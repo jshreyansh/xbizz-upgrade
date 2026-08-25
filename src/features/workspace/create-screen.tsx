@@ -154,15 +154,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       : "Custom Plain Text";
 
   const content = (
-    <main className="mx-auto w-full max-w-[1280px] px-6 py-5 sm:px-8">
+    <main className="mx-auto w-full max-w-[1280px] px-6 py-6 sm:px-8">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
-        {/* Left Column: Heading + Brief Section */}
-        <div className="min-w-0 space-y-3.5">
-          <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
-            Define the video brief
-          </h1>
-
-          <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
+        {/* Left Column: Brief Section */}
+        <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
             {/* Active Engine Indicator Pill */}
             <div className="flex items-center justify-between rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5">
               <div className="flex items-center gap-3">
@@ -251,10 +246,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
           </section>
-        </div>
 
         {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
-        <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">
+        <aside className="rise-in lg:sticky lg:top-[116px] self-start [animation-delay:80ms]">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
               <div className="flex items-center justify-between">

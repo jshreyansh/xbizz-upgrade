@@ -174,16 +174,11 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   const sampleDossiers = DOSSIERS.filter((d) => d.isSample);
 
   const content = (
-    <main className="mx-auto w-full max-w-[1280px] px-6 py-5 sm:px-8">
+    <main className="mx-auto w-full max-w-[1280px] px-6 py-6 sm:px-8">
       {/* Standardized 2-Column Layout with Top-Pinned Sticky Sidebar */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
-        {/* Left Column: Heading + Brand Dossiers */}
-        <div className="min-w-0 space-y-3.5">
-          <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
-            Choose brand dossier &amp; goals
-          </h1>
-
-          <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
+        {/* Left Column: Brand Dossiers & Sample Dossiers */}
+        <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
             {/* Group 1: Workspace Brand Dossiers */}
             <div>
               <div className="flex items-center justify-between mb-3.5">
@@ -356,10 +351,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               </Button>
             </div>
           </section>
-        </div>
 
         {/* Right Column: Sticky Mandatory Dropdowns Form (Fixed to Top) */}
-        <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">
+        <aside className="rise-in lg:sticky lg:top-[116px] self-start [animation-delay:80ms]">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             {/* Header */}
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
