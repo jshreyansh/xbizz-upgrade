@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" className={figtree.variable}>
-      <body className={figtree.className}>
+      <body className={figtree.className} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -95,21 +95,21 @@ const CREATION_OPTIONS: CreationOption[] = [
   {
     icon: Sparkles,
     title: "Start creating",
-    description: "Bring a brand or a brief — SwishX grounds it in your dossier and picks the right format.",
+    description: "Bring a brand or a brief — SwishX picks the right format.",
     cta: "Get started",
     href: "/dossiers",
   },
   {
     icon: Video,
     title: "Video",
-    description: "A cited, narrated reel built straight from your dossier.",
+    description: "Cited, narrated reels built from your dossier.",
     cta: "Open",
     href: "/create",
   },
   {
     icon: ImageIcon,
     title: "Infographic",
-    description: "A one-page visual aid for reps, congress, or the field.",
+    description: "One-page visual aids for reps, congress, or the field.",
     cta: "Open",
     href: "#",
     soon: true,
@@ -117,7 +117,7 @@ const CREATION_OPTIONS: CreationOption[] = [
   {
     icon: LayoutGrid,
     title: "Canvas",
-    description: "Print and digital layouts — journal ads, leave-behinds, banners.",
+    description: "Print and digital layouts — ads, leave-behinds, banners.",
     cta: "Open",
     href: "#",
     soon: true,
@@ -166,7 +166,7 @@ function CreationOptionCard({ option, onOpen }: { option: CreationOption; onOpen
           <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>SOON</span>
         )}
       </div>
-      <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5 }}>{option.description}</p>
+      <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{option.description}</p>
       {!option.soon && (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: "var(--brand)" }}>
           {option.cta} <ArrowRight size={13} />
