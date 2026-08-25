@@ -25,7 +25,7 @@ import {
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
+import { ChannelIcon } from "@/components/ui/select-icons";
 import { MultiSelectMenu, SelectMenu } from "@/components/ui/select-menu";
 import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
@@ -34,9 +34,8 @@ import { planningSources } from "@/features/workspace/mock-data";
 import { parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
-import type { Audience, PlanningSource } from "@/types/content";
+import type { PlanningSource } from "@/types/content";
 
-const audienceOptions: Audience[] = ["HCP", "Patient", "Payer", "Field team", "Consumer"];
 const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
 
 export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
@@ -188,12 +187,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 </span>
               </div>
             </div>
-            <button
-              onClick={handleBackToSource}
-              className="text-[12px] font-bold text-[var(--brand)] hover:underline"
-            >
-              Change source
-            </button>
           </div>
 
           <div className="mt-6">
@@ -239,6 +232,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               {sourceDisplayName}
             </span>
             <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+              <Users className="size-3.5 text-[var(--brand)]" />
+              {audience}
+            </span>
+            <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
               <Target className="size-3.5 text-[var(--brand)]" />
               {goal}
             </span>
@@ -254,11 +251,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             ))}
           </div>
 
-          <div className="mt-7 grid gap-4 border-t border-[var(--line)] pt-6 sm:grid-cols-2">
-            <Field label="Primary audience" icon={Users}>
-              <SelectMenu value={audience} onChange={(next) => setAudience(next as Audience)} options={audienceOptions} ariaLabel="Primary audience" renderIcon={(item) => <AudienceIcon value={item} />} />
-            </Field>
-
+          <div className="mt-7 border-t border-[var(--line)] pt-6">
             <Field label="Intended channel / format" icon={MonitorPlay}>
               <MultiSelectMenu values={uses} onChange={(next) => setIntendedUse(serializeIntendedUses(next))} options={useOptions} ariaLabel="Intended channel / format" renderIcon={(item) => <ChannelIcon value={item} />} />
             </Field>
@@ -279,16 +272,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               </div>
               <h2 className="mt-1 text-[18px] font-bold tracking-tight text-[var(--ink)]">{sourceDisplayName}</h2>
             </div>
-            <div className="p-5">
+            <div className="p-5 space-y-4">
+              <ContextItem icon={Users} title={`Audience & Goal: ${audience}`} detail={`Campaign objective: ${goal}`} />
+              <ContextItem icon={Layers} title={`Focus Topics (${topics.length})`} detail={topics.join(" · ")} />
               <ContextItem icon={BookOpenCheck} title={sourceType === "dossier" ? "214 approved claims" : "Evidence coverage"} detail={sourceType === "dossier" ? "All statements cited against FDA/EMA approved label." : "Grounding verified from attached source."} />
-              <ContextItem icon={ShieldCheck} title="Brand kit applied" detail="Logo, packshot, typography and fair balance." />
               <div className="mt-4 border-t border-[var(--line)] pt-4">
                 <label className="text-[13px] font-bold text-[var(--ink-muted)]" htmlFor="market">Market from source</label>
                 <SelectMenu value={market} onChange={setMarket} options={["United States", "India", "European Union", "United Kingdom", "Global / multiple markets"]} ariaLabel="Market from source" className="mt-1.5" renderIcon={() => <Globe2 className="size-[17px]" />} />
               </div>
             </div>
             <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[12.5px] leading-5 text-[var(--ink-muted)]">
-              The next screen will show one recommended plan and only the decisions that materially change the first draft.
+              Parameters from Step 1 are locked into this brief. The next screen will show the recommended content plan.
             </div>
           </div>
 

@@ -21,6 +21,8 @@ import {
   Plus,
   ShieldCheck,
   Target,
+  Users,
+  Layers,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -355,16 +357,69 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
           <aside className="rise-in [animation-delay:90ms]">
             <div className="lg:sticky lg:top-5">
-            <div className="squircle-card flex min-h-[500px] flex-col overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
-              <div className="border-b border-[var(--line)] p-5">
-                <div className="flex items-center justify-between gap-3"><h2 className="text-[20px] font-semibold tracking-[-0.025em]">{profile.units.length}-{assetType === "visual" ? "part" : assetType === "carousel" ? "page" : assetType === "video" ? "scene" : "section"} {profile.noun}</h2>{assetType === "video" && <span className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--ink-muted)]"><Clock3 className="size-4" />{duration}</span>}</div>
-                <p className="mt-2 text-[14px] leading-5 text-[var(--ink-muted)]">A low-cost storyboard comes next. You’ll edit the content before SwishX renders final visuals.</p>
+            <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
+              <div className="border-b border-[var(--line)] bg-[#fafbf9] px-5 py-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Available Context</span>
+                  <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--ok)]">
+                    Grounding verified
+                  </span>
+                </div>
+                <h2 className="mt-1 text-[18px] font-bold tracking-tight text-[var(--ink)]">{brandName} Dossier</h2>
               </div>
-              <ol className="divide-y divide-[var(--line)] px-5">
-                {profile.units.map((unit, index) => <li key={unit.title} className="group grid min-h-[62px] grid-cols-[32px_minmax(0,1fr)_auto] items-center gap-3 py-2.5 opacity-70 transition-opacity duration-200 hover:opacity-100"><span className="grid size-8 place-items-center rounded-[9px] bg-[#edf2ee] text-[13px] font-semibold text-[var(--brand)]">{index + 1}</span><span className="min-w-0"><span className="block truncate text-[14px] font-semibold">{unit.title}</span><span className="mt-0.5 block truncate text-[13px] text-[var(--ink-muted)]">{unit.detail}</span></span>{unit.time && <span className="text-[12px] font-medium text-[#6f7b74]">{unit.time}</span>}</li>)}
-              </ol>
-              <div className="mt-auto border-t border-[var(--line)] bg-[#f8faf8] p-5">
-                <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-[11px] bg-[var(--brand-soft)] text-[var(--brand)]"><FileCheck2 className="size-5" /></span><div><div className="text-[14px] font-bold">{approvedEvidenceCount > 0 ? "Evidence foundation ready" : "Concept storyboard"}</div><p className="mt-1 text-[13px] leading-5 text-[var(--ink-muted)]">{approvedEvidenceCount > 0 ? `Current ${market} sources will stay linked to every supported message.` : "Approved evidence can be attached before review or production."}</p></div></div>
+
+              <div className="p-5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]">
+                    <Users className="size-4" />
+                  </span>
+                  <div>
+                    <span className="block text-[14px] font-semibold">Audience &amp; Goal</span>
+                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">
+                      {audience} · {goal}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]">
+                    <Layers className="size-4" />
+                  </span>
+                  <div>
+                    <span className="block text-[14px] font-semibold">Focus Topics ({selectedTopics.length})</span>
+                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">
+                      {selectedTopics.join(" · ")}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]">
+                    <Film className="size-4" />
+                  </span>
+                  <div>
+                    <span className="block text-[14px] font-semibold">Creative Treatment</span>
+                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">
+                      {selectedTreatment.label} · {effectiveFormat} · {duration}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]">
+                    <FileCheck2 className="size-4" />
+                  </span>
+                  <div>
+                    <span className="block text-[14px] font-semibold">Evidence Grounding</span>
+                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">
+                      {approvedEvidenceCount > 0 ? `214 approved claims cited against ${market} label.` : "Grounding verified from attached source."}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[12.5px] leading-5 text-[var(--ink-muted)]">
+                Next: SwishX will generate the editable script, clinical scene prompts, and citation links in Studio.
               </div>
             </div>
 
