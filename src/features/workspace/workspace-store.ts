@@ -2,8 +2,17 @@ import { create } from "zustand";
 import { creativeDirections } from "@/features/workspace/mock-data";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, OnboardingBeat, PresentationMode } from "@/types/content";
 
+export type CreationMode = "magic-reel" | "magic-avatar" | "scratch";
+export type SourceSelectionType = "dossier" | "url" | "text";
+export type VideoSubStage = "mode-select" | "source-select" | "intake" | "directions" | "studio";
+
 interface WorkspaceState {
   view: AppView;
+  // Magic Video workflow states
+  creationMode: CreationMode;
+  sourceType: SourceSelectionType;
+  sourcePayload: { dossierId?: string; url?: string; text?: string };
+  videoSubStage: VideoSubStage;
   assetType: AssetType;
   brief: string;
   audience: Audience;
@@ -28,6 +37,10 @@ interface WorkspaceState {
   teamDockOpen: boolean;
   // Setters
   setView: (view: AppView) => void;
+  setCreationMode: (mode: CreationMode) => void;
+  setSourceType: (type: SourceSelectionType) => void;
+  setSourcePayload: (payload: { dossierId?: string; url?: string; text?: string }) => void;
+  setVideoSubStage: (stage: VideoSubStage) => void;
   setAssetType: (assetType: AssetType) => void;
   setBrief: (brief: string) => void;
   setAudience: (audience: Audience) => void;
@@ -56,6 +69,10 @@ interface WorkspaceState {
 
 const initialState = {
   view: "home" as AppView,
+  creationMode: "magic-reel" as CreationMode,
+  sourceType: "dossier" as SourceSelectionType,
+  sourcePayload: { dossierId: "velmora" },
+  videoSubStage: "mode-select" as VideoSubStage,
   assetType: "video" as AssetType,
   brief: "Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for DERMORA.",
   audience: "HCP" as Audience,
@@ -87,6 +104,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     if (documentWithTransitions?.startViewTransition && !reduceMotion) documentWithTransitions.startViewTransition(() => set({ view }));
     else set({ view });
   },
+  setCreationMode: (creationMode) => set({ creationMode }),
+  setSourceType: (sourceType) => set({ sourceType }),
+  setSourcePayload: (sourcePayload) => set({ sourcePayload }),
+  setVideoSubStage: (videoSubStage) => set({ videoSubStage }),
   setAssetType: (assetType) => set({ assetType }),
   setBrief: (brief) => set({ brief }),
   setAudience: (audience) => set({ audience }),

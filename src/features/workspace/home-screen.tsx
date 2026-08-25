@@ -286,6 +286,8 @@ function AssetLightbox({ asset, onClose }: { asset: SampleAsset; onClose: () => 
           <button
             onClick={() => {
               onClose();
+              useWorkspaceStore.getState().setView("create");
+              useWorkspaceStore.getState().setVideoSubStage("mode-select");
               router.push("/create");
             }}
             style={{ display: "inline-flex", alignItems: "center", gap: 9, marginTop: 22, width: "100%", justifyContent: "center", padding: "13px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5, background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff", boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)", cursor: "pointer" }}
@@ -386,6 +388,7 @@ export function HomeScreen() {
                     router.push("/dossiers");
                   } else {
                     useWorkspaceStore.getState().setView("create");
+                    useWorkspaceStore.getState().setVideoSubStage("mode-select");
                     router.push("/create");
                   }
                 }}

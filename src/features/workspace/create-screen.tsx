@@ -8,7 +8,6 @@ import {
   ChevronDown,
   CircleCheck,
   Eye,
-  FileImage,
   FileText,
   Film,
   FlaskConical,
@@ -16,11 +15,9 @@ import {
   Globe2,
   Info,
   LayoutGrid,
-  Layers3,
   Link2,
   MonitorPlay,
   Paperclip,
-  Presentation,
   RotateCcw,
   Search,
   ShieldCheck,
@@ -41,23 +38,10 @@ import { planningSources } from "@/features/workspace/mock-data";
 import { parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
-import type { AssetType, Audience, PlanningSource } from "@/types/content";
-
-const assetTypes: Array<{ type: AssetType; label: string; icon: typeof Film }> = [
-  { type: "video", label: "Video", icon: Film },
-  { type: "carousel", label: "Carousel", icon: Layers3 },
-  { type: "infographic", label: "Infographic", icon: Presentation },
-  { type: "visual", label: "Visual", icon: FileImage },
-];
+import type { Audience, PlanningSource } from "@/types/content";
 
 const audienceOptions: Audience[] = ["HCP", "Patient", "Payer", "Field team", "Consumer"];
 const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
-const exampleRequests: Record<AssetType, string> = {
-  video: "Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for DERMORA.",
-  carousel: "Create an evidence-led carousel that introduces DERMORA to dermatologists and makes the pivotal results easy to scan.",
-  infographic: "Create an HCP infographic that explains DERMORA’s mechanism and connects it to the pivotal evidence.",
-  visual: "Create a launch visual for DERMORA that leads with the approved efficacy message for dermatologists.",
-};
 
 export function CreateScreen() {
   const router = useRouter();
@@ -100,18 +84,11 @@ export function CreateScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const selectedSources = planningSources.filter((source) => selectedSourceIds.includes(source.id));
-  const productIdentified = selectedSources.length > 0 || brief.toLowerCase().includes("dermora");
   const requestIsSpecific = isRequestSpecific(brief);
   const filteredSources = useMemo(() => {
     const query = sourceQuery.trim().toLowerCase();
     return query ? planningSources.filter((source) => `${source.name} ${source.detail}`.toLowerCase().includes(query)) : planningSources;
   }, [sourceQuery]);
-
-  const changeAssetType = (nextType: AssetType) => {
-    if (brief === exampleRequests[assetType]) setBrief(exampleRequests[nextType]);
-    setAssetType(nextType);
-    setClarificationOpen(false);
-  };
 
   const preparePlan = () => {
     if (!requestIsSpecific) {
@@ -144,13 +121,36 @@ export function CreateScreen() {
 
   const currentScenario = demoScenarios.find((scenario) => scenario.id === demoScenarioId) ?? demoScenarios[0];
 
+  const creationMode = useWorkspaceStore((s) => s.creationMode);
+  const sourceType = useWorkspaceStore((s) => s.sourceType);
+  const sourcePayload = useWorkspaceStore((s) => s.sourcePayload);
+  const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
+
+  const handleBackToSource = () => {
+    setVideoSubStage("source-select");
+  };
+
+  const modeDisplayName =
+    creationMode === "magic-reel"
+      ? "MagicReel™ · Short Video"
+      : creationMode === "magic-avatar"
+      ? "MagicAvatar™ · Digital Twin"
+      : "Custom Video · Scratch";
+
+  const sourceDisplayName =
+    sourceType === "dossier"
+      ? `${sourcePayload.dossierId === "onkavia" ? "Onkavia" : sourcePayload.dossierId === "nirvexa" ? "Nirvexa" : "Velmora"} Dossier`
+      : sourceType === "url"
+      ? "Web / Study Link"
+      : "Custom Plain Text";
+
   return (
     <div className="page-enter min-h-screen bg-[#f3f5f2] pb-10">
       <header className="flex h-[68px] items-center border-b border-[var(--line)] bg-white/95 px-4 backdrop-blur-xl sm:px-7">
-        <button onClick={handleBackHome} className="focus-ring mr-4 grid size-10 place-items-center rounded-[10px] text-[var(--ink-muted)] hover:bg-black/5" aria-label="Back home"><ArrowLeft className="size-[20px]" /></button>
+        <button onClick={handleBackToSource} className="focus-ring mr-4 grid size-10 place-items-center rounded-[10px] text-[var(--ink-muted)] hover:bg-black/5" aria-label="Back to source"><ArrowLeft className="size-[20px]" /></button>
         <SwishXMark />
         <div className="ml-5 hidden h-6 w-px bg-[var(--line)] sm:block" />
-        <div className="ml-5 hidden sm:block"><div className="text-[14px] font-bold">New content</div><div className="text-[13px] text-[var(--ink-muted)]">Step 1 of 2 · Define the job</div></div>
+        <div className="ml-5 hidden sm:block"><div className="text-[14px] font-bold">{modeDisplayName}</div><div className="text-[13px] text-[var(--ink-muted)]">Step 3 of 3 · Define the job</div></div>
         <button onClick={() => setScenarioLibraryOpen(true)} className="focus-ring group ml-auto flex min-h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-white px-3 text-left shadow-sm transition hover:border-[var(--brand)] hover:bg-[var(--brand-soft)]" aria-label="Open demo cases">
           <span className="demo-orbit grid size-7 place-items-center rounded-[8px] bg-[var(--brand-soft)] text-[var(--brand)]"><FlaskConical className="size-4" /></span>
           <span className="hidden sm:block"><span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--ink-muted)]">Demo case</span><span className="block max-w-[170px] truncate text-[13px] font-bold">{currentScenario.label}</span></span>
@@ -165,26 +165,40 @@ export function CreateScreen() {
       <main className="mx-auto grid w-full max-w-[1320px] gap-5 px-4 py-5 sm:px-7 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
           <div className="max-w-[780px]">
-            <h1 className="text-[32px] font-[750] tracking-[-0.04em] sm:text-[38px]">What do you need to make?</h1>
-            <p className="mt-2 text-[16px] leading-6 text-[var(--ink-muted)]">Describe the job and attach the material SwishX should use. We’ll ask only when an important decision is unclear.</p>
+            <h1 className="text-[30px] font-[750] tracking-[-0.04em] sm:text-[36px]">Define the video job</h1>
+            <p className="mt-2 text-[15.5px] leading-6 text-[var(--ink-muted)]">Describe what you want to communicate. SwishX will synthesize the script, visual prompts, and regulatory citations from your source.</p>
           </div>
 
-          <fieldset className="mt-5">
-            <legend className="text-[14px] font-bold">Create a</legend>
-            <div className="relative mt-2 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              <span aria-hidden="true" className="squircle-control pointer-events-none absolute inset-y-0 hidden border border-[#adc4b8] bg-[#eff6f2] shadow-[0_5px_16px_rgb(19_31_26/6%)] transition-[left] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] sm:block" style={{ left: `calc(${assetTypes.findIndex((item) => item.type === assetType)} * ((100% - 30px) / 4 + 10px))`, width: "calc((100% - 30px) / 4)" }} />
-              {assetTypes.map(({ type, label, icon: Icon }) => {
-                const selected = assetType === type;
-                return (
-                  <button key={type} type="button" onClick={() => changeAssetType(type)} aria-pressed={selected} className={cn("squircle-control focus-ring relative z-10 flex min-h-[64px] items-center gap-3 border px-3.5 text-left transition-[opacity,background-color,border-color,box-shadow,transform] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]", selected ? "border-[#adc4b8] bg-[#eff6f2] opacity-100 shadow-[0_5px_16px_rgb(19_31_26/6%)] sm:border-transparent sm:bg-transparent sm:shadow-none" : "border-[var(--line)] bg-white opacity-65 hover:scale-[1.01] hover:border-[var(--line-strong)] hover:bg-[#fafbf9] hover:opacity-100")}>
-                    <Icon className={cn("size-5 shrink-0", selected ? "text-[var(--brand)]" : "text-[#707a75]")} />
-                    <span className="text-[15px] font-bold">{label}</span>
-                    {selected && <span className="absolute right-2.5 top-2.5 grid size-5 place-items-center rounded-full bg-[var(--brand)] text-white"><Check className="size-3" strokeWidth={3} /></span>}
-                  </button>
-                );
-              })}
+          {/* Active Engine Indicator Pill (Replaced 4-way generic picker) */}
+          <div className="mt-5 flex items-center justify-between rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5">
+            <div className="flex items-center gap-3">
+              <div className="grid size-10 place-items-center rounded-[11px] bg-[var(--brand)] text-white shadow-sm">
+                <Film className="size-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <b className="text-[14.5px] font-bold text-[var(--ink)]">{modeDisplayName}</b>
+                  <span className="rounded-full bg-[var(--brand-soft)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand)]">
+                    Selected Engine
+                  </span>
+                </div>
+                <span className="text-[12px] text-[var(--ink-muted)]">
+                  {creationMode === "magic-reel"
+                    ? "30–180s cinematic video with medical scenes, graphics & citations"
+                    : creationMode === "magic-avatar"
+                    ? "30–90s lip-synced presenter video with clinical slide overlays"
+                    : "Open custom prompt & duration"}
+                </span>
+              </div>
             </div>
-          </fieldset>
+            <button
+              type="button"
+              onClick={() => setVideoSubStage("mode-select")}
+              className="focus-ring rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)]"
+            >
+              Change
+            </button>
+          </div>
 
           <div className="mt-5">
             <label htmlFor="request" className="text-[14px] font-bold">Request and source material</label>
@@ -220,7 +234,7 @@ export function CreateScreen() {
             <div className="rise-in mt-3 rounded-[13px] border border-[#e5c07d] bg-[var(--warning-soft)] p-4" role="alert">
               <div className="flex items-start gap-3"><Info className="mt-0.5 size-5 shrink-0 text-[var(--warning)]" /><div><div className="text-[14px] font-bold text-[#704b13]">Tell us a little more about the job.</div><p className="mt-1 text-[14px] leading-5 text-[#765b31]">What should this {assetType} accomplish? A short sentence is enough.</p></div></div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {["Introduce the product", "Explain the mechanism", "Present clinical evidence", "Educate patients"].map((suggestion) => <button key={suggestion} onClick={() => { setBrief(`${suggestion} for ${audience === "HCP" ? "healthcare professionals" : audience.toLowerCase()} using the approved DERMORA source material.`); setClarificationOpen(false); }} className="focus-ring min-h-10 rounded-[9px] border border-[#dfc493] bg-white px-3 text-[13px] font-bold text-[#704b13] hover:bg-[#fffaf0]">{suggestion}</button>)}
+                {["Introduce the product", "Explain the mechanism", "Present clinical evidence", "Educate patients"].map((suggestion) => <button key={suggestion} onClick={() => { setBrief(`${suggestion} for ${audience === "HCP" ? "healthcare professionals" : audience.toLowerCase()} using the approved source material.`); setClarificationOpen(false); }} className="focus-ring min-h-10 rounded-[9px] border border-[#dfc493] bg-white px-3 text-[13px] font-bold text-[#704b13] hover:bg-[#fffaf0]">{suggestion}</button>)}
               </div>
             </div>
           )}
@@ -240,15 +254,26 @@ export function CreateScreen() {
           <div className="squircle-card flex min-h-[500px] flex-col overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             <div className="border-b border-[var(--line)] p-5">
               <div className="text-[12px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Available context</div>
-              <h2 className="mt-1 text-[20px] font-bold tracking-[-0.02em]">{productIdentified ? `DERMORA · ${market}` : "Product not identified"}</h2>
-              <p className="mt-2 text-[14px] leading-5 text-[var(--ink-muted)]">{productIdentified ? "The product was identified from your request or attached material." : "Mention a product or attach its dossier so SwishX can load the correct context."}</p>
+              <h2 className="mt-1 text-[20px] font-bold tracking-[-0.02em]">{sourceDisplayName} · {market}</h2>
+              <p className="mt-2 text-[14px] leading-5 text-[var(--ink-muted)]">
+                {sourceType === "dossier"
+                  ? "Grounding statements and citations in the approved 18-section brand dossier."
+                  : sourceType === "url"
+                  ? `Clinical statements extracted and linked to ${sourcePayload.url || "source link"}.`
+                  : "Using custom notes as the message boundary."}
+              </p>
             </div>
             <div className="p-5">
-              <ContextItem icon={BookOpenCheck} title={`${selectedSources.filter((source) => source.kind === "approved-source" || source.kind === "claims").length} evidence sources`} detail="Current sources will be treated as authoritative." />
-              <ContextItem icon={ShieldCheck} title="Brand context available" detail="Logo, packshot, typography and fair balance." />
+              {creationMode === "magic-avatar" ? (
+                <ContextItem icon={Users} title="Presenter Digital Twin" detail="Dr. Maya Kapoor (Dermatology Specialist) pre-configured." />
+              ) : (
+                <ContextItem icon={Film} title="Cinematic Scene Engine" detail="Scene storyboard with clinical graph animations & MoA visuals." />
+              )}
+              <ContextItem icon={BookOpenCheck} title={sourceType === "dossier" ? "214 approved claims" : "Evidence coverage"} detail={sourceType === "dossier" ? "All statements cited against FDA/EMA approved label." : "Grounding verified from attached source."} />
+              <ContextItem icon={ShieldCheck} title="Brand kit applied" detail="Logo, packshot, typography and fair balance." />
               <div className="mt-4 border-t border-[var(--line)] pt-4">
                 <label className="text-[13px] font-bold text-[var(--ink-muted)]" htmlFor="market">Market from source</label>
-                <SelectMenu value={market} onChange={setMarket} options={["United States", "India", "United Kingdom", "Global / multiple markets"]} ariaLabel="Market from source" className="mt-1.5" renderIcon={() => <Globe2 className="size-[17px]" />} />
+                <SelectMenu value={market} onChange={setMarket} options={["United States", "India", "European Union", "United Kingdom", "Global / multiple markets"]} ariaLabel="Market from source" className="mt-1.5" renderIcon={() => <Globe2 className="size-[17px]" />} />
               </div>
             </div>
             <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[13px] leading-5 text-[var(--ink-muted)]">The next screen will show one recommended plan and only the decisions that materially change the first draft.</div>
