@@ -18,7 +18,7 @@ const CREATE_TILES: CreateTile[] = [
   { label: "Website", icon: "globe", href: "#" },
   { label: "Doc", icon: "doc", href: "#" },
   { label: "Mail", icon: "mail", href: "#" },
-  { label: "Characters", icon: "characters", href: "#" },
+  { label: "Avatars", icon: "characters", href: "#" },
 ];
 
 interface NavItem {

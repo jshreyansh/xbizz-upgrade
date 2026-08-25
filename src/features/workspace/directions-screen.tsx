@@ -1144,10 +1144,10 @@ function PresenterLibrary({ selected, onSelect, onClose }: { selected: string; o
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => alert("Add Character flow initiated — you will be able to customize identity and likeness.")}
+              onClick={() => alert("Add Avatar flow initiated — you will be able to customize identity and likeness.")}
               className="focus-ring flex items-center gap-1.5 rounded-full border border-[var(--brand)] bg-[var(--tint)] px-3 py-1.5 text-[12px] font-bold text-[var(--brand-deep)] hover:bg-[var(--brand)] hover:text-white transition cursor-pointer"
             >
-              <Plus className="size-3.5" /> Add Character
+              <Plus className="size-3.5" /> Add Avatar
             </button>
             <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close presenter library">
               <XIcon />
