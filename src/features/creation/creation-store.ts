@@ -1,120 +1,173 @@
 import { create } from "zustand";
-import { creativeDirections } from "@/features/workspace/mock-data";
-import type { Scene } from "@/types/content";
 
-export type CreationStep =
-  | "intent"
-  | "brief"
-  | "direction"
-  | "script"
-  | "generating"
-  | "rendering"
-  | "complete";
+export type MVFormatType = "reel" | "avatar";
+export type MVAudience = "hcp" | "rep" | "patient" | "payer";
+export type MVVoice = "ava" | "marcus" | "sofia" | "hana";
+export type MVLength = "30s" | "60s" | "90s" | "120s" | "180s";
+export type MVScriptStructure = "problem" | "product" | "custom";
+export type MVVideoMode = "hd" | "cinematic";
 
-export type CreationIntent = "dossier" | "brief" | "scratch";
-
-export interface CreationState {
-  step: CreationStep;
-  intent: CreationIntent;
-  selectedDossierId: string;
-  briefText: string;
-  format: "16:9" | "9:16" | "1:1";
-  duration: "30s" | "45s" | "60s" | "90s";
-  voice: string;
-  captionStyle: "karaoke" | "subtitles" | "clean";
-  directionId: string;
-  scenes: Scene[];
-  renderProgress: number;
-  // Actions
-  setStep: (step: CreationStep) => void;
-  setIntent: (intent: CreationIntent) => void;
-  setSelectedDossierId: (id: string) => void;
-  setBriefText: (text: string) => void;
-  setFormat: (format: "16:9" | "9:16" | "1:1") => void;
-  setDuration: (duration: "30s" | "45s" | "60s" | "90s") => void;
-  setVoice: (voice: string) => void;
-  setCaptionStyle: (style: "karaoke" | "subtitles" | "clean") => void;
-  setDirectionId: (id: string) => void;
-  setScenes: (scenes: Scene[]) => void;
-  setRenderProgress: (progress: number) => void;
-  reset: () => void;
+export interface MVScene {
+  id: string;
+  number: number;
+  text: string;
+  source: string;
+  duration: string;
+  visualPrompt: string;
+  negativePrompt: string;
+  overlayText: string;
+  overlayType: string;
+  soundEffect?: string;
 }
 
-const DEFAULT_SCENES: Scene[] = [
+export const DEFAULT_MV_SCENES: MVScene[] = [
   {
     id: "sc-1",
     number: 1,
-    title: "Clinical Need & Baseline Risk",
-    duration: 10,
-    narration: "For patients post-acute coronary syndrome, residual inflammatory and thrombotic risk remains high despite guideline-directed statin and antiplatelet therapy.",
-    visual: "Cinematic close-up of cardiac arterial cross-section highlighting vulnerable plaque formation and microvascular inflammation.",
-    claim: "Residual vascular risk post-ACS remains up to 24% at 12 months.",
-    evidenceState: "approved",
+    text: "For patients living with heart failure, each hospitalization marks a progressive decline in cardiac function.",
+    source: "Drugs@FDA approved labeling · Section 1",
+    duration: "6.2s",
+    visualPrompt: "A calm cardiology consult room in a US academic medical centre, late-morning window light across a walnut desk. The camera opens on a close-up of an echocardiogram printout, then pulls back to a clinician mid-thought.",
+    negativePrompt: "cartoon, 3D render, CGI, animated character, illustration, sparkling eyes, waxy skin, product packaging, pill, tablet, capsule, logo text on screen, minors, distressed patient",
+    overlayText: "Velmora · tirzelamide",
+    overlayType: "Key term — middle, dark box",
   },
   {
     id: "sc-2",
     number: 2,
-    title: "Dual Pathway Mechanism",
-    duration: 14,
-    narration: "Velmora selectively targets the catalytic pocket with sub-nanomolar affinity, inhibiting thrombin generation without compromising baseline haemostasis.",
-    visual: "Photorealistic molecular animation showing targeted pocket binding and suppression of fibrin mesh propagation.",
-    claim: "Sub-nanomolar binding affinity (Ki = 0.42 nM) preserves baseline platelet adhesion.",
-    evidenceState: "approved",
+    text: "Velmora is a once-daily selective oral inhibitor designed to improve myocardial energetics and reduce recurrent decompensation.",
+    source: "ClinicalTrials.gov Protocol Identifier NCT04892110",
+    duration: "8.4s",
+    visualPrompt: "Photorealistic molecular representation of cardiac microvasculature with subtle kinetic flow of oxygenated erythrocytes.",
+    negativePrompt: "cartoon, 3D render, CGI, animated character, illustration, neon colors",
+    overlayText: "Selective Oral Inhibitor",
+    overlayType: "Lower third — light",
   },
   {
     id: "sc-3",
     number: 3,
-    title: "Pivotal Efficacy (CLARITY-CV)",
-    duration: 12,
-    narration: "In the 12,480-patient CLARITY-CV trial, Velmora demonstrated a statistically significant 24% reduction in primary composite MACE endpoints.",
-    visual: "Clear Kaplan-Meier survival curves showing early divergence at day 30 with sustained separation through 28 months.",
-    claim: "HR 0.76 (95% CI: 0.68-0.85; p < 0.001) for composite CV death, MI, or stroke.",
-    evidenceState: "approved",
+    text: "Across the pivotal Phase III CLARITY-CV study of over twelve thousand patients, Velmora achieved a twenty-four percent relative risk reduction in composite cardiovascular events.",
+    source: "CLARITY-CV Phase III (NEJM 2025; 392:101-114)",
+    duration: "11.2s",
+    visualPrompt: "Clean, elegant clinical data visualization of Kaplan-Meier survival curves showing early divergence at day 30.",
+    negativePrompt: "cartoon, 3D render, CGI, busy chart, tiny unreadable text",
+    overlayText: "24% Relative Risk Reduction (p < 0.001)",
+    overlayType: "Key term — middle, dark box",
   },
   {
     id: "sc-4",
     number: 4,
-    title: "Safety & Summary Call-to-Action",
-    duration: 9,
-    narration: "With a balanced bleeding profile and once-daily oral dosing, Velmora delivers targeted protection where patients need it most.",
-    visual: "Velmora packshot with on-screen ISI reference link and Prescribing Information callout.",
-    claim: "Major TIMI bleeding rate 1.9% vs 1.4% (p = 0.06); no increase in fatal hemorrhage.",
-    evidenceState: "approved",
+    text: "Adverse events were consistent with baseline comorbidities, with discontinuation rates comparable to placebo.",
+    source: "FDA PI Section 6.1 Adverse Reactions",
+    duration: "7.8s",
+    visualPrompt: "Senior cardiologist consulting with an active adult patient in a bright, modern clinic environment.",
+    negativePrompt: "distressed patient, cartoon, CGI",
+    overlayText: "Tolerability & Safety Profile",
+    overlayType: "Lower third — light",
+  },
+  {
+    id: "sc-5",
+    number: 5,
+    text: "With a convenient once-daily oral dosing regimen, Velmora integrates seamlessly into guideline-directed medical therapy.",
+    source: "FDA PI Section 2 Dosage and Administration",
+    duration: "6.5s",
+    visualPrompt: "Discreet packaging shot on minimalist frosted glass surface with clear prescribing guide iconography.",
+    negativePrompt: "pill spilling, cartoon, dramatic lighting",
+    overlayText: "Once Daily · No Titration Required",
+    overlayType: "Lower third — light",
   },
 ];
 
+export const KEPT_OUT_CLAIMS = [
+  "“Velmora cures heart failure in 85% of patients”",
+  "“Zero risk of renal complications in all age brackets”",
+  "“Superior to all competitor SGLT2 inhibitors without exception”",
+];
+
+export interface CreationState {
+  stage: 1 | 2 | 3 | 4 | 5 | 6 | 7;
+  formatType: MVFormatType;
+  selectedDossier: string;
+  audience: MVAudience;
+  voice: MVVoice;
+  length: MVLength;
+  scriptStructure: MVScriptStructure;
+  scenes: MVScene[];
+  activeSceneIndex: number;
+  videoMode: MVVideoMode;
+  mlrCitations: boolean;
+  mlrReferencesCard: boolean;
+  mlrIsiCard: boolean;
+  renderProgress: number;
+  // Actions
+  setStage: (stage: 1 | 2 | 3 | 4 | 5 | 6 | 7) => void;
+  setFormatType: (type: MVFormatType) => void;
+  setSelectedDossier: (dossier: string) => void;
+  setAudience: (aud: MVAudience) => void;
+  setVoice: (voice: MVVoice) => void;
+  setLength: (len: MVLength) => void;
+  setScriptStructure: (struct: MVScriptStructure) => void;
+  setScenes: (scenes: MVScene[]) => void;
+  updateScene: (index: number, partial: Partial<MVScene>) => void;
+  setActiveSceneIndex: (index: number) => void;
+  setVideoMode: (mode: MVVideoMode) => void;
+  setMlrCitations: (val: boolean) => void;
+  setMlrReferencesCard: (val: boolean) => void;
+  setMlrIsiCard: (val: boolean) => void;
+  setRenderProgress: (progress: number) => void;
+  reset: () => void;
+}
+
 export const useCreationStore = create<CreationState>((set) => ({
-  step: "intent",
-  intent: "dossier",
-  selectedDossierId: "velmora",
-  briefText: "Create a concise HCP launch video for cardiologists that explains the dual-pathway mechanism and pivotal Phase III CLARITY-CV evidence.",
-  format: "16:9",
-  duration: "45s",
-  voice: "Rohan · Clear & measured",
-  captionStyle: "karaoke",
-  directionId: creativeDirections[0].id,
-  scenes: DEFAULT_SCENES,
+  stage: 1,
+  formatType: "reel",
+  selectedDossier: "velmora",
+  audience: "hcp",
+  voice: "ava",
+  length: "60s",
+  scriptStructure: "product",
+  scenes: DEFAULT_MV_SCENES,
+  activeSceneIndex: 0,
+  videoMode: "hd",
+  mlrCitations: true,
+  mlrReferencesCard: true,
+  mlrIsiCard: true,
   renderProgress: 0,
-  setStep: (step) => set({ step }),
-  setIntent: (intent) => set({ intent }),
-  setSelectedDossierId: (selectedDossierId) => set({ selectedDossierId }),
-  setBriefText: (briefText) => set({ briefText }),
-  setFormat: (format) => set({ format }),
-  setDuration: (duration) => set({ duration }),
+  setStage: (stage) => set({ stage }),
+  setFormatType: (formatType) => set({ formatType }),
+  setSelectedDossier: (selectedDossier) => set({ selectedDossier }),
+  setAudience: (audience) => set({ audience }),
   setVoice: (voice) => set({ voice }),
-  setCaptionStyle: (captionStyle) => set({ captionStyle }),
-  setDirectionId: (directionId) => set({ directionId }),
+  setLength: (length) => set({ length }),
+  setScriptStructure: (scriptStructure) => set({ scriptStructure }),
   setScenes: (scenes) => set({ scenes }),
+  updateScene: (index, partial) =>
+    set((state) => {
+      const updated = [...state.scenes];
+      updated[index] = { ...updated[index], ...partial };
+      return { scenes: updated };
+    }),
+  setActiveSceneIndex: (activeSceneIndex) => set({ activeSceneIndex }),
+  setVideoMode: (videoMode) => set({ videoMode }),
+  setMlrCitations: (mlrCitations) => set({ mlrCitations }),
+  setMlrReferencesCard: (mlrReferencesCard) => set({ mlrReferencesCard }),
+  setMlrIsiCard: (mlrIsiCard) => set({ mlrIsiCard }),
   setRenderProgress: (renderProgress) => set({ renderProgress }),
   reset: () =>
     set({
-      step: "intent",
-      intent: "dossier",
-      selectedDossierId: "velmora",
-      format: "16:9",
-      duration: "45s",
-      directionId: creativeDirections[0].id,
-      scenes: DEFAULT_SCENES,
+      stage: 1,
+      formatType: "reel",
+      selectedDossier: "velmora",
+      audience: "hcp",
+      voice: "ava",
+      length: "60s",
+      scriptStructure: "product",
+      scenes: DEFAULT_MV_SCENES,
+      activeSceneIndex: 0,
+      videoMode: "hd",
+      mlrCitations: true,
+      mlrReferencesCard: true,
+      mlrIsiCard: true,
       renderProgress: 0,
     }),
 }));
