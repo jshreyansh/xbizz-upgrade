@@ -394,7 +394,7 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
 }
 
 /* ─── Showcase Item Card ─────────────────────────────────────────────────────── */
-function ShowcaseCard({ item }: { item: ShowcaseItem }) {
+function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: ShowcaseItem) => void }) {
   const [hovered, setHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -421,6 +421,7 @@ function ShowcaseCard({ item }: { item: ShowcaseItem }) {
 
   return (
     <div
+      onClick={() => onPlay(item)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -567,7 +568,15 @@ import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 
 /* ─── Horizontal lane row ────────────────────────────────────────────────────── */
-function ShowcaseLaneRow({ lane, isLast }: { lane: ShowcaseLane; isLast: boolean }) {
+function ShowcaseLaneRow({
+  lane,
+  isLast,
+  onPlayVideo,
+}: {
+  lane: ShowcaseLane;
+  isLast: boolean;
+  onPlayVideo: (item: ShowcaseItem) => void;
+}) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -666,7 +675,9 @@ function ShowcaseLaneRow({ lane, isLast }: { lane: ShowcaseLane; isLast: boolean
                 onSelect={() => router.push(`/dossiers?open=${dossier.id}`)}
               />
             ))
-          : lane.items.map((item, idx) => <ShowcaseCard key={idx} item={item} />)}
+          : lane.items.map((item, idx) => (
+              <ShowcaseCard key={idx} item={item} onPlay={onPlayVideo} />
+            ))}
       </div>
     </div>
   );
@@ -875,6 +886,7 @@ function HomeDossierCard({ dossier, onSelect }: { dossier: BrandDossier; onSelec
 /* ─── HomeScreen Component ───────────────────────────────────────────────────── */
 export function HomeScreen() {
   const router = useRouter();
+  const [playingVideoItem, setPlayingVideoItem] = useState<ShowcaseItem | null>(null);
 
   function openTile(tile: TileOption) {
     if (tile.href === "/create") {
@@ -920,7 +932,7 @@ export function HomeScreen() {
         ))}
       </div>
 
-      {/* Showcase — 3 horizontal scrollable lanes */}
+      {/* Showcase — 4 horizontal scrollable lanes */}
       <div
         style={{
           background: "#fff",
@@ -931,9 +943,84 @@ export function HomeScreen() {
         }}
       >
         {SHOWCASE_LANES.map((lane, i) => (
-          <ShowcaseLaneRow key={lane.label} lane={lane} isLast={i === SHOWCASE_LANES.length - 1} />
+          <ShowcaseLaneRow
+            key={lane.label}
+            lane={lane}
+            isLast={i === SHOWCASE_LANES.length - 1}
+            onPlayVideo={(item) => setPlayingVideoItem(item)}
+          />
         ))}
       </div>
+
+      {/* Video Playback Lightbox Modal */}
+      {playingVideoItem && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/65 p-4 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setPlayingVideoItem(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-[760px] overflow-hidden rounded-[24px] border border-white/40 bg-[#0d1017] shadow-2xl text-white select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/30">
+              <div className="flex items-center gap-2.5">
+                <span className="rounded-md bg-[var(--brand)] px-2 py-0.5 text-[10px] font-extrabold uppercase text-white">
+                  {playingVideoItem.tag}
+                </span>
+                <span className="text-[14px] font-bold text-white truncate max-w-[420px]">
+                  {playingVideoItem.title}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPlayingVideoItem(null)}
+                className="grid size-8 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Video Player */}
+            <div className="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
+              {playingVideoItem.videoSrc ? (
+                <video
+                  src={playingVideoItem.videoSrc}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="size-full object-contain"
+                />
+              ) : (
+                <div className="text-center p-8 space-y-2">
+                  <p className="text-[14px] font-semibold text-white/70">Sample Showreel Preview</p>
+                  <p className="text-[12px] text-white/40">Grounded in verified regulatory trial anchors.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Controls / Details */}
+            <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-t border-white/10 text-[12px]">
+              <div>
+                <p className="font-semibold text-white/90">{playingVideoItem.subtitle}</p>
+                <p className="text-[11px] text-white/50">Verified Medical Diction · {playingVideoItem.meta}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPlayingVideoItem(null);
+                  router.push("/create");
+                }}
+                className="rounded-xl bg-[var(--brand)] px-4 py-2 text-[12px] font-bold text-white shadow-lg hover:bg-[var(--brand-deep)] transition cursor-pointer"
+              >
+                Create with this style →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
