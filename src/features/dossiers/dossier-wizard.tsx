@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { BrandDossier, DossierApproval, DossierWizardStep, RegulatoryBody } from "@/features/dossiers/dossier-types";
+import type { BrandDossier, DossierApproval, DossierSource, DossierWizardStep, RegulatoryBody } from "@/features/dossiers/dossier-types";
 import { NEW_DOSSIER_TEMPLATE } from "@/features/dossiers/mock-dossiers";
 import { BrandLoader } from "@/components/ui/brand-loader";
 
@@ -39,6 +39,63 @@ const PHARMA_SECTIONS = [
   { id: "s18", name: "18. Core Visual Identity & ISI Layout Rules", cat: "Commercial", defaultOn: true },
 ];
 
+/** What promotional-review law requires before a dossier can be drafted.
+ *  Independent of the 18-section content plan — this is source
+ *  evidence, not written claims. */
+type SourceTier = "required" | "recommended" | "optional";
+
+interface RequiredSource {
+  type: BrandDossier["sources"][number]["type"];
+  badge: string;
+  label(anchor: RegulatoryBody): string;
+  detail: string;
+  tier: SourceTier;
+}
+
+const REQUIRED_SOURCES: RequiredSource[] = [
+  {
+    type: "label",
+    badge: "PI",
+    label: (anchor) => (anchor === "FDA" || anchor === "PMDA" ? "Approved Prescribing Information" : "Summary of Product Characteristics (SmPC)"),
+    detail: "The label governs every claim — nothing ships without it.",
+    tier: "required",
+  },
+  {
+    type: "clinical-trials",
+    badge: "NCT",
+    label: () => "Registered Clinical Trial Record",
+    detail: "Public registry entry for the pivotal study.",
+    tier: "required",
+  },
+  {
+    type: "pubmed",
+    badge: "PUB",
+    label: () => "Peer-Reviewed Pivotal Publication",
+    detail: "The published efficacy and safety readout.",
+    tier: "required",
+  },
+  {
+    type: "heor",
+    badge: "HEOR",
+    label: () => "Health Economics & Outcomes Data",
+    detail: "Needed only if the dossier will support value or budget-impact claims.",
+    tier: "recommended",
+  },
+  {
+    type: "slides",
+    badge: "CONG",
+    label: () => "Congress / Symposium Materials",
+    detail: "Supplementary — strengthens context, not required to proceed.",
+    tier: "optional",
+  },
+];
+
+const SOURCE_TIER_META: Record<SourceTier, { label: string; color: string; bg: string; line: string }> = {
+  required: { label: "Required by law", color: "var(--brand-deep)", bg: "var(--tint)", line: "var(--tint-line)" },
+  recommended: { label: "Recommended", color: "var(--warn)", bg: "var(--warn-bg)", line: "#f3dfb0" },
+  optional: { label: "Optional", color: "var(--ink-4)", bg: "rgba(10,13,20,.04)", line: "var(--hair)" },
+};
+
 export function DossierWizard({
   initialDossier,
   onBackToList,
@@ -54,6 +111,33 @@ export function DossierWizard({
   const [approvals, setApprovals] = useState<DossierApproval[]>(PENDING_APPROVALS);
   const [changesNote, setChangesNote] = useState("");
   const [showChangesForm, setShowChangesForm] = useState(false);
+  const [uploadingType, setUploadingType] = useState<string | null>(null);
+
+  const uploadedSourceTypes = new Set(activeDossier.sources.map((s) => s.type));
+  const requiredSources = REQUIRED_SOURCES.filter((r) => r.tier === "required");
+  const requiredUploadedCount = requiredSources.filter((r) => uploadedSourceTypes.has(r.type)).length;
+  const requiredSourcesMet = requiredUploadedCount === requiredSources.length;
+
+  function uploadSource(req: RequiredSource) {
+    if (uploadingType || uploadedSourceTypes.has(req.type)) return;
+    setUploadingType(req.type);
+    setTimeout(() => {
+      setActiveDossier((prev) => {
+        if (prev.sources.some((s) => s.type === req.type)) return prev;
+        const newSource: DossierSource = {
+          id: `src-${req.type}-${prev.sources.length + 1}`,
+          name: `${prev.brandName} — ${req.label(prev.regulatoryAnchor)}`,
+          type: req.type,
+          date: "Just now",
+          status: "approved",
+          details: req.detail,
+          citationCount: req.tier === "required" ? 24 : 12,
+        };
+        return { ...prev, sources: [...prev.sources, newSource], sourcesCount: prev.sourcesCount + 1 };
+      });
+      setUploadingType(null);
+    }, 900);
+  }
 
   // Step 4: Medical Writer streaming generation simulation
   useEffect(() => {
@@ -241,7 +325,7 @@ export function DossierWizard({
 
       {/* ── STEP 2: SOURCES SELECTION ──────────────────────────────── */}
       {step === "sources" && (
-        <div className="rise-in max-w-3xl mx-auto space-y-6">
+        <div className="rise-in max-w-5xl mx-auto space-y-6">
           <div>
             <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--brand)", fontWeight: 800, marginBottom: 4 }}>
               Step 2 of 5
@@ -250,72 +334,158 @@ export function DossierWizard({
               Approved Sources &amp; Clinical Allow-list
             </h2>
             <p style={{ fontSize: 14, color: "var(--ink-3)", margin: 0 }}>
-              The Medical Writer and MLR Reviewer will only ground sentences in these verified documents.
+              The Medical Writer and MLR Reviewer will only ground sentences in what’s verified here.
             </p>
           </div>
 
-          <div className="space-y-3">
-            {activeDossier.sources.map((src) => (
-              <div
-                key={src.id}
-                style={{
-                  background: "#fff",
-                  padding: "18px 20px",
-                  borderRadius: "var(--r-l)",
-                  border: "1px solid var(--hair)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  boxShadow: "var(--sh-1)",
-                }}
-              >
-                <span
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 10,
-                    background: "var(--tint)",
-                    color: "var(--brand)",
-                    display: "grid",
-                    placeItems: "center",
-                    fontWeight: 800,
-                    fontSize: 11,
-                    flexShrink: 0,
-                  }}
-                >
-                  {src.type === "label" ? "PI" : src.type === "pubmed" ? "PUB" : src.type === "clinical-trials" ? "NCT" : "HEOR"}
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <b style={{ fontSize: 14, fontWeight: 750 }}>{src.name}</b>
-                    <span style={{ fontSize: 10.5, fontWeight: 700, padding: "2px 7px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)" }}>
-                      ✓ Verified
-                    </span>
-                  </div>
-                  <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--ink-3)" }}>{src.details}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 20, alignItems: "start" }} className="grid-cols-1 lg:grid-cols-2">
+            {/* ── LEFT: upload progress checklist ── */}
+            <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", overflow: "hidden" }}>
+              <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--hair)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <b style={{ fontSize: 14.5, fontWeight: 800 }}>Upload progress</b>
+                  <span
+                    style={{
+                      fontSize: 11.5, fontWeight: 800, padding: "3px 9px", borderRadius: 99,
+                      background: requiredSourcesMet ? "var(--ok-bg)" : "var(--warn-bg)",
+                      color: requiredSourcesMet ? "var(--ok)" : "var(--warn)",
+                      border: `1px solid ${requiredSourcesMet ? "var(--ok-line)" : "#f3dfb0"}`,
+                    }}
+                  >
+                    {requiredSourcesMet ? "✓ Ready to draft" : `${requiredUploadedCount} of ${requiredSources.length} required`}
+                  </span>
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: "var(--brand)", flexShrink: 0 }}>
-                  {src.citationCount} potential claims
-                </span>
+                <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)" }}>
+                  What {activeDossier.regulatoryAnchor} promotional-review law requires before a word is drafted.
+                </p>
+                <div style={{ background: "var(--hair)", height: 6, borderRadius: 99, overflow: "hidden", marginTop: 12 }}>
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${(requiredUploadedCount / requiredSources.length) * 100}%`,
+                      background: requiredSourcesMet ? "var(--ok)" : "var(--brand)",
+                      borderRadius: 99,
+                      transition: "width .3s ease",
+                    }}
+                  />
+                </div>
               </div>
-            ))}
+
+              <div style={{ display: "grid" }}>
+                {REQUIRED_SOURCES.map((req, i) => {
+                  const uploaded = uploadedSourceTypes.has(req.type);
+                  const uploading = uploadingType === req.type;
+                  const tierMeta = SOURCE_TIER_META[req.tier];
+                  return (
+                    <div
+                      key={req.type}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 12,
+                        padding: "16px 20px",
+                        borderBottom: i < REQUIRED_SOURCES.length - 1 ? "1px solid var(--hair)" : "none",
+                        background: !uploaded && req.tier === "required" ? "var(--tint-2)" : "transparent",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                          background: uploaded ? "var(--ok-bg)" : "var(--tint)",
+                          color: uploaded ? "var(--ok)" : "var(--brand)",
+                          display: "grid", placeItems: "center", fontWeight: 800, fontSize: 10,
+                        }}
+                      >
+                        {uploaded ? (
+                          <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12l6 6L20 5" /></svg>
+                        ) : req.badge}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}>
+                          <b style={{ fontSize: 13.5, fontWeight: 750 }}>{req.label(activeDossier.regulatoryAnchor)}</b>
+                          <span style={{ fontSize: 9, letterSpacing: ".05em", fontWeight: 800, padding: "2px 6px", borderRadius: 5, background: tierMeta.bg, color: tierMeta.color, border: `1px solid ${tierMeta.line}` }}>
+                            {tierMeta.label.toUpperCase()}
+                          </span>
+                        </div>
+                        <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--ink-3)" }}>{req.detail}</p>
+                      </div>
+                      {uploaded ? (
+                        <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ok)", flexShrink: 0, marginTop: 6 }}>Uploaded</span>
+                      ) : (
+                        <button
+                          onClick={() => uploadSource(req)}
+                          disabled={uploading}
+                          style={{
+                            flexShrink: 0, marginTop: 2, padding: "7px 14px", borderRadius: "var(--r-s)", fontSize: 12.5, fontWeight: 700,
+                            background: uploading ? "var(--hair-2)" : "#fff",
+                            border: `1px solid ${uploading ? "var(--hair-2)" : "var(--hair-3)"}`,
+                            color: uploading ? "var(--ink-4)" : "var(--ink-2)",
+                            cursor: uploading ? "default" : "pointer",
+                          }}
+                        >
+                          {uploading ? "Uploading…" : "Upload"}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── RIGHT: complete brand dossier, high-level ── */}
+            <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", overflow: "hidden" }}>
+              <div style={{ padding: "18px 20px", borderBottom: "1px solid var(--hair)", display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: activeDossier.gradient, color: "#fff", display: "grid", placeItems: "center", fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
+                  {activeDossier.initials}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <b style={{ fontSize: 14.5, fontWeight: 800, display: "block" }}>{activeDossier.brandName} — Brand Dossier</b>
+                  <span style={{ fontSize: 12, color: "var(--ink-4)" }}>{activeDossier.regulatoryAnchor} anchored · {PHARMA_SECTIONS.length} sections planned</span>
+                </div>
+              </div>
+
+              <div style={{ padding: "6px 20px 16px" }}>
+                {(["Clinical", "Safety", "Regulatory", "Commercial"] as const).map((cat) => {
+                  const sectionsInCat = PHARMA_SECTIONS.filter((s) => s.cat === cat);
+                  if (sectionsInCat.length === 0) return null;
+                  return (
+                    <div key={cat} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--hair)" }}>
+                      <span style={{ fontSize: 13, fontWeight: 650, color: "var(--ink-2)" }}>{cat}</span>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ink-4)", padding: "2px 8px", borderRadius: 99, background: "var(--surface-subtle)" }}>
+                        {sectionsInCat.length} section{sectionsInCat.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={{ padding: "12px 20px 18px", background: "var(--surface-subtle)", borderTop: "1px solid var(--hair)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
+                  <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 8v4M12 16h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" /></svg>
+                  Every section is drafted only from sources verified on the left, then cleared by MLR before this dossier goes live.
+                </div>
+              </div>
+            </div>
           </div>
 
           <button
             onClick={() => setStep("plan")}
+            disabled={!requiredSourcesMet}
             style={{
               width: "100%",
               padding: "14px",
               borderRadius: "var(--r)",
               fontWeight: 750,
               fontSize: 14.5,
-              background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-              color: "#fff",
+              background: requiredSourcesMet ? "linear-gradient(180deg,#ff5b2d,var(--brand))" : "var(--hair-2)",
+              color: requiredSourcesMet ? "#fff" : "var(--ink-4)",
               border: "none",
-              boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
+              boxShadow: requiredSourcesMet ? "0 12px 26px -14px rgba(253,72,22,.9)" : "none",
+              cursor: requiredSourcesMet ? "pointer" : "default",
+              transition: ".2s var(--e)",
             }}
           >
-            Review 18-Section Content Plan →
+            {requiredSourcesMet ? "Review 18-Section Content Plan →" : `Upload ${requiredSources.length - requiredUploadedCount} more required source${requiredSources.length - requiredUploadedCount === 1 ? "" : "s"} to continue`}
           </button>
         </div>
       )}
@@ -393,7 +563,7 @@ export function DossierWizard({
               Medical Writer is drafting {activeDossier.brandName}
             </h2>
             <p style={{ fontSize: 14.5, color: "var(--ink-3)", margin: 0 }}>
-              Grounded in 6 approved sources · Checking claims against FDA guidance
+              Grounded in {activeDossier.sources.length} approved source{activeDossier.sources.length === 1 ? "" : "s"} · Checking claims against {activeDossier.regulatoryAnchor} guidance
             </p>
           </div>
 

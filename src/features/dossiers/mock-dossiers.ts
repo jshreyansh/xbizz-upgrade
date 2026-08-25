@@ -239,10 +239,14 @@ export const NEW_DOSSIER_TEMPLATE: BrandDossier = {
   sectionsCount: 18,
   claimsCited: 187,
   claimsHeldOut: 3,
-  sourcesCount: 6,
+  sourcesCount: 1,
   lastUpdated: "Just now",
   status: "complete",
   approvals: pendingApprovals(),
+  // Only the label ships pre-verified — the rest of the regulatory
+  // checklist (clinical trial record, pivotal publication, HEOR,
+  // congress deck) starts pending so the Sources step's upload
+  // checklist has real work to demonstrate.
   sources: [
     {
       id: "av-label",
@@ -252,42 +256,6 @@ export const NEW_DOSSIER_TEMPLATE: BrandDossier = {
       status: "approved",
       details: "Full US Prescribing Information including Highlights and Section 14",
       citationCount: 94,
-    },
-    {
-      id: "av-pubmed",
-      name: "AURA-ASTHMA Phase III 52-Week Exacerbation Study (NEJM 2025)",
-      type: "pubmed",
-      date: "Nov 2025",
-      status: "approved",
-      details: "N=1,850, 68% reduction in annualized asthma exacerbation rate (AAER)",
-      citationCount: 52,
-    },
-    {
-      id: "av-ctgov",
-      name: "ClinicalTrials.gov Identifier NCT05118942",
-      type: "clinical-trials",
-      date: "Dec 2025",
-      status: "approved",
-      details: "Multicenter placebo-controlled international trial",
-      citationCount: 14,
-    },
-    {
-      id: "av-heor",
-      name: "ICER / HEOR Budget Impact & Emergency Room Avoidance Model",
-      type: "heor",
-      date: "Jan 2026",
-      status: "approved",
-      details: "Projected 42% reduction in emergency department visits over 24 months",
-      citationCount: 16,
-    },
-    {
-      id: "av-slides",
-      name: "Global Brand Core Visual & Key Message Deck 2026",
-      type: "slides",
-      date: "Feb 2026",
-      status: "approved",
-      details: "Commercial message pillars, approved claim phrasing, patient archetype briefs",
-      citationCount: 11,
     },
   ],
   sections: [
