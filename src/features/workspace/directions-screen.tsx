@@ -283,7 +283,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         </p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
           <section className="rise-in space-y-3 [animation-delay:50ms]">
             <PlanSection icon={Film} title="Creative treatment" summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`} status={confirmedTreatment ? "Confirmed" : "Needs you"} open={openSection === "treatment"} onToggle={() => toggleSection("treatment")} tone={confirmedTreatment ? "done" : "attention"}>
               <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5"><div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div><p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p></div>
@@ -356,8 +356,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             </PlanSection>
           </section>
 
-          <aside className="rise-in [animation-delay:90ms]">
-            <div className="lg:sticky lg:top-5">
+          <aside className="rise-in lg:sticky lg:top-5 self-start [animation-delay:90ms]">
             <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
               <div className="border-b border-[var(--line)] bg-[#fafbf9] px-5 py-4">
                 <div className="flex items-center justify-between">
@@ -437,7 +436,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
               {unresolvedCount === 0 ? <CheckCircle2 className="size-4 text-[var(--brand)]" /> : <Info className="size-4 text-[var(--warning)]" />}
               <span>{unresolvedCount === 0 ? "The plan is ready for an editable storyboard." : `${unresolvedCount} decision${unresolvedCount === 1 ? "" : "s"} remaining.`}</span>
-            </div>
             </div>
           </aside>
         </div>

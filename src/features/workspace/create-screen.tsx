@@ -25,18 +25,15 @@ import {
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ChannelIcon } from "@/components/ui/select-icons";
-import { MultiSelectMenu, SelectMenu } from "@/components/ui/select-menu";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario, type DemoScenarioCategory } from "@/features/workspace/demo-scenarios";
 import { planningSources } from "@/features/workspace/mock-data";
-import { parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
+import { parseIntendedUses } from "@/features/workspace/intended-use";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
-
-const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
 
 export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
@@ -251,6 +248,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               <Layers className="size-3.5 text-[var(--brand)]" />
               {topics.length} topics
             </span>
+            <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+              <MonitorPlay className="size-3.5 text-[var(--brand)]" />
+              {uses.slice(0, 2).join(", ")}{uses.length > 2 ? ` +${uses.length - 2}` : ""}
+            </span>
             {selectedSources.map((source) => (
               <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
             ))}
@@ -259,17 +260,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             ))}
           </div>
 
-          <div className="mt-7 border-t border-[var(--line)] pt-6">
-            <Field label="Intended channel / format" icon={MonitorPlay}>
-              <MultiSelectMenu values={uses} onChange={(next) => setIntendedUse(serializeIntendedUses(next))} options={useOptions} ariaLabel="Intended channel / format" renderIcon={(item) => <ChannelIcon value={item} />} />
-            </Field>
-          </div>
-
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
         </section>
 
-        {/* Right Sidebar: Grounding Context */}
-        <aside className="rise-in [animation-delay:80ms]">
+        {/* Right Sidebar: Sticky Grounding Context */}
+        <aside className="rise-in lg:sticky lg:top-5 self-start [animation-delay:80ms]">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-5 py-4">
               <div className="flex items-center justify-between">
@@ -282,6 +277,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
             <div className="p-5 space-y-4">
               <ContextItem icon={Users} title={`Audience & Goal: ${audience}`} detail={`Campaign objective: ${goal}`} />
+              <ContextItem icon={MonitorPlay} title={`Channel & Format (${uses.length})`} detail={uses.join(" · ")} />
               <ContextItem icon={Layers} title={`Focus Topics (${topics.length})`} detail={topics.join(" · ")} />
               <ContextItem icon={BookOpenCheck} title={sourceType === "dossier" ? "214 approved claims" : "Evidence coverage"} detail={sourceType === "dossier" ? "All statements cited against FDA/EMA approved label." : "Grounding verified from attached source."} />
               <div className="mt-4 border-t border-[var(--line)] pt-4">
@@ -336,9 +332,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   );
 }
 
-function Field({ label, icon: Icon, children }: { label: string; icon: typeof Users; children: React.ReactNode }) {
-  return <div><span className="mb-1.5 flex items-center gap-2 text-[14px] font-semibold text-[var(--ink-muted)]"><Icon className="size-4 text-[var(--brand)]" />{label}</span>{children}</div>;
-}
+
 
 function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: () => void }) {
   const approved = source.status === "current" && source.kind !== "reference";

@@ -15,11 +15,13 @@ import {
   Zap,
   ShieldCheck,
   FlaskConical,
+  MonitorPlay,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AudienceIcon } from "@/components/ui/select-icons";
+import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
 import { MultiSelectMenu, SelectMenu } from "@/components/ui/select-menu";
 import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
+import { parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import type { Audience } from "@/types/content";
 
@@ -106,6 +108,16 @@ const TOPIC_OPTIONS = [
   "Drug Interactions",
   "Side Effects",
 ];
+const USE_OPTIONS = [
+  "HCP meeting",
+  "LinkedIn",
+  "Instagram",
+  "YouTube",
+  "Email",
+  "Website",
+  "Congress / event",
+  "Internal presentation",
+];
 
 const topicIcons: Record<string, typeof Pill> = {
   "Product Introduction": Pill,
@@ -123,6 +135,8 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   const setGoal = useWorkspaceStore((s) => s.setGoal);
   const topics = useWorkspaceStore((s) => s.topics);
   const setTopics = useWorkspaceStore((s) => s.setTopics);
+  const intendedUse = useWorkspaceStore((s) => s.intendedUse);
+  const setIntendedUse = useWorkspaceStore((s) => s.setIntendedUse);
   const creationMode = useWorkspaceStore((s) => s.creationMode);
   const brief = useWorkspaceStore((s) => s.brief);
   const setBrief = useWorkspaceStore((s) => s.setBrief);
@@ -134,13 +148,15 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   const selectedDossierId = sourcePayload.dossierId || "velmora";
   const activeDossier = DOSSIERS.find((d) => d.id === selectedDossierId) || DOSSIERS[0];
+  const uses = parseIntendedUses(intendedUse);
 
   // Mandatory Validation Checks
   const isAudienceValid = Boolean(audience);
   const isGoalValid = Boolean(goal);
   const isTopicsValid = topics.length > 0;
   const isDossierValid = Boolean(selectedDossierId);
-  const canContinue = isAudienceValid && isGoalValid && isTopicsValid && isDossierValid;
+  const isUseValid = uses.length > 0;
+  const canContinue = isAudienceValid && isGoalValid && isTopicsValid && isDossierValid && isUseValid;
 
   const handleSelectDossier = (dossierId: string) => {
     setSourcePayload({ dossierId });
@@ -186,7 +202,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
       </div>
 
       {/* Standardized 2-Column Layout */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
         {/* Left Column: Brand Dossiers & Sample Dossiers */}
         <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
           {/* Group 1: Workspace Brand Dossiers */}
@@ -362,8 +378,8 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
           </div>
         </section>
 
-        {/* Right Column: Mandatory Dropdowns Form */}
-        <aside className="rise-in [animation-delay:80ms]">
+        {/* Right Column: Sticky Mandatory Dropdowns Form */}
+        <aside className="rise-in lg:sticky lg:top-5 self-start [animation-delay:80ms]">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             {/* Header */}
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-5 py-4">
@@ -380,15 +396,12 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
             {/* Dropdowns Form */}
             <div className="p-5 space-y-4">
-              {/* 1. Target Audience (Mandatory) */}
+              {/* 1. Target Audience* */}
               <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
-                    <Users className="size-4 text-[var(--brand)]" />
-                    Target Audience
-                  </label>
-                  <span className="text-[11px] font-bold text-[var(--brand)]">* Required</span>
-                </div>
+                <label className="mb-1.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
+                  <Users className="size-4 text-[var(--brand)]" />
+                  Target Audience*
+                </label>
                 <SelectMenu
                   value={audience}
                   onChange={(next) => setAudience(next as Audience)}
@@ -398,15 +411,12 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                 />
               </div>
 
-              {/* 2. Campaign Goal (Mandatory) */}
+              {/* 2. Campaign Goal* */}
               <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
-                    <Target className="size-4 text-[var(--brand)]" />
-                    Campaign Goal
-                  </label>
-                  <span className="text-[11px] font-bold text-[var(--brand)]">* Required</span>
-                </div>
+                <label className="mb-1.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
+                  <Target className="size-4 text-[var(--brand)]" />
+                  Campaign Goal*
+                </label>
                 <SelectMenu
                   value={goal}
                   onChange={(next) => setGoal(next)}
@@ -416,19 +426,17 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                 />
               </div>
 
-              {/* 3. Focus Topics (Mandatory Multi-Select Dropdown) */}
+              {/* 3. Focus Topics* */}
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
                     <Layers className="size-4 text-[var(--brand)]" />
-                    Focus Topics
+                    Focus Topics*
                   </label>
-                  {topics.length > 0 ? (
+                  {topics.length > 0 && (
                     <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
                       {topics.length} selected
                     </span>
-                  ) : (
-                    <span className="text-[11px] font-bold text-[var(--warn)]">* Min 1 topic</span>
                   )}
                 </div>
                 <MultiSelectMenu
@@ -442,11 +450,33 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   }}
                 />
               </div>
+
+              {/* 4. Intended Channel / Format* */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
+                    <MonitorPlay className="size-4 text-[var(--brand)]" />
+                    Intended Channel / Format*
+                  </label>
+                  {uses.length > 0 && (
+                    <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+                      {uses.length} selected
+                    </span>
+                  )}
+                </div>
+                <MultiSelectMenu
+                  values={uses}
+                  onChange={(next) => setIntendedUse(serializeIntendedUses(next))}
+                  options={USE_OPTIONS}
+                  ariaLabel="Intended Channel / Format"
+                  renderIcon={(item) => <ChannelIcon value={item} />}
+                />
+              </div>
             </div>
 
             {/* Grounding Footer Note */}
             <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[12.5px] leading-5 text-[var(--ink-muted)]">
-              All script statements and storyboard scenes will be tailored to this audience, goal, and topic combination.
+              All script statements and storyboard scenes will be tailored to this configuration.
             </div>
           </div>
 
@@ -470,7 +500,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   ? "Please select an audience"
                   : !isGoalValid
                   ? "Please select a campaign goal"
-                  : "Please select at least 1 focus topic"}
+                  : !isTopicsValid
+                  ? "Please select at least 1 focus topic"
+                  : "Please select at least 1 intended channel"}
               </span>
             ) : (
               <>
