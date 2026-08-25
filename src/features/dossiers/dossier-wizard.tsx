@@ -13,6 +13,7 @@ const DOCUMENT_TYPES: { type: DocumentType; label: string; description: string }
 ];
 
 const PENDING_APPROVALS: DossierApproval[] = [
+  { role: "Medical Writer", name: "Medical Writer", initials: "MW", gradient: "linear-gradient(140deg,#ff7a3d,#c9310a)", status: "pending" },
   { role: "MLR Reviewer", name: "MLR Reviewer", initials: "MR", gradient: "linear-gradient(140deg,#22c07a,#12784a)", status: "pending" },
   { role: "Project Manager", name: "Project Manager", initials: "PM", gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)", status: "pending" },
   { role: "Brand Lead", name: "You", initials: "N", gradient: "linear-gradient(140deg,#3a3f4b,#0d1017)", status: "pending" },
@@ -228,15 +229,17 @@ export function DossierWizard({
     }
   }, [step]);
 
-  // Step 5: team reviews the dossier — MLR and the Project Manager sign off
-  // automatically; the Brand Lead ("You") gives the final approval by hand.
+  // Step 5: the Medical Writer certifies their own draft first (content
+  // sign-off), then MLR and the Project Manager review in turn; the Brand
+  // Lead ("You") gives the final approval by hand.
   useEffect(() => {
     if (step !== "approval") return;
     const timers = [
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "MLR Reviewer" ? { ...a, status: "reviewing" } : a))), 400),
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "MLR Reviewer" ? { ...a, status: "approved" } : a))), 1600),
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Project Manager" ? { ...a, status: "reviewing" } : a))), 900),
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Project Manager" ? { ...a, status: "approved" } : a))), 2300),
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Medical Writer" ? { ...a, status: "approved" } : a))), 300),
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "MLR Reviewer" ? { ...a, status: "reviewing" } : a))), 600),
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "MLR Reviewer" ? { ...a, status: "approved" } : a))), 1800),
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Project Manager" ? { ...a, status: "reviewing" } : a))), 1100),
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Project Manager" ? { ...a, status: "approved" } : a))), 2500),
     ];
     return () => timers.forEach(clearTimeout);
   }, [step]);
@@ -1046,6 +1049,21 @@ export function DossierWizard({
                     </span>
                   </div>
                 )}
+
+                {/* Document meta strip — makes this read as a formal master document, not a screen */}
+                <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--hair)" }}>
+                  {[
+                    ["Document type", DOCUMENT_TYPES.find((d) => d.type === activeDossier.documentType)?.label || "Commercial dossier"],
+                    ["Sections", `${activeDossier.sections.length} of ${PHARMA_SECTIONS.length}`],
+                    ["Claims cited", String(activeDossier.claimsCited)],
+                    ["Last updated", activeDossier.lastUpdated],
+                  ].map(([k, v]) => (
+                    <div key={k}>
+                      <span style={{ display: "block", fontSize: 10, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 700 }}>{k}</span>
+                      <b style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink-2)" }}>{v}</b>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -1138,71 +1156,122 @@ export function DossierWizard({
             </div>
           )}
 
-          {/* 2-Column Inspector: Left Sections Tree + Right Section Body */}
-          <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 20, alignItems: "start" }}>
-            {/* Left Section Tree */}
-            <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: 14, boxShadow: "var(--sh-1)" }}>
-              <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", padding: "8px 10px 12px" }}>
-                Dossier Sections ({activeDossier.sections.length})
+          {/* Master document: Index (left) + full document pane (right) */}
+          <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20, alignItems: "start" }}>
+            {/* INDEX */}
+            <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", overflow: "hidden", position: "sticky", top: 20 }}>
+              <div style={{ padding: "16px 18px", borderBottom: "1px solid var(--hair)" }}>
+                <span style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 800, color: "var(--brand)" }}>Index</span>
+                <b style={{ fontSize: 15, fontWeight: 800, display: "block", marginTop: 2 }}>{activeDossier.sections.length} sections</b>
               </div>
-              <div style={{ display: "grid", gap: 4 }}>
-                {activeDossier.sections.map((sec) => (
-                  <button
-                    key={sec.id}
-                    onClick={() => setActiveSectionId(sec.id)}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      padding: "10px 12px",
-                      borderRadius: "var(--r)",
-                      textAlign: "left",
-                      background: activeSectionId === sec.id ? "var(--tint)" : "transparent",
-                      border: activeSectionId === sec.id ? "1px solid var(--tint-line)" : "1px solid transparent",
-                    }}
-                  >
-                    <b style={{ fontSize: 13, color: activeSectionId === sec.id ? "var(--brand-deep)" : "var(--ink)" }}>{sec.title}</b>
-                    <span style={{ fontSize: 11, color: "var(--ink-4)", marginTop: 2 }}>{sec.claimsCount} claims · {sec.citations.length} sources</span>
-                  </button>
-                ))}
+              <div style={{ maxHeight: 620, overflowY: "auto", padding: "8px 8px 12px" }}>
+                {(["commercial", "clinical", "safety", "regulatory"] as const).map((cat) => {
+                  const sectionsInCat = activeDossier.sections.filter((s) => s.category === cat);
+                  if (sectionsInCat.length === 0) return null;
+                  return (
+                    <div key={cat} style={{ marginBottom: 6 }}>
+                      <div style={{ padding: "10px 10px 4px", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
+                        {cat}
+                      </div>
+                      {sectionsInCat.map((sec) => (
+                        <button
+                          key={sec.id}
+                          onClick={() => setActiveSectionId(sec.id)}
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "baseline",
+                            gap: 8,
+                            padding: "9px 10px",
+                            borderRadius: "var(--r)",
+                            textAlign: "left",
+                            background: activeSectionId === sec.id ? "var(--tint)" : "transparent",
+                            border: activeSectionId === sec.id ? "1px solid var(--tint-line)" : "1px solid transparent",
+                          }}
+                        >
+                          <span style={{ fontSize: 11.5, fontWeight: 800, color: activeSectionId === sec.id ? "var(--brand-deep)" : "var(--ink-4)", flexShrink: 0, width: 20 }}>
+                            {String(sec.number).padStart(2, "0")}
+                          </span>
+                          <span style={{ flex: 1, minWidth: 0 }}>
+                            <b style={{ fontSize: 13, fontWeight: 650, color: activeSectionId === sec.id ? "var(--brand-deep)" : "var(--ink)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sec.title}</b>
+                            <span style={{ fontSize: 10.5, color: "var(--ink-4)" }}>{sec.claimsCount} claims · {sec.citations.length} sources</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Right Active Section Content */}
+            {/* Full document pane */}
             {(() => {
               const sec = activeDossier.sections.find((s) => s.id === activeSectionId) || activeDossier.sections[0];
+              const secIndex = activeDossier.sections.findIndex((s) => s.id === sec.id);
               return (
-                <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: 30, boxShadow: "var(--sh-1)" }} className="space-y-6">
-                  <div style={{ borderBottom: "1px solid var(--hair)", paddingBottom: 16 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: "var(--brand)", textTransform: "uppercase" }}>
-                        Section {sec.number}
-                      </span>
-                      <span style={{ fontSize: 11, padding: "2px 7px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)", fontWeight: 700 }}>
-                        MLR Approved
-                      </span>
+                <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-2)", overflow: "hidden" }}>
+                  <div style={{ padding: "40px 44px 32px", position: "relative" }}>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute", top: 24, right: 40, fontSize: 72, fontWeight: 800, lineHeight: 1,
+                        color: "var(--hair)", userSelect: "none",
+                      }}
+                    >
+                      {String(sec.number).padStart(2, "0")}
+                    </span>
+                    <div style={{ borderBottom: "1px solid var(--hair)", paddingBottom: 20, marginBottom: 24, position: "relative" }} className="space-y-2">
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", letterSpacing: ".08em" }}>
+                          Section {sec.number} of {activeDossier.sections.length} · {sec.category}
+                        </span>
+                        <span style={{ fontSize: 11, padding: "2px 7px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)", fontWeight: 700 }}>
+                          MLR Approved
+                        </span>
+                      </div>
+                      <h2 style={{ fontSize: 27, fontWeight: 800, letterSpacing: "-.6px", margin: 0, maxWidth: "38ch" }}>{sec.title}</h2>
                     </div>
-                    <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: "-.5px", margin: 0 }}>{sec.title}</h2>
+
+                    {/* Body Content with citations */}
+                    <div style={{ fontSize: 15.5, lineHeight: 1.85, color: "var(--ink-2)", maxWidth: "72ch" }}>
+                      <p>{sec.content}</p>
+                    </div>
+
+                    {/* Citations Footer */}
+                    <div style={{ background: "var(--tint-2)", padding: "18px 20px", borderRadius: "var(--r)", border: "1px solid var(--tint-line)", marginTop: 24 }}>
+                      <b style={{ display: "block", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--brand-deep)", marginBottom: 8 }}>
+                        On-Record Citations
+                      </b>
+                      <div style={{ display: "grid", gap: 6 }}>
+                        {sec.citations.map((cite, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
+                            <span style={{ color: "var(--brand)", fontWeight: 800 }}>[{i + 1}]</span>
+                            <span>{cite}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Body Content with citations */}
-                  <div style={{ fontSize: 15, lineHeight: 1.75, color: "var(--ink-2)" }}>
-                    <p>{sec.content}</p>
-                  </div>
-
-                  {/* Citations Footer */}
-                  <div style={{ background: "var(--tint-2)", padding: "16px 18px", borderRadius: "var(--r)", border: "1px solid var(--tint-line)" }}>
-                    <b style={{ display: "block", fontSize: 12, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--brand-deep)", marginBottom: 8 }}>
-                      On-Record Citations
-                    </b>
-                    <div style={{ display: "grid", gap: 6 }}>
-                      {sec.citations.map((cite, i) => (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
-                          <span style={{ color: "var(--brand)", fontWeight: 800 }}>[{i + 1}]</span>
-                          <span>{cite}</span>
-                        </div>
-                      ))}
-                    </div>
+                  {/* Document footer — page-turn between sections */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 44px", borderTop: "1px solid var(--hair)", background: "var(--surface-subtle)" }}>
+                    <button
+                      onClick={() => secIndex > 0 && setActiveSectionId(activeDossier.sections[secIndex - 1].id)}
+                      disabled={secIndex === 0}
+                      style={{ fontSize: 12.5, fontWeight: 700, color: secIndex === 0 ? "var(--ink-4)" : "var(--ink-2)", cursor: secIndex === 0 ? "default" : "pointer" }}
+                    >
+                      ← Previous section
+                    </button>
+                    <span style={{ fontSize: 11.5, color: "var(--ink-4)", fontWeight: 650 }}>
+                      Page {secIndex + 1} of {activeDossier.sections.length}
+                    </span>
+                    <button
+                      onClick={() => secIndex < activeDossier.sections.length - 1 && setActiveSectionId(activeDossier.sections[secIndex + 1].id)}
+                      disabled={secIndex === activeDossier.sections.length - 1}
+                      style={{ fontSize: 12.5, fontWeight: 700, color: secIndex === activeDossier.sections.length - 1 ? "var(--ink-4)" : "var(--ink-2)", cursor: secIndex === activeDossier.sections.length - 1 ? "default" : "pointer" }}
+                    >
+                      Next section →
+                    </button>
                   </div>
                 </div>
               );

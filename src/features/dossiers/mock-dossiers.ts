@@ -13,6 +13,7 @@ export const BRAND_REGISTRY: BrandOption[] = [
 /** Fresh copy of a fully-signed-off approval trail, for dossiers seeded as already live. */
 function approvedByTeam(): DossierApproval[] {
   return [
+    { role: "Medical Writer", name: "Medical Writer", initials: "MW", gradient: "linear-gradient(140deg,#ff7a3d,#c9310a)", status: "approved" },
     { role: "MLR Reviewer", name: "MLR Reviewer", initials: "MR", gradient: "linear-gradient(140deg,#22c07a,#12784a)", status: "approved" },
     { role: "Project Manager", name: "Project Manager", initials: "PM", gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)", status: "approved" },
     { role: "Brand Lead", name: "You", initials: "N", gradient: "linear-gradient(140deg,#3a3f4b,#0d1017)", status: "approved" },

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Video, Image as ImageIcon, LayoutGrid, ArrowRight } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { PERSONA, SAMPLE_VIDEOS } from "@/features/workspace/mock-personas";
+import { PERSONA, SAMPLE_VIDEOS, SAMPLE_CANVAS } from "@/features/workspace/mock-personas";
 import type { SampleAsset } from "@/features/workspace/mock-personas";
 
 /* ── Core USP strip ───────────────────────────────────────────────────
@@ -32,7 +32,7 @@ function CoreUspStrip() {
 
 /* ── Reel card ──────────────────────────────────────────────────── */
 function ReelCard({ asset, onOpen, compact = false }: { asset: SampleAsset; onOpen: () => void; compact?: boolean }) {
-  const width = compact ? 108 : asset.type === "video" ? 160 : 175;
+  const width = compact ? 108 : asset.type === "video" ? 172 : 188;
   return (
     <button
       onClick={onOpen}
@@ -46,7 +46,10 @@ function ReelCard({ asset, onOpen, compact = false }: { asset: SampleAsset; onOp
         cursor: "pointer",
         flex: "0 0 auto",
         width,
+        boxShadow: compact ? "none" : "0 14px 28px -14px rgba(10,13,20,.35)",
+        transition: "transform .2s var(--e), box-shadow .2s var(--e)",
       }}
+      className={compact ? "" : "hover:-translate-y-1 hover:shadow-[0_20px_36px_-16px_rgba(10,13,20,.45)]"}
     >
       {/* Shade */}
       <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,transparent 45%,rgba(0,0,0,.7))" }} />
@@ -314,15 +317,20 @@ export function HomeScreen() {
         </div>
       </div>
 
-      {/* ── Sample Videos ───────────────────────────────────────── */}
+      {/* ── Magic Video · Magic Canvas showcase ─────────────────── */}
       <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", padding: 22 }}>
-        <div style={{ marginBottom: 14 }}>
-          <b style={{ fontSize: 15, fontWeight: 750, letterSpacing: "-.2px", display: "block" }}>Sample Videos</b>
-          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--ink-3)" }}>A few reels SwishX has already shipped.</p>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
+          <div>
+            <span style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--brand)" }}>
+              Magic Video · Magic Canvas
+            </span>
+            <b style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", display: "block", marginTop: 3 }}>See what your team already shipped</b>
+            <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--ink-3)" }}>Every reel and layout below is cited, MLR-cleared, and ready to reuse.</p>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          {SAMPLE_VIDEOS.slice(0, 3).map((asset, i) => (
-            <ReelCard key={i} asset={asset} compact onOpen={() => setLightboxAsset(asset)} />
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+          {[...SAMPLE_VIDEOS.slice(0, 3), ...SAMPLE_CANVAS.slice(0, 2)].map((asset, i) => (
+            <ReelCard key={i} asset={asset} onOpen={() => setLightboxAsset(asset)} />
           ))}
         </div>
       </div>
