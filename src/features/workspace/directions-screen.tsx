@@ -367,10 +367,21 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-[11px] bg-[var(--brand-soft)] text-[var(--brand)]"><FileCheck2 className="size-5" /></span><div><div className="text-[14px] font-bold">{approvedEvidenceCount > 0 ? "Evidence foundation ready" : "Concept storyboard"}</div><p className="mt-1 text-[13px] leading-5 text-[var(--ink-muted)]">{approvedEvidenceCount > 0 ? `Current ${market} sources will stay linked to every supported message.` : "Approved evidence can be attached before review or production."}</p></div></div>
               </div>
             </div>
-            {!embedded && (
-              <Button onClick={() => setView("studio")} size="lg" disabled={unresolvedCount > 0} className="group mt-3 h-[60px] w-full px-8 text-[16px] shadow-[0_10px_26px_rgb(21_61_46/22%)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgb(21_61_46/25%)]">Create storyboard <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" /></Button>
-            )}
-            <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">{unresolvedCount === 0 ? <CheckCircle2 className="size-4 text-[var(--brand)]" /> : <Info className="size-4 text-[var(--warning)]" />}<span>{unresolvedCount === 0 ? "The plan is ready for an editable storyboard." : `${unresolvedCount} decision${unresolvedCount === 1 ? "" : "s"} remaining.`}</span></div>
+
+            <Button
+              onClick={() => setView("studio")}
+              size="lg"
+              disabled={unresolvedCount > 0}
+              className="group mt-3.5 h-[52px] w-full px-8 rounded-[14px] text-[15px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+            >
+              <span>Create storyboard</span>
+              <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
+            </Button>
+
+            <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
+              {unresolvedCount === 0 ? <CheckCircle2 className="size-4 text-[var(--brand)]" /> : <Info className="size-4 text-[var(--warning)]" />}
+              <span>{unresolvedCount === 0 ? "The plan is ready for an editable storyboard." : `${unresolvedCount} decision${unresolvedCount === 1 ? "" : "s"} remaining.`}</span>
+            </div>
             </div>
           </aside>
         </div>

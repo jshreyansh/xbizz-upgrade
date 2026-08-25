@@ -287,12 +287,24 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 <SelectMenu value={market} onChange={setMarket} options={["United States", "India", "European Union", "United Kingdom", "Global / multiple markets"]} ariaLabel="Market from source" className="mt-1.5" renderIcon={() => <Globe2 className="size-[17px]" />} />
               </div>
             </div>
-            <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[13px] leading-5 text-[var(--ink-muted)]">The next screen will show one recommended plan and only the decisions that materially change the first draft.</div>
+            <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[12.5px] leading-5 text-[var(--ink-muted)]">
+              The next screen will show one recommended plan and only the decisions that materially change the first draft.
+            </div>
           </div>
-          {!embedded && (
-            <Button onClick={preparePlan} size="lg" className="group mt-3 h-[60px] w-full px-8 text-[16px] shadow-[0_10px_26px_rgb(21_61_46/22%)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgb(21_61_46/25%)]">Prepare content plan <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" /></Button>
-          )}
-          <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]"><ShieldCheck className="size-4 text-[var(--brand)]" /><span>Nothing is created until you confirm the plan.</span></div>
+
+          <Button
+            onClick={preparePlan}
+            size="lg"
+            className="group mt-3.5 h-[52px] w-full px-8 rounded-[14px] text-[15px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5"
+          >
+            <span>Prepare content plan</span>
+            <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
+          </Button>
+
+          <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
+            <ShieldCheck className="size-4 text-[var(--brand)]" />
+            <span>Nothing is created until you confirm the plan.</span>
+          </div>
         </aside>
       </div>
     </main>

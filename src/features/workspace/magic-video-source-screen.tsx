@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowRight,
   Check,
   Plus,
   Sparkles,
@@ -96,6 +97,10 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   const setGoal = useWorkspaceStore((s) => s.setGoal);
   const topics = useWorkspaceStore((s) => s.topics);
   const setTopics = useWorkspaceStore((s) => s.setTopics);
+  const creationMode = useWorkspaceStore((s) => s.creationMode);
+  const brief = useWorkspaceStore((s) => s.brief);
+  const setBrief = useWorkspaceStore((s) => s.setBrief);
+  const setSelectedSourceIds = useWorkspaceStore((s) => s.setSelectedSourceIds);
   const sourcePayload = useWorkspaceStore((s) => s.sourcePayload);
   const setSourcePayload = useWorkspaceStore((s) => s.setSourcePayload);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
@@ -106,6 +111,21 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   const handleSelectDossier = (dossierId: string) => {
     setSourcePayload({ dossierId });
+  };
+
+  const handleContinueToBrief = () => {
+    const dossierId = sourcePayload.dossierId || "velmora";
+    setSourcePayload({ dossierId });
+    setSelectedSourceIds(["dermora-core", "dermora-claims", "dermora-brand"]);
+    if (!brief || brief.length < 10) {
+      if (creationMode === "magic-reel") {
+        setBrief(`Create a concise ${dossierId === "velmora" ? "Velmora" : "Onkavia"} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`);
+      } else if (creationMode === "magic-avatar") {
+        setBrief(`Create a presenter-led clinical briefing video with Dr. Maya Kapoor highlighting the key trial readouts from the ${dossierId === "velmora" ? "Velmora" : "Onkavia"} dossier.`);
+      }
+    }
+    setVideoSubStage("intake");
+    setView("create");
   };
 
   const handleBackToMode = () => {
@@ -306,6 +326,16 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               All script statements and storyboard scenes will be tailored to this audience, goal, and topic combination.
             </div>
           </div>
+
+          {/* Standardized Continue Forward Button (Positioned Below Right Panel) */}
+          <Button
+            onClick={handleContinueToBrief}
+            size="lg"
+            className="group mt-3.5 h-[52px] w-full px-8 rounded-[14px] text-[15px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5"
+          >
+            <span>Continue to job brief</span>
+            <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
+          </Button>
 
           <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
             <ShieldCheck className="size-4 text-[var(--brand)]" />
