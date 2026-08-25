@@ -220,9 +220,14 @@ export function DirectionsScreen() {
         <SwishXMark />
         <div className="ml-5 hidden h-6 w-px bg-[var(--line)] sm:block" />
         <div className="ml-5 hidden sm:block"><div className="text-[14px] font-semibold">DERMORA {profile.noun}</div><div className="text-[13px] text-[var(--ink-muted)]">Step 2 of 2 · Confirm the plan</div></div>
-        <span className={cn("ml-auto hidden items-center gap-2 rounded-full px-3 py-1.5 text-[12.5px] font-semibold sm:flex", unresolvedCount === 0 ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "bg-[var(--warning-soft)] text-[var(--warning)]")}> 
-          {unresolvedCount === 0 ? <CheckCircle2 className="size-4" /> : <Info className="size-4" />}{planStatus}
-        </span>
+        <div className="ml-auto flex items-center gap-3">
+          <span className={cn("hidden items-center gap-2 rounded-full px-3 py-1.5 text-[12.5px] font-semibold sm:flex", unresolvedCount === 0 ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "bg-[var(--warning-soft)] text-[var(--warning)]")}> 
+            {unresolvedCount === 0 ? <CheckCircle2 className="size-4" /> : <Info className="size-4" />}{planStatus}
+          </span>
+          <Button onClick={() => setView("studio")} size="sm" disabled={unresolvedCount > 0} className="shadow-sm">
+            Create storyboard <ArrowRight className="size-4" />
+          </Button>
+        </div>
       </header>
 
       <main className="mx-auto w-full max-w-[1320px] px-4 py-5 sm:px-7">

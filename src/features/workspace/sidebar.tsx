@@ -91,6 +91,7 @@ export function Sidebar() {
   const collapsed = useWorkspaceStore((s) => s.navCollapsed);
   const setCollapsed = useWorkspaceStore((s) => s.setNavCollapsed);
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
+  const setView = useWorkspaceStore((s) => s.setView);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const sbw = collapsed ? 74 : 248;
@@ -159,7 +160,13 @@ export function Sidebar() {
               return (
                 <button
                   key={item.label}
-                  onClick={() => item.href !== "#" && router.push(item.href)}
+                  onClick={() => {
+                    if (item.href !== "#") {
+                      if (item.href === "/create") setView("create");
+                      else if (item.href === "/") setView("home");
+                      router.push(item.href);
+                    }
+                  }}
                   title={collapsed ? item.label : undefined}
                   style={{
                     display: "flex",

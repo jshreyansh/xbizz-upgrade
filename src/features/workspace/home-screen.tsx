@@ -381,7 +381,14 @@ export function HomeScreen() {
             {/* CTA row */}
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <button
-                onClick={() => router.push(isFirstRun ? "/dossiers" : "/create")}
+                onClick={() => {
+                  if (isFirstRun) {
+                    router.push("/dossiers");
+                  } else {
+                    useWorkspaceStore.getState().setView("create");
+                    router.push("/create");
+                  }
+                }}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 9,
                   padding: "12px 22px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5,

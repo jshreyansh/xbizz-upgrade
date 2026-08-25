@@ -1,12 +1,23 @@
 "use client";
 
-import { AppShell } from "@/features/workspace/app-shell";
-import { CreationFlow } from "@/features/creation/creation-flow";
+import { useEffect } from "react";
+import { CreateScreen } from "@/features/workspace/create-screen";
+import { DirectionsScreen } from "@/features/workspace/directions-screen";
+import { StudioScreen } from "@/features/workspace/studio-screen";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 
 export default function CreatePage() {
-  return (
-    <AppShell pageTitle="Magic Video Creation">
-      <CreationFlow />
-    </AppShell>
-  );
+  const view = useWorkspaceStore((state) => state.view);
+  const setView = useWorkspaceStore((state) => state.setView);
+
+  useEffect(() => {
+    if (view === "home") {
+      setView("create");
+    }
+  }, [view, setView]);
+
+  if (view === "directions") return <DirectionsScreen />;
+  if (view === "studio") return <StudioScreen />;
+
+  return <CreateScreen />;
 }
