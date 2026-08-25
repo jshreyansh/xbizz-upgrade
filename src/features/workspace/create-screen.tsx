@@ -144,9 +144,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       ? "MagicAvatar™ · Digital Twin"
       : "Custom Video · Scratch";
 
+  const dossierNames: Record<string, string> = {
+    velmora: "Velmora",
+    onkavia: "Onkavia",
+    nirvexa: "Nirvexa",
+    cardioxa: "Cardioxa",
+    pulmovax: "PulmoVax",
+  };
+
   const sourceDisplayName =
     sourceType === "dossier"
-      ? `${sourcePayload.dossierId === "onkavia" ? "Onkavia" : sourcePayload.dossierId === "nirvexa" ? "Nirvexa" : "Velmora"} Dossier`
+      ? `${dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora"} Dossier`
       : sourceType === "url"
       ? "Web / Study Link"
       : "Custom Plain Text";

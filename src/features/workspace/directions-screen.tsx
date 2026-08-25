@@ -171,14 +171,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setTopics: setStoreTopics,
   } = useWorkspaceStore();
 
-  const brandName =
-    sourcePayload.dossierId === "onkavia"
-      ? "Onkavia"
-      : sourcePayload.dossierId === "nirvexa"
-      ? "Nirvexa"
-      : sourcePayload.dossierId === "velmora"
-      ? "Velmora"
-      : "Clinical";
+  const dossierNames: Record<string, string> = {
+    velmora: "Velmora",
+    onkavia: "Onkavia",
+    nirvexa: "Nirvexa",
+    cardioxa: "Cardioxa",
+    pulmovax: "PulmoVax",
+  };
+
+  const brandName = dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora";
 
   const profile = profiles[assetType];
   const derivedPlan = useMemo(
