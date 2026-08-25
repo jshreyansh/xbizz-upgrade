@@ -108,16 +108,18 @@ export function Step1Format() {
               <button
                 key={f.key}
                 onClick={() => setFormatType(f.key)}
+                className={`group text-left transition-all duration-200 ${
+                  isSelected
+                    ? "opacity-100 shadow-md ring-2 ring-[var(--brand)] ring-offset-2"
+                    : "opacity-75 hover:opacity-100 hover:-translate-y-1 hover:shadow-lg"
+                }`}
                 style={{
                   display: "block",
                   width: "100%",
-                  textAlign: "left",
                   background: "#fff",
-                  borderRadius: "var(--r-l)",
-                  border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair)"}`,
-                  boxShadow: isSelected ? "0 0 0 4px rgba(253,72,22,.1), var(--sh-2)" : "var(--sh-1)",
+                  borderRadius: "var(--r-xl)",
+                  border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair-2)"}`,
                   overflow: "hidden",
-                  transition: "all .2s ease",
                   cursor: "pointer",
                 }}
               >
@@ -141,20 +143,20 @@ export function Step1Format() {
                   <div
                     style={{
                       position: "absolute",
-                      top: 12,
-                      left: 12,
+                      top: 14,
+                      left: 14,
                       display: "flex",
                       alignItems: "center",
                       gap: 7,
-                      fontSize: 10,
+                      fontSize: 10.5,
                       fontWeight: 800,
                       letterSpacing: ".1em",
                       textTransform: "uppercase",
                       color: "#fff",
-                      background: "rgba(8,10,16,.5)",
-                      backdropFilter: "blur(8px)",
-                      padding: "5px 10px",
-                      borderRadius: 7,
+                      background: "rgba(8,10,16,.6)",
+                      backdropFilter: "blur(10px)",
+                      padding: "6px 12px",
+                      borderRadius: 8,
                     }}
                   >
                     <i style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)", display: "block" }} />
@@ -164,35 +166,36 @@ export function Step1Format() {
                   <div
                     style={{
                       position: "absolute",
-                      top: 12,
-                      right: 12,
-                      fontSize: 10,
+                      top: 14,
+                      right: 14,
+                      fontSize: 10.5,
                       fontWeight: 800,
-                      background: "rgba(255,255,255,.9)",
+                      background: "rgba(255,255,255,.95)",
                       color: "#0d1017",
-                      padding: "5px 10px",
-                      borderRadius: 7,
+                      padding: "5px 11px",
+                      borderRadius: 8,
                     }}
                   >
                     {f.aspect}
                   </div>
-                  {/* Center play icon */}
+                  {/* Center play icon with spring scale on hover */}
                   <div
+                    className="transition-transform duration-300 group-hover:scale-110"
                     style={{
                       position: "absolute",
                       top: "45%",
                       left: "50%",
                       transform: "translate(-50%,-50%)",
-                      width: 50,
-                      height: 50,
+                      width: 52,
+                      height: 52,
                       borderRadius: "50%",
                       background: "var(--brand)",
                       display: "grid",
                       placeItems: "center",
-                      boxShadow: "0 10px 24px rgba(253,72,22,.6)",
+                      boxShadow: "0 12px 28px rgba(253,72,22,.65)",
                     }}
                   >
-                    <svg viewBox="0 0 24 24" fill="#fff" width={16} height={16}>
+                    <svg viewBox="0 0 24 24" fill="#fff" width={18} height={18} style={{ marginLeft: 2 }}>
                       <path d="M6 4l14 8-14 8z" />
                     </svg>
                   </div>
@@ -200,13 +203,13 @@ export function Step1Format() {
                   <div
                     style={{
                       position: "absolute",
-                      left: 14,
-                      right: 14,
-                      bottom: 34,
+                      left: 16,
+                      right: 16,
+                      bottom: 36,
                       color: "#fff",
-                      fontSize: 13.5,
-                      fontWeight: 650,
-                      textShadow: "0 2px 12px rgba(0,0,0,.6)",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      textShadow: "0 2px 14px rgba(0,0,0,.7)",
                     }}
                   >
                     {f.cap}
@@ -215,19 +218,19 @@ export function Step1Format() {
                   <div
                     style={{
                       position: "absolute",
-                      left: 14,
-                      right: 14,
-                      bottom: 12,
+                      left: 16,
+                      right: 16,
+                      bottom: 14,
                       display: "flex",
                       alignItems: "center",
                       gap: 9,
-                      color: "rgba(255,255,255,.85)",
+                      color: "rgba(255,255,255,.9)",
                       fontSize: 10.5,
-                      fontWeight: 600,
+                      fontWeight: 650,
                     }}
                   >
                     0:22
-                    <div style={{ flex: 1, height: 3, borderRadius: 9, background: "rgba(255,255,255,.28)", position: "relative" }}>
+                    <div style={{ flex: 1, height: 3.5, borderRadius: 9, background: "rgba(255,255,255,.28)", position: "relative" }}>
                       <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "36%", background: "var(--brand)", borderRadius: 9 }} />
                     </div>
                     1:00
@@ -235,13 +238,13 @@ export function Step1Format() {
                 </div>
 
                 {/* Body bottom */}
-                <div style={{ padding: "18px" }}>
+                <div style={{ padding: "20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div
                       style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 10,
+                        width: 38,
+                        height: 38,
+                        borderRadius: 12,
                         background: isSelected ? "var(--tint)" : "rgba(10,13,20,.05)",
                         color: isSelected ? "var(--brand)" : "var(--ink-2)",
                         display: "grid",
@@ -250,12 +253,12 @@ export function Step1Format() {
                       }}
                     >
                       {f.key === "avatar" ? (
-                        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <circle cx="12" cy="8" r="3.6" />
                           <path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5" />
                         </svg>
                       ) : (
-                        <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <svg width={19} height={19} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                           <rect x="2" y="6" width="14" height="12" rx="2.5" />
                           <path d="M16 10l6-3v10l-6-3z" />
                         </svg>
@@ -263,15 +266,15 @@ export function Step1Format() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <h3 style={{ margin: 0, fontSize: 16.5, fontWeight: 800, letterSpacing: "-.4px" }}>{f.name}</h3>
+                        <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, letterSpacing: "-.4px" }}>{f.name}</h3>
                         {f.key === "reel" && (
                           <span
                             style={{
                               fontSize: 10.5,
                               fontWeight: 750,
-                              background: "rgba(253,72,22,.1)",
-                              color: "var(--brand)",
-                              padding: "2px 7px",
+                              background: "rgba(253,72,22,.12)",
+                              color: "var(--brand-deep)",
+                              padding: "2px 8px",
                               borderRadius: 99,
                             }}
                           >
@@ -279,44 +282,45 @@ export function Step1Format() {
                           </span>
                         )}
                       </div>
-                      <span style={{ fontSize: 12, color: "var(--brand)", fontWeight: 700 }}>{f.sys}</span>
+                      <span style={{ fontSize: 12.5, color: "var(--brand)", fontWeight: 700 }}>{f.sys}</span>
                     </div>
-                    {/* Radio indicator */}
+                    {/* Concentric Radio Checkmark */}
                     <span
                       style={{
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         borderRadius: "50%",
-                        border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair-3)"}`,
+                        border: `2px solid ${isSelected ? "var(--brand)" : "var(--hair-3)"}`,
                         background: isSelected ? "var(--brand)" : "transparent",
                         display: "grid",
                         placeItems: "center",
                         color: "#fff",
                         flexShrink: 0,
+                        transition: "all .2s ease",
                       }}
                     >
                       {isSelected && (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" width={11} height={11}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" width={12} height={12}>
                           <path d="M4 12l6 6L20 5" />
                         </svg>
                       )}
                     </span>
                   </div>
 
-                  <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.55 }}>{f.desc}</p>
+                  <p style={{ margin: "14px 0 0", fontSize: 13.5, color: "var(--ink-3)", lineHeight: 1.6 }}>{f.desc}</p>
 
-                  <div style={{ display: "flex", gap: 24, marginTop: 14, paddingTop: 14, borderTop: "1px solid var(--hair)" }}>
+                  <div style={{ display: "flex", gap: 28, marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--hair)" }}>
                     <div>
-                      <span style={{ display: "block", fontSize: 9.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800 }}>Length</span>
-                      <b style={{ fontSize: 13, fontWeight: 700 }}>{f.len}</b>
+                      <span style={{ display: "block", fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800 }}>Length</span>
+                      <b style={{ fontSize: 14, fontWeight: 750 }}>{f.len}</b>
                     </div>
                     <div>
-                      <span style={{ display: "block", fontSize: 9.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800 }}>For</span>
-                      <b style={{ fontSize: 13, fontWeight: 700 }}>{f.aud}</b>
+                      <span style={{ display: "block", fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800 }}>For</span>
+                      <b style={{ fontSize: 14, fontWeight: 750 }}>{f.aud}</b>
                     </div>
                     <div>
-                      <span style={{ display: "block", fontSize: 9.5, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800 }}>Cost</span>
-                      <b style={{ fontSize: 13, fontWeight: 700 }}>{f.tok} tokens</b>
+                      <span style={{ display: "block", fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800 }}>Cost</span>
+                      <b style={{ fontSize: 14, fontWeight: 750 }}>{f.tok} tokens</b>
                     </div>
                   </div>
                 </div>

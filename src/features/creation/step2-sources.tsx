@@ -73,29 +73,28 @@ export function Step2Sources() {
           {/* Card 1: Build brand dossier */}
           <button
             onClick={() => router.push("/dossiers")}
+            className="group block w-full text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
             style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
               padding: "24px 22px",
               background: "#fff",
-              borderRadius: "var(--r-l)",
-              border: "1.5px solid var(--brand)",
-              boxShadow: "0 0 0 4px rgba(253,72,22,.08), var(--sh-2)",
+              borderRadius: "var(--r-xl)",
+              border: "1.5px solid var(--hair-2)",
               cursor: "pointer",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
               <span
+                className="transition-transform duration-200 group-hover:scale-105"
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 42,
+                  height: 42,
                   borderRadius: "var(--r)",
                   background: "linear-gradient(140deg,#ff7a3d,#c9310a)",
                   color: "#fff",
                   display: "grid",
                   placeItems: "center",
                   flexShrink: 0,
+                  boxShadow: "0 8px 18px rgba(253,72,22,.4)",
                 }}
               >
                 <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
@@ -115,13 +114,13 @@ export function Step2Sources() {
               Everything true about your brand in one place: what the drug is, who it is for, what you are allowed to claim, and the source behind each claim. Build it once — every video, email and visual aid after this is written from it.
             </p>
             <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)", border: "1px solid var(--ok-line)" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)", border: "1px solid var(--ok-line)" }}>
                 Free on trial credits
               </span>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "rgba(10,13,20,.05)", color: "var(--ink-3)" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 99, background: "rgba(10,13,20,.05)", color: "var(--ink-3)" }}>
                 19 sections
               </span>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "rgba(10,13,20,.05)", color: "var(--ink-3)" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 99, background: "rgba(10,13,20,.05)", color: "var(--ink-3)" }}>
                 Every claim cited
               </span>
             </div>
@@ -133,29 +132,29 @@ export function Step2Sources() {
               setSelectedDossier("velmora");
               setStage(3);
             }}
+            className="group block w-full text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
             style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
               padding: "24px 22px",
               background: "#fff",
-              borderRadius: "var(--r-l)",
-              border: "1.5px solid var(--hair-2)",
-              boxShadow: "var(--sh-1)",
+              borderRadius: "var(--r-xl)",
+              border: "1.5px solid var(--brand)",
+              boxShadow: "0 0 0 1px var(--brand), var(--sh-2)",
               cursor: "pointer",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
               <span
+                className="transition-transform duration-200 group-hover:scale-105"
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 42,
+                  height: 42,
                   borderRadius: "var(--r)",
                   background: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
                   color: "#fff",
                   display: "grid",
                   placeItems: "center",
                   flexShrink: 0,
+                  boxShadow: "0 8px 18px rgba(79,131,255,.4)",
                 }}
               >
                 <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
@@ -166,7 +165,7 @@ export function Step2Sources() {
                 <h3 style={{ margin: "0 0 2px", fontSize: 16.5, fontWeight: 800, letterSpacing: "-.4px" }}>
                   Try it with a sample dossier
                 </h3>
-                <span style={{ fontSize: 11.5, color: "var(--ink-4)", fontWeight: 650 }}>
+                <span style={{ fontSize: 11.5, color: "var(--brand)", fontWeight: 700 }}>
                   Fastest · see a finished video in ~10 minutes
                 </span>
               </div>
@@ -175,13 +174,13 @@ export function Step2Sources() {
               Use our fully-built Velmora dossier — 18 sections, 214 cited claims, FDA-anchored — to walk the whole flow now and see exactly what comes out the other end. Swap in your own brand whenever you are ready.
             </p>
             <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "var(--tint)", color: "var(--brand-deep)", border: "1px solid var(--tint-line)" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 99, background: "var(--tint)", color: "var(--brand-deep)", border: "1px solid var(--tint-line)" }}>
                 Velmora · tirzelamide
               </span>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "rgba(10,13,20,.05)", color: "var(--ink-3)" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 99, background: "rgba(10,13,20,.05)", color: "var(--ink-3)" }}>
                 🇺🇸 FDA
               </span>
-              <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 99, background: "rgba(10,13,20,.05)", color: "var(--ink-3)" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 99, background: "rgba(10,13,20,.05)", color: "var(--ink-3)" }}>
                 214 claims
               </span>
             </div>

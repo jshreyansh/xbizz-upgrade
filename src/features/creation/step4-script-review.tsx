@@ -109,19 +109,23 @@ export function Step4ScriptReview() {
             <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
               Script structure
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
               {STRUCTURES.map((st) => {
                 const isSelected = scriptStructure === st.id;
                 return (
                   <button
                     key={st.id}
                     onClick={() => setScriptStructure(st.id)}
+                    className={`transition-all duration-200 ${
+                      isSelected
+                        ? "opacity-100 ring-2 ring-[var(--brand)] shadow-sm bg-[var(--tint)]"
+                        : "opacity-70 hover:opacity-100 hover:-translate-y-0.5 bg-white"
+                    }`}
                     style={{
                       display: "block",
-                      padding: "14px 12px",
+                      padding: "16px 14px",
                       borderRadius: "var(--r)",
                       border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair-2)"}`,
-                      background: isSelected ? "var(--tint)" : "#fff",
                       textAlign: "left",
                       position: "relative",
                       cursor: "pointer",
@@ -132,7 +136,7 @@ export function Step4ScriptReview() {
                         display: "inline-block",
                         fontSize: 10,
                         fontWeight: 800,
-                        padding: "2px 7px",
+                        padding: "2px 8px",
                         borderRadius: 99,
                         background: isSelected ? "rgba(253,72,22,.15)" : "rgba(10,13,20,.06)",
                         color: isSelected ? "var(--brand-deep)" : "var(--ink-3)",
@@ -141,15 +145,15 @@ export function Step4ScriptReview() {
                     >
                       {st.type}
                     </span>
-                    <b style={{ display: "block", fontSize: 14, fontWeight: 750, color: isSelected ? "var(--brand-deep)" : "var(--ink)", marginBottom: 4 }}>
+                    <b style={{ display: "block", fontSize: 14.5, fontWeight: 780, color: isSelected ? "var(--brand-deep)" : "var(--ink)", marginBottom: 4 }}>
                       {st.title}
                     </b>
-                    <span style={{ fontSize: 11.5, color: "var(--ink-3)", lineHeight: 1.4, display: "block", marginBottom: 10 }}>
+                    <span style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.45, display: "block", marginBottom: 12 }}>
                       {st.desc}
                     </span>
                     <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
                       {st.flow.map((f, idx) => (
-                        <span key={f} style={{ fontSize: 10.5, color: isSelected && idx === 0 ? "var(--brand)" : "var(--ink-4)", fontWeight: 650 }}>
+                        <span key={f} style={{ fontSize: 11, color: isSelected && idx === 0 ? "var(--brand)" : "var(--ink-4)", fontWeight: 700 }}>
                           {idx > 0 && "› "}
                           {f}
                         </span>

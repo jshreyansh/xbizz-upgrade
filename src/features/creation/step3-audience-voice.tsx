@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useCreationStore, type MVAudience, type MVVoice, type MVLength } from "@/features/creation/creation-store";
 import { MVHeader } from "@/features/creation/mv-header";
 
@@ -10,11 +11,11 @@ const AUDIENCES: { id: MVAudience; title: string; desc: string }[] = [
   { id: "payer", title: "Payer", desc: "Budget impact and value" },
 ];
 
-const VOICES: { id: MVVoice; name: string; desc: string }[] = [
-  { id: "ava", name: "Ava", desc: "Warm · English (US)" },
-  { id: "marcus", name: "Marcus", desc: "Authoritative · English (US)" },
-  { id: "sofia", name: "Sofia", desc: "Calm · Spanish (US)" },
-  { id: "hana", name: "Hana", desc: "Calm · Japanese" },
+const VOICES: { id: MVVoice; name: string; desc: string; sample: string }[] = [
+  { id: "ava", name: "Ava", desc: "Warm · English (US)", sample: "Velmora achieved a 24% relative risk reduction in composite cardiovascular endpoints across twelve thousand patients." },
+  { id: "marcus", name: "Marcus", desc: "Authoritative · English (US)", sample: "In our Phase III clinical readouts, the primary composite endpoint was met with strong statistical significance." },
+  { id: "sofia", name: "Sofia", desc: "Calm · Spanish (US)", sample: "Velmora es un tratamiento oral diario diseñado para mejorar la función cardíaca en pacientes con insuficiencia." },
+  { id: "hana", name: "Hana", desc: "Calm · Japanese", sample: "Velmora は心不全患者を対象とした第III相臨床試験において主要評価項目を達成しました。" },
 ];
 
 const LENGTHS: MVLength[] = ["30s", "60s", "90s", "120s", "180s"];
@@ -29,10 +30,33 @@ export function Step3AudienceVoice() {
   const formatType = useCreationStore((s) => s.formatType);
   const setStage = useCreationStore((s) => s.setStage);
 
+  const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+
   const curAud = AUDIENCES.find((a) => a.id === audience) || AUDIENCES[0];
   const curVoice = VOICES.find((v) => v.id === voice) || VOICES[0];
   const formatName = formatType === "avatar" ? "Digital Twin · MagicAvatar™" : "Short Video · MagicReel™";
   const cost = formatType === "avatar" ? "8,000 tokens" : "5,000 tokens";
+
+  const handleVoicePreview = (v: (typeof VOICES)[0], e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    if (previewingVoice === v.id) {
+      window.speechSynthesis.cancel();
+      setPreviewingVoice(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(v.sample);
+    utterance.rate = 1.0;
+    utterance.pitch = v.id === "marcus" ? 0.9 : 1.05;
+    utterance.onend = () => setPreviewingVoice(null);
+    utterance.onerror = () => setPreviewingVoice(null);
+
+    setPreviewingVoice(v.id);
+    window.speechSynthesis.speak(utterance);
+  };
 
   return (
     <div className="page-enter space-y-6">
@@ -78,39 +102,43 @@ export function Step3AudienceVoice() {
         {/* Left Stack */}
         <div style={{ display: "grid", gap: 16 }}>
           {/* Card: Who it speaks to */}
-          <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
-            <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
+          <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: "22px", boxShadow: "var(--sh-1)" }}>
+            <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 14 }}>
               Who it speaks to
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {AUDIENCES.map((a) => {
                 const isSelected = audience === a.id;
                 return (
                   <button
                     key={a.id}
                     onClick={() => setAudience(a.id)}
+                    className={`transition-all duration-200 ${
+                      isSelected
+                        ? "opacity-100 ring-2 ring-[var(--brand)] shadow-sm bg-[var(--tint)]"
+                        : "opacity-70 hover:opacity-100 hover:-translate-y-0.5 bg-white"
+                    }`}
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 10,
-                      padding: "12px 14px",
+                      gap: 12,
+                      padding: "14px",
                       borderRadius: "var(--r)",
                       border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair-2)"}`,
-                      background: isSelected ? "var(--tint)" : "#fff",
                       textAlign: "left",
                       cursor: "pointer",
                     }}
                   >
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <b style={{ display: "block", fontSize: 13.5, color: isSelected ? "var(--brand-deep)" : "var(--ink)" }}>{a.title}</b>
-                      <span style={{ fontSize: 11.5, color: "var(--ink-3)", lineHeight: 1.4, display: "block", marginTop: 2 }}>{a.desc}</span>
+                      <b style={{ display: "block", fontSize: 14, color: isSelected ? "var(--brand-deep)" : "var(--ink)" }}>{a.title}</b>
+                      <span style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4, display: "block", marginTop: 3 }}>{a.desc}</span>
                     </div>
                     <span
                       style={{
-                        width: 18,
-                        height: 18,
+                        width: 20,
+                        height: 20,
                         borderRadius: "50%",
-                        border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair-3)"}`,
+                        border: `2px solid ${isSelected ? "var(--brand)" : "var(--hair-3)"}`,
                         background: isSelected ? "var(--brand)" : "transparent",
                         display: "grid",
                         placeItems: "center",
@@ -131,44 +159,73 @@ export function Step3AudienceVoice() {
           </div>
 
           {/* Card: Whose voice */}
-          <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
-            <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-              Whose voice
+          <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: "22px", boxShadow: "var(--sh-1)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+              <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
+                Whose voice
+              </div>
+              <span style={{ fontSize: 11.5, color: "var(--brand)", fontWeight: 650 }}>Click ▶ to audition voice</span>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               {VOICES.map((v) => {
                 const isSelected = voice === v.id;
+                const isPlaying = previewingVoice === v.id;
                 return (
-                  <button
+                  <div
                     key={v.id}
                     onClick={() => setVoice(v.id)}
+                    className={`flex items-center justify-between transition-all duration-200 ${
+                      isSelected
+                        ? "opacity-100 ring-2 ring-[var(--brand)] shadow-sm bg-[var(--tint)]"
+                        : "opacity-70 hover:opacity-100 hover:-translate-y-0.5 bg-white"
+                    }`}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
                       padding: "12px 14px",
                       borderRadius: "var(--r)",
                       border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair-2)"}`,
-                      background: isSelected ? "var(--tint)" : "#fff",
-                      textAlign: "left",
                       cursor: "pointer",
                     }}
                   >
-                    <span style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(10,13,20,.06)", display: "grid", placeItems: "center", flexShrink: 0 }}>
-                      <svg width={13} height={13} viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 4l14 8-14 8z" />
-                      </svg>
-                    </span>
+                    {/* Play Audition Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleVoicePreview(v, e)}
+                      title={`Audition ${v.name}`}
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        background: isPlaying ? "var(--brand)" : isSelected ? "rgba(253,72,22,.15)" : "rgba(10,13,20,.06)",
+                        color: isPlaying ? "#fff" : isSelected ? "var(--brand)" : "var(--ink-2)",
+                        display: "grid",
+                        placeItems: "center",
+                        border: "none",
+                        cursor: "pointer",
+                        marginRight: 10,
+                        flexShrink: 0,
+                        transition: "all .2s ease",
+                      }}
+                    >
+                      {isPlaying ? (
+                        <span style={{ fontSize: 11 }}>⏸</span>
+                      ) : (
+                        <svg width={13} height={13} viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 2 }}>
+                          <path d="M6 4l14 8-14 8z" />
+                        </svg>
+                      )}
+                    </button>
+
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <b style={{ display: "block", fontSize: 13, color: isSelected ? "var(--brand-deep)" : "var(--ink)" }}>{v.name}</b>
-                      <span style={{ fontSize: 11, color: "var(--ink-4)", display: "block" }}>{v.desc}</span>
+                      <b style={{ display: "block", fontSize: 13.5, color: isSelected ? "var(--brand-deep)" : "var(--ink)" }}>{v.name}</b>
+                      <span style={{ fontSize: 11.5, color: "var(--ink-4)", display: "block" }}>{v.desc}</span>
                     </div>
+
                     <span
                       style={{
-                        width: 18,
-                        height: 18,
+                        width: 20,
+                        height: 20,
                         borderRadius: "50%",
-                        border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair-3)"}`,
+                        border: `2px solid ${isSelected ? "var(--brand)" : "var(--hair-3)"}`,
                         background: isSelected ? "var(--brand)" : "transparent",
                         display: "grid",
                         placeItems: "center",
@@ -182,19 +239,19 @@ export function Step3AudienceVoice() {
                         </svg>
                       )}
                     </span>
-                  </button>
+                  </div>
                 );
               })}
             </div>
             <button
               style={{
-                marginTop: 12,
+                marginTop: 14,
                 width: "100%",
-                padding: "9px",
+                padding: "10px",
                 borderRadius: "var(--r)",
                 border: "1px dashed var(--hair-3)",
                 background: "#fff",
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: 650,
                 color: "var(--brand)",
                 cursor: "pointer",
@@ -204,26 +261,35 @@ export function Step3AudienceVoice() {
             </button>
           </div>
 
-          {/* Card: How long */}
-          <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: "20px 22px" }}>
-            <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 12 }}>
-              How long
+          {/* Card: How long with Stepped Slider */}
+          <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: "22px", boxShadow: "var(--sh-1)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
+                Target length
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 750, color: "var(--brand)", background: "rgba(253,72,22,.1)", padding: "2px 8px", borderRadius: 99 }}>
+                {length} · ~{parseInt(length) * 2} words
+              </span>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {LENGTHS.map((l) => {
                 const isSelected = length === l;
                 return (
                   <button
                     key={l}
                     onClick={() => setLength(l)}
+                    className={`transition-all duration-200 ${
+                      isSelected ? "scale-105 shadow-sm" : "hover:scale-102"
+                    }`}
                     style={{
-                      padding: "8px 16px",
+                      padding: "9px 18px",
                       borderRadius: 99,
                       border: `1.5px solid ${isSelected ? "var(--brand)" : "var(--hair-2)"}`,
-                      background: isSelected ? "var(--tint)" : "#fff",
-                      color: isSelected ? "var(--brand-deep)" : "var(--ink)",
-                      fontWeight: 700,
-                      fontSize: 13,
+                      background: isSelected ? "var(--brand)" : "#fff",
+                      color: isSelected ? "#fff" : "var(--ink)",
+                      fontWeight: 750,
+                      fontSize: 13.5,
                       cursor: "pointer",
                     }}
                   >
@@ -232,7 +298,7 @@ export function Step3AudienceVoice() {
                 );
               })}
             </div>
-            <p style={{ margin: "12px 0 0", fontSize: 12.5, color: "var(--ink-4)", lineHeight: 1.55 }}>
+            <p style={{ margin: "14px 0 0", fontSize: 12.5, color: "var(--ink-4)", lineHeight: 1.55 }}>
               Sixty seconds is roughly 120 spoken words — enough for the mechanism plus one pivotal result.
             </p>
           </div>
