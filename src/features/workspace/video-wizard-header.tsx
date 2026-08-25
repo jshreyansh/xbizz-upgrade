@@ -115,14 +115,19 @@ export function VideoWizardHeader({
       </div>
 
       {/* Tier 2: Persistent Full-Width Step Title Bar */}
-      <div className="h-[46px] w-full bg-[#fafbf9]/90 backdrop-blur-sm">
-        <div className="mx-auto flex h-full w-full max-w-[1280px] items-center justify-between px-6 sm:px-8">
-          <h1 className="text-[17px] font-[800] tracking-tight text-[var(--ink)] sm:text-[18px]">
-            {currentStepInfo.title}
-          </h1>
-          <span className="text-[12px] font-semibold text-[var(--ink-muted)]">
-            {currentStepInfo.subtitle}
-          </span>
+      <div className="h-[46px] w-full bg-[#fafbf9]/90 backdrop-blur-sm overflow-hidden">
+        <div className="mx-auto h-full w-full max-w-[1280px] px-6 sm:px-8">
+          <div
+            key={currentStep}
+            className="flex h-full w-full items-center justify-between step-transition"
+          >
+            <h1 className="text-[17px] font-[800] tracking-tight text-[var(--ink)] sm:text-[18px]">
+              {currentStepInfo.title}
+            </h1>
+            <span className="text-[12px] font-semibold text-[var(--ink-muted)]">
+              {currentStepInfo.subtitle}
+            </span>
+          </div>
         </div>
       </div>
     </header>

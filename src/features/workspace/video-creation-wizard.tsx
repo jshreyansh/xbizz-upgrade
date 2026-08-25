@@ -49,8 +49,8 @@ export function VideoCreationWizard() {
         onClose={handleClose}
       />
 
-      {/* Main Step Canvas */}
-      <div className="flex-1">
+      {/* Main Step Canvas with smooth transition */}
+      <div key={currentStep} className="flex-1 step-transition">
         {currentStep === 1 && <MagicVideoSourceScreen embedded />}
         {currentStep === 2 && <CreateScreen embedded />}
         {currentStep === 3 && <DirectionsScreen embedded />}

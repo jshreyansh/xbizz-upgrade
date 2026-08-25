@@ -436,7 +436,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   if (embedded) {
     return (
-      <div className="page-enter pb-10">
+      <div className="pb-10">
         {content}
         {presenterLibraryOpen && <PresenterLibrary selected={presenter} onSelect={(name) => { setPresenter(name); setPresenterLibraryOpen(false); }} onClose={() => setPresenterLibraryOpen(false)} />}
         {sourceManagerOpen && <SourceManager selectedIds={selectedSourceIds} onToggle={toggleSource} onClose={() => setSourceManagerOpen(false)} />}

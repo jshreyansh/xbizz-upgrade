@@ -290,6 +290,21 @@ button.rounded-full {
   animation: page-enter 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+@keyframes step-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-transition {
+  animation: step-fade-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 @keyframes modal-backdrop-in {
   from { opacity: 0; }
   to { opacity: 1; }

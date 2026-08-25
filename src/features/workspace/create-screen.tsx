@@ -293,7 +293,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   if (embedded) {
     return (
-      <div className="page-enter pb-10">
+      <div className="pb-10">
         {content}
         {sourceLibraryOpen && <SourceLibraryModal selectedIds={selectedSourceIds} query={sourceQuery} onQueryChange={setSourceQuery} sources={filteredSources} onToggle={toggleSource} onUpload={() => { setSourceLibraryOpen(false); fileInputRef.current?.click(); }} onClose={() => setSourceLibraryOpen(false)} />}
         {scenarioLibraryOpen && <DemoScenarioDrawer currentScenarioId={demoScenarioId} onSelect={loadScenario} onReset={() => loadScenario(demoScenarios.find((scenario) => scenario.id === defaultDemoScenarioId) ?? demoScenarios[0])} onClose={() => setScenarioLibraryOpen(false)} />}

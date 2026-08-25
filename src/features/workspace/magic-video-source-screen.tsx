@@ -467,7 +467,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   );
 
   if (embedded) {
-    return <div className="page-enter pb-10">{content}</div>;
+    return <div className="pb-10">{content}</div>;
   }
 
   return (
