@@ -15,13 +15,11 @@ import {
   Zap,
   ShieldCheck,
   FlaskConical,
-  MonitorPlay,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
+import { AudienceIcon } from "@/components/ui/select-icons";
 import { MultiSelectMenu, SelectMenu } from "@/components/ui/select-menu";
 import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
-import { parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import type { Audience } from "@/types/content";
 
@@ -108,16 +106,6 @@ const TOPIC_OPTIONS = [
   "Drug Interactions",
   "Side Effects",
 ];
-const USE_OPTIONS = [
-  "HCP meeting",
-  "LinkedIn",
-  "Instagram",
-  "YouTube",
-  "Email",
-  "Website",
-  "Congress / event",
-  "Internal presentation",
-];
 
 const topicIcons: Record<string, typeof Pill> = {
   "Product Introduction": Pill,
@@ -135,8 +123,6 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   const setGoal = useWorkspaceStore((s) => s.setGoal);
   const topics = useWorkspaceStore((s) => s.topics);
   const setTopics = useWorkspaceStore((s) => s.setTopics);
-  const intendedUse = useWorkspaceStore((s) => s.intendedUse);
-  const setIntendedUse = useWorkspaceStore((s) => s.setIntendedUse);
   const creationMode = useWorkspaceStore((s) => s.creationMode);
   const brief = useWorkspaceStore((s) => s.brief);
   const setBrief = useWorkspaceStore((s) => s.setBrief);
@@ -148,15 +134,13 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   const selectedDossierId = sourcePayload.dossierId || "velmora";
   const activeDossier = DOSSIERS.find((d) => d.id === selectedDossierId) || DOSSIERS[0];
-  const uses = parseIntendedUses(intendedUse);
 
   // Mandatory Validation Checks
   const isAudienceValid = Boolean(audience);
   const isGoalValid = Boolean(goal);
   const isTopicsValid = topics.length > 0;
   const isDossierValid = Boolean(selectedDossierId);
-  const isUseValid = uses.length > 0;
-  const canContinue = isAudienceValid && isGoalValid && isTopicsValid && isDossierValid && isUseValid;
+  const canContinue = isAudienceValid && isGoalValid && isTopicsValid && isDossierValid;
 
   const handleSelectDossier = (dossierId: string) => {
     setSourcePayload({ dossierId });
@@ -447,28 +431,6 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   }}
                 />
               </div>
-
-              {/* 4. Intended Channel / Format* */}
-              <div>
-                <div className="mb-1 flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
-                    <MonitorPlay className="size-3.5 text-[var(--brand)]" />
-                    Intended Channel / Format*
-                  </label>
-                  {uses.length > 0 && (
-                    <span className="text-[10.5px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-1.5 py-0.5 rounded-full border border-[var(--tint-line)]">
-                      {uses.length} selected
-                    </span>
-                  )}
-                </div>
-                <MultiSelectMenu
-                  values={uses}
-                  onChange={(next) => setIntendedUse(serializeIntendedUses(next))}
-                  options={USE_OPTIONS}
-                  ariaLabel="Intended Channel / Format"
-                  renderIcon={(item) => <ChannelIcon value={item} />}
-                />
-              </div>
             </div>
 
             {/* Grounding Footer Note */}
@@ -497,9 +459,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   ? "Please select an audience"
                   : !isGoalValid
                   ? "Please select a campaign goal"
-                  : !isTopicsValid
-                  ? "Please select at least 1 focus topic"
-                  : "Please select at least 1 intended channel"}
+                  : "Please select at least 1 focus topic"}
               </span>
             ) : (
               <>

@@ -12,7 +12,6 @@ import {
   Info,
   Layers,
   LayoutGrid,
-  MonitorPlay,
   Paperclip,
   Search,
   ShieldCheck,
@@ -30,7 +29,6 @@ import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario, type DemoScenarioCategory } from "@/features/workspace/demo-scenarios";
 import { planningSources } from "@/features/workspace/mock-data";
-import { parseIntendedUses } from "@/features/workspace/intended-use";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
@@ -83,7 +81,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     return query ? planningSources.filter((source) => `${source.name} ${source.detail}`.toLowerCase().includes(query)) : planningSources;
   }, [sourceQuery]);
 
-  const uses = useMemo(() => parseIntendedUses(intendedUse), [intendedUse]);
 
   const removeAttachment = (target: string) => {
     setLocalFiles((current) => current.filter((file) => file !== target));
@@ -245,10 +242,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               <Layers className="size-3.5 text-[var(--brand)]" />
               {topics.length} topics
             </span>
-            <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
-              <MonitorPlay className="size-3.5 text-[var(--brand)]" />
-              {uses.slice(0, 2).join(", ")}{uses.length > 2 ? ` +${uses.length - 2}` : ""}
-            </span>
             {selectedSources.map((source) => (
               <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
             ))}
@@ -274,7 +267,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
             <div className="p-4 space-y-3">
               <ContextItem icon={Users} title={`Audience & Goal: ${audience}`} detail={`Campaign objective: ${goal}`} />
-              <ContextItem icon={MonitorPlay} title={`Channel & Format (${uses.length})`} detail={uses.join(" · ")} />
               <ContextItem icon={Layers} title={`Focus Topics (${topics.length})`} detail={topics.join(" · ")} />
               <ContextItem icon={BookOpenCheck} title={sourceType === "dossier" ? "214 approved claims" : "Evidence coverage"} detail={sourceType === "dossier" ? "All statements cited against FDA/EMA approved label." : "Grounding verified from attached source."} />
               <div className="mt-3 border-t border-[var(--line)] pt-3">
