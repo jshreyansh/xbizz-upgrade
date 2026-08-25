@@ -20,7 +20,6 @@ import {
   Play,
   Plus,
   ShieldCheck,
-  Sparkles,
   Target,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -135,7 +134,7 @@ const profiles: Record<AssetType, {
 import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
 import { useRouter } from "next/navigation";
 
-export function DirectionsScreen() {
+export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const {
     assetType,
@@ -200,21 +199,23 @@ export function DirectionsScreen() {
   );
 
   const defaultTreatment = creationMode === "magic-avatar" ? "presenter" : creationMode === "magic-reel" ? "narrated" : (assetType === "video" ? presentationMode : derivedPlan.treatmentId);
-  const [treatmentId, setTreatmentId] = useState(defaultTreatment);
+  const [treatmentId, setTreatmentId] = useState<string>(defaultTreatment);
+  const [goal, setGoal] = useState<string>(derivedPlan.goal);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>(derivedPlan.topics);
   const [confirmedTreatment, setConfirmedTreatment] = useState(true);
-  const [presenter, setPresenter] = useState(creationMode === "magic-avatar" ? "Dr. Maya Kapoor" : "");
-  const [presenterLibraryOpen, setPresenterLibraryOpen] = useState(false);
-  const [sourceManagerOpen, setSourceManagerOpen] = useState(false);
-  const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
-  const [goal, setGoal] = useState(derivedPlan.goal);
-  const [selectedTopics, setSelectedTopics] = useState(derivedPlan.topics);
-  const [storyStructure, setStoryStructure] = useState(derivedPlan.storyStructure);
   const [sourceConflictResolved, setSourceConflictResolved] = useState(false);
+  const [storyStructure, setStoryStructure] = useState(derivedPlan.storyStructure);
+  const [presenter, setPresenter] = useState(
+    creationMode === "magic-avatar" ? "Dr. Maya Kapoor" : (presentationMode === "presenter" ? "Dr. Maya Kapoor" : "")
+  );
   const [openSection, setOpenSection] = useState<PlanSectionId | null>("treatment");
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
-  const selectedSources = planningSources.filter((source) => selectedSourceIds.includes(source.id));
-  const approvedEvidenceCount = selectedSources.filter((source) => source.kind === "approved-source" || source.kind === "claims").length;
-  const needsPresenter = assetType === "video" && treatmentId === "presenter";
+  const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
+  const [presenterLibraryOpen, setPresenterLibraryOpen] = useState(false);
+  const [sourceManagerOpen, setSourceManagerOpen] = useState(false);
+
+  const approvedEvidenceCount = selectedSourceIds.filter((id) => id !== "dermora-reference").length;
+  const needsPresenter = presentationMode === "presenter" || treatmentId === "presenter" || creationMode === "magic-avatar";
   const unresolvedCount = (confirmedTreatment ? 0 : 1) + (needsPresenter && !presenter ? 1 : 0) + (derivedPlan.sourceConflict && !sourceConflictResolved ? 1 : 0);
   const selectedTreatment = profile.treatments.find((item) => item.id === treatmentId) ?? profile.treatments[0];
 
@@ -266,32 +267,19 @@ export function DirectionsScreen() {
     router.push("/");
   };
 
-  return (
-    <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
-      <VideoWizardHeader
-        currentStep={3}
-        onBack={handleBackToBrief}
-        onClose={handleClose}
-        modeLabel={modeLabel}
-      />
+  const content = (
+    <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
+      {/* Standardized Page Heading (No Badge) */}
+      <div className="mb-7">
+        <h1 className="text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
+          Confirm the video plan
+        </h1>
+        <p className="mt-1 text-[15px] text-[var(--ink-3)]">
+          Review recommended creative direction, delivery format, voice talent, and cited evidence before generating scenes.
+        </p>
+      </div>
 
-      <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
-        {/* Standardized Page Heading */}
-        <div className="mb-7">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-1 text-[11.5px] font-bold uppercase tracking-wider text-[var(--brand-deep)] border border-[var(--tint-line)]">
-              <Sparkles className="size-3.5 text-[var(--brand)]" /> Step 3 of 3 · Confirm the Plan
-            </span>
-          </div>
-          <h1 className="mt-2.5 text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
-            Confirm the video plan
-          </h1>
-          <p className="mt-1 text-[15px] text-[var(--ink-3)]">
-            Review recommended creative direction, delivery format, voice talent, and cited evidence before generating scenes.
-          </p>
-        </div>
-
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
           <section className="rise-in space-y-3 [animation-delay:50ms]">
             <PlanSection icon={Film} title="Creative treatment" summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`} status={confirmedTreatment ? "Confirmed" : "Needs you"} open={openSection === "treatment"} onToggle={() => toggleSection("treatment")} tone={confirmedTreatment ? "done" : "attention"}>
               <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5"><div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div><p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p></div>
@@ -378,12 +366,35 @@ export function DirectionsScreen() {
                 <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-[11px] bg-[var(--brand-soft)] text-[var(--brand)]"><FileCheck2 className="size-5" /></span><div><div className="text-[14px] font-bold">{approvedEvidenceCount > 0 ? "Evidence foundation ready" : "Concept storyboard"}</div><p className="mt-1 text-[13px] leading-5 text-[var(--ink-muted)]">{approvedEvidenceCount > 0 ? `Current ${market} sources will stay linked to every supported message.` : "Approved evidence can be attached before review or production."}</p></div></div>
               </div>
             </div>
-            <Button onClick={() => setView("studio")} size="lg" disabled={unresolvedCount > 0} className="group mt-3 h-[60px] w-full px-8 text-[16px] shadow-[0_10px_26px_rgb(21_61_46/22%)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgb(21_61_46/25%)]">Create storyboard <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" /></Button>
+            {!embedded && (
+              <Button onClick={() => setView("studio")} size="lg" disabled={unresolvedCount > 0} className="group mt-3 h-[60px] w-full px-8 text-[16px] shadow-[0_10px_26px_rgb(21_61_46/22%)] transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgb(21_61_46/25%)]">Create storyboard <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" /></Button>
+            )}
             <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">{unresolvedCount === 0 ? <CheckCircle2 className="size-4 text-[var(--brand)]" /> : <Info className="size-4 text-[var(--warning)]" />}<span>{unresolvedCount === 0 ? "The plan is ready for an editable storyboard." : `${unresolvedCount} decision${unresolvedCount === 1 ? "" : "s"} remaining.`}</span></div>
             </div>
           </aside>
         </div>
       </main>
+  );
+
+  if (embedded) {
+    return (
+      <div className="page-enter pb-10">
+        {content}
+        {presenterLibraryOpen && <PresenterLibrary selected={presenter} onSelect={(name) => { setPresenter(name); setPresenterLibraryOpen(false); }} onClose={() => setPresenterLibraryOpen(false)} />}
+        {sourceManagerOpen && <SourceManager selectedIds={selectedSourceIds} onToggle={toggleSource} onClose={() => setSourceManagerOpen(false)} />}
+      </div>
+    );
+  }
+
+  return (
+    <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
+      <VideoWizardHeader
+        currentStep={3}
+        onBack={handleBackToBrief}
+        onClose={handleClose}
+        modeLabel={modeLabel}
+      />
+      {content}
       {presenterLibraryOpen && <PresenterLibrary selected={presenter} onSelect={(name) => { setPresenter(name); setPresenterLibraryOpen(false); }} onClose={() => setPresenterLibraryOpen(false)} />}
       {sourceManagerOpen && <SourceManager selectedIds={selectedSourceIds} onToggle={toggleSource} onClose={() => setSourceManagerOpen(false)} />}
     </div>

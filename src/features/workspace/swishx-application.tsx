@@ -2,9 +2,7 @@
 
 import { AppShell } from "@/features/workspace/app-shell";
 import { MagicVideoModeScreen } from "@/features/workspace/magic-video-mode-screen";
-import { MagicVideoSourceScreen } from "@/features/workspace/magic-video-source-screen";
-import { CreateScreen } from "@/features/workspace/create-screen";
-import { DirectionsScreen } from "@/features/workspace/directions-screen";
+import { VideoCreationWizard } from "@/features/workspace/video-creation-wizard";
 import { HomeScreen } from "@/features/workspace/home-screen";
 import { StudioScreen } from "@/features/workspace/studio-screen";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -21,10 +19,9 @@ export function SwishXApplication() {
         </AppShell>
       );
     }
-    if (videoSubStage === "source-select") return <MagicVideoSourceScreen />;
-    return <CreateScreen />;
+    return <VideoCreationWizard />;
   }
-  if (view === "directions") return <DirectionsScreen />;
+  if (view === "directions") return <VideoCreationWizard />;
   if (view === "studio") return <StudioScreen />;
 
   return (
