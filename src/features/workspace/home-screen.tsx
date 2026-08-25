@@ -7,52 +7,61 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA, SAMPLE_VIDEOS } from "@/features/workspace/mock-personas";
 import type { SampleAsset } from "@/features/workspace/mock-personas";
 
-/* ── Getting-started rail ────────────────────────────────────────── */
-function GettingStarted() {
+/* ── Journey stepper ─────────────────────────────────────────────────
+   First-run progress, shown as the footer of the unified creation
+   panel — a quiet, single-line tracker rather than a separate row of
+   floating pill buttons. */
+function JourneyStepper() {
   const router = useRouter();
   const steps = [
-    { label: "Build your first dossier", href: "/dossiers", done: false },
-    { label: "Create a Magic Video", href: "/create", done: false },
-    { label: "Send for review", href: "/create", done: false },
+    { label: "Dossier", href: "/dossiers" },
+    { label: "Magic Video", href: "/create" },
+    { label: "Review", href: "/create" },
   ];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 24 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+      <span style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 750, color: "var(--ink-4)", marginRight: 4 }}>
+        Your path
+      </span>
       {steps.map((step, i) => (
-        <div key={step.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+        <div key={step.label} style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
             onClick={() => router.push(step.href)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 9,
-              padding: "9px 14px",
-              borderRadius: "var(--r)",
-              border: `1px solid ${step.done ? "var(--hair-3)" : "var(--hair-2)"}`,
-              background: step.done ? "var(--tint)" : "#fff",
-              fontSize: 13,
-              fontWeight: 650,
-              color: "var(--ink-2)",
-              cursor: "pointer",
-            }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 650, color: "var(--ink-2)", cursor: "pointer" }}
           >
             <span
               style={{
-                width: 20, height: 20, borderRadius: "50%",
-                background: step.done ? "var(--ok)" : "var(--hair-2)",
-                display: "grid", placeItems: "center",
-                fontSize: 10, fontWeight: 800, color: step.done ? "#fff" : "var(--ink-3)",
+                width: 18, height: 18, borderRadius: "50%", background: "var(--hair-2)",
+                display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800, color: "var(--ink-3)", flexShrink: 0,
               }}
             >
-              {step.done ? (
-                <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12l6 6L20 5" /></svg>
-              ) : i + 1}
+              {i + 1}
             </span>
-            {step.label.replace("Build your ", "").replace("Create a ", "").replace("Send for ", "")}
+            {step.label}
           </button>
-          {i < 2 && <span style={{ width: 18, height: 1, background: "var(--hair-2)", display: "block" }} />}
+          {i < steps.length - 1 && <span style={{ width: 22, height: 1, background: "var(--hair-2)", display: "block" }} />}
         </div>
       ))}
-      <span style={{ fontSize: 12, color: "var(--ink-4)", marginLeft: 4 }}>0 of 3</span>
+      <span style={{ fontSize: 12, color: "var(--ink-4)", marginLeft: "auto" }}>0 of 3 complete</span>
+    </div>
+  );
+}
+
+/* ── Workspace snapshot ──────────────────────────────────────────────
+   Returning-user footer for the unified creation panel — the same
+   slot the JourneyStepper occupies during first run. */
+function WorkspaceSnapshot() {
+  const stats: [string, string][] = [["4", "markets live"], ["32", "formats"], ["0", "uncited claims"]];
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap" }}>
+      <span style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 750, color: "var(--ink-4)" }}>
+        Workspace
+      </span>
+      {stats.map(([val, label]) => (
+        <span key={label} style={{ fontSize: 13, color: "var(--ink-2)" }}>
+          <b style={{ fontWeight: 800, color: "var(--ink)" }}>{val}</b> {label}
+        </span>
+      ))}
     </div>
   );
 }
@@ -110,27 +119,25 @@ interface CreationOption {
   icon: typeof Sparkles;
   title: string;
   description: string;
+  cta: string;
   href: string;
   soon?: boolean;
+  flagship?: boolean;
 }
 
 const CREATION_OPTIONS: CreationOption[] = [
   {
-    icon: Sparkles,
-    title: "Creation",
-    description: "Start from a brief and let SwishX pick the right format for you.",
-    href: "/create",
-  },
-  {
     icon: Video,
     title: "Video",
     description: "A cited, narrated reel built straight from your dossier.",
+    cta: "Open",
     href: "/create",
   },
   {
     icon: ImageIcon,
     title: "Infographic",
     description: "A one-page visual aid for reps, congress, or the field.",
+    cta: "Open",
     href: "#",
     soon: true,
   },
@@ -138,6 +145,7 @@ const CREATION_OPTIONS: CreationOption[] = [
     icon: LayoutGrid,
     title: "Canvas",
     description: "Print and digital layouts — journal ads, leave-behinds, banners.",
+    cta: "Open",
     href: "#",
     soon: true,
   },
@@ -145,51 +153,91 @@ const CREATION_OPTIONS: CreationOption[] = [
 
 function CreationOptionCard({ option, onOpen }: { option: CreationOption; onOpen: () => void }) {
   const Icon = option.icon;
+
+  const icon = (
+    <span
+      style={{
+        display: "grid",
+        placeItems: "center",
+        width: option.flagship ? 48 : 36,
+        height: option.flagship ? 48 : 36,
+        borderRadius: option.flagship ? 14 : 10,
+        flexShrink: 0,
+        background: option.flagship ? "linear-gradient(140deg,#ff7a3d,var(--brand) 55%,#d8320c)" : "var(--tint)",
+        color: option.flagship ? "#fff" : "var(--brand)",
+        boxShadow: option.flagship ? "0 10px 22px -10px rgba(253,72,22,.8)" : "none",
+      }}
+    >
+      <Icon size={option.flagship ? 22 : 17} />
+    </span>
+  );
+
+  const titleRow = (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <b style={{ fontSize: option.flagship ? 17 : 15, fontWeight: 800, letterSpacing: "-.3px" }}>{option.title}</b>
+      {option.flagship && (
+        <span style={{ fontSize: 9, letterSpacing: ".07em", background: "var(--brand)", color: "#fff", padding: "2px 7px", borderRadius: 5, fontWeight: 800 }}>RECOMMENDED</span>
+      )}
+      {option.soon && (
+        <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>SOON</span>
+      )}
+    </div>
+  );
+
+  const ctaRow = !option.soon && (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: option.flagship ? 13.5 : 12.5, fontWeight: 700, color: "var(--brand)" }}>
+      {option.cta} <ArrowRight size={option.flagship ? 14 : 13} />
+    </span>
+  );
+
   return (
     <button
       onClick={onOpen}
       disabled={option.soon}
       style={{
         display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        gap: 10,
-        padding: "20px 20px 18px",
+        alignItems: option.flagship ? "center" : "flex-start",
+        gap: option.flagship ? 18 : 10,
+        padding: option.flagship ? "22px 26px" : "20px",
         borderRadius: "var(--r-l)",
-        border: "1px solid var(--hair)",
-        background: "#fff",
+        border: `1px solid ${option.flagship ? "var(--tint-line)" : "transparent"}`,
+        background: option.flagship ? "var(--tint-2)" : "transparent",
         textAlign: "left",
         cursor: option.soon ? "default" : "pointer",
-        opacity: option.soon ? 0.72 : 1,
-        transition: "border-color .18s var(--e), box-shadow .18s var(--e), transform .18s var(--e)",
+        opacity: option.soon ? 0.6 : 1,
+        transition: "border-color .18s var(--e), background .18s var(--e), transform .18s var(--e)",
       }}
-      className={option.soon ? "" : "hover:-translate-y-0.5 hover:border-[var(--hair-2)] hover:shadow-[var(--sh-1)]"}
+      className={[
+        "flex-col",
+        option.flagship ? "sm:col-span-2 sm:flex-row sm:items-center" : "",
+        option.soon ? "" : option.flagship ? "hover:border-[var(--brand)]" : "hover:bg-[var(--surface-subtle)]",
+      ].filter(Boolean).join(" ")}
     >
-      <span
-        style={{
-          display: "grid",
-          placeItems: "center",
-          width: 38,
-          height: 38,
-          borderRadius: 11,
-          background: "linear-gradient(140deg,#ff7a3d,var(--brand) 55%,#d8320c)",
-          color: "#fff",
-          boxShadow: "0 10px 22px -10px rgba(253,72,22,.8)",
-        }}
-      >
-        <Icon size={18} />
-      </span>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <b style={{ fontSize: 15, fontWeight: 750, letterSpacing: "-.2px" }}>{option.title}</b>
-        {option.soon && (
-          <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>SOON</span>
-        )}
-      </div>
-      <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5 }}>{option.description}</p>
-      {!option.soon && (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 2, fontSize: 12.5, fontWeight: 650, color: "var(--brand)" }}>
-          Get started <ArrowRight size={13} />
+      {icon}
+      {option.flagship ? (
+        <div style={{ display: "flex", flex: 1, minWidth: 0, flexDirection: "column", gap: 6 }}>
+          {titleRow}
+          <p style={{ margin: 0, fontSize: 13.5, color: "var(--ink-3)", lineHeight: 1.5, maxWidth: "48ch" }}>{option.description}</p>
+        </div>
+      ) : (
+        <>
+          {titleRow}
+          <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5 }}>{option.description}</p>
+        </>
+      )}
+      {option.flagship && ctaRow ? (
+        <span
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 8, flexShrink: 0,
+            padding: "10px 16px", borderRadius: "var(--r)", fontWeight: 700, fontSize: 13.5,
+            background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff",
+            boxShadow: "0 10px 22px -12px rgba(253,72,22,.9)",
+          }}
+        >
+          {option.cta} <ArrowRight size={14} />
         </span>
+      ) : (
+        !option.flagship && ctaRow
       )}
     </button>
   );
@@ -279,6 +327,26 @@ export function HomeScreen() {
   const isFirstRun = useWorkspaceStore((s) => s.isFirstRun);
   const [lightboxAsset, setLightboxAsset] = useState<SampleAsset | null>(null);
 
+  // The single primary action — everything the old hero CTA button did now
+  // lives in this flagship tile inside the unified creation panel below.
+  const flagshipOption: CreationOption = {
+    icon: Sparkles,
+    title: "Start creating",
+    description: "Bring a brand or a brief — SwishX grounds it in your dossier and picks the right format.",
+    cta: isFirstRun ? "Build my first dossier" : "Create a Magic Video",
+    href: isFirstRun ? "/dossiers" : "/create",
+    flagship: true,
+  };
+
+  const openOption = (option: CreationOption) => {
+    if (option.soon) return;
+    if (option.href === "/create") {
+      useWorkspaceStore.getState().setView("create");
+      useWorkspaceStore.getState().setVideoSubStage("mode-select");
+    }
+    router.push(option.href);
+  };
+
   return (
     <div className="page-enter">
       {/* ── Hero ────────────────────────────────────────────────── */}
@@ -308,66 +376,28 @@ export function HomeScreen() {
         >
           Welcome back, welcome {PERSONA.firstName}, and let’s create something.
         </h1>
-        <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-3)", margin: "0 0 22px", maxWidth: "50ch" }}>
-          Your team wrote, checked and shipped from your dossiers overnight — <b style={{ color: "var(--ink)" }}>zero uncited claims</b>. Pick up where they left off.
+        <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-3)", margin: 0, maxWidth: "50ch" }}>
+          Your team wrote, checked and shipped from your dossiers overnight — <b style={{ color: "var(--ink)" }}>zero uncited claims</b>. Pick up where they left off, or{" "}
+          <button style={{ color: "var(--ink)", fontWeight: 700, textDecoration: "underline", textDecorationColor: "var(--hair-3)", textUnderlineOffset: 3 }}>
+            take the 90s tour
+          </button>.
         </p>
-
-        {/* CTA row */}
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <button
-            onClick={() => {
-              if (isFirstRun) {
-                router.push("/dossiers");
-              } else {
-                useWorkspaceStore.getState().setView("create");
-                useWorkspaceStore.getState().setVideoSubStage("mode-select");
-                router.push("/create");
-              }
-            }}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 9,
-              padding: "12px 22px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5,
-              background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff",
-              boxShadow: "0 12px 26px -14px rgba(253,72,22,.9),inset 0 1px 0 rgba(255,255,255,.28)",
-              cursor: "pointer",
-            }}
-          >
-            {isFirstRun ? "Build my first dossier" : "Create a Magic Video"}
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-          </button>
-          <button style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: "var(--r)", fontWeight: 650, fontSize: 14, background: "#fff", border: "1px solid var(--hair-2)", color: "var(--ink-2)" }}>
-            Take the tour
-            <kbd style={{ fontSize: 11, background: "var(--hair)", color: "var(--ink-3)", padding: "2px 6px", borderRadius: 5 }}>90s</kbd>
-          </button>
-        </div>
-
-        {isFirstRun ? <GettingStarted /> : (
-          <div style={{ display: "flex", gap: 28, marginTop: 24 }}>
-            {[["4", "markets live"], ["32", "formats"], ["0", "uncited claims"]].map(([val, label]) => (
-              <div key={label}>
-                <b style={{ display: "block", fontSize: 22, fontWeight: 800, letterSpacing: "-.8px", color: "var(--ink)" }}>{val}</b>
-                <span style={{ fontSize: 12, color: "var(--ink-4)" }}>{label}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* ── What would you like to create? ─────────────────────── */}
-      <div style={{ marginBottom: 26 }}>
-        <div style={{ marginBottom: 14 }}>
-          <b style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-.4px", display: "block" }}>What would you like to create?</b>
-          <p style={{ margin: "4px 0 0", fontSize: 13.5, color: "var(--ink-3)" }}>Every format is grounded in your brand dossier — nothing gets invented.</p>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
-          {CREATION_OPTIONS.map((option) => (
-            <CreationOptionCard key={option.title} option={option} onOpen={() => !option.soon && router.push(option.href)} />
+      {/* ── Unified creation panel — one CTA, one surface ───────── */}
+      <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", marginBottom: 30, overflow: "hidden" }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1" style={{ padding: 22 }}>
+          {[flagshipOption, ...CREATION_OPTIONS].map((option) => (
+            <CreationOptionCard key={option.title} option={option} onOpen={() => openOption(option)} />
           ))}
+        </div>
+        <div style={{ borderTop: "1px solid var(--hair)", background: "var(--surface-subtle)", padding: "14px 22px" }}>
+          {isFirstRun ? <JourneyStepper /> : <WorkspaceSnapshot />}
         </div>
       </div>
 
       {/* ── Sample Videos ───────────────────────────────────────── */}
-      <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", padding: "22px 24px", boxShadow: "var(--sh-1)" }}>
+      <div>
         <div style={{ marginBottom: 14 }}>
           <b style={{ fontSize: 15, fontWeight: 750, letterSpacing: "-.2px", display: "block" }}>Sample Videos</b>
           <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--ink-3)" }}>A few reels SwishX has already shipped.</p>
