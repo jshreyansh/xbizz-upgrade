@@ -41,6 +41,8 @@ export interface DossierApproval {
   status: ApprovalStatus;
 }
 
+export type DocumentType = "commercial" | "patient-medication" | "hcp-scientific";
+
 export interface BrandDossier {
   id: string;
   brandName: string;
@@ -48,6 +50,7 @@ export interface BrandDossier {
   indication: string;
   therapyArea: string;
   regulatoryAnchor: RegulatoryBody;
+  documentType: DocumentType;
   gradient: string;
   accentColor: string;
   initials: string;
@@ -61,6 +64,16 @@ export interface BrandDossier {
   sections: DossierSection[];
   /** Who needs to sign off before this dossier can be used to create content. */
   approvals: DossierApproval[];
+}
+
+/** An entry in the brand picker — not every brand has a dossier yet. */
+export interface BrandOption {
+  id: string;
+  name: string;
+  genericName: string;
+  therapyArea: string;
+  regulatoryAnchor: RegulatoryBody;
+  hasDossier: boolean;
 }
 
 export type DossierWizardStep =

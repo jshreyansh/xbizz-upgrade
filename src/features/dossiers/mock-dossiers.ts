@@ -1,4 +1,14 @@
-import type { BrandDossier, DossierApproval } from "@/features/dossiers/dossier-types";
+import type { BrandDossier, BrandOption, DossierApproval } from "@/features/dossiers/dossier-types";
+
+/** Every brand on file — some already have a dossier, some don't yet. */
+export const BRAND_REGISTRY: BrandOption[] = [
+  { id: "velmora", name: "Velmora", genericName: "velmoxaban mesylate", therapyArea: "Cardiology", regulatoryAnchor: "FDA", hasDossier: true },
+  { id: "onkavia", name: "Onkavia", genericName: "onkatrelinib dihydrochloride", therapyArea: "Oncology", regulatoryAnchor: "EMA", hasDossier: true },
+  { id: "nirvexa", name: "Nirvexa", genericName: "nirvexizumab-qfvd", therapyArea: "Immunology", regulatoryAnchor: "MHRA", hasDossier: true },
+  { id: "dermora", name: "Dermora", genericName: "dermoclizine fumarate", therapyArea: "Dermatology", regulatoryAnchor: "FDA", hasDossier: false },
+  { id: "pulmavia", name: "Pulmavia", genericName: "pulmavatinib citrate", therapyArea: "Respiratory", regulatoryAnchor: "FDA", hasDossier: false },
+  { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyArea: "Nephrology", regulatoryAnchor: "PMDA", hasDossier: false },
+];
 
 /** Fresh copy of a fully-signed-off approval trail, for dossiers seeded as already live. */
 function approvedByTeam(): DossierApproval[] {
@@ -31,6 +41,7 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 8,
     lastUpdated: "Today, 09:15 AM",
     status: "complete",
+    documentType: "commercial",
     approvals: approvedByTeam(),
     sources: [
       {
@@ -139,6 +150,7 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 7,
     lastUpdated: "Yesterday, 04:30 PM",
     status: "complete",
+    documentType: "commercial",
     approvals: approvedByTeam(),
     sources: [
       {
@@ -199,6 +211,7 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 6,
     lastUpdated: "3 days ago",
     status: "complete",
+    documentType: "commercial",
     approvals: approvedByTeam(),
     sources: [
       {
@@ -242,6 +255,7 @@ export const NEW_DOSSIER_TEMPLATE: BrandDossier = {
   sourcesCount: 1,
   lastUpdated: "Just now",
   status: "complete",
+  documentType: "commercial",
   approvals: pendingApprovals(),
   // Only the label ships pre-verified — the rest of the regulatory
   // checklist (clinical trial record, pivotal publication, HEOR,

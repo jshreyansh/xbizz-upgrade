@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { BrandDossier, DossierApproval, DossierSource, DossierWizardStep, RegulatoryBody } from "@/features/dossiers/dossier-types";
-import { NEW_DOSSIER_TEMPLATE } from "@/features/dossiers/mock-dossiers";
+import type { BrandDossier, BrandOption, DocumentType, DossierApproval, DossierSource, DossierWizardStep, RegulatoryBody } from "@/features/dossiers/dossier-types";
+import { BRAND_REGISTRY, NEW_DOSSIER_TEMPLATE } from "@/features/dossiers/mock-dossiers";
 import { BrandLoader } from "@/components/ui/brand-loader";
+
+const DOCUMENT_TYPES: { type: DocumentType; label: string; description: string }[] = [
+  { type: "commercial", label: "Commercial dossier", description: "Sales-enablement dossier for HCPs — the default." },
+  { type: "patient-medication", label: "Patient Medication Information", description: "Regulated patient leaflet — its own mandated sections." },
+  { type: "hcp-scientific", label: "HCP Scientific", description: "Non-promotional prescriber reference." },
+];
 
 const PENDING_APPROVALS: DossierApproval[] = [
   { role: "MLR Reviewer", name: "MLR Reviewer", initials: "MR", gradient: "linear-gradient(140deg,#22c07a,#12784a)", status: "pending" },
@@ -113,6 +119,19 @@ export function DossierWizard({
   const [showChangesForm, setShowChangesForm] = useState(false);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
 
+  // Step 1: brand picker
+  const [brandQuery, setBrandQuery] = useState("");
+  const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
+  const [isNewBrand, setIsNewBrand] = useState(!initialDossier);
+
+  // Step 2: supporting documents (real files, not persisted anywhere — this is a prototype)
+  const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
+
+  // Step 6: send the finished dossier to the internal team
+  const [showSendMenu, setShowSendMenu] = useState(false);
+  const [sendRecipients, setSendRecipients] = useState<string[]>([]);
+  const [sentAt, setSentAt] = useState<string | null>(null);
+
   const uploadedSourceTypes = new Set(activeDossier.sources.map((s) => s.type));
   const requiredSources = REQUIRED_SOURCES.filter((r) => r.tier === "required");
   const requiredUploadedCount = requiredSources.filter((r) => uploadedSourceTypes.has(r.type)).length;
@@ -138,6 +157,52 @@ export function DossierWizard({
       setUploadingType(null);
     }, 900);
   }
+
+  function selectExistingBrand(option: BrandOption) {
+    setSelectedBrandId(option.id);
+    setIsNewBrand(false);
+    setActiveDossier((prev) => ({
+      ...prev,
+      brandName: option.name,
+      genericName: option.genericName,
+      therapyArea: option.therapyArea,
+      regulatoryAnchor: option.regulatoryAnchor,
+    }));
+  }
+
+  function startNewBrand() {
+    setSelectedBrandId(null);
+    setIsNewBrand(true);
+  }
+
+  function updateNewBrandField(field: "brandName" | "genericName" | "indication", value: string) {
+    setActiveDossier((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function addSupportingFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setSupportingFiles((prev) => [...prev, ...Array.from(files)]);
+  }
+
+  function removeSupportingFile(index: number) {
+    setSupportingFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function toggleSendRecipient(role: string) {
+    setSendRecipients((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]));
+  }
+
+  function sendToTeam() {
+    if (sendRecipients.length === 0) return;
+    setSentAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
+    setShowSendMenu(false);
+  }
+
+  const canContinueFromBrand = isNewBrand
+    ? activeDossier.brandName.trim().length > 0 && activeDossier.genericName.trim().length > 0
+    : selectedBrandId !== null;
+
+  const selectedBrandOption = BRAND_REGISTRY.find((b) => b.id === selectedBrandId) || null;
 
   // Step 4: Medical Writer streaming generation simulation
   useEffect(() => {
@@ -231,95 +296,262 @@ export function DossierWizard({
         )}
       </div>
 
-      {/* ── STEP 1: PRODUCT SELECTION ──────────────────────────────── */}
+      {/* ── STEP 1: BRAND ─────────────────────────────────────────── */}
       {step === "product" && (
-        <div className="rise-in max-w-2xl mx-auto space-y-6">
-          <div>
-            <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--brand)", fontWeight: 800, marginBottom: 4 }}>
-              Step 1 of 5
+        <div className="rise-in grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* LEFT — pick a brand, then a document type */}
+          <div className="space-y-5">
+            <div>
+              <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--brand)", fontWeight: 800, marginBottom: 4 }}>
+                Step 1 of 5
+              </div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 6px" }}>
+                Create a new Brand Dossier
+              </h2>
+              <p style={{ fontSize: 14, color: "var(--ink-3)", margin: 0 }}>
+                Pick a brand and a document type — I’ll ground every section in the sources you approve next.
+              </p>
             </div>
-            <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 6px" }}>
-              Define the Product &amp; Regulatory Anchor
-            </h2>
-            <p style={{ fontSize: 14, color: "var(--ink-3)", margin: 0 }}>
-              The dossier is built specifically for the regulatory body that governs your promotional review.
-            </p>
-          </div>
 
-          <div style={{ background: "#fff", padding: 26, borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)" }} className="space-y-4">
-            <div>
-              <label style={{ display: "block", fontSize: 11.5, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 8 }}>
-                Brand Name
-              </label>
-              <input
-                defaultValue={activeDossier.brandName}
-                style={{ width: "100%", padding: "12px 14px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 15, fontWeight: 600 }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 11.5, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 8 }}>
-                Generic / Molecular Name
-              </label>
-              <input
-                defaultValue={activeDossier.genericName}
-                style={{ width: "100%", padding: "12px 14px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14 }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 11.5, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 8 }}>
-                Primary Indication
-              </label>
-              <textarea
-                rows={2}
-                defaultValue={activeDossier.indication}
-                style={{ width: "100%", padding: "12px 14px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14 }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 11.5, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 8 }}>
-                Regulatory Anchor Body
-              </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                {[
-                  { label: "🇺🇸 FDA · United States", val: "FDA" as RegulatoryBody },
-                  { label: "🇪🇺 EMA · European Union", val: "EMA" as RegulatoryBody },
-                ].map((item) => (
+            {/* 1 · Brand */}
+            <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", overflow: "hidden" }}>
+              <div style={{ padding: "16px 20px 12px" }}>
+                <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 10 }}>
+                  1 · Brand
+                </div>
+                <input
+                  value={brandQuery}
+                  onChange={(e) => setBrandQuery(e.target.value)}
+                  placeholder="Search brands…"
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14 }}
+                />
+              </div>
+
+              <div style={{ maxHeight: 260, overflowY: "auto" }}>
+                {BRAND_REGISTRY.filter((b) => b.name.toLowerCase().includes(brandQuery.toLowerCase())).map((b) => (
                   <button
-                    key={item.val}
-                    onClick={() => setActiveDossier({ ...activeDossier, regulatoryAnchor: item.val })}
+                    key={b.id}
+                    onClick={() => selectExistingBrand(b)}
                     style={{
-                      padding: "12px 14px",
-                      borderRadius: "var(--r)",
-                      border: `1px solid ${activeDossier.regulatoryAnchor === item.val ? "var(--brand)" : "var(--hair-2)"}`,
-                      background: activeDossier.regulatoryAnchor === item.val ? "var(--tint)" : "#fff",
-                      fontWeight: 700,
-                      fontSize: 13.5,
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      padding: "12px 20px",
+                      borderTop: "1px solid var(--hair)",
+                      background: selectedBrandId === b.id ? "var(--tint-2)" : "transparent",
                       textAlign: "left",
                     }}
                   >
-                    {item.label}
+                    <div style={{ minWidth: 0 }}>
+                      <b style={{ fontSize: 14, fontWeight: 750, display: "block" }}>{b.name}</b>
+                      <span style={{ fontSize: 12, color: "var(--ink-4)" }}>{b.genericName} · {b.therapyArea}</span>
+                    </div>
+                    <span
+                      style={{
+                        width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                        border: `2px solid ${selectedBrandId === b.id ? "var(--brand)" : "var(--hair-3)"}`,
+                        display: "grid", placeItems: "center",
+                      }}
+                    >
+                      {selectedBrandId === b.id && <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--brand)" }} />}
+                    </span>
                   </button>
                 ))}
+                <button
+                  onClick={startNewBrand}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    padding: "14px 20px",
+                    borderTop: "1px solid var(--hair)",
+                    background: isNewBrand ? "var(--tint-2)" : "transparent",
+                    color: "var(--brand)",
+                    fontWeight: 700,
+                    fontSize: 13.5,
+                  }}
+                >
+                  <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}><path d="M12 5v14M5 12h14" /></svg>
+                  Add a new brand
+                </button>
               </div>
+
+              {isNewBrand && (
+                <div style={{ padding: "16px 20px 20px", borderTop: "1px solid var(--hair)", background: "var(--surface-subtle)" }} className="space-y-3">
+                  <div>
+                    <label style={{ display: "block", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
+                      Brand name
+                    </label>
+                    <input
+                      value={activeDossier.brandName}
+                      onChange={(e) => updateNewBrandField("brandName", e.target.value)}
+                      placeholder="e.g. Aveloxa"
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14, fontWeight: 600, background: "#fff" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
+                      Generic / molecular name
+                    </label>
+                    <input
+                      value={activeDossier.genericName}
+                      onChange={(e) => updateNewBrandField("genericName", e.target.value)}
+                      placeholder="e.g. aveloxotide dipropionate"
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, background: "#fff" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
+                      Primary indication
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={activeDossier.indication}
+                      onChange={(e) => updateNewBrandField("indication", e.target.value)}
+                      placeholder="What is it prescribed for?"
+                      style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, background: "#fff" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 6 }}>
+                      Regulatory anchor
+                    </label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                      {[
+                        { label: "🇺🇸 FDA", val: "FDA" as RegulatoryBody },
+                        { label: "🇪🇺 EMA", val: "EMA" as RegulatoryBody },
+                      ].map((item) => (
+                        <button
+                          key={item.val}
+                          onClick={() => setActiveDossier((prev) => ({ ...prev, regulatoryAnchor: item.val }))}
+                          style={{
+                            padding: "9px 12px",
+                            borderRadius: "var(--r)",
+                            border: `1px solid ${activeDossier.regulatoryAnchor === item.val ? "var(--brand)" : "var(--hair-2)"}`,
+                            background: activeDossier.regulatoryAnchor === item.val ? "var(--tint)" : "#fff",
+                            fontWeight: 700,
+                            fontSize: 13,
+                            textAlign: "left",
+                          }}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* 2 · Document type */}
+            <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", padding: 20 }} className="space-y-2">
+              <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 4 }}>
+                2 · Document type — what am I building?
+              </div>
+              {DOCUMENT_TYPES.map((dt) => (
+                <button
+                  key={dt.type}
+                  onClick={() => setActiveDossier((prev) => ({ ...prev, documentType: dt.type }))}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    padding: "13px 16px",
+                    borderRadius: "var(--r-l)",
+                    border: `1px solid ${activeDossier.documentType === dt.type ? "var(--brand)" : "var(--hair)"}`,
+                    background: activeDossier.documentType === dt.type ? "var(--tint-2)" : "transparent",
+                    textAlign: "left",
+                  }}
+                >
+                  <div>
+                    <b style={{ fontSize: 13.5, fontWeight: 750, display: "block" }}>{dt.label}</b>
+                    <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{dt.description}</span>
+                  </div>
+                  <span
+                    style={{
+                      width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                      border: `2px solid ${activeDossier.documentType === dt.type ? "var(--brand)" : "var(--hair-3)"}`,
+                      display: "grid", placeItems: "center",
+                    }}
+                  >
+                    {activeDossier.documentType === dt.type && <span style={{ width: 9, height: 9, borderRadius: "50%", background: "var(--brand)" }} />}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setStep("sources")}
+              disabled={!canContinueFromBrand}
+              style={{
+                width: "100%",
+                padding: "14px",
+                borderRadius: "var(--r)",
+                fontWeight: 750,
+                fontSize: 14.5,
+                background: canContinueFromBrand ? "linear-gradient(180deg,#ff5b2d,var(--brand))" : "var(--hair-2)",
+                color: canContinueFromBrand ? "#fff" : "var(--ink-4)",
+                border: "none",
+                boxShadow: canContinueFromBrand ? "0 12px 26px -14px rgba(253,72,22,.9)" : "none",
+                cursor: canContinueFromBrand ? "pointer" : "default",
+                transition: ".2s var(--e)",
+              }}
+            >
+              {canContinueFromBrand ? "Continue with your Medical Writer →" : isNewBrand ? "Name the brand to continue" : "Pick a brand to continue"}
+            </button>
           </div>
 
-          <button
-            onClick={() => setStep("sources")}
-            style={{
-              width: "100%",
-              padding: "14px",
-              borderRadius: "var(--r)",
-              fontWeight: 750,
-              fontSize: 14.5,
-              background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-              color: "#fff",
-              border: "none",
-              boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
-            }}
-          >
-            Continue to Sources &amp; Allow-list →
-          </button>
+          {/* RIGHT — what the Medical Writer is starting from */}
+          <div className="space-y-3">
+            <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
+              What I’m starting from
+            </div>
+            <div style={{ background: "var(--tint-2)", border: "1px solid var(--tint-line)", borderRadius: "var(--r-l)", padding: 16, display: "flex", gap: 12 }}>
+              <span style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(140deg,#ff7a3d,#c9310a)", flexShrink: 0, display: "grid", placeItems: "center", color: "#fff", fontSize: 11, fontWeight: 800 }}>MW</span>
+              <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
+                <b>Medical Writer</b> —{" "}
+                {isNewBrand
+                  ? "Tell me the brand and generic name, and I’ll ground everything I write in the sources you approve next."
+                  : "Select a brand and I’ll do the groundwork: existing record first, then a fresh source scan."}
+              </p>
+            </div>
+
+            {!isNewBrand && selectedBrandOption && (
+              selectedBrandOption.hasDossier ? (
+                <div style={{ background: "#fff", border: "1px solid var(--hair)", borderRadius: "var(--r-l)", padding: 16, boxShadow: "var(--sh-1)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--ok)" }} />
+                    <b style={{ fontSize: 13.5, fontWeight: 750 }}>Already on record</b>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)", lineHeight: 1.55 }}>
+                    {selectedBrandOption.name} already has a dossier. I’ll refresh it against fresh sources rather than start over.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ background: "#fff", border: "1px solid var(--hair)", borderRadius: "var(--r-l)", padding: 16, boxShadow: "var(--sh-1)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--warn)" }} />
+                    <b style={{ fontSize: 13.5, fontWeight: 750 }}>New product — no record yet</b>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)", lineHeight: 1.55 }}>
+                    Nothing on file for {selectedBrandOption.name}. I’ll build the full dossier from the sources you upload next.
+                  </p>
+                </div>
+              )
+            )}
+
+            {isNewBrand && !activeDossier.brandName.trim() && (
+              <div style={{ padding: "16px 4px", color: "var(--ink-4)", fontSize: 13 }}>
+                Select a brand to see what’s already on record.
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -466,6 +698,53 @@ export function DossierWizard({
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* ── Supporting documents (optional, not required by law) ── */}
+          <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", padding: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+              <b style={{ fontSize: 14.5, fontWeight: 800 }}>Supporting documents</b>
+              <span style={{ fontSize: 11, fontWeight: 750, color: "var(--ink-4)" }}>Optional</span>
+            </div>
+            <p style={{ margin: "0 0 14px", fontSize: 12.5, color: "var(--ink-3)" }}>
+              Anything else worth grounding claims in — slide decks, competitor teardowns, reference images. Not required by law, just extra context for your team.
+            </p>
+
+            <label
+              style={{
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                padding: "24px 16px", borderRadius: "var(--r-l)", border: "1.5px dashed var(--hair-3)",
+                background: "var(--surface-subtle)", cursor: "pointer", textAlign: "center",
+              }}
+            >
+              <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
+              <span style={{ fontSize: 13, fontWeight: 650, color: "var(--ink-2)" }}>Click to attach files or images</span>
+              <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>PDF, DOC, PNG, JPG — any size</span>
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                onChange={(e) => addSupportingFiles(e.target.files)}
+                style={{ display: "none" }}
+              />
+            </label>
+
+            {supportingFiles.length > 0 && (
+              <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
+                {supportingFiles.map((file, i) => (
+                  <div key={`${file.name}-${i}`} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 12px", borderRadius: "var(--r)", background: "var(--surface-subtle)" }}>
+                    <span style={{ width: 28, height: 28, borderRadius: 8, background: "var(--tint)", color: "var(--brand)", display: "grid", placeItems: "center", fontSize: 9, fontWeight: 800, flexShrink: 0 }}>
+                      {file.type.startsWith("image/") ? "IMG" : file.name.split(".").pop()?.slice(0, 4).toUpperCase() || "DOC"}
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 12.5, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.name}</span>
+                    <span style={{ fontSize: 11, color: "var(--ink-4)", flexShrink: 0 }}>{(file.size / 1024).toFixed(0)} KB</span>
+                    <button onClick={() => removeSupportingFile(i)} style={{ flexShrink: 0, width: 22, height: 22, borderRadius: "50%", display: "grid", placeItems: "center", color: "var(--ink-4)" }}>
+                      <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button
@@ -770,7 +1049,63 @@ export function DossierWizard({
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", gap: 10, position: "relative" }}>
+              <div style={{ position: "relative" }}>
+                <button
+                  onClick={() => setShowSendMenu((v) => !v)}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 7,
+                    padding: "11px 16px", borderRadius: "var(--r)", fontWeight: 700, fontSize: 14,
+                    background: "#fff", border: "1px solid var(--hair-2)", color: "var(--ink-2)", cursor: "pointer",
+                  }}
+                >
+                  <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4z" /></svg>
+                  Send to team
+                  <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+                </button>
+
+                {showSendMenu && (
+                  <div
+                    style={{
+                      position: "absolute", top: "calc(100% + 8px)", right: 0, width: 260, zIndex: 20,
+                      background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", boxShadow: "var(--sh-3)", overflow: "hidden",
+                    }}
+                  >
+                    <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--hair)", fontSize: 11.5, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-4)" }}>
+                      Notify internal team
+                    </div>
+                    <div style={{ padding: "6px 0" }}>
+                      {activeDossier.approvals.map((a) => (
+                        <label key={a.role} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 16px", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={sendRecipients.includes(a.role)}
+                            onChange={() => toggleSendRecipient(a.role)}
+                            style={{ accentColor: "var(--brand)", width: 15, height: 15 }}
+                          />
+                          <span style={{ width: 24, height: 24, borderRadius: "50%", background: a.gradient, color: "#fff", fontSize: 9, fontWeight: 800, display: "grid", placeItems: "center", flexShrink: 0 }}>{a.initials}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ padding: 12, borderTop: "1px solid var(--hair)" }}>
+                      <button
+                        onClick={sendToTeam}
+                        disabled={sendRecipients.length === 0}
+                        style={{
+                          width: "100%", padding: "10px", borderRadius: "var(--r)", fontWeight: 700, fontSize: 13,
+                          background: sendRecipients.length ? "var(--ink)" : "var(--hair-2)",
+                          color: sendRecipients.length ? "#fff" : "var(--ink-4)",
+                          border: "none", cursor: sendRecipients.length ? "pointer" : "default",
+                        }}
+                      >
+                        Send {sendRecipients.length > 0 ? `to ${sendRecipients.length}` : ""}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={() => router.push("/create")}
                 style={{
@@ -795,6 +1130,13 @@ export function DossierWizard({
               </button>
             </div>
           </div>
+
+          {sentAt && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 16px", borderRadius: "var(--r)", background: "var(--ok-bg)", border: "1px solid var(--ok-line)", color: "var(--ok)", fontSize: 13, fontWeight: 650 }}>
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12l6 6L20 5" /></svg>
+              Sent to {sendRecipients.join(", ")} at {sentAt}
+            </div>
+          )}
 
           {/* 2-Column Inspector: Left Sections Tree + Right Section Body */}
           <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 20, alignItems: "start" }}>
