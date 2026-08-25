@@ -1,14 +1,12 @@
 "use client";
 
 import { ArrowLeft, Check, X } from "lucide-react";
-import { SwishXMark } from "@/components/ui/swishx-mark";
 import { Button } from "@/components/ui/button";
 
 export interface VideoWizardHeaderProps {
   currentStep: 1 | 2 | 3;
   onBack: () => void;
   onClose: () => void;
-  modeLabel?: string;
 }
 
 const STEPS = [
@@ -21,38 +19,32 @@ export function VideoWizardHeader({
   currentStep,
   onBack,
   onClose,
-  modeLabel,
 }: VideoWizardHeaderProps) {
   const progressPercent = ((currentStep - 1) / (STEPS.length - 1)) * 100;
 
   return (
-    <header className="sticky top-0 z-40 flex h-[64px] w-full shrink-0 items-center justify-between border-b border-[var(--hair)] bg-white/95 px-6 backdrop-blur-md">
-      {/* Left: Back button + Product Mark + Mode Pill */}
-      <div className="flex items-center gap-3 min-w-[220px]">
+    <header className="sticky top-0 z-40 flex h-[60px] w-full shrink-0 items-center justify-between border-b border-[var(--hair)] bg-white/95 px-7 backdrop-blur-md">
+      {/* Left: Clean Back Navigation (Fixed Width, No Shifting SX Logo or Dynamic Text) */}
+      <div className="flex items-center w-[140px]">
         <button
           onClick={onBack}
-          className="focus-ring grid size-9 place-items-center rounded-[10px] text-[var(--ink-3)] transition hover:bg-black/5 hover:text-[var(--ink)]"
+          className="focus-ring inline-flex items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-[13px] font-semibold text-[var(--ink-2)] transition hover:bg-black/5 hover:text-[var(--ink)]"
           aria-label="Go back"
         >
-          <ArrowLeft className="size-[18px]" />
+          <ArrowLeft className="size-4" />
+          <span>Back</span>
         </button>
-        <SwishXMark compact />
-        {modeLabel && (
-          <span className="hidden sm:inline-flex items-center rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--brand-deep)] border border-[var(--tint-line)]">
-            {modeLabel}
-          </span>
-        )}
       </div>
 
-      {/* Center: Connected 3-Node Stepper with Animated Progress Line */}
-      <div className="flex items-center">
-        <nav aria-label="Creation progress" className="relative flex w-[280px] items-center justify-between">
-          {/* Background Connecting Line */}
+      {/* Center: Sleek Connected 3-Node Stepper with Animated Progress Track */}
+      <div className="flex items-center justify-center flex-1">
+        <nav aria-label="Creation progress" className="relative flex w-[320px] items-center justify-between">
+          {/* Background Connecting Hairline Track */}
           <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-[2px] bg-[#e5e7eb] rounded-full z-0" />
 
-          {/* Active Filling Progress Line */}
+          {/* Active Filling Animated Progress Line */}
           <div
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-[2.5px] bg-[var(--brand)] rounded-full z-0 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-[2px] bg-[var(--brand)] rounded-full z-0 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] shadow-[0_0_8px_rgba(253,72,22,0.35)]"
             style={{ width: `calc(${progressPercent}% * 0.92)` }}
           />
 
@@ -61,20 +53,20 @@ export function VideoWizardHeader({
             const isCompleted = currentStep > s.step;
             const isCurrent = currentStep === s.step;
             return (
-              <div key={s.step} className="relative z-10 flex flex-col items-center gap-1 bg-white px-1">
+              <div key={s.step} className="relative z-10 flex items-center gap-2 bg-white px-2 py-0.5 rounded-full">
                 <div
-                  className={`grid size-7 place-items-center rounded-full text-[11.5px] transition-all duration-300 ${
+                  className={`grid size-6 place-items-center rounded-full text-[11px] transition-all duration-300 ${
                     isCompleted
-                      ? "bg-[var(--brand)] text-white border-2 border-[var(--brand)] shadow-sm"
+                      ? "bg-[var(--brand)] text-white shadow-sm ring-2 ring-white"
                       : isCurrent
                       ? "bg-white text-[var(--brand)] border-2 border-[var(--brand)] ring-4 ring-[var(--tint)] shadow-sm font-bold scale-105"
-                      : "bg-[#f4f5f3] text-[var(--ink-4)] border-2 border-[#e5e7eb] font-semibold"
+                      : "bg-[#f4f5f3] text-[var(--ink-4)] border border-[#e5e7eb] font-medium"
                   }`}
                 >
-                  {isCompleted ? <Check className="size-3.5" strokeWidth={3.5} /> : s.step}
+                  {isCompleted ? <Check className="size-3" strokeWidth={3.5} /> : s.step}
                 </div>
                 <span
-                  className={`text-[11.5px] transition-colors duration-200 ${
+                  className={`text-[12px] tracking-tight transition-colors duration-200 ${
                     isCurrent
                       ? "font-extrabold text-[var(--ink)]"
                       : isCompleted
@@ -90,16 +82,16 @@ export function VideoWizardHeader({
         </nav>
       </div>
 
-      {/* Right: Clean Close Button */}
-      <div className="flex items-center justify-end min-w-[220px]">
+      {/* Right: Clean Exit Button (Fixed Width) */}
+      <div className="flex items-center justify-end w-[140px]">
         <Button
           onClick={onClose}
           variant="ghost"
           size="icon"
-          className="size-9 rounded-[10px] text-[var(--ink-3)] hover:bg-black/5 hover:text-[var(--ink)]"
+          className="size-8 rounded-[9px] text-[var(--ink-3)] hover:bg-black/5 hover:text-[var(--ink)]"
           aria-label="Exit creation"
         >
-          <X className="size-[18px]" />
+          <X className="size-4" />
         </Button>
       </div>
     </header>

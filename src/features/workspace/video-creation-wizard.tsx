@@ -36,13 +36,6 @@ export function VideoCreationWizard() {
       ? 2
       : 1;
 
-  const modeDisplayName =
-    creationMode === "magic-reel"
-      ? "MagicReel™"
-      : creationMode === "magic-avatar"
-      ? "MagicAvatar™"
-      : "Custom Video";
-
   const market = useWorkspaceStore((s) => s.market);
 
   // Derive plan for Step 3 resolution check
@@ -157,7 +150,6 @@ export function VideoCreationWizard() {
         currentStep={currentStep}
         onBack={handleBack}
         onClose={handleClose}
-        modeLabel={modeDisplayName}
       />
 
       {/* Main Step Canvas with Smooth Fade */}

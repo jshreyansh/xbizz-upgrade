@@ -163,6 +163,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     toggleSource,
     setView,
     setVideoSubStage,
+    goal: storeGoal,
+    topics: storeTopics,
+    setGoal: setStoreGoal,
+    setTopics: setStoreTopics,
   } = useWorkspaceStore();
 
   const brandName =
@@ -173,13 +177,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       : sourcePayload.dossierId === "velmora"
       ? "Velmora"
       : "Clinical";
-
-  const modeLabel =
-    creationMode === "magic-reel"
-      ? "MagicReel™"
-      : creationMode === "magic-avatar"
-      ? "MagicAvatar™"
-      : "Custom Video";
 
   const profile = profiles[assetType];
   const derivedPlan = useMemo(
@@ -200,8 +197,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   const defaultTreatment = creationMode === "magic-avatar" ? "presenter" : creationMode === "magic-reel" ? "narrated" : (assetType === "video" ? presentationMode : derivedPlan.treatmentId);
   const [treatmentId, setTreatmentId] = useState<string>(defaultTreatment);
-  const [goal, setGoal] = useState<string>(derivedPlan.goal);
-  const [selectedTopics, setSelectedTopics] = useState<string[]>(derivedPlan.topics);
+  const [goal, setGoal] = useState<string>(storeGoal || derivedPlan.goal);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>(storeTopics && storeTopics.length > 0 ? storeTopics : derivedPlan.topics);
   const [confirmedTreatment, setConfirmedTreatment] = useState(true);
   const [sourceConflictResolved, setSourceConflictResolved] = useState(false);
   const [storyStructure, setStoryStructure] = useState(derivedPlan.storyStructure);
@@ -234,7 +231,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   };
 
   const toggleTopic = (topic: string) =>
-    setSelectedTopics((current) => (current.includes(topic) ? current.filter((item) => item !== topic) : [...current, topic]));
+    setSelectedTopics((current) => {
+      const next = current.includes(topic) ? current.filter((item) => item !== topic) : [...current, topic];
+      setStoreTopics(next);
+      return next;
+    });
 
   const previewAudio = (kind: "voice" | "music", label: string) => {
     stopAudioPreview();
@@ -298,7 +299,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   <ChoiceGroup label="Choose the primary audience" value={audience} onChange={(next) => { setAudience(next as Audience); setEditingDecision(null); }} options={audienceOptions} icon={(next) => <AudienceIcon value={next} />} />
                 </DecisionRow>
                 <DecisionRow label="Objective" value={goal} icon={<Target className="size-4" />} editing={editingDecision === "objective"} onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}>
-                  <ChoiceGroup label="What should this accomplish?" value={goal} onChange={(next) => { setGoal(next); setEditingDecision(null); }} options={["New launch", "Awareness", "Adoption", "Retention", "Education"]} icon={() => <Target className="size-4" />} />
+                  <ChoiceGroup label="What should this accomplish?" value={goal} onChange={(next) => { setGoal(next); setStoreGoal(next); setEditingDecision(null); }} options={["New launch", "Awareness", "Adoption", "Retention", "Education"]} icon={() => <Target className="size-4" />} />
                 </DecisionRow>
                 <DecisionRow label="Topics" value={selectedTopics.join(" · ")} icon={<LayoutList className="size-4" />} editing={editingDecision === "topics"} onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}>
                   <div className="text-[13px] font-semibold text-[#5f6b65]">Include only what matters</div><div className="mt-2 flex flex-wrap gap-2">{topics.map((topic) => <button key={topic} onClick={() => toggleTopic(topic)} aria-pressed={selectedTopics.includes(topic)} className={cn("focus-ring min-h-10 rounded-[12px] border px-3 text-[13px] font-medium transition", selectedTopics.includes(topic) ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)]" : "border-[#e3e8e5] hover:border-[#cbd6d0]")}>{selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}{topic}</button>)}</div><div className="mt-3 flex justify-end"><Button size="sm" onClick={() => setEditingDecision(null)}>Done</Button></div>
@@ -392,7 +393,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         currentStep={3}
         onBack={handleBackToBrief}
         onClose={handleClose}
-        modeLabel={modeLabel}
       />
       {content}
       {presenterLibraryOpen && <PresenterLibrary selected={presenter} onSelect={(name) => { setPresenter(name); setPresenterLibraryOpen(false); }} onClose={() => setPresenterLibraryOpen(false)} />}

@@ -10,11 +10,13 @@ import {
   GitBranch,
   Globe2,
   Info,
+  Layers,
   LayoutGrid,
   MonitorPlay,
   Paperclip,
   Search,
   ShieldCheck,
+  Target,
   TriangleAlert,
   Upload,
   Users,
@@ -47,6 +49,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     audience,
     market,
     intendedUse,
+    goal,
+    topics,
     selectedSourceIds,
     demoScenarioId,
     setBrief,
@@ -228,21 +232,27 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           {/* Attached Files & Sources */}
-          {(localFiles.length > 0 || selectedSources.length > 0) && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-[12px] font-bold text-[var(--ink-muted)]">Active Context:</span>
-              <span className="squircle-control flex min-h-9 items-center gap-2 bg-[var(--tint)] px-2.5 text-[12.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
-                <ShieldCheck className="size-4 text-[var(--brand)]" />
-                {sourceDisplayName}
-              </span>
-              {selectedSources.map((source) => (
-                <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
-              ))}
-              {localFiles.map((file) => (
-                <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
-              ))}
-            </div>
-          )}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-[12px] font-bold text-[var(--ink-muted)]">Active Context:</span>
+            <span className="squircle-control flex min-h-9 items-center gap-2 bg-[var(--tint)] px-2.5 text-[12.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+              <ShieldCheck className="size-4 text-[var(--brand)]" />
+              {sourceDisplayName}
+            </span>
+            <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+              <Target className="size-3.5 text-[var(--brand)]" />
+              {goal}
+            </span>
+            <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+              <Layers className="size-3.5 text-[var(--brand)]" />
+              {topics.length} topics
+            </span>
+            {selectedSources.map((source) => (
+              <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
+            ))}
+            {localFiles.map((file) => (
+              <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
+            ))}
+          </div>
 
           <div className="mt-7 grid gap-4 border-t border-[var(--line)] pt-6 sm:grid-cols-2">
             <Field label="Primary audience" icon={Users}>
@@ -304,7 +314,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         currentStep={2}
         onBack={handleBackToSource}
         onClose={handleBackHome}
-        modeLabel={modeDisplayName}
       />
       {content}
       {sourceLibraryOpen && <SourceLibraryModal selectedIds={selectedSourceIds} query={sourceQuery} onQueryChange={setSourceQuery} sources={filteredSources} onToggle={toggleSource} onUpload={() => { setSourceLibraryOpen(false); fileInputRef.current?.click(); }} onClose={() => setSourceLibraryOpen(false)} />}

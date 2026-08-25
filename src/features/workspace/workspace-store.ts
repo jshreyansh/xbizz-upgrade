@@ -16,6 +16,8 @@ interface WorkspaceState {
   assetType: AssetType;
   brief: string;
   audience: Audience;
+  goal: string;
+  topics: string[];
   market: string;
   intendedUse: string;
   format: string;
@@ -44,6 +46,9 @@ interface WorkspaceState {
   setAssetType: (assetType: AssetType) => void;
   setBrief: (brief: string) => void;
   setAudience: (audience: Audience) => void;
+  setGoal: (goal: string) => void;
+  setTopics: (topics: string[]) => void;
+  toggleTopic: (topic: string) => void;
   setMarket: (market: string) => void;
   setIntendedUse: (intendedUse: string) => void;
   setFormat: (format: string) => void;
@@ -76,6 +81,8 @@ const initialState = {
   assetType: "video" as AssetType,
   brief: "Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for DERMORA.",
   audience: "HCP" as Audience,
+  goal: "New Launch",
+  topics: ["Product Introduction", "Mechanism of Action", "Indications", "Dosage & Safety"],
   market: "United States",
   intendedUse: "HCP meeting",
   format: "16:9",
@@ -111,6 +118,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setAssetType: (assetType) => set({ assetType }),
   setBrief: (brief) => set({ brief }),
   setAudience: (audience) => set({ audience }),
+  setGoal: (goal) => set({ goal }),
+  setTopics: (topics) => set({ topics }),
+  toggleTopic: (topic) =>
+    set((state) => ({
+      topics: state.topics.includes(topic)
+        ? state.topics.filter((t) => t !== topic)
+        : [...state.topics, topic],
+    })),
   setMarket: (market) => set({ market }),
   setIntendedUse: (intendedUse) => set({ intendedUse }),
   setFormat: (format) => set({ format }),
