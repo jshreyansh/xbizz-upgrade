@@ -149,15 +149,26 @@ export function CreateScreen() {
         modeLabel={modeDisplayName}
       />
 
-      <main className="mx-auto grid w-full max-w-[1320px] gap-5 px-4 py-5 sm:px-7 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
-          <div className="max-w-[780px]">
-            <h1 className="text-[30px] font-[750] tracking-[-0.04em] sm:text-[36px]">Define the video job</h1>
-            <p className="mt-2 text-[15.5px] leading-6 text-[var(--ink-muted)]">Describe what you want to communicate. SwishX will synthesize the script, visual prompts, and regulatory citations from your source.</p>
+      <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
+        {/* Standardized Page Heading */}
+        <div className="mb-7">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-1 text-[11.5px] font-bold uppercase tracking-wider text-[var(--brand-deep)] border border-[var(--tint-line)]">
+              <FileText className="size-3.5 text-[var(--brand)]" /> Step 2 of 3 · Define the Job
+            </span>
           </div>
+          <h1 className="mt-2.5 text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
+            Define the video brief
+          </h1>
+          <p className="mt-1 text-[15px] text-[var(--ink-3)]">
+            Describe what you want to communicate. SwishX will synthesize the script, visual scenes, and regulatory citations.
+          </p>
+        </div>
 
-          {/* Active Engine Indicator Pill (Replaced 4-way generic picker) */}
-          <div className="mt-5 flex items-center justify-between rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+          <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
+            {/* Active Engine Indicator Pill */}
+            <div className="flex items-center justify-between rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5">
             <div className="flex items-center gap-3">
               <div className="grid size-10 place-items-center rounded-[11px] bg-[var(--brand)] text-white shadow-sm">
                 <Film className="size-5" />
@@ -269,6 +280,7 @@ export function CreateScreen() {
           <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]"><ShieldCheck className="size-4 text-[var(--brand)]" /><span>Nothing is created until you confirm the plan.</span></div>
           </div>
         </aside>
+        </div>
       </main>
 
       {sourceLibraryOpen && <SourceLibraryModal selectedIds={selectedSourceIds} query={sourceQuery} onQueryChange={setSourceQuery} sources={filteredSources} onToggle={toggleSource} onUpload={() => { setSourceLibraryOpen(false); fileInputRef.current?.click(); }} onClose={() => setSourceLibraryOpen(false)} />}

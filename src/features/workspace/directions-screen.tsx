@@ -20,6 +20,7 @@ import {
   Play,
   Plus,
   ShieldCheck,
+  Sparkles,
   Target,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -274,12 +275,23 @@ export function DirectionsScreen() {
         modeLabel={modeLabel}
       />
 
-      <main className="mx-auto w-full max-w-[1320px] px-4 py-5 sm:px-7">
-        <section className="rise-in">
-          <h1 className="max-w-[780px] text-[30px] font-[700] tracking-[-0.04em] sm:text-[34px]">Complete the choices that change the draft.</h1>
-        </section>
+      <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
+        {/* Standardized Page Heading */}
+        <div className="mb-7">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-1 text-[11.5px] font-bold uppercase tracking-wider text-[var(--brand-deep)] border border-[var(--tint-line)]">
+              <Sparkles className="size-3.5 text-[var(--brand)]" /> Step 3 of 3 · Confirm the Plan
+            </span>
+          </div>
+          <h1 className="mt-2.5 text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
+            Confirm the video plan
+          </h1>
+          <p className="mt-1 text-[15px] text-[var(--ink-3)]">
+            Review recommended creative direction, delivery format, voice talent, and cited evidence before generating scenes.
+          </p>
+        </div>
 
-        <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
           <section className="rise-in space-y-3 [animation-delay:50ms]">
             <PlanSection icon={Film} title="Creative treatment" summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`} status={confirmedTreatment ? "Confirmed" : "Needs you"} open={openSection === "treatment"} onToggle={() => toggleSection("treatment")} tone={confirmedTreatment ? "done" : "attention"}>
               <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5"><div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div><p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p></div>

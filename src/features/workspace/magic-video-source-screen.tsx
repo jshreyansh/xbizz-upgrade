@@ -127,15 +127,15 @@ export function MagicVideoSourceScreen() {
       />
 
       {/* Main Content */}
-      <main className="mx-auto w-full max-w-[960px] px-6 py-8">
-        {/* Title */}
-        <div className="mb-6">
+      <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
+        {/* Standardized Page Heading */}
+        <div className="mb-7">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-0.5 text-[11.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-1 text-[11.5px] font-bold uppercase tracking-wider text-[var(--brand-deep)] border border-[var(--tint-line)]">
               <ShieldCheck className="size-3.5 text-[var(--brand)]" /> Step 1 of 3 · Grounded Evidence
             </span>
           </div>
-          <h1 className="mt-2.5 text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[32px]">
+          <h1 className="mt-2.5 text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
             Choose evidence source
           </h1>
           <p className="mt-1 text-[15px] text-[var(--ink-3)]">
