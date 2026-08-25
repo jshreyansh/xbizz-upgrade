@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { LogoMark } from "@/components/ui/logo-mark";
 
 const PRIMARY_MARKETS = [
   { flag: "🇺🇸", label: "United States · FDA", desc: "Claims checked against the approved PI and OPDP promotional guidance" },
@@ -24,9 +25,10 @@ export function WorkspaceScreen() {
       {/* Left */}
       <div className="relative z-[2] flex min-w-0 flex-[1.12] flex-col justify-between" style={{ padding: "54px 62px", color: "#fff" }}>
         <div>
-          <svg viewBox="0 0 120 24" fill="none" height={30} aria-label="SwishX">
-            <text x="0" y="20" fill="white" fontSize="22" fontWeight="800" letterSpacing="-1">SwishX</text>
-          </svg>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 9, color: "#fff", fontSize: 22, fontWeight: 800, letterSpacing: "-1px" }}>
+            <LogoMark size={24} />
+            swish<span style={{ color: "var(--brand)" }}>X</span>
+          </div>
         </div>
         <div>
           <div style={{ fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(255,255,255,.62)", fontWeight: 700, marginBottom: 22, display: "inline-flex", alignItems: "center", gap: 9 }}>

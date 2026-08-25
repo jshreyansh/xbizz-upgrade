@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { BrandDossier, DossierWizardStep, RegulatoryBody } from "@/features/dossiers/dossier-types";
 import { NEW_DOSSIER_TEMPLATE } from "@/features/dossiers/mock-dossiers";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 interface DossierWizardProps {
   initialDossier?: BrandDossier | null;
@@ -345,22 +346,7 @@ export function DossierWizard({
       {/* ── STEP 4: MEDICAL WRITER STREAMING ──────────────────────── */}
       {step === "writing" && (
         <div className="rise-in max-w-xl mx-auto text-center space-y-6 py-12">
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: 22,
-              background: "linear-gradient(140deg,#ff7a3d,#c9310a)",
-              display: "grid",
-              placeItems: "center",
-              margin: "0 auto",
-              boxShadow: "0 14px 34px -10px rgba(253,72,22,.8)",
-            }}
-          >
-            <svg width={32} height={32} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.2} style={{ animation: "spin 3s linear infinite" }}>
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-            </svg>
-          </div>
+          <BrandLoader size={72} className="mx-auto" />
 
           <div>
             <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 8px" }}>

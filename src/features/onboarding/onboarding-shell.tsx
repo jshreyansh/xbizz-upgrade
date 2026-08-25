@@ -7,6 +7,7 @@ import { BeatDossier } from "@/features/onboarding/beat-dossier";
 import { BeatOutputs } from "@/features/onboarding/beat-outputs";
 import { BeatChoice } from "@/features/onboarding/beat-choice";
 import type { OnboardingBeat } from "@/types/content";
+import { LogoMark } from "@/components/ui/logo-mark";
 
 const TOTAL = 4;
 
@@ -51,9 +52,10 @@ export function OnboardingShell() {
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-9 py-7">
-        <svg viewBox="0 0 120 24" fill="none" height={26} aria-label="SwishX">
-          <text x="0" y="20" fill="white" fontSize="22" fontWeight="800" letterSpacing="-1">SwishX</text>
-        </svg>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#fff", fontSize: 20, fontWeight: 800, letterSpacing: "-1px" }}>
+          <LogoMark size={22} />
+          swish<span style={{ color: "var(--brand)" }}>X</span>
+        </div>
         {beat < TOTAL && (
           <button
             onClick={endIntro}

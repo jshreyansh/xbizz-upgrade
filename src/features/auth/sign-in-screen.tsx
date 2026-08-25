@@ -1,6 +1,7 @@
 "use client";
 
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { LogoMark } from "@/components/ui/logo-mark";
 
 const MARKETS = ["🇺🇸 FDA", "🇪🇺 EMA", "🇬🇧 MHRA", "🇯🇵 PMDA", "🇮🇳 CDSCO", "🇦🇺 TGA", "🇧🇷 ANVISA", "+33 more"];
 const STATS = [
@@ -28,11 +29,10 @@ export function SignInScreen() {
       >
         {/* Wordmark */}
         <div>
-          <svg viewBox="0 0 120 24" fill="none" height={30} aria-label="SwishX">
-            <text x="0" y="20" fill="white" fontSize="22" fontWeight="800" letterSpacing="-1">
-              SwishX
-            </text>
-          </svg>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 9, color: "#fff", fontSize: 22, fontWeight: 800, letterSpacing: "-1px" }}>
+            <LogoMark size={24} />
+            swish<span style={{ color: "var(--brand)" }}>X</span>
+          </div>
         </div>
 
         <div>
