@@ -1,0 +1,278 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f7f5;
+  --surface: #ffffff;
+  --surface-subtle: #f7f8f6;
+  --ink: #17211d;
+  --ink-muted: #66716c;
+  --line: #e7ebe8;
+  --line-strong: #d7ded9;
+  --brand: #254f3f;
+  --brand-strong: #153d2e;
+  --brand-soft: #e7f0eb;
+  --lime: #d8f05d;
+  --warning: #9a6214;
+  --warning-soft: #fff3da;
+  --danger: #9f3a38;
+  --danger-soft: #fceae8;
+  --shadow-sm: 0 1px 2px rgb(19 31 26 / 3%), 0 8px 24px rgb(19 31 26 / 4%);
+  --shadow-lg: 0 24px 70px rgb(18 32 25 / 14%);
+  --squircle-control: 14px;
+  --squircle-panel: 18px;
+  --squircle-card: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  background: var(--background);
+  font-family: "Geist", "Inter", "SF Pro Display", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  corner-shape: squircle;
+}
+
+button.rounded-full {
+  corner-shape: round;
+}
+
+[role="dialog"] > div {
+  corner-shape: squircle;
+}
+
+[role="dialog"] {
+  animation: modal-backdrop-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+::selection {
+  color: var(--ink);
+  background: var(--lime);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #c9d0cc;
+  background-clip: padding-box;
+}
+
+.focus-ring:focus-visible {
+  outline: 3px solid rgb(37 79 63 / 22%);
+  outline-offset: 2px;
+}
+
+/* Continuous corners in supporting browsers; existing radii remain the fallback. */
+.squircle {
+  corner-shape: squircle;
+}
+
+.squircle-control {
+  border-radius: var(--squircle-control);
+  corner-shape: squircle;
+}
+
+.squircle-panel {
+  border-radius: var(--squircle-panel);
+  corner-shape: squircle;
+}
+
+.squircle-card {
+  border-radius: var(--squircle-card);
+  corner-shape: squircle;
+}
+
+.canvas-grid {
+  background-color: #e7ebe8;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 42%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 42%) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.soft-noise {
+  position: relative;
+  isolation: isolate;
+}
+
+.soft-noise::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.055'/%3E%3C/svg%3E");
+  content: "";
+  pointer-events: none;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise-in {
+  animation: rise-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes orbit-breathe {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgb(37 79 63 / 0%);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgb(37 79 63 / 8%);
+  }
+}
+
+.scenario-drawer {
+  animation: drawer-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.demo-orbit {
+  animation: orbit-breathe 3.2s ease-in-out infinite;
+}
+
+@keyframes select-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.select-pop {
+  transform-origin: top center;
+  animation: select-pop 170ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.select-pop-above {
+  transform-origin: bottom center;
+  animation: select-pop-above 170ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes select-pop-above {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes select-pop-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.988);
+  }
+}
+
+.select-pop-out {
+  animation: select-pop-out 150ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.select-pop-out-above {
+  animation: select-pop-out-above 150ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+@keyframes select-pop-out-above {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(4px) scale(0.988);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes page-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-3px); }
+}
+
+::view-transition-old(root) {
+  animation: 170ms cubic-bezier(0.4, 0, 1, 1) both page-exit;
+}
+
+::view-transition-new(root) {
+  animation: 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both page-enter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

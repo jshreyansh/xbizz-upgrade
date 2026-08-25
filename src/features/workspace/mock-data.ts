@@ -1,0 +1,96 @@
+import type { CreativeDirection, PlanningSource, Scene } from "@/types/content";
+
+export const planningSources: PlanningSource[] = [
+  { id: "dermora-core", name: "DERMORA Core Launch Deck", kind: "approved-source", detail: "US · v4.2 · approved 12 Aug 2026", status: "current" },
+  { id: "dermora-claims", name: "DERMORA Claims Library", kind: "claims", detail: "US · 24 approved claims · current", status: "current" },
+  { id: "dermora-brand", name: "DERMORA Brand Kit", kind: "brand", detail: "Logo, packshot, typography and fair balance", status: "current" },
+  { id: "hcp-detail-aid", name: "Approved HCP Detail Aid", kind: "existing-asset", detail: "Existing asset · approved May 2026", status: "current" },
+  { id: "dermora-india", name: "DERMORA India Dossier", kind: "approved-source", detail: "India · v3.1 · approved 02 Aug 2026", status: "current" },
+  { id: "clearskin-paper", name: "CLEARSKIN study publication", kind: "reference", detail: "External reference · not promotional approval", status: "reference-only" },
+];
+
+export const creativeDirections: CreativeDirection[] = [
+  {
+    id: "science-forward",
+    name: "Science, made visible",
+    eyebrow: "Recommended",
+    summary: "A precise clinical story that turns the mechanism and pivotal evidence into a clear visual journey.",
+    rationale: "Best fit for dermatologists who want the science quickly and without promotional theatre.",
+    palette: ["#183d32", "#d9ef62", "#f3f7f1"],
+    structure: ["Unmet need", "Mechanism", "Pivotal evidence", "Role in care", "Close"],
+    risk: "Low",
+  },
+  {
+    id: "practice-first",
+    name: "The clinical moment",
+    eyebrow: "Practice-led",
+    summary: "Begin inside the treatment decision, then reveal the product science as the answer to a familiar challenge.",
+    rationale: "More human and situational, with a clear bridge from practice tension to clinical evidence.",
+    palette: ["#433b34", "#f2c7a5", "#f8f4ef"],
+    structure: ["Clinical tension", "Patient impact", "New possibility", "Evidence", "Action"],
+    risk: "Moderate",
+  },
+  {
+    id: "signal-story",
+    name: "Follow the signal",
+    eyebrow: "Distinctive",
+    summary: "A confident visual metaphor follows one biological signal from disease pathway to treatment response.",
+    rationale: "Memorable and ownable, while remaining grounded in the approved mechanism and evidence.",
+    palette: ["#202c45", "#8fd8cc", "#f2f5f8"],
+    structure: ["Signal", "Disruption", "Intervention", "Response", "Implication"],
+    risk: "Moderate",
+  },
+];
+
+export const scenes: Scene[] = [
+  {
+    id: "scene-1",
+    number: 1,
+    title: "The unresolved burden",
+    duration: 8,
+    narration: "For adults living with moderate-to-severe plaque psoriasis, visible symptoms can be only part of the burden.",
+    visual: "A restrained clinical portrait gives way to an abstract skin-barrier landscape.",
+    claim: "Disease-burden statement",
+    evidenceState: "supported",
+  },
+  {
+    id: "scene-2",
+    number: 2,
+    title: "A precise target",
+    duration: 10,
+    narration: "DERMORA is designed to selectively address a key signal in the inflammatory pathway.",
+    visual: "A single lime signal travels through a minimal pathway model, isolating the therapeutic target.",
+    claim: "Mechanism-of-action statement",
+    evidenceState: "approved",
+  },
+  {
+    id: "scene-3",
+    number: 3,
+    title: "Pivotal evidence",
+    duration: 14,
+    narration: "In the pivotal CLEARSKIN study, a greater proportion of patients achieved the primary endpoint at Week 16.",
+    visual: "Evidence resolves into a clean comparative chart with the primary endpoint highlighted.",
+    claim: "CLEARSKIN primary endpoint",
+    evidenceState: "approved",
+  },
+  {
+    id: "scene-4",
+    number: 4,
+    title: "Designed for practice",
+    duration: 10,
+    narration: "A straightforward dosing approach supports a treatment conversation built around each appropriate patient.",
+    visual: "A simplified dosing sequence appears beside a calm physician–patient consultation.",
+    claim: "Dosing statement",
+    evidenceState: "changed",
+  },
+  {
+    id: "scene-5",
+    number: 5,
+    title: "A clearer next step",
+    duration: 8,
+    narration: "See the full Prescribing Information and consider whether DERMORA may be appropriate for your patients.",
+    visual: "The pathway resolves into the brand mark, fair-balance area, and HCP call to action.",
+    claim: "Call to action",
+    evidenceState: "approved",
+  },
+];
