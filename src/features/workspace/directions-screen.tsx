@@ -272,18 +272,14 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   };
 
   const content = (
-    <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
-      {/* Standardized Page Heading (No Badge) */}
-      <div className="mb-7">
-        <h1 className="text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
-          Confirm the video plan
-        </h1>
-        <p className="mt-1 text-[15px] text-[var(--ink-3)]">
-          Review recommended creative direction, delivery format, voice talent, and cited evidence before generating scenes.
-        </p>
-      </div>
-
+    <main className="mx-auto w-full max-w-[1280px] px-6 py-5 sm:px-8">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
+        {/* Left Column: Heading + Plan Sections */}
+        <div className="min-w-0 space-y-3.5">
+          <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
+            Confirm the video plan
+          </h1>
+
           <section className="rise-in space-y-3 [animation-delay:50ms]">
             <PlanSection icon={Film} title="Creative treatment" summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`} status={confirmedTreatment ? "Confirmed" : "Needs you"} open={openSection === "treatment"} onToggle={() => toggleSection("treatment")} tone={confirmedTreatment ? "done" : "attention"}>
               <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5"><div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div><p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p></div>
@@ -355,6 +351,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               <StructureChoices value={storyStructure} onChange={setStoryStructure} options={assetType === "video" ? ["Product → Proof", "Problem → Solution", "Mechanism → Evidence"] : profile.treatments.map((item) => item.label)} />
             </PlanSection>
           </section>
+        </div>
 
           {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
           <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:90ms]">

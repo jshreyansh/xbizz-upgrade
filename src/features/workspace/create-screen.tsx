@@ -155,103 +155,103 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   const content = (
     <main className="mx-auto w-full max-w-[1280px] px-6 py-5 sm:px-8">
-      {/* Compact Page Heading (No Secondary Subheadline) */}
-      <div className="mb-4">
-        <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
-          Define the video brief
-        </h1>
-      </div>
-
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
-        <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
-          {/* Active Engine Indicator Pill */}
-          <div className="flex items-center justify-between rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5">
-            <div className="flex items-center gap-3">
-              <div className="grid size-10 place-items-center rounded-[11px] bg-[var(--brand)] text-white shadow-sm">
-                <Film className="size-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <b className="text-[14.5px] font-bold text-[var(--ink)]">{modeDisplayName}</b>
-                  <span className="rounded-full bg-[var(--brand-soft)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand)]">
-                    Selected Engine
+        {/* Left Column: Heading + Brief Section */}
+        <div className="min-w-0 space-y-3.5">
+          <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
+            Define the video brief
+          </h1>
+
+          <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
+            {/* Active Engine Indicator Pill */}
+            <div className="flex items-center justify-between rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5">
+              <div className="flex items-center gap-3">
+                <div className="grid size-10 place-items-center rounded-[11px] bg-[var(--brand)] text-white shadow-sm">
+                  <Film className="size-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <b className="text-[14.5px] font-bold text-[var(--ink)]">{modeDisplayName}</b>
+                    <span className="rounded-full bg-[var(--brand-soft)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand)]">
+                      Selected Engine
+                    </span>
+                  </div>
+                  <span className="text-[12px] text-[var(--ink-muted)]">
+                    {creationMode === "magic-reel"
+                      ? "30–180s cinematic video with medical scenes, graphics & citations"
+                      : creationMode === "magic-avatar"
+                      ? "30–90s lip-synced presenter video with clinical slide overlays"
+                      : "Open custom prompt & duration"}
                   </span>
                 </div>
-                <span className="text-[12px] text-[var(--ink-muted)]">
-                  {creationMode === "magic-reel"
-                    ? "30–180s cinematic video with medical scenes, graphics & citations"
-                    : creationMode === "magic-avatar"
-                    ? "30–90s lip-synced presenter video with clinical slide overlays"
-                    : "Open custom prompt & duration"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex items-center justify-between">
-              <label htmlFor="content-brief" className="text-[14px] font-bold">What are you creating?</label>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setScenarioLibraryOpen(true)} className="text-[12.5px] font-medium text-[var(--brand)]">
-                  <FlaskConical className="size-3.5" /> Sample briefs
-                </Button>
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="focus-ring flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-medium text-[var(--ink-muted)] hover:bg-[#f2f4f2] hover:text-[var(--ink)]">
-                  <Paperclip className="size-3.5" /> Attach material
-                </button>
               </div>
             </div>
 
-            <textarea
-              id="content-brief"
-              value={brief}
-              onChange={(event) => setBrief(event.target.value)}
-              rows={4}
-              placeholder="e.g. Create a 60-second HCP explainer explaining why Velmora was developed, showing the dual-inhibition mechanism, and proving 24% relative risk reduction from CLARITY-CV."
-              className="mt-2.5 w-full rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5 text-[14.5px] leading-6 outline-none transition-[border-color,background-color] duration-200 focus:border-[var(--brand)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-soft)]"
-            />
-
-            {clarificationOpen && (
-              <div className="mt-3 rounded-[13px] border border-[#f0cfa0] bg-[#fffbf2] p-3.5 text-[13px] text-[#78531d]">
-                <div className="flex items-start gap-2.5">
-                  <Info className="mt-0.5 size-4 shrink-0 text-[#b57314]" />
-                  <div>
-                    <b>Add a little more detail before continuing.</b>
-                    <p className="mt-0.5 leading-5 text-[#8c672e]">Mention the topic, disease state, evidence point, or launch objective so SwishX can recommend an appropriate storyboard structure.</p>
-                  </div>
+            <div className="mt-6">
+              <div className="flex items-center justify-between">
+                <label htmlFor="content-brief" className="text-[14px] font-bold">What are you creating?</label>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setScenarioLibraryOpen(true)} className="text-[12.5px] font-medium text-[var(--brand)]">
+                    <FlaskConical className="size-3.5" /> Sample briefs
+                  </Button>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="focus-ring flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-medium text-[var(--ink-muted)] hover:bg-[#f2f4f2] hover:text-[var(--ink)]">
+                    <Paperclip className="size-3.5" /> Attach material
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Attached Files & Sources */}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="text-[12px] font-bold text-[var(--ink-muted)]">Active Context:</span>
-            <span className="squircle-control flex min-h-9 items-center gap-2 bg-[var(--tint)] px-2.5 text-[12.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
-              <ShieldCheck className="size-4 text-[var(--brand)]" />
-              {sourceDisplayName}
-            </span>
-            <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
-              <Users className="size-3.5 text-[var(--brand)]" />
-              {audience}
-            </span>
-            <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
-              <Target className="size-3.5 text-[var(--brand)]" />
-              {goal}
-            </span>
-            <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
-              <Layers className="size-3.5 text-[var(--brand)]" />
-              {topics.length} topics
-            </span>
-            {selectedSources.map((source) => (
-              <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
-            ))}
-            {localFiles.map((file) => (
-              <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
-            ))}
-          </div>
+              <textarea
+                id="content-brief"
+                value={brief}
+                onChange={(event) => setBrief(event.target.value)}
+                rows={4}
+                placeholder="e.g. Create a 60-second HCP explainer explaining why Velmora was developed, showing the dual-inhibition mechanism, and proving 24% relative risk reduction from CLARITY-CV."
+                className="mt-2.5 w-full rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5 text-[14.5px] leading-6 outline-none transition-[border-color,background-color] duration-200 focus:border-[var(--brand)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-soft)]"
+              />
 
-          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
-        </section>
+              {clarificationOpen && (
+                <div className="mt-3 rounded-[13px] border border-[#f0cfa0] bg-[#fffbf2] p-3.5 text-[13px] text-[#78531d]">
+                  <div className="flex items-start gap-2.5">
+                    <Info className="mt-0.5 size-4 shrink-0 text-[#b57314]" />
+                    <div>
+                      <b>Add a little more detail before continuing.</b>
+                      <p className="mt-0.5 leading-5 text-[#8c672e]">Mention the topic, disease state, evidence point, or launch objective so SwishX can recommend an appropriate storyboard structure.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Attached Files & Sources */}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-[12px] font-bold text-[var(--ink-muted)]">Active Context:</span>
+              <span className="squircle-control flex min-h-9 items-center gap-2 bg-[var(--tint)] px-2.5 text-[12.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+                <ShieldCheck className="size-4 text-[var(--brand)]" />
+                {sourceDisplayName}
+              </span>
+              <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+                <Users className="size-3.5 text-[var(--brand)]" />
+                {audience}
+              </span>
+              <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+                <Target className="size-3.5 text-[var(--brand)]" />
+                {goal}
+              </span>
+              <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+                <Layers className="size-3.5 text-[var(--brand)]" />
+                {topics.length} topics
+              </span>
+              {selectedSources.map((source) => (
+                <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
+              ))}
+              {localFiles.map((file) => (
+                <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
+              ))}
+            </div>
+
+            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
+          </section>
+        </div>
 
         {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
         <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">

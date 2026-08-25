@@ -175,189 +175,188 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   const content = (
     <main className="mx-auto w-full max-w-[1280px] px-6 py-5 sm:px-8">
-      {/* Compact Page Heading (No Secondary Subheadline) */}
-      <div className="mb-4">
-        <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
-          Choose brand dossier &amp; goals
-        </h1>
-      </div>
-
       {/* Standardized 2-Column Layout with Top-Pinned Sticky Sidebar */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
-        {/* Left Column: Brand Dossiers & Sample Dossiers */}
-        <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
-          {/* Group 1: Workspace Brand Dossiers */}
-          <div>
-            <div className="flex items-center justify-between mb-3.5">
-              <div className="flex items-center gap-2">
-                <span className="grid size-6 place-items-center rounded-full bg-[var(--brand)] text-white text-[11px] font-bold">1</span>
-                <h2 className="text-[15.5px] font-bold text-[var(--ink)]">Your Brand Dossiers</h2>
-                <span className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
-                  Mandatory Selection
+        {/* Left Column: Heading + Brand Dossiers */}
+        <div className="min-w-0 space-y-3.5">
+          <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
+            Choose brand dossier &amp; goals
+          </h1>
+
+          <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
+            {/* Group 1: Workspace Brand Dossiers */}
+            <div>
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="grid size-6 place-items-center rounded-full bg-[var(--brand)] text-white text-[11px] font-bold">1</span>
+                  <h2 className="text-[15.5px] font-bold text-[var(--ink)]">Your Brand Dossiers</h2>
+                  <span className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+                    Mandatory Selection
+                  </span>
+                </div>
+                <span className="text-[12px] font-bold text-[var(--ok)] hidden sm:inline-block">
+                  ✓ 100% label verified
                 </span>
               </div>
-              <span className="text-[12px] font-bold text-[var(--ok)] hidden sm:inline-block">
-                ✓ 100% label verified
-              </span>
-            </div>
 
-            <div className="grid gap-3.5 sm:grid-cols-3">
-              {brandDossiers.map((d) => {
-                const isSelected = selectedDossierId === d.id;
-                return (
-                  <div
-                    key={d.id}
-                    onClick={() => handleSelectDossier(d.id)}
-                    className={`relative flex flex-col rounded-[18px] border p-3.5 transition-all duration-200 cursor-pointer ${
-                      isSelected
-                        ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] ring-offset-2 shadow-md"
-                        : "border-[var(--hair-2)] bg-[#fafbf9] hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-white hover:shadow-sm"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className="grid size-8 place-items-center rounded-xl text-white font-extrabold text-[11px] shadow-sm"
-                          style={{ background: d.avatarBg }}
-                        >
-                          {d.name.slice(0, 2).toUpperCase()}
-                        </span>
-                        <div>
-                          <h3 className="text-[15px] font-bold text-[var(--ink)] leading-tight">{d.name}</h3>
-                          <span className="text-[11px] italic text-[var(--ink-3)]">{d.molecule}</span>
-                        </div>
-                      </div>
-                      <span
-                        className={`grid size-4 place-items-center rounded-full border transition ${
-                          isSelected
-                            ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                            : "border-[var(--hair-3)] bg-white"
-                        }`}
-                      >
-                        {isSelected && <Check className="size-2.5" strokeWidth={3.5} />}
-                      </span>
-                    </div>
-
-                    <div className="mt-3 rounded-[10px] bg-black/[0.03] p-2 border border-black/[0.04]">
-                      <div className="flex items-center justify-between text-[10px] font-bold text-[var(--ink-3)] mb-1">
-                        <span>Brand Dossier</span>
-                        <span>{d.sections} sections</span>
-                      </div>
-                      <div className="space-y-1">
-                        {d.skeletonWidths.map((w, i) => (
-                          <div key={i} className="flex items-center gap-1">
-                            <div className="h-1 rounded-full bg-black/10" style={{ width: `${w}%` }} />
-                            <sup className="text-[8px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between border-t border-[var(--hair)] pt-2 text-[11px]">
-                      <span className="rounded-full bg-white px-1.5 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
-                        {d.market}
-                      </span>
-                      <span className="font-bold text-[var(--ok)]">{d.claims} claims</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Group 2: Sample Dossiers by SwishX */}
-          <div className="border-t border-[var(--hair)] pt-5">
-            <div className="flex items-center justify-between mb-3.5">
-              <div className="flex items-center gap-2">
-                <FlaskConical className="size-4 text-[var(--brand)]" />
-                <h2 className="text-[14.5px] font-bold text-[var(--ink)]">Sample Dossiers by SwishX</h2>
-                <span className="text-[10.5px] font-bold text-[#b45309] bg-[#fef3c7] px-2 py-0.5 rounded-full border border-[#fde68a]">
-                  Ready to test
-                </span>
-              </div>
-              <span className="text-[11.5px] text-[var(--ink-muted)]">Pre-loaded clinical evidence</span>
-            </div>
-
-            <div className="grid gap-3.5 sm:grid-cols-2">
-              {sampleDossiers.map((d) => {
-                const isSelected = selectedDossierId === d.id;
-                return (
-                  <div
-                    key={d.id}
-                    onClick={() => handleSelectDossier(d.id)}
-                    className={`relative flex flex-col rounded-[18px] border p-3.5 transition-all duration-200 cursor-pointer ${
-                      isSelected
-                        ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] ring-offset-2 shadow-md"
-                        : "border-[var(--hair-2)] bg-[#fafbf9] hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-white hover:shadow-sm"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span
-                          className="grid size-8 place-items-center rounded-xl text-white font-extrabold text-[11px] shadow-sm"
-                          style={{ background: d.avatarBg }}
-                        >
-                          {d.name.slice(0, 2).toUpperCase()}
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-1.5">
+              <div className="grid gap-3.5 sm:grid-cols-3">
+                {brandDossiers.map((d) => {
+                  const isSelected = selectedDossierId === d.id;
+                  return (
+                    <div
+                      key={d.id}
+                      onClick={() => handleSelectDossier(d.id)}
+                      className={`relative flex flex-col rounded-[18px] border p-3.5 transition-all duration-200 cursor-pointer ${
+                        isSelected
+                          ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] ring-offset-2 shadow-md"
+                          : "border-[var(--hair-2)] bg-[#fafbf9] hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-white hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className="grid size-8 place-items-center rounded-xl text-white font-extrabold text-[11px] shadow-sm"
+                            style={{ background: d.avatarBg }}
+                          >
+                            {d.name.slice(0, 2).toUpperCase()}
+                          </span>
+                          <div>
                             <h3 className="text-[15px] font-bold text-[var(--ink)] leading-tight">{d.name}</h3>
-                            <span className="rounded-full bg-[#fef3c7] text-[#92400e] px-1.5 py-0.2 text-[9.5px] font-bold border border-[#fde68a]">
-                              Sample
-                            </span>
+                            <span className="text-[11px] italic text-[var(--ink-3)]">{d.molecule}</span>
                           </div>
-                          <span className="text-[11px] italic text-[var(--ink-3)]">{d.molecule}</span>
+                        </div>
+                        <span
+                          className={`grid size-4 place-items-center rounded-full border transition ${
+                            isSelected
+                              ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                              : "border-[var(--hair-3)] bg-white"
+                          }`}
+                        >
+                          {isSelected && <Check className="size-2.5" strokeWidth={3.5} />}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 rounded-[10px] bg-black/[0.03] p-2 border border-black/[0.04]">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-[var(--ink-3)] mb-1">
+                          <span>Brand Dossier</span>
+                          <span>{d.sections} sections</span>
+                        </div>
+                        <div className="space-y-1">
+                          {d.skeletonWidths.map((w, i) => (
+                            <div key={i} className="flex items-center gap-1">
+                              <div className="h-1 rounded-full bg-black/10" style={{ width: `${w}%` }} />
+                              <sup className="text-[8px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                      <span
-                        className={`grid size-4 place-items-center rounded-full border transition ${
-                          isSelected
-                            ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                            : "border-[var(--hair-3)] bg-white"
-                        }`}
-                      >
-                        {isSelected && <Check className="size-2.5" strokeWidth={3.5} />}
-                      </span>
-                    </div>
 
-                    <div className="mt-3 rounded-[10px] bg-black/[0.03] p-2 border border-black/[0.04]">
-                      <div className="flex items-center justify-between text-[10px] font-bold text-[var(--ink-3)] mb-1">
-                        <span>Curated Clinical Sample</span>
-                        <span>{d.sections} sections</span>
+                      <div className="mt-3 flex items-center justify-between border-t border-[var(--hair)] pt-2 text-[11px]">
+                        <span className="rounded-full bg-white px-1.5 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
+                          {d.market}
+                        </span>
+                        <span className="font-bold text-[var(--ok)]">{d.claims} claims</span>
                       </div>
-                      <div className="space-y-1">
-                        {d.skeletonWidths.map((w, i) => (
-                          <div key={i} className="flex items-center gap-1">
-                            <div className="h-1 rounded-full bg-black/10" style={{ width: `${w}%` }} />
-                            <sup className="text-[8px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Group 2: Sample Dossiers by SwishX */}
+            <div className="border-t border-[var(--hair)] pt-5">
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="flex items-center gap-2">
+                  <FlaskConical className="size-4 text-[var(--brand)]" />
+                  <h2 className="text-[14.5px] font-bold text-[var(--ink)]">Sample Dossiers by SwishX</h2>
+                  <span className="text-[10.5px] font-bold text-[#b45309] bg-[#fef3c7] px-2 py-0.5 rounded-full border border-[#fde68a]">
+                    Ready to test
+                  </span>
+                </div>
+                <span className="text-[11.5px] text-[var(--ink-muted)]">Pre-loaded clinical evidence</span>
+              </div>
+
+              <div className="grid gap-3.5 sm:grid-cols-2">
+                {sampleDossiers.map((d) => {
+                  const isSelected = selectedDossierId === d.id;
+                  return (
+                    <div
+                      key={d.id}
+                      onClick={() => handleSelectDossier(d.id)}
+                      className={`relative flex flex-col rounded-[18px] border p-3.5 transition-all duration-200 cursor-pointer ${
+                        isSelected
+                          ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] ring-offset-2 shadow-md"
+                          : "border-[var(--hair-2)] bg-[#fafbf9] hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-white hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span
+                            className="grid size-8 place-items-center rounded-xl text-white font-extrabold text-[11px] shadow-sm"
+                            style={{ background: d.avatarBg }}
+                          >
+                            {d.name.slice(0, 2).toUpperCase()}
+                          </span>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <h3 className="text-[15px] font-bold text-[var(--ink)] leading-tight">{d.name}</h3>
+                              <span className="rounded-full bg-[#fef3c7] text-[#92400e] px-1.5 py-0.2 text-[9.5px] font-bold border border-[#fde68a]">
+                                Sample
+                              </span>
+                            </div>
+                            <span className="text-[11px] italic text-[var(--ink-3)]">{d.molecule}</span>
                           </div>
-                        ))}
+                        </div>
+                        <span
+                          className={`grid size-4 place-items-center rounded-full border transition ${
+                            isSelected
+                              ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                              : "border-[var(--hair-3)] bg-white"
+                          }`}
+                        >
+                          {isSelected && <Check className="size-2.5" strokeWidth={3.5} />}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 rounded-[10px] bg-black/[0.03] p-2 border border-black/[0.04]">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-[var(--ink-3)] mb-1">
+                          <span>Curated Clinical Sample</span>
+                          <span>{d.sections} sections</span>
+                        </div>
+                        <div className="space-y-1">
+                          {d.skeletonWidths.map((w, i) => (
+                            <div key={i} className="flex items-center gap-1">
+                              <div className="h-1 rounded-full bg-black/10" style={{ width: `${w}%` }} />
+                              <sup className="text-[8px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="mt-3 flex items-center justify-between border-t border-[var(--hair)] pt-2 text-[11px]">
+                        <span className="rounded-full bg-white px-1.5 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
+                          {d.market}
+                        </span>
+                        <span className="font-bold text-[var(--ok)]">{d.claims} claims cited</span>
                       </div>
                     </div>
-
-                    <div className="mt-3 flex items-center justify-between border-t border-[var(--hair)] pt-2 text-[11px]">
-                      <span className="rounded-full bg-white px-1.5 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
-                        {d.market}
-                      </span>
-                      <span className="font-bold text-[var(--ok)]">{d.claims} claims cited</span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Quick Add Custom Dossier */}
-          <div className="flex items-center justify-between rounded-[16px] border border-[var(--hair-2)] bg-[#fafbf9] p-3 text-[12.5px] text-[var(--ink-3)]">
-            <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-[var(--brand)] shrink-0" />
-              <span>Need a dossier for another molecule? Synthesize a new one from FDA / EMA labels.</span>
+            {/* Quick Add Custom Dossier */}
+            <div className="flex items-center justify-between rounded-[16px] border border-[var(--hair-2)] bg-[#fafbf9] p-3 text-[12.5px] text-[var(--ink-3)]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="size-4 text-[var(--brand)] shrink-0" />
+                <span>Need a dossier for another molecule? Synthesize a new one from FDA / EMA labels.</span>
+              </div>
+              <Button variant="ghost" size="sm" className="font-bold text-[var(--brand)] text-[12px] h-7 shrink-0">
+                <Plus className="size-3 mr-1" /> New Dossier
+              </Button>
             </div>
-            <Button variant="ghost" size="sm" className="font-bold text-[var(--brand)] text-[12px] h-7 shrink-0">
-              <Plus className="size-3 mr-1" /> New Dossier
-            </Button>
-          </div>
-        </section>
+          </section>
+        </div>
 
         {/* Right Column: Sticky Mandatory Dropdowns Form (Fixed to Top) */}
         <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">
