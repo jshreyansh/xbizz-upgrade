@@ -580,7 +580,7 @@ function ShowcaseLaneRow({ lane, isLast }: { lane: ShowcaseLane; isLast: boolean
   return (
     <div style={{ marginBottom: isLast ? 0 : 28 }}>
       {/* Lane header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div>
           <span
             style={{
@@ -647,14 +647,14 @@ function ShowcaseLaneRow({ lane, isLast }: { lane: ShowcaseLane; isLast: boolean
         </div>
       </div>
 
-      {/* Horizontal scrolling strip */}
+      {/* Horizontal scrolling strip with top and bottom breathing padding */}
       <div
         ref={scrollRef}
         style={{
           display: "flex",
           gap: 14,
           overflowX: "auto",
-          paddingBottom: 6,
+          padding: "8px 4px 12px",
           scrollbarWidth: "none",
         }}
       >
