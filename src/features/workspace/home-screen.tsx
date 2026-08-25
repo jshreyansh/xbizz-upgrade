@@ -305,26 +305,17 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         gradient: "linear-gradient(150deg,#0f2e28,#1b5546 50%,#3d9880)",
         hasPlay: true,
         tag: "MagicCanvas",
-        videoSrc: "/4360-178617258_medium.mp4",
-      },
-      {
-        title: "Glucenta savings card",
-        subtitle: "Patients · US · FDA",
-        meta: "3.5x2in",
-        aspect: "3/4",
-        gradient: "linear-gradient(150deg,#3a2718,#7d5227 50%,#c99a4e)",
-        hasPlay: true,
-        tag: "MagicCanvas",
         videoSrc: "/46621-448480587_medium.mp4",
       },
     ],
   },
 ];
 
-/* ─── Creation Tile ─────────────────────────────────────────────────────────── */
-function CreationTile({ tile, onOpen }: { tile: TileOption; onOpen: () => void }) {
-  const Icon = tile.icon;
+/* ─── Top Creation Flow Tile Component ─────────────────────────────────────── */
+function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }) {
   const [hovered, setHovered] = useState(false);
+  const Icon = tile.icon;
+
   return (
     <button
       type="button"
@@ -334,8 +325,8 @@ function CreationTile({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
       style={{
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
-        padding: "22px 24px",
+        justifyContent: "flex-start",
+        padding: "24px 24px 22px",
         borderRadius: "var(--r-xl)",
         background: hovered ? "#fdfefe" : "#fff",
         border: hovered ? "1.5px solid var(--brand)" : "1px solid var(--hair)",
@@ -344,7 +335,7 @@ function CreationTile({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
         textAlign: "left",
         transition: "all .24s cubic-bezier(0.16, 1, 0.3, 1)",
         position: "relative",
-        minHeight: 142,
+        minHeight: 154,
         overflow: "hidden",
       }}
       className="hover:-translate-y-1 group"
@@ -368,7 +359,7 @@ function CreationTile({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
       </div>
 
       {/* Title */}
-      <div style={{ position: "relative", zIndex: 2 }}>
+      <div style={{ position: "relative", zIndex: 2, marginBottom: 8 }}>
         <h3
           style={{
             fontSize: 17,
@@ -376,6 +367,7 @@ function CreationTile({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
             color: "var(--ink)",
             letterSpacing: "-.4px",
             margin: 0,
+            lineHeight: 1.2,
           }}
         >
           {tile.title}
@@ -571,13 +563,19 @@ function ShowcaseCard({ item }: { item: ShowcaseItem }) {
   );
 }
 
+import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
+import type { BrandDossier } from "@/features/dossiers/dossier-types";
+
 /* ─── Horizontal lane row ────────────────────────────────────────────────────── */
 function ShowcaseLaneRow({ lane, isLast }: { lane: ShowcaseLane; isLast: boolean }) {
+  const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   function scroll(dir: "left" | "right") {
     scrollRef.current?.scrollBy({ left: dir === "left" ? -340 : 340, behavior: "smooth" });
   }
+
+  const isDossierLane = lane.label === "Brand Dossiers";
 
   return (
     <div style={{ marginBottom: isLast ? 0 : 28 }}>
@@ -654,15 +652,221 @@ function ShowcaseLaneRow({ lane, isLast }: { lane: ShowcaseLane; isLast: boolean
         ref={scrollRef}
         style={{
           display: "flex",
-          gap: 12,
+          gap: 14,
           overflowX: "auto",
           paddingBottom: 6,
           scrollbarWidth: "none",
         }}
       >
-        {lane.items.map((item, idx) => (
-          <ShowcaseCard key={idx} item={item} />
-        ))}
+        {isDossierLane
+          ? MOCK_DOSSIERS.map((dossier) => (
+              <HomeDossierCard
+                key={dossier.id}
+                dossier={dossier}
+                onSelect={() => router.push(`/dossiers?open=${dossier.id}`)}
+              />
+            ))
+          : lane.items.map((item, idx) => <ShowcaseCard key={idx} item={item} />)}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Dedicated Clinical Brand Dossier Card for Showcase Lane ─────────────────── */
+function HomeDossierCard({ dossier, onSelect }: { dossier: BrandDossier; onSelect: () => void }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      onClick={onSelect}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: 290,
+        height: 200,
+        flexShrink: 0,
+        borderRadius: "var(--r-xl)",
+        background: "#fff",
+        border: hovered ? "1.5px solid var(--brand)" : "1px solid var(--hair)",
+        boxShadow: hovered ? "0 12px 28px -8px rgba(0,0,0,0.08)" : "var(--sh-1)",
+        padding: "16px 18px",
+        cursor: "pointer",
+        transition: "all .2s var(--e)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        position: "relative",
+      }}
+      className="hover:-translate-y-1"
+    >
+      {/* Header */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+            <b style={{ fontSize: 16, fontWeight: 800, color: "var(--ink)", letterSpacing: "-.4px" }}>
+              {dossier.brandName}
+            </b>
+            {dossier.isSample && (
+              <span
+                style={{
+                  fontSize: 9.5,
+                  fontWeight: 800,
+                  padding: "1.5px 6px",
+                  borderRadius: 99,
+                  background: "#fef3c7",
+                  color: "#b45309",
+                  border: "1px solid #fde68a",
+                }}
+              >
+                Sample
+              </span>
+            )}
+            <span
+              style={{
+                fontSize: 9.5,
+                fontWeight: 800,
+                padding: "1.5px 6px",
+                borderRadius: 99,
+                background: "var(--ok-bg)",
+                color: "var(--ok)",
+                border: "1px solid var(--ok-line)",
+              }}
+            >
+              {dossier.regulatoryAnchor} Anchor
+            </span>
+          </div>
+        </div>
+
+        <span
+          style={{
+            fontSize: 11.5,
+            color: "var(--ink-4)",
+            fontStyle: "italic",
+            display: "block",
+            marginTop: 1.5,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {dossier.genericName}
+        </span>
+
+        {/* Indication */}
+        <p
+          style={{
+            fontSize: 11.5,
+            color: "var(--ink-3)",
+            lineHeight: 1.35,
+            margin: "8px 0 0",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {dossier.indication}
+        </p>
+      </div>
+
+      {/* Stats row & Footer */}
+      <div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 4,
+            padding: "6px 8px",
+            background:
+              dossier.healthStatus === "critical"
+                ? "#fff5f5"
+                : dossier.healthStatus === "warning"
+                ? "#fefce8"
+                : "var(--tint-2)",
+            borderRadius: "var(--r)",
+            border:
+              dossier.healthStatus === "critical"
+                ? "1px solid #fed7d7"
+                : dossier.healthStatus === "warning"
+                ? "1px solid #fef08a"
+                : "1px solid var(--tint-line)",
+            marginBottom: 8,
+            textAlign: "center",
+          }}
+        >
+          <div>
+            <b style={{ display: "block", fontSize: 13, fontWeight: 800, color: "var(--ink)" }}>
+              {dossier.sectionsCount}
+            </b>
+            <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-4)" }}>
+              Sections
+            </span>
+          </div>
+          <div>
+            <b
+              style={{
+                display: "block",
+                fontSize: 13,
+                fontWeight: 800,
+                color:
+                  dossier.healthStatus === "critical"
+                    ? "#ef4444"
+                    : dossier.healthStatus === "warning"
+                    ? "#eab308"
+                    : "var(--ok)",
+              }}
+            >
+              {dossier.healthStatus === "critical"
+                ? `${dossier.verifiedClaimsCount}/${dossier.totalClaimsCount}`
+                : dossier.healthStatus === "warning"
+                ? "50%"
+                : dossier.totalClaimsCount}
+            </b>
+            <span
+              style={{
+                fontSize: 8.5,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color:
+                  dossier.healthStatus === "critical"
+                    ? "#ef4444"
+                    : dossier.healthStatus === "warning"
+                    ? "#eab308"
+                    : "var(--ok)",
+              }}
+            >
+              {dossier.healthStatus === "critical"
+                ? "Verified"
+                : dossier.healthStatus === "warning"
+                ? "Pending"
+                : "Claims"}
+            </span>
+          </div>
+          <div>
+            <b style={{ display: "block", fontSize: 13, fontWeight: 800, color: "var(--ink)" }}>
+              {dossier.sourcesCount}
+            </b>
+            <span style={{ fontSize: 8.5, fontWeight: 700, textTransform: "uppercase", color: "var(--ink-4)" }}>
+              Sources
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 10, color: "var(--ink-4)" }}>{dossier.lastUpdated}</span>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              color: "var(--brand)",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
+            Inspect dossier →
+          </span>
+        </div>
       </div>
     </div>
   );
@@ -712,7 +916,7 @@ export function HomeScreen() {
         }}
       >
         {CREATION_TILES.map((tile) => (
-          <CreationTile key={tile.title} tile={tile} onOpen={() => openTile(tile)} />
+          <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} />
         ))}
       </div>
 
