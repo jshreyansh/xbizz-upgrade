@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { AppShell } from "@/features/workspace/app-shell";
 import { MagicVideoModeScreen } from "@/features/workspace/magic-video-mode-screen";
 import { MagicVideoSourceScreen } from "@/features/workspace/magic-video-source-screen";
 import { CreateScreen } from "@/features/workspace/create-screen";
@@ -22,7 +23,16 @@ export default function CreatePage() {
   if (view === "directions") return <DirectionsScreen />;
   if (view === "studio") return <StudioScreen />;
 
-  if (videoSubStage === "mode-select") return <MagicVideoModeScreen />;
+  // Stage 1 (Mode Selection) renders within the platform shell with sidebar
+  if (videoSubStage === "mode-select") {
+    return (
+      <AppShell pageTitle="Magic Video">
+        <MagicVideoModeScreen />
+      </AppShell>
+    );
+  }
+
+  // Once a card is clicked, transitions to focused full-page flow for Source & Plan
   if (videoSubStage === "source-select") return <MagicVideoSourceScreen />;
 
   return <CreateScreen />;
