@@ -141,13 +141,11 @@ export function CreateScreen() {
       : "Custom Plain Text";
 
   return (
-    <div className="page-enter min-h-screen bg-[#f3f5f2] pb-10">
+    <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
       <VideoWizardHeader
         currentStep={2}
         onBack={handleBackToSource}
-        onNext={preparePlan}
         onClose={handleBackHome}
-        nextLabel="Prepare plan"
         modeLabel={modeDisplayName}
       />
 

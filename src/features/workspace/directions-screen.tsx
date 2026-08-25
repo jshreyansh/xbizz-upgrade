@@ -266,14 +266,11 @@ export function DirectionsScreen() {
   };
 
   return (
-    <div className="page-enter min-h-screen bg-[#f6f7f5] pb-10">
+    <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
       <VideoWizardHeader
         currentStep={3}
         onBack={handleBackToBrief}
-        onNext={() => setView("studio")}
         onClose={handleClose}
-        nextLabel="Create storyboard"
-        nextDisabled={unresolvedCount > 0}
         modeLabel={modeLabel}
       />
 
@@ -344,8 +341,8 @@ export function DirectionsScreen() {
             <PlanSection icon={ShieldCheck} title="Brand and evidence" summary={derivedPlan.sourceConflict && !sourceConflictResolved ? "Source authority needs confirmation" : approvedEvidenceCount > 0 ? `${approvedEvidenceCount} approved sources · brand kit applied` : "Concept only · approved source needed"} status={derivedPlan.sourceConflict && !sourceConflictResolved ? "Needs you" : approvedEvidenceCount > 0 ? "From source" : "Review"} open={openSection === "brand"} onToggle={() => toggleSection("brand")} tone={derivedPlan.sourceConflict && !sourceConflictResolved ? "attention" : approvedEvidenceCount > 0 ? "default" : "attention"}>
               {derivedPlan.sourceConflict && !sourceConflictResolved && <div className="mb-3 rounded-[12px] border border-[#e4c17f] bg-[var(--warning-soft)] p-3.5"><div className="flex items-start gap-3"><Info className="mt-0.5 size-5 shrink-0 text-[var(--warning)]" /><div><div className="text-[14px] font-bold text-[#704b13]">Confirm source authority</div><p className="mt-1 text-[13px] leading-5 text-[#765b31]">{derivedPlan.sourceConflict}</p><button onClick={() => setSourceConflictResolved(true)} className="focus-ring mt-2 min-h-10 rounded-[9px] bg-white px-3 text-[13px] font-bold text-[#704b13] shadow-sm">Use current {market} source as authority</button></div></div></div>}
               <div className="grid gap-3 sm:grid-cols-2">
-                <InfoCard icon={PackageCheck} title="Brand material" body={selectedSourceIds.includes("dermora-brand") ? "Primary logo, packshot, typography and fair balance will be applied automatically." : "No current brand kit is attached. Add one before production if brand treatment is required."} />
-                <InfoCard icon={BookOpenCheck} title="Evidence coverage" body={approvedEvidenceCount > 0 ? "Mechanism, efficacy and required safety language are linked to current US sources." : "This can become a concept storyboard, but it will not be marked evidence-ready."} />
+                <InfoCard icon={PackageCheck} title="Brand material" body={`Primary logo, packshot, typography and fair balance for ${brandName} will be applied automatically.`} />
+                <InfoCard icon={BookOpenCheck} title="Evidence coverage" body={approvedEvidenceCount > 0 ? `Mechanism, efficacy and required safety language are linked to current ${market} sources.` : "This can become a concept storyboard, but it will not be marked evidence-ready."} />
               </div>
               <button onClick={() => setSourceManagerOpen(true)} className="focus-ring mt-3 flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)]"><Plus className="size-4" /> Add or remove sources</button>
             </PlanSection>

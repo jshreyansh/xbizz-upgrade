@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, Wand2, UserCheck, Compass } from "lucide-react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 
 interface SampleVideo {
@@ -23,8 +23,8 @@ const REEL_SAMPLES: SampleVideo[] = [
     badge: "MagicReel™",
     aspect: "9:16",
     duration: "60s",
-    gradient: "linear-gradient(155deg,#0a1a2f,#040814 60%,#1c0c04)",
-    glow: "radial-gradient(circle,rgba(253,72,22,.65),transparent 65%)",
+    gradient: "linear-gradient(145deg,#0c1626,#050a14 55%,#1c0c04)",
+    glow: "radial-gradient(circle at 50% 50%, rgba(253,72,22,.45), transparent 70%)",
     caption: "“Velmora demonstrated a 24% relative risk reduction in primary composite CV endpoints.”",
     currentTime: "0:24",
     totalTime: "1:00",
@@ -35,8 +35,8 @@ const REEL_SAMPLES: SampleVideo[] = [
     badge: "MagicReel™",
     aspect: "16:9",
     duration: "45s",
-    gradient: "linear-gradient(155deg,#0e231e,#06130f 60%,#1a2a12)",
-    glow: "radial-gradient(circle,rgba(34,192,122,.55),transparent 65%)",
+    gradient: "linear-gradient(145deg,#0a1f1a,#040e0b 55%,#17240f)",
+    glow: "radial-gradient(circle at 50% 50%, rgba(34,192,122,.4), transparent 70%)",
     caption: "“Targeted SGLT2 inhibition preserves renal perfusion while improving glycemic metrics.”",
     currentTime: "0:18",
     totalTime: "0:45",
@@ -47,9 +47,9 @@ const REEL_SAMPLES: SampleVideo[] = [
     badge: "MagicReel™",
     aspect: "1:1",
     duration: "90s",
-    gradient: "linear-gradient(155deg,#1f132e,#0c0717 60%,#280f1e)",
-    glow: "radial-gradient(circle,rgba(155,107,255,.6),transparent 65%)",
-    caption: "“Consistent tolerability profile across 12,400 patients in clinical trials.”",
+    gradient: "linear-gradient(145deg,#1b1028,#080512 55%,#220b18)",
+    glow: "radial-gradient(circle at 50% 50%, rgba(155,107,255,.4), transparent 70%)",
+    caption: "“Consistent tolerability profile across 12,400 patients in double-blind trials.”",
     currentTime: "0:42",
     totalTime: "1:30",
     progressPercent: 46,
@@ -62,8 +62,8 @@ const AVATAR_SAMPLES: SampleVideo[] = [
     badge: "MagicAvatar™",
     aspect: "9:16",
     duration: "60s",
-    gradient: "linear-gradient(155deg,#12182b,#080c16 60%,#091d2c)",
-    glow: "radial-gradient(circle,rgba(79,131,255,.65),transparent 65%)",
+    gradient: "linear-gradient(145deg,#0f172a,#060913 55%,#081724)",
+    glow: "radial-gradient(circle at 50% 50%, rgba(59,130,246,.45), transparent 70%)",
     caption: "“Hello colleagues. Today let's examine the subgroup readouts from CLARITY-CV.”",
     currentTime: "0:20",
     totalTime: "1:00",
@@ -74,8 +74,8 @@ const AVATAR_SAMPLES: SampleVideo[] = [
     badge: "MagicAvatar™",
     aspect: "16:9",
     duration: "90s",
-    gradient: "linear-gradient(155deg,#1f1610,#0d0905 60%,#241508)",
-    glow: "radial-gradient(circle,rgba(255,154,77,.6),transparent 65%)",
+    gradient: "linear-gradient(145deg,#1d140e,#0b0704 55%,#221206)",
+    glow: "radial-gradient(circle at 50% 50%, rgba(255,138,76,.4), transparent 70%)",
     caption: "“The secondary endpoints confirmed sustained glycemic control through week 52.”",
     currentTime: "0:36",
     totalTime: "1:30",
@@ -86,8 +86,8 @@ const AVATAR_SAMPLES: SampleVideo[] = [
     badge: "MagicAvatar™",
     aspect: "9:16",
     duration: "45s",
-    gradient: "linear-gradient(155deg,#17211d,#08130f 60%,#0c2118)",
-    glow: "radial-gradient(circle,rgba(45,156,110,.55),transparent 65%)",
+    gradient: "linear-gradient(145deg,#121d18,#050d0a 55%,#091d14)",
+    glow: "radial-gradient(circle at 50% 50%, rgba(18,120,74,.45), transparent 70%)",
     caption: "“Once-daily oral administration without food restrictions supports adherence.”",
     currentTime: "0:15",
     totalTime: "0:45",
@@ -129,46 +129,53 @@ export function MagicVideoModeScreen() {
   const curAvatar = AVATAR_SAMPLES[avatarIndex];
 
   return (
-    <div className="page-enter mx-auto w-full max-w-[1200px]">
-      {/* Title & Description - Clean & Punchy */}
-      <div className="mb-6">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-soft)] px-3 py-0.5 text-[11.5px] font-bold text-[var(--brand)]">
-          <Sparkles className="size-3" /> Magic Video
-        </span>
-        <h1 className="mt-2 text-[28px] font-[800] tracking-tight sm:text-[34px]">
+    <div className="page-enter mx-auto w-full max-w-[1240px]">
+      {/* Section Header */}
+      <div className="mb-7">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-0.5 text-[12px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+            <Sparkles className="size-3.5 text-[var(--brand)]" /> Video Creation Suite
+          </span>
+        </div>
+        <h1 className="mt-2.5 text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
           Choose video format
         </h1>
-        <p className="mt-1 text-[14.5px] text-[var(--ink-muted)]">
-          Select an engine to start. Pacing, voice, and clinical citations are configured automatically.
+        <p className="mt-1 text-[15px] text-[var(--ink-3)]">
+          Select an AI video engine. Production pacing, visual scenes, and regulatory citations are configured automatically.
         </p>
       </div>
 
       {/* 3-Card Grid */}
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-3">
         {/* ── CARD 1: MagicReel™ ── */}
         <div
           onMouseEnter={() => setReelHovered(true)}
           onMouseLeave={() => setReelHovered(false)}
           onClick={() => handleSelectMode("magic-reel")}
-          className="group squircle-card rise-in relative flex flex-col overflow-hidden border border-[var(--line)] bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-lg cursor-pointer"
+          className="group relative flex flex-col rounded-[24px] border border-[var(--hair-2)] bg-white p-2.5 shadow-[var(--sh-1)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-[var(--sh-3)] cursor-pointer"
         >
-          {/* Top Preview */}
-          <div className="relative h-[210px] overflow-hidden" style={{ background: curReel.gradient }}>
+          {/* Inner Video Preview Frame */}
+          <div
+            className="relative h-[220px] w-full overflow-hidden rounded-[18px]"
+            style={{ background: curReel.gradient }}
+          >
             <div
               className="absolute inset-0 transition-all duration-700"
-              style={{ background: curReel.glow, filter: "blur(26px)", opacity: 0.65 }}
+              style={{ background: curReel.glow, filter: "blur(24px)" }}
             />
-            <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
-              <span className="size-1.5 rounded-full bg-[var(--brand)]" />
+
+            {/* Top Badges */}
+            <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md border border-white/10">
+              <Wand2 className="size-3 text-[var(--brand-2)]" />
               {curReel.badge}
             </div>
-            <div className="absolute right-3 top-3 z-10 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-bold text-[#0d1017]">
+            <div className="absolute right-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-bold text-[var(--ink)] shadow-sm">
               {curReel.aspect}
             </div>
 
-            {/* Play Button */}
+            {/* Center Play Button */}
             <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-              <div className="grid size-12 place-items-center rounded-full bg-[var(--brand)] text-white shadow-md transition-transform duration-200 group-hover:scale-110">
+              <div className="grid size-12 place-items-center rounded-full bg-[var(--brand)] text-white shadow-[0_8px_20px_rgba(253,72,22,.5)] transition-transform duration-200 group-hover:scale-110">
                 <svg viewBox="0 0 24 24" fill="currentColor" width={18} height={18} className="ml-0.5">
                   <path d="M6 4l14 8-14 8z" />
                 </svg>
@@ -182,9 +189,10 @@ export function MagicVideoModeScreen() {
                 e.stopPropagation();
                 setReelIndex((prev) => (prev - 1 + REEL_SAMPLES.length) % REEL_SAMPLES.length);
               }}
-              className="absolute left-1.5 top-1/2 z-20 -translate-y-1/2 grid size-7 place-items-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+              className="absolute left-2 top-1/2 z-20 -translate-y-1/2 grid size-7 place-items-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+              aria-label="Previous sample"
             >
-              <ChevronLeft className="size-3.5" />
+              <ChevronLeft className="size-4" />
             </button>
             <button
               type="button"
@@ -192,30 +200,19 @@ export function MagicVideoModeScreen() {
                 e.stopPropagation();
                 setReelIndex((prev) => (prev + 1) % REEL_SAMPLES.length);
               }}
-              className="absolute right-1.5 top-1/2 z-20 -translate-y-1/2 grid size-7 place-items-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+              className="absolute right-2 top-1/2 z-20 -translate-y-1/2 grid size-7 place-items-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+              aria-label="Next sample"
             >
-              <ChevronRight className="size-3.5" />
+              <ChevronRight className="size-4" />
             </button>
 
-            {/* Caption */}
-            <div className="absolute bottom-10 left-3.5 right-3.5 z-10 text-[12.5px] font-semibold text-white drop-shadow">
+            {/* Subtitle Caption */}
+            <div className="absolute bottom-10 left-3.5 right-3.5 z-10 text-[12.5px] font-semibold leading-snug text-white/95 drop-shadow-md">
               {curReel.caption}
             </div>
 
-            {/* Scrubber */}
-            <div className="absolute bottom-2.5 left-3.5 right-3.5 z-10 flex items-center gap-2 text-[10px] font-medium text-white/80">
-              <span>{curReel.currentTime}</span>
-              <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-white/25">
-                <div
-                  className="absolute left-0 top-0 bottom-0 rounded-full bg-[var(--brand)]"
-                  style={{ width: `${curReel.progressPercent}%` }}
-                />
-              </div>
-              <span>{curReel.totalTime}</span>
-            </div>
-
-            {/* Dots */}
-            <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 flex items-center gap-1.5">
+            {/* Slim Apple Progress Pill Dashes */}
+            <div className="absolute bottom-3.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
               {REEL_SAMPLES.map((_, i) => (
                 <button
                   key={i}
@@ -224,40 +221,49 @@ export function MagicVideoModeScreen() {
                     e.stopPropagation();
                     setReelIndex(i);
                   }}
-                  className={`h-1.5 rounded-full transition-all ${
-                    reelIndex === i ? "w-4 bg-[var(--brand)]" : "w-1.5 bg-white/50"
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    reelIndex === i ? "w-5 bg-[var(--brand)]" : "w-1.5 bg-white/40 hover:bg-white/70"
                   }`}
+                  aria-label={`Go to slide ${i + 1}`}
                 />
               ))}
             </div>
           </div>
 
-          {/* Info */}
-          <div className="flex flex-1 flex-col p-4">
+          {/* Lower Content */}
+          <div className="flex flex-1 flex-col p-3.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-[17px] font-bold">MagicReel™</h3>
-              <span className="rounded-full bg-[var(--brand-soft)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand)]">
-                Recommended
+              <h3 className="text-[17px] font-bold text-[var(--ink)]">MagicReel™</h3>
+              <span className="rounded-full bg-[var(--tint)] px-2 py-0.5 text-[11px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+                Most Popular
               </span>
             </div>
-            <p className="mt-1 text-[13px] text-[var(--ink-muted)]">
-              Cinematic short explainer with motion scenes, graphs & citations.
+            <p className="mt-1 text-[13.5px] leading-snug text-[var(--ink-3)]">
+              Cinematic explainer with motion scenes, graphics, voiceover & citations.
             </p>
 
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ Motion Scenes</span>
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ Voiceover</span>
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ On-Screen Citations</span>
+            {/* Pill Features */}
+            <div className="mt-3.5 flex flex-wrap gap-1.5">
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Motion Scenes
+              </span>
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Voice Narration
+              </span>
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Label Citations
+              </span>
             </div>
 
+            {/* Bottom Meta & Button */}
             <div className="mt-auto pt-4">
-              <div className="flex items-center justify-between border-t border-[var(--line)] pt-2.5 text-[11.5px] font-semibold text-[var(--ink-muted)]">
+              <div className="flex items-center justify-between border-t border-[var(--hair)] pt-2.5 text-[12px] font-medium text-[var(--ink-4)]">
                 <span>30–180s · HCP & Patient</span>
-                <span className="text-[var(--brand)] font-bold">5,000 tokens</span>
+                <span className="font-bold text-[var(--brand-deep)]">5,000 tokens</span>
               </div>
               <button
                 type="button"
-                className="focus-ring mt-2.5 w-full rounded-[10px] bg-[var(--brand)] py-2 text-[13px] font-bold text-white shadow-sm transition hover:bg-[var(--brand-deep)]"
+                className="focus-ring mt-3 w-full rounded-[14px] bg-[var(--brand)] py-2.5 text-[13.5px] font-bold text-white shadow-sm transition-all duration-200 hover:bg-[var(--brand-deep)] hover:shadow-md"
               >
                 Choose MagicReel™ →
               </button>
@@ -270,25 +276,30 @@ export function MagicVideoModeScreen() {
           onMouseEnter={() => setAvatarHovered(true)}
           onMouseLeave={() => setAvatarHovered(false)}
           onClick={() => handleSelectMode("magic-avatar")}
-          className="group squircle-card rise-in relative flex flex-col overflow-hidden border border-[var(--line)] bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#1d4ed8] hover:shadow-lg cursor-pointer [animation-delay:60ms]"
+          className="group relative flex flex-col rounded-[24px] border border-[var(--hair-2)] bg-white p-2.5 shadow-[var(--sh-1)] transition-all duration-300 hover:-translate-y-1 hover:border-[#2563eb] hover:shadow-[var(--sh-3)] cursor-pointer"
         >
-          {/* Top Preview */}
-          <div className="relative h-[210px] overflow-hidden" style={{ background: curAvatar.gradient }}>
+          {/* Inner Video Preview Frame */}
+          <div
+            className="relative h-[220px] w-full overflow-hidden rounded-[18px]"
+            style={{ background: curAvatar.gradient }}
+          >
             <div
               className="absolute inset-0 transition-all duration-700"
-              style={{ background: curAvatar.glow, filter: "blur(26px)", opacity: 0.65 }}
+              style={{ background: curAvatar.glow, filter: "blur(24px)" }}
             />
-            <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-md">
-              <span className="size-1.5 rounded-full bg-[#3b82f6]" />
+
+            {/* Top Badges */}
+            <div className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md border border-white/10">
+              <UserCheck className="size-3 text-[#60a5fa]" />
               {curAvatar.badge}
             </div>
-            <div className="absolute right-3 top-3 z-10 rounded-md bg-white/95 px-2 py-0.5 text-[10.5px] font-bold text-[#0d1017]">
+            <div className="absolute right-3 top-3 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-bold text-[var(--ink)] shadow-sm">
               {curAvatar.aspect}
             </div>
 
-            {/* Play Button */}
+            {/* Center Play Button */}
             <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-              <div className="grid size-12 place-items-center rounded-full bg-[#1d4ed8] text-white shadow-md transition-transform duration-200 group-hover:scale-110">
+              <div className="grid size-12 place-items-center rounded-full bg-[#2563eb] text-white shadow-[0_8px_20px_rgba(37,99,235,.5)] transition-transform duration-200 group-hover:scale-110">
                 <svg viewBox="0 0 24 24" fill="currentColor" width={18} height={18} className="ml-0.5">
                   <path d="M6 4l14 8-14 8z" />
                 </svg>
@@ -302,9 +313,10 @@ export function MagicVideoModeScreen() {
                 e.stopPropagation();
                 setAvatarIndex((prev) => (prev - 1 + AVATAR_SAMPLES.length) % AVATAR_SAMPLES.length);
               }}
-              className="absolute left-1.5 top-1/2 z-20 -translate-y-1/2 grid size-7 place-items-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+              className="absolute left-2 top-1/2 z-20 -translate-y-1/2 grid size-7 place-items-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+              aria-label="Previous sample"
             >
-              <ChevronLeft className="size-3.5" />
+              <ChevronLeft className="size-4" />
             </button>
             <button
               type="button"
@@ -312,30 +324,19 @@ export function MagicVideoModeScreen() {
                 e.stopPropagation();
                 setAvatarIndex((prev) => (prev + 1) % AVATAR_SAMPLES.length);
               }}
-              className="absolute right-1.5 top-1/2 z-20 -translate-y-1/2 grid size-7 place-items-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+              className="absolute right-2 top-1/2 z-20 -translate-y-1/2 grid size-7 place-items-center rounded-full bg-black/40 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/70"
+              aria-label="Next sample"
             >
-              <ChevronRight className="size-3.5" />
+              <ChevronRight className="size-4" />
             </button>
 
-            {/* Caption */}
-            <div className="absolute bottom-10 left-3.5 right-3.5 z-10 text-[12.5px] font-semibold text-white drop-shadow">
+            {/* Subtitle Caption */}
+            <div className="absolute bottom-10 left-3.5 right-3.5 z-10 text-[12.5px] font-semibold leading-snug text-white/95 drop-shadow-md">
               {curAvatar.caption}
             </div>
 
-            {/* Scrubber */}
-            <div className="absolute bottom-2.5 left-3.5 right-3.5 z-10 flex items-center gap-2 text-[10px] font-medium text-white/80">
-              <span>{curAvatar.currentTime}</span>
-              <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-white/25">
-                <div
-                  className="absolute left-0 top-0 bottom-0 rounded-full bg-[#3b82f6]"
-                  style={{ width: `${curAvatar.progressPercent}%` }}
-                />
-              </div>
-              <span>{curAvatar.totalTime}</span>
-            </div>
-
-            {/* Dots */}
-            <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 flex items-center gap-1.5">
+            {/* Slim Apple Progress Pill Dashes */}
+            <div className="absolute bottom-3.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5">
               {AVATAR_SAMPLES.map((_, i) => (
                 <button
                   key={i}
@@ -344,40 +345,49 @@ export function MagicVideoModeScreen() {
                     e.stopPropagation();
                     setAvatarIndex(i);
                   }}
-                  className={`h-1.5 rounded-full transition-all ${
-                    avatarIndex === i ? "w-4 bg-[#3b82f6]" : "w-1.5 bg-white/50"
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    avatarIndex === i ? "w-5 bg-[#3b82f6]" : "w-1.5 bg-white/40 hover:bg-white/70"
                   }`}
+                  aria-label={`Go to slide ${i + 1}`}
                 />
               ))}
             </div>
           </div>
 
-          {/* Info */}
-          <div className="flex flex-1 flex-col p-4">
+          {/* Lower Content */}
+          <div className="flex flex-1 flex-col p-3.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-[17px] font-bold">MagicAvatar™</h3>
-              <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-[10.5px] font-bold text-[#1d4ed8]">
+              <h3 className="text-[17px] font-bold text-[var(--ink)]">MagicAvatar™</h3>
+              <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-[11px] font-bold text-[#1d4ed8] border border-[#dbeafe]">
                 Digital Twin
               </span>
             </div>
-            <p className="mt-1 text-[13px] text-[var(--ink-muted)]">
-              Presenter-led clinical video with AI doctor digital twins.
+            <p className="mt-1 text-[13.5px] leading-snug text-[var(--ink-3)]">
+              Presenter-led clinical video with AI doctor digital twins & evidence slides.
             </p>
 
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ Doctor Avatar</span>
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ Lip-Sync Audio</span>
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ Evidence Slides</span>
+            {/* Pill Features */}
+            <div className="mt-3.5 flex flex-wrap gap-1.5">
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Doctor Avatar
+              </span>
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Lip-Sync Audio
+              </span>
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Slide Overlays
+              </span>
             </div>
 
+            {/* Bottom Meta & Button */}
             <div className="mt-auto pt-4">
-              <div className="flex items-center justify-between border-t border-[var(--line)] pt-2.5 text-[11.5px] font-semibold text-[var(--ink-muted)]">
+              <div className="flex items-center justify-between border-t border-[var(--hair)] pt-2.5 text-[12px] font-medium text-[var(--ink-4)]">
                 <span>30–90s · Presenter</span>
-                <span className="text-[#1d4ed8] font-bold">8,000 tokens</span>
+                <span className="font-bold text-[#1d4ed8]">8,000 tokens</span>
               </div>
               <button
                 type="button"
-                className="focus-ring mt-2.5 w-full rounded-[10px] bg-[#1d4ed8] py-2 text-[13px] font-bold text-white shadow-sm transition hover:bg-[#1e40af]"
+                className="focus-ring mt-3 w-full rounded-[14px] bg-[#2563eb] py-2.5 text-[13.5px] font-bold text-white shadow-sm transition-all duration-200 hover:bg-[#1d4ed8] hover:shadow-md"
               >
                 Choose MagicAvatar™ →
               </button>
@@ -388,43 +398,51 @@ export function MagicVideoModeScreen() {
         {/* ── CARD 3: Create from Scratch ── */}
         <div
           onClick={() => handleSelectMode("scratch")}
-          className="group squircle-card rise-in relative flex flex-col overflow-hidden border border-[var(--line)] bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-lg cursor-pointer [animation-delay:120ms]"
+          className="group relative flex flex-col rounded-[24px] border border-[var(--hair-2)] bg-white p-2.5 shadow-[var(--sh-1)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-[var(--sh-3)] cursor-pointer"
         >
-          {/* Top Graphic */}
-          <div className="relative flex h-[210px] flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#1b2028] via-[#10141a] to-[#080a0e] p-5 text-center">
-            <div className="grid size-14 place-items-center rounded-2xl bg-gradient-to-tr from-[#ff5b2d] to-[#fd4816] text-white shadow-md transition-transform duration-200 group-hover:scale-110">
-              <Sparkles className="size-7" />
+          {/* Inner Graphic Frame */}
+          <div className="relative flex h-[220px] w-full flex-col items-center justify-center overflow-hidden rounded-[18px] bg-gradient-to-br from-[#1b2230] via-[#101520] to-[#080b12] p-5 text-center">
+            <div className="grid size-12 place-items-center rounded-2xl bg-gradient-to-tr from-[#ff5b2d] to-[#fd4816] text-white shadow-[0_8px_20px_rgba(253,72,22,.45)] transition-transform duration-200 group-hover:scale-110">
+              <Compass className="size-6" />
             </div>
             <h4 className="mt-3 text-[15px] font-bold text-white">Freeform Canvas</h4>
-            <p className="mt-0.5 text-[11.5px] text-white/70">Custom prompt and flexible duration</p>
+            <p className="mt-0.5 text-[11.5px] text-white/70">Custom prompt and open configuration</p>
           </div>
 
-          {/* Info */}
-          <div className="flex flex-1 flex-col p-4">
+          {/* Lower Content */}
+          <div className="flex flex-1 flex-col p-3.5">
             <div className="flex items-center justify-between">
-              <h3 className="text-[17px] font-bold">Create from Scratch</h3>
-              <span className="rounded-full bg-black/5 px-2 py-0.5 text-[10.5px] font-bold text-[var(--ink-2)]">
-                Open Prompt
+              <h3 className="text-[17px] font-bold text-[var(--ink)]">Create from Scratch</h3>
+              <span className="rounded-full bg-[#f4f5f3] px-2 py-0.5 text-[11px] font-bold text-[var(--ink-2)] border border-[var(--hair-2)]">
+                Open
               </span>
             </div>
-            <p className="mt-1 text-[13px] text-[var(--ink-muted)]">
-              Build a custom video using your own prompt without presets.
+            <p className="mt-1 text-[13.5px] leading-snug text-[var(--ink-3)]">
+              Build a custom video using your own prompt without preset constraints.
             </p>
 
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ Custom Prompt</span>
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ Any Duration</span>
-              <span className="rounded-md bg-black/[0.04] px-2 py-0.5 text-[11px] font-semibold text-[var(--ink-2)]">✓ Modular Assets</span>
+            {/* Pill Features */}
+            <div className="mt-3.5 flex flex-wrap gap-1.5">
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Custom Prompt
+              </span>
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Any Duration
+              </span>
+              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 text-[11.5px] font-semibold text-[var(--ink-2)]">
+                Modular Setup
+              </span>
             </div>
 
+            {/* Bottom Meta & Button */}
             <div className="mt-auto pt-4">
-              <div className="flex items-center justify-between border-t border-[var(--line)] pt-2.5 text-[11.5px] font-semibold text-[var(--ink-muted)]">
-                <span>Custom runtime</span>
-                <span className="text-[var(--brand)] font-bold">Standard tokens</span>
+              <div className="flex items-center justify-between border-t border-[var(--hair)] pt-2.5 text-[12px] font-medium text-[var(--ink-4)]">
+                <span>Custom length</span>
+                <span className="font-bold text-[var(--ink-2)]">Standard tokens</span>
               </div>
               <button
                 type="button"
-                className="focus-ring mt-2.5 w-full rounded-[10px] border border-[var(--line-strong)] bg-white py-2 text-[13px] font-bold text-[var(--ink)] shadow-sm transition hover:border-[var(--brand)] hover:bg-[var(--brand-soft)] hover:text-[var(--brand)]"
+                className="focus-ring mt-3 w-full rounded-[14px] border border-[var(--hair-3)] bg-white py-2.5 text-[13.5px] font-bold text-[var(--ink)] shadow-sm transition-all duration-200 hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
               >
                 Start from Scratch →
               </button>
