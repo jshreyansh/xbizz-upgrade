@@ -25,6 +25,7 @@ interface WorkspaceState {
   onboardingBeat: OnboardingBeat;
   isFirstRun: boolean;
   navCollapsed: boolean;
+  teamDockOpen: boolean;
   // Setters
   setView: (view: AppView) => void;
   setAssetType: (assetType: AssetType) => void;
@@ -48,6 +49,8 @@ interface WorkspaceState {
   setOnboardingBeat: (beat: OnboardingBeat) => void;
   setIsFirstRun: (isFirstRun: boolean) => void;
   setNavCollapsed: (collapsed: boolean) => void;
+  setTeamDockOpen: (open: boolean) => void;
+  toggleTeamDock: () => void;
   reset: () => void;
 }
 
@@ -73,6 +76,7 @@ const initialState = {
   onboardingBeat: 1 as OnboardingBeat,
   isFirstRun: true,
   navCollapsed: false,
+  teamDockOpen: false,
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -104,5 +108,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setOnboardingBeat: (onboardingBeat) => set({ onboardingBeat }),
   setIsFirstRun: (isFirstRun) => set({ isFirstRun }),
   setNavCollapsed: (navCollapsed) => set({ navCollapsed }),
+  setTeamDockOpen: (teamDockOpen) => set({ teamDockOpen }),
+  toggleTeamDock: () => set((state) => ({ teamDockOpen: !state.teamDockOpen })),
   reset: () => set(initialState),
 }));

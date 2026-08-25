@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA, MESSAGES, SAMPLE_VIDEOS, SAMPLE_CANVAS, TEAM } from "@/features/workspace/mock-personas";
 import type { SampleAsset } from "@/features/workspace/mock-personas";
@@ -44,6 +45,7 @@ function HeroMesh() {
 
 /* ── Messages panel ─────────────────────────────────────────────── */
 function MessagesPanel() {
+  const toggleTeamDock = useWorkspaceStore((s) => s.toggleTeamDock);
   const unreadCount = MESSAGES.filter((m) => m.unread).length;
   return (
     <div
@@ -63,7 +65,12 @@ function MessagesPanel() {
             {unreadCount} new
           </span>
         )}
-        <button style={{ marginLeft: "auto", fontSize: 12.5, color: "var(--brand)", fontWeight: 650 }}>Open session →</button>
+        <button
+          onClick={toggleTeamDock}
+          style={{ marginLeft: "auto", fontSize: 12.5, color: "var(--brand)", fontWeight: 650, cursor: "pointer" }}
+        >
+          Open session →
+        </button>
       </div>
 
       <div>
@@ -72,6 +79,7 @@ function MessagesPanel() {
           return (
             <div
               key={i}
+              onClick={toggleTeamDock}
               style={{
                 display: "flex",
                 alignItems: "flex-start",
@@ -79,7 +87,9 @@ function MessagesPanel() {
                 padding: "13px 18px",
                 borderBottom: i < MESSAGES.length - 1 ? "1px solid var(--hair)" : "none",
                 background: msg.unread ? "rgba(253,72,22,.03)" : "transparent",
+                cursor: "pointer",
               }}
+              className="hover:bg-black/[0.02]"
             >
               <span
                 style={{
@@ -109,7 +119,10 @@ function MessagesPanel() {
       </div>
 
       <div style={{ padding: "11px 16px", borderTop: "1px solid var(--hair)" }}>
-        <button style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", background: "#fff", color: "var(--ink-3)", fontSize: 13.5 }}>
+        <button
+          onClick={toggleTeamDock}
+          style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "11px 14px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", background: "#fff", color: "var(--ink-3)", fontSize: 13.5, cursor: "pointer" }}
+        >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.7L3 21l1.9-5a8.3 8.3 0 0 1-.9-3.8A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" /></svg>
           Message your team…
           <span style={{ marginLeft: "auto", fontSize: 10.5, fontWeight: 700, color: "var(--ink-4)", padding: "2px 6px", border: "1px solid var(--hair-2)", borderRadius: 5 }}>⌘J</span>
@@ -121,16 +134,18 @@ function MessagesPanel() {
 
 /* ── Getting-started rail ────────────────────────────────────────── */
 function GettingStarted() {
+  const router = useRouter();
   const steps = [
-    { label: "Build your first dossier", done: false },
-    { label: "Create a Magic Video", done: false },
-    { label: "Send for review", done: false },
+    { label: "Build your first dossier", href: "/dossiers", done: false },
+    { label: "Create a Magic Video", href: "/create", done: false },
+    { label: "Send for review", href: "/create", done: false },
   ];
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginTop: 24 }}>
       {steps.map((step, i) => (
         <div key={step.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
           <button
+            onClick={() => router.push(step.href)}
             style={{
               display: "flex",
               alignItems: "center",
@@ -143,6 +158,7 @@ function GettingStarted() {
               fontSize: 13,
               fontWeight: 650,
               color: "#fff",
+              cursor: "pointer",
             }}
           >
             <span
@@ -209,6 +225,7 @@ function ReelCard({ asset, onOpen }: { asset: SampleAsset; onOpen: () => void })
 
 /* ── Asset lightbox ─────────────────────────────────────────────── */
 function AssetLightbox({ asset, onClose }: { asset: SampleAsset; onClose: () => void }) {
+  const router = useRouter();
   return (
     <div
       onClick={onClose}
@@ -267,8 +284,11 @@ function AssetLightbox({ asset, onClose }: { asset: SampleAsset; onClose: () => 
             </div>
           ))}
           <button
-            onClick={onClose}
-            style={{ display: "inline-flex", alignItems: "center", gap: 9, marginTop: 22, width: "100%", justifyContent: "center", padding: "13px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5, background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff", boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)" }}
+            onClick={() => {
+              onClose();
+              router.push("/create");
+            }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 9, marginTop: 22, width: "100%", justifyContent: "center", padding: "13px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5, background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff", boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)", cursor: "pointer" }}
           >
             Make one like this
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
@@ -283,6 +303,7 @@ function AssetLightbox({ asset, onClose }: { asset: SampleAsset; onClose: () => 
 type GalTab = "all" | "video" | "canvas";
 
 export function HomeScreen() {
+  const router = useRouter();
   const isFirstRun = useWorkspaceStore((s) => s.isFirstRun);
   const [galTab, setGalTab] = useState<GalTab>("all");
   const [lightboxAsset, setLightboxAsset] = useState<SampleAsset | null>(null);
@@ -360,11 +381,13 @@ export function HomeScreen() {
             {/* CTA row */}
             <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <button
+                onClick={() => router.push(isFirstRun ? "/dossiers" : "/create")}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 9,
                   padding: "12px 22px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5,
                   background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff",
                   boxShadow: "0 12px 26px -14px rgba(253,72,22,.9),inset 0 1px 0 rgba(255,255,255,.28)",
+                  cursor: "pointer",
                 }}
               >
                 {isFirstRun ? "Build my first dossier" : "Create a Magic Video"}

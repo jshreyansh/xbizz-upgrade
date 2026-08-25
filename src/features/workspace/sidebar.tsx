@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
@@ -29,8 +29,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Create",
     items: [
-      { label: "Content Studio", icon: "studio", href: "#" },
-      { label: "Magic Video", icon: "video", href: "#", indent: true },
+      { label: "Content Studio", icon: "studio", href: "/create" },
+      { label: "Magic Video", icon: "video", href: "/create", indent: true },
       { label: "Magic Aid", icon: "layers", href: "#", soon: true, indent: true },
       { label: "Magic Mail", icon: "mail", href: "#", soon: true, indent: true },
       { label: "Magic Canvas", icon: "canvas", href: "#", indent: true },
@@ -40,7 +40,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Library",
     items: [
-      { label: "Brand Dossiers", icon: "dossier", href: "#" },
+      { label: "Brand Dossiers", icon: "dossier", href: "/dossiers" },
       { label: "Content Library", icon: "library", href: "#" },
       { label: "Templates", icon: "templates", href: "#" },
       { label: "Characters", icon: "characters", href: "#" },
@@ -87,6 +87,7 @@ function NavIcon({ name }: { name: string }): ReactNode {
 
 export function Sidebar() {
   const router = useRouter();
+  const pathname = usePathname();
   const collapsed = useWorkspaceStore((s) => s.navCollapsed);
   const setCollapsed = useWorkspaceStore((s) => s.setNavCollapsed);
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
@@ -153,48 +154,51 @@ export function Sidebar() {
             ) : (
               <div style={{ height: 1, background: "var(--hair)", margin: "14px 8px 10px" }} />
             )}
-            {group.items.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => item.href !== "#" && router.push(item.href)}
-                title={collapsed ? item.label : undefined}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: collapsed ? 0 : 11,
-                  width: "100%",
-                  padding: collapsed ? "11px 0" : "9px 10px",
-                  borderRadius: 10,
-                  fontSize: collapsed ? 0 : 13.5,
-                  fontWeight: 560,
-                  color: item.href === "/" ? "var(--brand)" : "var(--ink-2)",
-                  background: item.href === "/" ? "var(--tint)" : "transparent",
-                  justifyContent: collapsed ? "center" : "flex-start",
-                  paddingLeft: !collapsed && item.indent ? 28 : undefined,
-                  position: "relative",
-                  transition: ".16s var(--e)",
-                }}
-              >
-                {item.href === "/" && !collapsed && (
-                  <span style={{ position: "absolute", left: -14, top: 8, bottom: 8, width: 3, borderRadius: "0 3px 3px 0", background: "var(--brand)" }} />
-                )}
-                <NavIcon name={item.icon} />
-                {!collapsed && (
-                  <>
-                    <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
-                    {item.soon && (
-                      <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>SOON</span>
-                    )}
-                    {item.badge !== undefined && (
-                      <span style={{ fontSize: 10.5, background: "var(--brand)", color: "#fff", padding: "1px 7px", borderRadius: 99, fontWeight: 750 }}>{item.badge}</span>
-                    )}
-                  </>
-                )}
-                {collapsed && item.badge !== undefined && (
-                  <span style={{ position: "absolute", top: 4, right: 8, fontSize: 9, background: "var(--brand)", color: "#fff", padding: "0 5px", borderRadius: 99, fontWeight: 750 }}>{item.badge}</span>
-                )}
-              </button>
-            ))}
+            {group.items.map((item) => {
+              const isActive = item.href === "/" ? pathname === "/" : item.href !== "#" && pathname.startsWith(item.href);
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => item.href !== "#" && router.push(item.href)}
+                  title={collapsed ? item.label : undefined}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: collapsed ? 0 : 11,
+                    width: "100%",
+                    padding: collapsed ? "11px 0" : "9px 10px",
+                    borderRadius: 10,
+                    fontSize: collapsed ? 0 : 13.5,
+                    fontWeight: 560,
+                    color: isActive ? "var(--brand)" : "var(--ink-2)",
+                    background: isActive ? "var(--tint)" : "transparent",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    paddingLeft: !collapsed && item.indent ? 28 : undefined,
+                    position: "relative",
+                    transition: ".16s var(--e)",
+                  }}
+                >
+                  {isActive && !collapsed && (
+                    <span style={{ position: "absolute", left: -14, top: 8, bottom: 8, width: 3, borderRadius: "0 3px 3px 0", background: "var(--brand)" }} />
+                  )}
+                  <NavIcon name={item.icon} />
+                  {!collapsed && (
+                    <>
+                      <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
+                      {item.soon && (
+                        <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>SOON</span>
+                      )}
+                      {item.badge !== undefined && (
+                        <span style={{ fontSize: 10.5, background: "var(--brand)", color: "#fff", padding: "1px 7px", borderRadius: 99, fontWeight: 750 }}>{item.badge}</span>
+                      )}
+                    </>
+                  )}
+                  {collapsed && item.badge !== undefined && (
+                    <span style={{ position: "absolute", top: 4, right: 8, fontSize: 9, background: "var(--brand)", color: "#fff", padding: "0 5px", borderRadius: 99, fontWeight: 750 }}>{item.badge}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         ))}
       </div>
