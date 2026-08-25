@@ -37,6 +37,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   TextCursorInput,
+  Timer,
   Trash2,
   Type,
   Undo2,
@@ -95,6 +96,14 @@ export function StudioScreen() {
 
   // Toast notification state
   const [toastMessage, setToMessage] = useState<string | null>(null);
+
+  // ── Spatial Area Selector & Time Duration Widget States for Chat ──
+  const [isSelectingRegion, setIsSelectingRegion] = useState(false);
+  const [selectedBox, setSelectedBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [isDraggingBox, setIsDraggingBox] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [timeRange, setTimeRange] = useState<{ start: number; end: number } | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   // Local scenes list allowing dynamic addition and reordering
   const [sceneList, setSceneList] = useState(scenes);
@@ -226,16 +235,43 @@ export function StudioScreen() {
   };
 
   const handleSendChat = () => {
-    if (!directorInput.trim()) return;
-    const msg = directorInput;
+    if (!directorInput.trim() && !selectedBox && !timeRange) return;
+    
+    let contextualPrefix = "";
+    if (selectedBox) {
+      contextualPrefix += `[Region Target: ${Math.round(selectedBox.x)}%,${Math.round(selectedBox.y)}% (${Math.round(selectedBox.width)}%×${Math.round(selectedBox.height)}%)] `;
+    }
+    if (timeRange) {
+      contextualPrefix += `[Time Range: ${timeRange.start}s – ${timeRange.end}s] `;
+    }
+
+    const rawInput = directorInput.trim() || "Adjust highlighted video region";
+    const fullMsg = contextualPrefix ? `${contextualPrefix}${rawInput}` : rawInput;
+
+    const hadRegion = Boolean(selectedBox);
+    const hadTime = Boolean(timeRange);
+    const timeStart = timeRange?.start;
+    const timeEnd = timeRange?.end;
+
     setDirectorInput("");
-    setChatMessages((prev) => [...prev, { role: "user", text: msg }]);
+    setSelectedBox(null);
+    setTimeRange(null);
+    setShowTimePicker(false);
+    setIsSelectingRegion(false);
+
+    setChatMessages((prev) => [...prev, { role: "user", text: fullMsg }]);
     setTimeout(() => {
+      let replyText = `Applied "${rawInput}" across Scene ${selectedScene.number} and verified all label claims.`;
+      if (hadRegion) {
+        replyText = `Target area re-composited in Scene ${selectedScene.number} according to your spatial selection with balanced lighting and label claim grounding.`;
+      } else if (hadTime) {
+        replyText = `Trimmed and paced Scene ${selectedScene.number} between ${timeStart}s – ${timeEnd}s. Audio narration and visual transitions synchronised.`;
+      }
       setChatMessages((prev) => [
         ...prev,
         {
           role: "swishx",
-          text: `Applied "${msg}" across target scenes and verified all 6 source claims. Ready to generate.`,
+          text: replyText,
         },
       ]);
     }, 600);
@@ -693,7 +729,7 @@ export function StudioScreen() {
         >
           {/* Top Video Sub-header */}
           <div className="relative flex min-h-0 flex-1 flex-col bg-[#e6e9e6]">
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-[rgb(202_209_205/70%)] bg-white/45 px-3 backdrop-blur-sm">
+            <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#cad1cd]/70 bg-white/45 px-3 backdrop-blur-sm">
               <div className="flex items-center gap-2 text-[8px] font-bold text-[#717b76]">
                 <span className="rounded-md bg-white px-2 py-1 shadow-sm">
                   Scene {selectedScene.number} of {scenes.length}
@@ -710,7 +746,7 @@ export function StudioScreen() {
 
             {/* 16:9 Video Canvas Player / Rendering Loader */}
             <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-7">
-              <div className="w-full max-w-[840px] overflow-hidden rounded-[8px] bg-[#173d31] shadow-[0_28px_80px_rgb(24_37_31/22%)] ring-1 ring-black/10 aspect-video flex flex-col justify-center items-center relative">
+              <div className="w-full max-w-[840px] overflow-hidden rounded-[8px] bg-[#173d31] shadow-2xl ring-1 ring-black/10 aspect-video flex flex-col justify-center items-center relative">
                 {isEditor && !generatedSceneIds.includes(selectedScene.id) ? (
                   /* Live Asynchronous Rendering State Canvas */
                   <div className="size-full flex flex-col items-center justify-center p-8 text-center bg-radial from-[#1e4d3f] to-[#0f2820] text-white relative overflow-hidden animate-pulse">
@@ -749,7 +785,45 @@ export function StudioScreen() {
                     </div>
                   </div>
                 ) : (
-                  /* Completed Interactive Video Player */
+                  /* Interactive Drag Selection Overlay Container */
+                  <div
+                    className="relative size-full overflow-hidden select-none"
+                  onMouseDown={(e) => {
+                    if (!isSelectingRegion) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    setDragStart({ x, y });
+                    setIsDraggingBox(true);
+                    setSelectedBox({ x, y, width: 0, height: 0 });
+                  }}
+                  onMouseMove={(e) => {
+                    if (!isSelectingRegion || !isDraggingBox || !dragStart) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const currentX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+                    const currentY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+
+                    const x = Math.min(dragStart.x, currentX);
+                    const y = Math.min(dragStart.y, currentY);
+                    const width = Math.abs(currentX - dragStart.x);
+                    const height = Math.abs(currentY - dragStart.y);
+
+                    setSelectedBox({ x, y, width, height });
+                  }}
+                  onMouseUp={() => {
+                    if (isDraggingBox) {
+                      setIsDraggingBox(false);
+                      setIsSelectingRegion(false);
+                      if (selectedBox && (selectedBox.width < 3 || selectedBox.height < 3)) {
+                        setSelectedBox(null);
+                      } else {
+                        setToMessage("Spatial region attached to chat");
+                        setTimeout(() => setToMessage(null), 2500);
+                      }
+                    }
+                  }}
+                >
+                  {/* Completed Interactive Video Player */}
                   <Player
                     component={DermoraComposition}
                     durationInFrames={300}
@@ -758,12 +832,51 @@ export function StudioScreen() {
                     fps={30}
                     controls
                     loop
-                    style={{ width: "100%", aspectRatio: "16 / 9" }}
+                    className="w-full aspect-video"
                   />
-                )}
-              </div>
+
+                  {/* Active Selection Mode Helper Banner */}
+                  {isSelectingRegion && (
+                    <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 rounded-full bg-[var(--brand)] px-3.5 py-1.5 text-[11px] font-bold text-white shadow-lg animate-bounce flex items-center gap-2">
+                      <ScanLine className="size-3.5" />
+                      <span>Click and drag across video to select area</span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsSelectingRegion(false);
+                        }}
+                        className="ml-1 text-white/80 hover:text-white"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Render Highlighted Dragged Region Box */}
+                  {selectedBox && selectedBox.width > 2 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: `${selectedBox.x}%`,
+                        top: `${selectedBox.y}%`,
+                        width: `${selectedBox.width}%`,
+                        height: `${selectedBox.height}%`,
+                        boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)",
+                        backgroundColor: "rgba(253, 72, 22, 0.2)",
+                      }}
+                      className="z-20 pointer-events-none rounded-lg border-2 border-[var(--brand)] transition-all"
+                    >
+                      <div className="absolute -top-6 left-0 rounded-md bg-[var(--brand)] px-1.5 py-0.5 text-[9px] font-extrabold text-white uppercase shadow-sm">
+                        Selected Target
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
+        </div>
 
           {/* ── Multi-Layer Timeline: Light Clean SwishX Pharma/Office Theme ── */}
           <div className="border-t border-[var(--line)] bg-[#fafbf9] text-[var(--ink)] shrink-0">
@@ -1078,22 +1191,182 @@ export function StudioScreen() {
                   </div>
                 )}
 
-                {/* Input Field */}
-                <div className="mt-auto pt-2">
-                  <div className="flex items-center gap-2 rounded-2xl border border-black/[0.12] bg-white p-1.5 pl-3.5 focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand-soft)] shadow-xs">
+                {/* Input Field & Contextual Widgets */}
+                <div className="mt-auto pt-2 space-y-2">
+                  {/* Attached Context Badges */}
+                  {(selectedBox || timeRange) && (
+                    <div className="flex flex-wrap items-center gap-1.5 px-1">
+                      {selectedBox && (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-[var(--tint)] border border-[var(--brand)]/30 px-2 py-1 text-[11px] font-bold text-[var(--brand-deep)] shadow-2xs">
+                          <ScanLine className="size-3 text-[var(--brand)]" />
+                          <span>Video Area ({Math.round(selectedBox.width)}%×{Math.round(selectedBox.height)}%)</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedBox(null)}
+                            className="hover:text-rose-600 ml-0.5 cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      )}
+                      {timeRange && (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 border border-blue-200 px-2 py-1 text-[11px] font-bold text-blue-800 shadow-2xs">
+                          <Timer className="size-3 text-blue-600" />
+                          <span>Range: {timeRange.start}s – {timeRange.end}s</span>
+                          <button
+                            type="button"
+                            onClick={() => setTimeRange(null)}
+                            className="hover:text-rose-600 ml-0.5 cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Time Range Widget Popover */}
+                  {showTimePicker && (
+                    <div className="rounded-xl border border-black/[0.08] bg-white p-3 shadow-lg space-y-2.5 animate-in fade-in zoom-in-95">
+                      <div className="flex items-center justify-between border-b border-black/[0.05] pb-2">
+                        <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink)]">
+                          <Timer className="size-3.5 text-[var(--brand)]" />
+                          <span>Target Scene Duration</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowTimePicker(false)}
+                          className="text-[11px] text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                        {[
+                          { start: 0, end: 5, label: "0s – 5s (Intro)" },
+                          { start: 3, end: 9, label: "3s – 9s (Key MoA)" },
+                          { start: 0, end: selectedScene.duration, label: `Full (${selectedScene.duration}s)` },
+                        ].map((preset) => (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            onClick={() => {
+                              setTimeRange({ start: preset.start, end: preset.end });
+                              setShowTimePicker(false);
+                            }}
+                            className="rounded-lg border border-black/[0.06] bg-[#fafbf9] p-1.5 text-center font-bold text-[var(--ink-2)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] transition cursor-pointer"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <div className="flex-1 flex items-center gap-1 bg-[#f4f7f4] rounded-lg px-2 py-1 text-[11.5px] border border-black/5">
+                          <span className="text-[var(--ink-muted)] font-semibold">From:</span>
+                          <input
+                            type="number"
+                            min={0}
+                            max={selectedScene.duration - 1}
+                            defaultValue={timeRange?.start ?? 0}
+                            id="time-range-start"
+                            className="w-10 bg-transparent text-center font-bold text-[var(--ink)] outline-none"
+                          />
+                          <span>s</span>
+                        </div>
+                        <span className="text-[var(--ink-muted)] font-bold">to</span>
+                        <div className="flex-1 flex items-center gap-1 bg-[#f4f7f4] rounded-lg px-2 py-1 text-[11.5px] border border-black/5">
+                          <span className="text-[var(--ink-muted)] font-semibold">To:</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={selectedScene.duration}
+                            defaultValue={timeRange?.end ?? selectedScene.duration}
+                            id="time-range-end"
+                            className="w-10 bg-transparent text-center font-bold text-[var(--ink)] outline-none"
+                          />
+                          <span>s</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const startVal = Number((document.getElementById("time-range-start") as HTMLInputElement)?.value || 0);
+                            const endVal = Number((document.getElementById("time-range-end") as HTMLInputElement)?.value || selectedScene.duration);
+                            setTimeRange({ start: Math.min(startVal, endVal), end: Math.max(startVal, endVal) });
+                            setShowTimePicker(false);
+                          }}
+                          className="h-8 bg-[var(--brand)] text-white font-bold text-[11.5px] px-3"
+                        >
+                          Apply
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Main Input Box with Integrated Tool Widgets */}
+                  <div className="flex items-center gap-1.5 rounded-2xl border border-black/[0.12] bg-white p-1.5 pl-2.5 focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand-soft)] shadow-xs">
+                    {/* Area Selector Icon Trigger */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isEditor) {
+                          setToMessage("Switching to Editor canvas for video area selection");
+                          setStudioMode("editor");
+                        }
+                        setIsSelectingRegion(!isSelectingRegion);
+                        if (!isSelectingRegion) {
+                          setToMessage("Click and drag across the video to select target area");
+                          setTimeout(() => setToMessage(null), 3000);
+                        }
+                      }}
+                      title="Select video area to edit"
+                      className={cn(
+                        "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer",
+                        isSelectingRegion || selectedBox
+                          ? "bg-[var(--brand)] text-white shadow-xs"
+                          : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--brand)]"
+                      )}
+                    >
+                      <ScanLine className="size-4" />
+                    </button>
+
+                    {/* Time Range Widget Trigger */}
+                    <button
+                      type="button"
+                      onClick={() => setShowTimePicker(!showTimePicker)}
+                      title="Add scene timestamp / duration range"
+                      className={cn(
+                        "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer",
+                        timeRange || showTimePicker
+                          ? "bg-blue-600 text-white shadow-xs"
+                          : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-blue-600"
+                      )}
+                    >
+                      <Timer className="size-4" />
+                    </button>
+
                     <input
                       type="text"
                       value={directorInput}
                       onChange={(e) => setDirectorInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                      placeholder="Ask or direct changes..."
-                      className="flex-1 bg-transparent text-[12.5px] text-[var(--ink)] placeholder:text-[var(--ink-muted)] outline-none"
+                      placeholder={
+                        selectedBox
+                          ? "Instruct change for selected area..."
+                          : timeRange
+                          ? `Direct change for ${timeRange.start}s–${timeRange.end}s...`
+                          : "Ask or direct changes..."
+                      }
+                      className="flex-1 bg-transparent text-[12.5px] text-[var(--ink)] placeholder:text-[var(--ink-muted)] outline-none min-w-0 px-1"
                     />
+
                     <button
                       type="button"
                       onClick={handleSendChat}
-                      disabled={!directorInput.trim()}
-                      className="grid size-8 place-items-center rounded-xl bg-[var(--brand)] text-white disabled:opacity-30 transition-all hover:bg-[var(--brand-deep)] shadow-xs cursor-pointer"
+                      disabled={!directorInput.trim() && !selectedBox && !timeRange}
+                      className="grid size-8 place-items-center rounded-xl bg-[var(--brand)] text-white disabled:opacity-30 transition-all hover:bg-[var(--brand-deep)] shadow-xs cursor-pointer shrink-0"
+                      title="Send instruction"
                     >
                       <Send className="size-3.5" />
                     </button>
