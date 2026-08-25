@@ -218,6 +218,21 @@ button.rounded-full {
   animation: brand-spin 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
+@keyframes shimmer-sweep {
+  0% {
+    background-position: -180% 0;
+  }
+  100% {
+    background-position: 180% 0;
+  }
+}
+
+.shimmer-bar {
+  background: linear-gradient(90deg, var(--tint) 25%, var(--brand-2) 50%, var(--tint) 75%);
+  background-size: 200% 100%;
+  animation: shimmer-sweep 1.3s ease-in-out infinite;
+}
+
 .scenario-drawer {
   animation: drawer-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }

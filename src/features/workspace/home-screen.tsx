@@ -271,7 +271,7 @@ export function HomeScreen() {
   return (
     <div className="page-enter">
       {/* ── Hero ────────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 640, marginBottom: 30 }}>
+      <div style={{ maxWidth: 640, marginBottom: 28 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
           <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: "var(--ink-3)" }}>
             <i style={{ width: 6, height: 6, borderRadius: "50%", background: "#0d9488", boxShadow: "0 0 8px rgba(13,148,136,.5)", display: "block", animation: "blink 2s infinite" }} />
@@ -306,7 +306,14 @@ export function HomeScreen() {
       </div>
 
       {/* ── Unified creation panel — equal options, one surface ─── */}
-      <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", marginBottom: 24, overflow: "hidden" }}>
+      <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", marginBottom: 28, overflow: "hidden" }}>
+        <div style={{ padding: "22px 22px 0" }}>
+          <span style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--brand)" }}>
+            Content Studio
+          </span>
+          <b style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", display: "block", marginTop: 3 }}>What would you like to make?</b>
+          <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--ink-3)" }}>Every format is grounded in your brand dossier — nothing invented, nothing uncited.</p>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1" style={{ padding: 22 }}>
           {CREATION_OPTIONS.map((option) => (
             <CreationOptionCard key={option.title} option={option} onOpen={() => openOption(option)} />

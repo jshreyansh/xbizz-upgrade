@@ -116,6 +116,7 @@ export function DossierWizard({
   const [writerProgress, setWriterProgress] = useState(0);
   const [currentWritingSection, setCurrentWritingSection] = useState("Indications & Target Specificity");
   const [approvals, setApprovals] = useState<DossierApproval[]>(PENDING_APPROVALS);
+  const [sentRoles, setSentRoles] = useState<string[]>([]);
   const [changesNote, setChangesNote] = useState("");
   const [showChangesForm, setShowChangesForm] = useState(false);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
@@ -214,6 +215,7 @@ export function DossierWizard({
             clearInterval(interval);
             setTimeout(() => {
               setApprovals(PENDING_APPROVALS.map((a) => ({ ...a })));
+              setSentRoles([]);
               setStep("approval");
             }, 600);
             return 100;
@@ -229,20 +231,16 @@ export function DossierWizard({
     }
   }, [step]);
 
-  // Step 5: the Medical Writer certifies their own draft first (content
-  // sign-off), then MLR and the Project Manager review in turn; the Brand
-  // Lead ("You") gives the final approval by hand.
-  useEffect(() => {
-    if (step !== "approval") return;
-    const timers = [
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Medical Writer" ? { ...a, status: "approved" } : a))), 300),
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "MLR Reviewer" ? { ...a, status: "reviewing" } : a))), 600),
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "MLR Reviewer" ? { ...a, status: "approved" } : a))), 1800),
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Project Manager" ? { ...a, status: "reviewing" } : a))), 1100),
-      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Project Manager" ? { ...a, status: "approved" } : a))), 2500),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [step]);
+  // Step 5: nothing approves itself. Each accountable reviewer only moves
+  // once you explicitly send it to them — no silent auto-approval.
+  function requestApproval(role: string) {
+    if (sentRoles.includes(role)) return;
+    setSentRoles((prev) => [...prev, role]);
+    setApprovals((prev) => prev.map((a) => (a.role === role ? { ...a, status: "reviewing" } : a)));
+    setTimeout(() => {
+      setApprovals((prev) => prev.map((a) => (a.role === role ? { ...a, status: "approved" } : a)));
+    }, 1500);
+  }
 
   const teamReady = approvals.filter((a) => a.role !== "Brand Lead").every((a) => a.status === "approved");
 
@@ -857,6 +855,60 @@ export function DossierWizard({
           <div style={{ fontSize: 13, color: "var(--ink-3)", fontWeight: 650 }}>
             Current section: <span style={{ color: "var(--brand-deep)" }}>{currentWritingSection}</span> ({writerProgress}%)
           </div>
+
+          {/* Live document — sections fill in as the writer reaches them */}
+          <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", padding: 22, textAlign: "left", maxWidth: 480, margin: "8px auto 0" }}>
+            <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 14 }}>
+              Live document · {selectedSections.length} sections
+            </div>
+            <div style={{ display: "grid", gap: 14 }}>
+              {selectedSections.map((secId, i) => {
+                const meta = PHARMA_SECTIONS.find((s) => s.id === secId);
+                if (!meta) return null;
+                const completedCount = Math.floor((writerProgress / 100) * selectedSections.length);
+                const state = writerProgress >= 100 || i < completedCount ? "done" : i === completedCount ? "drafting" : "queued";
+                return (
+                  <div key={secId} style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    <span
+                      style={{
+                        width: 20, height: 20, borderRadius: "50%", flexShrink: 0, marginTop: 1,
+                        display: "grid", placeItems: "center", fontSize: 9, fontWeight: 800,
+                        background: state === "done" ? "var(--ok)" : state === "drafting" ? "var(--brand)" : "var(--hair-2)",
+                        color: state === "queued" ? "var(--ink-4)" : "#fff",
+                      }}
+                    >
+                      {state === "done" ? (
+                        <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12l6 6L20 5" /></svg>
+                      ) : (
+                        i + 1
+                      )}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 13, fontWeight: state === "queued" ? 500 : 650, color: state === "queued" ? "var(--ink-4)" : "var(--ink)" }}>
+                          {meta.name.replace(/^\d+\.\s*/, "")}
+                        </span>
+                        {state === "drafting" && (
+                          <span style={{ fontSize: 9.5, letterSpacing: ".04em", fontWeight: 800, color: "var(--brand)", textTransform: "uppercase" }}>Drafting…</span>
+                        )}
+                        {state === "queued" && (
+                          <span style={{ fontSize: 9.5, letterSpacing: ".04em", fontWeight: 700, color: "var(--ink-4)", textTransform: "uppercase" }}>Queued</span>
+                        )}
+                      </div>
+                      {state !== "done" ? (
+                        <div style={{ display: "grid", gap: 4, marginTop: 6 }}>
+                          <div className={state === "drafting" ? "shimmer-bar" : ""} style={{ height: 6, borderRadius: 99, width: "92%", background: state === "queued" ? "var(--hair)" : undefined }} />
+                          <div className={state === "drafting" ? "shimmer-bar" : ""} style={{ height: 6, borderRadius: 99, width: "58%", background: state === "queued" ? "var(--hair)" : undefined }} />
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>Drafted &amp; cited</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
@@ -871,7 +923,7 @@ export function DossierWizard({
               Team review before {activeDossier.brandName} goes live
             </h2>
             <p style={{ fontSize: 14.5, color: "var(--ink-3)", margin: "0 auto", maxWidth: "48ch" }}>
-              Nothing built from this dossier ships until every reviewer below signs off.
+              Send it to whoever’s accountable for each department — nothing here approves itself.
             </p>
           </div>
 
@@ -898,19 +950,31 @@ export function DossierWizard({
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <b style={{ fontSize: 14, fontWeight: 750, display: "block" }}>{a.name}</b>
-                  <span style={{ fontSize: 12, color: "var(--ink-4)" }}>{a.role}</span>
+                  <span style={{ fontSize: 12, color: "var(--ink-4)" }}>{a.role === "Brand Lead" ? "Final sign-off — you" : `Accountable for ${a.role}`}</span>
                 </div>
                 {a.status === "pending" && (
-                  <span style={{ fontSize: 11.5, fontWeight: 750, color: "var(--ink-4)", background: "var(--hair)", padding: "4px 10px", borderRadius: 99 }}>
-                    Pending
-                  </span>
+                  a.role === "Brand Lead" ? (
+                    <span style={{ fontSize: 11.5, fontWeight: 750, color: "var(--ink-4)", background: "var(--hair)", padding: "4px 10px", borderRadius: 99 }}>
+                      Waiting on team
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => requestApproval(a.role)}
+                      style={{
+                        flexShrink: 0, padding: "7px 14px", borderRadius: "var(--r-s)", fontSize: 12.5, fontWeight: 700,
+                        background: "#fff", border: "1px solid var(--hair-3)", color: "var(--ink-2)", cursor: "pointer",
+                      }}
+                    >
+                      Send for approval
+                    </button>
+                  )
                 )}
                 {a.status === "reviewing" && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 750, color: "var(--brand-deep)", background: "var(--tint)", padding: "4px 10px", borderRadius: 99 }}>
                     <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} className="animate-brand-spin" style={{ animationDuration: "1s" }}>
                       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
                     </svg>
-                    Reviewing…
+                    Sent · awaiting response
                   </span>
                 )}
                 {a.status === "approved" && (
@@ -942,7 +1006,11 @@ export function DossierWizard({
                   transition: ".2s var(--e)",
                 }}
               >
-                {teamReady ? "✓ Approve & Publish Dossier →" : "Waiting on the team to finish reviewing…"}
+                {teamReady
+                  ? "✓ Approve & Publish Dossier →"
+                  : sentRoles.length === 0
+                    ? "Send each department for approval to continue"
+                    : "Waiting on the team to respond…"}
               </button>
               <button
                 onClick={() => setShowChangesForm(true)}
