@@ -12,10 +12,11 @@ import {
   ShieldAlert,
   HelpCircle,
   Zap,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AudienceIcon } from "@/components/ui/select-icons";
-import { SelectMenu } from "@/components/ui/select-menu";
+import { MultiSelectMenu, SelectMenu } from "@/components/ui/select-menu";
 import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import type { Audience } from "@/types/content";
@@ -69,21 +70,24 @@ const DOSSIERS: DossierItem[] = [
 ];
 
 const AUDIENCE_OPTIONS: Audience[] = ["HCP", "Patient", "Payer", "Field team", "Consumer"];
-
+const GOAL_OPTIONS = ["New Launch", "Awareness", "Retention"];
 const TOPIC_OPTIONS = [
-  { id: "Product Introduction", label: "Product Introduction", desc: "Overview & unmet need", icon: Pill },
-  { id: "Mechanism of Action", label: "Mechanism of Action", desc: "3D cellular pathway & receptor targets", icon: Activity },
-  { id: "Indications", label: "Indications", desc: "Approved patient populations & criteria", icon: Target },
-  { id: "Dosage & Safety", label: "Dosage & Safety", desc: "Administration, titration & tolerability", icon: ShieldAlert },
-  { id: "Drug Interactions", label: "Drug Interactions", desc: "Metabolic pathways & contraindications", icon: Zap },
-  { id: "Side Effects", label: "Side Effects", desc: "Adverse event rates & safety balance", icon: HelpCircle },
+  "Product Introduction",
+  "Mechanism of Action",
+  "Indications",
+  "Dosage & Safety",
+  "Drug Interactions",
+  "Side Effects",
 ];
 
-const GOAL_OPTIONS = [
-  { id: "New Launch", label: "New Launch", desc: "Establish clinical role and lead with pivotal trial efficacy" },
-  { id: "Awareness", label: "Awareness", desc: "Highlight unmet disease burden and MoA differentiation" },
-  { id: "Retention", label: "Retention", desc: "Reinforce long-term safety, adherence, and real-world outcomes" },
-];
+const topicIcons: Record<string, typeof Pill> = {
+  "Product Introduction": Pill,
+  "Mechanism of Action": Activity,
+  "Indications": Target,
+  "Dosage & Safety": ShieldAlert,
+  "Drug Interactions": Zap,
+  "Side Effects": HelpCircle,
+};
 
 export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolean }) {
   const audience = useWorkspaceStore((s) => s.audience);
@@ -91,13 +95,14 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   const goal = useWorkspaceStore((s) => s.goal);
   const setGoal = useWorkspaceStore((s) => s.setGoal);
   const topics = useWorkspaceStore((s) => s.topics);
-  const toggleTopic = useWorkspaceStore((s) => s.toggleTopic);
+  const setTopics = useWorkspaceStore((s) => s.setTopics);
   const sourcePayload = useWorkspaceStore((s) => s.sourcePayload);
   const setSourcePayload = useWorkspaceStore((s) => s.setSourcePayload);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
   const setView = useWorkspaceStore((s) => s.setView);
 
-  const selectedDossier = sourcePayload.dossierId || "velmora";
+  const selectedDossierId = sourcePayload.dossierId || "velmora";
+  const activeDossier = DOSSIERS.find((d) => d.id === selectedDossierId) || DOSSIERS[0];
 
   const handleSelectDossier = (dossierId: string) => {
     setSourcePayload({ dossierId });
@@ -113,57 +118,59 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   const content = (
     <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
-      {/* Standardized Heading (No Badge) */}
+      {/* Standardized Page Heading (No Badge) */}
       <div className="mb-7">
         <h1 className="text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
           Choose brand dossier &amp; goals
         </h1>
         <p className="mt-1 text-[15px] text-[var(--ink-3)]">
-          Select a verified dossier to ground every claim, then configure your audience, focus topics, and campaign goal.
+          Select an approved dossier to ground every claim, then set your audience, campaign goal, and focus topics.
         </p>
       </div>
 
-      <div className="space-y-8">
-        {/* ── SECTION 1: Mandatory Brand Dossier Selection ── */}
-        <div>
-          <div className="flex items-center justify-between mb-3.5">
+      {/* Standardized 2-Column Layout */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+        {/* Left Column: Brand Dossier Selection */}
+        <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <span className="grid size-6 place-items-center rounded-full bg-[var(--brand)] text-white text-[11px] font-bold">1</span>
               <h2 className="text-[16px] font-bold text-[var(--ink)]">Select Brand Dossier</h2>
-              <span className="text-[12px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+              <span className="text-[11.5px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
                 Mandatory
               </span>
             </div>
-            <span className="text-[12px] font-bold text-[var(--ok)]">
+            <span className="text-[12px] font-bold text-[var(--ok)] hidden sm:inline-block">
               ✓ 100% cited against regulatory label
             </span>
           </div>
 
+          {/* Dossiers Grid */}
           <div className="grid gap-4 sm:grid-cols-3">
             {DOSSIERS.map((d) => {
-              const isSelected = selectedDossier === d.id;
+              const isSelected = selectedDossierId === d.id;
               return (
                 <div
                   key={d.id}
                   onClick={() => handleSelectDossier(d.id)}
-                  className={`relative flex flex-col rounded-[22px] border p-4 transition-all duration-200 cursor-pointer ${
+                  className={`relative flex flex-col rounded-[20px] border p-4 transition-all duration-200 cursor-pointer ${
                     isSelected
                       ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] ring-offset-2 shadow-md"
-                      : "border-[var(--hair-2)] bg-white hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-sm"
+                      : "border-[var(--hair-2)] bg-[#fafbf9] hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-white hover:shadow-sm"
                   }`}
                 >
-                  {/* Top Row: Monogram Avatar & Radio */}
+                  {/* Top: Avatar & Check */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <span
-                        className="grid size-10 place-items-center rounded-xl text-white font-extrabold text-[13px] shadow-sm"
+                        className="grid size-9 place-items-center rounded-xl text-white font-extrabold text-[12px] shadow-sm"
                         style={{ background: d.avatarBg }}
                       >
                         {d.name.slice(0, 2).toUpperCase()}
                       </span>
                       <div>
-                        <h3 className="text-[16.5px] font-bold text-[var(--ink)]">{d.name}</h3>
-                        <span className="text-[12px] italic text-[var(--ink-3)]">{d.molecule}</span>
+                        <h3 className="text-[15.5px] font-bold text-[var(--ink)] leading-tight">{d.name}</h3>
+                        <span className="text-[11.5px] italic text-[var(--ink-3)]">{d.molecule}</span>
                       </div>
                     </div>
                     <span
@@ -177,9 +184,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                     </span>
                   </div>
 
-                  {/* Dossier Document Skeleton Preview */}
-                  <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-3 border border-black/[0.04]">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-[var(--ink-3)] mb-2">
+                  {/* Skeleton lines */}
+                  <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-2.5 border border-black/[0.04]">
+                    <div className="flex items-center justify-between text-[10.5px] font-bold text-[var(--ink-3)] mb-1.5">
                       <span>Brand Dossier</span>
                       <span>{d.sections} sections</span>
                     </div>
@@ -190,19 +197,19 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                             className="h-1.5 rounded-full bg-black/10"
                             style={{ width: `${w}%` }}
                           />
-                          <sup className="text-[9px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
+                          <sup className="text-[8.5px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Footer Stats */}
-                  <div className="mt-4 flex items-center justify-between border-t border-[var(--hair)] pt-2.5 text-[12px]">
+                  {/* Bottom stats */}
+                  <div className="mt-3.5 flex items-center justify-between border-t border-[var(--hair)] pt-2 text-[11.5px]">
                     <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
                       {d.market}
                     </span>
                     <span className="font-bold text-[var(--ok)]">
-                      {d.claims} claims cited
+                      {d.claims} claims
                     </span>
                   </div>
                 </div>
@@ -211,131 +218,110 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
           </div>
 
           {/* Quick Add Dossier */}
-          <div className="mt-3 flex items-center justify-between rounded-[16px] border border-[var(--hair-2)] bg-white p-3.5 text-[13px] text-[var(--ink-3)] shadow-sm">
+          <div className="mt-4 flex items-center justify-between rounded-[16px] border border-[var(--hair-2)] bg-[#fafbf9] p-3.5 text-[13px] text-[var(--ink-3)]">
             <div className="flex items-center gap-2">
               <Sparkles className="size-4 text-[var(--brand)] shrink-0" />
               <span>Need a dossier for another molecule? Synthesize a new one from FDA / EMA labels.</span>
             </div>
-            <Button variant="ghost" size="sm" className="font-bold text-[var(--brand)] text-[12.5px] h-8">
+            <Button variant="ghost" size="sm" className="font-bold text-[var(--brand)] text-[12.5px] h-8 shrink-0">
               <Plus className="size-3.5 mr-1" /> New Dossier
             </Button>
           </div>
-        </div>
+        </section>
 
-        {/* ── SECTION 2: Audience, Topics & Campaign Goal ── */}
-        <div className="grid gap-6 lg:grid-cols-3 pt-2 border-t border-[var(--hair)]">
-          {/* 1. Target Audience */}
-          <div className="rounded-[22px] border border-[var(--hair-2)] bg-white p-5 shadow-sm flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="size-4 text-[var(--brand)]" />
-              <h3 className="text-[15px] font-bold text-[var(--ink)]">Target Audience</h3>
-            </div>
-            <p className="text-[13px] text-[var(--ink-3)] mb-4">
-              Determines clinical vocabulary, fair balance density, and evidence depth.
-            </p>
-            <div className="mt-auto">
-              <SelectMenu
-                value={audience}
-                onChange={(next) => setAudience(next as Audience)}
-                options={AUDIENCE_OPTIONS}
-                ariaLabel="Target Audience"
-                renderIcon={(item) => <AudienceIcon value={item} />}
-              />
-            </div>
-          </div>
-
-          {/* 2. Campaign Goal */}
-          <div className="rounded-[22px] border border-[var(--hair-2)] bg-white p-5 shadow-sm flex flex-col">
-            <div className="flex items-center gap-2 mb-3">
-              <Target className="size-4 text-[var(--brand)]" />
-              <h3 className="text-[15px] font-bold text-[var(--ink)]">Campaign Goal</h3>
-            </div>
-            <p className="text-[13px] text-[var(--ink-3)] mb-3">
-              Establishes communication priority and storyline arc.
-            </p>
-            <div className="space-y-2 mt-auto">
-              {GOAL_OPTIONS.map((g) => {
-                const isSelected = goal === g.id;
-                return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    onClick={() => setGoal(g.id)}
-                    className={`focus-ring w-full flex items-center justify-between p-2.5 rounded-[12px] border text-left transition-all ${
-                      isSelected
-                        ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-xs"
-                        : "border-[var(--hair-2)] bg-[#fafbf9] text-[var(--ink)] hover:border-[var(--hair-3)] hover:bg-white"
-                    }`}
-                  >
-                    <div>
-                      <b className="block text-[13px]">{g.label}</b>
-                      <span className="block text-[11px] text-[var(--ink-3)] font-normal">{g.desc}</span>
-                    </div>
-                    <span
-                      className={`grid size-4 place-items-center rounded-full border shrink-0 ml-2 ${
-                        isSelected ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[var(--hair-3)]"
-                      }`}
-                    >
-                      {isSelected && <Check className="size-2.5" strokeWidth={3.5} />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. Focus Topics (Multi-Select) */}
-          <div className="rounded-[22px] border border-[var(--hair-2)] bg-white p-5 shadow-sm flex flex-col">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Layers className="size-4 text-[var(--brand)]" />
-                <h3 className="text-[15px] font-bold text-[var(--ink)]">Focus Topics</h3>
+        {/* Right Column: Audience, Goal & Focus Topics Dropdowns */}
+        <aside className="rise-in [animation-delay:80ms]">
+          <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
+            {/* Header */}
+            <div className="border-b border-[var(--line)] bg-[#fafbf9] px-5 py-4">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Configuration</span>
+                <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--ok)]">
+                  Active
+                </span>
               </div>
-              <span className="text-[11.5px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
-                {topics.length} selected
-              </span>
+              <h2 className="mt-1 text-[17px] font-bold tracking-tight text-[var(--ink)]">
+                {activeDossier.name} Dossier
+              </h2>
             </div>
-            <p className="text-[13px] text-[var(--ink-3)] mb-3">
-              Pick one or more clinical pillars to feature in the generated storyboard.
-            </p>
-            <div className="grid grid-cols-2 gap-2 mt-auto">
-              {TOPIC_OPTIONS.map((t) => {
-                const isSelected = topics.includes(t.id);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => toggleTopic(t.id)}
-                    className={`focus-ring flex items-center gap-2 p-2 rounded-[11px] border text-left transition-all ${
-                      isSelected
-                        ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-xs"
-                        : "border-[var(--hair-2)] bg-[#fafbf9] text-[var(--ink-2)] hover:border-[var(--hair-3)] hover:bg-white"
-                    }`}
-                  >
-                    <span
-                      className={`grid size-4 place-items-center rounded-full border shrink-0 ${
-                        isSelected ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[var(--hair-3)]"
-                      }`}
-                    >
-                      {isSelected && <Check className="size-2.5" strokeWidth={3.5} />}
-                    </span>
-                    <span className="text-[12px] leading-tight truncate">{t.label}</span>
-                  </button>
-                );
-              })}
+
+            {/* Dropdowns Form */}
+            <div className="p-5 space-y-4">
+              {/* 1. Target Audience */}
+              <div>
+                <label className="mb-1.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
+                  <Users className="size-4 text-[var(--brand)]" />
+                  Target Audience
+                </label>
+                <SelectMenu
+                  value={audience}
+                  onChange={(next) => setAudience(next as Audience)}
+                  options={AUDIENCE_OPTIONS}
+                  ariaLabel="Target Audience"
+                  renderIcon={(item) => <AudienceIcon value={item} />}
+                />
+              </div>
+
+              {/* 2. Campaign Goal */}
+              <div>
+                <label className="mb-1.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
+                  <Target className="size-4 text-[var(--brand)]" />
+                  Campaign Goal
+                </label>
+                <SelectMenu
+                  value={goal}
+                  onChange={(next) => setGoal(next)}
+                  options={GOAL_OPTIONS}
+                  ariaLabel="Campaign Goal"
+                  renderIcon={() => <Target className="size-4 text-[var(--brand)]" />}
+                />
+              </div>
+
+              {/* 3. Focus Topics (Multi-Select Dropdown) */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
+                    <Layers className="size-4 text-[var(--brand)]" />
+                    Focus Topics
+                  </label>
+                  <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+                    {topics.length} selected
+                  </span>
+                </div>
+                <MultiSelectMenu
+                  values={topics}
+                  onChange={(next) => setTopics(next)}
+                  options={TOPIC_OPTIONS}
+                  ariaLabel="Focus Topics"
+                  renderIcon={(item) => {
+                    const Icon = topicIcons[item] || Pill;
+                    return <Icon className="size-4 text-[var(--brand)]" />;
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Grounding Footer Note */}
+            <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[12.5px] leading-5 text-[var(--ink-muted)]">
+              All script statements and storyboard scenes will be tailored to this audience, goal, and topic combination.
             </div>
           </div>
-        </div>
+
+          <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
+            <ShieldCheck className="size-4 text-[var(--brand)]" />
+            <span>Nothing is created until you confirm the plan.</span>
+          </div>
+        </aside>
       </div>
     </main>
   );
 
   if (embedded) {
-    return <div className="page-enter pb-12">{content}</div>;
+    return <div className="page-enter pb-10">{content}</div>;
   }
 
   return (
-    <div className="page-enter min-h-screen bg-[#f7f8f6] pb-24">
+    <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
       <VideoWizardHeader
         currentStep={1}
         onBack={handleBackToMode}

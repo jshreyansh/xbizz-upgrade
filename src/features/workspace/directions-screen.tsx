@@ -280,7 +280,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         </p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
           <section className="rise-in space-y-3 [animation-delay:50ms]">
             <PlanSection icon={Film} title="Creative treatment" summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`} status={confirmedTreatment ? "Confirmed" : "Needs you"} open={openSection === "treatment"} onToggle={() => toggleSection("treatment")} tone={confirmedTreatment ? "done" : "attention"}>
               <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5"><div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div><p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p></div>
