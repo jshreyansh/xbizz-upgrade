@@ -56,15 +56,10 @@ export function Topbar({ pageTitle = "Home" }: TopbarProps) {
         <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
           <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.7L3 21l1.9-5a8.3 8.3 0 0 1-.9-3.8A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" />
         </svg>
-        Ask your team <kbd style={{ fontSize: 10, background: "rgba(253,72,22,.12)", padding: "1px 5px", borderRadius: 4, marginLeft: 2 }}>⌘J</kbd>
+        Ask your team <kbd style={{ fontSize: 10, background: "rgba(253,72,22,.12)", padding: "1px 5px", borderRadius: 4, marginLeft: 2 }}>&#8984;J</kbd>
       </button>
 
-      {/* Workspace chip */}
-      <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "7px 13px", border: "1px solid var(--hair)", borderRadius: 11, background: "#fff", fontSize: 13.5, fontWeight: 650, boxShadow: "var(--sh-1)" }}>
-        <span style={{ width: 24, height: 24, borderRadius: 7, background: "linear-gradient(140deg,#243b6b,#0f1d3a)", color: "#fff", display: "grid", placeItems: "center", fontSize: 9, fontWeight: 800 }}>MT</span>
-        🌐 {PERSONA.org}
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
-      </div>
+
 
       {/* Icon buttons */}
       {[

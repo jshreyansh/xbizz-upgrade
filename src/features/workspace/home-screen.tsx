@@ -1,344 +1,735 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Video, Image as ImageIcon, LayoutGrid, ArrowRight } from "lucide-react";
+import { Sparkles, Video, Image as ImageIcon, User2 } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { PERSONA, SAMPLE_VIDEOS, SAMPLE_CANVAS } from "@/features/workspace/mock-personas";
-import type { SampleAsset } from "@/features/workspace/mock-personas";
+import { PERSONA } from "@/features/workspace/mock-personas";
 
-/* ── Core USP strip ───────────────────────────────────────────────────
-   The footer of the unified creation panel. No CTA, no progress —
-   just the platform's core value props, quiet and consistent for
-   every visitor. */
-const CORE_USPS: [string, string][] = [
-  ["40+", "regulatory markets"],
-  ["5", "AI co-workers"],
-  ["32", "content formats"],
-  ["0", "uncited claims"],
-];
-
-function CoreUspStrip() {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap" }}>
-      {CORE_USPS.map(([val, label]) => (
-        <span key={label} style={{ fontSize: 13, color: "var(--ink-2)" }}>
-          <b style={{ fontWeight: 800, color: "var(--ink)" }}>{val}</b> {label}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/* ── Reel card ──────────────────────────────────────────────────── */
-function ReelCard({ asset, onOpen, compact = false }: { asset: SampleAsset; onOpen: () => void; compact?: boolean }) {
-  const width = compact ? 108 : asset.type === "video" ? 172 : 188;
-  return (
-    <button
-      onClick={onOpen}
-      style={{
-        position: "relative",
-        borderRadius: compact ? "var(--r)" : "var(--r-l)",
-        overflow: "hidden",
-        aspectRatio: asset.type === "video" ? "9/16" : "4/5",
-        background: asset.gradient,
-        border: "none",
-        cursor: "pointer",
-        flex: "0 0 auto",
-        width,
-        boxShadow: compact ? "none" : "0 14px 28px -14px rgba(10,13,20,.35)",
-        transition: "transform .2s var(--e), box-shadow .2s var(--e)",
-      }}
-      className={compact ? "" : "hover:-translate-y-1 hover:shadow-[0_20px_36px_-16px_rgba(10,13,20,.45)]"}
-    >
-      {/* Shade */}
-      <span style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,transparent 45%,rgba(0,0,0,.7))" }} />
-      {!compact && (
-        <>
-          {/* Engine tag */}
-          <span style={{ position: "absolute", top: 10, right: 10, fontSize: 9.5, fontWeight: 800, background: "rgba(0,0,0,.5)", color: "rgba(255,255,255,.85)", padding: "3px 7px", borderRadius: 5 }}>{asset.engine}</span>
-          {/* Duration */}
-          <span style={{ position: "absolute", bottom: 46, right: 10, fontSize: 10, fontWeight: 700, background: "rgba(0,0,0,.55)", color: "#fff", padding: "3px 7px", borderRadius: 5 }}>{asset.duration}</span>
-        </>
-      )}
-      {/* Play button for videos */}
-      {asset.type === "video" && (
-        <span style={{ position: "absolute", top: compact ? "42%" : "38%", left: "50%", transform: "translate(-50%,-50%)", width: compact ? 28 : 36, height: compact ? 28 : 36, borderRadius: "50%", background: "rgba(255,255,255,.9)", display: "grid", placeItems: "center" }}>
-          <svg viewBox="0 0 24 24" fill="#0d1017" width={compact ? 11 : 14} height={compact ? 11 : 14}><path d="M6 4l14 8-14 8z" /></svg>
-        </span>
-      )}
-      {/* Meta */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: compact ? "8px 9px" : "10px 12px" }}>
-        <b style={{ display: "block", fontSize: compact ? 10.5 : 12.5, color: "#fff", fontWeight: 750, marginBottom: compact ? 1 : 3, letterSpacing: "-.2px", textAlign: "left", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {asset.title.split(" — ")[0]}
-        </b>
-        {!compact && (
-          <span style={{ fontSize: 10.5, color: "rgba(255,255,255,.65)", display: "block", textAlign: "left" }}>{asset.audience} · {asset.market}</span>
-        )}
-      </div>
-    </button>
-  );
-}
-
-/* ── Creation option card ──────────────────────────────────────────
-   Quick-start entry points shown below the hero. */
-interface CreationOption {
+/* ─── Types ─────────────────────────────────────────────────────────────────── */
+interface TileOption {
   icon: typeof Sparkles;
   title: string;
+  badge: string;
+  tag: string;
   description: string;
-  cta: string;
   href: string;
-  soon?: boolean;
 }
 
-const CREATION_OPTIONS: CreationOption[] = [
+interface ShowcaseItem {
+  title: string;
+  subtitle: string;
+  meta: string;
+  aspect: string;
+  gradient: string;
+  hasPlay: boolean;
+  tag: string;
+  videoSrc?: string;
+}
+
+interface ShowcaseLane {
+  label: string;
+  title: string;
+  items: ShowcaseItem[];
+}
+
+/* ─── Data ───────────────────────────────────────────────────────────────────── */
+const CREATION_TILES: TileOption[] = [
   {
     icon: Sparkles,
-    title: "Start creating",
-    description: "Bring a brand or a brief — SwishX picks the right format.",
-    cta: "Get started",
+    title: "Start Here",
+    badge: "Smart Intake",
+    tag: "Brief or Dossier",
+    description: "Upload your master dossier or paste a raw brief. SwishX coordinates the clinical pipeline.",
     href: "/dossiers",
   },
   {
     icon: Video,
-    title: "Video",
-    description: "Cited, narrated reels built from your dossier.",
-    cta: "Open",
+    title: "Magic Video",
+    badge: "Cinema & 3D",
+    tag: "16:9 & 9:16 Reels",
+    description: "Synthesize source-backed MoA animations, voiceovers & clinical evidence reels in minutes.",
     href: "/create",
   },
   {
     icon: ImageIcon,
-    title: "Infographic",
-    description: "One-page visual aids for reps, congress, or the field.",
-    cta: "Open",
+    title: "Magic Canvas",
+    badge: "Visuals",
+    tag: "Congress & Infographics",
+    description: "Generate compliant visual leave-behinds, booth banners, and high-impact journal ads.",
     href: "#",
-    soon: true,
   },
   {
-    icon: LayoutGrid,
-    title: "Canvas",
-    description: "Print and digital layouts — ads, leave-behinds, banners.",
-    cta: "Open",
-    href: "#",
-    soon: true,
+    icon: User2,
+    title: "Magic Avatar",
+    badge: "Digital Twin",
+    tag: "Lip-sync Presenter",
+    description: "Empower verified medical doctor avatars with natural phoneme lip-sync and studio gestures.",
+    href: "/create",
   },
 ];
 
-/* Every option gets the same quiet treatment — no flagship, no CTA
-   button competing for attention. The core USPs do the selling. */
-function CreationOptionCard({ option, onOpen }: { option: CreationOption; onOpen: () => void }) {
-  const Icon = option.icon;
+const SHOWCASE_LANES: ShowcaseLane[] = [
+  {
+    label: "Magic Video",
+    title: "Reels that move medicine forward",
+    items: [
+      {
+        title: "Tecentriq clinical pivotal reel",
+        subtitle: "Oncologists · US · FDA",
+        meta: "1:42",
+        aspect: "9/16",
+        gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 45%,#5b7fb8)",
+        hasPlay: true,
+        tag: "MagicReel",
+        videoSrc: "/tecentriq-reel.mp4",
+      },
+      {
+        title: "Mechanism of Action (MoA) 3D",
+        subtitle: "Cardiologists · US · FDA",
+        meta: "0:14",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#3a1e4d,#63307a 48%,#a06bc4)",
+        hasPlay: true,
+        tag: "MagicReel",
+        videoSrc: "/reel-moa.mp4",
+      },
+      {
+        title: "Brevanta therapeutic study",
+        subtitle: "Payers · UK · MHRA",
+        meta: "1:15",
+        aspect: "9/16",
+        gradient: "linear-gradient(160deg,#12332c,#1d5a4a 48%,#3f9c7f)",
+        hasPlay: true,
+        tag: "MagicReel",
+        videoSrc: "/Brevanta final draft-web.mp4",
+      },
+      {
+        title: "Clinical laboratory readout",
+        subtitle: "Researchers · Global",
+        meta: "0:42",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#2a1b0f,#5c3515 48%,#9e6130)",
+        hasPlay: true,
+        tag: "MagicReel",
+        videoSrc: "/21617-319452308_medium.mp4",
+      },
+      {
+        title: "Molecular interaction dynamics",
+        subtitle: "HCPs · EU · EMA",
+        meta: "0:30",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#16233f,#2c4573 50%,#5b7fb8)",
+        hasPlay: true,
+        tag: "MagicReel",
+        videoSrc: "/27019-361107952_medium.mp4",
+      },
+      {
+        title: "Surgical precision & robotics",
+        subtitle: "Surgeons · US · FDA",
+        meta: "0:24",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#1a0a2e,#3b1a5e 48%,#6a3a9e)",
+        hasPlay: true,
+        tag: "MagicReel",
+        videoSrc: "/326638_medium.mp4",
+      },
+      {
+        title: "Cellular therapy pathway",
+        subtitle: "Immunologists · Global",
+        meta: "0:10",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#0a1f18,#13382c 48%,#1d5442)",
+        hasPlay: true,
+        tag: "MagicReel",
+        videoSrc: "/40781-426939561_medium.mp4",
+      },
+      {
+        title: "Diagnostic imaging review",
+        subtitle: "Radiologists · US",
+        meta: "0:20",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#1f1329,#381d4a 48%,#572c73)",
+        hasPlay: true,
+        tag: "MagicReel",
+        videoSrc: "/4360-178617258_medium.mp4",
+      },
+    ],
+  },
+  {
+    label: "Brand Dossiers",
+    title: "Master regulatory dossiers & clinical evidence anchors",
+    items: [
+      {
+        title: "Velmora Master Dossier",
+        subtitle: "FDA Anchor · Cardiology · 18 Secs",
+        meta: "66 Claims",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 48%,#5b7fb8)",
+        hasPlay: false,
+        tag: "Dossier",
+      },
+      {
+        title: "Onkavia SmPC Dossier",
+        subtitle: "EMA Anchor · NSCLC · 19 Secs",
+        meta: "84 Claims",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#3a1e4d,#63307a 48%,#a06bc4)",
+        hasPlay: false,
+        tag: "Dossier",
+      },
+      {
+        title: "Nirvexa Value Dossier",
+        subtitle: "MHRA Anchor · Immunology · 16 Secs",
+        meta: "162 Claims",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#12332c,#1d5a4a 48%,#3f9c7f)",
+        hasPlay: false,
+        tag: "Dossier",
+      },
+      {
+        title: "Cardioxa Sample Dossier",
+        subtitle: "Sample · FDA Anchor · 17 Secs",
+        meta: "165 Claims",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#2f1e4a,#4b2c78 48%,#7c4bb8)",
+        hasPlay: false,
+        tag: "Sample",
+      },
+      {
+        title: "PulmoVax Sample Dossier",
+        subtitle: "Sample · WHO Anchor · 21 Secs",
+        meta: "230 Claims",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#133b34,#1c6356 48%,#349e8a)",
+        hasPlay: false,
+        tag: "Sample",
+      },
+    ],
+  },
+  {
+    label: "Magic Avatar",
+    title: "Your digital presenters, always on-label",
+    items: [
+      {
+        title: "Dr. Ayesha Vance on trial endpoints",
+        subtitle: "Medical Director · Meridian Tx",
+        meta: "0:43",
+        aspect: "9/16",
+        gradient: "linear-gradient(160deg,#1a1a2e,#2d2d5e 45%,#4a4a8a)",
+        hasPlay: true,
+        tag: "MagicAvatar",
+        videoSrc: "/avatar-showcase.mp4",
+      },
+      {
+        title: "Tecentriq HCP briefing",
+        subtitle: "KOL Presenter · Oncology",
+        meta: "1:42",
+        aspect: "9/16",
+        gradient: "linear-gradient(160deg,#2e1a1a,#5e2d2d 45%,#8a4a4a)",
+        hasPlay: true,
+        tag: "MagicAvatar",
+        videoSrc: "/tecentriq-reel.mp4",
+      },
+      {
+        title: "Brevanta therapy overview",
+        subtitle: "Clinical Twin · Immunology",
+        meta: "1:15",
+        aspect: "9/16",
+        gradient: "linear-gradient(160deg,#1a2e1a,#2d5e2d 45%,#4a8a4a)",
+        hasPlay: true,
+        tag: "MagicAvatar",
+        videoSrc: "/Brevanta final draft-web.mp4",
+      },
+      {
+        title: "Clinical research synthesis",
+        subtitle: "VP Medical Affairs · US",
+        meta: "0:09",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#2e2a1a,#5e542d 45%,#8a7a4a)",
+        hasPlay: true,
+        tag: "MagicAvatar",
+        videoSrc: "/133898-758336558_medium.mp4",
+      },
+      {
+        title: "Hospital medical team consultation",
+        subtitle: "Lead Cardiologist · EU",
+        meta: "0:11",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#1a2a2e,#2d4a5e 45%,#4a7a8a)",
+        hasPlay: true,
+        tag: "MagicAvatar",
+        videoSrc: "/133900-758336565_medium.mp4",
+      },
+      {
+        title: "Patient compliance briefing",
+        subtitle: "Clinical Liaison · US",
+        meta: "0:13",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#251a2e,#442a5e 45%,#68408a)",
+        hasPlay: true,
+        tag: "MagicAvatar",
+        videoSrc: "/46621-448480587_medium.mp4",
+      },
+    ],
+  },
+  {
+    label: "Magic Canvas",
+    title: "Layouts your reps actually use",
+    items: [
+      {
+        title: "Velmora journal ad",
+        subtitle: "FDA · Full-page · A4",
+        meta: "A4",
+        aspect: "3/4",
+        gradient: "linear-gradient(150deg,#16233f,#2c4573 50%,#5b7fb8)",
+        hasPlay: true,
+        tag: "MagicCanvas",
+        videoSrc: "/326638_medium.mp4",
+      },
+      {
+        title: "Onkavia congress panel",
+        subtitle: "EMA · 2×1m booth stand",
+        meta: "2x1m",
+        aspect: "16/9",
+        gradient: "linear-gradient(150deg,#33193f,#5b2c70 50%,#9a63bc)",
+        hasPlay: true,
+        tag: "MagicCanvas",
+        videoSrc: "/21617-319452308_medium.mp4",
+      },
+      {
+        title: "Nirvexa payer infographic",
+        subtitle: "HEOR summary · UK",
+        meta: "1:1",
+        aspect: "1/1",
+        gradient: "linear-gradient(150deg,#0f2e28,#1b5546 50%,#3d9880)",
+        hasPlay: true,
+        tag: "MagicCanvas",
+        videoSrc: "/4360-178617258_medium.mp4",
+      },
+      {
+        title: "Glucenta savings card",
+        subtitle: "Patients · US · FDA",
+        meta: "3.5x2in",
+        aspect: "3/4",
+        gradient: "linear-gradient(150deg,#3a2718,#7d5227 50%,#c99a4e)",
+        hasPlay: true,
+        tag: "MagicCanvas",
+        videoSrc: "/46621-448480587_medium.mp4",
+      },
+    ],
+  },
+];
+
+/* ─── Creation Tile ─────────────────────────────────────────────────────────── */
+function CreationTile({ tile, onOpen }: { tile: TileOption; onOpen: () => void }) {
+  const Icon = tile.icon;
+  const [hovered, setHovered] = useState(false);
   return (
     <button
+      type="button"
       onClick={onOpen}
-      disabled={option.soon}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
-        gap: 10,
-        padding: 20,
-        borderRadius: "var(--r-l)",
+        justifyContent: "space-between",
+        padding: "22px 24px",
+        borderRadius: "var(--r-xl)",
+        background: hovered ? "#fdfefe" : "#fff",
+        border: hovered ? "1.5px solid var(--brand)" : "1px solid var(--hair)",
+        boxShadow: hovered ? "0 12px 28px -8px rgba(0,0,0,0.07)" : "0 2px 6px rgba(0,0,0,0.02)",
+        cursor: "pointer",
         textAlign: "left",
-        cursor: option.soon ? "default" : "pointer",
-        opacity: option.soon ? 0.6 : 1,
-        transition: "background .18s var(--e)",
+        transition: "all .24s cubic-bezier(0.16, 1, 0.3, 1)",
+        position: "relative",
+        minHeight: 142,
+        overflow: "hidden",
       }}
-      className={option.soon ? "" : "hover:bg-[var(--surface-subtle)]"}
+      className="hover:-translate-y-1 group"
     >
-      <span
+      {/* Aesthetic Artistic Icon Emerging from Top-Right Corner */}
+      <div
         style={{
-          display: "grid",
-          placeItems: "center",
-          width: 36,
-          height: 36,
-          borderRadius: 10,
-          flexShrink: 0,
-          background: "var(--tint)",
+          position: "absolute",
+          top: -12,
+          right: -12,
+          pointerEvents: "none",
           color: "var(--brand)",
+          opacity: hovered ? 0.18 : 0.08,
+          transform: `${tile.title === "Magic Video" ? "scaleX(-1) " : ""}${
+            hovered ? "rotate(12deg) scale(1.12)" : "rotate(0deg) scale(1)"
+          }`,
+          transition: "all .3s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
-        <Icon size={17} />
-      </span>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <b style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-.3px" }}>{option.title}</b>
-        {option.soon && (
-          <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>SOON</span>
-        )}
+        <Icon size={92} strokeWidth={1.7} />
       </div>
-      <p style={{ margin: 0, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{option.description}</p>
-      {!option.soon && (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12.5, fontWeight: 700, color: "var(--brand)" }}>
-          {option.cta} <ArrowRight size={13} />
-        </span>
-      )}
+
+      {/* Title */}
+      <div style={{ position: "relative", zIndex: 2 }}>
+        <h3
+          style={{
+            fontSize: 17,
+            fontWeight: 800,
+            color: "var(--ink)",
+            letterSpacing: "-.4px",
+            margin: 0,
+          }}
+        >
+          {tile.title}
+        </h3>
+      </div>
+
+      {/* Description */}
+      <p
+        style={{
+          position: "relative",
+          zIndex: 2,
+          fontSize: 13,
+          color: "var(--ink-3)",
+          margin: "14px 0 0",
+          lineHeight: 1.5,
+          fontWeight: 450,
+          maxWidth: "32ch",
+        }}
+      >
+        {tile.description}
+      </p>
     </button>
   );
 }
 
-/* ── Asset lightbox ─────────────────────────────────────────────── */
-function AssetLightbox({ asset, onClose }: { asset: SampleAsset; onClose: () => void }) {
-  const router = useRouter();
+/* ─── Showcase Item Card ─────────────────────────────────────────────────────── */
+function ShowcaseCard({ item }: { item: ShowcaseItem }) {
+  const [hovered, setHovered] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Calculate width from aspect ratio
+  const aspectW =
+    item.aspect === "9/16"
+      ? 125
+      : item.aspect === "16/9"
+      ? 260
+      : item.aspect === "1/1"
+      ? 140
+      : item.aspect === "3/4"
+      ? 135
+      : 180;
+
+  useEffect(() => {
+    if (hovered && item.videoSrc && videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    } else if (!hovered && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [hovered, item.videoSrc]);
+
   return (
     <div
-      onClick={onClose}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        position: "fixed", inset: 0, background: "rgba(6,7,10,.78)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        zIndex: 99, backdropFilter: "blur(6px)", animation: "modal-backdrop-in 200ms both",
+        width: aspectW,
+        height: 200,
+        borderRadius: "var(--r-l)",
+        position: "relative",
+        flexShrink: 0,
+        overflow: "hidden",
+        background: item.gradient,
+        cursor: "pointer",
+        transition: "transform .2s var(--e), box-shadow .2s var(--e)",
       }}
+      className="hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgba(10,13,20,.42)]"
     >
+      {/* Real Video Element (Plays smoothly on hover) */}
+      {item.videoSrc && (
+        <video
+          ref={videoRef}
+          src={item.videoSrc}
+          loop
+          muted
+          playsInline
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            opacity: hovered ? 0.95 : 0.65,
+            transition: "opacity .3s ease",
+          }}
+        />
+      )}
+
+      {/* Dark gradient overlay for legibility */}
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
-          display: "flex", gap: 0, borderRadius: "var(--r-xl)",
-          overflow: "hidden", background: "#fff", boxShadow: "var(--sh-4)",
-          maxWidth: 820, width: "90vw",
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(180deg, rgba(0,0,0,.15) 0%, transparent 40%, rgba(0,0,0,.75) 100%)",
+        }}
+      />
+
+      {/* Tag pill */}
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          left: 10,
+          fontSize: 9.5,
+          fontWeight: 800,
+          background: "rgba(0,0,0,.58)",
+          color: "rgba(255,255,255,.95)",
+          padding: "3px 8px",
+          borderRadius: 6,
+          backdropFilter: "blur(6px)",
+          letterSpacing: ".03em",
         }}
       >
-        {/* Player side */}
+        {item.tag}
+      </div>
+
+      {/* Meta (duration / format) */}
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          fontSize: 9.5,
+          fontWeight: 700,
+          background: "rgba(0,0,0,.5)",
+          color: "#fff",
+          padding: "3px 8px",
+          borderRadius: 6,
+          backdropFilter: "blur(4px)",
+        }}
+      >
+        {item.meta}
+      </div>
+
+      {/* Standard Neutral Center Play button without glow */}
+      {item.hasPlay && (
         <div
           style={{
-            position: "relative",
-            flex: asset.type === "video" ? "0 0 340px" : "0 0 280px",
-            background: asset.gradient,
-            minHeight: 440,
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,.92)",
+            display: "grid",
+            placeItems: "center",
+            boxShadow: "0 4px 12px rgba(0,0,0,.25)",
+            transition: "transform .2s ease",
+            transformOrigin: "center",
+          }}
+          className={hovered ? "scale-110" : "scale-100"}
+        >
+          <svg viewBox="0 0 24 24" fill="#0d1017" width={13} height={13} style={{ marginLeft: 1.5 }}>
+            <path d="M6 4l14 8-14 8z" />
+          </svg>
+        </div>
+      )}
+
+      {/* Bottom meta */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 11px", zIndex: 10 }}>
+        <b
+          style={{
+            display: "block",
+            fontSize: 12.5,
+            color: "#fff",
+            fontWeight: 750,
+            letterSpacing: "-.2px",
+            lineHeight: 1.3,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,transparent 42%,rgba(6,7,10,.75))" }} />
-          <div style={{ position: "absolute", top: 14, right: 14, padding: "6px 10px", background: "#fff", borderRadius: 7, fontSize: 9, fontWeight: 800, color: "#243b6b", textAlign: "center", lineHeight: 1.3 }}>Meridian<br />Tx</div>
-          <div style={{ position: "absolute", inset: "0 0 80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {asset.type === "video" && (
-              <div style={{ width: 54, height: 54, borderRadius: "50%", background: "rgba(255,255,255,.9)", display: "grid", placeItems: "center" }}>
-                <svg viewBox="0 0 24 24" fill="#0d1017" width={20} height={20}><path d="M6 4l14 8-14 8z" /></svg>
-              </div>
-            )}
-          </div>
-        </div>
-        {/* Detail side */}
-        <div style={{ flex: 1, padding: "32px 28px", overflowY: "auto" }}>
-          <button onClick={onClose} style={{ position: "absolute", top: 18, right: 18, width: 36, height: 36, borderRadius: "50%", background: "rgba(10,13,20,.08)", display: "grid", placeItems: "center" }}>
-            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-          <div style={{ fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 750, marginBottom: 8 }}>{asset.engine} · {asset.market}</div>
-          <h3 style={{ margin: "0 0 8px", fontSize: 20, fontWeight: 800, letterSpacing: "-.6px" }}>{asset.title}</h3>
-          <p style={{ margin: "0 0 20px", fontSize: 13.5, color: "var(--ink-3)", lineHeight: 1.6 }}>{asset.description}</p>
-          {[
-            ["Audience", asset.audience],
-            [asset.type === "video" ? "Runtime" : "Format", asset.duration],
-            ["Regulatory anchor", asset.market],
-            ["On-screen citations", "Yes"],
-            ["Claims cited", "Every line"],
-            ["Status", "Approved · live"],
-          ].map(([k, v]) => (
-            <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: "1px solid var(--hair)", fontSize: 13.5 }}>
-              <span style={{ color: "var(--ink-3)" }}>{k}</span>
-              <b>{v}</b>
-            </div>
-          ))}
-          <button
-            onClick={() => {
-              onClose();
-              useWorkspaceStore.getState().setView("create");
-              useWorkspaceStore.getState().setVideoSubStage("mode-select");
-              router.push("/create");
-            }}
-            style={{ display: "inline-flex", alignItems: "center", gap: 9, marginTop: 22, width: "100%", justifyContent: "center", padding: "13px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5, background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff", boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)", cursor: "pointer" }}
-          >
-            Make one like this
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-          </button>
-        </div>
+          {item.title}
+        </b>
+        <span
+          style={{
+            display: "block",
+            fontSize: 10.5,
+            color: "rgba(255,255,255,.8)",
+            marginTop: 2,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {item.subtitle}
+        </span>
       </div>
     </div>
   );
 }
 
-/* ── Home Screen ────────────────────────────────────────────────── */
+/* ─── Horizontal lane row ────────────────────────────────────────────────────── */
+function ShowcaseLaneRow({ lane, isLast }: { lane: ShowcaseLane; isLast: boolean }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  function scroll(dir: "left" | "right") {
+    scrollRef.current?.scrollBy({ left: dir === "left" ? -340 : 340, behavior: "smooth" });
+  }
+
+  return (
+    <div style={{ marginBottom: isLast ? 0 : 28 }}>
+      {/* Lane header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: ".12em",
+              textTransform: "uppercase",
+              color: "var(--brand)",
+              display: "block",
+              marginBottom: 2,
+            }}
+          >
+            {lane.label}
+          </span>
+          <h3
+            style={{
+              fontSize: 14.5,
+              fontWeight: 800,
+              letterSpacing: "-.3px",
+              color: "var(--ink)",
+              margin: 0,
+            }}
+          >
+            {lane.title}
+          </h3>
+        </div>
+
+        {/* Scroll arrows */}
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            onClick={() => scroll("left")}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              border: "1px solid var(--hair)",
+              background: "#fff",
+              display: "grid",
+              placeItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            onClick={() => scroll("right")}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              border: "1px solid var(--hair)",
+              background: "#fff",
+              display: "grid",
+              placeItems: "center",
+              cursor: "pointer",
+            }}
+          >
+            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Horizontal scrolling strip */}
+      <div
+        ref={scrollRef}
+        style={{
+          display: "flex",
+          gap: 12,
+          overflowX: "auto",
+          paddingBottom: 6,
+          scrollbarWidth: "none",
+        }}
+      >
+        {lane.items.map((item, idx) => (
+          <ShowcaseCard key={idx} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── HomeScreen Component ───────────────────────────────────────────────────── */
 export function HomeScreen() {
   const router = useRouter();
-  const [lightboxAsset, setLightboxAsset] = useState<SampleAsset | null>(null);
 
-  const openOption = (option: CreationOption) => {
-    if (option.soon) return;
-    if (option.href === "/create") {
+  function openTile(tile: TileOption) {
+    if (tile.href === "/create") {
       useWorkspaceStore.getState().setView("create");
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
     }
-    router.push(option.href);
-  };
+    if (tile.href !== "#") {
+      router.push(tile.href);
+    }
+  }
 
   return (
-    <div className="page-enter">
-      {/* ── Hero ────────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 640, marginBottom: 30 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-          <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: "var(--ink-3)" }}>
-            <i style={{ width: 6, height: 6, borderRadius: "50%", background: "#0d9488", boxShadow: "0 0 8px rgba(13,148,136,.5)", display: "block", animation: "blink 2s infinite" }} />
-            Workspace live
-          </span>
-          <span style={{ fontSize: 12.5, color: "var(--ink-4)", fontWeight: 500 }}>
-            Tuesday, 18 August · {PERSONA.org}
-          </span>
-        </div>
-
+    <div className="page-enter space-y-7 max-w-[1140px] pb-12">
+      {/* Welcome */}
+      <div className="pt-1 pb-1">
         <h1
           style={{
-            fontSize: "clamp(28px,2.8vw,38px)",
-            lineHeight: 1.15,
+            fontSize: "clamp(24px, 2.5vw, 32px)",
+            lineHeight: 1.2,
             fontWeight: 800,
-            letterSpacing: "-1.4px",
-            margin: "0 0 12px",
-            background: "linear-gradient(96deg, var(--ink) 0%, var(--brand-deep) 55%, var(--brand) 100%)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent",
+            letterSpacing: "-0.8px",
+            margin: 0,
+            color: "var(--ink)",
           }}
         >
-          Welcome back, welcome {PERSONA.firstName}, and let’s create something.
+          Welcome back, <span style={{ color: "var(--brand)" }}>{PERSONA.firstName}.</span>
         </h1>
-        <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-3)", margin: 0, maxWidth: "50ch" }}>
-          Your team wrote, checked and shipped from your dossiers overnight — <b style={{ color: "var(--ink)" }}>zero uncited claims</b>. Pick up where they left off, or{" "}
-          <button style={{ color: "var(--ink)", fontWeight: 700, textDecoration: "underline", textDecorationColor: "var(--hair-3)", textUnderlineOffset: 3 }}>
-            take the 90s tour
-          </button>.
+        <p className="mt-1.5 text-[14px] text-[var(--ink-3)] font-medium">
+          Select a content workflow or explore verified medical showreels.
         </p>
       </div>
 
-      {/* ── Unified creation panel — equal options, one surface ─── */}
-      <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", marginBottom: 24, overflow: "hidden" }}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1" style={{ padding: 22 }}>
-          {CREATION_OPTIONS.map((option) => (
-            <CreationOptionCard key={option.title} option={option} onOpen={() => openOption(option)} />
-          ))}
-        </div>
-        <div style={{ borderTop: "1px solid var(--hair)", background: "var(--surface-subtle)", padding: "14px 22px" }}>
-          <CoreUspStrip />
-        </div>
+      {/* Creation tiles — 4 individual bordered cards */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 16,
+        }}
+      >
+        {CREATION_TILES.map((tile) => (
+          <CreationTile key={tile.title} tile={tile} onOpen={() => openTile(tile)} />
+        ))}
       </div>
 
-      {/* ── Magic Video · Magic Canvas showcase ─────────────────── */}
-      <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", padding: 22 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap", marginBottom: 18 }}>
-          <div>
-            <span style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--brand)" }}>
-              Magic Video · Magic Canvas
-            </span>
-            <b style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", display: "block", marginTop: 3 }}>See what your team already shipped</b>
-            <p style={{ margin: "3px 0 0", fontSize: 12.5, color: "var(--ink-3)" }}>Every reel and layout below is cited, MLR-cleared, and ready to reuse.</p>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-          {[...SAMPLE_VIDEOS.slice(0, 3), ...SAMPLE_CANVAS.slice(0, 2)].map((asset, i) => (
-            <ReelCard key={i} asset={asset} onOpen={() => setLightboxAsset(asset)} />
-          ))}
-        </div>
+      {/* Showcase — 3 horizontal scrollable lanes */}
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: "var(--r-xl)",
+          border: "1px solid var(--hair)",
+          boxShadow: "var(--sh-1)",
+          padding: "22px 22px 20px",
+        }}
+      >
+        {SHOWCASE_LANES.map((lane, i) => (
+          <ShowcaseLaneRow key={lane.label} lane={lane} isLast={i === SHOWCASE_LANES.length - 1} />
+        ))}
       </div>
-
-      {/* Lightbox */}
-      {lightboxAsset && (
-        <AssetLightbox asset={lightboxAsset} onClose={() => setLightboxAsset(null)} />
-      )}
     </div>
   );
 }

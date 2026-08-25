@@ -183,26 +183,46 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
 
             <div className="mt-6">
-              <div className="flex items-center justify-between">
-                <label htmlFor="content-brief" className="text-[14px] font-bold">What are you creating?</label>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setScenarioLibraryOpen(true)} className="text-[12.5px] font-medium text-[var(--brand)]">
-                    <FlaskConical className="size-3.5" /> Sample briefs
-                  </Button>
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="focus-ring flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12.5px] font-medium text-[var(--ink-muted)] hover:bg-[#f2f4f2] hover:text-[var(--ink)]">
-                    <Paperclip className="size-3.5" /> Attach material
-                  </button>
+              <label htmlFor="content-brief" className="block text-[14px] font-bold text-[var(--ink)] mb-2">
+                What are you creating?
+              </label>
+
+              {/* Modern AI Chat-Style Input Box with bottom actions */}
+              <div className="relative rounded-[16px] border border-[var(--line)] bg-[#fafbf9] p-3 transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(253,72,22,0.12)]">
+                <textarea
+                  id="content-brief"
+                  value={brief}
+                  onChange={(event) => setBrief(event.target.value)}
+                  rows={4}
+                  placeholder="e.g. Create a 60-second HCP explainer explaining why Velmora was developed, showing the dual-inhibition mechanism, and proving 24% relative risk reduction from CLARITY-CV."
+                  className="w-full resize-none bg-transparent p-1 text-[14.5px] leading-6 outline-none placeholder:text-[var(--ink-4)] text-[var(--ink)]"
+                />
+
+                {/* Bottom Action Bar inside Textarea */}
+                <div className="mt-2 flex items-center justify-between border-t border-black/[0.05] pt-2.5">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="focus-ring inline-flex items-center gap-1.5 rounded-[9px] border border-[var(--hair-2)] bg-white px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink-2)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] hover:shadow-xs"
+                    >
+                      <Paperclip className="size-3.5 text-[var(--brand)]" />
+                      <span>Attach material</span>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setScenarioLibraryOpen(true)}
+                      className="h-8 rounded-[9px] px-2.5 text-[12px] font-medium text-[var(--ink-muted)] hover:text-[var(--brand)] hover:bg-black/[0.03]"
+                    >
+                      <FlaskConical className="size-3.5 mr-1" /> Sample briefs
+                    </Button>
+                  </div>
+                  <span className="text-[11.5px] text-[var(--ink-4)] font-medium pr-1">
+                    {brief.length > 0 ? `${brief.length} chars` : "Plain text or prompt"}
+                  </span>
                 </div>
               </div>
-
-              <textarea
-                id="content-brief"
-                value={brief}
-                onChange={(event) => setBrief(event.target.value)}
-                rows={4}
-                placeholder="e.g. Create a 60-second HCP explainer explaining why Velmora was developed, showing the dual-inhibition mechanism, and proving 24% relative risk reduction from CLARITY-CV."
-                className="mt-2.5 w-full rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5 text-[14.5px] leading-6 outline-none transition-[border-color,background-color] duration-200 focus:border-[var(--brand)] focus:bg-white focus:ring-2 focus:ring-[var(--brand-soft)]"
-              />
 
               {clarificationOpen && (
                 <div className="mt-3 rounded-[13px] border border-[#f0cfa0] bg-[#fffbf2] p-3.5 text-[13px] text-[#78531d]">
@@ -218,30 +238,35 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
 
             {/* Attached Files & Sources */}
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-[12px] font-bold text-[var(--ink-muted)]">Active Context:</span>
-              <span className="squircle-control flex min-h-9 items-center gap-2 bg-[var(--tint)] px-2.5 text-[12.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
-                <ShieldCheck className="size-4 text-[var(--brand)]" />
-                {sourceDisplayName}
-              </span>
-              <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
-                <Users className="size-3.5 text-[var(--brand)]" />
-                {audience}
-              </span>
-              <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
-                <Target className="size-3.5 text-[var(--brand)]" />
-                {goal}
-              </span>
-              <span className="squircle-control flex min-h-9 items-center gap-1.5 bg-[#f4f5f3] px-2.5 text-[12px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
-                <Layers className="size-3.5 text-[var(--brand)]" />
-                {topics.length} topics
-              </span>
-              {selectedSources.map((source) => (
-                <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
-              ))}
-              {localFiles.map((file) => (
-                <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
-              ))}
+            <div className="mt-5 pt-4 border-t border-[var(--hair)] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Active Context &amp; Evidence</span>
+                <span className="text-[11.5px] font-semibold text-[var(--ok)]">Grounding locked</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--tint)] px-3 py-1.5 text-[12.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-xs">
+                  <ShieldCheck className="size-4 text-[var(--brand)]" />
+                  {sourceDisplayName}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+                  <Users className="size-3.5 text-[var(--brand)]" />
+                  {audience}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+                  <Target className="size-3.5 text-[var(--brand)]" />
+                  {goal}
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+                  <Layers className="size-3.5 text-[var(--brand)]" />
+                  {topics.length} topics
+                </span>
+                {selectedSources.map((source) => (
+                  <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
+                ))}
+                {localFiles.map((file) => (
+                  <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
+                ))}
+              </div>
             </div>
 
             <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />

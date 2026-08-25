@@ -70,31 +70,30 @@ export function DossierListScreen({
             className="hover:scale-[1.01] hover:shadow-lg"
           >
             {/* Top Bar */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: dossier.gradient,
-                  color: "#fff",
-                  display: "grid",
-                  placeItems: "center",
-                  fontSize: 16,
-                  fontWeight: 800,
-                  boxShadow: "0 8px 18px -6px rgba(0,0,0,.35)",
-                }}
-              >
-                {dossier.initials}
-              </div>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <b style={{ fontSize: 18, letterSpacing: "-.5px", fontWeight: 800 }}>{dossier.brandName}</b>
+                  <b style={{ fontSize: 20, letterSpacing: "-.5px", fontWeight: 800, color: "var(--ink)" }}>{dossier.brandName}</b>
+                  {dossier.isSample && (
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 800,
+                        padding: "2px 8px",
+                        borderRadius: 99,
+                        background: "#fef3c7",
+                        color: "#b45309",
+                        border: "1px solid #fde68a",
+                      }}
+                    >
+                      Sample
+                    </span>
+                  )}
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: 10.5,
                       fontWeight: 800,
-                      padding: "2px 7px",
+                      padding: "2px 8px",
                       borderRadius: 99,
                       background: "var(--ok-bg)",
                       color: "var(--ok)",
@@ -104,7 +103,7 @@ export function DossierListScreen({
                     {dossier.regulatoryAnchor} Anchor
                   </span>
                 </div>
-                <span style={{ fontSize: 12, color: "var(--ink-4)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: 13, color: "var(--ink-4)", fontStyle: "italic", display: "block", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {dossier.genericName}
                 </span>
               </div>
@@ -122,9 +121,19 @@ export function DossierListScreen({
                 gridTemplateColumns: "repeat(3, 1fr)",
                 gap: 8,
                 padding: "12px 10px",
-                background: "var(--tint-2)",
+                background:
+                  dossier.healthStatus === "critical"
+                    ? "#fff5f5"
+                    : dossier.healthStatus === "warning"
+                    ? "#fefce8"
+                    : "var(--tint-2)",
                 borderRadius: "var(--r)",
-                border: "1px solid var(--tint-line)",
+                border:
+                  dossier.healthStatus === "critical"
+                    ? "1px solid #fed7d7"
+                    : dossier.healthStatus === "warning"
+                    ? "1px solid #fef08a"
+                    : "1px solid var(--tint-line)",
                 marginBottom: 16,
                 textAlign: "center",
               }}
@@ -136,10 +145,44 @@ export function DossierListScreen({
                 <span style={{ fontSize: 10, color: "var(--ink-4)", textTransform: "uppercase", fontWeight: 700 }}>Sections</span>
               </div>
               <div>
-                <b style={{ display: "block", fontSize: 15, fontWeight: 800, color: "var(--ok)" }}>
-                  {dossier.claimsCited}
+                <b
+                  style={{
+                    display: "block",
+                    fontSize: 14.5,
+                    fontWeight: 800,
+                    color:
+                      dossier.healthStatus === "critical"
+                        ? "#dc2626"
+                        : dossier.healthStatus === "warning"
+                        ? "#ca8a04"
+                        : "var(--ok)",
+                  }}
+                >
+                  {dossier.healthStatus === "critical"
+                    ? `${dossier.claimsCited}/${dossier.totalClaimsCount || 66}`
+                    : dossier.healthStatus === "warning"
+                    ? `${dossier.claimsCited}/${dossier.totalClaimsCount || 84}`
+                    : dossier.claimsCited}
                 </b>
-                <span style={{ fontSize: 10, color: "var(--ink-4)", textTransform: "uppercase", fontWeight: 700 }}>Claims Cited</span>
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    color:
+                      dossier.healthStatus === "critical"
+                        ? "#b91c1c"
+                        : dossier.healthStatus === "warning"
+                        ? "#a16207"
+                        : "var(--ink-4)",
+                    textTransform: "uppercase",
+                    fontWeight: 800,
+                  }}
+                >
+                  {dossier.healthStatus === "critical"
+                    ? "2/66 Verified"
+                    : dossier.healthStatus === "warning"
+                    ? "50% Pending"
+                    : "Claims Cited"}
+                </span>
               </div>
               <div>
                 <b style={{ display: "block", fontSize: 15, fontWeight: 800, color: "var(--ink-3)" }}>

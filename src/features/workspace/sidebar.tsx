@@ -1,17 +1,31 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { LogoMark } from "@/components/ui/logo-mark";
 
-interface NavItem {
+interface CreateTile {
   label: string;
   icon: string;
   href: string;
-  indent?: boolean;
-  soon?: boolean;
+}
+
+const CREATE_TILES: CreateTile[] = [
+  { label: "Video", icon: "video", href: "/create" },
+  { label: "Image", icon: "image", href: "#" },
+  { label: "Website", icon: "globe", href: "#" },
+  { label: "Doc", icon: "doc", href: "#" },
+  { label: "Mail", icon: "mail", href: "#" },
+  { label: "Characters", icon: "characters", href: "#" },
+];
+
+interface NavItem {
+  label: string;
+  shortLabel: string;
+  icon: string;
+  href: string;
   badge?: number;
 }
 
@@ -20,70 +34,119 @@ interface NavGroup {
   items: NavItem[];
 }
 
-const NAV_GROUPS: NavGroup[] = [
+const ASSET_GROUPS: NavGroup[] = [
   {
-    label: "Overview",
+    label: "Assets",
     items: [
-      { label: "Home", icon: "home", href: "/" },
+      { label: "Brand Dossiers", shortLabel: "Brands", icon: "dossier", href: "/dossiers" },
+      { label: "Content Library", shortLabel: "Contents", icon: "library", href: "#" },
+      { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "#" },
     ],
   },
   {
-    label: "Create",
+    label: "Review",
     items: [
-      { label: "Content Studio", icon: "studio", href: "/create" },
-      { label: "Magic Video", icon: "video", href: "/create", indent: true },
-      { label: "Magic Aid", icon: "layers", href: "#", soon: true, indent: true },
-      { label: "Magic Mail", icon: "mail", href: "#", soon: true, indent: true },
-      { label: "Magic Canvas", icon: "canvas", href: "#", indent: true },
-      { label: "Magic Doc", icon: "doc", href: "#", soon: true, indent: true },
-    ],
-  },
-  {
-    label: "Library",
-    items: [
-      { label: "Brand Dossiers", icon: "dossier", href: "/dossiers" },
-      { label: "Content Library", icon: "library", href: "#" },
-      { label: "Templates", icon: "templates", href: "#" },
-      { label: "Characters", icon: "characters", href: "#" },
-      { label: "Claims Library", icon: "claims", href: "#" },
-    ],
-  },
-  {
-    label: "Activate",
-    items: [
-      { label: "MLR Review", icon: "shield", href: "#", badge: 12 },
-      { label: "Campaigns", icon: "campaigns", href: "#" },
-      { label: "Audience", icon: "audience", href: "#" },
-      { label: "Re-engage", icon: "reengage", href: "#" },
+      { label: "MLR Review", shortLabel: "MLR", icon: "shield", href: "#", badge: 12 },
     ],
   },
 ];
 
-function NavIcon({ name }: { name: string }): ReactNode {
+function NavIcon({ name, active = false }: { name: string; active?: boolean }): ReactNode {
+  const color = active ? "#fff" : "currentColor";
   const icons: Record<string, ReactNode> = {
-    home: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M3 10.5L12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /></svg>,
-    studio: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5z" /></svg>,
-    video: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M5 3l14 9-14 9z" /></svg>,
-    layers: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 2l9 5-9 5-9-5z" /><path d="M3 12l9 5 9-5M3 17l9 5 9-5" /></svg>,
-    mail: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="2" y="5" width="20" height="14" rx="2.5" /><path d="M2 7l10 6 10-6" /></svg>,
-    canvas: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M3 15l5-5 4 4 3-3 6 6" /></svg>,
-    doc: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>,
-    dossier: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M2 4h7a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H2z" /><path d="M22 4h-7a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H22z" /></svg>,
-    library: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M3 7l2-3h5l2 3h9v12H3z" /></svg>,
-    templates: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M3 9h18M9 9v11" /></svg>,
-    characters: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={12} cy={8} r={4} /><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" /></svg>,
-    claims: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M7 7v10M11 7v10M17 7v10M21 7v10" /></svg>,
-    shield: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 2l8 4v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" /></svg>,
-    campaigns: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" /></svg>,
-    audience: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={9} cy={8} r={3.5} /><path d="M2 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5" /><path d="M17 8.5a3.5 3.5 0 0 1 0 5" /></svg>,
-    reengage: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 3v6h-6" /></svg>,
-    settings: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx={12} cy={12} r={3} /><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 14.1a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.6-2.4l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 3.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z" /></svg>,
+    home: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M3 10.5L12 3l9 7.5" />
+        <path d="M5 9.5V21h14V9.5" />
+      </svg>
+    ),
+    studio: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" />
+        <path d="M19 2l.8 2.2L22 5l-2.2.8L19 8l-.8-2.2L16 5l2.2-.8L19 2z" />
+      </svg>
+    ),
+    studioFilled: (
+      <svg viewBox="0 0 24 24" className="size-4">
+        <path
+          d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z"
+          fill={active ? "#fff" : "var(--brand)"}
+        />
+        <path
+          d="M19 2l.8 2.2L22 5l-2.2.8L19 8l-.8-2.2L16 5l2.2-.8L19 2z"
+          fill={active ? "#fff" : "var(--brand)"}
+        />
+      </svg>
+    ),
+    video: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <rect x="2" y="5" width="15" height="14" rx="3" />
+        <path d="M17 9.5l5-3.5v12l-5-3.5z" />
+      </svg>
+    ),
+    image: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <rect x="3" y="3" width="18" height="18" rx="3.5" />
+        <circle cx="8.5" cy="8.5" r="1.5" />
+        <path d="M21 15l-5-5L5 21" />
+      </svg>
+    ),
+    globe: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+    ),
+    doc: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    ),
+    mail: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <rect x="2" y="4" width="20" height="16" rx="2.5" />
+        <path d="M22 7l-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+      </svg>
+    ),
+    characters: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" />
+      </svg>
+    ),
+    dossier: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+      </svg>
+    ),
+    library: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M3 7l2-3h5l2 3h9v12H3z" />
+      </svg>
+    ),
+    claims: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M7 7v10M11 7v10M17 7v10M21 7v10" />
+      </svg>
+    ),
+    shield: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M12 2l8 4v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />
+      </svg>
+    ),
+    settings: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 14.1a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.6-2.4l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 3.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z" />
+      </svg>
+    ),
   };
-  return (
-    <span style={{ width: 15, height: 15, display: "block", flexShrink: 0, opacity: 0.85 }}>
-      {icons[name] ?? icons.home}
-    </span>
-  );
+  return <span className="flex shrink-0 items-center justify-center">{icons[name] ?? icons.home}</span>;
 }
 
 export function Sidebar() {
@@ -94,9 +157,12 @@ export function Sidebar() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
   const setView = useWorkspaceStore((s) => s.setView);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  const sbw = collapsed ? 74 : 248;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [createFlyoutOpen, setCreateFlyoutOpen] = useState(false);
+  const flyoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const sbw = collapsed ? 80 : 252;
 
   function handleSignOut() {
     setMenuOpen(false);
@@ -104,201 +170,382 @@ export function Sidebar() {
     router.push("/auth");
   }
 
+  function handleCreateNav(href: string) {
+    setCreateFlyoutOpen(false);
+    if (href === "/create") {
+      setView("create");
+      setVideoSubStage("mode-select");
+      router.push("/create");
+    } else if (href !== "#") {
+      router.push(href);
+    }
+  }
+
+  const isHomeActive = pathname === "/";
+  const isCreateActive = pathname.startsWith("/create");
+
+  const handleMouseEnterCreate = () => {
+    if (collapsed) {
+      if (flyoutTimerRef.current) clearTimeout(flyoutTimerRef.current);
+      setCreateFlyoutOpen(true);
+    }
+  };
+
+  const handleMouseLeaveCreate = () => {
+    if (collapsed) {
+      flyoutTimerRef.current = setTimeout(() => {
+        setCreateFlyoutOpen(false);
+      }, 220);
+    }
+  };
+
   return (
-    <aside
-      style={{
-        width: sbw,
-        flexShrink: 0,
-        borderRight: "1px solid var(--hair)",
-        display: "flex",
-        flexDirection: "column",
-        padding: collapsed ? "18px 10px 14px" : "18px 14px 14px",
-        background: "#fff",
-        position: "relative",
-        zIndex: 2,
-        transition: "width .26s var(--e)",
-        overflow: "hidden",
-      }}
-    >
-      {/* Top: logo + collapse toggle */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", padding: "2px 6px 22px", flexDirection: collapsed ? "column" : "row", gap: collapsed ? 9 : 0 }}>
-        {!collapsed ? (
-          <div style={{ fontWeight: 800, fontSize: 18.5, letterSpacing: "-.7px", display: "flex", alignItems: "center", gap: 9 }}>
-            <LogoMark size={24} className="text-[var(--brand)]" />
-            swish<span style={{ color: "var(--brand)" }}>X</span>
-          </div>
-        ) : (
-          <LogoMark size={24} className="text-[var(--brand)]" />
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          title={collapsed ? "Expand menu" : "Collapse menu"}
-          style={{ width: 30, height: 30, borderRadius: 10, display: "grid", placeItems: "center", color: "var(--ink-3)", transition: ".2s var(--e)", flexShrink: 0 }}
+    <div className="relative z-40 flex h-full shrink-0 p-3 select-none">
+      {/* ─── Floating Island Glassy Sidebar ─── */}
+      <aside
+        style={{
+          width: sbw,
+          transition: "width 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
+        className="relative flex h-full flex-col rounded-[24px] border border-black/[0.08] bg-white/95 shadow-[0_8px_32px_-8px_rgba(10,13,20,0.08),0_1px_3px_rgba(0,0,0,0.03)] backdrop-blur-xl transition-all overflow-hidden"
+      >
+        {/* Top Header: Logo (Click to expand if collapsed) + Minimize Button in Open State */}
+        <div
+          className={`flex items-center pt-4 pb-2.5 px-4 ${
+            collapsed ? "justify-center" : "justify-between"
+          }`}
         >
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} style={{ transform: collapsed ? "rotate(180deg)" : "none", transition: ".26s" }}>
-            <rect x={3} y={4} width={18} height={16} rx={2.5} />
-            <path d="M9 4v16" />
-            <path d="M15 9l-2.5 3 2.5 3" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Nav scroll area */}
-      <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "thin" }}>
-        {NAV_GROUPS.map((group) => (
-          <div key={group.label}>
-            {/* Group label */}
-            {!collapsed ? (
-              <div style={{ fontSize: 10, letterSpacing: ".16em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800, padding: "15px 9px 7px" }}>{group.label}</div>
-            ) : (
-              <div style={{ height: 1, background: "var(--hair)", margin: "14px 8px 10px" }} />
-            )}
-            {group.items.map((item) => {
-              const isActive = item.href === "/" ? pathname === "/" : item.href !== "#" && pathname.startsWith(item.href);
-              return (
-                <button
-                  key={item.label}
-                  onClick={() => {
-                    if (item.href !== "#") {
-                      if (item.href === "/create") {
-                        setView("create");
-                        setVideoSubStage("mode-select");
-                      } else if (item.href === "/") {
-                        setView("home");
-                      }
-                      router.push(item.href);
-                    }
-                  }}
-                  title={collapsed ? item.label : undefined}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: collapsed ? 0 : 11,
-                    width: "100%",
-                    padding: collapsed ? "11px 0" : "9px 10px",
-                    borderRadius: 10,
-                    fontSize: collapsed ? 0 : 13.5,
-                    fontWeight: 560,
-                    color: isActive ? "var(--brand)" : "var(--ink-2)",
-                    background: isActive ? "var(--tint)" : "transparent",
-                    justifyContent: collapsed ? "center" : "flex-start",
-                    paddingLeft: !collapsed && item.indent ? 28 : undefined,
-                    position: "relative",
-                    transition: ".16s var(--e)",
-                  }}
-                >
-                  {isActive && !collapsed && (
-                    <span style={{ position: "absolute", left: -14, top: 8, bottom: 8, width: 3, borderRadius: "0 3px 3px 0", background: "var(--brand)" }} />
-                  )}
-                  <NavIcon name={item.icon} />
-                  {!collapsed && (
-                    <>
-                      <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
-                      {item.soon && (
-                        <span style={{ fontSize: 9, letterSpacing: ".07em", background: "rgba(10,13,20,.06)", color: "var(--ink-4)", padding: "2px 6px", borderRadius: 5, fontWeight: 800 }}>SOON</span>
-                      )}
-                      {item.badge !== undefined && (
-                        <span style={{ fontSize: 10.5, background: "var(--brand)", color: "#fff", padding: "1px 7px", borderRadius: 99, fontWeight: 750 }}>{item.badge}</span>
-                      )}
-                    </>
-                  )}
-                  {collapsed && item.badge !== undefined && (
-                    <span style={{ position: "absolute", top: 4, right: 8, fontSize: 9, background: "var(--brand)", color: "#fff", padding: "0 5px", borderRadius: 99, fontWeight: 750 }}>{item.badge}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div style={{ borderTop: "1px solid var(--hair)", paddingTop: 10, marginTop: 10, position: "relative" }}>
-        {/* Token credit chip */}
-        {!collapsed && (
-          <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 10px", borderRadius: 12, background: "linear-gradient(120deg,var(--tint),#fff)", border: "1px solid var(--tint-line)", marginBottom: 8 }}>
-            <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth={2}><circle cx={12} cy={12} r={9} /><path d="M12 7v10M9 10h6" /></svg>
-            <span>
-              <b style={{ color: "var(--ink)", fontSize: 12.5, display: "block", margin: 0 }}>Tokens</b>
-              <small style={{ display: "block", fontSize: 10, color: "var(--ink-4)", letterSpacing: ".04em", textTransform: "uppercase", fontWeight: 700 }}>Growth plan</small>
-            </span>
-            <b style={{ marginLeft: "auto", color: "var(--brand)", fontWeight: 800, fontSize: 13, letterSpacing: "-.2px" }}>2,450,000</b>
-          </div>
-        )}
-
-        {/* Settings */}
-        <button
-          style={{ display: "flex", alignItems: "center", gap: collapsed ? 0 : 11, width: "100%", padding: collapsed ? "11px 0" : "9px 10px", borderRadius: 10, fontSize: collapsed ? 0 : 13.5, fontWeight: 560, color: "var(--ink-2)", justifyContent: collapsed ? "center" : "flex-start", marginBottom: 4 }}
-          title={collapsed ? "Settings" : undefined}
-        >
-          <NavIcon name="settings" />
-          {!collapsed && "Settings"}
-        </button>
-
-        {/* User button */}
-        <div style={{ position: "relative" }}>
+          {/* Logo Button: Expands when collapsed */}
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{ display: "flex", alignItems: "center", gap: collapsed ? 0 : 10, padding: collapsed ? "9px 0" : "9px 9px", borderRadius: 12, width: "100%", textAlign: "left", justifyContent: collapsed ? "center" : "flex-start" }}
+            onClick={() => collapsed && setCollapsed(false)}
+            title={collapsed ? "Click to expand sidebar" : undefined}
+            className={`flex items-center gap-2.5 font-[800] text-[18px] tracking-tight text-[var(--ink)] ${
+              collapsed ? "cursor-pointer hover:scale-105 transition-transform" : "cursor-default"
+            }`}
           >
-            <span style={{ width: 30, height: 30, borderRadius: "50%", background: PERSONA.avatarGradient, color: "#fff", display: "grid", placeItems: "center", fontSize: 12, fontWeight: 750, flexShrink: 0 }}>{PERSONA.initials}</span>
+            <LogoMark size={24} className="text-[var(--brand)]" />
             {!collapsed && (
-              <span style={{ minWidth: 0 }}>
-                <b style={{ fontSize: 13, display: "block", lineHeight: 1.25 }}>{PERSONA.name}</b>
-                <span style={{ fontSize: 11, color: "var(--ink-4)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{PERSONA.email}</span>
+              <span>
+                swish<span className="text-[var(--brand)]">X</span>
               </span>
             )}
           </button>
 
-          {/* User menu pop-up */}
-          {menuOpen && (
-            <div
-              style={{
-                position: "absolute",
-                left: 8,
-                right: 8,
-                bottom: 52,
-                background: "#fff",
-                border: "1px solid var(--hair-2)",
-                borderRadius: "var(--r-l)",
-                boxShadow: "var(--sh-3)",
-                padding: 7,
-                zIndex: 40,
-                animation: "spring-in .26s var(--spring) both",
-                transformOrigin: "bottom center",
-              }}
+          {/* Minimize toggle button ONLY visible in open state */}
+          {!collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              title="Collapse sidebar"
+              className="flex size-7 items-center justify-center rounded-lg text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors"
             >
-              {/* User header */}
-              <div style={{ padding: "11px 11px 9px", display: "flex", gap: 10, alignItems: "center" }}>
-                <span style={{ width: 34, height: 34, borderRadius: "50%", background: PERSONA.avatarGradient, color: "#fff", display: "grid", placeItems: "center", fontSize: 13, fontWeight: 750, flexShrink: 0 }}>{PERSONA.initials}</span>
-                <span style={{ minWidth: 0 }}>
-                  <b style={{ fontSize: 13.5, display: "block" }}>{PERSONA.name}</b>
-                  <span style={{ fontSize: 11.5, color: "var(--ink-4)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{PERSONA.email}</span>
-                </span>
-              </div>
-              <div style={{ height: 1, background: "var(--hair)", margin: "6px 4px" }} />
-              {[
-                { label: "Profile & preferences" },
-                { label: "Switch workspace", badge: "3" },
-                { label: "Replay the product tour" },
-                { label: "Security & sessions" },
-              ].map((item) => (
-                <button key={item.label} style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", padding: "10px 11px", borderRadius: 10, fontSize: 13.5, fontWeight: 560, textAlign: "left" }}>
-                  {item.label}
-                  {item.badge && <span style={{ marginLeft: "auto", fontSize: 10.5, background: "rgba(10,13,20,.08)", color: "var(--ink-3)", padding: "2px 6px", borderRadius: 6 }}>{item.badge}</span>}
-                </button>
-              ))}
-              <div style={{ height: 1, background: "var(--hair)", margin: "6px 4px" }} />
-              <button
-                onClick={handleSignOut}
-                style={{ display: "flex", alignItems: "center", gap: 11, width: "100%", padding: "10px 11px", borderRadius: 10, fontSize: 13.5, fontWeight: 560, textAlign: "left", color: "#b91c1c" }}
+              <svg
+                width={16}
+                height={16}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
               >
-                Sign out
-              </button>
-            </div>
+                <rect x="3" y="4" width="18" height="16" rx="2.5" />
+                <path d="M9 4v16" />
+                <path d="M15 9l-2.5 3 2.5 3" />
+              </svg>
+            </button>
           )}
         </div>
-      </div>
-    </aside>
+
+        {/* ── Scrollable Body with comfortable lateral padding ── */}
+        <div className={`flex-1 overflow-y-auto ${collapsed ? "px-2" : "px-3"} py-2 scrollbar-none space-y-3.5`}>
+          {/* ── HOME BUTTON ── */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                setView("home");
+                router.push("/");
+              }}
+              title={collapsed ? "Home" : undefined}
+              className={`group relative flex items-center rounded-[14px] transition-all duration-200 ${
+                collapsed
+                  ? "w-[58px] flex-col justify-center py-2 px-1 gap-1"
+                  : "w-full h-[42px] gap-3 px-3"
+              } ${
+                isHomeActive
+                  ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                  : "text-[var(--ink-2)] hover:bg-black/[0.04] hover:text-[var(--ink)]"
+              }`}
+            >
+              <div
+                className={`grid size-7 place-items-center rounded-[9px] transition-all shrink-0 ${
+                  isHomeActive
+                    ? "text-white"
+                    : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"
+                }`}
+              >
+                <NavIcon name="home" active={isHomeActive} />
+              </div>
+              <span
+                className={`tracking-tight ${
+                  collapsed
+                    ? "text-[10.5px] font-[750] leading-none"
+                    : "text-[14px] font-[750]"
+                } ${isHomeActive ? "text-white" : "text-[var(--ink)]"}`}
+              >
+                Home
+              </span>
+            </button>
+          </div>
+
+          {/* ── MAGIC STUDIO SECTION (6 tiles in 2-column grid under MAGIC STUDIO heading) ── */}
+          <div
+            className="relative"
+            onMouseEnter={handleMouseEnterCreate}
+            onMouseLeave={handleMouseLeaveCreate}
+          >
+            {!collapsed ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 px-2 pt-1 text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                  <span>Magic Studio</span>
+                </div>
+
+                {/* 2-Column Grid Format Tiles (Video, Image, Website, Doc, Mail, Characters) */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  {CREATE_TILES.map((tile) => {
+                    const isTileActive = tile.href === "/create" && isCreateActive;
+                    return (
+                      <button
+                        key={tile.label}
+                        onClick={() => handleCreateNav(tile.href)}
+                        className={`group flex items-center gap-2.5 rounded-[12px] border px-3 py-2.5 text-left transition-all duration-150 ${
+                          isTileActive
+                            ? "border-transparent bg-[var(--brand)] text-white font-[750] shadow-[0_3px_10px_rgba(253,72,22,0.32)]"
+                            : "border-transparent bg-black/[0.025] text-[var(--ink-2)] font-semibold hover:border-[var(--hair-2)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
+                        }`}
+                      >
+                        <span className={`transition-colors ${isTileActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"}`}>
+                          <NavIcon name={tile.icon} active={isTileActive} />
+                        </span>
+                        <span className={`truncate text-[12.5px] font-medium leading-none ${isTileActive ? "text-white font-bold" : ""}`}>
+                          {tile.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* Collapsed Mode: Magic Studio Icon with Solid Orange Filled Shape in Unselected, Solid Chip in Selected */
+              <div className="flex flex-col items-center gap-1">
+                <div className="my-1 h-px w-6 bg-black/10" />
+                <button
+                  onClick={() => handleCreateNav("/create")}
+                  className={`group relative flex w-[58px] flex-col items-center justify-center rounded-[14px] py-2 px-1 gap-1 transition-all duration-200 ${
+                    isCreateActive
+                      ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                      : "text-[var(--ink-2)] hover:bg-black/[0.04] hover:text-[var(--ink)]"
+                  }`}
+                  title="Magic Studio"
+                >
+                  <div
+                    className={`grid size-7 place-items-center rounded-[9px] transition-transform group-hover:scale-105 shrink-0 ${
+                      !isCreateActive ? "filter drop-shadow-[0_1px_4px_rgba(253,72,22,0.35)]" : ""
+                    }`}
+                  >
+                    <NavIcon name="studioFilled" active={isCreateActive} />
+                  </div>
+                  <span className={`text-[10.5px] font-[750] tracking-tight leading-none text-center ${isCreateActive ? "text-white" : "text-[var(--ink)]"}`}>
+                    Studio
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ── ASSETS & REVIEW SECTIONS ── */}
+          {ASSET_GROUPS.map((group) => (
+            <div key={group.label} className="space-y-1.5">
+              {!collapsed ? (
+                <div className="px-2 pt-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                  {group.label}
+                </div>
+              ) : (
+                <div className="my-1.5 flex justify-center">
+                  <div className="h-px w-6 bg-black/10" />
+                </div>
+              )}
+
+              {group.items.map((item) => {
+                const isActive = item.href !== "#" && pathname.startsWith(item.href);
+                return (
+                  <div key={item.label} className="flex justify-center">
+                    <button
+                      onClick={() => {
+                        if (item.href !== "#") router.push(item.href);
+                      }}
+                      title={collapsed ? item.label : undefined}
+                      className={`group flex items-center rounded-[14px] transition-all duration-150 ${
+                        collapsed
+                          ? "w-[58px] flex-col justify-center py-2 px-1 gap-1"
+                          : "w-full h-[42px] gap-3 px-3"
+                      } ${
+                        isActive
+                          ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                          : "text-[var(--ink-2)] hover:bg-black/[0.04] hover:text-[var(--ink)] font-medium"
+                      }`}
+                    >
+                      <span className={`shrink-0 ${isActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"}`}>
+                        <NavIcon name={item.icon} active={isActive} />
+                      </span>
+                      <span
+                        className={`tracking-tight truncate ${
+                          collapsed
+                            ? "text-[10.5px] font-[750] leading-none"
+                            : "flex-1 text-left text-[14px] font-[750]"
+                        } ${isActive ? "text-white" : "text-[var(--ink)]"}`}
+                      >
+                        {collapsed ? item.shortLabel : item.label}
+                      </span>
+                      {!collapsed && item.badge !== undefined && (
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? "bg-white/25 text-white" : "bg-[var(--brand)] text-white"}`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Floating Bottom: Tokens & Profile ── */}
+        <div className="relative border-t border-black/[0.06] p-2 space-y-1.5">
+          {/* Token chip */}
+          {!collapsed && (
+            <div className="flex items-center gap-2 rounded-[13px] border border-[var(--tint-line)] bg-gradient-to-r from-[var(--tint)] to-white px-2.5 py-2">
+              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth={2.2}>
+                <circle cx={12} cy={12} r={9} />
+                <path d="M12 7v10M9 10h6" />
+              </svg>
+              <div className="min-w-0 flex-1">
+                <span className="block text-[11px] font-extrabold text-[var(--ink)] leading-none">2.45M Tokens</span>
+                <span className="block text-[9.5px] uppercase font-bold text-[var(--ink-muted)] mt-0.5">Growth Plan</span>
+              </div>
+            </div>
+          )}
+
+          {/* User Account / Workspace Pill */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className={`flex w-full items-center rounded-[14px] border border-black/[0.06] bg-black/[0.02] p-1.5 text-left transition-all hover:bg-black/[0.05] ${
+                collapsed ? "justify-center" : "gap-2.5"
+              }`}
+            >
+              <span
+                style={{ background: PERSONA.avatarGradient }}
+                className="grid size-7 shrink-0 place-items-center rounded-full text-[11.5px] font-[800] text-white shadow-xs"
+              >
+                {PERSONA.initials}
+              </span>
+
+              {!collapsed && (
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[12.5px] font-bold text-[var(--ink)] leading-tight">{PERSONA.name}</div>
+                  <div className="flex items-center gap-1 text-[10.5px] font-bold text-[var(--brand)] truncate mt-0.5">
+                    <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <rect x={2} y={7} width={20} height={15} rx={2} />
+                      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
+                    </svg>
+                    <span className="truncate">{PERSONA.org}</span>
+                  </div>
+                </div>
+              )}
+            </button>
+
+            {/* Profile Pop-up Menu */}
+            {menuOpen && (
+              <div
+                style={{ animation: "spring-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both" }}
+                className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-[18px] border border-black/[0.08] bg-white/95 p-2 shadow-[0_16px_36px_-8px_rgba(10,13,20,0.18)] backdrop-blur-2xl"
+              >
+                <div className="flex items-center gap-2.5 p-2 border-b border-black/[0.05]">
+                  <span
+                    style={{ background: PERSONA.avatarGradient }}
+                    className="grid size-8 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white"
+                  >
+                    {PERSONA.initials}
+                  </span>
+                  <div className="min-w-0">
+                    <b className="block text-[13px] font-bold leading-tight">{PERSONA.name}</b>
+                    <span className="block text-[11px] text-[var(--ink-muted)] truncate">{PERSONA.email}</span>
+                  </div>
+                </div>
+
+                <div className="py-1 space-y-0.5">
+                  <button className="flex w-full items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--ink-2)] hover:bg-black/[0.04] text-left">
+                    Profile &amp; Settings
+                  </button>
+                  <button className="flex w-full items-center justify-between rounded-[10px] px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--ink-2)] hover:bg-black/[0.04] text-left">
+                    <span>Switch Workspace</span>
+                    <span className="rounded bg-black/[0.06] px-1.5 py-0.2 text-[10px] font-bold text-[var(--ink-3)]">3</span>
+                  </button>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-[12.5px] font-semibold text-rose-600 hover:bg-rose-50 text-left"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Hover Flyout Grid for Collapsed Mode ── */}
+      {collapsed && createFlyoutOpen && (
+        <div
+          onMouseEnter={handleMouseEnterCreate}
+          onMouseLeave={handleMouseLeaveCreate}
+          style={{
+            position: "fixed",
+            left: 92,
+            top: 76,
+            zIndex: 9999,
+            animation: "spring-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
+          }}
+          className="w-[250px] rounded-[22px] border border-black/[0.08] bg-white p-3.5 shadow-[0_20px_50px_-10px_rgba(10,13,20,0.22),0_4px_12px_rgba(0,0,0,0.05)] backdrop-blur-2xl"
+        >
+          <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-black/[0.06]">
+            <span className="grid size-6 place-items-center rounded-lg bg-[var(--tint)] text-[var(--brand)]">
+              <NavIcon name="studioFilled" active={false} />
+            </span>
+            <span className="text-[13.5px] font-[800] tracking-tight text-[var(--ink)]">Magic Studio</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {CREATE_TILES.map((tile) => {
+              const isTileActive = tile.href === "/create" && isCreateActive;
+              return (
+                <button
+                  key={tile.label}
+                  onClick={() => handleCreateNav(tile.href)}
+                  className={`group flex items-center gap-2 rounded-[12px] border p-2 text-left transition-all duration-150 ${
+                    isTileActive
+                      ? "border-transparent bg-[var(--brand)] text-white font-bold shadow-xs"
+                      : "border-black/[0.04] bg-[#f8faf8] text-[var(--ink-2)] font-semibold hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand)]"
+                  }`}
+                >
+                  <span className={`transition-colors ${isTileActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
+                    <NavIcon name={tile.icon} active={isTileActive} />
+                  </span>
+                  <span className={`truncate text-[12px] font-bold ${isTileActive ? "text-white" : ""}`}>{tile.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

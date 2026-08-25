@@ -133,6 +133,10 @@ export function DossierWizard({
   const [sendRecipients, setSendRecipients] = useState<string[]>([]);
   const [sentAt, setSentAt] = useState<string | null>(null);
 
+  // Claims Verification Panel State (Collapses index into numbers 01, 02 and opens rightside verification drawer)
+  const [claimsPanelOpen, setClaimsPanelOpen] = useState(false);
+  const [resolvedClaims, setResolvedClaims] = useState<Record<string, "pending" | "accepted" | "rejected">>({});
+
   const uploadedSourceTypes = new Set(activeDossier.sources.map((s) => s.type));
   const requiredSources = REQUIRED_SOURCES.filter((r) => r.tier === "required");
   const requiredUploadedCount = requiredSources.filter((r) => uploadedSourceTypes.has(r.type)).length;
@@ -1156,60 +1160,197 @@ export function DossierWizard({
             </div>
           )}
 
-          {/* Master document: Index (left) + full document pane (right) */}
-          <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 20, alignItems: "start" }}>
-            {/* INDEX */}
-            <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", overflow: "hidden", position: "sticky", top: 20 }}>
-              <div style={{ padding: "16px 18px", borderBottom: "1px solid var(--hair)" }}>
-                <span style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 800, color: "var(--brand)" }}>Index</span>
-                <b style={{ fontSize: 15, fontWeight: 800, display: "block", marginTop: 2 }}>{activeDossier.sections.length} sections</b>
+          {/* Master document: Collapsible Index (left) + Section preview (middle) + Claims Verification Drawer (right) */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: claimsPanelOpen ? "72px minmax(0, 1fr) 390px" : "320px minmax(0, 1fr)",
+              gap: 20,
+              alignItems: "start",
+              transition: "grid-template-columns 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+          >
+            {/* ── LEFT INDEX PANEL (Expands to 320px or collapses to 72px numbers 01, 02, 03...) ── */}
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: "var(--r-xl)",
+                border: "1px solid var(--hair)",
+                boxShadow: "var(--sh-1)",
+                overflow: "hidden",
+                position: "sticky",
+                top: 20,
+                transition: "all 0.3s ease",
+              }}
+            >
+              {/* Header */}
+              <div
+                style={{
+                  padding: claimsPanelOpen ? "16px 8px" : "16px 18px",
+                  borderBottom: "1px solid var(--hair)",
+                  textAlign: claimsPanelOpen ? "center" : "left",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                {!claimsPanelOpen ? (
+                  <div>
+                    <span style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 800, color: "var(--brand)" }}>Index</span>
+                    <b style={{ fontSize: 15, fontWeight: 800, display: "block", marginTop: 2 }}>{activeDossier.sections.length} sections</b>
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 11, fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", width: "100%", display: "block" }}>
+                    Secs
+                  </span>
+                )}
               </div>
-              <div style={{ maxHeight: 620, overflowY: "auto", padding: "8px 8px 12px" }}>
+
+              {/* Section list */}
+              <div style={{ maxHeight: 620, overflowY: "auto", padding: claimsPanelOpen ? "8px 6px" : "8px 8px 12px" }}>
                 {(["commercial", "clinical", "safety", "regulatory"] as const).map((cat) => {
                   const sectionsInCat = activeDossier.sections.filter((s) => s.category === cat);
                   if (sectionsInCat.length === 0) return null;
                   return (
                     <div key={cat} style={{ marginBottom: 6 }}>
-                      <div style={{ padding: "10px 10px 4px", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
-                        {cat}
-                      </div>
-                      {sectionsInCat.map((sec) => (
-                        <button
-                          key={sec.id}
-                          onClick={() => setActiveSectionId(sec.id)}
-                          style={{
-                            width: "100%",
-                            display: "flex",
-                            alignItems: "baseline",
-                            gap: 8,
-                            padding: "9px 10px",
-                            borderRadius: "var(--r)",
-                            textAlign: "left",
-                            background: activeSectionId === sec.id ? "var(--tint)" : "transparent",
-                            border: activeSectionId === sec.id ? "1px solid var(--tint-line)" : "1px solid transparent",
-                          }}
-                        >
-                          <span style={{ fontSize: 11.5, fontWeight: 800, color: activeSectionId === sec.id ? "var(--brand-deep)" : "var(--ink-4)", flexShrink: 0, width: 20 }}>
-                            {String(sec.number).padStart(2, "0")}
-                          </span>
-                          <span style={{ flex: 1, minWidth: 0 }}>
-                            <b style={{ fontSize: 13, fontWeight: 650, color: activeSectionId === sec.id ? "var(--brand-deep)" : "var(--ink)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sec.title}</b>
-                            <span style={{ fontSize: 10.5, color: "var(--ink-4)" }}>{sec.claimsCount} claims · {sec.citations.length} sources</span>
-                          </span>
-                        </button>
-                      ))}
+                      {!claimsPanelOpen && (
+                        <div style={{ padding: "10px 10px 4px", fontSize: 10.5, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
+                          {cat}
+                        </div>
+                      )}
+                      {sectionsInCat.map((sec) => {
+                        const isSelected = activeSectionId === sec.id;
+                        const hasIssues = sec.unverifiedClaims && sec.unverifiedClaims.length > 0;
+                        return (
+                          <button
+                            key={sec.id}
+                            onClick={() => setActiveSectionId(sec.id)}
+                            title={`${String(sec.number).padStart(2, "0")}. ${sec.title}`}
+                            style={{
+                              width: "100%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: claimsPanelOpen ? "center" : "flex-start",
+                              gap: claimsPanelOpen ? 0 : 8,
+                              padding: claimsPanelOpen ? "10px 0" : "9px 10px",
+                              borderRadius: "var(--r)",
+                              textAlign: "left",
+                              background: isSelected ? "var(--tint)" : "transparent",
+                              border: isSelected ? "1px solid var(--tint-line)" : "1px solid transparent",
+                              position: "relative",
+                              cursor: "pointer",
+                              marginBottom: 3,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 12,
+                                fontWeight: 800,
+                                color: isSelected ? "var(--brand-deep)" : hasIssues ? "#dc2626" : "var(--ink-4)",
+                                display: "grid",
+                                placeItems: "center",
+                                width: claimsPanelOpen ? 34 : 20,
+                                height: claimsPanelOpen ? 34 : "auto",
+                                borderRadius: claimsPanelOpen ? 10 : 0,
+                                background: claimsPanelOpen && isSelected ? "#fff" : "transparent",
+                                boxShadow: claimsPanelOpen && isSelected ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+                              }}
+                            >
+                              {String(sec.number).padStart(2, "0")}
+                            </span>
+                            {!claimsPanelOpen && (
+                              <span style={{ flex: 1, minWidth: 0 }}>
+                                <b
+                                  style={{
+                                    fontSize: 13,
+                                    fontWeight: 650,
+                                    color: isSelected ? "var(--brand-deep)" : "var(--ink)",
+                                    display: "block",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {sec.title}
+                                </b>
+                                <span style={{ fontSize: 10.5, color: hasIssues ? "#dc2626" : "var(--ink-4)", fontWeight: hasIssues ? 700 : 400 }}>
+                                  {hasIssues ? `⚠️ ${sec.unverifiedClaims?.length} pending` : `${sec.claimsCount} claims · ${sec.citations.length} sources`}
+                                </span>
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Full document pane */}
+            {/* ── MIDDLE FULL DOCUMENT PANE ── */}
             {(() => {
               const sec = activeDossier.sections.find((s) => s.id === activeSectionId) || activeDossier.sections[0];
               const secIndex = activeDossier.sections.findIndex((s) => s.id === sec.id);
+              const unverifiedList = sec.unverifiedClaims || [];
+              const pendingCount = unverifiedList.filter((u) => !resolvedClaims[u.id]).length;
+
               return (
                 <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-2)", overflow: "hidden" }}>
+                  {/* ── SECTION LEVEL CLAIMS DEFICIENCY WARNING BANNER ── */}
+                  {unverifiedList.length > 0 && (
+                    <div
+                      style={{
+                        background: "#fffbeb",
+                        borderBottom: "1px solid #fde68a",
+                        padding: "14px 28px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 16,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: "50%", background: "#fef3c7", color: "#b45309", fontSize: 14 }}>
+                          ⚠️
+                        </span>
+                        <div>
+                          <b style={{ fontSize: 13, color: "#92400e", display: "block" }}>
+                            {pendingCount > 0
+                              ? `Please resolve all ${pendingCount} pending claims verification issues`
+                              : "All claims verification issues resolved in this section"}
+                          </b>
+                          <span style={{ fontSize: 11.5, color: "#b45309" }}>
+                            {pendingCount > 0
+                              ? "Clinical claims must match verified on-label source anchors before export."
+                              : "Ready for formal MLR approval."}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setClaimsPanelOpen((prev) => !prev)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "8px 14px",
+                          borderRadius: "var(--r)",
+                          fontWeight: 700,
+                          fontSize: 12,
+                          background: claimsPanelOpen ? "#fef3c7" : "linear-gradient(180deg,#d97706,#b45309)",
+                          color: claimsPanelOpen ? "#92400e" : "#fff",
+                          border: "none",
+                          boxShadow: "0 2px 6px rgba(180,83,9,0.2)",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span>{claimsPanelOpen ? "Close Claims Panel" : "Resolve Claims →"}</span>
+                      </button>
+                    </div>
+                  )}
+
                   <div style={{ padding: "40px 44px 32px", position: "relative" }}>
                     <span
                       aria-hidden="true"
@@ -1225,8 +1366,18 @@ export function DossierWizard({
                         <span style={{ fontSize: 11, fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", letterSpacing: ".08em" }}>
                           Section {sec.number} of {activeDossier.sections.length} · {sec.category}
                         </span>
-                        <span style={{ fontSize: 11, padding: "2px 7px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)", fontWeight: 700 }}>
-                          MLR Approved
+                        <span
+                          style={{
+                            fontSize: 11,
+                            padding: "2px 7px",
+                            borderRadius: 99,
+                            background: unverifiedList.length > 0 ? "#fef2f2" : "var(--ok-bg)",
+                            color: unverifiedList.length > 0 ? "#dc2626" : "var(--ok)",
+                            border: unverifiedList.length > 0 ? "1px solid #fecaca" : "1px solid var(--ok-line)",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {unverifiedList.length > 0 ? "⚠️ Needs Verification" : "MLR Approved"}
                         </span>
                       </div>
                       <h2 style={{ fontSize: 27, fontWeight: 800, letterSpacing: "-.6px", margin: 0, maxWidth: "38ch" }}>{sec.title}</h2>
@@ -1272,6 +1423,183 @@ export function DossierWizard({
                     >
                       Next section →
                     </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── RIGHT CLAIMS VERIFICATION DRAWER (Opens when user clicks Resolve Claims) ── */}
+            {claimsPanelOpen && (() => {
+              const sec = activeDossier.sections.find((s) => s.id === activeSectionId) || activeDossier.sections[0];
+              const unverifiedList = sec.unverifiedClaims || [];
+
+              return (
+                <div
+                  style={{
+                    background: "#fff",
+                    borderRadius: "var(--r-xl)",
+                    border: "1px solid var(--hair)",
+                    boxShadow: "var(--sh-2)",
+                    overflow: "hidden",
+                    position: "sticky",
+                    top: 20,
+                    maxHeight: "calc(100vh - 120px)",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                  className="animate-in fade-in slide-in-from-right-4 duration-300"
+                >
+                  {/* Drawer Header */}
+                  <div
+                    style={{
+                      padding: "16px 20px",
+                      borderBottom: "1px solid var(--hair)",
+                      background: "#fafbf9",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "#d97706" }}>
+                        Claims Verification
+                      </span>
+                      <b style={{ fontSize: 14.5, fontWeight: 800, display: "block", color: "var(--ink)", marginTop: 2 }}>
+                        Section {sec.number} Claims ({unverifiedList.length})
+                      </b>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setClaimsPanelOpen(false)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        fontSize: 16,
+                        cursor: "pointer",
+                        color: "var(--ink-4)",
+                        padding: 4,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Claims Tile Stack */}
+                  <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "grid", gap: 12 }}>
+                    {unverifiedList.length === 0 ? (
+                      <div style={{ padding: 24, textAlign: "center", color: "var(--ink-4)", fontSize: 13 }}>
+                        No pending unverified claims for this section.
+                      </div>
+                    ) : (
+                      unverifiedList.map((item, idx) => {
+                        const status = resolvedClaims[item.id] || item.status;
+                        return (
+                          <div
+                            key={item.id}
+                            style={{
+                              borderRadius: "var(--r)",
+                              border:
+                                status === "accepted"
+                                  ? "1px solid var(--ok-line)"
+                                  : status === "rejected"
+                                  ? "1px solid #fecaca"
+                                  : "1px solid #fde68a",
+                              background:
+                                status === "accepted"
+                                  ? "var(--ok-bg)"
+                                  : status === "rejected"
+                                  ? "#fef2f2"
+                                  : "#fffdfa",
+                              padding: 14,
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+                              display: "grid",
+                              gap: 8,
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                              <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: "var(--ink-4)" }}>
+                                Claim #{idx + 1}
+                              </span>
+                              {status !== "pending" && (
+                                <span
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 800,
+                                    padding: "2px 6px",
+                                    borderRadius: 99,
+                                    background: status === "accepted" ? "var(--ok)" : "#dc2626",
+                                    color: "#fff",
+                                  }}
+                                >
+                                  {status === "accepted" ? "Verified" : "Denied"}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Claim Statement */}
+                            <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: "var(--ink)", lineHeight: 1.4 }}>
+                              "{item.claim}"
+                            </p>
+
+                            {/* Issue Description */}
+                            <div style={{ background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 8 }}>
+                              <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: "#b45309", display: "block", marginBottom: 2 }}>
+                                Deficiency
+                              </span>
+                              <p style={{ margin: 0, fontSize: 11.5, color: "var(--ink-2)", lineHeight: 1.4 }}>
+                                {item.issue}
+                              </p>
+                            </div>
+
+                            {/* Source Link */}
+                            <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--brand)" }}>
+                              <span>🔗</span>
+                              <span style={{ textDecoration: "underline", fontWeight: 600 }}>{item.sourceLink}</span>
+                            </div>
+
+                            {/* Accept / Deny Action Buttons */}
+                            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                              <button
+                                type="button"
+                                onClick={() => setResolvedClaims((prev) => ({ ...prev, [item.id]: "accepted" }))}
+                                style={{
+                                  flex: 1,
+                                  padding: "7px 10px",
+                                  borderRadius: 8,
+                                  fontSize: 11.5,
+                                  fontWeight: 700,
+                                  background: status === "accepted" ? "var(--ok)" : "#fff",
+                                  color: status === "accepted" ? "#fff" : "var(--ok)",
+                                  border: "1px solid var(--ok-line)",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s ease",
+                                }}
+                              >
+                                ✓ Accept Claim
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setResolvedClaims((prev) => ({ ...prev, [item.id]: "rejected" }))}
+                                style={{
+                                  flex: 1,
+                                  padding: "7px 10px",
+                                  borderRadius: 8,
+                                  fontSize: 11.5,
+                                  fontWeight: 700,
+                                  background: status === "rejected" ? "#dc2626" : "#fff",
+                                  color: status === "rejected" ? "#fff" : "#dc2626",
+                                  border: "1px solid #fecaca",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s ease",
+                                }}
+                              >
+                                ✕ Deny / Flag
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               );

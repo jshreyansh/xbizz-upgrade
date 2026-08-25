@@ -80,9 +80,9 @@ const initialState = {
   videoSubStage: "mode-select" as VideoSubStage,
   assetType: "video" as AssetType,
   brief: "Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for DERMORA.",
-  audience: "HCP" as Audience,
-  goal: "New Launch",
-  topics: ["Product Introduction", "Mechanism of Action", "Indications", "Dosage & Safety"],
+  audience: "" as Audience,
+  goal: "",
+  topics: [] as string[],
   market: "United States",
   intendedUse: "HCP meeting",
   format: "16:9",
@@ -106,10 +106,18 @@ const initialState = {
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   ...initialState,
   setView: (view) => {
-    const documentWithTransitions = typeof document === "undefined" ? null : document as Document & { startViewTransition?: (update: () => void) => void };
+    const documentWithTransitions = typeof document === "undefined" ? null : document as Document & { startViewTransition?: (update: () => void) => { ready?: Promise<unknown> } };
     const reduceMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (documentWithTransitions?.startViewTransition && !reduceMotion) documentWithTransitions.startViewTransition(() => set({ view }));
-    else set({ view });
+    if (documentWithTransitions?.startViewTransition && !reduceMotion) {
+      try {
+        const transition = documentWithTransitions.startViewTransition(() => set({ view }));
+        transition?.ready?.catch(() => {});
+      } catch {
+        set({ view });
+      }
+    } else {
+      set({ view });
+    }
   },
   setCreationMode: (creationMode) => set({ creationMode }),
   setSourceType: (sourceType) => set({ sourceType }),

@@ -23,6 +23,7 @@ import {
   Target,
   Users,
   Layers,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -45,6 +46,19 @@ const presenters = [
   { name: "Dr. Rohan Mehta", role: "Physician · clear, authoritative", image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=160&q=80" },
   { name: "Dr. Aisha Shah", role: "Medical presenter · calm, precise", image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=160&q=80" },
   { name: "Dr. Daniel Lee", role: "Physician · conversational", image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=160&q=80" },
+  { name: "Dr. Elena Rostova", role: "Oncology specialist · measured", image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=160&q=80" },
+  { name: "Dr. Marcus Thorne", role: "Cardiology lead · authoritative", image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=160&q=80" },
+];
+
+const voiceList = [
+  { name: "Rohan", role: "clear and measured", accent: "Indian / US English", tag: "Authoritative" },
+  { name: "Riya", role: "friendly and clear", accent: "Neutral English", tag: "Warm & Caring" },
+  { name: "Dev", role: "warm and conversational", accent: "US English", tag: "Conversational" },
+  { name: "Sarah", role: "clinical and precise", accent: "British English", tag: "Clinical Lead" },
+  { name: "Marcus", role: "deep and trustworthy", accent: "North American", tag: "Physician" },
+  { name: "Elena", role: "calm and scientific", accent: "International", tag: "Research" },
+  { name: "Liam", role: "energetic and direct", accent: "Australian", tag: "Patient Briefing" },
+  { name: "Priya", role: "empathetic and reassuring", accent: "Neutral English", tag: "Patient Care" },
 ];
 
 const profiles: Record<AssetType, {
@@ -198,7 +212,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     [assetType, audience, brief, intendedUse, market, selectedSourceIds, creationMode, sourceType, sourcePayload]
   );
 
-  const defaultTreatment = creationMode === "magic-avatar" ? "presenter" : creationMode === "magic-reel" ? "narrated" : (assetType === "video" ? presentationMode : derivedPlan.treatmentId);
+  const isMagicAvatar = creationMode === "magic-avatar";
+  const defaultTreatment = isMagicAvatar ? "presenter" : creationMode === "magic-reel" ? "narrated" : (assetType === "video" ? presentationMode : derivedPlan.treatmentId);
   const [treatmentId, setTreatmentId] = useState<string>(defaultTreatment);
   const [goal, setGoal] = useState<string>(storeGoal || derivedPlan.goal);
   const [selectedTopics, setSelectedTopics] = useState<string[]>(storeTopics && storeTopics.length > 0 ? storeTopics : derivedPlan.topics);
@@ -206,17 +221,49 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const [sourceConflictResolved, setSourceConflictResolved] = useState(false);
   const [storyStructure, setStoryStructure] = useState(derivedPlan.storyStructure);
   const [presenter, setPresenter] = useState(
-    creationMode === "magic-avatar" ? "Dr. Maya Kapoor" : (presentationMode === "presenter" ? "Dr. Maya Kapoor" : "")
+    isMagicAvatar ? "Dr. Maya Kapoor" : (presentationMode === "presenter" ? "Dr. Maya Kapoor" : "")
   );
-  const [openSection, setOpenSection] = useState<PlanSectionId | null>("treatment");
+
+  // Dynamic Product Media Assets: Starts EMPTY by default so user can upload multiple photos/videos
+  const [productMediaList, setProductMediaList] = useState<
+    Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string }>
+  >([]);
+
+  const isProductFocus =
+    selectedTopics.some((t) => t.toLowerCase().includes("product") || t.toLowerCase().includes("launch")) ||
+    goal.toLowerCase().includes("launch") ||
+    goal.toLowerCase().includes("product") ||
+    brief.toLowerCase().includes("product") ||
+    brief.toLowerCase().includes("pen") ||
+    brief.toLowerCase().includes("autoinjector");
+
+  // Step 3 Progressive Sequencing:
+  // If Avatar + Product: Step 1 = Voice/Avatar (Confirm First), Step 2 = Product Assets (Confirm Second)
+  const [openSection, setOpenSection] = useState<PlanSectionId | null>(
+    isMagicAvatar
+      ? "voice"
+      : isProductFocus && productMediaList.length === 0
+      ? ("product-assets" as any)
+      : "treatment"
+  );
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
   const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
   const [presenterLibraryOpen, setPresenterLibraryOpen] = useState(false);
+  const [voiceLibraryOpen, setVoiceLibraryOpen] = useState(false);
   const [sourceManagerOpen, setSourceManagerOpen] = useState(false);
 
   const approvedEvidenceCount = selectedSourceIds.filter((id) => id !== "dermora-reference").length;
   const needsPresenter = presentationMode === "presenter" || treatmentId === "presenter" || creationMode === "magic-avatar";
-  const unresolvedCount = (confirmedTreatment ? 0 : 1) + (needsPresenter && !presenter ? 1 : 0) + (derivedPlan.sourceConflict && !sourceConflictResolved ? 1 : 0);
+  const needsProductAssets = isProductFocus && productMediaList.length === 0;
+  const hasPresenter = !needsPresenter || (presenter && presenter.trim().length > 0);
+
+  const unresolvedCount =
+    (confirmedTreatment ? 0 : 1) +
+    (needsPresenter && !presenter ? 1 : 0) +
+    (needsProductAssets ? 1 : 0) +
+    (derivedPlan.sourceConflict && !sourceConflictResolved ? 1 : 0);
+
+  const isPlanReady = unresolvedCount === 0;
   const selectedTreatment = profile.treatments.find((item) => item.id === treatmentId) ?? profile.treatments[0];
 
   const toggleSection = (section: PlanSectionId) => {
@@ -274,78 +321,684 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const content = (
     <main className="mx-auto w-full max-w-[1280px] px-6 py-6 sm:px-8">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] items-start w-full">
-        {/* Left Column: Plan Sections */}
+        {/* Left Column: Plan Sections (Stable, intuitive order) */}
         <section className="min-w-0 w-full space-y-3">
-            <PlanSection icon={Film} title="Creative treatment" summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`} status={confirmedTreatment ? "Confirmed" : "Needs you"} open={openSection === "treatment"} onToggle={() => toggleSection("treatment")} tone={confirmedTreatment ? "done" : "attention"}>
-              <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5"><div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div><p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p></div>
-              <div className="mt-3 grid gap-2.5">
+          {/* 1. Creative Treatment (in regular mode) OR Presenter & Voice (in Magic Avatar mode) */}
+          {isMagicAvatar ? (
+            <PlanSection
+              icon={Mic2}
+              title="Presenter, voice and sound"
+              summary={`${presenter || "Dr. Maya Kapoor"} · ${language} · ${music}`}
+              status={presenter ? "Confirmed" : "Needs you"}
+              open={openSection === "voice"}
+              onToggle={() => toggleSection("voice")}
+              tone={presenter ? "done" : "attention"}
+            >
+              <div className="mb-4">
+                <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
+                  Select AI Presenter Avatar
+                </div>
+                <div className="grid gap-2.5 sm:grid-cols-3">
+                  {presenters.slice(0, 2).map((person) => (
+                    <button
+                      key={person.name}
+                      onClick={() => setPresenter(person.name)}
+                      className={cn(
+                        "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                        presenter === person.name
+                          ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
+                          : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                      )}
+                    >
+                      <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <span className="block truncate font-bold text-[14px]">{person.name}</span>
+                        <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
+                      </div>
+                      {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setPresenterLibraryOpen(true)}
+                    className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
+                  >
+                    <span className="flex -space-x-2.5">
+                      {presenters.slice(2).map((person) => (
+                        <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                      ))}
+                    </span>
+                    <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
+                    <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <DecisionRow
+                  label="Language"
+                  value={language}
+                  icon={<Globe2 className="size-4" />}
+                  editing={editingDecision === "language"}
+                  onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                >
+                  <ChoiceGroup
+                    label="Choose a language"
+                    value={language}
+                    onChange={(next) => {
+                      setLanguage(next);
+                      setEditingDecision(null);
+                    }}
+                    options={["English", "Hindi", "Spanish", "French", "German"]}
+                    icon={() => <Globe2 className="size-4" />}
+                  />
+                </DecisionRow>
+                <DecisionRow
+                  label="Voice"
+                  value={voice}
+                  icon={<Mic2 className="size-4" />}
+                  editing={editingDecision === "voice"}
+                  onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
+                  onPreview={() => previewAudio("voice", voice)}
+                  playing={previewingAudio === voice}
+                >
+                  <AudioChoices
+                    label="Choose and preview a voice"
+                    value={voice}
+                    options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                    onChange={(next) => {
+                      setVoice(next);
+                      setEditingDecision(null);
+                    }}
+                    previewing={previewingAudio}
+                    onPreview={(option) => previewAudio("voice", option)}
+                    onOpenLibrary={() => setVoiceLibraryOpen(true)}
+                  />
+                </DecisionRow>
+                <DecisionRow
+                  label="Background music"
+                  value={music}
+                  icon={<Music2 className="size-4" />}
+                  editing={editingDecision === "music"}
+                  onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
+                  onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
+                  playing={previewingAudio === music}
+                >
+                  <AudioChoices
+                    label="Choose and preview music"
+                    value={music}
+                    options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                    onChange={(next) => {
+                      setMusic(next);
+                      setEditingDecision(null);
+                    }}
+                    previewing={previewingAudio}
+                    onPreview={(option) => previewAudio("music", option)}
+                    music
+                  />
+                </DecisionRow>
+              </div>
+
+              {/* Explicit Guided Confirmation Button */}
+              <div className="mt-4 pt-3 border-t border-[var(--line)] flex justify-end">
+                <Button
+                  onClick={() => {
+                    setConfirmedTreatment(true);
+                    setOpenSection(isProductFocus ? ("product-assets" as any) : "message");
+                  }}
+                  className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold"
+                >
+                  {isProductFocus ? "Confirm Avatar & Proceed to Product Assets" : "Confirm Avatar & Continue"} <ArrowRight className="size-4 ml-1" />
+                </Button>
+              </div>
+            </PlanSection>
+          ) : (
+            <PlanSection
+              icon={Film}
+              title="Creative treatment"
+              summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`}
+              status={confirmedTreatment ? "Confirmed" : "Needs you"}
+              open={openSection === "treatment"}
+              onToggle={() => toggleSection("treatment")}
+              tone={confirmedTreatment ? "done" : "attention"}
+            >
+              <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5">
+                <div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div>
+                <p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p>
+              </div>
+              <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
                 {profile.treatments.map((item, index) => {
                   const selected = treatmentId === item.id;
-                  return <button key={item.id} onClick={() => selectTreatment(item.id)} className={cn("focus-ring flex min-h-[64px] items-center gap-3 rounded-[13px] border px-3.5 text-left transition-[opacity,transform,background-color,border-color,box-shadow] duration-200 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-px hover:opacity-100 focus-visible:opacity-100", selected ? "border-[#b8ccc2] bg-[#f2f7f4] opacity-100 shadow-[0_2px_10px_rgb(19_31_26/4%)]" : "border-[#e4e9e6] opacity-70 hover:border-[#ccd7d1] hover:bg-[#fcfdfc]")}><span className={cn("grid size-5 shrink-0 place-items-center rounded-full border", selected ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[#d6ddd9]")}>{selected && <Check className="size-3" strokeWidth={3} />}</span><span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-[14px] font-semibold">{item.label}{index === 0 && <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10.5px] font-semibold text-[var(--brand)]">Recommended</span>}</span><span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">{item.description}</span></span></button>;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => selectTreatment(item.id)}
+                      className={cn(
+                        "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
+                        selected
+                          ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
+                          : "border-[#e4e9e6] bg-white opacity-85 hover:opacity-100 hover:border-[#ccd7d1]"
+                      )}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <span className="font-bold text-[14.5px] text-[var(--ink)] flex items-center gap-1.5 leading-tight">
+                            {item.label}
+                          </span>
+                          <span
+                            className={cn(
+                              "grid size-5 shrink-0 place-items-center rounded-full border transition",
+                              selected
+                                ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                : "border-[#d6ddd9] bg-white"
+                            )}
+                          >
+                            {selected && <Check className="size-3" strokeWidth={3.5} />}
+                          </span>
+                        </div>
+                        {index === 0 && (
+                          <span className="inline-block mb-2 rounded-full bg-white px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
+                            Recommended
+                          </span>
+                        )}
+                        <p className="text-[12.5px] leading-relaxed text-[var(--ink-muted)]">
+                          {item.description}
+                        </p>
+                      </div>
+                    </button>
+                  );
                 })}
               </div>
-              {!confirmedTreatment && <Button onClick={() => { setConfirmedTreatment(true); setOpenSection(null); }} className="mt-3">Use recommendation <ArrowRight className="size-4" /></Button>}
+              {!confirmedTreatment && (
+                <Button
+                  onClick={() => {
+                    setConfirmedTreatment(true);
+                    setOpenSection(isProductFocus ? ("product-assets" as any) : null);
+                  }}
+                  className="mt-3"
+                >
+                  Use recommendation <ArrowRight className="size-4" />
+                </Button>
+              )}
             </PlanSection>
+          )}
 
-            <PlanSection icon={Target} title="Message and audience" summary={`${audience} · ${goal} · ${selectedTopics.length} topics`} status="From brief" open={openSection === "message"} onToggle={() => toggleSection("message")}>
-              <div className="space-y-2">
-                <DecisionRow label="Audience" value={audience} icon={<AudienceIcon value={audience} />} editing={editingDecision === "audience"} onEdit={() => setEditingDecision(editingDecision === "audience" ? null : "audience")}>
-                  <ChoiceGroup label="Choose the primary audience" value={audience} onChange={(next) => { setAudience(next as Audience); setEditingDecision(null); }} options={audienceOptions} icon={(next) => <AudienceIcon value={next} />} />
-                </DecisionRow>
-                <DecisionRow label="Objective" value={goal} icon={<Target className="size-4" />} editing={editingDecision === "objective"} onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}>
-                  <ChoiceGroup label="What should this accomplish?" value={goal} onChange={(next) => { setGoal(next); setStoreGoal(next); setEditingDecision(null); }} options={["New launch", "Awareness", "Adoption", "Retention", "Education"]} icon={() => <Target className="size-4" />} />
-                </DecisionRow>
-                <DecisionRow label="Topics" value={selectedTopics.join(" · ")} icon={<LayoutList className="size-4" />} editing={editingDecision === "topics"} onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}>
-                  <div className="text-[13px] font-semibold text-[#5f6b65]">Include only what matters</div><div className="mt-2 flex flex-wrap gap-2">{topics.map((topic) => <button key={topic} onClick={() => toggleTopic(topic)} aria-pressed={selectedTopics.includes(topic)} className={cn("focus-ring min-h-10 rounded-[12px] border px-3 text-[13px] font-medium transition", selectedTopics.includes(topic) ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)]" : "border-[#e3e8e5] hover:border-[#cbd6d0]")}>{selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}{topic}</button>)}</div><div className="mt-3 flex justify-end"><Button size="sm" onClick={() => setEditingDecision(null)}>Done</Button></div>
-                </DecisionRow>
+          {/* 1b. Elevated Product Packshot & Visual Assets (Placed at the top when Product Introduction / Launch is targeted) */}
+          <PlanSection
+            icon={PackageCheck}
+            title="Product &amp; Device Visual Assets"
+            summary={
+              productMediaList.length > 0
+                ? `${productMediaList.length} media attached · 3D packshots grounded`
+                : isProductFocus
+                ? "Required for Product Introduction · Please attach product photos/videos"
+                : "Optional product packshots & 3D device renders"
+            }
+            status={
+              isProductFocus
+                ? productMediaList.length > 0
+                  ? "Attached"
+                  : "Needs Assets"
+                : "Optional"
+            }
+            open={openSection === ("product-assets" as any)}
+            onToggle={() => toggleSection("product-assets" as any)}
+            tone={productMediaList.length > 0 ? "done" : isProductFocus ? "attention" : "default"}
+          >
+            <div className="space-y-3.5">
+              <div className="rounded-[14px] bg-[#fafbf9] border border-[var(--line)] p-3.5 text-[12.5px] text-[var(--ink-2)] leading-relaxed">
+                <p className="font-bold text-[var(--ink)] mb-1">
+                  📸 Product Packshots &amp; Device Reference Media
+                </p>
+                <p className="text-[var(--ink-muted)] text-[12px]">
+                  Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.
+                </p>
               </div>
-            </PlanSection>
 
-            <PlanSection icon={MonitorPlay} title="Delivery" summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration}`} status="Recommended" open={openSection === "delivery"} onToggle={() => toggleSection("delivery")}>
-              <div className="space-y-2">
-                <DecisionRow label="Destinations" value={displayIntendedUses(intendedUse)} icon={<ChannelIcon value={parseIntendedUses(intendedUse)[0]} />} editing={editingDecision === "channel"} onEdit={() => setEditingDecision(editingDecision === "channel" ? null : "channel")}>
-                  <MultiChoiceGroup label="Choose one or more destinations" values={parseIntendedUses(intendedUse)} onChange={(next) => setIntendedUse(serializeIntendedUses(next))} onDone={() => setEditingDecision(null)} options={useOptions} icon={(next) => <ChannelIcon value={next} />} />
-                </DecisionRow>
-                <DecisionRow label={assetType === "video" ? "Frame" : "Format"} value={effectiveFormat} icon={<FrameGlyph value={effectiveFormat} />} editing={editingDecision === "format"} onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}>
-                  <FormatChoices label="Choose the output shape" value={effectiveFormat} options={profile.formatOptions} onChange={(next) => { setFormat(next); setEditingDecision(null); }} />
-                </DecisionRow>
-                <DecisionRow label={assetType === "video" ? "Length" : "Amount"} value={duration} icon={<Clock3 className="size-4" />} editing={editingDecision === "length"} onEdit={() => setEditingDecision(editingDecision === "length" ? null : "length")}>
-                  <SteppedControl label={assetType === "video" ? "Video length" : "Content amount"} value={duration} options={profile.lengthOptions} onChange={setDuration} />
-                  <div className="mt-3 flex justify-end"><Button size="sm" onClick={() => setEditingDecision(null)}>Done</Button></div>
-                </DecisionRow>
+              {/* Uploaded Media Grid: Starts empty by default */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {productMediaList.map((media) => (
+                  <div
+                    key={media.id}
+                    className="group relative rounded-xl border border-black/[0.08] bg-white overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
+                  >
+                    {/* Visual Media Thumbnail Preview */}
+                    <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
+                      <img
+                        src={media.preview}
+                        alt={media.name}
+                        className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[8.5px] font-bold text-white uppercase backdrop-blur-xs">
+                        {media.type}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setProductMediaList((prev) => prev.filter((m) => m.id !== media.id))}
+                        className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-rose-600 transition cursor-pointer backdrop-blur-xs"
+                        title="Remove media"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Meta */}
+                    <div className="p-2.5">
+                      <span className="block truncate text-[12px] font-bold text-[var(--ink)]">
+                        {media.name}
+                      </span>
+                      <span className="text-[10px] text-[var(--ink-muted)] block mt-0.5 font-medium">
+                        {media.size} · Uploaded
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* + Add Media Dropzone Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sampleItem = {
+                      id: `media-${Date.now()}`,
+                      name: "Velmora_Autoinjector_3D_Packshot.png",
+                      type: "image" as const,
+                      preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                      size: "4.2 MB",
+                    };
+                    setProductMediaList((prev) => [...prev, sampleItem]);
+                  }}
+                  className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--brand)]/40 bg-white p-4 text-center hover:bg-[var(--tint)] hover:border-[var(--brand)] transition cursor-pointer"
+                >
+                  <div className="grid size-8 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand)]">
+                    <Plus className="size-4" />
+                  </div>
+                  <div>
+                    <span className="block text-[12px] font-bold text-[var(--brand)]">
+                      {productMediaList.length === 0 ? "Upload Product Photos / Videos" : "Add More Product Media"}
+                    </span>
+                    <span className="text-[10px] text-[var(--ink-muted)] mt-0.5 block">
+                      PNG, JPG, MP4 · Click to attach asset
+                    </span>
+                  </div>
+                </button>
               </div>
-            </PlanSection>
 
-            {assetType === "video" && treatmentId !== "visual-only" && (
-              <PlanSection icon={Mic2} title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"} summary={needsPresenter ? `${presenter || "Choose presenter"} · ${language} · ${music}` : `${voice} · ${language} · ${music}`} status={needsPresenter && !presenter ? "Needs you" : "Recommended"} open={openSection === "voice"} onToggle={() => toggleSection("voice")} tone={needsPresenter && !presenter ? "attention" : "default"}>
-                {needsPresenter && <div className="mb-4"><div className="text-[13px] font-semibold text-[#5f6b65]">Who appears on screen?</div><div className="mt-2 grid gap-2 sm:grid-cols-3">{presenters.slice(0, 2).map((person) => <button key={person.name} onClick={() => setPresenter(person.name)} className={cn("focus-ring flex min-h-[58px] items-center gap-2.5 rounded-[13px] border px-2.5 text-left text-[13px] font-medium transition hover:-translate-y-px", presenter === person.name ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] shadow-sm" : "border-[#e3e8e5] hover:border-[#cbd6d0]")}><FacePhoto person={person} className="size-9 rounded-full ring-2 ring-white" /><span className="min-w-0 truncate">{person.name}</span>{presenter === person.name && <Check className="ml-auto size-4 shrink-0" />}</button>)}<button onClick={() => setPresenterLibraryOpen(true)} className="focus-ring flex min-h-[58px] items-center gap-2.5 rounded-[13px] border border-[#e3e8e5] px-2.5 text-left text-[13px] font-medium transition hover:-translate-y-px hover:border-[#cbd6d0] hover:bg-[#fcfdfc]"><span className="flex -space-x-2">{presenters.slice(2).map((person) => <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white" />)}</span><span>View library</span><ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" /></button></div></div>}
-                <div className="space-y-2">
-                  <DecisionRow label="Language" value={language} icon={<Globe2 className="size-4" />} editing={editingDecision === "language"} onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}>
-                    <ChoiceGroup label="Choose a language" value={language} onChange={(next) => { setLanguage(next); setEditingDecision(null); }} options={["English", "Hindi", "Spanish", "French", "German"]} icon={() => <Globe2 className="size-4" />} />
-                  </DecisionRow>
-                  <DecisionRow label="Voice" value={voice} icon={<Mic2 className="size-4" />} editing={editingDecision === "voice"} onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")} onPreview={() => previewAudio("voice", voice)} playing={previewingAudio === voice}>
-                    <AudioChoices label="Choose and preview a voice" value={voice} options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]} onChange={(next) => { setVoice(next); setEditingDecision(null); }} previewing={previewingAudio} onPreview={(option) => previewAudio("voice", option)} />
-                  </DecisionRow>
-                  <DecisionRow label="Background music" value={music} icon={<Music2 className="size-4" />} editing={editingDecision === "music"} onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")} onPreview={music === "No music" ? undefined : () => previewAudio("music", music)} playing={previewingAudio === music}>
-                    <AudioChoices label="Choose and preview music" value={music} options={["No music", "Calm clinical", "Warm", "Uplifting"]} onChange={(next) => { setMusic(next); setEditingDecision(null); }} previewing={previewingAudio} onPreview={(option) => previewAudio("music", option)} music />
-                  </DecisionRow>
+              {/* Guided Next Step */}
+              <div className="mt-3 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (productMediaList.length === 0) {
+                      setProductMediaList([
+                        {
+                          id: `media-${Date.now()}`,
+                          name: "Velmora_Autoinjector_3D_Packshot.png",
+                          type: "image",
+                          preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                          size: "4.2 MB",
+                        },
+                      ]);
+                    }
+                    setOpenSection("message");
+                  }}
+                  className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
+                >
+                  Save Product Assets &amp; Next <ArrowRight className="size-3.5 ml-1" />
+                </Button>
+              </div>
+            </div>
+          </PlanSection>
+
+          {/* 2. Message and Audience */}
+          <PlanSection
+            icon={Target}
+            title="Message and audience"
+            summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
+            status="From brief"
+            open={openSection === "message"}
+            onToggle={() => toggleSection("message")}
+          >
+            <div className="space-y-2">
+              <DecisionRow
+                label="Audience"
+                value={audience}
+                icon={<AudienceIcon value={audience} />}
+                editing={editingDecision === "audience"}
+                onEdit={() => setEditingDecision(editingDecision === "audience" ? null : "audience")}
+              >
+                <ChoiceGroup
+                  label="Choose the primary audience"
+                  value={audience}
+                  onChange={(next) => {
+                    setAudience(next as Audience);
+                    setEditingDecision(null);
+                  }}
+                  options={audienceOptions}
+                  icon={(next) => <AudienceIcon value={next} />}
+                />
+              </DecisionRow>
+              <DecisionRow
+                label="Objective"
+                value={goal}
+                icon={<Target className="size-4" />}
+                editing={editingDecision === "objective"}
+                onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}
+              >
+                <ChoiceGroup
+                  label="What should this accomplish?"
+                  value={goal}
+                  onChange={(next) => {
+                    setGoal(next);
+                    setStoreGoal(next);
+                    setEditingDecision(null);
+                  }}
+                  options={["New launch", "Awareness", "Adoption", "Retention", "Education"]}
+                  icon={() => <Target className="size-4" />}
+                />
+              </DecisionRow>
+              <DecisionRow
+                label="Topics"
+                value={selectedTopics.join(" · ")}
+                icon={<LayoutList className="size-4" />}
+                editing={editingDecision === "topics"}
+                onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}
+              >
+                <div className="text-[13px] font-semibold text-[#5f6b65]">Include only what matters</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {topics.map((topic) => (
+                    <button
+                      key={topic}
+                      onClick={() => toggleTopic(topic)}
+                      aria-pressed={selectedTopics.includes(topic)}
+                      className={cn(
+                        "focus-ring min-h-10 rounded-[12px] border px-3 text-[13px] font-medium transition",
+                        selectedTopics.includes(topic)
+                          ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)]"
+                          : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                      )}
+                    >
+                      {selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}
+                      {topic}
+                    </button>
+                  ))}
                 </div>
-              </PlanSection>
-            )}
+                <div className="mt-3 flex justify-end">
+                  <Button size="sm" onClick={() => setEditingDecision(null)}>
+                    Done
+                  </Button>
+                </div>
+              </DecisionRow>
+            </div>
+          </PlanSection>
 
-            <PlanSection icon={ShieldCheck} title="Brand and evidence" summary={derivedPlan.sourceConflict && !sourceConflictResolved ? "Source authority needs confirmation" : approvedEvidenceCount > 0 ? `${approvedEvidenceCount} approved sources · brand kit applied` : "Concept only · approved source needed"} status={derivedPlan.sourceConflict && !sourceConflictResolved ? "Needs you" : approvedEvidenceCount > 0 ? "From source" : "Review"} open={openSection === "brand"} onToggle={() => toggleSection("brand")} tone={derivedPlan.sourceConflict && !sourceConflictResolved ? "attention" : approvedEvidenceCount > 0 ? "default" : "attention"}>
-              {derivedPlan.sourceConflict && !sourceConflictResolved && <div className="mb-3 rounded-[12px] border border-[#e4c17f] bg-[var(--warning-soft)] p-3.5"><div className="flex items-start gap-3"><Info className="mt-0.5 size-5 shrink-0 text-[var(--warning)]" /><div><div className="text-[14px] font-bold text-[#704b13]">Confirm source authority</div><p className="mt-1 text-[13px] leading-5 text-[#765b31]">{derivedPlan.sourceConflict}</p><button onClick={() => setSourceConflictResolved(true)} className="focus-ring mt-2 min-h-10 rounded-[9px] bg-white px-3 text-[13px] font-bold text-[#704b13] shadow-sm">Use current {market} source as authority</button></div></div></div>}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <InfoCard icon={PackageCheck} title="Brand material" body={`Primary logo, packshot, typography and fair balance for ${brandName} will be applied automatically.`} />
-                <InfoCard icon={BookOpenCheck} title="Evidence coverage" body={approvedEvidenceCount > 0 ? `Mechanism, efficacy and required safety language are linked to current ${market} sources.` : "This can become a concept storyboard, but it will not be marked evidence-ready."} />
+          {/* 3. Delivery */}
+          <PlanSection
+            icon={MonitorPlay}
+            title="Delivery"
+            summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration}`}
+            status="Recommended"
+            open={openSection === "delivery"}
+            onToggle={() => toggleSection("delivery")}
+          >
+            <div className="space-y-2">
+              <DecisionRow
+                label="Destinations"
+                value={displayIntendedUses(intendedUse)}
+                icon={<ChannelIcon value={parseIntendedUses(intendedUse)[0]} />}
+                editing={editingDecision === "channel"}
+                onEdit={() => setEditingDecision(editingDecision === "channel" ? null : "channel")}
+              >
+                <MultiChoiceGroup
+                  label="Choose one or more destinations"
+                  values={parseIntendedUses(intendedUse)}
+                  onChange={(next) => setIntendedUse(serializeIntendedUses(next))}
+                  onDone={() => setEditingDecision(null)}
+                  options={useOptions}
+                  icon={(next) => <ChannelIcon value={next} />}
+                />
+              </DecisionRow>
+              <DecisionRow
+                label={assetType === "video" ? "Frame" : "Format"}
+                value={effectiveFormat}
+                icon={<FrameGlyph value={effectiveFormat} />}
+                editing={editingDecision === "format"}
+                onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
+              >
+                <FormatChoices
+                  label="Choose the output shape"
+                  value={effectiveFormat}
+                  options={profile.formatOptions}
+                  onChange={(next) => {
+                    setFormat(next);
+                    setEditingDecision(null);
+                  }}
+                />
+              </DecisionRow>
+              <DecisionRow
+                label={assetType === "video" ? "Length" : "Amount"}
+                value={duration}
+                icon={<Clock3 className="size-4" />}
+                editing={editingDecision === "length"}
+                onEdit={() => setEditingDecision(editingDecision === "length" ? null : "length")}
+              >
+                <SteppedControl
+                  label={assetType === "video" ? "Video length" : "Content amount"}
+                  value={duration}
+                  options={profile.lengthOptions}
+                  onChange={setDuration}
+                />
+                <div className="mt-3 flex justify-end">
+                  <Button size="sm" onClick={() => setEditingDecision(null)}>
+                    Done
+                  </Button>
+                </div>
+              </DecisionRow>
+            </div>
+          </PlanSection>
+
+          {/* 4. Presenter, Voice and Sound (for standard video mode) */}
+          {!isMagicAvatar && assetType === "video" && treatmentId !== "visual-only" && (
+            <PlanSection
+              icon={Mic2}
+              title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"}
+              summary={
+                needsPresenter
+                  ? `${presenter || "Choose presenter"} · ${language} · ${music}`
+                  : `${voice} · ${language} · ${music}`
+              }
+              status={needsPresenter && !presenter ? "Needs you" : "Recommended"}
+              open={openSection === "voice"}
+              onToggle={() => toggleSection("voice")}
+              tone={needsPresenter && !presenter ? "attention" : "default"}
+            >
+              {needsPresenter && (
+                <div className="mb-4">
+                  <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
+                    Who appears on screen?
+                  </div>
+                  <div className="grid gap-2.5 sm:grid-cols-3">
+                    {presenters.slice(0, 2).map((person) => (
+                      <button
+                        key={person.name}
+                        onClick={() => setPresenter(person.name)}
+                        className={cn(
+                          "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                          presenter === person.name
+                            ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
+                            : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                        )}
+                      >
+                        <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate font-bold text-[14px]">{person.name}</span>
+                          <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
+                        </div>
+                        {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setPresenterLibraryOpen(true)}
+                      className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
+                    >
+                      <span className="flex -space-x-2.5">
+                        {presenters.slice(2).map((person) => (
+                          <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                        ))}
+                      </span>
+                      <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
+                      <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
+                    </button>
+                  </div>
+                </div>
+              )}
+              <div className="space-y-2">
+                <DecisionRow
+                  label="Language"
+                  value={language}
+                  icon={<Globe2 className="size-4" />}
+                  editing={editingDecision === "language"}
+                  onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                >
+                  <ChoiceGroup
+                    label="Choose a language"
+                    value={language}
+                    onChange={(next) => {
+                      setLanguage(next);
+                      setEditingDecision(null);
+                    }}
+                    options={["English", "Hindi", "Spanish", "French", "German"]}
+                    icon={() => <Globe2 className="size-4" />}
+                  />
+                </DecisionRow>
+                <DecisionRow
+                  label="Voice"
+                  value={voice}
+                  icon={<Mic2 className="size-4" />}
+                  editing={editingDecision === "voice"}
+                  onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
+                  onPreview={() => previewAudio("voice", voice)}
+                  playing={previewingAudio === voice}
+                >
+                  <AudioChoices
+                    label="Choose and preview a voice"
+                    value={voice}
+                    options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                    onChange={(next) => {
+                      setVoice(next);
+                      setEditingDecision(null);
+                    }}
+                    previewing={previewingAudio}
+                    onPreview={(option) => previewAudio("voice", option)}
+                  />
+                </DecisionRow>
+                <DecisionRow
+                  label="Background music"
+                  value={music}
+                  icon={<Music2 className="size-4" />}
+                  editing={editingDecision === "music"}
+                  onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
+                  onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
+                  playing={previewingAudio === music}
+                >
+                  <AudioChoices
+                    label="Choose and preview music"
+                    value={music}
+                    options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                    onChange={(next) => {
+                      setMusic(next);
+                      setEditingDecision(null);
+                    }}
+                    previewing={previewingAudio}
+                    onPreview={(option) => previewAudio("music", option)}
+                    music
+                  />
+                </DecisionRow>
               </div>
-              <button onClick={() => setSourceManagerOpen(true)} className="focus-ring mt-3 flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)]"><Plus className="size-4" /> Add or remove sources</button>
             </PlanSection>
+          )}
 
-            <PlanSection icon={LayoutList} title="Story structure" summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : assetType === "carousel" ? "pages" : "sections"}`} status={derivedPlan.followsSuppliedScript ? "From script" : "Recommended"} open={openSection === "story"} onToggle={() => toggleSection("story")}>
-              <StructureChoices value={storyStructure} onChange={setStoryStructure} options={assetType === "video" ? ["Product → Proof", "Problem → Solution", "Mechanism → Evidence"] : profile.treatments.map((item) => item.label)} />
-            </PlanSection>
-          </section>
+          {/* 5. Brand and Evidence */}
+          <PlanSection
+            icon={ShieldCheck}
+            title="Brand and evidence"
+            summary={
+              derivedPlan.sourceConflict && !sourceConflictResolved
+                ? "Source authority needs confirmation"
+                : approvedEvidenceCount > 0
+                ? `${approvedEvidenceCount} approved sources · brand kit applied`
+                : "Concept only · approved source needed"
+            }
+            status={
+              derivedPlan.sourceConflict && !sourceConflictResolved
+                ? "Needs you"
+                : approvedEvidenceCount > 0
+                ? "From source"
+                : "Review"
+            }
+            open={openSection === "brand"}
+            onToggle={() => toggleSection("brand")}
+            tone={derivedPlan.sourceConflict && !sourceConflictResolved ? "attention" : "default"}
+          >
+            {derivedPlan.sourceConflict && !sourceConflictResolved && (
+              <div className="mb-3 rounded-[12px] border border-[#e4c17f] bg-[var(--warning-soft)] p-3.5">
+                <div className="flex items-start gap-3">
+                  <Info className="mt-0.5 size-5 shrink-0 text-[var(--warning)]" />
+                  <div>
+                    <div className="text-[14px] font-bold text-[#704b13]">Confirm source authority</div>
+                    <p className="mt-1 text-[13px] leading-5 text-[#765b31]">{derivedPlan.sourceConflict}</p>
+                    <button
+                      onClick={() => setSourceConflictResolved(true)}
+                      className="focus-ring mt-2 min-h-10 rounded-[9px] bg-white px-3 text-[13px] font-bold text-[#704b13] shadow-sm"
+                    >
+                      Use current {market} source as authority
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoCard
+                icon={PackageCheck}
+                title="Brand material"
+                body={`Primary logo, packshot, typography and fair balance for ${brandName} will be applied automatically.`}
+              />
+              <InfoCard
+                icon={BookOpenCheck}
+                title="Evidence coverage"
+                body={
+                  approvedEvidenceCount > 0
+                    ? `Mechanism, efficacy and required safety language are linked to current ${market} sources.`
+                    : "This can become a concept storyboard, but it will not be marked evidence-ready."
+                }
+              />
+            </div>
+            <button
+              onClick={() => setSourceManagerOpen(true)}
+              className="focus-ring mt-3 flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)]"
+            >
+              <Plus className="size-4" /> Add or remove sources
+            </button>
+          </PlanSection>
+
+          {/* 6. Story Structure */}
+          <PlanSection
+            icon={LayoutList}
+            title="Story structure"
+            summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : assetType === "carousel" ? "pages" : "sections"}`}
+            status={derivedPlan.followsSuppliedScript ? "From script" : "Recommended"}
+            open={openSection === "story"}
+            onToggle={() => toggleSection("story")}
+          >
+            <StructureChoices
+              value={storyStructure}
+              onChange={setStoryStructure}
+              options={
+                assetType === "video"
+                  ? ["Product → Proof", "Problem → Solution", "Mechanism → Evidence"]
+                  : profile.treatments.map((item) => item.label)
+              }
+            />
+          </PlanSection>
+        </section>
 
           {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
           <aside className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-[76px] self-start">
@@ -418,16 +1071,34 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             <Button
               onClick={() => setView("studio")}
               size="lg"
-              disabled={unresolvedCount > 0}
-              className="group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+              disabled={!isPlanReady}
+              className={cn(
+                "group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md transition-all duration-200",
+                isPlanReady
+                  ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:-translate-y-0.5 cursor-pointer"
+                  : "bg-black/15 text-[var(--ink-muted)] cursor-not-allowed border border-black/[0.06] shadow-none"
+              )}
             >
-              <span>Create storyboard</span>
-              <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
+              <span>Create scenes</span>
+              <ArrowRight className={cn("size-4 ml-1.5 transition-transform", isPlanReady && "group-hover:translate-x-1")} />
             </Button>
 
-            <div className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-[var(--ink-muted)]">
-              {unresolvedCount === 0 ? <CheckCircle2 className="size-3.5 text-[var(--brand)]" /> : <Info className="size-3.5 text-[var(--warning)]" />}
-              <span>{unresolvedCount === 0 ? "The plan is ready for an editable storyboard" : `${unresolvedCount} decision${unresolvedCount === 1 ? "" : "s"} remaining`}</span>
+            <div className="mt-2.5 flex items-center justify-center gap-1.5 text-[11.5px] text-[var(--ink-muted)] text-center">
+              {isPlanReady ? (
+                <>
+                  <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+                  <span className="text-emerald-700 font-semibold">All required inputs confirmed · Ready to create scenes</span>
+                </>
+              ) : (
+                <>
+                  <Info className="size-3.5 text-amber-600 shrink-0" />
+                  <span className="text-amber-700 font-medium">
+                    {needsProductAssets
+                      ? "Upload product photos/videos above to activate"
+                      : `${unresolvedCount} required step${unresolvedCount === 1 ? "" : "s"} need${unresolvedCount === 1 ? "s" : ""} confirmation`}
+                  </span>
+                </>
+              )}
             </div>
           </aside>
         </div>
@@ -439,6 +1110,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       <div className="pb-10">
         {content}
         {presenterLibraryOpen && <PresenterLibrary selected={presenter} onSelect={(name) => { setPresenter(name); setPresenterLibraryOpen(false); }} onClose={() => setPresenterLibraryOpen(false)} />}
+        {voiceLibraryOpen && <VoiceLibrary selected={voice} onSelect={(name) => { setVoice(name); setVoiceLibraryOpen(false); }} onClose={() => setVoiceLibraryOpen(false)} previewing={previewingAudio} onPreview={(name) => previewAudio("voice", name)} />}
         {sourceManagerOpen && <SourceManager selectedIds={selectedSourceIds} onToggle={toggleSource} onClose={() => setSourceManagerOpen(false)} />}
       </div>
     );
@@ -453,13 +1125,170 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       />
       {content}
       {presenterLibraryOpen && <PresenterLibrary selected={presenter} onSelect={(name) => { setPresenter(name); setPresenterLibraryOpen(false); }} onClose={() => setPresenterLibraryOpen(false)} />}
+      {voiceLibraryOpen && <VoiceLibrary selected={voice} onSelect={(name) => { setVoice(name); setVoiceLibraryOpen(false); }} onClose={() => setVoiceLibraryOpen(false)} previewing={previewingAudio} onPreview={(name) => previewAudio("voice", name)} />}
       {sourceManagerOpen && <SourceManager selectedIds={selectedSourceIds} onToggle={toggleSource} onClose={() => setSourceManagerOpen(false)} />}
     </div>
   );
 }
 
 function PresenterLibrary({ selected, onSelect, onClose }: { selected: string; onSelect: (name: string) => void; onClose: () => void }) {
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Presenter library"><div className="select-pop w-full max-w-[640px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-[var(--shadow-lg)]"><div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6"><div><div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Presenter library</div><h2 className="mt-1 text-[23px] font-semibold tracking-[-0.03em]">Choose who appears on screen</h2><p className="mt-1 text-[14px] text-[var(--ink-muted)]">Preview the face and delivery style before choosing.</p></div><Button variant="ghost" size="icon" onClick={onClose} aria-label="Close presenter library"><XIcon /></Button></div><div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-6">{presenters.map((person) => { const active = selected === person.name; return <button key={person.name} onClick={() => onSelect(person.name)} className={cn("focus-ring group flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#afc5ba] bg-[#f1f7f3]" : "border-[#e3e8e5] hover:border-[#c8d4ce]")}><FacePhoto person={person} className="size-14 rounded-[14px]" /><span className="min-w-0 flex-1"><span className="block text-[14px] font-semibold">{person.name}</span><span className="mt-1 block text-[12.5px] leading-4 text-[var(--ink-muted)]">{person.role}</span></span><span className={cn("grid size-6 place-items-center rounded-full border", active ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[#d5ddd8]")}>{active && <Check className="size-3.5" />}</span></button>; })}</div></div></div>;
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Presenter library">
+      <div className="select-pop w-full max-w-[680px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-[var(--shadow-lg)]">
+        <div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Presenter Library</div>
+            <h2 className="mt-1 text-[23px] font-semibold tracking-[-0.03em]">Choose who appears on screen</h2>
+            <p className="mt-1 text-[13.5px] text-[var(--ink-muted)]">Preview the face and delivery style before choosing.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => alert("Add Character flow initiated — you will be able to customize identity and likeness.")}
+              className="focus-ring flex items-center gap-1.5 rounded-full border border-[var(--brand)] bg-[var(--tint)] px-3 py-1.5 text-[12px] font-bold text-[var(--brand-deep)] hover:bg-[var(--brand)] hover:text-white transition cursor-pointer"
+            >
+              <Plus className="size-3.5" /> Add Character
+            </button>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close presenter library">
+              <XIcon />
+            </Button>
+          </div>
+        </div>
+        <div className="max-h-[460px] overflow-y-auto grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
+          {presenters.map((person) => {
+            const active = selected === person.name;
+            return (
+              <button
+                key={person.name}
+                type="button"
+                onClick={() => onSelect(person.name)}
+                className={cn(
+                  "focus-ring group flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
+                  active ? "border-[#afc5ba] bg-[#f1f7f3]" : "border-[#e3e8e5] hover:border-[#c8d4ce]"
+                )}
+              >
+                <FacePhoto person={person} className="size-14 rounded-[14px]" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-bold text-[var(--ink)]">{person.name}</span>
+                  <span className="mt-0.5 block text-[12px] leading-4 text-[var(--ink-muted)]">{person.role}</span>
+                </span>
+                <span
+                  className={cn(
+                    "grid size-6 place-items-center rounded-full border",
+                    active ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[#d5ddd8]"
+                  )}
+                >
+                  {active && <Check className="size-3.5" />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VoiceLibrary({
+  selected,
+  onSelect,
+  onClose,
+  previewing,
+  onPreview,
+}: {
+  selected: string;
+  onSelect: (name: string) => void;
+  onClose: () => void;
+  previewing: string | null;
+  onPreview: (name: string) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Voice Library">
+      <div className="select-pop w-full max-w-[680px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-[var(--shadow-lg)]">
+        <div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Voiceover Library</div>
+            <h2 className="mt-1 text-[23px] font-semibold tracking-[-0.03em]">Choose voice &amp; narration tone</h2>
+            <p className="mt-1 text-[13.5px] text-[var(--ink-muted)]">Preview medical diction, cadence, and accent profiles.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => alert("Add Voiceover flow initiated — you will be able to record or clone custom medical voice.")}
+              className="focus-ring flex items-center gap-1.5 rounded-full border border-[var(--brand)] bg-[var(--tint)] px-3 py-1.5 text-[12px] font-bold text-[var(--brand-deep)] hover:bg-[var(--brand)] hover:text-white transition cursor-pointer"
+            >
+              <Plus className="size-3.5" /> Add Voiceover
+            </button>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close voice library">
+              <XIcon />
+            </Button>
+          </div>
+        </div>
+
+        <div className="max-h-[460px] overflow-y-auto grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
+          {voiceList.map((item) => {
+            const formatted = `${item.name} · ${item.role}`;
+            const active = selected.startsWith(item.name);
+            const playing = previewing === formatted || previewing === item.name;
+            return (
+              <div
+                key={item.name}
+                className={cn(
+                  "focus-ring group flex items-center gap-3 rounded-[16px] border p-3.5 transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
+                  active ? "border-[#afc5ba] bg-[#f1f7f3]" : "border-[#e3e8e5] hover:border-[#c8d4ce] bg-white"
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelect(formatted)}
+                  className="flex flex-1 items-center gap-3 min-w-0 text-left"
+                >
+                  <span className={cn("grid size-11 shrink-0 place-items-center rounded-[12px]", active ? "bg-[var(--brand)] text-white" : "bg-[#f0f3f1] text-[var(--brand)]")}>
+                    <Mic2 className="size-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="text-[14px] font-bold text-[var(--ink)]">{item.name}</span>
+                      <span className="rounded-md bg-black/[0.04] px-1.5 py-0.5 text-[9.5px] font-bold text-[var(--ink-muted)]">
+                        {item.tag}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 block text-[12px] text-[var(--ink-muted)] truncate">{item.role}</span>
+                    <span className="block text-[10.5px] text-[var(--ink-4)] mt-0.5">{item.accent}</span>
+                  </span>
+                </button>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPreview(formatted);
+                    }}
+                    className="grid size-8 place-items-center rounded-full bg-white text-[var(--brand)] shadow-xs border border-black/5 hover:scale-105 transition"
+                    title={`Preview ${item.name}`}
+                  >
+                    {playing ? <Pause className="size-3.5" /> : <Play className="size-3.5 ml-0.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onSelect(formatted)}
+                    className={cn(
+                      "grid size-6 place-items-center rounded-full border",
+                      active ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[#d5ddd8]"
+                    )}
+                  >
+                    {active && <Check className="size-3.5" />}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function FacePhoto({ person, className }: { person: (typeof presenters)[number]; className: string }) {
@@ -474,17 +1303,110 @@ function SourceManager({ selectedIds, onToggle, onClose }: { selectedIds: string
   return <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Manage source material"><div className="select-pop w-full max-w-[720px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-[var(--shadow-lg)]"><div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6"><div><div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Plan sources</div><h2 className="mt-1 text-[23px] font-semibold tracking-[-0.03em]">Add or remove source material</h2><p className="mt-1 text-[14px] text-[var(--ink-muted)]">Evidence coverage updates here without reloading the plan.</p></div><Button variant="ghost" size="icon" onClick={onClose} aria-label="Close source manager"><XIcon /></Button></div><div className="max-h-[430px] space-y-2 overflow-y-auto p-4 sm:p-6">{planningSources.map((source) => { const active = selectedIds.includes(source.id); return <div key={source.id} className={cn("flex min-h-[68px] items-center gap-3 rounded-[14px] border p-3 transition", active ? "border-[#b8ccc2] bg-[#f2f7f4]" : "border-[#e3e8e5]")}><span className="grid size-10 shrink-0 place-items-center rounded-[11px] bg-white text-[var(--brand)] shadow-sm"><FileCheck2 className="size-[18px]" /></span><span className="min-w-0 flex-1"><span className="block truncate text-[14px] font-semibold">{source.name}</span><span className="mt-0.5 block truncate text-[12.5px] text-[var(--ink-muted)]">{source.detail}</span></span><button type="button" onClick={() => onToggle(source.id)} className={cn("focus-ring flex min-h-10 items-center gap-1.5 rounded-[10px] px-3 text-[12.5px] font-semibold", active ? "bg-white text-[#6a756f] shadow-sm" : "bg-[var(--brand)] text-white")}>{active ? <Check className="size-4" /> : <Plus className="size-4" />}{active ? "Attached" : "Add"}</button></div>; })}</div><div className="flex items-center justify-between border-t border-[var(--line)] bg-[#f8faf8] p-4 sm:px-6"><span className="text-[12.5px] text-[var(--ink-muted)]">{selectedIds.length} sources attached</span><Button onClick={onClose}>Done</Button></div></div></div>;
 }
 
-function PlanSection({ icon: Icon, title, summary, status, open, onToggle, tone = "default", children }: { icon: LucideIcon; title: string; summary: string; status: string; open: boolean; onToggle: () => void; tone?: "default" | "done" | "attention"; children: React.ReactNode }) {
+function PlanSection({
+  icon: Icon,
+  title,
+  summary,
+  status,
+  open,
+  onToggle,
+  tone = "default",
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  summary: string;
+  status: string;
+  open: boolean;
+  onToggle: () => void;
+  tone?: "default" | "done" | "attention";
+  children: React.ReactNode;
+}) {
   return (
-    <section className={cn("squircle-card relative border bg-white shadow-[var(--shadow-sm)] transition-[opacity,filter,box-shadow,border-color] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]", open ? "z-20 opacity-100 saturate-100 shadow-[0_8px_24px_rgb(19_31_26/6%)]" : "z-0 opacity-[.72] saturate-[.72] hover:opacity-100 hover:saturate-100 hover:shadow-[0_7px_22px_rgb(19_31_26/5%)]", tone === "attention" ? "border-[#ead8b5]" : "border-[var(--line)]")}>
-      <button onClick={onToggle} className="focus-ring group flex min-h-[70px] w-full items-center gap-3 px-4 text-left sm:px-5" aria-expanded={open}>
-        <span className={cn("squircle-control grid size-9 shrink-0 place-items-center transition-transform group-hover:scale-105", tone === "attention" ? "bg-[var(--warning-soft)] text-[var(--warning)]" : tone === "done" ? "bg-[var(--brand)] text-white" : "bg-[#edf3ef] text-[var(--brand)]")}>{tone === "done" ? <Check className="size-4" /> : <Icon className="size-[18px]" />}</span>
-        <span className="min-w-0 flex-1"><span className="block text-[15px] font-semibold">{title}</span><span className="mt-0.5 block truncate text-[12.5px] text-[var(--ink-muted)]">{summary}</span></span>
-        <span className={cn("hidden rounded-full px-2.5 py-1 text-[11.5px] font-semibold sm:inline", tone === "attention" ? "bg-[var(--warning-soft)] text-[var(--warning)]" : "bg-[#eef2ef] text-[#66736c]")}>{status}</span>
-        <ChevronDown className={cn("size-[18px] shrink-0 text-[var(--ink-muted)] transition-transform", open && "rotate-180")} />
+    <section
+      className={cn(
+        "squircle-card relative rounded-[20px] border transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+        open
+          ? "z-20 bg-white scale-[1.015] shadow-[0_12px_36px_rgba(10,13,20,0.08),0_2px_8px_rgba(10,13,20,0.04)] border-[var(--brand)] ring-2 ring-[var(--brand-soft)] my-3"
+          : "z-0 bg-white/90 opacity-[.82] hover:opacity-100 hover:bg-white hover:shadow-sm",
+        !open && (tone === "attention" ? "border-[#ead8b5]" : "border-[var(--line)]")
+      )}
+    >
+      <button
+        onClick={onToggle}
+        className={cn(
+          "focus-ring group flex w-full items-center gap-3.5 px-4 text-left transition-all duration-200 sm:px-5",
+          open ? "min-h-[74px]" : "min-h-[64px]"
+        )}
+        aria-expanded={open}
+      >
+        <span
+          className={cn(
+            "squircle-control grid size-10 shrink-0 place-items-center rounded-[12px] transition-transform group-hover:scale-105",
+            tone === "attention"
+              ? "bg-[var(--warning-soft)] text-[var(--warning)]"
+              : tone === "done"
+              ? "bg-[var(--brand)] text-white shadow-xs"
+              : "bg-[#edf3ef] text-[var(--brand)]"
+          )}
+        >
+          {tone === "done" ? (
+            <Check className="size-4" strokeWidth={3} />
+          ) : (
+            <Icon className="size-[19px]" />
+          )}
+        </span>
+
+        <span className="min-w-0 flex-1">
+          <span
+            className={cn(
+              "block font-bold tracking-tight transition-colors",
+              open ? "text-[16px] text-[var(--ink)]" : "text-[15px] text-[var(--ink-2)]"
+            )}
+          >
+            {title}
+          </span>
+          <span className="mt-0.5 block truncate text-[12.5px] text-[var(--ink-muted)]">
+            {summary}
+          </span>
+        </span>
+
+        <span
+          className={cn(
+            "hidden rounded-full px-2.5 py-1 text-[11px] font-bold sm:inline border",
+            tone === "attention"
+              ? "bg-[var(--warning-soft)] text-[var(--warning)] border-[#fde68a]"
+              : tone === "done"
+              ? "bg-[var(--tint)] text-[var(--brand-deep)] border-[var(--tint-line)]"
+              : "bg-[#eef2ef] text-[#66736c] border-[#e2e8e4]"
+          )}
+        >
+          {status}
+        </span>
+
+        <div
+          className={cn(
+            "grid size-7 place-items-center rounded-full transition-all duration-300",
+            open ? "rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:bg-black/5"
+          )}
+        >
+          <ChevronDown className="size-4" />
+        </div>
       </button>
-      <div aria-hidden={!open} inert={!open} className={cn("grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]", open ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0")}>
-        <div className="overflow-hidden"><div className="border-t border-[var(--line)] px-4 py-4 sm:px-5">{children}</div></div>
+
+      <div
+        aria-hidden={!open}
+        inert={!open}
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+          open ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-[var(--line)] bg-[#fafbf9]/60 px-4 py-4.5 sm:px-5">
+            {children}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -534,8 +1456,102 @@ function SteppedControl({ label, value, options, onChange }: { label: string; va
   return <div><div className="flex items-center justify-between"><div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div><output className="rounded-full bg-[#edf3ef] px-2.5 py-1 text-[12px] font-semibold text-[var(--brand)]">{options[currentIndex]}</output></div><input aria-label={label} type="range" min={0} max={Math.max(0, options.length - 1)} step={1} value={currentIndex} onChange={(event) => onChange(options[Number(event.target.value)])} className="mt-4 w-full accent-[var(--brand)]" /><div className="mt-1.5 flex justify-between gap-1">{options.map((option, index) => <button type="button" key={option} onClick={() => onChange(option)} className={cn("focus-ring rounded-md px-1 py-1 text-[11px]", index === currentIndex ? "font-semibold text-[var(--brand)]" : "text-[var(--ink-muted)]")}>{option.replace(" sec", "s")}</button>)}</div></div>;
 }
 
-function AudioChoices({ label, value, options, onChange, previewing, onPreview, music = false, className }: { label: string; value: string; options: readonly string[]; onChange: (value: string) => void; previewing: string | null; onPreview: (value: string) => void; music?: boolean; className?: string }) {
-  return <div className={className}><div className="flex items-center justify-between"><div className="text-[13px] font-medium text-[#5f6b65]">{label}</div><span className="text-[11.5px] text-[var(--ink-muted)]">Preview before choosing</span></div><div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{options.map((option) => { const selected = value === option; const playing = previewing === option; const silent = music && option === "No music"; return <div key={option} className={cn("flex min-h-[60px] items-center rounded-[13px] border transition-[opacity,background-color,border-color,box-shadow] duration-200 hover:opacity-100", selected ? "border-[#adc4b8] bg-[#eff6f2] opacity-100" : "border-[#e3e8e5] bg-white opacity-65 hover:border-[#cbd6d0]")}><button type="button" aria-pressed={selected} onClick={() => onChange(option)} className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-l-[13px] p-3 text-left"><span className={cn("grid size-7 shrink-0 place-items-center rounded-[9px]", selected ? "bg-[var(--brand)] text-white" : "bg-[#f0f3f1] text-[#6d7972]")}>{music ? <Music2 className="size-4" /> : <Mic2 className="size-4" />}</span><span className="min-w-0"><span className="block truncate text-[13px] font-semibold">{option.split(" · ")[0]}</span><span className="mt-0.5 block truncate text-[11.5px] text-[var(--ink-muted)]">{option.split(" · ")[1] ?? (silent ? "Voice only" : "Music bed")}</span></span></button>{!silent && <button type="button" onClick={() => onPreview(option)} className="focus-ring mr-2 grid size-9 shrink-0 place-items-center rounded-full bg-white text-[var(--brand)] shadow-sm transition hover:scale-105" aria-label={`${playing ? "Stop" : "Preview"} ${option}`}>{playing ? <Pause className="size-4" /> : <Play className="ml-0.5 size-4" />}</button>}</div>; })}</div></div>;
+function AudioChoices({
+  label,
+  value,
+  options,
+  onChange,
+  previewing,
+  onPreview,
+  onOpenLibrary,
+  music = false,
+  className,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+  previewing: string | null;
+  onPreview: (value: string) => void;
+  onOpenLibrary?: () => void;
+  music?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <div className="flex items-center justify-between">
+        <div className="text-[13px] font-medium text-[#5f6b65]">{label}</div>
+        <span className="text-[11.5px] text-[var(--ink-muted)]">Preview before choosing</span>
+      </div>
+      <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {options.map((option) => {
+          const selected = value === option;
+          const playing = previewing === option;
+          const silent = music && option === "No music";
+          return (
+            <div
+              key={option}
+              className={cn(
+                "flex min-h-[60px] items-center rounded-[13px] border transition-[opacity,background-color,border-color,box-shadow] duration-200 hover:opacity-100",
+                selected
+                  ? "border-[#adc4b8] bg-[#eff6f2] opacity-100 ring-1 ring-[#adc4b8]"
+                  : "border-[#e3e8e5] bg-white opacity-85 hover:border-[#cbd6d0]"
+              )}
+            >
+              <button
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onChange(option)}
+                className="focus-ring flex min-w-0 flex-1 items-center gap-2.5 rounded-l-[13px] p-3 text-left cursor-pointer"
+              >
+                <span
+                  className={cn(
+                    "grid size-7 shrink-0 place-items-center rounded-[9px]",
+                    selected ? "bg-[var(--brand)] text-white" : "bg-[#f0f3f1] text-[#6d7972]"
+                  )}
+                >
+                  {music ? <Music2 className="size-4" /> : <Mic2 className="size-4" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] font-semibold">{option.split(" · ")[0]}</span>
+                  <span className="mt-0.5 block truncate text-[11px] text-[var(--ink-muted)]">
+                    {option.split(" · ")[1] ?? (silent ? "Voice only" : "Music bed")}
+                  </span>
+                </span>
+              </button>
+              {!silent && (
+                <button
+                  type="button"
+                  onClick={() => onPreview(option)}
+                  className="focus-ring mr-2 grid size-8 shrink-0 place-items-center rounded-full bg-white text-[var(--brand)] shadow-2xs transition hover:scale-105 cursor-pointer border border-black/5"
+                  aria-label={`${playing ? "Stop" : "Preview"} ${option}`}
+                >
+                  {playing ? <Pause className="size-3.5" /> : <Play className="ml-0.5 size-3.5" />}
+                </button>
+              )}
+            </div>
+          );
+        })}
+
+        {/* Voice Library Modal Launcher Card */}
+        {onOpenLibrary && !music && (
+          <button
+            type="button"
+            onClick={onOpenLibrary}
+            className="focus-ring flex min-h-[60px] items-center gap-2 rounded-[13px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
+          >
+            <span className="grid size-7 shrink-0 place-items-center rounded-[9px] bg-[var(--tint)] text-[var(--brand)]">
+              <Mic2 className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[12.5px] text-[var(--ink-2)]">
+              Voiceover Library
+            </span>
+            <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)] shrink-0" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function StructureChoices({ value, options, onChange }: { value: string; options: readonly string[]; onChange: (value: string) => void }) {

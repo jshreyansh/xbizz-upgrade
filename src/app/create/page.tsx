@@ -7,6 +7,7 @@ import { MagicVideoSourceScreen } from "@/features/workspace/magic-video-source-
 import { CreateScreen } from "@/features/workspace/create-screen";
 import { DirectionsScreen } from "@/features/workspace/directions-screen";
 import { StudioScreen } from "@/features/workspace/studio-screen";
+import { VideoCreationWizard } from "@/features/workspace/video-creation-wizard";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 
 export default function CreatePage() {
@@ -32,8 +33,6 @@ export default function CreatePage() {
     );
   }
 
-  // Once a card is clicked, transitions to focused full-page flow for Source & Plan
-  if (videoSubStage === "source-select") return <MagicVideoSourceScreen />;
-
-  return <CreateScreen />;
+  // Once a card is clicked, transitions to the persistent VideoCreationWizard stepper
+  return <VideoCreationWizard />;
 }

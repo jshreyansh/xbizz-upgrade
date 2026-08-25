@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -8,13 +8,29 @@ import { cn } from "@/lib/cn";
 
 type MenuPlacement = { style: CSSProperties; above: boolean };
 
-export function SelectMenu({ value, options, onChange, ariaLabel, className, renderIcon }: { value: string; options: readonly string[]; onChange: (value: string) => void; ariaLabel: string; className?: string; renderIcon?: (option: string) => ReactNode }) {
+export function SelectMenu({
+  value,
+  options,
+  onChange,
+  ariaLabel,
+  className,
+  placeholder = "Select an option...",
+  renderIcon,
+}: {
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+  ariaLabel: string;
+  className?: string;
+  placeholder?: string;
+  renderIcon?: (option: string) => ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [placement, setPlacement] = useState<MenuPlacement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const selectedValue = value || options[0];
+  const hasValue = Boolean(value);
 
   useEffect(() => {
     if (open) {
@@ -70,12 +86,54 @@ export function SelectMenu({ value, options, onChange, ariaLabel, className, ren
   }, []);
 
   const menu = menuMounted && placement && (
-    <div ref={menuRef} style={placement.style} className={cn("squircle-panel z-[100] overflow-y-auto border border-[#e3e8e5] bg-white p-1.5 shadow-[0_20px_60px_rgb(23_34_29/16%),0_3px_12px_rgb(23_34_29/6%)]", open ? placement.above ? "select-pop-above" : "select-pop" : placement.above ? "select-pop-out-above pointer-events-none" : "select-pop-out pointer-events-none")} role="listbox" aria-label={ariaLabel}>
+    <div
+      ref={menuRef}
+      style={placement.style}
+      className={cn(
+        "squircle-panel z-[100] overflow-y-auto border border-[#e3e8e5] bg-white p-1.5 shadow-[0_20px_60px_rgb(23_34_29/16%),0_3px_12px_rgb(23_34_29/6%)]",
+        open
+          ? placement.above
+            ? "select-pop-above"
+            : "select-pop"
+          : placement.above
+          ? "select-pop-out-above pointer-events-none"
+          : "select-pop-out pointer-events-none"
+      )}
+      role="listbox"
+      aria-label={ariaLabel}
+    >
       {options.map((option) => {
-        const selected = option === selectedValue;
+        const selected = option === value;
         return (
-          <button key={option} type="button" role="option" aria-selected={selected} onClick={() => { onChange(option); setOpen(false); }} className={cn("squircle-control focus-ring flex min-h-11 w-full items-center gap-3 px-3 text-left text-[14px] transition-[opacity,background-color,transform] duration-200 hover:opacity-100 focus-visible:opacity-100", selected ? "bg-[#eff6f2] font-medium text-[var(--brand)] opacity-100" : "font-normal text-[var(--ink)] opacity-68 hover:bg-[#f6f8f7]")}>
-            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border transition", selected ? "border-[var(--brand)]" : "border-[#d6ddd9] bg-white")}><span className={cn("size-2.5 rounded-full bg-[var(--brand)] transition", selected ? "scale-100" : "scale-0")} /></span>
+          <button
+            key={option}
+            type="button"
+            role="option"
+            aria-selected={selected}
+            onClick={() => {
+              onChange(option);
+              setOpen(false);
+            }}
+            className={cn(
+              "squircle-control focus-ring flex min-h-11 w-full items-center gap-3 px-3 text-left text-[14px] transition-[opacity,background-color,transform] duration-200 hover:opacity-100 focus-visible:opacity-100",
+              selected
+                ? "bg-[#eff6f2] font-medium text-[var(--brand)] opacity-100"
+                : "font-normal text-[var(--ink)] opacity-68 hover:bg-[#f6f8f7]"
+            )}
+          >
+            <span
+              className={cn(
+                "grid size-5 shrink-0 place-items-center rounded-full border transition",
+                selected ? "border-[var(--brand)]" : "border-[#d6ddd9] bg-white"
+              )}
+            >
+              <span
+                className={cn(
+                  "size-2.5 rounded-full bg-[var(--brand)] transition",
+                  selected ? "scale-100" : "scale-0"
+                )}
+              />
+            </span>
             {renderIcon?.(option)}
             <span className="min-w-0 flex-1 truncate">{option}</span>
           </button>
@@ -86,22 +144,73 @@ export function SelectMenu({ value, options, onChange, ariaLabel, className, ren
 
   return (
     <div ref={rootRef} className={cn("relative", className)}>
-      <button type="button" onClick={() => setOpen((current) => !current)} onKeyDown={(event) => { if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") { event.preventDefault(); setOpen(true); } }} className={cn("squircle-control focus-ring group flex h-12 w-full items-center justify-between border bg-white px-3.5 text-left text-[14px] font-medium text-[var(--ink)] shadow-[0_1px_2px_rgb(19_31_26/2%)] transition", open ? "border-[#9fb4aa] shadow-[0_0_0_3px_rgb(37_79_63/8%)]" : "border-[#e3e8e5] hover:border-[#cbd5d0] hover:bg-[#fcfdfc]")} aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open}>
-        <span className="flex min-w-0 items-center gap-2.5">{renderIcon?.(selectedValue)}<span className="truncate">{selectedValue}</span></span>
-        <span className={cn("ml-3 grid size-7 shrink-0 place-items-center rounded-full text-[#738079] transition", open ? "rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]" : "group-hover:bg-[#f2f5f3]")}><ChevronDown className="size-4" /></span>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+        className={cn(
+          "squircle-control focus-ring group flex h-12 w-full items-center justify-between border bg-white px-3.5 text-left text-[14px] font-medium shadow-[0_1px_2px_rgb(19_31_26/2%)] transition",
+          hasValue ? "text-[var(--ink)]" : "text-[var(--ink-4)]",
+          open
+            ? "border-[#9fb4aa] shadow-[0_0_0_3px_rgb(37_79_63/8%)]"
+            : "border-[#e3e8e5] hover:border-[#cbd5d0] hover:bg-[#fcfdfc]"
+        )}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="flex min-w-0 items-center gap-2.5">
+          {hasValue ? (
+            <>
+              {renderIcon?.(value)}
+              <span className="truncate">{value}</span>
+            </>
+          ) : (
+            <span className="text-[var(--ink-4)] italic font-normal">{placeholder}</span>
+          )}
+        </span>
+        <span
+          className={cn(
+            "ml-3 grid size-7 shrink-0 place-items-center rounded-full text-[#738079] transition",
+            open ? "rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]" : "group-hover:bg-[#f2f5f3]"
+          )}
+        >
+          <ChevronDown className="size-4" />
+        </span>
       </button>
       {typeof document !== "undefined" && menu ? createPortal(menu, document.body) : null}
     </div>
   );
 }
 
-export function MultiSelectMenu({ values, options, onChange, ariaLabel, className, renderIcon }: { values: string[]; options: readonly string[]; onChange: (values: string[]) => void; ariaLabel: string; className?: string; renderIcon?: (option: string) => ReactNode }) {
+export function MultiSelectMenu({
+  values,
+  options,
+  onChange,
+  ariaLabel,
+  className,
+  placeholder = "Select focus topics...",
+  renderIcon,
+}: {
+  values: string[];
+  options: readonly string[];
+  onChange: (values: string[]) => void;
+  ariaLabel: string;
+  className?: string;
+  placeholder?: string;
+  renderIcon?: (option: string) => ReactNode;
+}) {
   const [open, setOpen] = useState(false);
   const [menuMounted, setMenuMounted] = useState(false);
   const [placement, setPlacement] = useState<MenuPlacement | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const selectedValues = values.length > 0 ? values : [options[0]];
+  const selectedValues = values;
 
   useEffect(() => {
     if (open) {
@@ -158,10 +267,11 @@ export function MultiSelectMenu({ values, options, onChange, ariaLabel, classNam
 
   const toggleValue = (option: string) => {
     if (selectedValues.includes(option)) {
-      if (selectedValues.length > 1) onChange(selectedValues.filter((item) => item !== option));
-    } else onChange([...selectedValues, option]);
+      onChange(selectedValues.filter((item) => item !== option));
+    } else {
+      onChange([...selectedValues, option]);
+    }
   };
-  const summary = selectedValues[0];
 
   const menu = menuMounted && placement && (
     <div ref={menuRef} style={placement.style} className={cn("squircle-panel z-[100] overflow-y-auto border border-[#e3e8e5] bg-white p-1.5 shadow-[0_20px_60px_rgb(23_34_29/16%),0_3px_12px_rgb(23_34_29/6%)]", open ? placement.above ? "select-pop-above" : "select-pop" : placement.above ? "select-pop-out-above pointer-events-none" : "select-pop-out pointer-events-none")} role="listbox" aria-multiselectable="true" aria-label={ariaLabel}>
@@ -174,11 +284,63 @@ export function MultiSelectMenu({ values, options, onChange, ariaLabel, classNam
   );
 
   return (
-    <div ref={rootRef} className={cn("relative", className)}>
-      <button type="button" onClick={() => setOpen((current) => !current)} className={cn("squircle-control focus-ring group flex h-12 w-full items-center justify-between border bg-white px-3.5 text-left text-[14px] font-medium text-[var(--ink)] shadow-[0_1px_2px_rgb(19_31_26/2%)] transition", open ? "border-[#9fb4aa] shadow-[0_0_0_3px_rgb(37_79_63/8%)]" : "border-[#e3e8e5] hover:border-[#cbd5d0] hover:bg-[#fcfdfc]")} aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={open}>
-        <span className="flex min-w-0 items-center gap-2.5">{renderIcon?.(selectedValues[0])}<span className="truncate">{summary}</span>{selectedValues.length > 1 && <><span className="flex -space-x-1.5" aria-hidden="true">{selectedValues.slice(1, 4).map((option) => <span key={option} className="grid size-6 place-items-center rounded-full border-2 border-white bg-[#edf3ef] text-[var(--brand)] shadow-sm">{renderIcon?.(option)}</span>)}</span><span className="shrink-0 text-[12px] font-semibold text-[var(--brand)]">+{selectedValues.length - 1}</span></>}</span>
-        <span className={cn("ml-3 grid size-7 shrink-0 place-items-center rounded-full text-[#738079] transition", open ? "rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]" : "group-hover:bg-[#f2f5f3]")}><ChevronDown className="size-4" /></span>
+    <div ref={rootRef} className={cn("relative space-y-2", className)}>
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className={cn(
+          "squircle-control focus-ring group flex h-11 w-full items-center justify-between rounded-[13px] border bg-white px-3.5 text-left text-[13.5px] font-medium text-[var(--ink)] shadow-[0_1px_2px_rgb(19_31_26/2%)] transition",
+          open
+            ? "border-[var(--brand)] shadow-[0_0_0_3px_rgba(253,72,22,0.12)]"
+            : "border-[#e3e8e5] hover:border-[#cbd5d0] hover:bg-[#fcfdfc]"
+        )}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="flex min-w-0 items-center gap-2 text-[var(--ink-2)]">
+          <span className="font-medium text-[var(--ink)]">
+            {selectedValues.length === 0
+              ? "Select focus topics..."
+              : `${selectedValues.length} topics selected`}
+          </span>
+        </span>
+        <span
+          className={cn(
+            "ml-3 grid size-6 shrink-0 place-items-center rounded-full text-[#738079] transition",
+            open ? "rotate-180 text-[var(--brand)]" : "group-hover:bg-[#f2f5f3]"
+          )}
+        >
+          <ChevronDown className="size-4" />
+        </span>
       </button>
+
+      {/* Selected Items as individual removable chips below */}
+      {selectedValues.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-0.5">
+          {selectedValues.map((val) => (
+            <span
+              key={val}
+              className="inline-flex items-center gap-1.5 rounded-[9px] border border-[var(--tint-line)] bg-[var(--tint)] px-2.5 py-1 text-[11.5px] font-semibold text-[var(--brand-deep)] transition hover:bg-[var(--brand-soft)]"
+            >
+              {renderIcon?.(val)}
+              <span>{val}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleValue(val);
+                }}
+                className="grid size-4 place-items-center rounded-full text-[var(--brand)] hover:bg-black/10 transition"
+                aria-label={`Remove ${val}`}
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {typeof document !== "undefined" && menu ? createPortal(menu, document.body) : null}
     </div>
   );

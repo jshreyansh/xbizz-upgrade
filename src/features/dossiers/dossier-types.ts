@@ -20,6 +20,14 @@ export interface CitedClaim {
   heldOutReason?: string;
 }
 
+export interface UnverifiedClaim {
+  id: string;
+  claim: string;
+  issue: string;
+  sourceLink: string;
+  status: "pending" | "accepted" | "rejected";
+}
+
 export interface DossierSection {
   id: string;
   number: number;
@@ -29,6 +37,7 @@ export interface DossierSection {
   claimsCount: number;
   heldOutCount: number;
   citations: string[];
+  unverifiedClaims?: UnverifiedClaim[];
 }
 
 export type ApprovalStatus = "pending" | "reviewing" | "approved" | "changes-requested";
@@ -60,6 +69,10 @@ export interface BrandDossier {
   sourcesCount: number;
   lastUpdated: string;
   status: "complete" | "draft" | "updating" | "pending-approval";
+  healthStatus?: "critical" | "warning" | "healthy";
+  verifiedClaimsCount?: number;
+  totalClaimsCount?: number;
+  isSample?: boolean;
   sources: DossierSource[];
   sections: DossierSection[];
   /** Who needs to sign off before this dossier can be used to create content. */
