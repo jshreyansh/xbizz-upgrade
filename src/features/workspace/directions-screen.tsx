@@ -356,69 +356,70 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             </PlanSection>
           </section>
 
-          <aside className="rise-in lg:sticky lg:top-5 self-start [animation-delay:90ms]">
+          {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
+          <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:90ms]">
             <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
-              <div className="border-b border-[var(--line)] bg-[#fafbf9] px-5 py-4">
+              <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Available Context</span>
-                  <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--ok)]">
+                  <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Available Context</span>
+                  <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)]">
                     Grounding verified
                   </span>
                 </div>
-                <h2 className="mt-1 text-[18px] font-bold tracking-tight text-[var(--ink)]">{brandName} Dossier</h2>
+                <h2 className="mt-0.5 text-[16px] font-bold tracking-tight text-[var(--ink)]">{brandName} Dossier</h2>
               </div>
 
-              <div className="p-5 space-y-4">
+              <div className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-[9px] bg-[var(--brand-soft)] text-[var(--brand)]">
                     <Users className="size-4" />
                   </span>
                   <div>
-                    <span className="block text-[14px] font-semibold">Audience &amp; Goal</span>
-                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">
+                    <span className="block text-[13.5px] font-semibold">Audience &amp; Goal</span>
+                    <span className="mt-0.5 block text-[12.5px] leading-4 text-[var(--ink-muted)]">
                       {audience} · {goal}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-[9px] bg-[var(--brand-soft)] text-[var(--brand)]">
                     <Layers className="size-4" />
                   </span>
                   <div>
-                    <span className="block text-[14px] font-semibold">Focus Topics ({selectedTopics.length})</span>
-                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">
+                    <span className="block text-[13.5px] font-semibold">Focus Topics ({selectedTopics.length})</span>
+                    <span className="mt-0.5 block text-[12.5px] leading-4 text-[var(--ink-muted)]">
                       {selectedTopics.join(" · ")}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-[9px] bg-[var(--brand-soft)] text-[var(--brand)]">
                     <Film className="size-4" />
                   </span>
                   <div>
-                    <span className="block text-[14px] font-semibold">Creative Treatment</span>
-                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">
+                    <span className="block text-[13.5px] font-semibold">Creative Treatment</span>
+                    <span className="mt-0.5 block text-[12.5px] leading-4 text-[var(--ink-muted)]">
                       {selectedTreatment.label} · {effectiveFormat} · {duration}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-[9px] bg-[var(--brand-soft)] text-[var(--brand)]">
                     <FileCheck2 className="size-4" />
                   </span>
                   <div>
-                    <span className="block text-[14px] font-semibold">Evidence Grounding</span>
-                    <span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">
+                    <span className="block text-[13.5px] font-semibold">Evidence Grounding</span>
+                    <span className="mt-0.5 block text-[12.5px] leading-4 text-[var(--ink-muted)]">
                       {approvedEvidenceCount > 0 ? `214 approved claims cited against ${market} label.` : "Grounding verified from attached source."}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[12.5px] leading-5 text-[var(--ink-muted)]">
+              <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-4 py-2.5 text-[11.5px] leading-4 text-[var(--ink-muted)]">
                 Next: SwishX will generate the editable script, clinical scene prompts, and citation links in Studio.
               </div>
             </div>
@@ -427,15 +428,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               onClick={() => setView("studio")}
               size="lg"
               disabled={unresolvedCount > 0}
-              className="group mt-3.5 h-[52px] w-full px-8 rounded-[14px] text-[15px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+              className="group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             >
               <span>Create storyboard</span>
               <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
             </Button>
 
-            <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
-              {unresolvedCount === 0 ? <CheckCircle2 className="size-4 text-[var(--brand)]" /> : <Info className="size-4 text-[var(--warning)]" />}
-              <span>{unresolvedCount === 0 ? "The plan is ready for an editable storyboard." : `${unresolvedCount} decision${unresolvedCount === 1 ? "" : "s"} remaining.`}</span>
+            <div className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-[var(--ink-muted)]">
+              {unresolvedCount === 0 ? <CheckCircle2 className="size-3.5 text-[var(--brand)]" /> : <Info className="size-3.5 text-[var(--warning)]" />}
+              <span>{unresolvedCount === 0 ? "The plan is ready for an editable storyboard" : `${unresolvedCount} decision${unresolvedCount === 1 ? "" : "s"} remaining`}</span>
             </div>
           </aside>
         </div>

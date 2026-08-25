@@ -157,18 +157,15 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       : "Custom Plain Text";
 
   const content = (
-    <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
-      {/* Standardized Page Heading (No Badge) */}
-      <div className="mb-7">
-        <h1 className="text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
+    <main className="mx-auto w-full max-w-[1280px] px-6 py-5 sm:px-8">
+      {/* Compact Page Heading (No Secondary Subheadline) */}
+      <div className="mb-4">
+        <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
           Define the video brief
         </h1>
-        <p className="mt-1 text-[15px] text-[var(--ink-3)]">
-          Describe what you want to communicate. SwishX will synthesize the script, visual scenes, and regulatory citations.
-        </p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
         <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
           {/* Active Engine Indicator Pill */}
           <div className="flex items-center justify-between rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5">
@@ -263,45 +260,45 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
         </section>
 
-        {/* Right Sidebar: Sticky Grounding Context */}
-        <aside className="rise-in lg:sticky lg:top-5 self-start [animation-delay:80ms]">
+        {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
+        <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
-            <div className="border-b border-[var(--line)] bg-[#fafbf9] px-5 py-4">
+            <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-[13px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Available Context</span>
-                <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[11px] font-bold text-[var(--ok)]">
+                <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Available Context</span>
+                <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)]">
                   Grounding active
                 </span>
               </div>
-              <h2 className="mt-1 text-[18px] font-bold tracking-tight text-[var(--ink)]">{sourceDisplayName}</h2>
+              <h2 className="mt-0.5 text-[16px] font-bold tracking-tight text-[var(--ink)]">{sourceDisplayName}</h2>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-4 space-y-3">
               <ContextItem icon={Users} title={`Audience & Goal: ${audience}`} detail={`Campaign objective: ${goal}`} />
               <ContextItem icon={MonitorPlay} title={`Channel & Format (${uses.length})`} detail={uses.join(" · ")} />
               <ContextItem icon={Layers} title={`Focus Topics (${topics.length})`} detail={topics.join(" · ")} />
               <ContextItem icon={BookOpenCheck} title={sourceType === "dossier" ? "214 approved claims" : "Evidence coverage"} detail={sourceType === "dossier" ? "All statements cited against FDA/EMA approved label." : "Grounding verified from attached source."} />
-              <div className="mt-4 border-t border-[var(--line)] pt-4">
-                <label className="text-[13px] font-bold text-[var(--ink-muted)]" htmlFor="market">Market from source</label>
-                <SelectMenu value={market} onChange={setMarket} options={["United States", "India", "European Union", "United Kingdom", "Global / multiple markets"]} ariaLabel="Market from source" className="mt-1.5" renderIcon={() => <Globe2 className="size-[17px]" />} />
+              <div className="mt-3 border-t border-[var(--line)] pt-3">
+                <label className="text-[12.5px] font-bold text-[var(--ink-muted)]" htmlFor="market">Market from source</label>
+                <SelectMenu value={market} onChange={setMarket} options={["United States", "India", "European Union", "United Kingdom", "Global / multiple markets"]} ariaLabel="Market from source" className="mt-1" renderIcon={() => <Globe2 className="size-[15px]" />} />
               </div>
             </div>
-            <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[12.5px] leading-5 text-[var(--ink-muted)]">
-              Parameters from Step 1 are locked into this brief. The next screen will show the recommended content plan.
+            <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-4 py-2.5 text-[11.5px] leading-4 text-[var(--ink-muted)]">
+              Parameters from Step 1 are locked into this brief. The next screen will show the content plan.
             </div>
           </div>
 
           <Button
             onClick={preparePlan}
             size="lg"
-            className="group mt-3.5 h-[52px] w-full px-8 rounded-[14px] text-[15px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5"
+            className="group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5"
           >
             <span>Prepare content plan</span>
             <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
           </Button>
 
-          <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
-            <ShieldCheck className="size-4 text-[var(--brand)]" />
-            <span>Nothing is created until you confirm the plan.</span>
+          <div className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-[var(--ink-muted)]">
+            <ShieldCheck className="size-3.5 text-[var(--brand)]" />
+            <span>Nothing is created until you confirm the plan</span>
           </div>
         </aside>
       </div>

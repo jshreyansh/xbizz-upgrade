@@ -190,18 +190,15 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   const sampleDossiers = DOSSIERS.filter((d) => d.isSample);
 
   const content = (
-    <main className="mx-auto w-full max-w-[1280px] px-6 py-7 sm:px-8">
-      {/* Standardized Page Heading (No Badge) */}
-      <div className="mb-7">
-        <h1 className="text-[28px] font-[800] tracking-tight text-[var(--ink)] sm:text-[34px]">
+    <main className="mx-auto w-full max-w-[1280px] px-6 py-5 sm:px-8">
+      {/* Compact Page Heading (No Secondary Subheadline) */}
+      <div className="mb-4">
+        <h1 className="text-[20px] font-[800] tracking-tight text-[var(--ink)] sm:text-[22px]">
           Choose brand dossier &amp; goals
         </h1>
-        <p className="mt-1 text-[15px] text-[var(--ink-3)]">
-          Select a brand dossier or a SwishX sample to ground every claim, then configure your mandatory campaign parameters.
-        </p>
       </div>
 
-      {/* Standardized 2-Column Layout */}
+      {/* Standardized 2-Column Layout with Top-Pinned Sticky Sidebar */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
         {/* Left Column: Brand Dossiers & Sample Dossiers */}
         <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
@@ -378,28 +375,28 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
           </div>
         </section>
 
-        {/* Right Column: Sticky Mandatory Dropdowns Form */}
-        <aside className="rise-in lg:sticky lg:top-5 self-start [animation-delay:80ms]">
+        {/* Right Column: Sticky Mandatory Dropdowns Form (Fixed to Top) */}
+        <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             {/* Header */}
-            <div className="border-b border-[var(--line)] bg-[#fafbf9] px-5 py-4">
+            <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Configuration</span>
-                <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--ok)]">
+                <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Configuration</span>
+                <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)]">
                   Mandatory
                 </span>
               </div>
-              <h2 className="mt-1 text-[17px] font-bold tracking-tight text-[var(--ink)]">
+              <h2 className="mt-0.5 text-[16px] font-bold tracking-tight text-[var(--ink)]">
                 {activeDossier.name} Dossier
               </h2>
             </div>
 
             {/* Dropdowns Form */}
-            <div className="p-5 space-y-4">
+            <div className="p-4 space-y-3.5">
               {/* 1. Target Audience* */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
-                  <Users className="size-4 text-[var(--brand)]" />
+                <label className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
+                  <Users className="size-3.5 text-[var(--brand)]" />
                   Target Audience*
                 </label>
                 <SelectMenu
@@ -413,8 +410,8 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
               {/* 2. Campaign Goal* */}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
-                  <Target className="size-4 text-[var(--brand)]" />
+                <label className="mb-1 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
+                  <Target className="size-3.5 text-[var(--brand)]" />
                   Campaign Goal*
                 </label>
                 <SelectMenu
@@ -422,19 +419,19 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   onChange={(next) => setGoal(next)}
                   options={GOAL_OPTIONS}
                   ariaLabel="Campaign Goal"
-                  renderIcon={() => <Target className="size-4 text-[var(--brand)]" />}
+                  renderIcon={() => <Target className="size-3.5 text-[var(--brand)]" />}
                 />
               </div>
 
               {/* 3. Focus Topics* */}
               <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
-                    <Layers className="size-4 text-[var(--brand)]" />
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
+                    <Layers className="size-3.5 text-[var(--brand)]" />
                     Focus Topics*
                   </label>
                   {topics.length > 0 && (
-                    <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+                    <span className="text-[10.5px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-1.5 py-0.5 rounded-full border border-[var(--tint-line)]">
                       {topics.length} selected
                     </span>
                   )}
@@ -446,20 +443,20 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   ariaLabel="Focus Topics"
                   renderIcon={(item) => {
                     const Icon = topicIcons[item] || Pill;
-                    return <Icon className="size-4 text-[var(--brand)]" />;
+                    return <Icon className="size-3.5 text-[var(--brand)]" />;
                   }}
                 />
               </div>
 
               {/* 4. Intended Channel / Format* */}
               <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <label className="flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]">
-                    <MonitorPlay className="size-4 text-[var(--brand)]" />
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
+                    <MonitorPlay className="size-3.5 text-[var(--brand)]" />
                     Intended Channel / Format*
                   </label>
                   {uses.length > 0 && (
-                    <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+                    <span className="text-[10.5px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-1.5 py-0.5 rounded-full border border-[var(--tint-line)]">
                       {uses.length} selected
                     </span>
                   )}
@@ -475,8 +472,8 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             </div>
 
             {/* Grounding Footer Note */}
-            <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-5 py-4 text-[12.5px] leading-5 text-[var(--ink-muted)]">
-              All script statements and storyboard scenes will be tailored to this configuration.
+            <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-4 py-2.5 text-[11.5px] leading-4 text-[var(--ink-muted)]">
+              All statements and scenes will be tailored to this configuration.
             </div>
           </div>
 
@@ -485,13 +482,13 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             onClick={handleContinueToBrief}
             size="lg"
             disabled={!canContinue}
-            className="group mt-3.5 h-[52px] w-full px-8 rounded-[14px] text-[15px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+            className="group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           >
             <span>Continue to job brief</span>
             <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
           </Button>
 
-          <div className="mt-3 flex items-center justify-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
+          <div className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-[var(--ink-muted)]">
             {!canContinue ? (
               <span className="text-[var(--warn)] font-medium">
                 {!isDossierValid
@@ -506,7 +503,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               </span>
             ) : (
               <>
-                <ShieldCheck className="size-4 text-[var(--brand)]" />
+                <ShieldCheck className="size-3.5 text-[var(--brand)]" />
                 <span>All mandatory inputs configured</span>
               </>
             )}
