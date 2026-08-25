@@ -11,7 +11,7 @@ export function SwishXApplication() {
   const view = useWorkspaceStore((state) => state.view);
   const videoSubStage = useWorkspaceStore((state) => state.videoSubStage);
 
-  if (view === "create") {
+  if (view === "create" || view === "directions") {
     if (videoSubStage === "mode-select") {
       return (
         <AppShell pageTitle="Magic Video">
@@ -21,7 +21,6 @@ export function SwishXApplication() {
     }
     return <VideoCreationWizard />;
   }
-  if (view === "directions") return <VideoCreationWizard />;
   if (view === "studio") return <StudioScreen />;
 
   return (
