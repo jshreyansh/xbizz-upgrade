@@ -1101,16 +1101,16 @@ export function StudioScreen() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 flex flex-col overflow-hidden">
             {/* ── TAB 1: DIRECT / CHAT (Unified Component Across Both Modes - Always 1st) ── */}
             {activeTab === "assistant" && (
-              <div className="flex min-h-full flex-col p-4 space-y-3.5">
+              <div className="flex flex-1 flex-col h-full min-h-0 p-3.5 gap-2.5 overflow-hidden">
                 {/* Chat Top Banner */}
-                <div className="rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-3">
+                <div className="shrink-0 rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-3">
                   <div className="flex items-center gap-2 text-[12px] font-bold text-[var(--brand-deep)]">
                     <Sparkles className="size-3.5 text-[var(--brand)]" />
                     <span>Direct with SwishX</span>
-                    <span className="ml-auto rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.2 text-[9px] font-bold">
+                    <span className="ml-auto rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-[9px] font-bold">
                       Online
                     </span>
                   </div>
@@ -1119,8 +1119,8 @@ export function StudioScreen() {
                   </p>
                 </div>
 
-                {/* Messages Feed: Clean natural chat bubbles with proper max-width */}
-                <div className="flex-1 flex flex-col space-y-3 overflow-y-auto max-h-[380px] pr-1">
+                {/* Messages Feed: Fills entire available vertical space seamlessly */}
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1">
                   {chatMessages.map((msg, idx) => (
                     <div
                       key={idx}
@@ -1131,7 +1131,7 @@ export function StudioScreen() {
                     >
                       <div
                         className={cn(
-                          "rounded-[16px] px-3.5 py-2.5 text-[12px] shadow-2xs",
+                          "rounded-[16px] px-3.5 py-2.5 text-[12px] shadow-2xs break-words",
                           msg.role === "user"
                             ? "bg-[var(--brand)] text-white font-medium max-w-[85%] rounded-br-xs text-left"
                             : "bg-[#f4f7f4] border border-black/[0.06] text-[var(--ink)] max-w-[92%] rounded-bl-xs"
@@ -1147,59 +1147,59 @@ export function StudioScreen() {
                       </div>
                     </div>
                   ))}
+
+                  {/* Suggestion Prompt Chips - ONLY shown when chat has not yet started */}
+                  {chatMessages.length === 0 && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                          Suggested Prompts
+                        </span>
+                        <span className="text-[9px] text-[var(--ink-muted)]">Click to apply</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {[
+                          "Add our company values",
+                          "Include our clinical trial data",
+                          "Make the welcome feel warmer",
+                          "Apply brand compliance palette",
+                        ].map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => {
+                              setDirectorInput("");
+                              setChatMessages((prev) => [...prev, { role: "user", text: suggestion }]);
+                              setTimeout(() => {
+                                setChatMessages((prev) => [
+                                  ...prev,
+                                  {
+                                    role: "swishx",
+                                    text: `Applied "${suggestion}" across Scene ${selectedScene.number} and verified all 6 source claims.`,
+                                  },
+                                ]);
+                              }, 600);
+                            }}
+                            className="w-full flex items-center justify-between text-left rounded-xl border border-black/[0.06] bg-[#fafbf9] px-3.5 py-2.5 text-[11.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] transition-all cursor-pointer group"
+                          >
+                            <span className="truncate">{suggestion}</span>
+                            <ChevronRight className="size-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Suggestion Prompt Chips - ONLY shown when chat has not yet started */}
-                {chatMessages.length === 0 && (
-                  <div className="space-y-2 pt-2 border-t border-black/[0.06]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-                        Suggested Prompts
-                      </span>
-                      <span className="text-[9px] text-[var(--ink-muted)]">Click to apply</span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-1.5">
-                      {[
-                        "Add our company values",
-                        "Include our clinical trial data",
-                        "Make the welcome feel warmer",
-                        "Apply brand compliance palette",
-                      ].map((suggestion) => (
-                        <button
-                          key={suggestion}
-                          type="button"
-                          onClick={() => {
-                            setDirectorInput("");
-                            setChatMessages((prev) => [...prev, { role: "user", text: suggestion }]);
-                            setTimeout(() => {
-                              setChatMessages((prev) => [
-                                ...prev,
-                                {
-                                  role: "swishx",
-                                  text: `Applied "${suggestion}" across Scene ${selectedScene.number} and verified all 6 source claims.`,
-                                },
-                              ]);
-                            }, 600);
-                          }}
-                          className="w-full flex items-center justify-between text-left rounded-xl border border-black/[0.06] bg-[#fafbf9] px-3.5 py-2.5 text-[11.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] transition-all cursor-pointer group"
-                        >
-                          <span className="truncate">{suggestion}</span>
-                          <ChevronRight className="size-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Input Field & Contextual Widgets */}
-                <div className="mt-auto pt-2 space-y-2">
+                {/* Input Field & Contextual Widgets (Shrink-0 anchored at bottom) */}
+                <div className="shrink-0 pt-1 space-y-2">
                   {/* Attached Context Badges */}
                   {(selectedBox || timeRange) && (
                     <div className="flex flex-wrap items-center gap-1.5 px-1">
                       {selectedBox && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-[var(--tint)] border border-[var(--brand)]/30 px-2 py-1 text-[11px] font-bold text-[var(--brand-deep)] shadow-2xs">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-[var(--tint)] border border-[var(--brand)]/30 px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand-deep)] shadow-2xs">
                           <ScanLine className="size-3 text-[var(--brand)]" />
-                          <span>Video Area ({Math.round(selectedBox.width)}%×{Math.round(selectedBox.height)}%)</span>
+                          <span>Area ({Math.round(selectedBox.width)}%×{Math.round(selectedBox.height)}%)</span>
                           <button
                             type="button"
                             onClick={() => setSelectedBox(null)}
@@ -1210,9 +1210,9 @@ export function StudioScreen() {
                         </span>
                       )}
                       {timeRange && (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 border border-blue-200 px-2 py-1 text-[11px] font-bold text-blue-800 shadow-2xs">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10.5px] font-bold text-blue-800 shadow-2xs">
                           <Timer className="size-3 text-blue-600" />
-                          <span>Range: {timeRange.start}s – {timeRange.end}s</span>
+                          <span>{timeRange.start}s – {timeRange.end}s</span>
                           <button
                             type="button"
                             onClick={() => setTimeRange(null)}
@@ -1225,27 +1225,27 @@ export function StudioScreen() {
                     </div>
                   )}
 
-                  {/* Time Range Widget Popover */}
+                  {/* Time Range Widget Popover (Compact & Strictly Fitting Panel) */}
                   {showTimePicker && (
-                    <div className="rounded-xl border border-black/[0.08] bg-white p-3 shadow-lg space-y-2.5 animate-in fade-in zoom-in-95">
-                      <div className="flex items-center justify-between border-b border-black/[0.05] pb-2">
-                        <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink)]">
+                    <div className="rounded-xl border border-black/[0.08] bg-white p-3 shadow-lg space-y-2 animate-in fade-in zoom-in-95">
+                      <div className="flex items-center justify-between border-b border-black/[0.05] pb-1.5">
+                        <div className="flex items-center gap-1.5 text-[10.5px] font-extrabold uppercase tracking-wider text-[var(--ink)]">
                           <Timer className="size-3.5 text-[var(--brand)]" />
                           <span>Target Scene Duration</span>
                         </div>
                         <button
                           type="button"
                           onClick={() => setShowTimePicker(false)}
-                          className="text-[11px] text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                          className="text-[11px] text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer"
                         >
                           ✕
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                      <div className="grid grid-cols-3 gap-1 text-[10.5px]">
                         {[
-                          { start: 0, end: 5, label: "0s – 5s (Intro)" },
-                          { start: 3, end: 9, label: "3s – 9s (Key MoA)" },
+                          { start: 0, end: 5, label: "0s–5s" },
+                          { start: 3, end: 9, label: "3s–9s" },
                           { start: 0, end: selectedScene.duration, label: `Full (${selectedScene.duration}s)` },
                         ].map((preset) => (
                           <button
@@ -1255,96 +1255,97 @@ export function StudioScreen() {
                               setTimeRange({ start: preset.start, end: preset.end });
                               setShowTimePicker(false);
                             }}
-                            className="rounded-lg border border-black/[0.06] bg-[#fafbf9] p-1.5 text-center font-bold text-[var(--ink-2)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] transition cursor-pointer"
+                            className="rounded-lg border border-black/[0.06] bg-[#fafbf9] py-1 text-center font-bold text-[var(--ink-2)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] transition cursor-pointer"
                           >
                             {preset.label}
                           </button>
                         ))}
                       </div>
 
-                      <div className="flex items-center gap-2 pt-1">
-                        <div className="flex-1 flex items-center gap-1 bg-[#f4f7f4] rounded-lg px-2 py-1 text-[11.5px] border border-black/5">
-                          <span className="text-[var(--ink-muted)] font-semibold">From:</span>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <div className="flex-1 flex items-center gap-1 bg-[#f4f7f4] rounded-lg px-2 py-1 text-[11px] border border-black/5 min-w-0">
+                          <span className="text-[var(--ink-muted)] font-medium">From</span>
                           <input
                             type="number"
                             min={0}
                             max={selectedScene.duration - 1}
                             defaultValue={timeRange?.start ?? 0}
                             id="time-range-start"
-                            className="w-10 bg-transparent text-center font-bold text-[var(--ink)] outline-none"
+                            className="w-8 bg-transparent text-center font-bold text-[var(--ink)] outline-none"
                           />
                           <span>s</span>
                         </div>
-                        <span className="text-[var(--ink-muted)] font-bold">to</span>
-                        <div className="flex-1 flex items-center gap-1 bg-[#f4f7f4] rounded-lg px-2 py-1 text-[11.5px] border border-black/5">
-                          <span className="text-[var(--ink-muted)] font-semibold">To:</span>
+                        <span className="text-[var(--ink-muted)] font-bold text-[10px]">to</span>
+                        <div className="flex-1 flex items-center gap-1 bg-[#f4f7f4] rounded-lg px-2 py-1 text-[11px] border border-black/5 min-w-0">
+                          <span className="text-[var(--ink-muted)] font-medium">To</span>
                           <input
                             type="number"
                             min={1}
                             max={selectedScene.duration}
                             defaultValue={timeRange?.end ?? selectedScene.duration}
                             id="time-range-end"
-                            className="w-10 bg-transparent text-center font-bold text-[var(--ink)] outline-none"
+                            className="w-8 bg-transparent text-center font-bold text-[var(--ink)] outline-none"
                           />
                           <span>s</span>
                         </div>
-                        <Button
-                          size="sm"
+                        <button
+                          type="button"
                           onClick={() => {
                             const startVal = Number((document.getElementById("time-range-start") as HTMLInputElement)?.value || 0);
                             const endVal = Number((document.getElementById("time-range-end") as HTMLInputElement)?.value || selectedScene.duration);
                             setTimeRange({ start: Math.min(startVal, endVal), end: Math.max(startVal, endVal) });
                             setShowTimePicker(false);
                           }}
-                          className="h-8 bg-[var(--brand)] text-white font-bold text-[11.5px] px-3"
+                          className="grid size-7.5 shrink-0 place-items-center rounded-lg bg-[var(--brand)] text-white shadow-2xs hover:bg-[var(--brand-deep)] transition cursor-pointer"
+                          title="Apply duration range"
                         >
-                          Apply
-                        </Button>
+                          <Check className="size-3.5" />
+                        </button>
                       </div>
                     </div>
                   )}
 
-                  {/* Main Input Box with Integrated Tool Widgets */}
+                  {/* Main Input Box */}
                   <div className="flex items-center gap-1.5 rounded-2xl border border-black/[0.12] bg-white p-1.5 pl-2.5 focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand-soft)] shadow-xs">
-                    {/* Area Selector Icon Trigger */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!isEditor) {
-                          setToMessage("Switching to Editor canvas for video area selection");
-                          setStudioMode("editor");
-                        }
-                        setIsSelectingRegion(!isSelectingRegion);
-                        if (!isSelectingRegion) {
-                          setToMessage("Click and drag across the video to select target area");
-                          setTimeout(() => setToMessage(null), 3000);
-                        }
-                      }}
-                      title="Select video area to edit"
-                      className={cn(
-                        "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer",
-                        isSelectingRegion || selectedBox
-                          ? "bg-[var(--brand)] text-white shadow-xs"
-                          : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--brand)]"
-                      )}
-                    >
-                      <ScanLine className="size-4" />
-                    </button>
+                    {/* Area Selector Icon Trigger: ONLY visible in Editor Mode */}
+                    {isEditor && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsSelectingRegion(!isSelectingRegion);
+                          if (!isSelectingRegion) {
+                            setToMessage("Click and drag across the video to select target area");
+                            setTimeout(() => setToMessage(null), 3000);
+                          }
+                        }}
+                        title="Select video area to edit"
+                        className={cn(
+                          "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer shrink-0",
+                          isSelectingRegion || selectedBox
+                            ? "bg-[var(--brand)] text-white shadow-xs"
+                            : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--brand)]"
+                        )}
+                      >
+                        <ScanLine className="size-4" />
+                      </button>
+                    )}
 
-                    {/* Time Range Widget Trigger */}
-                    <button
-                      type="button"
-                      onClick={() => setShowTimePicker(!showTimePicker)}
-                      title="Add scene timestamp / duration range"
-                      className={cn(
-                        "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer",
-                        timeRange || showTimePicker
-                          ? "bg-blue-600 text-white shadow-xs"
-                          : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-blue-600"
-                      )}
-                    >
-                      <Timer className="size-4" />
-                    </button>
+                    {/* Time Range Widget Trigger: ONLY visible in Editor Mode */}
+                    {isEditor && (
+                      <button
+                        type="button"
+                        onClick={() => setShowTimePicker(!showTimePicker)}
+                        title="Add scene timestamp / duration range"
+                        className={cn(
+                          "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer shrink-0",
+                          timeRange || showTimePicker
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-blue-600"
+                        )}
+                      >
+                        <Timer className="size-4" />
+                      </button>
+                    )}
 
                     <input
                       type="text"
