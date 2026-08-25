@@ -273,9 +273,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   const content = (
     <main className="mx-auto w-full max-w-[1280px] px-6 py-6 sm:px-8">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] items-start w-full">
         {/* Left Column: Plan Sections */}
-        <section className="rise-in space-y-3 [animation-delay:50ms]">
+        <section className="min-w-0 w-full space-y-3">
             <PlanSection icon={Film} title="Creative treatment" summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`} status={confirmedTreatment ? "Confirmed" : "Needs you"} open={openSection === "treatment"} onToggle={() => toggleSection("treatment")} tone={confirmedTreatment ? "done" : "attention"}>
               <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5"><div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div><p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p></div>
               <div className="mt-3 grid gap-2.5">
@@ -348,7 +348,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           </section>
 
           {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
-          <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:90ms]">
+          <aside className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-[76px] self-start">
             <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
               <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
                 <div className="flex items-center justify-between">

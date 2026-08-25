@@ -176,9 +176,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   const content = (
     <main className="mx-auto w-full max-w-[1280px] px-6 py-6 sm:px-8">
       {/* Standardized 2-Column Layout with Top-Pinned Sticky Sidebar */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] items-start w-full">
         {/* Left Column: Brand Dossiers & Sample Dossiers */}
-        <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
+        <section className="squircle-card min-w-0 w-full border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
             {/* Group 1: Workspace Brand Dossiers */}
             <div>
               <div className="flex items-center justify-between mb-3.5">
@@ -353,7 +353,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
           </section>
 
         {/* Right Column: Sticky Mandatory Dropdowns Form (Fixed to Top) */}
-        <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">
+        <aside className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-[76px] self-start">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             {/* Header */}
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">

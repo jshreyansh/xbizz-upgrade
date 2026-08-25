@@ -24,7 +24,7 @@ export function VideoWizardHeader({
   const progressPercent = (currentStep / 3) * 100;
 
   return (
-    <header className="sticky top-0 z-40 relative flex h-[60px] w-full shrink-0 items-center justify-between bg-white/95 px-7 backdrop-blur-md transition-all duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+    <header className="sticky top-0 z-40 relative flex h-[60px] w-full shrink-0 items-center justify-between bg-white px-7 border-b border-[#eef0eb] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
       {/* Left: Clean Back Navigation (Fixed Width) */}
       <div className="flex items-center w-[160px]">
         <button
@@ -37,15 +37,12 @@ export function VideoWizardHeader({
         </button>
       </div>
 
-      {/* Center: Step Heading + 'Step X of 3' Badge */}
-      <div
-        key={currentStep}
-        className="flex items-center justify-center gap-2.5 flex-1 step-transition"
-      >
-        <h1 className="text-[16px] font-[800] tracking-tight text-[var(--ink)] sm:text-[17px]">
+      {/* Center: Step Heading + 'Step X of 3' Badge (Rock-Solid Persistent, No Remounting) */}
+      <div className="flex items-center justify-center gap-2.5 flex-1 min-w-0">
+        <h1 className="text-[16px] font-[800] tracking-tight text-[var(--ink)] sm:text-[17px] truncate">
           {currentHeading}
         </h1>
-        <span className="rounded-full bg-[#f2f4f2] px-2.5 py-0.5 text-[11.5px] font-bold text-[var(--ink-3)] border border-[#e5e7eb]">
+        <span className="shrink-0 rounded-full bg-[#f2f4f2] px-2.5 py-0.5 text-[11.5px] font-bold text-[var(--ink-3)] border border-[#e5e7eb]">
           Step {currentStep} of 3
         </span>
       </div>
