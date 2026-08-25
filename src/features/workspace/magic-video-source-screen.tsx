@@ -14,8 +14,10 @@ interface DossierItem {
   market: string;
   sections: number;
   claims: number;
-  status: string;
+  heldOut: number;
   gradient: string;
+  avatarBg: string;
+  skeletonWidths: number[];
 }
 
 const DOSSIERS: DossierItem[] = [
@@ -26,8 +28,10 @@ const DOSSIERS: DossierItem[] = [
     market: "🇺🇸 US · FDA",
     sections: 18,
     claims: 214,
-    status: "Verified",
+    heldOut: 0,
     gradient: "linear-gradient(140deg,#3b82f6,#1d4ed8)",
+    avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
+    skeletonWidths: [88, 72, 94, 60, 80],
   },
   {
     id: "onkavia",
@@ -36,8 +40,10 @@ const DOSSIERS: DossierItem[] = [
     market: "🇪🇺 EU · EMA",
     sections: 19,
     claims: 188,
-    status: "Verified",
+    heldOut: 0,
     gradient: "linear-gradient(140deg,#10b981,#059669)",
+    avatarBg: "linear-gradient(140deg,#22c07a,#12784a)",
+    skeletonWidths: [92, 65, 84, 55, 78],
   },
   {
     id: "nirvexa",
@@ -46,8 +52,10 @@ const DOSSIERS: DossierItem[] = [
     market: "🇬🇧 UK · MHRA",
     sections: 16,
     claims: 142,
-    status: "Draft v2",
+    heldOut: 2,
     gradient: "linear-gradient(140deg,#8b5cf6,#6d28d9)",
+    avatarBg: "linear-gradient(140deg,#9b6bff,#5b21b6)",
+    skeletonWidths: [80, 88, 60, 90, 70],
   },
 ];
 
@@ -110,7 +118,7 @@ export function MagicVideoSourceScreen() {
 
   return (
     <div className="page-enter min-h-screen bg-[#f7f8f6] pb-24">
-      {/* Consistent 3-Step Header (NO continue button in header) */}
+      {/* Stable 3-Step Header without Top CTA */}
       <VideoWizardHeader
         currentStep={1}
         onBack={handleBackToMode}
@@ -119,11 +127,11 @@ export function MagicVideoSourceScreen() {
       />
 
       {/* Main Content */}
-      <main className="mx-auto w-full max-w-[940px] px-6 py-8">
+      <main className="mx-auto w-full max-w-[960px] px-6 py-8">
         {/* Title */}
         <div className="mb-6">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-0.5 text-[12px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-0.5 text-[11.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
               <ShieldCheck className="size-3.5 text-[var(--brand)]" /> Step 1 of 3 · Grounded Evidence
             </span>
           </div>
@@ -131,7 +139,7 @@ export function MagicVideoSourceScreen() {
             Choose evidence source
           </h1>
           <p className="mt-1 text-[15px] text-[var(--ink-3)]">
-            Every clinical statement, claim, and on-screen citation will be verified against this source.
+            Every clinical statement and citation in your video will be verified against this source.
           </p>
         </div>
 
@@ -162,15 +170,15 @@ export function MagicVideoSourceScreen() {
           })}
         </div>
 
-        {/* Tab 1: Brand Dossier Cards */}
+        {/* Tab 1: Brand Dossier Cards (Elevated with beat-dossier.tsx skeleton preview) */}
         {sourceType === "dossier" && (
           <div className="rise-in mt-6 space-y-4">
             <div className="flex items-center justify-between text-[12px] font-semibold text-[var(--ink-3)]">
               <span>Select an approved dossier ({DOSSIERS.length} available)</span>
-              <span className="font-bold text-[var(--ok)]">✓ Cited against regulatory label</span>
+              <span className="font-bold text-[var(--ok)]">✓ 100% cited against regulatory label</span>
             </div>
 
-            <div className="grid gap-3.5 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-3">
               {DOSSIERS.map((d) => {
                 const isSelected = selectedDossier === d.id;
                 return (
@@ -185,12 +193,18 @@ export function MagicVideoSourceScreen() {
                   >
                     {/* Top Row: Avatar & Radio */}
                     <div className="flex items-center justify-between">
-                      <span
-                        className="grid size-10 place-items-center rounded-xl text-white font-extrabold text-[13px] shadow-sm"
-                        style={{ background: d.gradient }}
-                      >
-                        {d.name.slice(0, 2).toUpperCase()}
-                      </span>
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className="grid size-10 place-items-center rounded-xl text-white font-extrabold text-[13px] shadow-sm"
+                          style={{ background: d.avatarBg }}
+                        >
+                          {d.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div>
+                          <h3 className="text-[16.5px] font-bold text-[var(--ink)]">{d.name}</h3>
+                          <span className="text-[12px] italic text-[var(--ink-3)]">{d.molecule}</span>
+                        </div>
+                      </div>
                       <span
                         className={`grid size-5 place-items-center rounded-full border transition ${
                           isSelected
@@ -202,19 +216,32 @@ export function MagicVideoSourceScreen() {
                       </span>
                     </div>
 
-                    {/* Brand Info */}
-                    <div className="mt-3.5">
-                      <h3 className="text-[17px] font-bold text-[var(--ink)]">{d.name}</h3>
-                      <span className="text-[12.5px] italic text-[var(--ink-3)]">{d.molecule}</span>
+                    {/* Dossier Document Skeleton Preview (inspired by beat-dossier.tsx) */}
+                    <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-3 border border-black/[0.04]">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-[var(--ink-3)] mb-2">
+                        <span>Brand Dossier</span>
+                        <span>{d.sections} sections</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        {d.skeletonWidths.map((w, i) => (
+                          <div key={i} className="flex items-center gap-1">
+                            <div
+                              className="h-1.5 rounded-full bg-black/10"
+                              style={{ width: `${w}%` }}
+                            />
+                            <sup className="text-[9px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Meta Chips */}
-                    <div className="mt-4 flex flex-wrap items-center gap-1.5 border-t border-[var(--hair)] pt-3 text-[12px]">
-                      <span className="rounded-full bg-white px-2.5 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
+                    {/* Footer Stats Row */}
+                    <div className="mt-4 flex items-center justify-between border-t border-[var(--hair)] pt-2.5 text-[12px]">
+                      <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
                         {d.market}
                       </span>
-                      <span className="rounded-full bg-white px-2.5 py-0.5 font-bold text-[var(--ok)] border border-[var(--ok-line)]">
-                        {d.claims} cited claims
+                      <span className="font-bold text-[var(--ok)]">
+                        {d.claims} claims cited
                       </span>
                     </div>
                   </div>
@@ -253,11 +280,29 @@ export function MagicVideoSourceScreen() {
               />
             </div>
 
-            <div className="mt-3.5 flex flex-wrap items-center gap-2 text-[12px] text-[var(--ink-3)]">
-              <span className="font-semibold text-[var(--ink-4)]">Supported sources:</span>
-              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 font-medium text-[var(--ink-2)] border border-[var(--hair)]">ClinicalTrials.gov</span>
-              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 font-medium text-[var(--ink-2)] border border-[var(--hair)]">PubMed / NCBI</span>
-              <span className="rounded-full bg-[#f4f5f3] px-2.5 py-0.5 font-medium text-[var(--ink-2)] border border-[var(--hair)]">FDA / EMA Labels</span>
+            {/* Source Badges inspired by beat-sources.tsx */}
+            <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
+              {[
+                { initials: "FDA", bg: "linear-gradient(140deg,#4f83ff,#1d4ed8)", label: "Approved Label", desc: "Indications & safety" },
+                { initials: "PM", bg: "linear-gradient(140deg,#22c07a,#12784a)", label: "PubMed Central", desc: "Peer-reviewed papers" },
+                { initials: "CT", bg: "linear-gradient(140deg,#9b6bff,#5b21b6)", label: "ClinicalTrials.gov", desc: "Registered readouts" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="flex items-center gap-2.5 rounded-[12px] bg-[#f8faf8] p-2.5 border border-[var(--hair)]"
+                >
+                  <span
+                    className="grid size-7 place-items-center rounded-md text-[9.5px] font-extrabold text-white shrink-0"
+                    style={{ background: s.bg }}
+                  >
+                    {s.initials}
+                  </span>
+                  <div className="min-w-0">
+                    <b className="block truncate text-[12px] text-[var(--ink)]">{s.label}</b>
+                    <span className="block truncate text-[11px] text-[var(--ink-4)]">{s.desc}</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -285,7 +330,7 @@ export function MagicVideoSourceScreen() {
           </div>
         )}
 
-        {/* Bottom Primary Action CTA (Positioned cleanly at bottom, NOT in header) */}
+        {/* Bottom Primary Action CTA */}
         <div className="mt-8 flex justify-end">
           <Button
             onClick={handleContinue}
