@@ -1,4 +1,18 @@
-import type { BrandDossier } from "@/features/dossiers/dossier-types";
+import type { BrandDossier, DossierApproval } from "@/features/dossiers/dossier-types";
+
+/** Fresh copy of a fully-signed-off approval trail, for dossiers seeded as already live. */
+function approvedByTeam(): DossierApproval[] {
+  return [
+    { role: "MLR Reviewer", name: "MLR Reviewer", initials: "MR", gradient: "linear-gradient(140deg,#22c07a,#12784a)", status: "approved" },
+    { role: "Project Manager", name: "Project Manager", initials: "PM", gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)", status: "approved" },
+    { role: "Brand Lead", name: "You", initials: "N", gradient: "linear-gradient(140deg,#3a3f4b,#0d1017)", status: "approved" },
+  ];
+}
+
+/** Fresh copy of an unstarted approval trail, for a dossier that hasn't been reviewed yet. */
+function pendingApprovals(): DossierApproval[] {
+  return approvedByTeam().map((a) => ({ ...a, status: "pending" as const }));
+}
 
 export const MOCK_DOSSIERS: BrandDossier[] = [
   {
@@ -17,6 +31,7 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 8,
     lastUpdated: "Today, 09:15 AM",
     status: "complete",
+    approvals: approvedByTeam(),
     sources: [
       {
         id: "src-fda",
@@ -124,6 +139,7 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 7,
     lastUpdated: "Yesterday, 04:30 PM",
     status: "complete",
+    approvals: approvedByTeam(),
     sources: [
       {
         id: "src-ema",
@@ -183,6 +199,7 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 6,
     lastUpdated: "3 days ago",
     status: "complete",
+    approvals: approvedByTeam(),
     sources: [
       {
         id: "src-mhra",
@@ -225,6 +242,7 @@ export const NEW_DOSSIER_TEMPLATE: BrandDossier = {
   sourcesCount: 6,
   lastUpdated: "Just now",
   status: "complete",
+  approvals: pendingApprovals(),
   sources: [
     {
       id: "av-label",

@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { BrandDossier, DossierWizardStep, RegulatoryBody } from "@/features/dossiers/dossier-types";
+import type { BrandDossier, DossierApproval, DossierWizardStep, RegulatoryBody } from "@/features/dossiers/dossier-types";
 import { NEW_DOSSIER_TEMPLATE } from "@/features/dossiers/mock-dossiers";
 import { BrandLoader } from "@/components/ui/brand-loader";
+
+const PENDING_APPROVALS: DossierApproval[] = [
+  { role: "MLR Reviewer", name: "MLR Reviewer", initials: "MR", gradient: "linear-gradient(140deg,#22c07a,#12784a)", status: "pending" },
+  { role: "Project Manager", name: "Project Manager", initials: "PM", gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)", status: "pending" },
+  { role: "Brand Lead", name: "You", initials: "N", gradient: "linear-gradient(140deg,#3a3f4b,#0d1017)", status: "pending" },
+];
 
 interface DossierWizardProps {
   initialDossier?: BrandDossier | null;
@@ -45,6 +51,9 @@ export function DossierWizard({
   const [activeSectionId, setActiveSectionId] = useState<string>(activeDossier.sections[0]?.id || "sec-a1");
   const [writerProgress, setWriterProgress] = useState(0);
   const [currentWritingSection, setCurrentWritingSection] = useState("Indications & Target Specificity");
+  const [approvals, setApprovals] = useState<DossierApproval[]>(PENDING_APPROVALS);
+  const [changesNote, setChangesNote] = useState("");
+  const [showChangesForm, setShowChangesForm] = useState(false);
 
   // Step 4: Medical Writer streaming generation simulation
   useEffect(() => {
@@ -54,8 +63,8 @@ export function DossierWizard({
           if (prev >= 100) {
             clearInterval(interval);
             setTimeout(() => {
-              setStep("view");
-              onDossierCreated(activeDossier);
+              setApprovals(PENDING_APPROVALS.map((a) => ({ ...a })));
+              setStep("approval");
             }, 600);
             return 100;
           }
@@ -68,7 +77,38 @@ export function DossierWizard({
       }, 400);
       return () => clearInterval(interval);
     }
-  }, [step, activeDossier, onDossierCreated]);
+  }, [step]);
+
+  // Step 5: team reviews the dossier — MLR and the Project Manager sign off
+  // automatically; the Brand Lead ("You") gives the final approval by hand.
+  useEffect(() => {
+    if (step !== "approval") return;
+    const timers = [
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "MLR Reviewer" ? { ...a, status: "reviewing" } : a))), 400),
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "MLR Reviewer" ? { ...a, status: "approved" } : a))), 1600),
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Project Manager" ? { ...a, status: "reviewing" } : a))), 900),
+      setTimeout(() => setApprovals((prev) => prev.map((a) => (a.role === "Project Manager" ? { ...a, status: "approved" } : a))), 2300),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [step]);
+
+  const teamReady = approvals.filter((a) => a.role !== "Brand Lead").every((a) => a.status === "approved");
+
+  function approveDossier() {
+    const finalApprovals = approvals.map((a) => (a.role === "Brand Lead" ? { ...a, status: "approved" as const } : a));
+    const approvedDossier: BrandDossier = { ...activeDossier, status: "complete", approvals: finalApprovals };
+    setApprovals(finalApprovals);
+    setActiveDossier(approvedDossier);
+    onDossierCreated(approvedDossier);
+    setStep("view");
+  }
+
+  function submitChangesRequest() {
+    setApprovals((prev) => prev.map((a) => (a.role === "Brand Lead" ? { ...a, status: "changes-requested" } : a)));
+    setShowChangesForm(false);
+    setChangesNote("");
+    setStep("plan");
+  }
 
   const toggleSection = (id: string) => {
     setSelectedSections((prev) =>
@@ -81,11 +121,11 @@ export function DossierWizard({
       {/* Wizard Header / Breadcrumb */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--hair)", paddingBottom: 16 }}>
         <button
-          onClick={step === "view" && initialDossier ? onBackToList : () => {
+          onClick={step === "view" ? onBackToList : () => {
             if (step === "product") onBackToList();
             else if (step === "sources") setStep("product");
             else if (step === "plan") setStep("sources");
-            else if (step === "writing") setStep("plan");
+            else if (step === "writing" || step === "approval") setStep("plan");
             else setStep("list");
           }}
           style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 700, color: "var(--ink-3)" }}
@@ -96,7 +136,7 @@ export function DossierWizard({
           {step === "view" ? "Back to Brand Dossiers" : "Back"}
         </button>
 
-        {step !== "view" && step !== "writing" && (
+        {step !== "view" && step !== "writing" && step !== "approval" && (
           <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 12.5, fontWeight: 700 }}>
             <span style={{ color: step === "product" ? "var(--brand)" : "var(--ink-4)" }}>1. Product</span>
             <span style={{ color: "var(--hair-3)" }}>/</span>
@@ -112,7 +152,7 @@ export function DossierWizard({
         <div className="rise-in max-w-2xl mx-auto space-y-6">
           <div>
             <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--brand)", fontWeight: 800, marginBottom: 4 }}>
-              Step 1 of 4
+              Step 1 of 5
             </div>
             <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 6px" }}>
               Define the Product &amp; Regulatory Anchor
@@ -204,7 +244,7 @@ export function DossierWizard({
         <div className="rise-in max-w-3xl mx-auto space-y-6">
           <div>
             <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--brand)", fontWeight: 800, marginBottom: 4 }}>
-              Step 2 of 4
+              Step 2 of 5
             </div>
             <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 6px" }}>
               Approved Sources &amp; Clinical Allow-list
@@ -285,7 +325,7 @@ export function DossierWizard({
         <div className="rise-in max-w-3xl mx-auto space-y-6">
           <div>
             <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--brand)", fontWeight: 800, marginBottom: 4 }}>
-              Step 3 of 4
+              Step 3 of 5
             </div>
             <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 6px" }}>
               Medical Writer 18-Section Content Plan
@@ -368,7 +408,130 @@ export function DossierWizard({
         </div>
       )}
 
-      {/* ── STEP 5: MASTER DOSSIER VIEW ───────────────────────────── */}
+      {/* ── STEP 5: TEAM APPROVAL ───────────────────────────────────── */}
+      {step === "approval" && (
+        <div className="rise-in max-w-xl mx-auto space-y-6 py-8">
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--brand)", fontWeight: 800, marginBottom: 4 }}>
+              Step 5 of 5
+            </div>
+            <h2 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: "0 0 8px" }}>
+              Team review before {activeDossier.brandName} goes live
+            </h2>
+            <p style={{ fontSize: 14.5, color: "var(--ink-3)", margin: "0 auto", maxWidth: "48ch" }}>
+              Nothing built from this dossier ships until every reviewer below signs off.
+            </p>
+          </div>
+
+          <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", overflow: "hidden" }}>
+            {approvals.map((a, i) => (
+              <div
+                key={a.role}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 14,
+                  padding: "16px 20px",
+                  borderBottom: i < approvals.length - 1 ? "1px solid var(--hair)" : "none",
+                }}
+              >
+                <span
+                  style={{
+                    width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                    background: a.gradient, display: "grid", placeItems: "center",
+                    color: "#fff", fontSize: 12, fontWeight: 800,
+                  }}
+                >
+                  {a.initials}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <b style={{ fontSize: 14, fontWeight: 750, display: "block" }}>{a.name}</b>
+                  <span style={{ fontSize: 12, color: "var(--ink-4)" }}>{a.role}</span>
+                </div>
+                {a.status === "pending" && (
+                  <span style={{ fontSize: 11.5, fontWeight: 750, color: "var(--ink-4)", background: "var(--hair)", padding: "4px 10px", borderRadius: 99 }}>
+                    Pending
+                  </span>
+                )}
+                {a.status === "reviewing" && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 750, color: "var(--brand-deep)", background: "var(--tint)", padding: "4px 10px", borderRadius: 99 }}>
+                    <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} className="animate-brand-spin" style={{ animationDuration: "1s" }}>
+                      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                    </svg>
+                    Reviewing…
+                  </span>
+                )}
+                {a.status === "approved" && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11.5, fontWeight: 750, color: "var(--ok)", background: "var(--ok-bg)", border: "1px solid var(--ok-line)", padding: "4px 10px", borderRadius: 99 }}>
+                    <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12l6 6L20 5" /></svg>
+                    Approved
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {!showChangesForm ? (
+            <div className="space-y-3">
+              <button
+                onClick={approveDossier}
+                disabled={!teamReady}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  borderRadius: "var(--r)",
+                  fontWeight: 750,
+                  fontSize: 14.5,
+                  background: teamReady ? "linear-gradient(180deg,#ff5b2d,var(--brand))" : "var(--hair-2)",
+                  color: teamReady ? "#fff" : "var(--ink-4)",
+                  border: "none",
+                  boxShadow: teamReady ? "0 12px 26px -14px rgba(253,72,22,.9)" : "none",
+                  cursor: teamReady ? "pointer" : "default",
+                  transition: ".2s var(--e)",
+                }}
+              >
+                {teamReady ? "✓ Approve & Publish Dossier →" : "Waiting on the team to finish reviewing…"}
+              </button>
+              <button
+                onClick={() => setShowChangesForm(true)}
+                style={{ width: "100%", padding: "12px", borderRadius: "var(--r)", fontWeight: 650, fontSize: 13.5, background: "#fff", border: "1px solid var(--hair-2)", color: "var(--ink-3)" }}
+              >
+                Request changes instead
+              </button>
+            </div>
+          ) : (
+            <div style={{ background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", padding: 18 }} className="space-y-3">
+              <label style={{ display: "block", fontSize: 11.5, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)" }}>
+                What needs to change?
+              </label>
+              <textarea
+                rows={3}
+                value={changesNote}
+                onChange={(e) => setChangesNote(e.target.value)}
+                placeholder="e.g. Re-check the safety section citations before this goes back to the team."
+                style={{ width: "100%", padding: "12px 14px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5 }}
+              />
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={() => setShowChangesForm(false)}
+                  style={{ flex: 1, padding: "12px", borderRadius: "var(--r)", fontWeight: 650, fontSize: 13.5, background: "#fff", border: "1px solid var(--hair-2)", color: "var(--ink-3)" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitChangesRequest}
+                  disabled={!changesNote.trim()}
+                  style={{ flex: 2, padding: "12px", borderRadius: "var(--r)", fontWeight: 700, fontSize: 13.5, background: changesNote.trim() ? "var(--ink)" : "var(--hair-2)", color: changesNote.trim() ? "#fff" : "var(--ink-4)", border: "none" }}
+                >
+                  Send back to Content Plan
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── STEP 6: MASTER DOSSIER VIEW ───────────────────────────── */}
       {step === "view" && (
         <div className="rise-in space-y-6">
           {/* Top Dossier Summary Card */}
@@ -406,12 +569,34 @@ export function DossierWizard({
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: 0 }}>{activeDossier.brandName}</h1>
                   <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)", border: "1px solid var(--ok-line)" }}>
-                    {activeDossier.regulatoryAnchor} Anchor · Live
+                    {activeDossier.regulatoryAnchor} Anchor · {activeDossier.status === "complete" ? "Approved" : "Live"}
                   </span>
                 </div>
                 <p style={{ margin: "3px 0 0", fontSize: 13.5, color: "var(--ink-3)" }}>
                   {activeDossier.genericName} — {activeDossier.indication}
                 </p>
+                {activeDossier.approvals.every((a) => a.status === "approved") && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+                    <div style={{ display: "flex" }}>
+                      {activeDossier.approvals.map((a, i) => (
+                        <span
+                          key={a.role}
+                          title={`${a.name} · ${a.role}`}
+                          style={{
+                            width: 20, height: 20, borderRadius: "50%", background: a.gradient,
+                            display: "grid", placeItems: "center", color: "#fff", fontSize: 8.5, fontWeight: 800,
+                            border: "2px solid #fff", marginLeft: i === 0 ? 0 : -6,
+                          }}
+                        >
+                          {a.initials}
+                        </span>
+                      ))}
+                    </div>
+                    <span style={{ fontSize: 12, color: "var(--ink-4)" }}>
+                      Approved by {activeDossier.approvals.map((a) => a.name).join(", ")}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 

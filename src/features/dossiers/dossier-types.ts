@@ -31,6 +31,16 @@ export interface DossierSection {
   citations: string[];
 }
 
+export type ApprovalStatus = "pending" | "reviewing" | "approved" | "changes-requested";
+
+export interface DossierApproval {
+  role: string;
+  name: string;
+  initials: string;
+  gradient: string;
+  status: ApprovalStatus;
+}
+
 export interface BrandDossier {
   id: string;
   brandName: string;
@@ -46,9 +56,11 @@ export interface BrandDossier {
   claimsHeldOut: number;
   sourcesCount: number;
   lastUpdated: string;
-  status: "complete" | "draft" | "updating";
+  status: "complete" | "draft" | "updating" | "pending-approval";
   sources: DossierSource[];
   sections: DossierSection[];
+  /** Who needs to sign off before this dossier can be used to create content. */
+  approvals: DossierApproval[];
 }
 
 export type DossierWizardStep =
@@ -57,4 +69,5 @@ export type DossierWizardStep =
   | "sources"
   | "plan"
   | "writing"
+  | "approval"
   | "view";
