@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { creativeDirections } from "@/features/workspace/mock-data";
-import type { AppView, AssetType, Audience, InspectorTab, PresentationMode } from "@/types/content";
+import type { AppView, AssetType, Audience, AuthView, InspectorTab, OnboardingBeat, PresentationMode } from "@/types/content";
 
 interface WorkspaceState {
   view: AppView;
@@ -20,6 +20,12 @@ interface WorkspaceState {
   directionId: string;
   selectedSceneId: string;
   inspectorTab: InspectorTab;
+  // Auth & onboarding
+  authView: AuthView;
+  onboardingBeat: OnboardingBeat;
+  isFirstRun: boolean;
+  navCollapsed: boolean;
+  // Setters
   setView: (view: AppView) => void;
   setAssetType: (assetType: AssetType) => void;
   setBrief: (brief: string) => void;
@@ -38,6 +44,10 @@ interface WorkspaceState {
   setDirectionId: (directionId: string) => void;
   setSelectedSceneId: (selectedSceneId: string) => void;
   setInspectorTab: (inspectorTab: InspectorTab) => void;
+  setAuthView: (authView: AuthView) => void;
+  setOnboardingBeat: (beat: OnboardingBeat) => void;
+  setIsFirstRun: (isFirstRun: boolean) => void;
+  setNavCollapsed: (collapsed: boolean) => void;
   reset: () => void;
 }
 
@@ -59,6 +69,10 @@ const initialState = {
   directionId: creativeDirections[0].id,
   selectedSceneId: "scene-3",
   inspectorTab: "edit" as InspectorTab,
+  authView: "signin" as AuthView,
+  onboardingBeat: 1 as OnboardingBeat,
+  isFirstRun: true,
+  navCollapsed: false,
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -86,5 +100,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setDirectionId: (directionId) => set({ directionId }),
   setSelectedSceneId: (selectedSceneId) => set({ selectedSceneId }),
   setInspectorTab: (inspectorTab) => set({ inspectorTab }),
+  setAuthView: (authView) => set({ authView }),
+  setOnboardingBeat: (onboardingBeat) => set({ onboardingBeat }),
+  setIsFirstRun: (isFirstRun) => set({ isFirstRun }),
+  setNavCollapsed: (navCollapsed) => set({ navCollapsed }),
   reset: () => set(initialState),
 }));

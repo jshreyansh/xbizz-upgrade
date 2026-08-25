@@ -1,29 +1,71 @@
 @import "tailwindcss";
 
+/* ── Core brand tokens (HTML mockup palette) ─────────────────────── */
 :root {
-  --background: #f6f7f5;
-  --surface: #ffffff;
-  --surface-subtle: #f7f8f6;
-  --ink: #17211d;
-  --ink-muted: #66716c;
-  --line: #e7ebe8;
-  --line-strong: #d7ded9;
-  --brand: #254f3f;
-  --brand-strong: #153d2e;
-  --brand-soft: #e7f0eb;
-  --lime: #d8f05d;
-  --warning: #9a6214;
-  --warning-soft: #fff3da;
-  --danger: #9f3a38;
-  --danger-soft: #fceae8;
-  --shadow-sm: 0 1px 2px rgb(19 31 26 / 3%), 0 8px 24px rgb(19 31 26 / 4%);
-  --shadow-lg: 0 24px 70px rgb(18 32 25 / 14%);
-  --squircle-control: 14px;
-  --squircle-panel: 18px;
-  --squircle-card: 24px;
+  --brand:      #fd4816;
+  --brand-2:    #ff8a4c;
+  --brand-deep: #b82f0c;
+  --brand-ink:  #7a1f06;
+  --canvas:     #fbfaf9;
+  --card:       #ffffff;
+  --ink:        #0a0d14;
+  --ink-2:      #3c414d;
+  --ink-3:      #6b7280;
+  --ink-4:      #9aa0ac;
+  --hair:       rgba(10,13,20,.08);
+  --hair-2:     rgba(10,13,20,.14);
+  --hair-3:     rgba(10,13,20,.22);
+  --tint:       #fff5f1;
+  --tint-2:     #fff9f6;
+  --tint-line:  #ffe3d8;
+  --ok:         #12784a;
+  --ok-bg:      #e9f8f0;
+  --ok-line:    #c3ebd7;
+  --warn:       #a15c07;
+  --warn-bg:    #fff5e6;
+  --blue:       #1d4ed8;
+  --violet:     #5b21b6;
+  --amber:      #b45309;
+
+  /* Corner radius */
+  --r-s:  10px;
+  --r:    14px;
+  --r-l:  18px;
+  --r-xl: 24px;
+
+  /* Shadows */
+  --sh-1: 0 1px 2px rgba(10,13,20,.05);
+  --sh-2: 0 1px 2px rgba(10,13,20,.05), 0 10px 26px -14px rgba(10,13,20,.22);
+  --sh-3: 0 2px 6px rgba(10,13,20,.05), 0 26px 60px -26px rgba(10,13,20,.34);
+  --sh-4: 0 40px 110px -40px rgba(10,13,20,.5), 0 12px 34px -18px rgba(10,13,20,.28);
+
+  /* Easings */
+  --e:      cubic-bezier(.22,.61,.36,1);
+  --spring: cubic-bezier(.34,1.4,.64,1);
+
+  /* Legacy tokens kept for existing screens */
+  --background:       var(--canvas);
+  --surface:          var(--card);
+  --surface-subtle:   #f7f8f6;
+  --ink-muted:        var(--ink-3);
+  --line:             var(--hair);
+  --line-strong:      var(--hair-2);
+  --brand-strong:     var(--brand-deep);
+  --brand-soft:       var(--tint);
+  --lime:             #d8f05d;
+  --warning:          var(--warn);
+  --warning-soft:     var(--warn-bg);
+  --danger:           #9f3a38;
+  --danger-soft:      #fceae8;
+  --shadow-sm:        var(--sh-1);
+  --shadow-lg:        var(--sh-3);
+  --squircle-control: var(--r);
+  --squircle-panel:   var(--r-l);
+  --squircle-card:    var(--r-xl);
 }
 
-* {
+/* ── Base resets ─────────────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -32,12 +74,12 @@ html {
 }
 
 body {
-  min-height: 100vh;
   margin: 0;
+  font-family: var(--font-figtree), "Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
   color: var(--ink);
-  background: var(--background);
-  font-family: "Geist", "Inter", "SF Pro Display", "Segoe UI", sans-serif;
+  background: var(--canvas);
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: "cv11", "ss01";
 }
 
 button,

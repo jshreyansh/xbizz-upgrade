@@ -5,6 +5,12 @@ export type AppView = "home" | "create" | "directions" | "studio";
 export type InspectorTab = "edit" | "assistant" | "evidence";
 export type EvidenceState = "approved" | "supported" | "changed" | "unsupported";
 
+/** Auth sub-stages within /auth route */
+export type AuthView = "signin" | "otp" | "workspace" | "team" | "signedout";
+
+/** Onboarding beat index within /onboarding route (1-indexed) */
+export type OnboardingBeat = 1 | 2 | 3 | 4;
+
 export interface SourceReference {
   id: string;
   name: string;
