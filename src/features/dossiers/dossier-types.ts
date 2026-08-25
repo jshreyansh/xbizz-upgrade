@@ -31,6 +31,18 @@ export interface DossierSection {
   citations: string[];
 }
 
+export type ApprovalStatus = "pending" | "reviewing" | "approved" | "changes-requested";
+
+export interface DossierApproval {
+  role: string;
+  name: string;
+  initials: string;
+  gradient: string;
+  status: ApprovalStatus;
+}
+
+export type DocumentType = "commercial" | "patient-medication" | "hcp-scientific";
+
 export interface BrandDossier {
   id: string;
   brandName: string;
@@ -38,6 +50,7 @@ export interface BrandDossier {
   indication: string;
   therapyArea: string;
   regulatoryAnchor: RegulatoryBody;
+  documentType: DocumentType;
   gradient: string;
   accentColor: string;
   initials: string;
@@ -46,9 +59,21 @@ export interface BrandDossier {
   claimsHeldOut: number;
   sourcesCount: number;
   lastUpdated: string;
-  status: "complete" | "draft" | "updating";
+  status: "complete" | "draft" | "updating" | "pending-approval";
   sources: DossierSource[];
   sections: DossierSection[];
+  /** Who needs to sign off before this dossier can be used to create content. */
+  approvals: DossierApproval[];
+}
+
+/** An entry in the brand picker — not every brand has a dossier yet. */
+export interface BrandOption {
+  id: string;
+  name: string;
+  genericName: string;
+  therapyArea: string;
+  regulatoryAnchor: RegulatoryBody;
+  hasDossier: boolean;
 }
 
 export type DossierWizardStep =
@@ -57,4 +82,5 @@ export type DossierWizardStep =
   | "sources"
   | "plan"
   | "writing"
+  | "approval"
   | "view";

@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
+import { LogoMark } from "@/components/ui/logo-mark";
 
 interface NavItem {
   label: string;
@@ -123,15 +124,11 @@ export function Sidebar() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", padding: "2px 6px 22px", flexDirection: collapsed ? "column" : "row", gap: collapsed ? 9 : 0 }}>
         {!collapsed ? (
           <div style={{ fontWeight: 800, fontSize: 18.5, letterSpacing: "-.7px", display: "flex", alignItems: "center", gap: 9 }}>
-            <span style={{ width: 26, height: 26, borderRadius: 8, background: "linear-gradient(140deg,#ff7a3d,var(--brand) 55%,#d8320c)", display: "grid", placeItems: "center", boxShadow: "0 10px 28px -8px rgba(253,72,22,.85),inset 0 1px 0 rgba(255,255,255,.4)", flexShrink: 0 }}>
-              <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.4}><path d="M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5z" /></svg>
-            </span>
-            SwishX
+            <LogoMark size={24} className="text-[var(--brand)]" />
+            swish<span style={{ color: "var(--brand)" }}>X</span>
           </div>
         ) : (
-          <span style={{ width: 26, height: 26, borderRadius: 8, background: "linear-gradient(140deg,#ff7a3d,var(--brand) 55%,#d8320c)", display: "grid", placeItems: "center", boxShadow: "0 10px 28px -8px rgba(253,72,22,.85),inset 0 1px 0 rgba(255,255,255,.4)" }}>
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2.4}><path d="M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5z" /></svg>
-          </span>
+          <LogoMark size={24} className="text-[var(--brand)]" />
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}

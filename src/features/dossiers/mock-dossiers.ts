@@ -1,4 +1,29 @@
-import type { BrandDossier } from "@/features/dossiers/dossier-types";
+import type { BrandDossier, BrandOption, DossierApproval } from "@/features/dossiers/dossier-types";
+
+/** Every brand on file — some already have a dossier, some don't yet. */
+export const BRAND_REGISTRY: BrandOption[] = [
+  { id: "velmora", name: "Velmora", genericName: "velmoxaban mesylate", therapyArea: "Cardiology", regulatoryAnchor: "FDA", hasDossier: true },
+  { id: "onkavia", name: "Onkavia", genericName: "onkatrelinib dihydrochloride", therapyArea: "Oncology", regulatoryAnchor: "EMA", hasDossier: true },
+  { id: "nirvexa", name: "Nirvexa", genericName: "nirvexizumab-qfvd", therapyArea: "Immunology", regulatoryAnchor: "MHRA", hasDossier: true },
+  { id: "dermora", name: "Dermora", genericName: "dermoclizine fumarate", therapyArea: "Dermatology", regulatoryAnchor: "FDA", hasDossier: false },
+  { id: "pulmavia", name: "Pulmavia", genericName: "pulmavatinib citrate", therapyArea: "Respiratory", regulatoryAnchor: "FDA", hasDossier: false },
+  { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyArea: "Nephrology", regulatoryAnchor: "PMDA", hasDossier: false },
+];
+
+/** Fresh copy of a fully-signed-off approval trail, for dossiers seeded as already live. */
+function approvedByTeam(): DossierApproval[] {
+  return [
+    { role: "Medical Writer", name: "Medical Writer", initials: "MW", gradient: "linear-gradient(140deg,#ff7a3d,#c9310a)", status: "approved" },
+    { role: "MLR Reviewer", name: "MLR Reviewer", initials: "MR", gradient: "linear-gradient(140deg,#22c07a,#12784a)", status: "approved" },
+    { role: "Project Manager", name: "Project Manager", initials: "PM", gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)", status: "approved" },
+    { role: "Brand Lead", name: "You", initials: "N", gradient: "linear-gradient(140deg,#3a3f4b,#0d1017)", status: "approved" },
+  ];
+}
+
+/** Fresh copy of an unstarted approval trail, for a dossier that hasn't been reviewed yet. */
+function pendingApprovals(): DossierApproval[] {
+  return approvedByTeam().map((a) => ({ ...a, status: "pending" as const }));
+}
 
 export const MOCK_DOSSIERS: BrandDossier[] = [
   {
@@ -17,6 +42,8 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 8,
     lastUpdated: "Today, 09:15 AM",
     status: "complete",
+    documentType: "commercial",
+    approvals: approvedByTeam(),
     sources: [
       {
         id: "src-fda",
@@ -124,6 +151,8 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 7,
     lastUpdated: "Yesterday, 04:30 PM",
     status: "complete",
+    documentType: "commercial",
+    approvals: approvedByTeam(),
     sources: [
       {
         id: "src-ema",
@@ -183,6 +212,8 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
     sourcesCount: 6,
     lastUpdated: "3 days ago",
     status: "complete",
+    documentType: "commercial",
+    approvals: approvedByTeam(),
     sources: [
       {
         id: "src-mhra",
@@ -222,9 +253,15 @@ export const NEW_DOSSIER_TEMPLATE: BrandDossier = {
   sectionsCount: 18,
   claimsCited: 187,
   claimsHeldOut: 3,
-  sourcesCount: 6,
+  sourcesCount: 1,
   lastUpdated: "Just now",
   status: "complete",
+  documentType: "commercial",
+  approvals: pendingApprovals(),
+  // Only the label ships pre-verified — the rest of the regulatory
+  // checklist (clinical trial record, pivotal publication, HEOR,
+  // congress deck) starts pending so the Sources step's upload
+  // checklist has real work to demonstrate.
   sources: [
     {
       id: "av-label",
@@ -234,42 +271,6 @@ export const NEW_DOSSIER_TEMPLATE: BrandDossier = {
       status: "approved",
       details: "Full US Prescribing Information including Highlights and Section 14",
       citationCount: 94,
-    },
-    {
-      id: "av-pubmed",
-      name: "AURA-ASTHMA Phase III 52-Week Exacerbation Study (NEJM 2025)",
-      type: "pubmed",
-      date: "Nov 2025",
-      status: "approved",
-      details: "N=1,850, 68% reduction in annualized asthma exacerbation rate (AAER)",
-      citationCount: 52,
-    },
-    {
-      id: "av-ctgov",
-      name: "ClinicalTrials.gov Identifier NCT05118942",
-      type: "clinical-trials",
-      date: "Dec 2025",
-      status: "approved",
-      details: "Multicenter placebo-controlled international trial",
-      citationCount: 14,
-    },
-    {
-      id: "av-heor",
-      name: "ICER / HEOR Budget Impact & Emergency Room Avoidance Model",
-      type: "heor",
-      date: "Jan 2026",
-      status: "approved",
-      details: "Projected 42% reduction in emergency department visits over 24 months",
-      citationCount: 16,
-    },
-    {
-      id: "av-slides",
-      name: "Global Brand Core Visual & Key Message Deck 2026",
-      type: "slides",
-      date: "Feb 2026",
-      status: "approved",
-      details: "Commercial message pillars, approved claim phrasing, patient archetype briefs",
-      citationCount: 11,
     },
   ],
   sections: [

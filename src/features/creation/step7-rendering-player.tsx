@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Player } from "@remotion/player";
 import { DermoraComposition } from "@/features/workspace/video-composition";
 import { useCreationStore } from "@/features/creation/creation-store";
+import { LogoMark } from "@/components/ui/logo-mark";
 
 export function Step7RenderingPlayer() {
   const [progress, setProgress] = useState(12);
@@ -61,14 +62,15 @@ export function Step7RenderingPlayer() {
                   height: 96,
                   borderRadius: "50%",
                   background: "#fff",
-                  display: "grid",
-                  placeItems: "center",
-                  fontSize: 22,
-                  fontWeight: 800,
-                  color: "var(--brand-deep)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 4,
                 }}
               >
-                {progress}%
+                <LogoMark size={26} className="animate-brand-spin text-[var(--brand)]" />
+                <span style={{ fontSize: 15, fontWeight: 800, color: "var(--brand-deep)" }}>{progress}%</span>
               </div>
             </div>
 
