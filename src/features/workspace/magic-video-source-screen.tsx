@@ -353,7 +353,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
           </section>
 
         {/* Right Column: Sticky Mandatory Dropdowns Form (Fixed to Top) */}
-        <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">
+        <aside className="rise-in lg:sticky lg:top-[98px] self-start [animation-delay:80ms]">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             {/* Header */}
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">

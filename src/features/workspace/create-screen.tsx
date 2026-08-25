@@ -248,7 +248,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           </section>
 
         {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
-        <aside className="rise-in lg:sticky lg:top-[76px] self-start [animation-delay:80ms]">
+        <aside className="rise-in lg:sticky lg:top-[98px] self-start [animation-delay:80ms]">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
               <div className="flex items-center justify-between">

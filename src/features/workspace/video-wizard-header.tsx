@@ -15,15 +15,22 @@ const STEPS = [
   { step: 3, label: "Plan" },
 ] as const;
 
+const STEP_HEADINGS: Record<1 | 2 | 3, string> = {
+  1: "Choose brand dossier & goals",
+  2: "Define the video brief",
+  3: "Confirm the video plan",
+};
+
 export function VideoWizardHeader({
   currentStep,
   onBack,
   onClose,
 }: VideoWizardHeaderProps) {
   const progressPercent = ((currentStep - 1) / (STEPS.length - 1)) * 100;
+  const currentHeading = STEP_HEADINGS[currentStep];
 
   return (
-    <header className="sticky top-0 z-40 flex h-[60px] w-full shrink-0 items-center justify-between border-b border-[var(--hair)] bg-white/95 px-7 backdrop-blur-md">
+    <header className="sticky top-0 z-40 flex h-[82px] w-full shrink-0 items-center justify-between border-b border-[var(--hair)] bg-white/95 px-7 backdrop-blur-md transition-all duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
       {/* Left: Clean Back Navigation (Fixed Width) */}
       <div className="flex items-center w-[140px]">
         <button
@@ -36,8 +43,9 @@ export function VideoWizardHeader({
         </button>
       </div>
 
-      {/* Center: Sleek Connected 3-Node Stepper with Animated Progress Track */}
-      <div className="flex items-center justify-center flex-1">
+      {/* Center: Connected 3-Node Stepper with Centered Step Heading Directly Below */}
+      <div className="flex flex-col items-center justify-center flex-1 py-1">
+        {/* Stepper Node Row */}
         <nav aria-label="Creation progress" className="relative flex w-[320px] items-center justify-between">
           {/* Background Connecting Hairline Track */}
           <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-[2px] bg-[#e5e7eb] rounded-full z-0" />
@@ -53,20 +61,20 @@ export function VideoWizardHeader({
             const isCompleted = currentStep > s.step;
             const isCurrent = currentStep === s.step;
             return (
-              <div key={s.step} className="relative z-10 flex items-center gap-2 bg-white px-2 py-0.5 rounded-full">
+              <div key={s.step} className="relative z-10 flex items-center gap-1.5 bg-white px-2 py-0.5 rounded-full">
                 <div
-                  className={`grid size-6 place-items-center rounded-full text-[11px] font-bold transition-all duration-300 ${
+                  className={`grid size-5 place-items-center rounded-full text-[10.5px] font-bold transition-all duration-300 ${
                     isCompleted
                       ? "bg-[var(--brand)] text-white shadow-sm ring-2 ring-white"
                       : isCurrent
-                      ? "bg-white text-[var(--brand)] border-2 border-[var(--brand)] ring-4 ring-[var(--tint)] shadow-sm scale-105"
+                      ? "bg-white text-[var(--brand)] border-2 border-[var(--brand)] ring-3 ring-[var(--tint)] shadow-sm scale-105"
                       : "bg-[#f4f5f3] text-[var(--ink-4)] border border-[#e5e7eb]"
                   }`}
                 >
                   {isCompleted ? <Check className="size-3" strokeWidth={3.5} /> : s.step}
                 </div>
                 <span
-                  className={`text-[12.5px] tracking-tight transition-colors duration-300 ${
+                  className={`text-[12px] tracking-tight transition-colors duration-300 ${
                     isCurrent
                       ? "font-extrabold text-[var(--ink)]"
                       : isCompleted
@@ -80,6 +88,13 @@ export function VideoWizardHeader({
             );
           })}
         </nav>
+
+        {/* Centered Step Heading Line Connected Inside Header */}
+        <div key={currentStep} className="mt-1.5 text-center step-transition">
+          <h1 className="text-[14.5px] font-[800] tracking-tight text-[var(--ink)] sm:text-[15px]">
+            {currentHeading}
+          </h1>
+        </div>
       </div>
 
       {/* Right: Clean Exit Button (Fixed Width) */}
