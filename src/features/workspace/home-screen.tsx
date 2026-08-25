@@ -7,43 +7,6 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA, SAMPLE_VIDEOS } from "@/features/workspace/mock-personas";
 import type { SampleAsset } from "@/features/workspace/mock-personas";
 
-/* ── Hero Banner (hb3) ──────────────────────────────────────────── */
-function HeroAurora() {
-  return (
-    <div className="pointer-events-none absolute inset-[-40%]" style={{ filter: "blur(70px)", opacity: 0.75 }}>
-      {[
-        { size: "60vw", left: "-8%", top: "-18%", bg: "radial-gradient(circle,rgba(253,72,22,.2),transparent 58%)" },
-        { size: "40vw", left: "42%", top: "12%",  bg: "radial-gradient(circle,rgba(255,142,76,.16),transparent 60%)", delay: "-7s" },
-        { size: "30vw", left: "14%", top: "52%",  bg: "radial-gradient(circle,rgba(139,30,10,.16),transparent 62%)", delay: "-13s" },
-      ].map((b, i) => (
-        <span
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            width: b.size, height: b.size, left: b.left, top: b.top,
-            background: b.bg, mixBlendMode: "multiply",
-            animation: `float 20s ease-in-out infinite alternate${b.delay ? ` ${b.delay}` : ""}`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function HeroMesh() {
-  return (
-    <div
-      className="pointer-events-none absolute inset-0"
-      style={{
-        backgroundImage:
-          "radial-gradient(circle,rgba(253,72,22,.12) 1px,transparent 1px)",
-        backgroundSize: "28px 28px",
-        opacity: 0.7,
-      }}
-    />
-  );
-}
-
 /* ── Getting-started rail ────────────────────────────────────────── */
 function GettingStarted() {
   const router = useRouter();
@@ -64,21 +27,20 @@ function GettingStarted() {
               gap: 9,
               padding: "9px 14px",
               borderRadius: "var(--r)",
-              border: "1px solid rgba(255,255,255,.35)",
-              background: step.done ? "rgba(255,255,255,.3)" : "rgba(255,255,255,.14)",
-              backdropFilter: "blur(10px)",
+              border: `1px solid ${step.done ? "var(--hair-3)" : "var(--hair-2)"}`,
+              background: step.done ? "var(--tint)" : "#fff",
               fontSize: 13,
               fontWeight: 650,
-              color: "#fff",
+              color: "var(--ink-2)",
               cursor: "pointer",
             }}
           >
             <span
               style={{
                 width: 20, height: 20, borderRadius: "50%",
-                background: step.done ? "var(--ok)" : "rgba(255,255,255,.25)",
+                background: step.done ? "var(--ok)" : "var(--hair-2)",
                 display: "grid", placeItems: "center",
-                fontSize: 10, fontWeight: 800, color: "#fff",
+                fontSize: 10, fontWeight: 800, color: step.done ? "#fff" : "var(--ink-3)",
               }}
             >
               {step.done ? (
@@ -87,10 +49,10 @@ function GettingStarted() {
             </span>
             {step.label.replace("Build your ", "").replace("Create a ", "").replace("Send for ", "")}
           </button>
-          {i < 2 && <span style={{ width: 18, height: 1, background: "rgba(255,255,255,.3)", display: "block" }} />}
+          {i < 2 && <span style={{ width: 18, height: 1, background: "var(--hair-2)", display: "block" }} />}
         </div>
       ))}
-      <span style={{ fontSize: 12, color: "rgba(255,255,255,.54)", marginLeft: 4 }}>0 of 3</span>
+      <span style={{ fontSize: 12, color: "var(--ink-4)", marginLeft: 4 }}>0 of 3</span>
     </div>
   );
 }
@@ -319,97 +281,76 @@ export function HomeScreen() {
 
   return (
     <div className="page-enter">
-      {/* ── hb3 Hero ────────────────────────────────────────────── */}
-      <div
-        style={{
-          position: "relative",
-          borderRadius: "var(--r-xl)",
-          overflow: "hidden",
-          background: "linear-gradient(155deg,#0e1219 0%,#18121c 38%,#1a1008 72%,#0d1217 100%)",
-          padding: "38px 38px 40px",
-          marginBottom: 22,
-        }}
-      >
-        <HeroAurora />
-        <HeroMesh />
-
-        <div style={{ position: "relative", zIndex: 2, maxWidth: 640 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: "rgba(255,255,255,.7)" }}>
-                <i style={{ width: 6, height: 6, borderRadius: "50%", background: "#5eead4", boxShadow: "0 0 8px #5eead4", display: "block", animation: "blink 2s infinite" }} />
-                Workspace live
-              </span>
-              <span style={{ fontSize: 12.5, color: "rgba(255,255,255,.38)", fontWeight: 500 }}>
-                Tuesday, 18 August · {PERSONA.org}
-              </span>
-            </div>
-
-            <h1
-              style={{
-                fontSize: "clamp(28px,2.8vw,38px)",
-                lineHeight: 1.1,
-                fontWeight: 800,
-                letterSpacing: "-1.4px",
-                margin: "0 0 10px",
-                color: "#fff",
-              }}
-            >
-              Welcome back, {PERSONA.firstName} 👋<br />
-              <span
-                style={{
-                  background: "linear-gradient(96deg,#ffd9c7,#ff8a5c 46%,#ffcfb8)",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                Let’s create something great.
-              </span>
-            </h1>
-            <p style={{ fontSize: 15, lineHeight: 1.6, color: "rgba(255,255,255,.68)", margin: "0 0 22px", maxWidth: "50ch" }}>
-              Your team wrote, checked and shipped from your dossiers overnight — <b style={{ color: "#fff" }}>zero uncited claims</b>. Pick up where they left off.
-            </p>
-
-            {/* CTA row */}
-            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-              <button
-                onClick={() => {
-                  if (isFirstRun) {
-                    router.push("/dossiers");
-                  } else {
-                    useWorkspaceStore.getState().setView("create");
-                    useWorkspaceStore.getState().setVideoSubStage("mode-select");
-                    router.push("/create");
-                  }
-                }}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 9,
-                  padding: "12px 22px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5,
-                  background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff",
-                  boxShadow: "0 12px 26px -14px rgba(253,72,22,.9),inset 0 1px 0 rgba(255,255,255,.28)",
-                  cursor: "pointer",
-                }}
-              >
-                {isFirstRun ? "Build my first dossier" : "Create a Magic Video"}
-                <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-              </button>
-              <button style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: "var(--r)", fontWeight: 650, fontSize: 14, background: "rgba(255,255,255,.1)", border: "1px solid rgba(255,255,255,.2)", color: "#fff", backdropFilter: "blur(8px)" }}>
-                Take the tour
-                <kbd style={{ fontSize: 11, background: "rgba(255,255,255,.15)", padding: "2px 6px", borderRadius: 5 }}>90s</kbd>
-              </button>
-            </div>
-
-            {isFirstRun ? <GettingStarted /> : (
-              <div style={{ display: "flex", gap: 28, marginTop: 24 }}>
-                {[["4", "markets live"], ["32", "formats"], ["0", "uncited claims"]].map(([val, label]) => (
-                  <div key={label}>
-                    <b style={{ display: "block", fontSize: 22, fontWeight: 800, letterSpacing: "-.8px", color: "#fff" }}>{val}</b>
-                    <span style={{ fontSize: 12, color: "rgba(255,255,255,.45)" }}>{label}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* ── Hero ────────────────────────────────────────────────── */}
+      <div style={{ maxWidth: 640, marginBottom: 30 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: "var(--ink-3)" }}>
+            <i style={{ width: 6, height: 6, borderRadius: "50%", background: "#0d9488", boxShadow: "0 0 8px rgba(13,148,136,.5)", display: "block", animation: "blink 2s infinite" }} />
+            Workspace live
+          </span>
+          <span style={{ fontSize: 12.5, color: "var(--ink-4)", fontWeight: 500 }}>
+            Tuesday, 18 August · {PERSONA.org}
+          </span>
         </div>
+
+        <h1
+          style={{
+            fontSize: "clamp(28px,2.8vw,38px)",
+            lineHeight: 1.15,
+            fontWeight: 800,
+            letterSpacing: "-1.4px",
+            margin: "0 0 12px",
+            background: "linear-gradient(96deg, var(--ink) 0%, var(--brand-deep) 55%, var(--brand) 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            color: "transparent",
+          }}
+        >
+          Welcome back, welcome {PERSONA.firstName}, and let’s create something.
+        </h1>
+        <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--ink-3)", margin: "0 0 22px", maxWidth: "50ch" }}>
+          Your team wrote, checked and shipped from your dossiers overnight — <b style={{ color: "var(--ink)" }}>zero uncited claims</b>. Pick up where they left off.
+        </p>
+
+        {/* CTA row */}
+        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+          <button
+            onClick={() => {
+              if (isFirstRun) {
+                router.push("/dossiers");
+              } else {
+                useWorkspaceStore.getState().setView("create");
+                useWorkspaceStore.getState().setVideoSubStage("mode-select");
+                router.push("/create");
+              }
+            }}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 9,
+              padding: "12px 22px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5,
+              background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff",
+              boxShadow: "0 12px 26px -14px rgba(253,72,22,.9),inset 0 1px 0 rgba(255,255,255,.28)",
+              cursor: "pointer",
+            }}
+          >
+            {isFirstRun ? "Build my first dossier" : "Create a Magic Video"}
+            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+          </button>
+          <button style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 18px", borderRadius: "var(--r)", fontWeight: 650, fontSize: 14, background: "#fff", border: "1px solid var(--hair-2)", color: "var(--ink-2)" }}>
+            Take the tour
+            <kbd style={{ fontSize: 11, background: "var(--hair)", color: "var(--ink-3)", padding: "2px 6px", borderRadius: 5 }}>90s</kbd>
+          </button>
+        </div>
+
+        {isFirstRun ? <GettingStarted /> : (
+          <div style={{ display: "flex", gap: 28, marginTop: 24 }}>
+            {[["4", "markets live"], ["32", "formats"], ["0", "uncited claims"]].map(([val, label]) => (
+              <div key={label}>
+                <b style={{ display: "block", fontSize: 22, fontWeight: 800, letterSpacing: "-.8px", color: "var(--ink)" }}>{val}</b>
+                <span style={{ fontSize: 12, color: "var(--ink-4)" }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── What would you like to create? ─────────────────────── */}
