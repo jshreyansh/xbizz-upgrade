@@ -1,11 +1,9 @@
 "use client";
 
 import {
-  ArrowLeft,
   ArrowRight,
   BookOpenCheck,
   Check,
-  ChevronDown,
   CircleCheck,
   Eye,
   FileText,
@@ -31,7 +29,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
 import { MultiSelectMenu, SelectMenu } from "@/components/ui/select-menu";
-import { SwishXMark } from "@/components/ui/swishx-mark";
+import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario, type DemoScenarioCategory } from "@/features/workspace/demo-scenarios";
 import { planningSources } from "@/features/workspace/mock-data";
@@ -119,8 +117,6 @@ export function CreateScreen() {
     setScenarioLibraryOpen(false);
   };
 
-  const currentScenario = demoScenarios.find((scenario) => scenario.id === demoScenarioId) ?? demoScenarios[0];
-
   const creationMode = useWorkspaceStore((s) => s.creationMode);
   const sourceType = useWorkspaceStore((s) => s.sourceType);
   const sourcePayload = useWorkspaceStore((s) => s.sourcePayload);
@@ -146,21 +142,14 @@ export function CreateScreen() {
 
   return (
     <div className="page-enter min-h-screen bg-[#f3f5f2] pb-10">
-      <header className="flex h-[68px] items-center border-b border-[var(--line)] bg-white/95 px-4 backdrop-blur-xl sm:px-7">
-        <button onClick={handleBackToSource} className="focus-ring mr-4 grid size-10 place-items-center rounded-[10px] text-[var(--ink-muted)] hover:bg-black/5" aria-label="Back to source"><ArrowLeft className="size-[20px]" /></button>
-        <SwishXMark />
-        <div className="ml-5 hidden h-6 w-px bg-[var(--line)] sm:block" />
-        <div className="ml-5 hidden sm:block"><div className="text-[14px] font-bold">{modeDisplayName}</div><div className="text-[13px] text-[var(--ink-muted)]">Step 3 of 3 · Define the job</div></div>
-        <button onClick={() => setScenarioLibraryOpen(true)} className="focus-ring group ml-auto flex min-h-10 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-white px-3 text-left shadow-sm transition hover:border-[var(--brand)] hover:bg-[var(--brand-soft)]" aria-label="Open demo cases">
-          <span className="demo-orbit grid size-7 place-items-center rounded-[8px] bg-[var(--brand-soft)] text-[var(--brand)]"><FlaskConical className="size-4" /></span>
-          <span className="hidden sm:block"><span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--ink-muted)]">Demo case</span><span className="block max-w-[170px] truncate text-[13px] font-bold">{currentScenario.label}</span></span>
-          <ChevronDown className="hidden size-4 text-[var(--ink-muted)] sm:block" />
-        </button>
-        <Button onClick={preparePlan} size="sm" className="ml-3 hidden sm:inline-flex shadow-sm">
-          Prepare plan <ArrowRight className="size-4" />
-        </Button>
-        <Button onClick={handleBackHome} variant="ghost" size="icon" className="ml-2" aria-label="Close"><X className="size-[20px]" /></Button>
-      </header>
+      <VideoWizardHeader
+        currentStep={2}
+        onBack={handleBackToSource}
+        onNext={preparePlan}
+        onClose={handleBackHome}
+        nextLabel="Prepare plan"
+        modeLabel={modeDisplayName}
+      />
 
       <main className="mx-auto grid w-full max-w-[1320px] gap-5 px-4 py-5 sm:px-7 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="squircle-card rise-in border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft,
   ArrowRight,
   BookOpenCheck,
   Check,
@@ -27,7 +26,6 @@ import type { LucideIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
-import { SwishXMark } from "@/components/ui/swishx-mark";
 import { deriveContentPlan } from "@/features/workspace/content-plan";
 import { displayIntendedUses, parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { planningSources } from "@/features/workspace/mock-data";
@@ -67,8 +65,8 @@ const profiles: Record<AssetType, {
     ],
     units: [
       { title: "The unresolved need", detail: "Establish the clinical context", time: "8s" },
-      { title: "Introducing DERMORA", detail: "State its intended role", time: "8s" },
-      { title: "How it works", detail: "Explain the mechanism", time: "12s" },
+      { title: "Product introduction", detail: "State the molecule's intended role", time: "8s" },
+      { title: "How it works", detail: "Explain the mechanism of action", time: "12s" },
       { title: "Pivotal evidence", detail: "Present the approved endpoint", time: "20s" },
       { title: "Close and fair balance", detail: "CTA and required safety", time: "12s" },
     ],
@@ -87,7 +85,7 @@ const profiles: Record<AssetType, {
     units: [
       { title: "Cover", detail: "One clear launch message" },
       { title: "Clinical need", detail: "Why this matters" },
-      { title: "Product introduction", detail: "The role of DERMORA" },
+      { title: "Product introduction", detail: "The role of the molecule" },
       { title: "Mechanism", detail: "Simple scientific explanation" },
       { title: "Pivotal evidence", detail: "Approved result and citation" },
       { title: "Close", detail: "CTA and fair balance" },
@@ -133,7 +131,11 @@ const profiles: Record<AssetType, {
   },
 };
 
+import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
+import { useRouter } from "next/navigation";
+
 export function DirectionsScreen() {
+  const router = useRouter();
   const {
     assetType,
     brief,
@@ -147,6 +149,9 @@ export function DirectionsScreen() {
     voice,
     music,
     selectedSourceIds,
+    creationMode,
+    sourceType,
+    sourcePayload,
     setAudience,
     setIntendedUse,
     setFormat,
@@ -157,13 +162,46 @@ export function DirectionsScreen() {
     setMusic,
     toggleSource,
     setView,
+    setVideoSubStage,
   } = useWorkspaceStore();
+
+  const brandName =
+    sourcePayload.dossierId === "onkavia"
+      ? "Onkavia"
+      : sourcePayload.dossierId === "nirvexa"
+      ? "Nirvexa"
+      : sourcePayload.dossierId === "velmora"
+      ? "Velmora"
+      : "Clinical";
+
+  const modeLabel =
+    creationMode === "magic-reel"
+      ? "MagicReel™"
+      : creationMode === "magic-avatar"
+      ? "MagicAvatar™"
+      : "Custom Video";
+
   const profile = profiles[assetType];
-  const derivedPlan = useMemo(() => deriveContentPlan({ assetType, brief, audience, market, intendedUse, selectedSourceIds }), [assetType, audience, brief, intendedUse, market, selectedSourceIds]);
-  const defaultTreatment = assetType === "video" ? presentationMode : derivedPlan.treatmentId;
+  const derivedPlan = useMemo(
+    () =>
+      deriveContentPlan({
+        assetType,
+        brief,
+        audience,
+        market,
+        intendedUse,
+        selectedSourceIds,
+        creationMode,
+        sourceType,
+        sourcePayload,
+      }),
+    [assetType, audience, brief, intendedUse, market, selectedSourceIds, creationMode, sourceType, sourcePayload]
+  );
+
+  const defaultTreatment = creationMode === "magic-avatar" ? "presenter" : creationMode === "magic-reel" ? "narrated" : (assetType === "video" ? presentationMode : derivedPlan.treatmentId);
   const [treatmentId, setTreatmentId] = useState(defaultTreatment);
-  const [confirmedTreatment, setConfirmedTreatment] = useState(false);
-  const [presenter, setPresenter] = useState("");
+  const [confirmedTreatment, setConfirmedTreatment] = useState(true);
+  const [presenter, setPresenter] = useState(creationMode === "magic-avatar" ? "Dr. Maya Kapoor" : "");
   const [presenterLibraryOpen, setPresenterLibraryOpen] = useState(false);
   const [sourceManagerOpen, setSourceManagerOpen] = useState(false);
   const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
@@ -181,8 +219,9 @@ export function DirectionsScreen() {
 
   const toggleSection = (section: PlanSectionId) => {
     setEditingDecision(null);
-    setOpenSection((current) => current === section ? null : section);
+    setOpenSection((current) => (current === section ? null : section));
   };
+
   const selectTreatment = (id: string) => {
     setTreatmentId(id);
     if (assetType === "video") setPresentationMode(id as PresentationMode);
@@ -191,7 +230,10 @@ export function DirectionsScreen() {
     setConfirmedTreatment(true);
     setOpenSection(id === "presenter" ? "voice" : null);
   };
-  const toggleTopic = (topic: string) => setSelectedTopics((current) => current.includes(topic) ? current.filter((item) => item !== topic) : [...current, topic]);
+
+  const toggleTopic = (topic: string) =>
+    setSelectedTopics((current) => (current.includes(topic) ? current.filter((item) => item !== topic) : [...current, topic]));
+
   const previewAudio = (kind: "voice" | "music", label: string) => {
     stopAudioPreview();
     if (previewingAudio === label) {
@@ -200,9 +242,9 @@ export function DirectionsScreen() {
     }
     setPreviewingAudio(label);
     if (kind === "voice" && "speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance("DERMORA brings approved evidence into a clear clinical story.");
-      utterance.rate = label.includes("Riya") ? 0.93 : label.includes("Dev") ? 1.02 : 0.88;
-      utterance.pitch = label.includes("Riya") ? 1.08 : 0.92;
+      const utterance = new SpeechSynthesisUtterance(`${brandName} brings approved evidence into a clear clinical story.`);
+      utterance.rate = label.includes("Riya") || label.includes("Maya") ? 0.95 : 0.9;
+      utterance.pitch = label.includes("Riya") || label.includes("Maya") ? 1.05 : 0.95;
       utterance.onend = () => setPreviewingAudio(null);
       window.speechSynthesis.speak(utterance);
     } else {
@@ -210,25 +252,30 @@ export function DirectionsScreen() {
       window.setTimeout(() => setPreviewingAudio(null), 2200);
     }
   };
+
   const effectiveFormat = format.includes("·") ? format.split("·")[0].trim() : format;
-  const planStatus = unresolvedCount === 0 ? "Plan ready" : `${unresolvedCount} decision${unresolvedCount === 1 ? "" : "s"} need you`;
+
+  const handleBackToBrief = () => {
+    setVideoSubStage("intake");
+    setView("create");
+  };
+
+  const handleClose = () => {
+    setView("home");
+    router.push("/");
+  };
 
   return (
     <div className="page-enter min-h-screen bg-[#f6f7f5] pb-10">
-      <header className="flex h-[68px] items-center border-b border-[var(--line)] bg-white/95 px-4 backdrop-blur-xl sm:px-7">
-        <button onClick={() => setView("create")} className="focus-ring mr-4 grid size-10 place-items-center rounded-[10px] text-[var(--ink-muted)] hover:bg-black/5" aria-label="Back to request"><ArrowLeft className="size-[20px]" /></button>
-        <SwishXMark />
-        <div className="ml-5 hidden h-6 w-px bg-[var(--line)] sm:block" />
-        <div className="ml-5 hidden sm:block"><div className="text-[14px] font-semibold">DERMORA {profile.noun}</div><div className="text-[13px] text-[var(--ink-muted)]">Step 2 of 2 · Confirm the plan</div></div>
-        <div className="ml-auto flex items-center gap-3">
-          <span className={cn("hidden items-center gap-2 rounded-full px-3 py-1.5 text-[12.5px] font-semibold sm:flex", unresolvedCount === 0 ? "bg-[var(--brand-soft)] text-[var(--brand)]" : "bg-[var(--warning-soft)] text-[var(--warning)]")}> 
-            {unresolvedCount === 0 ? <CheckCircle2 className="size-4" /> : <Info className="size-4" />}{planStatus}
-          </span>
-          <Button onClick={() => setView("studio")} size="sm" disabled={unresolvedCount > 0} className="shadow-sm">
-            Create storyboard <ArrowRight className="size-4" />
-          </Button>
-        </div>
-      </header>
+      <VideoWizardHeader
+        currentStep={3}
+        onBack={handleBackToBrief}
+        onNext={() => setView("studio")}
+        onClose={handleClose}
+        nextLabel="Create storyboard"
+        nextDisabled={unresolvedCount > 0}
+        modeLabel={modeLabel}
+      />
 
       <main className="mx-auto w-full max-w-[1320px] px-4 py-5 sm:px-7">
         <section className="rise-in">

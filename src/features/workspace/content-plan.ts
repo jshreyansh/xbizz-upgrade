@@ -1,5 +1,6 @@
 import { planningSources } from "@/features/workspace/mock-data";
 import { parseIntendedUses, primaryIntendedUse } from "@/features/workspace/intended-use";
+import type { CreationMode, SourceSelectionType } from "@/features/workspace/workspace-store";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 
 export interface PlanInputs {
@@ -9,6 +10,9 @@ export interface PlanInputs {
   market: string;
   intendedUse: string;
   selectedSourceIds: string[];
+  creationMode?: CreationMode;
+  sourceType?: SourceSelectionType;
+  sourcePayload?: { dossierId?: string; url?: string; text?: string };
 }
 
 export interface DerivedContentPlan {
@@ -29,7 +33,7 @@ export interface DerivedContentPlan {
 }
 
 export function isRequestSpecific(brief: string) {
-  return brief.trim().split(/\s+/).filter(Boolean).length >= 6;
+  return brief.trim().split(/\s+/).filter(Boolean).length >= 4;
 }
 
 const deliveryDefaults: Record<string, Record<AssetType, { format: string; length: string }>> = {
@@ -101,9 +105,10 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
   const intendedUses = parseIntendedUses(inputs.intendedUse);
   const primaryUse = primaryIntendedUse(inputs.intendedUse);
   const delivery = (deliveryDefaults[primaryUse] ?? deliveryDefaults["HCP meeting"])[inputs.assetType];
-  const hasApprovedEvidence = selectedSources.some((source) => source.kind === "approved-source" || source.kind === "claims");
-  const hasBrandKit = selectedSources.some((source) => source.kind === "brand");
-  const followsSuppliedScript = /\b(my|supplied|attached|existing) script\b|use (this|the) script/.test(brief);
+
+  const hasApprovedEvidence = inputs.sourceType === "dossier" || inputs.sourceType === "url" || selectedSources.some((source) => source.kind === "approved-source" || source.kind === "claims");
+  const hasBrandKit = inputs.sourceType === "dossier" || selectedSources.some((source) => source.kind === "brand");
+  const followsSuppliedScript = inputs.sourceType === "text" || /\b(my|supplied|attached|existing) script\b|use (this|the) script/.test(brief);
 
   const goal = brief.includes("launch") || brief.includes("introduce")
     ? "New launch"
@@ -124,11 +129,15 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
   ]);
   if (topics.length === 0) topics.push(inputs.audience === "Patient" ? "Patient impact" : "Product introduction");
 
-  const presentationMode: PresentationMode = /presenter|avatar|doctor speaking|spokesperson|digital twin/.test(brief)
+  const presentationMode: PresentationMode = inputs.creationMode === "magic-avatar"
     ? "presenter"
-    : /visual.only|silent|without (a )?voice|no narration/.test(brief)
-      ? "visual-only"
-      : "narrated";
+    : inputs.creationMode === "magic-reel"
+    ? "narrated"
+    : /presenter|avatar|doctor speaking|spokesperson|digital twin/.test(brief)
+      ? "presenter"
+      : /visual.only|silent|without (a )?voice|no narration/.test(brief)
+        ? "visual-only"
+        : "narrated";
 
   const treatmentId = inputs.assetType === "video"
     ? presentationMode
@@ -148,17 +157,18 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
           ? treatmentId === "comparison" ? "Comparison" : treatmentId === "process" ? "Step-by-step process" : "Context → Evidence → Implication"
           : treatmentId === "product" ? "Product-first composition" : treatmentId === "evidence" ? "Evidence-first composition" : "Message-first composition";
 
-  const language = inputs.market === "India" ? "English" : inputs.market === "United States" || inputs.market === "United Kingdom" ? "English" : "English";
-  const voice = inputs.audience === "Patient" ? "Riya · friendly and clear" : inputs.audience === "HCP" ? "Rohan · clear and measured" : "Dev · warm and conversational";
+  const language = "English";
+  const voice = inputs.creationMode === "magic-avatar"
+    ? "Dr. Maya · clinical and warm"
+    : inputs.audience === "Patient"
+    ? "Riya · friendly and clear"
+    : inputs.audience === "HCP"
+    ? "Rohan · clear and measured"
+    : "Dev · warm and conversational";
+
   const music = inputs.assetType === "video" && presentationMode === "visual-only" && intendedUses.some((use) => ["Social channel", "LinkedIn", "Instagram", "YouTube"].includes(use)) ? "Calm clinical" : "No music";
 
-  const hasUSSource = selectedSources.some((source) => /\bUS\b/.test(source.detail));
-  const hasIndiaSource = selectedSources.some((source) => /\bIndia\b|\bIN\b/.test(source.detail));
-  const sourceConflict = hasUSSource && inputs.market === "India"
-    ? "US source material is attached to an India-market request. Confirm the authoritative local dossier."
-    : hasIndiaSource && inputs.market === "United States"
-      ? "India source material is attached to a US-market request. The current US dossier should remain authoritative."
-      : null;
+  const sourceConflict = null;
 
   return {
     goal,
