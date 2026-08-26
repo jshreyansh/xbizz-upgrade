@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   BookOpenCheck,
@@ -1224,27 +1225,44 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   />
                 </PlanSection>
 
-                {/* Sticky Confirmation CTA at the bottom of the Left Stage */}
-                <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#eef1ed] via-[#eef1ed] to-transparent shrink-0 mt-auto z-20">
-                  <div className="border border-white/10 bg-[#121614] text-white p-4 shadow-[0_12px_36px_rgba(0,0,0,0.22)] rounded-[20px] flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
+                {/* Centered Floating Confirmation CTA at the bottom of the Left Stage */}
+                <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
+                  <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-[0_16px_40px_rgba(0,0,0,0.32)] backdrop-blur-md max-w-[580px] w-auto">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                      {isPlanReady ? (
                         <CheckCircle2 className="size-4.5 text-emerald-400 shrink-0" />
-                        <span className="text-[13.5px] font-bold text-white tracking-tight">Ready to generate script</span>
+                      ) : (
+                        <AlertCircle className="size-4.5 text-amber-400 shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-[12.5px] font-bold text-white tracking-tight truncate">
+                          {isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
+                        </div>
+                        <p className="text-[11px] text-white/70 truncate">
+                          {isPlanReady
+                            ? "Grounded against 214 approved claims"
+                            : needsProductAssets
+                            ? "Please attach product visual assets"
+                            : needsPresenter && !presenter
+                            ? "Please select an AI presenter"
+                            : "Please confirm creative treatment"}
+                        </p>
                       </div>
-                      <p className="text-[11.5px] text-white/70 mt-0.5">
-                        Grounded against 214 approved claims · Nothing is finalized until you review in Studio.
-                      </p>
                     </div>
 
                     <Button
                       onClick={handleConfirmPlan}
-                      disabled={isGenerating}
-                      size="lg"
-                      className="h-11 px-6 rounded-[13px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer shrink-0"
+                      disabled={!isPlanReady || isGenerating}
+                      size="sm"
+                      className={cn(
+                        "h-9.5 px-5 rounded-full text-[13px] font-bold shadow-sm transition-all duration-200 shrink-0",
+                        isPlanReady && !isGenerating
+                          ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:-translate-y-0.5 cursor-pointer"
+                          : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                      )}
                     >
                       <span>Confirm Plan &amp; Build Script</span>
-                      <ArrowRight className="size-4 ml-1.5" />
+                      <ArrowRight className="size-3.5 ml-1.5" />
                     </Button>
                   </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import { Player } from "@remotion/player";
 import {
+  AlertCircle,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
@@ -145,6 +146,7 @@ export function StudioScreen() {
   // Local scenes list allowing dynamic addition and reordering
   const [sceneList, setSceneList] = useState(scenes);
   const [draggedSceneId, setDraggedSceneId] = useState<string | null>(null);
+  const isScriptComplete = sceneList.length > 0 && sceneList.every((s) => s.narration && s.narration.trim().length > 0);
 
   // Chat message thread from workspace store (continuous across Brief, Plan, and Studio)
   const [directorInput, setDirectorInput] = useState("");
@@ -822,28 +824,42 @@ export function StudioScreen() {
             </button>
           )}
 
-          {/* Sticky Floating CTA at the bottom of Script Stage to Generate Scenes */}
+          {/* Centered Floating Action Capsule in Script Stage */}
           {!isEditor && (
-            <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#eef1ed] via-[#eef1ed] to-transparent shrink-0 mt-auto z-20">
-              <div className="border border-white/10 bg-[#121614] text-white p-4 shadow-[0_12px_36px_rgba(0,0,0,0.22)] rounded-[20px] flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
+            <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
+              <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-[0_16px_40px_rgba(0,0,0,0.32)] backdrop-blur-md max-w-[580px] w-auto">
+                <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                  {isScriptComplete ? (
                     <Sparkles className="size-4.5 text-[var(--brand)] shrink-0" />
-                    <span className="text-[13.5px] font-bold text-white tracking-tight">Script approved &amp; claims grounded</span>
+                  ) : (
+                    <AlertCircle className="size-4.5 text-amber-400 shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-[12.5px] font-bold text-white tracking-tight truncate">
+                      {isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
+                    </div>
+                    <p className="text-[11px] text-white/70 truncate">
+                      {isScriptComplete
+                        ? `${sceneList.length} scenes structured · Generates visual canvas`
+                        : "Please ensure all scenes have narrative scripts"}
+                    </p>
                   </div>
-                  <p className="text-[11.5px] text-white/70 mt-0.5">
-                    {sceneList.length} scenes structured · Generates multi-layer visual canvas &amp; synchronized timeline.
-                  </p>
                 </div>
 
                 <Button
                   onClick={handleOpenGenerateModal}
-                  size="lg"
-                  className="h-11 px-6 rounded-[13px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 cursor-pointer shrink-0"
+                  disabled={!isScriptComplete}
+                  size="sm"
+                  className={cn(
+                    "h-9.5 px-5 rounded-full text-[13px] font-bold shadow-sm transition-all duration-200 shrink-0",
+                    isScriptComplete
+                      ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:-translate-y-0.5 cursor-pointer"
+                      : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                  )}
                 >
-                  <Sparkles className="size-4 mr-1.5" />
+                  <Sparkles className="size-3.5 mr-1.5" />
                   <span>Generate Scenes</span>
-                  <ArrowRight className="size-4 ml-1.5" />
+                  <ArrowRight className="size-3.5 ml-1.5" />
                 </Button>
               </div>
             </div>
