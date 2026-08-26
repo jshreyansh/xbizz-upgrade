@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Video, Image as ImageIcon, User2 } from "lucide-react";
+import { Sparkles, Video, Image as ImageIcon, Globe, ArrowRight } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { cn } from "@/lib/cn";
@@ -15,6 +15,7 @@ interface TileOption {
   tag: string;
   description: string;
   href: string;
+  gradient: string;
 }
 
 interface ShowcaseItem {
@@ -37,36 +38,31 @@ interface ShowcaseLane {
 /* ─── Data ───────────────────────────────────────────────────────────────────── */
 const CREATION_TILES: TileOption[] = [
   {
-    icon: Sparkles,
-    title: "Start Here",
-    badge: "Smart Intake",
-    tag: "Brief or Dossier",
-    description: "Upload your master dossier or paste a raw brief. SwishX coordinates the clinical pipeline.",
-    href: "/dossiers",
-  },
-  {
     icon: Video,
     title: "Magic Video",
     badge: "Cinema & 3D",
     tag: "16:9 & 9:16 Reels",
-    description: "Synthesize source-backed MoA animations, voiceovers & clinical evidence reels in minutes.",
+    description: "Source-backed MoA reels & clinical evidence videos, in minutes.",
     href: "/create",
+    gradient: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
   },
   {
     icon: ImageIcon,
     title: "Magic Canvas",
     badge: "Visuals",
     tag: "Congress & Infographics",
-    description: "Generate compliant visual leave-behinds, booth banners, and high-impact journal ads.",
+    description: "Compliant leave-behinds, booth banners & journal ads.",
     href: "#",
+    gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)",
   },
   {
-    icon: User2,
-    title: "Magic Avatar",
-    badge: "Digital Twin",
-    tag: "Lip-sync Presenter",
-    description: "Empower verified medical doctor avatars with natural phoneme lip-sync and studio gestures.",
+    icon: Globe,
+    title: "Magic Website",
+    badge: "Web & Landing",
+    tag: "HCP & Patient Portals",
+    description: "On-label microsites and landing pages, live in hours.",
     href: "/create",
+    gradient: "linear-gradient(140deg,#22c07a,#12784a)",
   },
 ];
 
@@ -209,68 +205,44 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
     ],
   },
   {
-    label: "Magic Avatar",
-    title: "Your digital presenters, always on-label",
+    label: "Magic Website",
+    title: "Microsites your field team can ship same-day",
     items: [
       {
-        title: "Dr. Ayesha Vance on trial endpoints",
-        subtitle: "Medical Director · Meridian Tx",
-        meta: "0:43",
-        aspect: "9/16",
-        gradient: "linear-gradient(160deg,#1a1a2e,#2d2d5e 45%,#4a4a8a)",
-        hasPlay: true,
-        tag: "MagicAvatar",
-        videoSrc: "/avatar-showcase.mp4",
-      },
-      {
-        title: "Tecentriq HCP briefing",
-        subtitle: "KOL Presenter · Oncology",
-        meta: "1:42",
-        aspect: "9/16",
-        gradient: "linear-gradient(160deg,#2e1a1a,#5e2d2d 45%,#8a4a4a)",
-        hasPlay: true,
-        tag: "MagicAvatar",
-        videoSrc: "/tecentriq-reel.mp4",
-      },
-      {
-        title: "Brevanta therapy overview",
-        subtitle: "Clinical Twin · Immunology",
-        meta: "1:15",
-        aspect: "9/16",
-        gradient: "linear-gradient(160deg,#1a2e1a,#2d5e2d 45%,#4a8a4a)",
-        hasPlay: true,
-        tag: "MagicAvatar",
-        videoSrc: "/Brevanta final draft-web.mp4",
-      },
-      {
-        title: "Clinical research synthesis",
-        subtitle: "VP Medical Affairs · US",
-        meta: "0:09",
+        title: "Velmora HCP portal",
+        subtitle: "FDA Anchor · Cardiology",
+        meta: "5 pages",
         aspect: "16/9",
-        gradient: "linear-gradient(160deg,#2e2a1a,#5e542d 45%,#8a7a4a)",
-        hasPlay: true,
-        tag: "MagicAvatar",
-        videoSrc: "/133898-758336558_medium.mp4",
+        gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 48%,#5b7fb8)",
+        hasPlay: false,
+        tag: "MagicWebsite",
       },
       {
-        title: "Hospital medical team consultation",
-        subtitle: "Lead Cardiologist · EU",
-        meta: "0:11",
+        title: "Onkavia patient landing page",
+        subtitle: "EMA Anchor · NSCLC",
+        meta: "3 pages",
         aspect: "16/9",
-        gradient: "linear-gradient(160deg,#1a2a2e,#2d4a5e 45%,#4a7a8a)",
-        hasPlay: true,
-        tag: "MagicAvatar",
-        videoSrc: "/133900-758336565_medium.mp4",
+        gradient: "linear-gradient(160deg,#3a1e4d,#63307a 48%,#a06bc4)",
+        hasPlay: false,
+        tag: "MagicWebsite",
       },
       {
-        title: "Patient compliance briefing",
-        subtitle: "Clinical Liaison · US",
-        meta: "0:13",
+        title: "Nirvexa congress microsite",
+        subtitle: "MHRA Anchor · Immunology",
+        meta: "4 pages",
         aspect: "16/9",
-        gradient: "linear-gradient(160deg,#251a2e,#442a5e 45%,#68408a)",
-        hasPlay: true,
-        tag: "MagicAvatar",
-        videoSrc: "/46621-448480587_medium.mp4",
+        gradient: "linear-gradient(160deg,#12332c,#1d5a4a 48%,#3f9c7f)",
+        hasPlay: false,
+        tag: "MagicWebsite",
+      },
+      {
+        title: "Brevanta sample rep site",
+        subtitle: "Sample · FDA Anchor",
+        meta: "6 pages",
+        aspect: "16/9",
+        gradient: "linear-gradient(160deg,#2a1b0f,#5c3515 48%,#9e6130)",
+        hasPlay: false,
+        tag: "Sample",
       },
     ],
   },
@@ -326,8 +298,9 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
       style={{
         display: "flex",
         flexDirection: "column",
-        justifyContent: "flex-start",
-        padding: "24px 24px 22px",
+        alignItems: "flex-start",
+        gap: 12,
+        padding: "22px 22px 20px",
         borderRadius: "var(--r-xl)",
         background: hovered ? "#fdfefe" : "#fff",
         border: hovered ? "1.5px solid var(--brand)" : "1px solid var(--hair)",
@@ -336,34 +309,35 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
         textAlign: "left",
         transition: "all .24s cubic-bezier(0.16, 1, 0.3, 1)",
         position: "relative",
-        minHeight: 154,
+        minHeight: 168,
         overflow: "hidden",
       }}
       className="hover:-translate-y-1 group"
     >
-      {/* Aesthetic Artistic Icon Emerging from Top-Right Corner */}
-      <div
+      {/* Gradient icon badge — one distinct premium visual per card */}
+      <span
         style={{
-          position: "absolute",
-          top: -12,
-          right: -12,
-          pointerEvents: "none",
-          color: "var(--brand)",
-          opacity: hovered ? 0.18 : 0.08,
-          transform: `${tile.title === "Magic Video" ? "scaleX(-1) " : ""}${
-            hovered ? "rotate(12deg) scale(1.12)" : "rotate(0deg) scale(1)"
-          }`,
-          transition: "all .3s cubic-bezier(0.16, 1, 0.3, 1)",
+          display: "grid",
+          placeItems: "center",
+          width: 44,
+          height: 44,
+          borderRadius: 13,
+          flexShrink: 0,
+          background: tile.gradient,
+          color: "#fff",
+          boxShadow: "0 10px 20px -10px rgba(10,13,20,.45)",
+          transition: "transform .3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transform: hovered ? "scale(1.08) rotate(-6deg)" : "scale(1) rotate(0deg)",
         }}
       >
-        <Icon size={92} strokeWidth={1.7} />
-      </div>
+        <Icon size={20} strokeWidth={2} />
+      </span>
 
-      {/* Title */}
-      <div style={{ position: "relative", zIndex: 2, marginBottom: 8 }}>
+      {/* Title + badge */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <h3
           style={{
-            fontSize: 17,
+            fontSize: 16.5,
             fontWeight: 800,
             color: "var(--ink)",
             letterSpacing: "-.4px",
@@ -373,23 +347,52 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
         >
           {tile.title}
         </h3>
+        <span
+          style={{
+            fontSize: 9.5,
+            fontWeight: 800,
+            letterSpacing: ".04em",
+            textTransform: "uppercase",
+            color: "var(--brand-deep)",
+            background: "var(--tint)",
+            border: "1px solid var(--tint-line)",
+            padding: "2px 7px",
+            borderRadius: 5,
+          }}
+        >
+          {tile.badge}
+        </span>
       </div>
 
       {/* Description */}
       <p
         style={{
-          position: "relative",
-          zIndex: 2,
           fontSize: 13,
           color: "var(--ink-3)",
-          margin: "14px 0 0",
+          margin: 0,
           lineHeight: 1.5,
           fontWeight: 450,
-          maxWidth: "32ch",
         }}
       >
         {tile.description}
       </p>
+
+      {/* Get started CTA */}
+      <span
+        style={{
+          marginTop: "auto",
+          paddingTop: 4,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          fontSize: 12.5,
+          fontWeight: 700,
+          color: "var(--brand)",
+        }}
+      >
+        Get started
+        <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-1" />
+      </span>
     </button>
   );
 }
@@ -901,30 +904,56 @@ export function HomeScreen() {
 
   return (
     <div className="page-enter space-y-7 max-w-[1140px] pb-12">
-      {/* Welcome */}
-      <div className="pt-1 pb-1">
-        <h1
+      {/* Welcome + Start Here CTA */}
+      <div className="pt-1 pb-1 flex items-center justify-between gap-5 flex-wrap">
+        <div>
+          <h1
+            style={{
+              fontSize: "clamp(24px, 2.5vw, 32px)",
+              lineHeight: 1.2,
+              fontWeight: 800,
+              letterSpacing: "-0.8px",
+              margin: 0,
+              color: "var(--ink)",
+            }}
+          >
+            Welcome back, <span style={{ color: "var(--brand)" }}>{PERSONA.firstName}.</span>
+          </h1>
+          <p className="mt-1.5 text-[14px] text-[var(--ink-3)] font-medium">
+            Select a content workflow or explore verified medical showreels.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push("/dossiers")}
           style={{
-            fontSize: "clamp(24px, 2.5vw, 32px)",
-            lineHeight: 1.2,
-            fontWeight: 800,
-            letterSpacing: "-0.8px",
-            margin: 0,
-            color: "var(--ink)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 9,
+            padding: "12px 20px",
+            borderRadius: "var(--r)",
+            fontWeight: 700,
+            fontSize: 14,
+            color: "#fff",
+            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
+            boxShadow: "0 12px 26px -14px rgba(253,72,22,.85),inset 0 1px 0 rgba(255,255,255,.28)",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
           }}
+          className="hover:-translate-y-0.5 transition-transform"
         >
-          Welcome back, <span style={{ color: "var(--brand)" }}>{PERSONA.firstName}.</span>
-        </h1>
-        <p className="mt-1.5 text-[14px] text-[var(--ink-3)] font-medium">
-          Select a content workflow or explore verified medical showreels.
-        </p>
+          <Sparkles size={16} strokeWidth={2.2} />
+          Start Here — upload dossier or brief
+          <ArrowRight size={15} strokeWidth={2.4} />
+        </button>
       </div>
 
-      {/* Creation tiles — 4 individual bordered cards */}
+      {/* Creation tiles — bordered cards */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: `repeat(${CREATION_TILES.length}, 1fr)`,
           gap: 16,
         }}
       >
