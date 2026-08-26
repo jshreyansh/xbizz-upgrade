@@ -212,6 +212,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     topics: storeTopics,
     setGoal: setStoreGoal,
     setTopics: setStoreTopics,
+    selectedQuality,
+    setSelectedQuality,
   } = useWorkspaceStore();
 
   const dossierNames: Record<string, string> = {
@@ -241,6 +243,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       }),
     [assetType, audience, brief, intendedUse, market, selectedSourceIds, creationMode, sourceType, sourcePayload]
   );
+
+  // Dynamic Real-time Duration, Quality & Credit Calculations
+  const durationSeconds = duration.includes("30") ? 30 : duration.includes("45") ? 45 : duration.includes("90") ? 90 : 60;
+  const estimatedCredits = Math.round((durationSeconds / 60) * (selectedQuality === "cinematic" ? 7500 : 2500));
+  const estimatedRenderTime = selectedQuality === "cinematic" ? "12–14 min" : "7–9 min";
 
   const isMagicAvatar = creationMode === "magic-avatar";
   const defaultTreatment = isMagicAvatar ? "presenter" : creationMode === "magic-reel" ? "narrated" : (assetType === "video" ? presentationMode : derivedPlan.treatmentId);
@@ -955,16 +962,17 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   </div>
                 </PlanSection>
 
-                {/* 4. Delivery */}
+                {/* 4. Delivery & Cost */}
                 <PlanSection
                   icon={MonitorPlay}
-                  title="Delivery"
-                  summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration}`}
-                  status="Recommended"
+                  title="Delivery & Cost"
+                  summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration} · ${selectedQuality === "cinematic" ? "Cinematic" : "HD"} (⚡ ${estimatedCredits.toLocaleString()} credits)`}
+                  status={`${estimatedCredits.toLocaleString()} credits`}
+                  tone="done"
                   open={openSection === "delivery"}
                   onToggle={() => toggleSection("delivery")}
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <DecisionRow
                       label="Destinations"
                       value={displayIntendedUses(intendedUse)}
@@ -1017,6 +1025,102 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </Button>
                       </div>
                     </DecisionRow>
+
+                    {/* Output Quality & Generation Engine Selector */}
+                    <div className="pt-2 border-t border-black/[0.06]">
+                      <label className="text-[12.5px] font-bold text-[var(--ink)] block mb-2">
+                        Generation Output Quality
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Option 1: HD */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedQuality("hd")}
+                          className={cn(
+                            "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
+                            selectedQuality === "hd"
+                              ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
+                              : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                          )}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="font-extrabold text-[15px] text-[var(--ink)]">HD Motion</span>
+                              <span className="rounded-full bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
+                                ⚡ {Math.round((durationSeconds / 60) * 2500).toLocaleString()} credits
+                              </span>
+                            </div>
+                            <p className="text-[12px] leading-relaxed text-[var(--ink-muted)]">
+                              Lifelike motion that stops the scroll — ideal for launches &amp; HCP presentations.
+                            </p>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/[0.05] text-[11px] text-[var(--ink-muted)]">
+                            <span className="flex items-center gap-1 font-medium">⏱ 7–9 min render</span>
+                            {selectedQuality === "hd" && (
+                              <span className="font-bold text-[var(--brand)] flex items-center gap-1">
+                                <Check className="size-3.5" strokeWidth={3} /> Selected
+                              </span>
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Option 2: Cinematic */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedQuality("cinematic")}
+                          className={cn(
+                            "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
+                            selectedQuality === "cinematic"
+                              ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
+                              : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                          )}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                              <span className="font-extrabold text-[15px] text-[var(--ink)]">Cinematic 4K</span>
+                              <span className="rounded-full bg-orange-50 border border-orange-200 px-2 py-0.5 text-[10px] font-extrabold text-orange-800">
+                                ⚡ {Math.round((durationSeconds / 60) * 7500).toLocaleString()} credits
+                              </span>
+                            </div>
+                            <p className="text-[12px] leading-relaxed text-[var(--ink-muted)]">
+                              Ultra-realistic, fully generated 3D anatomical scenes — for flagship congresses.
+                            </p>
+                          </div>
+                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/[0.05] text-[11px] text-[var(--ink-muted)]">
+                            <span className="flex items-center gap-1 font-medium">⏱ 12–14 min render</span>
+                            {selectedQuality === "cinematic" && (
+                              <span className="font-bold text-[var(--brand)] flex items-center gap-1">
+                                <Check className="size-3.5" strokeWidth={3} /> Selected
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Live Real-Time Cost & Balance Breakdown Card */}
+                    <div className="rounded-[16px] bg-[#121614] border border-white/10 p-4 text-white shadow-md">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
+                        <div className="flex items-center gap-2">
+                          <div className="size-7 rounded-lg bg-[var(--brand)]/20 border border-[var(--brand)]/40 flex items-center justify-center">
+                            <Sparkles className="size-3.5 text-[var(--brand)]" />
+                          </div>
+                          <div>
+                            <div className="text-[11px] font-extrabold uppercase tracking-wider text-white/60">Estimated Project Cost</div>
+                            <div className="text-[16px] font-[850] text-white">⚡ {estimatedCredits.toLocaleString()} Credits</div>
+                          </div>
+                        </div>
+                        <div className="text-right sm:text-right text-[11.5px] text-white/70">
+                          <span>Team Balance: </span>
+                          <strong className="text-emerald-400 font-bold">50,000 credits</strong>
+                        </div>
+                      </div>
+                      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/75">
+                        <span>Format: <strong className="text-white font-semibold">{effectiveFormat}</strong> ({duration})</span>
+                        <span>Quality: <strong className="text-white font-semibold">{selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}</strong></span>
+                        <span>Estimated Render: <strong className="text-white font-semibold">~{estimatedRenderTime}</strong></span>
+                      </div>
+                    </div>
                   </div>
                 </PlanSection>
 
@@ -1467,24 +1571,24 @@ function PlanSection({
   return (
     <section
       className={cn(
-        "squircle-card relative rounded-[20px] border transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+        "squircle-card relative transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
         open
-          ? "z-20 bg-white scale-[1.015] shadow-[0_12px_36px_rgba(10,13,20,0.08),0_2px_8px_rgba(10,13,20,0.04)] border-[var(--brand)] ring-2 ring-[var(--brand-soft)] my-3"
-          : "z-0 bg-white/90 opacity-[.82] hover:opacity-100 hover:bg-white hover:shadow-sm",
-        !open && (tone === "attention" ? "border-[#ead8b5]" : "border-[var(--line)]")
+          ? "z-20 bg-white scale-[1.012] shadow-[0_16px_40px_rgba(10,13,20,0.09),0_2px_8px_rgba(10,13,20,0.04)] border-2 border-[var(--brand)] ring-4 ring-[var(--brand-soft)] rounded-[20px] my-3.5"
+          : "z-0 bg-white/75 opacity-[.78] hover:opacity-100 hover:bg-white hover:shadow-xs border border-black/[0.08] rounded-[14px] my-1"
       )}
     >
       <button
         onClick={onToggle}
         className={cn(
-          "focus-ring group flex w-full items-center gap-3.5 px-4 text-left transition-all duration-200 sm:px-5 cursor-pointer",
-          open ? "min-h-[74px]" : "min-h-[64px]"
+          "focus-ring group flex w-full items-center gap-3 px-3.5 text-left transition-all duration-200 sm:px-4 cursor-pointer",
+          open ? "min-h-[70px]" : "min-h-[46px] py-1.5"
         )}
         aria-expanded={open}
       >
         <span
           className={cn(
-            "squircle-control grid size-10 shrink-0 place-items-center rounded-[12px] transition-transform group-hover:scale-105",
+            "squircle-control grid shrink-0 place-items-center transition-transform group-hover:scale-105",
+            open ? "size-10 rounded-[12px]" : "size-7.5 rounded-[9px]",
             tone === "attention"
               ? "bg-[var(--warning-soft)] text-[var(--warning)]"
               : tone === "done"
@@ -1493,29 +1597,35 @@ function PlanSection({
           )}
         >
           {tone === "done" ? (
-            <Check className="size-4" strokeWidth={3} />
+            <Check className={cn(open ? "size-4" : "size-3.5")} strokeWidth={3} />
           ) : (
-            <Icon className="size-[19px]" />
+            <Icon className={cn(open ? "size-[19px]" : "size-3.5")} />
           )}
         </span>
 
         <span className="min-w-0 flex-1">
           <span
             className={cn(
-              "block font-bold tracking-tight transition-colors",
-              open ? "text-[16px] text-[var(--ink)]" : "text-[15px] text-[var(--ink-2)]"
+              "block font-bold tracking-tight transition-colors leading-snug",
+              open ? "text-[16px] text-[var(--ink)]" : "text-[13.5px] text-[var(--ink-2)]"
             )}
           >
             {title}
           </span>
-          <span className="mt-0.5 block truncate text-[12.5px] text-[var(--ink-muted)]">
+          <span
+            className={cn(
+              "block truncate text-[var(--ink-muted)]",
+              open ? "mt-0.5 text-[12.5px]" : "text-[11.5px] max-w-[420px]"
+            )}
+          >
             {summary}
           </span>
         </span>
 
         <span
           className={cn(
-            "hidden rounded-full px-2.5 py-1 text-[11px] font-bold sm:inline border",
+            "hidden rounded-full font-bold sm:inline border",
+            open ? "px-2.5 py-1 text-[11px]" : "px-2 py-0.5 text-[10px]",
             tone === "attention"
               ? "bg-[var(--warning-soft)] text-[var(--warning)] border-[#fde68a]"
               : tone === "done"
@@ -1528,11 +1638,13 @@ function PlanSection({
 
         <div
           className={cn(
-            "grid size-7 place-items-center rounded-full transition-all duration-300",
-            open ? "rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:bg-black/5"
+            "grid place-items-center rounded-full transition-all duration-300",
+            open
+              ? "size-7 rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]"
+              : "size-6 text-[var(--ink-muted)] group-hover:bg-black/5"
           )}
         >
-          <ChevronDown className="size-4" />
+          <ChevronDown className={cn(open ? "size-4" : "size-3.5")} />
         </div>
       </button>
 
@@ -1544,9 +1656,7 @@ function PlanSection({
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-[var(--line)] bg-[#fafbf9]/60 px-4 py-4.5 sm:px-5">
-            {children}
-          </div>
+          <div className="border-t border-[var(--line)] px-4 pb-5 pt-3.5 sm:px-5 sm:pb-6">{children}</div>
         </div>
       </div>
     </section>

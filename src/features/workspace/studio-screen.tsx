@@ -847,7 +847,7 @@ export function StudioScreen() {
                 </div>
 
                 <Button
-                  onClick={handleOpenGenerateModal}
+                  onClick={handleConfirmGeneration}
                   disabled={!isScriptComplete}
                   size="sm"
                   className={cn(

@@ -31,6 +31,7 @@ interface WorkspaceState {
   directionId: string;
   selectedSceneId: string;
   inspectorTab: InspectorTab;
+  selectedQuality: "hd" | "cinematic";
   chatMessages: Array<{ role: "user" | "swishx"; text: string }>;
   // Auth & onboarding
   authView: AuthView;
@@ -40,6 +41,7 @@ interface WorkspaceState {
   teamDockOpen: boolean;
   // Setters
   setView: (view: AppView) => void;
+  setSelectedQuality: (quality: "hd" | "cinematic") => void;
   setChatMessages: (messages: Array<{ role: "user" | "swishx"; text: string }>) => void;
   addChatMessage: (message: { role: "user" | "swishx"; text: string }) => void;
   setCreationMode: (mode: CreationMode) => void;
@@ -99,6 +101,7 @@ const initialState = {
   directionId: creativeDirections[0].id,
   selectedSceneId: "scene-3",
   inspectorTab: "edit" as InspectorTab,
+  selectedQuality: "hd" as "hd" | "cinematic",
   chatMessages: [] as Array<{ role: "user" | "swishx"; text: string }>,
   authView: "signin" as AuthView,
   onboardingBeat: 1 as OnboardingBeat,
@@ -109,6 +112,7 @@ const initialState = {
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   ...initialState,
+  setSelectedQuality: (selectedQuality) => set({ selectedQuality }),
   setChatMessages: (chatMessages) => set({ chatMessages }),
   addChatMessage: (message) => set((state) => ({ chatMessages: [...state.chatMessages, message] })),
   setView: (view) => {
