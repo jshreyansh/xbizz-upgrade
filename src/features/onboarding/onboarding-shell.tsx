@@ -34,7 +34,6 @@ export function OnboardingShell() {
       className="relative flex h-full w-full flex-col overflow-hidden"
       style={{
         background: "linear-gradient(145deg,#181014,#120e10 40%,#1a1008)",
-        fontFamily: "Figtree,system-ui,sans-serif",
       }}
     >
       {/* Warm mesh blobs */}
