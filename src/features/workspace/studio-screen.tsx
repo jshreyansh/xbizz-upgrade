@@ -3,8 +3,10 @@
 import {
   AlertCircle,
   AlertTriangle,
+  ArrowDown,
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
   BookOpenCheck,
   Check,
   CheckCircle2,
@@ -15,6 +17,7 @@ import {
   FileCheck2,
   FileText,
   Film,
+  GripVertical,
   History,
   Image as ImageIcon,
   Layers,
@@ -38,6 +41,7 @@ import {
   Sliders,
   SlidersHorizontal,
   Sparkles,
+  Tag,
   Timer,
   Trash2,
   Type,
@@ -72,6 +76,16 @@ const dossierNames: Record<string, string> = {
   cardioxa: "Cardioxa",
   pulmovax: "PulmoVax",
 };
+
+const NARRATIVE_TAG_OPTIONS = [
+  { id: "Intro", label: "Intro" },
+  { id: "Clinical Need", label: "Clinical Need" },
+  { id: "Mechanism", label: "Mechanism" },
+  { id: "Evidence", label: "Evidence" },
+  { id: "Dosing", label: "Dosing" },
+  { id: "Safety", label: "Safety" },
+  { id: "Outro", label: "Outro" },
+];
 
 function FormattedMessageText({ text }: { text: string }) {
   const parts = text.split(/(\*\*.*?\*\*)/g);
@@ -303,6 +317,52 @@ export function StudioScreen() {
   const handleReturnToScript = () => { setStudioMode("scenes"); setActiveTab("assistant"); };
   const handleReturnToEditor = () => { setStudioMode("editor"); setActiveTab("edit"); };
 
+  const handleAddDirectScriptScene = () => {
+    const nextNum = sceneList.length + 1;
+    const defaultTag = nextNum === 1 ? "Intro" : nextNum >= 5 ? "Outro" : "Evidence";
+    const newScene = {
+      id: `scene-${Date.now()}`,
+      number: nextNum,
+      title: `Scene ${nextNum}: Clinical Message`,
+      duration: 10,
+      narration: "",
+      visual: "High-clarity clinical anatomical visualization with verified safety parameters.",
+      claim: "Dossier §5.1 verified",
+      evidenceState: "approved" as const,
+      narrativeTag: defaultTag,
+    };
+    const updated = [...sceneList, newScene].map((s, idx) => ({ ...s, number: idx + 1 }));
+    setSceneList(updated);
+    setSelectedSceneId(newScene.id);
+    setToMessage(`Added Script Scene ${nextNum} (${defaultTag})`);
+    setTimeout(() => setToMessage(null), 2500);
+  };
+
+  const handleMoveScene = (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= sceneList.length) return;
+    const updated = [...sceneList];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, moved);
+    const renumbered = updated.map((s, idx) => ({ ...s, number: idx + 1 }));
+    setSceneList(renumbered);
+  };
+
+  const handleDeleteScene = (id: string) => {
+    if (sceneList.length <= 1) {
+      setToMessage("At least one scene is required in storyboard");
+      setTimeout(() => setToMessage(null), 2000);
+      return;
+    }
+    const updated = sceneList.filter((s) => s.id !== id).map((s, idx) => ({ ...s, number: idx + 1 }));
+    setSceneList(updated);
+    if (selectedSceneId === id && updated[0]) {
+      setSelectedSceneId(updated[0].id);
+    }
+    setToMessage("Scene deleted");
+    setTimeout(() => setToMessage(null), 2000);
+  };
+
   const handleCreateSceneFromModal = (sceneData: {
     insertPosition: number;
     title: string;
@@ -312,7 +372,7 @@ export function StudioScreen() {
     category: "normal" | "intro" | "outro" | "product";
   }) => {
     const targetPos = Math.max(1, Math.min(sceneData.insertPosition, sceneList.length + 1));
-    const tag = sceneData.category === "intro" ? "Intro Hook" : sceneData.category === "outro" ? "CTA Outro" : sceneData.category === "product" ? "Mechanism (MoA)" : "Clinical Statement";
+    const tag = sceneData.category === "intro" ? "Intro" : sceneData.category === "outro" ? "Outro" : sceneData.category === "product" ? "Mechanism" : "Evidence";
     const newScene = {
       id: `scene-${Date.now()}`,
       number: targetPos,
@@ -493,10 +553,22 @@ export function StudioScreen() {
           ) : (
             <div className="flex items-center justify-between pb-4 shrink-0">
               <div>
-                <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight">Script</h2>
-                <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">Review and shape the clinical narrative before generating the full visual canvas.</p>
+                <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight">
+                  Script
+                </h2>
+                <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
+                  Review and shape the clinical narrative before generating the full visual canvas.
+                </p>
               </div>
-              <Button type="button" onClick={() => setAddSceneModalOpen(true)} size="sm" className="bg-white border border-[var(--line)] text-[var(--ink)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"><Plus className="size-3.5 text-[var(--brand)]" /> <span>Add Scene</span></Button>
+              <Button
+                type="button"
+                onClick={handleAddDirectScriptScene}
+                size="sm"
+                className="bg-white border border-[var(--line)] text-[var(--ink)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
+              >
+                <Plus className="size-3.5 text-[var(--brand)]" />
+                <span>Add Script Scene</span>
+              </Button>
             </div>
           )}
 
@@ -505,31 +577,232 @@ export function StudioScreen() {
               ? chapters.map((ch) => {
                   const isCurrent = activeMasterChapter?.id === ch.id;
                   return (
-                    <button key={ch.id} type="button" onClick={() => { setMasterCurrentTime(ch.start); setMasterPlaying(true); }} className={cn("group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer", isCurrent ? "border-[var(--brand)] bg-[var(--tint)] shadow-xs ring-1 ring-[var(--brand)]" : "border-black/[0.06] bg-white hover:border-black/20 hover:bg-[#fafbf9]")}>
-                      <div className="flex items-center justify-between gap-1 mb-1"><span className={cn("rounded-md px-1.5 py-0.5 text-[9.5px] font-extrabold", isCurrent ? "bg-[var(--brand)] text-white" : "bg-black/5 text-[var(--ink-muted)]")}>0:{ch.start.toString().padStart(2, "0")} – 0:{ch.end.toString().padStart(2, "0")}</span>{isCurrent && <span className="flex items-center gap-1 text-[9.5px] font-extrabold text-[var(--brand-deep)]"><Play className="size-2.5 fill-current" /> Playing</span>}</div>
-                      <div className="text-[12px] font-bold text-[var(--ink)] line-clamp-1">{ch.number}. {ch.title}</div>
-                      <p className="text-[10.5px] text-[var(--ink-muted)] line-clamp-2 mt-0.5 leading-snug">{ch.narration}</p>
+                    <button
+                      key={ch.id}
+                      type="button"
+                      onClick={() => {
+                        setMasterCurrentTime(ch.start);
+                        setMasterPlaying(true);
+                      }}
+                      className={cn(
+                        "group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer",
+                        isCurrent
+                          ? "border-[var(--brand)] bg-[var(--tint)] shadow-xs ring-1 ring-[var(--brand)]"
+                          : "border-black/[0.06] bg-white hover:border-black/20 hover:bg-[#fafbf9]"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span
+                          className={cn(
+                            "rounded-md px-1.5 py-0.5 text-[9.5px] font-extrabold",
+                            isCurrent ? "bg-[var(--brand)] text-white" : "bg-black/5 text-[var(--ink-muted)]"
+                          )}
+                        >
+                          0:{ch.start.toString().padStart(2, "0")} – 0:{ch.end.toString().padStart(2, "0")}
+                        </span>
+                        {isCurrent && (
+                          <span className="flex items-center gap-1 text-[9.5px] font-extrabold text-[var(--brand-deep)]">
+                            <Play className="size-2.5 fill-current" /> Playing
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[12px] font-bold text-[var(--ink)] line-clamp-1">
+                        {ch.number}. {ch.title}
+                      </div>
+                      <p className="text-[10.5px] text-[var(--ink-muted)] line-clamp-2 mt-0.5 leading-snug">
+                        {ch.narration}
+                      </p>
                     </button>
                   );
                 })
-              : sceneList.map((scene) => {
-                  const active = scene.id === selectedSceneId;
-                  return (
-                    <div key={scene.id} onClick={() => { setSelectedSceneId(scene.id); setSceneCurrentTime(0); }} className={cn("group relative rounded-[16px] border transition-all cursor-pointer", active ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm" : "border-black/[0.07] bg-white/90 hover:border-black/20 hover:bg-white", isEditor ? "p-2" : "p-4")}>
-                      {isEditor ? (
-                        <div className="space-y-1.5">
-                          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[#173d31] flex items-center justify-center"><DynamicSceneComposition scene={scene} brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"} /><div className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[8.5px] font-extrabold text-white">{scene.number}</div></div>
-                          <div className="px-0.5"><div className="text-[11.5px] font-bold text-[var(--ink)] truncate">{scene.title}</div></div>
-                        </div>
-                      ) : (
-                        <div className="space-y-2.5">
-                          <div className="flex items-center justify-between gap-2"><div className="flex items-center gap-2"><span className="flex size-6 items-center justify-center rounded-lg bg-[var(--ink)] text-[11px] font-black text-white">{scene.number}</span><span className="text-[14px] font-extrabold text-[var(--ink)]">{scene.title}</span></div><span className="rounded-md bg-black/5 px-2 py-0.5 text-[10px] font-bold text-[var(--ink-muted)]">⏱ {scene.duration}s</span></div>
-                          <div className="rounded-xl bg-[#f8faf8] border border-black/[0.05] p-3"><div className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] mb-1">Narration Script</div><textarea value={scene.narration} onChange={(e) => setSceneList((prev) => prev.map((s) => (s.id === scene.id ? { ...s, narration: e.target.value } : s)))} className="w-full bg-transparent text-[12.5px] text-[var(--ink)] leading-relaxed resize-none focus:outline-none font-medium" rows={2} /></div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              : (
+                <>
+                  {sceneList.map((scene, idx) => {
+                    const active = scene.id === selectedSceneId;
+                    const isDragging = scene.id === draggedSceneId;
+
+                    return (
+                      <div
+                        key={scene.id}
+                        draggable={!isEditor}
+                        onDragStart={() => handleDragStart(scene.id)}
+                        onDragOver={(e) => handleDragOver(e, scene.id)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => {
+                          setSelectedSceneId(scene.id);
+                          setSceneCurrentTime(0);
+                        }}
+                        className={cn(
+                          "group relative rounded-[16px] border transition-all cursor-pointer bg-white",
+                          active
+                            ? "border-[var(--brand)] ring-2 ring-[var(--brand)]/15 shadow-sm"
+                            : "border-black/[0.07] hover:border-black/20",
+                          isDragging && "opacity-40 border-dashed border-[var(--brand)]",
+                          isEditor ? "p-2" : "p-4"
+                        )}
+                      >
+                        {isEditor ? (
+                          <div className="space-y-1.5">
+                            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[#173d31] flex items-center justify-center">
+                              <DynamicSceneComposition
+                                scene={scene}
+                                brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
+                              />
+                              <div className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[8.5px] font-extrabold text-white">
+                                {scene.number}
+                              </div>
+                            </div>
+                            <div className="px-0.5">
+                              <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">{scene.title}</div>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Script Mode Rich Card */
+                          <div className="space-y-3">
+                            {/* Card Header with Drag Handle, Scene Number, Narrative Tag, and Actions */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0 flex-1">
+                                <div
+                                  title="Drag to reorder scene"
+                                  className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-[var(--ink)] p-0.5 shrink-0"
+                                >
+                                  <GripVertical className="size-4" />
+                                </div>
+                                <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-[var(--ink)] text-[11px] font-black text-white">
+                                  {scene.number}
+                                </span>
+
+                                {/* Editable Title Input */}
+                                <input
+                                  type="text"
+                                  value={scene.title}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setSceneList((prev) =>
+                                      prev.map((s) => (s.id === scene.id ? { ...s, title: val } : s))
+                                    );
+                                  }}
+                                  className="text-[13.5px] font-extrabold text-[var(--ink)] bg-transparent hover:bg-black/5 focus:bg-white rounded-md px-1.5 py-0.5 border border-transparent focus:border-[var(--brand)] focus:outline-none transition-all truncate flex-1"
+                                  placeholder="Scene Title..."
+                                />
+
+                                {/* Interactive Narrative Tag Pill */}
+                                <div className="relative group/tag shrink-0">
+                                  <select
+                                    value={scene.narrativeTag || "Evidence"}
+                                    onChange={(e) => {
+                                      const nextTag = e.target.value;
+                                      setSceneList((prev) =>
+                                        prev.map((s) =>
+                                          s.id === scene.id ? { ...s, narrativeTag: nextTag } : s
+                                        )
+                                      );
+                                      setToMessage(`Scene ${scene.number} tagged as (${nextTag})`);
+                                      setTimeout(() => setToMessage(null), 2000);
+                                    }}
+                                    className="appearance-none focus-ring cursor-pointer rounded-full bg-[var(--tint)] border border-[var(--brand)]/30 pl-2.5 pr-6 py-0.5 text-[11px] font-bold text-[var(--brand-deep)] hover:bg-[var(--tint-strong)] transition-all"
+                                  >
+                                    {NARRATIVE_TAG_OPTIONS.map((tag) => (
+                                      <option key={tag.id} value={tag.id}>
+                                        ({tag.label})
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="size-2.5 text-[var(--brand-deep)] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                              </div>
+
+                              {/* Action controls: Move Up, Move Down, Duration, Delete */}
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className="rounded-md bg-black/5 px-2 py-0.5 text-[10px] font-bold text-[var(--ink-muted)]">
+                                  ⏱ {scene.duration}s
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveScene(idx, "up");
+                                  }}
+                                  disabled={idx === 0}
+                                  title="Move Up"
+                                  className="size-6 rounded hover:bg-black/5 flex items-center justify-center text-gray-500 disabled:opacity-20 cursor-pointer"
+                                >
+                                  <ArrowUp className="size-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMoveScene(idx, "down");
+                                  }}
+                                  disabled={idx === sceneList.length - 1}
+                                  title="Move Down"
+                                  className="size-6 rounded hover:bg-black/5 flex items-center justify-center text-gray-500 disabled:opacity-20 cursor-pointer"
+                                >
+                                  <ArrowDown className="size-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteScene(scene.id);
+                                  }}
+                                  title="Delete Scene"
+                                  className="size-6 rounded hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center cursor-pointer transition-colors"
+                                >
+                                  <Trash2 className="size-3" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Narration Textarea */}
+                            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.05] p-3 focus-within:border-[var(--brand)] focus-within:ring-1 focus-within:ring-[var(--brand)]/20 transition-all">
+                              <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] mb-1">
+                                <span>Narration Script</span>
+                                <span className="text-[9.5px] font-medium lowercase text-gray-400">
+                                  {scene.narration ? `${scene.narration.split(" ").filter(Boolean).length} words` : "Empty"}
+                                </span>
+                              </div>
+                              <textarea
+                                value={scene.narration}
+                                onChange={(e) => {
+                                  const nextVal = e.target.value;
+                                  setSceneList((prev) =>
+                                    prev.map((s) => (s.id === scene.id ? { ...s, narration: nextVal } : s))
+                                  );
+                                }}
+                                placeholder="Write narration script for this scene..."
+                                className="w-full bg-transparent text-[12.5px] text-[var(--ink)] leading-relaxed resize-none focus:outline-none font-medium placeholder:text-gray-400"
+                                rows={2}
+                              />
+                            </div>
+
+                            {/* Bottom Card Footer with PromoMats Grounding */}
+                            <div className="flex items-center justify-between text-[10.5px] text-[var(--ink-muted)] pt-0.5">
+                              <span className="flex items-center gap-1 font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                🛡 {scene.claim}
+                              </span>
+                              <span className="text-[10px] font-medium text-gray-500">
+                                Tag: <strong className="text-[var(--ink)]">({scene.narrativeTag || "Evidence"})</strong>
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {/* Direct Add Script Scene Bottom Button */}
+                  <button
+                    type="button"
+                    onClick={handleAddDirectScriptScene}
+                    className="w-full py-3 border-2 border-dashed border-[var(--line-strong)] hover:border-[var(--brand)] bg-white/70 hover:bg-white rounded-2xl flex items-center justify-center gap-2 text-[12.5px] font-bold text-[var(--ink-2)] hover:text-[var(--brand)] transition-all cursor-pointer shadow-2xs"
+                  >
+                    <Plus className="size-4 text-[var(--brand)]" />
+                    <span>+ Add Script Scene</span>
+                  </button>
+                </>
+              )}
           </div>
 
           {!isEditor && !isReview && !isGenerating && (
