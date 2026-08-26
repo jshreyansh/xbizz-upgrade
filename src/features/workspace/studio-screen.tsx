@@ -1516,14 +1516,47 @@ export function StudioScreen() {
         </main>
 
         <aside className="w-[410px] shrink-0 border-l border-[var(--line)] bg-white flex flex-col min-h-0 shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10">
-          <div className="grid grid-cols-3 gap-1 p-2 border-b border-[var(--line)] bg-[#f4f6f4]">
-            <InspectorTabButton tab="assistant" current={activeTab} onClick={setActiveTab} icon={Sparkles}>Chat</InspectorTabButton>
-            {isReview ? (
-              <InspectorTabButton tab="comments" current={activeTab} onClick={setActiveTab} icon={MessageSquare}>Comments ({commentsList.length})</InspectorTabButton>
-            ) : (
-              <InspectorTabButton tab="edit" current={activeTab} onClick={setActiveTab} icon={Sliders}>Edit</InspectorTabButton>
-            )}
-            <InspectorTabButton tab="evidence" current={activeTab} onClick={setActiveTab} icon={ShieldCheck}>Claims (24)</InspectorTabButton>
+          <div className="p-2.5 border-b border-[var(--line)] bg-[#f4f6f4]">
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
+              <InspectorTabButton
+                tab="assistant"
+                current={activeTab}
+                onClick={setActiveTab}
+                icon={Sparkles}
+                badge={<span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />}
+              >
+                Chat
+              </InspectorTabButton>
+              {isReview ? (
+                <InspectorTabButton
+                  tab="comments"
+                  current={activeTab}
+                  onClick={setActiveTab}
+                  icon={MessageSquare}
+                  count={commentsList.length}
+                >
+                  Comments
+                </InspectorTabButton>
+              ) : (
+                <InspectorTabButton
+                  tab="edit"
+                  current={activeTab}
+                  onClick={setActiveTab}
+                  icon={SlidersHorizontal}
+                >
+                  Edit
+                </InspectorTabButton>
+              )}
+              <InspectorTabButton
+                tab="evidence"
+                current={activeTab}
+                onClick={setActiveTab}
+                icon={ShieldCheck}
+                count={24}
+              >
+                Claims
+              </InspectorTabButton>
+            </div>
           </div>
 
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
@@ -2151,12 +2184,57 @@ export function StudioScreen() {
   );
 }
 
-function InspectorTabButton({ tab, current, onClick, icon: Icon, children }: any) {
+function InspectorTabButton({
+  tab,
+  current,
+  onClick,
+  icon: Icon,
+  badge,
+  count,
+  children,
+}: {
+  tab: string;
+  current: string;
+  onClick: (tab: any) => void;
+  icon?: any;
+  badge?: React.ReactNode;
+  count?: number;
+  children: React.ReactNode;
+}) {
   const active = tab === current;
   return (
-    <button type="button" onClick={() => onClick(tab)} className={cn("flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[11px] text-[12px] transition-all cursor-pointer", active ? "bg-white shadow-xs" : "hover:bg-white/50")}>
-      {Icon && <Icon className="size-3.5" />}
-      {children}
+    <button
+      type="button"
+      onClick={() => onClick(tab)}
+      className={cn(
+        "group relative flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-[12.5px] transition-all duration-200 cursor-pointer font-[800] select-none",
+        active
+          ? "bg-white text-[var(--ink)] shadow-xs border border-black/[0.08]"
+          : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-white/50 border border-transparent"
+      )}
+    >
+      {badge}
+      {Icon && (
+        <Icon
+          className={cn(
+            "size-3.5 shrink-0 transition-colors",
+            active ? "text-[var(--brand)]" : "text-gray-400 group-hover:text-gray-600"
+          )}
+        />
+      )}
+      <span className="truncate">{children}</span>
+      {count !== undefined && (
+        <span
+          className={cn(
+            "text-[10px] font-extrabold px-1.5 py-0.2 rounded-full transition-colors",
+            active
+              ? "bg-[var(--tint-strong)] text-[var(--brand-deep)] border border-[var(--brand)]/20"
+              : "bg-black/5 text-gray-500"
+          )}
+        >
+          {count}
+        </span>
+      )}
     </button>
   );
 }
