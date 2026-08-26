@@ -303,6 +303,21 @@ button.rounded-full {
   animation: page-enter 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
+@keyframes rise-in-stagger {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise-in-stagger {
+  animation: rise-in-stagger 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 @keyframes step-fade-in {
   from {
     opacity: 0;
