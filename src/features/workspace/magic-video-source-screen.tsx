@@ -20,7 +20,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { AudienceIcon } from "@/components/ui/select-icons";
 import { MultiSelectMenu, SelectMenu } from "@/components/ui/select-menu";
-import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
@@ -121,8 +120,6 @@ const topicIcons: Record<string, typeof Pill> = {
 export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolean }) {
   const audience = useWorkspaceStore((s) => s.audience);
   const setAudience = useWorkspaceStore((s) => s.setAudience);
-  const goal = useWorkspaceStore((s) => s.goal);
-  const setGoal = useWorkspaceStore((s) => s.setGoal);
   const topics = useWorkspaceStore((s) => s.topics);
   const setTopics = useWorkspaceStore((s) => s.setTopics);
   const creationMode = useWorkspaceStore((s) => s.creationMode);
@@ -140,10 +137,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   // Mandatory Validation Checks
   const isAudienceValid = Boolean(audience);
-  const isGoalValid = Boolean(goal);
   const isTopicsValid = topics.length > 0;
   const isDossierValid = Boolean(selectedDossierId);
-  const canContinue = isAudienceValid && isGoalValid && isTopicsValid && isDossierValid;
+  const canContinue = isAudienceValid && isTopicsValid && isDossierValid;
 
   const handleSelectDossier = (dossierId: string) => {
     setSourcePayload({ dossierId });
@@ -416,23 +412,6 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                 />
               </div>
 
-              {/* 3. Campaign Goal* */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-[12.5px] font-semibold text-[var(--ink-2)] tracking-tight">
-                  <Target className="size-3.5 text-[var(--brand)]" />
-                  <span>Campaign Goal</span>
-                  <span className="text-[11px] text-[var(--brand)] font-bold">*</span>
-                </label>
-                <SelectMenu
-                  value={goal}
-                  onChange={(next) => setGoal(next)}
-                  options={GOAL_OPTIONS}
-                  ariaLabel="Campaign Goal"
-                  placeholder="Choose campaign goal..."
-                  renderIcon={() => <Target className="size-3.5 text-[var(--brand)]" />}
-                />
-              </div>
-
               {/* 4. Focus Topics* */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -474,7 +453,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             disabled={!canContinue}
             className="group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
           >
-            <span>Continue to job brief</span>
+            <span>Start Project</span>
             <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
           </Button>
 
@@ -485,8 +464,6 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   ? "Please select a brand dossier"
                   : !isAudienceValid
                   ? "Please select an audience"
-                  : !isGoalValid
-                  ? "Please select a campaign goal"
                   : "Please select at least 1 focus topic"}
               </span>
             ) : (
@@ -507,11 +484,17 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   return (
     <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
-      <VideoWizardHeader
-        currentStep={1}
-        onBack={handleBackToMode}
-        onClose={handleClose}
-      />
+      {/* Minimal Back Button — no full header bar */}
+      <div className="px-6 pt-5 pb-1">
+        <button
+          type="button"
+          onClick={handleBackToMode}
+          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+        >
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}><path d="M15 18l-6-6 6-6" /></svg>
+          Back
+        </button>
+      </div>
       {content}
     </div>
   );

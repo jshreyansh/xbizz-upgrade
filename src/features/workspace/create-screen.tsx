@@ -2,30 +2,28 @@
 
 import {
   ArrowRight,
-  BookOpenCheck,
-  CircleCheck,
   FileText,
   Film,
   FlaskConical,
-  GitBranch,
   Globe2,
+  Home,
   Info,
   Layers,
-  LayoutGrid,
   Paperclip,
   Search,
   ShieldCheck,
   Target,
-  TriangleAlert,
   Upload,
+  UserCircle2,
   Users,
   X,
+  CircleCheck,
+  GitBranch,
+  LayoutGrid,
+  TriangleAlert,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { SelectMenu } from "@/components/ui/select-menu";
-import { VideoWizardHeader } from "@/features/workspace/video-wizard-header";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario, type DemoScenarioCategory } from "@/features/workspace/demo-scenarios";
 import { planningSources } from "@/features/workspace/mock-data";
@@ -34,7 +32,6 @@ import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
 
 export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
-  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -81,7 +78,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     return query ? planningSources.filter((source) => `${source.name} ${source.detail}`.toLowerCase().includes(query)) : planningSources;
   }, [sourceQuery]);
 
-
   const removeAttachment = (target: string) => {
     setLocalFiles((current) => current.filter((file) => file !== target));
   };
@@ -110,13 +106,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setVideoSubStage("directions");
   };
 
-  const handleBackHome = () => {
-    setView("home");
-    router.push("/");
-  };
-
   const handleBackToSource = () => {
     setVideoSubStage("source-select");
+  };
+
+  const handleGoHome = () => {
+    setView("home");
   };
 
   const loadScenario = (scenario: DemoScenario) => {
@@ -133,10 +128,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   const modeDisplayName =
     creationMode === "magic-reel"
-      ? "MagicReel™ · Short Video"
+      ? "MagicReel\u2122 \u00b7 Short Video"
       : creationMode === "magic-avatar"
-      ? "MagicAvatar™ · Digital Twin"
-      : "Custom Video · Scratch";
+      ? "MagicAvatar\u2122 \u00b7 Digital Twin"
+      : "Custom Video \u00b7 Scratch";
+
+  const modeSubtitle =
+    creationMode === "magic-reel"
+      ? "30\u2013180s cinematic video with medical scenes, graphics & citations"
+      : creationMode === "magic-avatar"
+      ? "30\u201390s lip-synced presenter video with clinical slide overlays"
+      : "Open custom prompt & duration";
 
   const dossierNames: Record<string, string> = {
     velmora: "Velmora",
@@ -153,207 +155,222 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       ? "Web / Study Link"
       : "Custom Plain Text";
 
-  const content = (
-    <main className="mx-auto w-full max-w-[1280px] px-6 py-6 sm:px-8">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] items-start w-full">
-        {/* Left Column: Brief Section */}
-        <section className="squircle-card min-w-0 w-full border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6">
-            {/* Active Engine Indicator Pill */}
-            <div className="flex items-center justify-between rounded-[14px] border border-[var(--line)] bg-[#fafbf9] p-3.5">
-              <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-[11px] bg-[var(--brand)] text-white shadow-sm">
-                  <Film className="size-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <b className="text-[14.5px] font-bold text-[var(--ink)]">{modeDisplayName}</b>
-                    <span className="rounded-full bg-[var(--brand-soft)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand)]">
-                      Selected Engine
-                    </span>
-                  </div>
-                  <span className="text-[12px] text-[var(--ink-muted)]">
-                    {creationMode === "magic-reel"
-                      ? "30–180s cinematic video with medical scenes, graphics & citations"
-                      : creationMode === "magic-avatar"
-                      ? "30–90s lip-synced presenter video with clinical slide overlays"
-                      : "Open custom prompt & duration"}
-                  </span>
-                </div>
-              </div>
-            </div>
+  const projectName =
+    sourceType === "dossier"
+      ? `${dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora"} HCP launch`
+      : "New Video Project";
 
-            <div className="mt-6">
-              <label htmlFor="content-brief" className="block text-[14px] font-bold text-[var(--ink)] mb-2">
+  return (
+    <div className="min-h-screen flex flex-col bg-[#f7f8f6]">
+      {/* Persistent minimal top bar */}
+      <header className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.06] bg-white/80 backdrop-blur-sm">
+        <button
+          type="button"
+          onClick={handleBackToSource}
+          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer shrink-0"
+        >
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}><path d="M15 18l-6-6 6-6" /></svg>
+          Back
+        </button>
+        <div className="w-px h-4 bg-black/10" />
+        <button
+          type="button"
+          onClick={handleGoHome}
+          className="grid size-6 place-items-center text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer shrink-0"
+          title="Home"
+        >
+          <Home className="size-4" />
+        </button>
+        <div className="w-px h-4 bg-black/10" />
+        <span className="text-[13px] font-semibold text-[var(--ink)] truncate">{projectName}</span>
+        <span className="rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-2 py-0.5 text-[10px] font-bold text-[var(--brand-deep)]">
+          Draft v1
+        </span>
+      </header>
+
+      {/* Center stage */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
+        <div className="w-full max-w-[680px] space-y-6">
+          {/* Engine indicator pill */}
+          <div className="flex items-center gap-3 rounded-[16px] border border-[var(--line)] bg-white px-4 py-3 shadow-xs">
+            <div className="grid size-9 place-items-center rounded-[10px] bg-[var(--brand)] text-white shadow-sm shrink-0">
+              {creationMode === "magic-avatar" ? <UserCircle2 className="size-[18px]" /> : <Film className="size-[18px]" />}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] font-bold text-[var(--ink)]">{modeDisplayName}</span>
+                <span className="rounded-full bg-[var(--brand-soft)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand)]">
+                  Selected Engine
+                </span>
+              </div>
+              <span className="text-[12px] text-[var(--ink-muted)]">{modeSubtitle}</span>
+            </div>
+          </div>
+
+          {/* Main brief input card */}
+          <div className="rounded-[20px] border border-[var(--line)] bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)] overflow-hidden">
+            <div className="p-5 pb-3">
+              <label className="block text-[15px] font-bold text-[var(--ink)] mb-3">
                 What are you creating?
               </label>
-
-              {/* Modern AI Chat-Style Input Box with bottom actions */}
-              <div className="relative rounded-[16px] border border-[var(--line)] bg-[#fafbf9] p-3 transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(253,72,22,0.12)]">
-                <textarea
-                  id="content-brief"
-                  value={brief}
-                  onChange={(event) => setBrief(event.target.value)}
-                  rows={4}
-                  placeholder="e.g. Create a 60-second HCP explainer explaining why Velmora was developed, showing the dual-inhibition mechanism, and proving 24% relative risk reduction from CLARITY-CV."
-                  className="w-full resize-none bg-transparent p-1 text-[14.5px] leading-6 outline-none placeholder:text-[var(--ink-4)] text-[var(--ink)]"
-                />
-
-                {/* Bottom Action Bar inside Textarea */}
-                <div className="mt-2 flex items-center justify-between border-t border-black/[0.05] pt-2.5">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="focus-ring inline-flex items-center gap-1.5 rounded-[9px] border border-[var(--hair-2)] bg-white px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink-2)] transition hover:border-[var(--brand)] hover:text-[var(--brand)] hover:shadow-xs"
-                    >
-                      <Paperclip className="size-3.5 text-[var(--brand)]" />
-                      <span>Attach material</span>
-                    </button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setScenarioLibraryOpen(true)}
-                      className="h-8 rounded-[9px] px-2.5 text-[12px] font-medium text-[var(--ink-muted)] hover:text-[var(--brand)] hover:bg-black/[0.03]"
-                    >
-                      <FlaskConical className="size-3.5 mr-1" /> Sample briefs
-                    </Button>
-                  </div>
-                  <span className="text-[11.5px] text-[var(--ink-4)] font-medium pr-1">
-                    {brief.length > 0 ? `${brief.length} chars` : "Plain text or prompt"}
-                  </span>
-                </div>
-              </div>
-
-              {clarificationOpen && (
-                <div className="mt-3 rounded-[13px] border border-[#f0cfa0] bg-[#fffbf2] p-3.5 text-[13px] text-[#78531d]">
-                  <div className="flex items-start gap-2.5">
-                    <Info className="mt-0.5 size-4 shrink-0 text-[#b57314]" />
-                    <div>
-                      <b>Add a little more detail before continuing.</b>
-                      <p className="mt-0.5 leading-5 text-[#8c672e]">Mention the topic, disease state, evidence point, or launch objective so SwishX can recommend an appropriate storyboard structure.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <textarea
+                value={brief}
+                onChange={(e) => setBrief(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) preparePlan();
+                }}
+                rows={5}
+                placeholder={`e.g. Create a concise ${dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora"} HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence.`}
+                className="w-full resize-none bg-transparent text-[14.5px] leading-relaxed outline-none placeholder:text-[var(--ink-4)] text-[var(--ink)]"
+              />
             </div>
 
-            {/* Attached Files & Sources */}
-            <div className="mt-5 pt-4 border-t border-[var(--hair)] space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Active Context &amp; Evidence</span>
-                <span className="text-[11.5px] font-semibold text-[var(--ok)]">Grounding locked</span>
+            {/* Bottom action bar */}
+            <div className="flex items-center justify-between border-t border-black/[0.05] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-1.5 rounded-[9px] border border-black/10 bg-[#f7f8f6] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer"
+                >
+                  <Paperclip className="size-3.5 text-[var(--brand)]" />
+                  Attach material
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScenarioLibraryOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-[9px] border border-black/10 bg-[#f7f8f6] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer"
+                >
+                  <FlaskConical className="size-3.5" />
+                  Sample briefs
+                </button>
               </div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--tint)] px-3 py-1.5 text-[12.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-xs">
-                  <ShieldCheck className="size-4 text-[var(--brand)]" />
-                  {sourceDisplayName}
+              <div className="flex items-center gap-2">
+                <span className="text-[11.5px] text-[var(--ink-4)]">
+                  {brief.length > 0 ? `${brief.length} chars` : "\u2318\u21b5 to send"}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+                <button
+                  type="button"
+                  onClick={preparePlan}
+                  disabled={!brief.trim()}
+                  className="grid size-9 place-items-center rounded-full bg-[var(--brand)] text-white disabled:opacity-30 hover:bg-[var(--brand-deep)] transition-all shadow-xs cursor-pointer disabled:cursor-not-allowed"
+                  title="Proceed to plan"
+                >
+                  <ArrowRight className="size-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Clarification warning */}
+          {clarificationOpen && (
+            <div className="rounded-[13px] border border-[#f0cfa0] bg-[#fffbf2] p-3.5 text-[13px] text-[#78531d]">
+              <div className="flex items-start gap-2.5">
+                <Info className="mt-0.5 size-4 shrink-0 text-[#b57314]" />
+                <div>
+                  <b>Add a little more detail before continuing.</b>
+                  <p className="mt-0.5 leading-5 text-[#8c672e]">Mention the topic, disease state, evidence point, or launch objective so SwishX can recommend an appropriate storyboard structure.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Active Context & Evidence */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                Active Context & Evidence
+              </span>
+              <span className="text-[11.5px] font-semibold text-[var(--ok)]">Grounding locked</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[var(--tint)] px-3 py-1.5 text-[12.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-xs">
+                <ShieldCheck className="size-3.5 text-[var(--brand)]" />
+                {sourceDisplayName}
+              </span>
+              {audience && (
+                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-black/[0.06]">
                   <Users className="size-3.5 text-[var(--brand)]" />
                   {audience}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+              )}
+              {goal && (
+                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-black/[0.06]">
                   <Target className="size-3.5 text-[var(--brand)]" />
                   {goal}
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-[var(--hair-2)]">
+              )}
+              {topics.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-[10px] bg-[#f4f5f3] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--ink)] border border-black/[0.06]">
                   <Layers className="size-3.5 text-[var(--brand)]" />
-                  {topics.length} topics
+                  {topics.length} {topics.length === 1 ? "topic" : "topics"}
                 </span>
-                {selectedSources.map((source) => (
-                  <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
-                ))}
-                {localFiles.map((file) => (
-                  <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
-                ))}
-              </div>
-            </div>
-
-            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
-          </section>
-
-        {/* Right Sidebar: Sticky Grounding Context (Fixed to Top) */}
-        <aside className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-[76px] self-start">
-          <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
-            <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Available Context</span>
-                <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)]">
-                  Grounding active
-                </span>
-              </div>
-              <h2 className="mt-0.5 text-[16px] font-bold tracking-tight text-[var(--ink)]">{sourceDisplayName}</h2>
-            </div>
-            <div className="p-4 space-y-3">
-              <ContextItem icon={Users} title={`Audience & Goal: ${audience}`} detail={`Campaign objective: ${goal}`} />
-              <ContextItem icon={Layers} title={`Focus Topics (${topics.length})`} detail={topics.join(" · ")} />
-              <ContextItem icon={BookOpenCheck} title={sourceType === "dossier" ? "214 approved claims" : "Evidence coverage"} detail={sourceType === "dossier" ? "All statements cited against FDA/EMA approved label." : "Grounding verified from attached source."} />
-              <div className="mt-3 border-t border-[var(--line)] pt-3">
-                <label className="text-[12.5px] font-bold text-[var(--ink-muted)]" htmlFor="market">Market from source</label>
-                <SelectMenu value={market} onChange={setMarket} options={["United States", "India", "European Union", "United Kingdom", "Global / multiple markets"]} ariaLabel="Market from source" className="mt-1" renderIcon={() => <Globe2 className="size-[15px]" />} />
-              </div>
-            </div>
-            <div className="mt-auto border-t border-[var(--line)] bg-[#f7f9f7] px-4 py-2.5 text-[11.5px] leading-4 text-[var(--ink-muted)]">
-              Parameters from Step 1 are locked into this brief. The next screen will show the content plan.
+              )}
+              {selectedSources.map((source) => (
+                <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
+              ))}
+              {localFiles.map((file) => (
+                <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
+              ))}
             </div>
           </div>
+        </div>
+      </main>
 
-          <Button
-            onClick={preparePlan}
-            size="lg"
-            className="group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5"
-          >
-            <span>Prepare content plan</span>
-            <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
-          </Button>
+      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
 
-          <div className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-[var(--ink-muted)]">
-            <ShieldCheck className="size-3.5 text-[var(--brand)]" />
-            <span>Nothing is created until you confirm the plan</span>
-          </div>
-        </aside>
-      </div>
-    </main>
-  );
-
-  if (embedded) {
-    return (
-      <div className="pb-10">
-        {content}
-        {sourceLibraryOpen && <SourceLibraryModal selectedIds={selectedSourceIds} query={sourceQuery} onQueryChange={setSourceQuery} sources={filteredSources} onToggle={toggleSource} onUpload={() => { setSourceLibraryOpen(false); fileInputRef.current?.click(); }} onClose={() => setSourceLibraryOpen(false)} />}
-        {scenarioLibraryOpen && <DemoScenarioDrawer currentScenarioId={demoScenarioId} onSelect={loadScenario} onReset={() => loadScenario(demoScenarios.find((scenario) => scenario.id === defaultDemoScenarioId) ?? demoScenarios[0])} onClose={() => setScenarioLibraryOpen(false)} />}
-      </div>
-    );
-  }
-
-  return (
-    <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
-      <VideoWizardHeader
-        currentStep={2}
-        onBack={handleBackToSource}
-        onClose={handleBackHome}
-      />
-      {content}
-      {sourceLibraryOpen && <SourceLibraryModal selectedIds={selectedSourceIds} query={sourceQuery} onQueryChange={setSourceQuery} sources={filteredSources} onToggle={toggleSource} onUpload={() => { setSourceLibraryOpen(false); fileInputRef.current?.click(); }} onClose={() => setSourceLibraryOpen(false)} />}
-      {scenarioLibraryOpen && <DemoScenarioDrawer currentScenarioId={demoScenarioId} onSelect={loadScenario} onReset={() => loadScenario(demoScenarios.find((scenario) => scenario.id === defaultDemoScenarioId) ?? demoScenarios[0])} onClose={() => setScenarioLibraryOpen(false)} />}
+      {sourceLibraryOpen && (
+        <SourceLibraryModal
+          selectedIds={selectedSourceIds}
+          query={sourceQuery}
+          onQueryChange={setSourceQuery}
+          sources={filteredSources}
+          onToggle={toggleSource}
+          onUpload={() => { setSourceLibraryOpen(false); fileInputRef.current?.click(); }}
+          onClose={() => setSourceLibraryOpen(false)}
+        />
+      )}
+      {scenarioLibraryOpen && (
+        <DemoScenarioDrawer
+          currentScenarioId={demoScenarioId}
+          onSelect={loadScenario}
+          onReset={() => loadScenario(demoScenarios.find((s) => s.id === defaultDemoScenarioId) ?? demoScenarios[0])}
+          onClose={() => setScenarioLibraryOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
-
-
 function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: () => void }) {
   const approved = source.status === "current" && source.kind !== "reference";
-  const color = source.kind === "brand" ? "bg-[#eaf2ed] text-[#355f4e]" : source.kind === "claims" ? "bg-[#eef1f7] text-[#4f5f78]" : source.kind === "reference" ? "bg-[#f3eee8] text-[#705f4d]" : "bg-[#f5ece8] text-[#775548]";
-  return <span className={cn("squircle-control flex min-h-9 max-w-full items-center gap-2 px-2.5 text-[13px] font-medium", color)}><FileText className="size-4 shrink-0 opacity-75" /><span className="max-w-[210px] truncate">{source.name}</span>{approved && <span className="rounded-full bg-white/65 px-1.5 py-0.5 text-[10.5px] font-semibold opacity-80">Current</span>}<button onClick={onRemove} className="focus-ring grid size-6 shrink-0 place-items-center rounded-full opacity-60 transition hover:bg-white/70 hover:opacity-100" aria-label={`Remove ${source.name}`}><X className="size-3.5" /></button></span>;
+  const color =
+    source.kind === "brand" ? "bg-[#eaf2ed] text-[#355f4e]"
+    : source.kind === "claims" ? "bg-[#eef1f7] text-[#4f5f78]"
+    : source.kind === "reference" ? "bg-[#f3eee8] text-[#705f4d]"
+    : "bg-[#f5ece8] text-[#775548]";
+  return (
+    <span className={cn("flex min-h-9 max-w-full items-center gap-2 rounded-[10px] px-2.5 text-[12.5px] font-medium border border-black/[0.06]", color)}>
+      <FileText className="size-3.5 shrink-0 opacity-75" />
+      <span className="max-w-[210px] truncate">{source.name}</span>
+      {approved && <span className="rounded-full bg-white/65 px-1.5 py-0.5 text-[10.5px] font-semibold opacity-80">Current</span>}
+      <button onClick={onRemove} className="grid size-5 shrink-0 place-items-center rounded-full opacity-60 hover:bg-white/70 hover:opacity-100 transition" aria-label={`Remove ${source.name}`}>
+        <X className="size-3" />
+      </button>
+    </span>
+  );
 }
 
 function AttachmentChip({ label, onRemove }: { label: string; onRemove: () => void }) {
-  return <span className="squircle-control flex min-h-9 items-center gap-2 bg-[#edf1f4] px-2.5 text-[13px] font-medium text-[#52616a]"><Paperclip className="size-4 opacity-75" /><span className="max-w-[180px] truncate">{label}</span><button onClick={onRemove} className="focus-ring grid size-6 place-items-center rounded-full opacity-60 transition hover:bg-white/70 hover:opacity-100" aria-label={`Remove ${label}`}><X className="size-3.5" /></button></span>;
-}
-
-function ContextItem({ icon: Icon, title, detail }: { icon: typeof ShieldCheck; title: string; detail: string }) {
-  return <div className="mb-4 flex items-start gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-[var(--brand-soft)] text-[var(--brand)]"><Icon className="size-4" /></span><span><span className="block text-[14px] font-semibold">{title}</span><span className="mt-0.5 block text-[13px] leading-5 text-[var(--ink-muted)]">{detail}</span></span></div>;
+  return (
+    <span className="flex min-h-9 items-center gap-2 rounded-[10px] bg-[#edf1f4] px-2.5 text-[12.5px] font-medium text-[#52616a] border border-black/[0.06]">
+      <Paperclip className="size-3.5 opacity-75" />
+      <span className="max-w-[180px] truncate">{label}</span>
+      <button onClick={onRemove} className="grid size-5 place-items-center rounded-full opacity-60 hover:bg-white/70 hover:opacity-100 transition" aria-label={`Remove ${label}`}>
+        <X className="size-3" />
+      </button>
+    </span>
+  );
 }
 
 const scenarioCategoryIcons: Record<DemoScenarioCategory, typeof CircleCheck> = {
@@ -365,16 +382,16 @@ const scenarioCategoryIcons: Record<DemoScenarioCategory, typeof CircleCheck> = 
 };
 
 function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: { currentScenarioId: string; onSelect: (scenario: DemoScenario) => void; onReset: () => void; onClose: () => void }) {
-  const categories = [...new Set(demoScenarios.map((scenario) => scenario.category))];
+  const categories = [...new Set(demoScenarios.map((s) => s.category))];
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-[#10231c]/38 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Demo cases">
+    <div className="fixed inset-0 z-50 flex justify-end bg-[#10231c]/38 backdrop-blur-[2px]" role="dialog" aria-modal="true">
       <div className="slide-left flex h-full w-full max-w-[440px] flex-col border-l border-white/50 bg-[#fafbfa] shadow-2xl">
         <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Demo Library</div>
-            <h3 className="text-[17px] font-semibold">Test cases</h3>
+            <h3 className="text-[17px] font-semibold">Sample briefs</h3>
           </div>
-          <button onClick={onClose} className="focus-ring grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-[#eef2ef] hover:text-[var(--ink)]" aria-label="Close demo cases"><X className="size-4" /></button>
+          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-[#eef2ef]" aria-label="Close"><X className="size-4" /></button>
         </div>
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {categories.map((category) => {
@@ -386,20 +403,18 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
                   <CategoryIcon className="size-3.5 text-[var(--brand)]" />
                   <span>{category}</span>
                 </div>
-                <div className="space-y-2">
-                  {list.map((scenario) => {
-                    const active = scenario.id === currentScenarioId;
-                    return (
-                      <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("focus-ring block w-full rounded-[14px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-[#eef5f1]" : "border-[var(--line)] bg-white hover:border-[#ccd7d1]")}>
-                        <div className="flex items-center justify-between">
-                          <b className="text-[13.5px] font-semibold text-[var(--ink)]">{scenario.label}</b>
-                          {active && <span className="rounded-full bg-[var(--brand)] px-2 py-0.5 text-[10px] font-bold text-white">Active</span>}
-                        </div>
-                        <p className="mt-1 text-[12.5px] leading-5 text-[var(--ink-muted)]">{scenario.description}</p>
-                      </button>
-                    );
-                  })}
-                </div>
+                {list.map((scenario) => {
+                  const active = scenario.id === currentScenarioId;
+                  return (
+                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-[14px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-[#eef5f1]" : "border-[var(--line)] bg-white hover:border-[#ccd7d1]")}>
+                      <div className="flex items-center justify-between">
+                        <b className="text-[13.5px] font-semibold">{scenario.label}</b>
+                        {active && <span className="rounded-full bg-[var(--brand)] px-2 py-0.5 text-[10px] font-bold text-white">Active</span>}
+                      </div>
+                      <p className="mt-1 text-[12.5px] leading-5 text-[var(--ink-muted)]">{scenario.description}</p>
+                    </button>
+                  );
+                })}
               </div>
             );
           })}
@@ -414,14 +429,14 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
 
 function SourceLibraryModal({ selectedIds, query, onQueryChange, sources, onToggle, onUpload, onClose }: { selectedIds: string[]; query: string; onQueryChange: (q: string) => void; sources: PlanningSource[]; onToggle: (id: string) => void; onUpload: () => void; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/38 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Evidence library">
-      <div className="select-pop flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-[22px] border border-white/60 bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/38 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
+      <div className="flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-[22px] border border-white/60 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-[var(--line)] p-5">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Regulatory Sources</div>
             <h3 className="text-[18px] font-semibold">Attach verified evidence</h3>
           </div>
-          <button onClick={onClose} className="focus-ring grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-[#eef2ef] hover:text-[var(--ink)]" aria-label="Close evidence library"><X className="size-4" /></button>
+          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-[#eef2ef]" aria-label="Close"><X className="size-4" /></button>
         </div>
         <div className="p-4 border-b border-[var(--line)]">
           <div className="flex items-center gap-2 rounded-[12px] border border-[var(--line)] bg-[#fafbf9] px-3 py-2">
