@@ -4,6 +4,7 @@ import { Player } from "@remotion/player";
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   AtSign,
   BookOpenCheck,
   Check,
@@ -819,6 +820,33 @@ export function StudioScreen() {
             >
               <Plus className="size-3" /> Add scene
             </button>
+          )}
+
+          {/* Sticky Floating CTA at the bottom of Script Stage to Generate Scenes */}
+          {!isEditor && (
+            <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#eef1ed] via-[#eef1ed] to-transparent shrink-0 mt-auto z-20">
+              <div className="border border-white/10 bg-[#121614] text-white p-4 shadow-[0_12px_36px_rgba(0,0,0,0.22)] rounded-[20px] flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="size-4.5 text-[var(--brand)] shrink-0" />
+                    <span className="text-[13.5px] font-bold text-white tracking-tight">Script approved &amp; claims grounded</span>
+                  </div>
+                  <p className="text-[11.5px] text-white/70 mt-0.5">
+                    {sceneList.length} scenes structured · Generates multi-layer visual canvas &amp; synchronized timeline.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleOpenGenerateModal}
+                  size="lg"
+                  className="h-11 px-6 rounded-[13px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 cursor-pointer shrink-0"
+                >
+                  <Sparkles className="size-4 mr-1.5" />
+                  <span>Generate Scenes</span>
+                  <ArrowRight className="size-4 ml-1.5" />
+                </Button>
+              </div>
+            </div>
           )}
         </aside>
 

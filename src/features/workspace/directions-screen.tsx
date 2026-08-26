@@ -1225,14 +1225,14 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 </PlanSection>
 
                 {/* Sticky Confirmation CTA at the bottom of the Left Stage */}
-                <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#eef1ed] via-[#eef1ed] to-transparent shrink-0 mt-auto">
-                  <div className="squircle-card border border-[var(--line)] bg-white p-4 shadow-md rounded-[18px] flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#eef1ed] via-[#eef1ed] to-transparent shrink-0 mt-auto z-20">
+                  <div className="border border-white/10 bg-[#121614] text-white p-4 shadow-[0_12px_36px_rgba(0,0,0,0.22)] rounded-[20px] flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-emerald-600" />
-                        <span className="text-[13.5px] font-bold text-[var(--ink)]">Ready to generate script</span>
+                        <CheckCircle2 className="size-4.5 text-emerald-400 shrink-0" />
+                        <span className="text-[13.5px] font-bold text-white tracking-tight">Ready to generate script</span>
                       </div>
-                      <p className="text-[11.5px] text-[var(--ink-muted)] mt-0.5">
+                      <p className="text-[11.5px] text-white/70 mt-0.5">
                         Grounded against 214 approved claims · Nothing is finalized until you review in Studio.
                       </p>
                     </div>
@@ -1241,7 +1241,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       onClick={handleConfirmPlan}
                       disabled={isGenerating}
                       size="lg"
-                      className="h-11 px-6 rounded-[12px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer shrink-0"
+                      className="h-11 px-6 rounded-[13px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer shrink-0"
                     >
                       <span>Confirm Plan &amp; Build Script</span>
                       <ArrowRight className="size-4 ml-1.5" />
