@@ -51,7 +51,7 @@ import {
   WandSparkles,
   X,
 } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { scenes } from "@/features/workspace/mock-data";
@@ -132,6 +132,36 @@ export function StudioScreen() {
   const chatMessages = useWorkspaceStore((s) => s.chatMessages);
   const setChatMessages = useWorkspaceStore((s) => s.setChatMessages);
   const addChatMessage = useWorkspaceStore((s) => s.addChatMessage);
+  const studioChatEndRef = useRef<HTMLDivElement>(null);
+
+  // Fallback: Ensure messages are initialized even if studio is loaded directly
+  useEffect(() => {
+    if (chatMessages.length === 0) {
+      const bName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
+      setChatMessages([
+        {
+          role: "user",
+          text: `Create a concise ${bName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`,
+        },
+        {
+          role: "swishx",
+          text: `I've structured a 5-scene video plan grounded in the **${bName}** dossier and approved claims.`,
+        },
+        {
+          role: "user",
+          text: "Confirm plan & build script",
+        },
+        {
+          role: "swishx",
+          text: `Script & storyboard scenes generated for **${bName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`,
+        },
+      ]);
+    }
+  }, [chatMessages.length, sourcePayload?.dossierId, setChatMessages]);
+
+  useEffect(() => {
+    studioChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
 
   // Editor mode multi-layer timeline accordion (Default to CLOSED)
   const [timelineOpen, setTimelineOpen] = useState(false);
@@ -1216,10 +1246,11 @@ export function StudioScreen() {
                             <span>SwishX Copilot</span>
                           </div>
                         )}
-                        <span>{msg.text}</span>
+                        <span className="whitespace-pre-wrap">{msg.text}</span>
                       </div>
                     </div>
                   ))}
+                  <div ref={studioChatEndRef} />
 
                   {/* Suggestion Prompt Chips - ONLY shown when chat has not yet started */}
                   {chatMessages.length === 0 && (

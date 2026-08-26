@@ -352,8 +352,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setGenerationStep(1);
 
     addChatMessage({
+      role: "user",
+      text: "Confirm plan & build script",
+    });
+
+    addChatMessage({
       role: "swishx",
-      text: `Confirmed plan for **${brandName}**. Generating 5-scene clinical storyboard grounded against approved label citations...`,
+      text: `Confirmed plan parameters for **${brandName}**. Structuring 5-scene clinical script and grounding against FDA approved claims...`,
     });
 
     setTimeout(() => {
@@ -365,6 +370,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     }, 1200);
 
     setTimeout(() => {
+      addChatMessage({
+        role: "swishx",
+        text: `Script & storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`,
+      });
       setVideoSubStage("studio");
       setView("studio");
     }, 1800);
@@ -484,10 +493,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 <Sparkles className="size-10 text-[var(--brand)] animate-pulse" />
               </div>
               <h3 className="text-[22px] font-extrabold text-[var(--ink)] tracking-tight">
-                Generating Storyboard Scenes...
+                Generating Clinical Script &amp; Storyboard...
               </h3>
               <p className="text-[13.5px] text-[var(--ink-muted)] mt-1.5 max-w-[440px]">
-                Structuring clinical narrative, scene narration, and multi-layer visual grounding against 214 approved claims.
+                Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims.
               </p>
 
               <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-[12.5px]">
@@ -497,7 +506,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 </div>
                 <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40")}>
                   <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Synthesized 5-scene clinical narrative</span>
+                  <span className="font-semibold">Synthesized 5-scene clinical narrative &amp; script</span>
                 </div>
                 <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40")}>
                   <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
@@ -1211,7 +1220,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     <div>
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="size-4 text-emerald-600" />
-                        <span className="text-[13.5px] font-bold text-[var(--ink)]">Ready to generate scenes</span>
+                        <span className="text-[13.5px] font-bold text-[var(--ink)]">Ready to generate script</span>
                       </div>
                       <p className="text-[11.5px] text-[var(--ink-muted)] mt-0.5">
                         Grounded against 214 approved claims · Nothing is finalized until you review in Studio.
@@ -1224,7 +1233,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       size="lg"
                       className="h-11 px-6 rounded-[12px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer shrink-0"
                     >
-                      <span>Confirm Plan &amp; Build Scenes</span>
+                      <span>Confirm Plan &amp; Build Script</span>
                       <ArrowRight className="size-4 ml-1.5" />
                     </Button>
                   </div>
@@ -1243,26 +1252,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           }}
           className="flex flex-col shrink-0 min-h-0 bg-[#fafbf9] border-l border-[var(--line)] overflow-hidden"
         >
-          {/* Header Segmented Tabs matching Studio Inspector */}
-          <div className="p-3 border-b border-[var(--line)] bg-white shrink-0">
-            <div className="grid grid-cols-2 rounded-2xl bg-[#ebefe9] p-1 gap-1 border border-black/[0.03] shadow-inner">
-              <button
-                type="button"
-                className="py-1.5 rounded-xl text-[12px] font-bold transition-all shadow-xs bg-white text-[var(--ink)] cursor-pointer"
-              >
-                Chat
-              </button>
-              <button
-                type="button"
-                className="py-1.5 rounded-xl text-[12px] font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-all cursor-pointer"
-              >
-                Claims (24)
-              </button>
-            </div>
-          </div>
-
           {/* Chat Top Online Banner */}
-          <div className="px-3.5 pt-3 shrink-0">
+          <div className="p-3.5 border-b border-[var(--line)] bg-white shrink-0">
             <div className="rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-2.5">
               <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--brand-deep)]">
                 <Sparkles className="size-3.5 text-[var(--brand)]" />
