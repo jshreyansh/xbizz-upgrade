@@ -16,6 +16,7 @@ interface TileOption {
   description: string;
   href: string;
   gradient: string;
+  glow: string;
 }
 
 interface ShowcaseItem {
@@ -44,7 +45,8 @@ const CREATION_TILES: TileOption[] = [
     tag: "16:9 & 9:16 Reels",
     description: "Source-backed MoA reels & clinical evidence videos, in minutes.",
     href: "/create",
-    gradient: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
+    gradient: "linear-gradient(145deg,#6ea2ff,#3d6bff 55%,#1d3fd6)",
+    glow: "rgba(61,107,255,.38)",
   },
   {
     icon: ImageIcon,
@@ -53,7 +55,8 @@ const CREATION_TILES: TileOption[] = [
     tag: "Congress & Infographics",
     description: "Compliant leave-behinds, booth banners & journal ads.",
     href: "#",
-    gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)",
+    gradient: "linear-gradient(145deg,#c199ff,#9b5bff 55%,#6d1fd8)",
+    glow: "rgba(155,91,255,.38)",
   },
   {
     icon: Globe,
@@ -62,7 +65,8 @@ const CREATION_TILES: TileOption[] = [
     tag: "HCP & Patient Portals",
     description: "On-label microsites and landing pages, live in hours.",
     href: "/create",
-    gradient: "linear-gradient(140deg,#22c07a,#12784a)",
+    gradient: "linear-gradient(145deg,#4fdb9c,#16b878 55%,#0a8556)",
+    glow: "rgba(22,184,120,.38)",
   },
 ];
 
@@ -298,96 +302,126 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "flex-start",
-        gap: 12,
-        padding: "22px 22px 20px",
+        alignItems: "center",
+        gap: 14,
+        padding: "36px 28px 30px",
         borderRadius: "var(--r-xl)",
         background: hovered ? "#fdfefe" : "#fff",
         border: hovered ? "1.5px solid var(--brand)" : "1px solid var(--hair)",
-        boxShadow: hovered ? "0 12px 28px -8px rgba(0,0,0,0.07)" : "0 2px 6px rgba(0,0,0,0.02)",
+        boxShadow: hovered ? `0 20px 40px -14px ${tile.glow}` : "0 2px 6px rgba(0,0,0,0.02)",
         cursor: "pointer",
-        textAlign: "left",
-        transition: "all .24s cubic-bezier(0.16, 1, 0.3, 1)",
+        textAlign: "center",
+        transition: "all .28s cubic-bezier(0.16, 1, 0.3, 1)",
         position: "relative",
-        minHeight: 168,
+        minHeight: 260,
         overflow: "hidden",
       }}
-      className="hover:-translate-y-1 group"
+      className="hover:-translate-y-1.5 group"
     >
-      {/* Gradient icon badge — one distinct premium visual per card */}
+      {/* Soft radial glow behind the icon — colorful backdrop */}
+      <span
+        aria-hidden
+        style={{
+          position: "absolute",
+          top: -34,
+          left: "50%",
+          width: 170,
+          height: 170,
+          borderRadius: "50%",
+          background: tile.gradient,
+          filter: "blur(38px)",
+          opacity: hovered ? 0.42 : 0.24,
+          transform: "translateX(-50%)",
+          transition: "opacity .3s ease",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Gradient icon badge — large, colorful, interactive */}
       <span
         style={{
+          position: "relative",
           display: "grid",
           placeItems: "center",
-          width: 44,
-          height: 44,
-          borderRadius: 13,
+          width: 68,
+          height: 68,
+          borderRadius: 20,
           flexShrink: 0,
           background: tile.gradient,
           color: "#fff",
-          boxShadow: "0 10px 20px -10px rgba(10,13,20,.45)",
-          transition: "transform .3s cubic-bezier(0.16, 1, 0.3, 1)",
-          transform: hovered ? "scale(1.08) rotate(-6deg)" : "scale(1) rotate(0deg)",
+          boxShadow: `0 14px 26px -10px ${tile.glow}, inset 0 1px 0 rgba(255,255,255,.35)`,
+          transition: "transform .32s cubic-bezier(0.16, 1, 0.3, 1)",
+          transform: hovered ? "scale(1.1) rotate(-6deg)" : "scale(1) rotate(0deg)",
         }}
       >
-        <Icon size={20} strokeWidth={2} />
+        <Icon size={30} strokeWidth={1.9} />
       </span>
 
-      {/* Title + badge */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <h3
-          style={{
-            fontSize: 16.5,
-            fontWeight: 800,
-            color: "var(--ink)",
-            letterSpacing: "-.4px",
-            margin: 0,
-            lineHeight: 1.2,
-          }}
-        >
-          {tile.title}
-        </h3>
-        <span
-          style={{
-            fontSize: 9.5,
-            fontWeight: 800,
-            letterSpacing: ".04em",
-            textTransform: "uppercase",
-            color: "var(--brand-deep)",
-            background: "var(--tint)",
-            border: "1px solid var(--tint-line)",
-            padding: "2px 7px",
-            borderRadius: 5,
-          }}
-        >
-          {tile.badge}
-        </span>
-      </div>
+      {/* Badge */}
+      <span
+        style={{
+          position: "relative",
+          fontSize: 9.5,
+          fontWeight: 800,
+          letterSpacing: ".04em",
+          textTransform: "uppercase",
+          color: "var(--brand-deep)",
+          background: "var(--tint)",
+          border: "1px solid var(--tint-line)",
+          padding: "2px 8px",
+          borderRadius: 99,
+        }}
+      >
+        {tile.badge}
+      </span>
+
+      {/* Title */}
+      <h3
+        style={{
+          position: "relative",
+          fontSize: 19,
+          fontWeight: 800,
+          color: "var(--ink)",
+          letterSpacing: "-.4px",
+          margin: 0,
+          lineHeight: 1.2,
+        }}
+      >
+        {tile.title}
+      </h3>
 
       {/* Description */}
       <p
         style={{
-          fontSize: 13,
+          position: "relative",
+          fontSize: 13.5,
           color: "var(--ink-3)",
           margin: 0,
-          lineHeight: 1.5,
+          lineHeight: 1.55,
           fontWeight: 450,
+          maxWidth: "30ch",
         }}
       >
         {tile.description}
       </p>
 
-      {/* Get started CTA */}
+      {/* Get started — clickable pill CTA */}
       <span
         style={{
+          position: "relative",
           marginTop: "auto",
-          paddingTop: 4,
           display: "inline-flex",
           alignItems: "center",
-          gap: 5,
+          gap: 6,
           fontSize: 12.5,
-          fontWeight: 700,
-          color: "var(--brand)",
+          fontWeight: 750,
+          padding: "8px 16px",
+          borderRadius: 99,
+          color: hovered ? "#fff" : "var(--brand-deep)",
+          background: hovered ? tile.gradient : "var(--tint)",
+          border: hovered ? "1px solid transparent" : "1px solid var(--tint-line)",
+          boxShadow: hovered ? `0 10px 20px -10px ${tile.glow}` : "none",
+          transition: "all .24s ease",
         }}
       >
         Get started
@@ -930,22 +964,22 @@ export function HomeScreen() {
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 9,
-            padding: "12px 20px",
-            borderRadius: "var(--r)",
-            fontWeight: 700,
-            fontSize: 14,
+            gap: 10,
+            padding: "15px 26px",
+            borderRadius: 99,
+            fontWeight: 750,
+            fontSize: 15,
             color: "#fff",
             background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            boxShadow: "0 12px 26px -14px rgba(253,72,22,.85),inset 0 1px 0 rgba(255,255,255,.28)",
+            boxShadow: "0 16px 32px -14px rgba(253,72,22,.9),inset 0 1px 0 rgba(255,255,255,.32)",
             whiteSpace: "nowrap",
             flexShrink: 0,
           }}
-          className="hover:-translate-y-0.5 transition-transform"
+          className="hover:-translate-y-0.5 hover:scale-[1.02] transition-transform"
         >
-          <Sparkles size={16} strokeWidth={2.2} />
+          <Sparkles size={18} strokeWidth={2.2} />
           Start Here — upload dossier or brief
-          <ArrowRight size={15} strokeWidth={2.4} />
+          <ArrowRight size={16} strokeWidth={2.4} />
         </button>
       </div>
 
