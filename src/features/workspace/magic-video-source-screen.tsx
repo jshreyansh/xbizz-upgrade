@@ -38,7 +38,7 @@ export interface BrandItem {
   genericName: string;
   therapyAreas: string[];
   hasDossier: boolean;
-  dossierId?: string;
+  dossierIds?: string[];
 }
 
 export interface DossierItem {
@@ -57,11 +57,46 @@ export interface DossierItem {
 }
 
 const INITIAL_BRANDS: BrandItem[] = [
-  { id: "velmora", name: "Velmora", genericName: "tirzelamide", therapyAreas: ["Dermatology", "Cardiology"], hasDossier: true, dossierId: "velmora" },
-  { id: "onkavia", name: "Onkavia", genericName: "relunocitinib", therapyAreas: ["Oncology"], hasDossier: true, dossierId: "onkavia" },
-  { id: "nirvexa", name: "Nirvexa", genericName: "brentaxaban", therapyAreas: ["Immunology"], hasDossier: true, dossierId: "nirvexa" },
-  { id: "cardioxa", name: "Cardioxa", genericName: "levomilnacipran ER", therapyAreas: ["Cardiology"], hasDossier: true, dossierId: "cardioxa" },
-  { id: "pulmovax", name: "PulmoVax", genericName: "albuterol / budesonide", therapyAreas: ["Respiratory"], hasDossier: true, dossierId: "pulmovax" },
+  {
+    id: "velmora",
+    name: "Velmora",
+    genericName: "tirzelamide",
+    therapyAreas: ["Dermatology", "Cardiology"],
+    hasDossier: true,
+    dossierIds: ["velmora-commercial", "velmora-smpc", "velmora-heor"],
+  },
+  {
+    id: "onkavia",
+    name: "Onkavia",
+    genericName: "relunocitinib",
+    therapyAreas: ["Oncology"],
+    hasDossier: true,
+    dossierIds: ["onkavia-ema", "onkavia-fda"],
+  },
+  {
+    id: "nirvexa",
+    name: "Nirvexa",
+    genericName: "brentaxaban",
+    therapyAreas: ["Immunology"],
+    hasDossier: true,
+    dossierIds: ["nirvexa-mhra", "nirvexa-fda"],
+  },
+  {
+    id: "cardioxa",
+    name: "Cardioxa",
+    genericName: "levomilnacipran ER",
+    therapyAreas: ["Cardiology"],
+    hasDossier: true,
+    dossierIds: ["cardioxa-sample"],
+  },
+  {
+    id: "pulmovax",
+    name: "PulmoVax",
+    genericName: "albuterol / budesonide",
+    therapyAreas: ["Respiratory"],
+    hasDossier: true,
+    dossierIds: ["pulmovax-sample"],
+  },
   { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
   { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
   { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
@@ -72,10 +107,10 @@ const INITIAL_BRANDS: BrandItem[] = [
 ];
 
 const DOSSIERS: Record<string, DossierItem> = {
-  velmora: {
-    id: "velmora",
+  "velmora-commercial": {
+    id: "velmora-commercial",
     brandId: "velmora",
-    name: "Velmora Commercial Dossier",
+    name: "Velmora Commercial Launch Dossier",
     molecule: "tirzelamide",
     market: "🇺🇸 US · FDA",
     sections: 18,
@@ -90,10 +125,43 @@ const DOSSIERS: Record<string, DossierItem> = {
       { name: "ClinicalTrials.gov Protocol NCT04892110", citations: 18 },
     ],
   },
-  onkavia: {
-    id: "onkavia",
+  "velmora-smpc": {
+    id: "velmora-smpc",
+    brandId: "velmora",
+    name: "Velmora EU Summary of Product Characteristics (SmPC)",
+    molecule: "tirzelamide",
+    market: "🇪🇺 EU · EMA",
+    sections: 19,
+    claims: 186,
+    heldOut: 0,
+    avatarBg: "linear-gradient(140deg,#22c07a,#12784a)",
+    skeletonWidths: [92, 65, 84, 55, 78],
+    documents: [
+      { name: "EMA Approved Summary of Product Characteristics (SmPC)", citations: 104 },
+      { name: "EU Multi-Center CLARITY-EU Phase III Sub-study", citations: 52 },
+      { name: "European HTA Joint Clinical Assessment Submission", citations: 30 },
+    ],
+  },
+  "velmora-heor": {
+    id: "velmora-heor",
+    brandId: "velmora",
+    name: "Velmora HEOR & Value Evidence Dossier",
+    molecule: "tirzelamide",
+    market: "🌐 Global · HEOR",
+    sections: 14,
+    claims: 128,
+    heldOut: 0,
+    avatarBg: "linear-gradient(140deg,#f59e0b,#d97706)",
+    skeletonWidths: [80, 85, 70, 90, 65],
+    documents: [
+      { name: "Global Health Economics & QALY Impact Dossier", citations: 76 },
+      { name: "30-Day Hospital Readmission Reduction Health Economic Model", citations: 52 },
+    ],
+  },
+  "onkavia-ema": {
+    id: "onkavia-ema",
     brandId: "onkavia",
-    name: "Onkavia Clinical Reference",
+    name: "Onkavia Clinical Reference Dossier",
     molecule: "relunocitinib",
     market: "🇪🇺 EU · EMA",
     sections: 19,
@@ -107,10 +175,26 @@ const DOSSIERS: Record<string, DossierItem> = {
       { name: "EU HEOR Relative Effectiveness Dossier", citations: 34 },
     ],
   },
-  nirvexa: {
-    id: "nirvexa",
+  "onkavia-fda": {
+    id: "onkavia-fda",
+    brandId: "onkavia",
+    name: "Onkavia US Prescribing Dossier",
+    molecule: "relunocitinib",
+    market: "🇺🇸 US · FDA",
+    sections: 17,
+    claims: 172,
+    heldOut: 0,
+    avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
+    skeletonWidths: [88, 70, 85, 60, 75],
+    documents: [
+      { name: "FDA Approved Prescribing Information (Rev. 02/2026)", citations: 98 },
+      { name: "US Expanded Access Oncology Safety Registry", citations: 40 },
+    ],
+  },
+  "nirvexa-mhra": {
+    id: "nirvexa-mhra",
     brandId: "nirvexa",
-    name: "Nirvexa Commercial Dossier",
+    name: "Nirvexa UK Commercial Dossier",
     molecule: "brentaxaban",
     market: "🇬🇧 UK · MHRA",
     sections: 16,
@@ -124,8 +208,24 @@ const DOSSIERS: Record<string, DossierItem> = {
       { name: "NICE Technology Appraisal Submission", citations: 18 },
     ],
   },
-  cardioxa: {
-    id: "cardioxa",
+  "nirvexa-fda": {
+    id: "nirvexa-fda",
+    brandId: "nirvexa",
+    name: "Nirvexa US Prescribing Dossier",
+    molecule: "brentaxaban",
+    market: "🇺🇸 US · FDA",
+    sections: 15,
+    claims: 130,
+    heldOut: 1,
+    avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
+    skeletonWidths: [85, 75, 80, 65, 70],
+    documents: [
+      { name: "FDA Approved Package Insert (PI)", citations: 80 },
+      { name: "Global Phase III Immunology Meta-Analysis", citations: 50 },
+    ],
+  },
+  "cardioxa-sample": {
+    id: "cardioxa-sample",
     brandId: "cardioxa",
     name: "Cardioxa Sample Dossier",
     molecule: "levomilnacipran ER",
@@ -141,8 +241,8 @@ const DOSSIERS: Record<string, DossierItem> = {
       { name: "Cardiology Trial Readouts & Endpoints", citations: 55 },
     ],
   },
-  pulmovax: {
-    id: "pulmovax",
+  "pulmovax-sample": {
+    id: "pulmovax-sample",
     brandId: "pulmovax",
     name: "PulmoVax Sample Dossier",
     molecule: "albuterol / budesonide",
@@ -224,8 +324,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   // Brands State
   const [brandList, setBrandList] = useState<BrandItem[]>(INITIAL_BRANDS);
-  const [selectedBrandId, setSelectedBrandId] = useState<string>(
-    sourcePayload.dossierId || "velmora"
+  const [selectedBrandId, setSelectedBrandId] = useState<string>("velmora");
+  const [selectedDossierId, setSelectedDossierId] = useState<string>(
+    sourcePayload.dossierId || "velmora-commercial"
   );
   const [brandSearchQuery, setBrandSearchQuery] = useState("");
   const [isChangingBrand, setIsChangingBrand] = useState(false);
@@ -241,7 +342,15 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
     [brandList, selectedBrandId]
   );
 
-  const selectedDossier = selectedBrand?.dossierId ? DOSSIERS[selectedBrand.dossierId] : null;
+  const availableDossiers = useMemo(() => {
+    if (!selectedBrand || !selectedBrand.hasDossier || !selectedBrand.dossierIds) return [];
+    return selectedBrand.dossierIds.map((id) => DOSSIERS[id]).filter(Boolean);
+  }, [selectedBrand]);
+
+  const activeDossier = useMemo(() => {
+    if (!selectedDossierId) return availableDossiers[0] || null;
+    return DOSSIERS[selectedDossierId] || availableDossiers[0] || null;
+  }, [selectedDossierId, availableDossiers]);
 
   // Filtered Brands
   const filteredBrands = useMemo(() => {
@@ -258,17 +367,25 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   // Mandatory Validation Checks
   const isAudienceValid = Boolean(audience);
   const isTopicsValid = topics.length > 0;
-  const isDossierValid = Boolean(selectedBrand?.hasDossier && selectedDossier);
+  const isDossierValid = Boolean(selectedBrand?.hasDossier && activeDossier);
   const canContinue = isAudienceValid && isTopicsValid && isDossierValid;
 
   const handleSelectBrand = (brand: BrandItem) => {
     setSelectedBrandId(brand.id);
     setIsChangingBrand(false);
-    if (brand.hasDossier && brand.dossierId) {
-      setSourcePayload({ dossierId: brand.dossierId });
+    if (brand.hasDossier && brand.dossierIds && brand.dossierIds.length > 0) {
+      const firstDossierId = brand.dossierIds[0];
+      setSelectedDossierId(firstDossierId);
+      setSourcePayload({ dossierId: firstDossierId });
     } else {
+      setSelectedDossierId("");
       setSourcePayload({ dossierId: "" });
     }
+  };
+
+  const handleSelectDossier = (dossier: DossierItem) => {
+    setSelectedDossierId(dossier.id);
+    setSourcePayload({ dossierId: dossier.id });
   };
 
   const handleAddBrandSubmit = (e: React.FormEvent) => {
@@ -286,6 +403,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
     setBrandList((prev) => [createdBrand, ...prev]);
     setSelectedBrandId(createdBrand.id);
+    setSelectedDossierId("");
     setSourcePayload({ dossierId: "" });
     setIsAddBrandModalOpen(false);
     setIsChangingBrand(false);
@@ -309,8 +427,8 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   };
 
   const handleContinueToBrief = () => {
-    if (!canContinue || !selectedDossier) return;
-    const dossierId = selectedDossier.id;
+    if (!canContinue || !activeDossier) return;
+    const dossierId = activeDossier.id;
     setSourcePayload({ dossierId });
     setSelectedSourceIds(["dermora-core", "dermora-claims", "dermora-brand"]);
     if (!brief || brief.length < 10) {
@@ -350,7 +468,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                       </span>
                       {selectedBrand.hasDossier ? (
                         <span className="rounded-md bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[9.5px] font-extrabold text-emerald-800">
-                          ✓ Dossier on file
+                          ✓ {availableDossiers.length} Dossier{availableDossiers.length > 1 ? "s" : ""} on file
                         </span>
                       ) : (
                         <span className="rounded-md bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-[9.5px] font-extrabold text-amber-800">
@@ -452,7 +570,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                           </span>
                           {brand.hasDossier ? (
                             <span className="rounded bg-emerald-50 px-1.5 py-0.2 text-[9px] font-bold text-emerald-800 border border-emerald-200">
-                              Dossier
+                              {brand.dossierIds?.length || 1} Dossier{brand.dossierIds && brand.dossierIds.length > 1 ? "s" : ""}
                             </span>
                           ) : (
                             <span className="rounded bg-amber-50 px-1.5 py-0.2 text-[9px] font-bold text-amber-800 border border-amber-200">
@@ -491,85 +609,114 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             </div>
           )}
 
-          {/* ── STEP 2: DOSSIER EVIDENCE & DOCUMENTS (PROMINENT AT TOP) ── */}
+          {/* ── STEP 2: DOSSIER EVIDENCE & DOCUMENTS (MULTIPLE SELECTABLE DOSSIERS) ── */}
           <div className="space-y-3.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="size-4 text-[var(--brand)]" />
                 <h3 className="text-[15px] font-[850] text-[var(--ink)]">
-                  Dossier Evidence &amp; Grounding for {selectedBrand.name}
+                  Available Dossiers &amp; Regulatory Sources for {selectedBrand.name}
                 </h3>
               </div>
               {selectedBrand.hasDossier && (
-                <span className="text-[11.5px] font-bold text-[var(--ok)]">
-                  ✓ 100% PromoMats Grounded
+                <span className="text-[11px] font-bold text-[var(--ok)] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  ✓ {availableDossiers.length} Options Available · Pick One
                 </span>
               )}
             </div>
 
-            {selectedBrand.hasDossier && selectedDossier ? (
-              /* Case A: Brand has Dossier */
-              <div className="space-y-4">
-                <div className="rounded-[20px] border border-[var(--brand)] bg-[var(--tint)] p-4.5 shadow-xs ring-1 ring-[var(--brand)]/20">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-[16px] font-[850] text-[var(--ink)] tracking-tight">
-                          {selectedDossier.name}
-                        </h4>
-                        {selectedDossier.isSample && (
-                          <span className="rounded-full bg-[#fef3c7] text-[#92400e] px-2 py-0.5 text-[9.5px] font-bold border border-[#fde68a]">
-                            Sample
+            {selectedBrand.hasDossier && availableDossiers.length > 0 ? (
+              /* Case A: Multiple Selectable Dossiers for Brand */
+              <div className="space-y-3.5">
+                {availableDossiers.map((dossier) => {
+                  const isSelected = activeDossier?.id === dossier.id;
+                  return (
+                    <div
+                      key={dossier.id}
+                      onClick={() => handleSelectDossier(dossier)}
+                      className={cn(
+                        "rounded-[20px] border p-4.5 transition-all duration-200 cursor-pointer",
+                        isSelected
+                          ? "border-[var(--brand)] bg-[var(--tint)]/60 ring-2 ring-[var(--brand)]/20 shadow-xs"
+                          : "border-black/[0.08] bg-[#fafbf9] hover:border-black/20 hover:bg-white hover:shadow-2xs"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {/* Radio Button */}
+                          <span
+                            className={cn(
+                              "grid size-5.5 place-items-center rounded-full border transition-all shrink-0 mt-0.5",
+                              isSelected
+                                ? "border-[var(--brand)] bg-[var(--brand)] text-white shadow-2xs"
+                                : "border-black/20 bg-white"
+                            )}
+                          >
+                            {isSelected && <Check className="size-3" strokeWidth={3.5} />}
                           </span>
-                        )}
-                      </div>
-                      <span className="text-[12px] italic text-[var(--ink-3)] font-medium mt-0.5 block">
-                        {selectedDossier.molecule}
-                      </span>
-                    </div>
-                    <span className="rounded-full bg-white px-2.5 py-0.5 font-bold text-[11px] text-[var(--ink-2)] border border-[var(--hair-2)]">
-                      {selectedDossier.market}
-                    </span>
-                  </div>
 
-                  {/* Visual Skeleton Bars */}
-                  <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-2.5 border border-black/[0.04]">
-                    <div className="flex items-center justify-between text-[11px] font-bold text-[var(--ink-3)] mb-1.5">
-                      <span>Brand Dossier Structure</span>
-                      <span>{selectedDossier.sections} sections · {selectedDossier.claims} approved claims</span>
-                    </div>
-                    <div className="space-y-1.5">
-                      {selectedDossier.skeletonWidths.map((w, i) => (
-                        <div key={i} className="flex items-center gap-1.5">
-                          <div className="h-1.5 rounded-full bg-black/10" style={{ width: `${w}%` }} />
-                          <sup className="text-[8.5px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-[15.5px] font-[850] text-[var(--ink)] tracking-tight">
+                                {dossier.name}
+                              </h4>
+                              {dossier.isSample && (
+                                <span className="rounded-full bg-[#fef3c7] text-[#92400e] px-2 py-0.5 text-[9px] font-bold border border-[#fde68a]">
+                                  Sample
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11.5px] italic text-[var(--ink-3)] font-medium mt-0.5 block">
+                              {dossier.molecule}
+                            </span>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Attached Regulatory Documents */}
-                  {selectedDossier.documents && selectedDossier.documents.length > 0 && (
-                    <div className="mt-3.5 space-y-1.5 border-t border-[var(--hair)] pt-3">
-                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
-                        Attached Clinical Documents &amp; Labels
+                        <span className="rounded-full bg-white px-2.5 py-0.5 font-bold text-[11px] text-[var(--ink-2)] border border-[var(--hair-2)] shrink-0">
+                          {dossier.market}
+                        </span>
                       </div>
-                      {selectedDossier.documents.map((doc, dIdx) => (
-                        <div
-                          key={dIdx}
-                          className="flex items-center justify-between text-[11.5px] bg-white/90 border border-black/[0.06] rounded-lg px-2.5 py-1.5 shadow-2xs"
-                        >
-                          <span className="font-medium text-[var(--ink)] truncate max-w-[78%]">
-                            📄 {doc.name}
-                          </span>
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
-                            {doc.citations} citations
-                          </span>
+
+                      {/* Visual Skeleton Bars */}
+                      <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-2.5 border border-black/[0.04]">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-[var(--ink-3)] mb-1.5">
+                          <span>Dossier Structure</span>
+                          <span>{dossier.sections} sections · {dossier.claims} approved claims</span>
                         </div>
-                      ))}
+                        <div className="space-y-1.5">
+                          {dossier.skeletonWidths.map((w, i) => (
+                            <div key={i} className="flex items-center gap-1.5">
+                              <div className="h-1.5 rounded-full bg-black/10" style={{ width: `${w}%` }} />
+                              <sup className="text-[8.5px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Attached Regulatory Documents */}
+                      {dossier.documents && dossier.documents.length > 0 && (
+                        <div className="mt-3.5 space-y-1.5 border-t border-[var(--hair)] pt-3">
+                          <div className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                            Attached Clinical Documents &amp; Labels ({dossier.documents.length})
+                          </div>
+                          {dossier.documents.map((doc, dIdx) => (
+                            <div
+                              key={dIdx}
+                              className="flex items-center justify-between text-[11.5px] bg-white/90 border border-black/[0.06] rounded-lg px-2.5 py-1.5 shadow-2xs"
+                            >
+                              <span className="font-medium text-[var(--ink)] truncate max-w-[78%]">
+                                📄 {doc.name}
+                              </span>
+                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                                {doc.citations} citations
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
             ) : (
               /* Case B: Brand has NO Dossier Yet */
@@ -610,8 +757,8 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   Mandatory
                 </span>
               </div>
-              <h2 className="mt-0.5 text-[16px] font-[850] tracking-tight text-[var(--ink)]">
-                {selectedBrand.name} Dossier
+              <h2 className="mt-0.5 text-[16px] font-[850] tracking-tight text-[var(--ink)] truncate">
+                {activeDossier ? activeDossier.name : `${selectedBrand.name} Dossier`}
               </h2>
             </div>
 
