@@ -158,57 +158,6 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
     ],
   },
   {
-    label: "Brand Dossiers",
-    title: "Master regulatory dossiers & clinical evidence anchors",
-    items: [
-      {
-        title: "Velmora Master Dossier",
-        subtitle: "FDA Anchor · Cardiology · 18 Secs",
-        meta: "66 Claims",
-        aspect: "16/9",
-        gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 48%,#5b7fb8)",
-        hasPlay: false,
-        tag: "Dossier",
-      },
-      {
-        title: "Onkavia SmPC Dossier",
-        subtitle: "EMA Anchor · NSCLC · 19 Secs",
-        meta: "84 Claims",
-        aspect: "16/9",
-        gradient: "linear-gradient(160deg,#3a1e4d,#63307a 48%,#a06bc4)",
-        hasPlay: false,
-        tag: "Dossier",
-      },
-      {
-        title: "Nirvexa Value Dossier",
-        subtitle: "MHRA Anchor · Immunology · 16 Secs",
-        meta: "162 Claims",
-        aspect: "16/9",
-        gradient: "linear-gradient(160deg,#12332c,#1d5a4a 48%,#3f9c7f)",
-        hasPlay: false,
-        tag: "Dossier",
-      },
-      {
-        title: "Cardioxa Sample Dossier",
-        subtitle: "Sample · FDA Anchor · 17 Secs",
-        meta: "165 Claims",
-        aspect: "16/9",
-        gradient: "linear-gradient(160deg,#2f1e4a,#4b2c78 48%,#7c4bb8)",
-        hasPlay: false,
-        tag: "Sample",
-      },
-      {
-        title: "PulmoVax Sample Dossier",
-        subtitle: "Sample · WHO Anchor · 21 Secs",
-        meta: "230 Claims",
-        aspect: "16/9",
-        gradient: "linear-gradient(160deg,#133b34,#1c6356 48%,#349e8a)",
-        hasPlay: false,
-        tag: "Sample",
-      },
-    ],
-  },
-  {
     label: "Magic Website",
     title: "Microsites your field team can ship same-day",
     items: [
@@ -925,6 +874,7 @@ function HomeDossierCard({ dossier, onSelect }: { dossier: BrandDossier; onSelec
 export function HomeScreen() {
   const router = useRouter();
   const [playingVideoItem, setPlayingVideoItem] = useState<ShowcaseItem | null>(null);
+  const [audience, setAudience] = useState<"first" | "returning">("first");
 
   function openTile(tile: TileOption) {
     if (tile.href === "/create") {
@@ -938,49 +888,85 @@ export function HomeScreen() {
 
   return (
     <div className="page-enter space-y-7 max-w-[1140px] pb-12">
-      {/* Welcome + Start Here CTA */}
-      <div className="pt-1 pb-1 flex items-center justify-between gap-5 flex-wrap">
-        <div>
-          <h1
+      {/* Preview-only control — switches between the first-time and returning-user experience */}
+      <div style={{ display: "inline-flex", padding: 3, borderRadius: 99, background: "var(--surface-subtle)", border: "1px solid var(--hair)" }}>
+        {(["first", "returning"] as const).map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => setAudience(mode)}
             style={{
-              fontSize: "clamp(24px, 2.5vw, 32px)",
-              lineHeight: 1.2,
-              fontWeight: 800,
-              letterSpacing: "-0.8px",
-              margin: 0,
-              color: "var(--ink)",
+              padding: "6px 14px",
+              borderRadius: 99,
+              fontSize: 12.5,
+              fontWeight: 700,
+              background: audience === mode ? "var(--ink)" : "transparent",
+              color: audience === mode ? "#fff" : "var(--ink-3)",
+              transition: "background .18s var(--e), color .18s var(--e)",
             }}
           >
-            Welcome back, <span style={{ color: "var(--brand)" }}>{PERSONA.firstName}.</span>
-          </h1>
-          <p className="mt-1.5 text-[14px] text-[var(--ink-3)] font-medium">
-            Select a content workflow or explore verified medical showreels.
-          </p>
-        </div>
+            {mode === "first" ? "First visit" : "Returning"}
+          </button>
+        ))}
+      </div>
 
-        <button
-          type="button"
-          onClick={() => router.push("/dossiers")}
+      {/* Welcome */}
+      <div key={audience} className="pt-1 pb-1 rise-in-stagger">
+        <h1
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "15px 26px",
-            borderRadius: 99,
-            fontWeight: 750,
-            fontSize: 15,
-            color: "#fff",
-            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            boxShadow: "0 16px 32px -14px rgba(253,72,22,.9),inset 0 1px 0 rgba(255,255,255,.32)",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
+            fontSize: "clamp(24px, 2.5vw, 32px)",
+            lineHeight: 1.2,
+            fontWeight: 800,
+            letterSpacing: "-0.8px",
+            margin: 0,
+            color: "var(--ink)",
           }}
-          className="hover:-translate-y-0.5 hover:scale-[1.02] transition-transform"
         >
-          <Sparkles size={18} strokeWidth={2.2} />
-          Start Here — upload dossier or brief
-          <ArrowRight size={16} strokeWidth={2.4} />
-        </button>
+          {audience === "first" ? (
+            <>
+              Welcome, <span style={{ color: "var(--brand)" }}>{PERSONA.firstName}.</span>
+            </>
+          ) : (
+            <>
+              Welcome back, <span style={{ color: "var(--brand)" }}>{PERSONA.firstName}.</span>
+            </>
+          )}
+        </h1>
+        <p className="mt-1.5 text-[14px] text-[var(--ink-3)] font-medium">
+          {audience === "first"
+            ? "Upload a dossier or brief and SwishX handles the rest — everything grounded and MLR-ready."
+            : "Select a content workflow or explore verified medical showreels."}
+        </p>
+      </div>
+
+      {/* Auxiliary strip — guided path for first-time, quick stats for returning */}
+      <div key={`aux-${audience}`} className="rise-in-stagger">
+        {audience === "first" ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "14px 20px", borderRadius: "var(--r-l)", background: "var(--tint-2)", border: "1px solid var(--tint-line)" }}>
+            <span style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 750, color: "var(--brand-deep)", marginRight: 4 }}>
+              Your path
+            </span>
+            {["Upload dossier", "Magic Video", "Send for review"].map((step, i, arr) => (
+              <div key={step} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 650, color: "var(--ink-2)" }}>
+                  <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", border: "1px solid var(--hair-2)", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800, color: "var(--ink-3)" }}>
+                    {i + 1}
+                  </span>
+                  {step}
+                </span>
+                {i < arr.length - 1 && <span style={{ width: 20, height: 1, background: "var(--tint-line)" }} />}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap", padding: "14px 20px", borderRadius: "var(--r-l)", background: "var(--surface-subtle)", border: "1px solid var(--hair)" }}>
+            {[["40+", "regulatory markets"], ["5", "AI co-workers"], ["32", "content formats"], ["0", "uncited claims"]].map(([val, label]) => (
+              <span key={label} style={{ fontSize: 13, color: "var(--ink-2)" }}>
+                <b style={{ fontWeight: 800, color: "var(--ink)" }}>{val}</b> {label}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Creation tiles — bordered cards */}
