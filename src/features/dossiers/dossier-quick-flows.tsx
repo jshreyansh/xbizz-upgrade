@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Upload, Sparkles, FileText, Loader2, Check, X, ArrowRight } from "lucide-react";
+import { Upload, Sparkles, FileText, Loader2, Check, X, ArrowRight, ChevronLeft, ChevronDown } from "lucide-react";
 import { ConfettiBurst } from "@/features/dossiers/confetti-burst";
+import { BRAND_REGISTRY } from "@/features/dossiers/mock-dossiers";
 import type { BrandDossier, DossierSection, RegulatoryBody } from "@/features/dossiers/dossier-types";
 
 /* ─── Shared modal shell ─────────────────────────────────────────────────────── */
@@ -36,6 +37,31 @@ function FlowModal({
         {children}
       </div>
     </div>
+  );
+}
+
+function BackButton({ onBack }: { onBack: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onBack}
+      aria-label="Back"
+      style={{
+        position: "absolute",
+        top: 14,
+        left: 14,
+        width: 30,
+        height: 30,
+        borderRadius: "50%",
+        display: "grid",
+        placeItems: "center",
+        color: "var(--ink-3)",
+        background: "var(--surface-subtle)",
+        zIndex: 2,
+      }}
+    >
+      <ChevronLeft size={16} />
+    </button>
   );
 }
 
@@ -323,22 +349,55 @@ function buildMockDossier(input: {
 }
 
 const REGULATORY_BODIES: RegulatoryBody[] = ["FDA", "EMA", "MHRA", "PMDA"];
+const PREVIEW_SECTIONS = ["Indication & Positioning", "Mechanism of Action", "Clinical Evidence", "Safety Profile", "Dosing & Administration", "Payer & HEOR Summary"];
+const OTHER_PRODUCT_ID = "__other__";
 
-/* ─── Flow 1 — Upload a dossier, verify & validate, confetti ───────────────── */
-type UploadStep = "input" | "processing" | "success";
+/* ─── Single consolidated flow — one CTA on the list page opens this.
+   Steps: pick the product -> choose Create or Upload -> that path's
+   input -> processing -> (preview, create-path only) -> success. ───── */
+type FlowStep = "product" | "path" | "upload-input" | "create-input" | "processing" | "preview" | "success";
+type FlowPath = "create" | "upload";
 
-export function UploadDossierFlow({
+export function NewDossierFlow({
   onClose,
   onCreated,
 }: {
   onClose: () => void;
   onCreated: (dossier: BrandDossier) => void;
 }) {
-  const [step, setStep] = useState<UploadStep>("input");
+  const [step, setStep] = useState<FlowStep>("product");
+  const [path, setPath] = useState<FlowPath | null>(null);
+
+  // Step 1 — product
+  const [productId, setProductId] = useState("");
   const [brandName, setBrandName] = useState("");
+  const [genericName, setGenericName] = useState("");
+  const [anchor, setAnchor] = useState<RegulatoryBody>("FDA");
+  const isOtherProduct = productId === OTHER_PRODUCT_ID;
+
+  // Upload path
   const [fileName, setFileName] = useState<string | null>(null);
-  const [dossier, setDossier] = useState<BrandDossier | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Create path
+  const [indication, setIndication] = useState("");
+
+  const [dossier, setDossier] = useState<BrandDossier | null>(null);
+
+  function handleProductChange(id: string) {
+    setProductId(id);
+    if (id === OTHER_PRODUCT_ID) {
+      setBrandName("");
+      setGenericName("");
+      return;
+    }
+    const brand = BRAND_REGISTRY.find((b) => b.id === id);
+    if (brand) {
+      setBrandName(brand.name);
+      setGenericName(brand.genericName);
+      setAnchor(brand.regulatoryAnchor);
+    }
+  }
 
   function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -346,32 +405,164 @@ export function UploadDossierFlow({
   }
 
   function startVerification() {
-    setDossier(buildMockDossier({ brandName, genericName: "", indication: `Extracted from ${fileName}`, regulatoryAnchor: "FDA" }));
+    setDossier(buildMockDossier({ brandName, genericName, indication: `Extracted from ${fileName}`, regulatoryAnchor: anchor }));
     setStep("processing");
   }
 
+  function startAnalysis() {
+    setDossier(buildMockDossier({ brandName, genericName, indication, regulatoryAnchor: anchor, sectionTitles: PREVIEW_SECTIONS }));
+    setStep("processing");
+  }
+
+  const productChosen = isOtherProduct ? brandName.trim().length > 0 : productId.length > 0;
+  const canUpload = brandName.trim().length > 0 && !!fileName;
+  const canAnalyze = brandName.trim().length > 0 && indication.trim().length > 0;
+
   return (
     <FlowModal onClose={onClose}>
+      {step !== "product" && (
+        <BackButton
+          onBack={() => {
+            if (step === "path") setStep("product");
+            else if (step === "upload-input" || step === "create-input") setStep("path");
+          }}
+        />
+      )}
       <CloseButton onClose={onClose} />
-      {step === "input" && (
+
+      {step === "product" && (
         <div style={{ padding: "32px 28px 28px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
             <span style={{ width: 36, height: 36, borderRadius: 11, display: "grid", placeItems: "center", background: "var(--tint)", color: "var(--brand-deep)" }}>
-              <Upload size={17} />
+              <Sparkles size={17} />
             </span>
-            <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>Upload a dossier</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>New brand dossier</h3>
           </div>
           <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "6px 0 20px" }}>
-            Bring an existing brand dossier — we&rsquo;ll verify and validate it against your regulatory anchor.
+            Which product is this for?
           </p>
 
-          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Brand name</label>
-          <input
-            value={brandName}
-            onChange={(e) => setBrandName(e.target.value)}
-            placeholder="e.g. Velmora"
-            style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, marginBottom: 16, color: "var(--ink)" }}
-          />
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Product</label>
+          <div style={{ position: "relative", marginBottom: isOtherProduct ? 16 : 22 }}>
+            <select
+              value={productId}
+              onChange={(e) => handleProductChange(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 34px 10px 12px",
+                borderRadius: "var(--r)",
+                border: "1px solid var(--hair-2)",
+                fontSize: 13.5,
+                color: productId ? "var(--ink)" : "var(--ink-4)",
+                background: "#fff",
+                appearance: "none",
+                cursor: "pointer",
+              }}
+            >
+              <option value="" disabled>
+                Choose a product…
+              </option>
+              {BRAND_REGISTRY.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name} — {b.therapyArea}
+                  {b.hasDossier ? " (has a dossier)" : ""}
+                </option>
+              ))}
+              <option value={OTHER_PRODUCT_ID}>Other / new product…</option>
+            </select>
+            <ChevronDown size={15} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
+          </div>
+
+          {isOtherProduct && (
+            <>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Brand name</label>
+              <input
+                value={brandName}
+                onChange={(e) => setBrandName(e.target.value)}
+                placeholder="e.g. Velmora"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, marginBottom: 22, color: "var(--ink)" }}
+              />
+            </>
+          )}
+
+          <button
+            type="button"
+            disabled={!productChosen}
+            onClick={() => setStep("path")}
+            style={{
+              width: "100%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "12px 0",
+              borderRadius: "var(--r)",
+              fontWeight: 750,
+              fontSize: 14,
+              color: "#fff",
+              background: !productChosen ? "var(--ink-4)" : "linear-gradient(180deg,#ff5b2d,var(--brand))",
+              opacity: !productChosen ? 0.5 : 1,
+              cursor: !productChosen ? "not-allowed" : "pointer",
+              boxShadow: !productChosen ? "none" : "0 12px 24px -12px rgba(253,72,22,.6)",
+            }}
+          >
+            Next
+            <ArrowRight size={14} />
+          </button>
+        </div>
+      )}
+
+      {step === "path" && (
+        <div style={{ padding: "36px 28px 28px" }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)", textAlign: "center" }}>
+            How do you want to build {brandName}&rsquo;s dossier?
+          </h3>
+          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 20px", textAlign: "center" }}>
+            Either way, it&rsquo;ll be grounded and MLR-ready.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <button
+              type="button"
+              onClick={() => {
+                setPath("create");
+                setStep("create-input");
+              }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "22px 14px", borderRadius: "var(--r-l)", border: "1px solid var(--hair-2)", background: "#fff", cursor: "pointer", textAlign: "center" }}
+              className="hover:-translate-y-0.5 transition-transform"
+            >
+              <span style={{ width: 42, height: 42, borderRadius: 13, display: "grid", placeItems: "center", background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff" }}>
+                <Sparkles size={19} />
+              </span>
+              <b style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Create</b>
+              <span style={{ fontSize: 11.5, color: "var(--ink-3)", lineHeight: 1.4 }}>AI drafts it from approved sources</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPath("upload");
+                setStep("upload-input");
+              }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "22px 14px", borderRadius: "var(--r-l)", border: "1px solid var(--hair-2)", background: "#fff", cursor: "pointer", textAlign: "center" }}
+              className="hover:-translate-y-0.5 transition-transform"
+            >
+              <span style={{ width: 42, height: 42, borderRadius: 13, display: "grid", placeItems: "center", background: "var(--ink)", color: "#fff" }}>
+                <Upload size={19} />
+              </span>
+              <b style={{ fontSize: 14, fontWeight: 800, color: "var(--ink)" }}>Upload</b>
+              <span style={{ fontSize: 11.5, color: "var(--ink-3)", lineHeight: 1.4 }}>Bring an existing document</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === "upload-input" && (
+        <div style={{ padding: "32px 28px 28px" }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Upload {brandName}&rsquo;s dossier</h3>
+          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 20px" }}>
+            We&rsquo;ll verify and validate it against the {anchor} anchor.
+          </p>
 
           <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier file</label>
           <button
@@ -400,7 +591,7 @@ export function UploadDossierFlow({
 
           <button
             type="button"
-            disabled={!brandName || !fileName}
+            disabled={!canUpload}
             onClick={startVerification}
             style={{
               width: "100%",
@@ -409,10 +600,10 @@ export function UploadDossierFlow({
               fontWeight: 750,
               fontSize: 14,
               color: "#fff",
-              background: !brandName || !fileName ? "var(--ink-4)" : "linear-gradient(180deg,#ff5b2d,var(--brand))",
-              opacity: !brandName || !fileName ? 0.5 : 1,
-              cursor: !brandName || !fileName ? "not-allowed" : "pointer",
-              boxShadow: !brandName || !fileName ? "none" : "0 12px 24px -12px rgba(253,72,22,.6)",
+              background: !canUpload ? "var(--ink-4)" : "linear-gradient(180deg,#ff5b2d,var(--brand))",
+              opacity: !canUpload ? 0.5 : 1,
+              cursor: !canUpload ? "not-allowed" : "pointer",
+              boxShadow: !canUpload ? "none" : "0 12px 24px -12px rgba(253,72,22,.6)",
             }}
           >
             Verify &amp; validate
@@ -420,91 +611,12 @@ export function UploadDossierFlow({
         </div>
       )}
 
-      {step === "processing" && (
-        <ProcessingChecklist
-          title="Verifying & validating"
-          items={["Scanning document structure", "Extracting brand & indication", "Matching regulatory anchor", "Cross-referencing citations"]}
-          onDone={() => setStep("success")}
-        />
-      )}
-
-      {step === "success" && dossier && (
-        <SuccessScreen
-          headline="Dossier verified & validated"
-          subtitle={`${dossier.brandName} passed all checks and is ready to use.`}
-          dossier={dossier}
-          onClose={onClose}
-          onViewDossier={() => {
-            onCreated(dossier);
-            onClose();
-          }}
-        />
-      )}
-    </FlowModal>
-  );
-}
-
-/* ─── Flow 2 — Create a dossier, analyze & preview, confetti ───────────────── */
-type CreateStep = "input" | "processing" | "preview" | "success";
-
-const PREVIEW_SECTIONS = ["Indication & Positioning", "Mechanism of Action", "Clinical Evidence", "Safety Profile", "Dosing & Administration", "Payer & HEOR Summary"];
-
-export function CreateDossierFlow({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void;
-  onCreated: (dossier: BrandDossier) => void;
-}) {
-  const [step, setStep] = useState<CreateStep>("input");
-  const [brandName, setBrandName] = useState("");
-  const [genericName, setGenericName] = useState("");
-  const [indication, setIndication] = useState("");
-  const [anchor, setAnchor] = useState<RegulatoryBody>("FDA");
-  const [dossier, setDossier] = useState<BrandDossier | null>(null);
-
-  function startAnalysis() {
-    setDossier(buildMockDossier({ brandName, genericName, indication, regulatoryAnchor: anchor, sectionTitles: PREVIEW_SECTIONS }));
-    setStep("processing");
-  }
-
-  const canSubmit = brandName.trim().length > 0 && indication.trim().length > 0;
-
-  return (
-    <FlowModal onClose={onClose}>
-      <CloseButton onClose={onClose} />
-      {step === "input" && (
+      {step === "create-input" && (
         <div style={{ padding: "32px 28px 28px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-            <span style={{ width: 36, height: 36, borderRadius: 11, display: "grid", placeItems: "center", background: "var(--tint)", color: "var(--brand-deep)" }}>
-              <Sparkles size={17} />
-            </span>
-            <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>Create a brand dossier</h3>
-          </div>
-          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "6px 0 20px" }}>
-            Give us the basics — we&rsquo;ll analyze approved sources and draft a preview.
+          <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Create {brandName}&rsquo;s dossier</h3>
+          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 20px" }}>
+            Give us the brief — we&rsquo;ll analyze approved sources and draft a preview.
           </p>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Brand name</label>
-              <input
-                value={brandName}
-                onChange={(e) => setBrandName(e.target.value)}
-                placeholder="e.g. Velmora"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Generic name</label>
-              <input
-                value={genericName}
-                onChange={(e) => setGenericName(e.target.value)}
-                placeholder="e.g. velmoxaban"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)" }}
-              />
-            </div>
-          </div>
 
           <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Indication / brief</label>
           <textarea
@@ -540,7 +652,7 @@ export function CreateDossierFlow({
 
           <button
             type="button"
-            disabled={!canSubmit}
+            disabled={!canAnalyze}
             onClick={startAnalysis}
             style={{
               width: "100%",
@@ -549,10 +661,10 @@ export function CreateDossierFlow({
               fontWeight: 750,
               fontSize: 14,
               color: "#fff",
-              background: !canSubmit ? "var(--ink-4)" : "linear-gradient(180deg,#ff5b2d,var(--brand))",
-              opacity: !canSubmit ? 0.5 : 1,
-              cursor: !canSubmit ? "not-allowed" : "pointer",
-              boxShadow: !canSubmit ? "none" : "0 12px 24px -12px rgba(253,72,22,.6)",
+              background: !canAnalyze ? "var(--ink-4)" : "linear-gradient(180deg,#ff5b2d,var(--brand))",
+              opacity: !canAnalyze ? 0.5 : 1,
+              cursor: !canAnalyze ? "not-allowed" : "pointer",
+              boxShadow: !canAnalyze ? "none" : "0 12px 24px -12px rgba(253,72,22,.6)",
             }}
           >
             Analyze &amp; create
@@ -560,7 +672,15 @@ export function CreateDossierFlow({
         </div>
       )}
 
-      {step === "processing" && (
+      {step === "processing" && path === "upload" && (
+        <ProcessingChecklist
+          title="Verifying & validating"
+          items={["Scanning document structure", "Extracting brand & indication", "Matching regulatory anchor", "Cross-referencing citations"]}
+          onDone={() => setStep("success")}
+        />
+      )}
+
+      {step === "processing" && path === "create" && (
         <ProcessingChecklist
           title="Analyzing brand & building preview"
           items={["Reading approved label & literature", "Drafting section outline", "Grounding claims to sources", "Building preview"]}
@@ -618,8 +738,12 @@ export function CreateDossierFlow({
 
       {step === "success" && dossier && (
         <SuccessScreen
-          headline="Brand dossier created"
-          subtitle={`${dossier.brandName} is drafted, grounded, and ready for review.`}
+          headline={path === "upload" ? "Dossier verified & validated" : "Brand dossier created"}
+          subtitle={
+            path === "upload"
+              ? `${dossier.brandName} passed all checks and is ready to use.`
+              : `${dossier.brandName} is drafted, grounded, and ready for review.`
+          }
           dossier={dossier}
           onClose={onClose}
           onViewDossier={() => {
