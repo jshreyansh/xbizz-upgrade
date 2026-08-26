@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Check,
@@ -16,6 +18,12 @@ import {
   ShieldCheck,
   FlaskConical,
   MonitorPlay,
+  Search,
+  X,
+  FileText,
+  Building2,
+  FolderPlus,
+  BookOpenCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AudienceIcon } from "@/components/ui/select-icons";
@@ -24,8 +32,18 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
 
-interface DossierItem {
+export interface BrandItem {
   id: string;
+  name: string;
+  genericName: string;
+  therapyAreas: string[];
+  hasDossier: boolean;
+  dossierId?: string;
+}
+
+export interface DossierItem {
+  id: string;
+  brandId: string;
   name: string;
   molecule: string;
   market: string;
@@ -35,12 +53,29 @@ interface DossierItem {
   avatarBg: string;
   skeletonWidths: number[];
   isSample?: boolean;
+  documents?: Array<{ name: string; citations: number }>;
 }
 
-const DOSSIERS: DossierItem[] = [
-  {
+const INITIAL_BRANDS: BrandItem[] = [
+  { id: "velmora", name: "Velmora", genericName: "tirzelamide", therapyAreas: ["Dermatology", "Cardiology"], hasDossier: true, dossierId: "velmora" },
+  { id: "onkavia", name: "Onkavia", genericName: "relunocitinib", therapyAreas: ["Oncology"], hasDossier: true, dossierId: "onkavia" },
+  { id: "nirvexa", name: "Nirvexa", genericName: "brentaxaban", therapyAreas: ["Immunology"], hasDossier: true, dossierId: "nirvexa" },
+  { id: "cardioxa", name: "Cardioxa", genericName: "levomilnacipran ER", therapyAreas: ["Cardiology"], hasDossier: true, dossierId: "cardioxa" },
+  { id: "pulmovax", name: "PulmoVax", genericName: "albuterol / budesonide", therapyAreas: ["Respiratory"], hasDossier: true, dossierId: "pulmovax" },
+  { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
+  { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
+  { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
+  { id: "abd-1", name: "ABD 1", genericName: "Abacavir + Dolutegravir", therapyAreas: ["Anti-infectives & Antimicrobials"], hasDossier: false },
+  { id: "dermora", name: "Dermora", genericName: "dermoclizine fumarate", therapyAreas: ["Dermatology"], hasDossier: false },
+  { id: "pulmavia", name: "Pulmavia", genericName: "pulmavatinib citrate", therapyAreas: ["Respiratory"], hasDossier: false },
+  { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyAreas: ["Nephrology & Urology"], hasDossier: false },
+];
+
+const DOSSIERS: Record<string, DossierItem> = {
+  velmora: {
     id: "velmora",
-    name: "Velmora",
+    brandId: "velmora",
+    name: "Velmora Commercial Dossier",
     molecule: "tirzelamide",
     market: "🇺🇸 US · FDA",
     sections: 18,
@@ -48,10 +83,17 @@ const DOSSIERS: DossierItem[] = [
     heldOut: 0,
     avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
     skeletonWidths: [88, 72, 94, 60, 80],
+    documents: [
+      { name: "FDA Approved Prescribing Information (Rev. 04/2026)", citations: 112 },
+      { name: "CLARITY-CV Phase III Pivotal Readout (NEJM 2025)", citations: 64 },
+      { name: "Global HEOR Budget Impact & QALY Analysis", citations: 20 },
+      { name: "ClinicalTrials.gov Protocol NCT04892110", citations: 18 },
+    ],
   },
-  {
+  onkavia: {
     id: "onkavia",
-    name: "Onkavia",
+    brandId: "onkavia",
+    name: "Onkavia Clinical Reference",
     molecule: "relunocitinib",
     market: "🇪🇺 EU · EMA",
     sections: 19,
@@ -59,10 +101,16 @@ const DOSSIERS: DossierItem[] = [
     heldOut: 0,
     avatarBg: "linear-gradient(140deg,#22c07a,#12784a)",
     skeletonWidths: [92, 65, 84, 55, 78],
+    documents: [
+      { name: "EMA Summary of Product Characteristics (SmPC)", citations: 96 },
+      { name: "EMBRACE-3 Pivotal Trial Readout (Lancet Oncology)", citations: 58 },
+      { name: "EU HEOR Relative Effectiveness Dossier", citations: 34 },
+    ],
   },
-  {
+  nirvexa: {
     id: "nirvexa",
-    name: "Nirvexa",
+    brandId: "nirvexa",
+    name: "Nirvexa Commercial Dossier",
     molecule: "brentaxaban",
     market: "🇬🇧 UK · MHRA",
     sections: 16,
@@ -70,10 +118,16 @@ const DOSSIERS: DossierItem[] = [
     heldOut: 2,
     avatarBg: "linear-gradient(140deg,#9b6bff,#5b21b6)",
     skeletonWidths: [80, 88, 60, 90, 70],
+    documents: [
+      { name: "MHRA Approved Summary of Product Characteristics", citations: 82 },
+      { name: "NAVIGATE-2 Phase III Efficacy Readout", citations: 42 },
+      { name: "NICE Technology Appraisal Submission", citations: 18 },
+    ],
   },
-  {
+  cardioxa: {
     id: "cardioxa",
-    name: "Cardioxa",
+    brandId: "cardioxa",
+    name: "Cardioxa Sample Dossier",
     molecule: "levomilnacipran ER",
     market: "🇺🇸 US · FDA",
     sections: 17,
@@ -82,10 +136,15 @@ const DOSSIERS: DossierItem[] = [
     avatarBg: "linear-gradient(140deg,#f59e0b,#d97706)",
     skeletonWidths: [85, 70, 90, 65, 75],
     isSample: true,
+    documents: [
+      { name: "Curated FDA Sample Prescribing Information", citations: 110 },
+      { name: "Cardiology Trial Readouts & Endpoints", citations: 55 },
+    ],
   },
-  {
+  pulmovax: {
     id: "pulmovax",
-    name: "PulmoVax",
+    brandId: "pulmovax",
+    name: "PulmoVax Sample Dossier",
     molecule: "albuterol / budesonide",
     market: "🌐 Global · WHO",
     sections: 21,
@@ -94,11 +153,40 @@ const DOSSIERS: DossierItem[] = [
     avatarBg: "linear-gradient(140deg,#ec4899,#be185d)",
     skeletonWidths: [90, 80, 75, 88, 68],
     isSample: true,
+    documents: [
+      { name: "WHO Guideline Formulation Reference", citations: 140 },
+      { name: "Inhalation Powder Clinical Evidence", citations: 90 },
+    ],
   },
+};
+
+const ALL_THERAPY_AREAS = [
+  "Cardiology",
+  "Diabetology & Metabolic Disorders",
+  "CNS & Neurology",
+  "Psychiatry",
+  "Respiratory",
+  "Gastroenterology",
+  "Oncology",
+  "Anti-infectives & Antimicrobials",
+  "Gynaecology & Women's Health",
+  "Dermatology",
+  "Nephrology & Urology",
+  "Rheumatology & Musculoskeletal",
+  "Ophthalmology",
+  "Paediatrics",
+  "General Medicine & Primary Care",
+  "Allergy & ENT",
+  "Nutrition & Supplements",
+  "Dermatology & Aesthetics",
+  "Haematology",
+  "Endocrinology",
+  "Immunology",
+  "Infectious Diseases",
+  "Rare Diseases",
 ];
 
 const AUDIENCE_OPTIONS: Audience[] = ["HCP", "Patient", "Payer", "Field team", "Consumer"];
-const GOAL_OPTIONS = ["New Launch", "Awareness", "Retention"];
 const TOPIC_OPTIONS = [
   "Product Introduction",
   "Mechanism of Action",
@@ -118,6 +206,7 @@ const topicIcons: Record<string, typeof Pill> = {
 };
 
 export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolean }) {
+  const router = useRouter();
   const audience = useWorkspaceStore((s) => s.audience);
   const setAudience = useWorkspaceStore((s) => s.setAudience);
   const topics = useWorkspaceStore((s) => s.topics);
@@ -132,29 +221,100 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   const setView = useWorkspaceStore((s) => s.setView);
   const format = useWorkspaceStore((s) => s.format);
   const setFormat = useWorkspaceStore((s) => s.setFormat);
-  const selectedDossierId = sourcePayload.dossierId || "velmora";
-  const activeDossier = DOSSIERS.find((d) => d.id === selectedDossierId) || DOSSIERS[0];
+
+  // Brands State
+  const [brandList, setBrandList] = useState<BrandItem[]>(INITIAL_BRANDS);
+  const [selectedBrandId, setSelectedBrandId] = useState<string>(
+    sourcePayload.dossierId || "velmora"
+  );
+  const [brandSearchQuery, setBrandSearchQuery] = useState("");
+
+  // Add Brand Modal State
+  const [isAddBrandModalOpen, setIsAddBrandModalOpen] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newBrandMolecule, setNewBrandMolecule] = useState("");
+  const [newBrandTherapyAreas, setNewBrandTherapyAreas] = useState<string[]>(["Dermatology"]);
+
+  const selectedBrand = useMemo(
+    () => brandList.find((b) => b.id === selectedBrandId) || brandList[0],
+    [brandList, selectedBrandId]
+  );
+
+  const selectedDossier = selectedBrand?.dossierId ? DOSSIERS[selectedBrand.dossierId] : null;
+
+  // Filtered Brands
+  const filteredBrands = useMemo(() => {
+    const q = brandSearchQuery.trim().toLowerCase();
+    if (!q) return brandList;
+    return brandList.filter(
+      (b) =>
+        b.name.toLowerCase().includes(q) ||
+        b.genericName.toLowerCase().includes(q) ||
+        b.therapyAreas.some((t) => t.toLowerCase().includes(q))
+    );
+  }, [brandList, brandSearchQuery]);
 
   // Mandatory Validation Checks
   const isAudienceValid = Boolean(audience);
   const isTopicsValid = topics.length > 0;
-  const isDossierValid = Boolean(selectedDossierId);
+  const isDossierValid = Boolean(selectedBrand?.hasDossier && selectedDossier);
   const canContinue = isAudienceValid && isTopicsValid && isDossierValid;
 
-  const handleSelectDossier = (dossierId: string) => {
-    setSourcePayload({ dossierId });
+  const handleSelectBrand = (brand: BrandItem) => {
+    setSelectedBrandId(brand.id);
+    if (brand.hasDossier && brand.dossierId) {
+      setSourcePayload({ dossierId: brand.dossierId });
+    } else {
+      setSourcePayload({ dossierId: "" });
+    }
+  };
+
+  const handleAddBrandSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBrandName.trim()) return;
+
+    const newBrandId = newBrandName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const createdBrand: BrandItem = {
+      id: newBrandId,
+      name: newBrandName.trim(),
+      genericName: newBrandMolecule.trim() || "Novel formulation",
+      therapyAreas: newBrandTherapyAreas.length > 0 ? newBrandTherapyAreas : ["General Medicine & Primary Care"],
+      hasDossier: false,
+    };
+
+    setBrandList((prev) => [createdBrand, ...prev]);
+    setSelectedBrandId(createdBrand.id);
+    setSourcePayload({ dossierId: "" });
+    setIsAddBrandModalOpen(false);
+    setNewBrandName("");
+    setNewBrandMolecule("");
+    setNewBrandTherapyAreas(["Dermatology"]);
+  };
+
+  const handleToggleTherapyArea = (area: string) => {
+    setNewBrandTherapyAreas((prev) =>
+      prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
+    );
+  };
+
+  const handleSelectAllTherapyAreas = () => {
+    if (newBrandTherapyAreas.length === ALL_THERAPY_AREAS.length) {
+      setNewBrandTherapyAreas([]);
+    } else {
+      setNewBrandTherapyAreas([...ALL_THERAPY_AREAS]);
+    }
   };
 
   const handleContinueToBrief = () => {
-    if (!canContinue) return;
-    const dossierId = sourcePayload.dossierId || "velmora";
+    if (!canContinue || !selectedDossier) return;
+    const dossierId = selectedDossier.id;
     setSourcePayload({ dossierId });
     setSelectedSourceIds(["dermora-core", "dermora-claims", "dermora-brand"]);
     if (!brief || brief.length < 10) {
       if (creationMode === "magic-reel") {
-        setBrief(`Create a concise ${activeDossier.name} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`);
+        setBrief(`Create a concise ${selectedBrand.name} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`);
       } else if (creationMode === "magic-avatar") {
-        setBrief(`Create a presenter-led clinical briefing video with Dr. Maya Kapoor highlighting the key trial readouts from the ${activeDossier.name} dossier.`);
+        setBrief(`Create a presenter-led clinical briefing video highlighting the key trial readouts from the ${selectedBrand.name} dossier.`);
       }
     }
     setVideoSubStage("intake");
@@ -165,178 +325,236 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
     setVideoSubStage("mode-select");
   };
 
-  const handleClose = () => {
-    setView("home");
-  };
-
-  const brandDossiers = DOSSIERS.filter((d) => !d.isSample);
-  const sampleDossiers = DOSSIERS.filter((d) => d.isSample);
-
   const content = (
     <main className="mx-auto w-full max-w-[1280px] px-6 py-6 sm:px-8">
-      {/* Standardized 2-Column Layout with Top-Pinned Sticky Sidebar */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] items-start w-full">
-        {/* Left Column: Brand Dossiers & Sample Dossiers */}
+      {/* Standardized 2-Column Layout */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] items-start w-full">
+        {/* Left Column: Brand & Dossier Directory */}
         <section className="squircle-card min-w-0 w-full border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-6">
-            {/* Group 1: Workspace Brand Dossiers */}
-            <div>
-              <div className="flex items-center justify-between mb-3.5">
-                <div className="flex items-center gap-2">
-                  <span className="grid size-6 place-items-center rounded-full bg-[var(--brand)] text-white text-[11px] font-bold">1</span>
-                  <h2 className="text-[15.5px] font-bold text-[var(--ink)]">Your Brand Dossiers</h2>
-                  <span className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
-                    Mandatory Selection
-                  </span>
-                </div>
-                <span className="text-[12px] font-bold text-[var(--ok)] hidden sm:inline-block">
-                  ✓ 100% label verified
-                </span>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                {brandDossiers.map((d) => {
-                  const isSelected = selectedDossierId === d.id;
-                  return (
-                    <div
-                      key={d.id}
-                      onClick={() => handleSelectDossier(d.id)}
-                      className={`relative flex flex-col rounded-[20px] border p-4 transition-all duration-200 cursor-pointer ${
-                        isSelected
-                          ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] ring-offset-2 shadow-md"
-                          : "border-[var(--hair-2)] bg-[#fafbf9] hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-white hover:shadow-sm"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-[17px] font-[800] tracking-tight text-[var(--ink)] leading-tight">{d.name}</h3>
-                          <span className="text-[12px] italic text-[var(--ink-3)] font-medium mt-0.5 block">{d.molecule}</span>
-                        </div>
-                        <span
-                          className={`grid size-5 place-items-center rounded-full border transition ${
-                            isSelected
-                              ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                              : "border-[var(--hair-3)] bg-white"
-                          }`}
-                        >
-                          {isSelected && <Check className="size-3" strokeWidth={3.5} />}
-                        </span>
-                      </div>
-
-                      <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-2.5 border border-black/[0.04]">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[var(--ink-3)] mb-1.5">
-                          <span>Brand Dossier</span>
-                          <span>{d.sections} sections</span>
-                        </div>
-                        <div className="space-y-1.5">
-                          {d.skeletonWidths.map((w, i) => (
-                            <div key={i} className="flex items-center gap-1.5">
-                              <div className="h-1.5 rounded-full bg-black/10" style={{ width: `${w}%` }} />
-                              <sup className="text-[8.5px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="mt-3.5 flex items-center justify-between border-t border-[var(--hair)] pt-2.5 text-[11.5px]">
-                        <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
-                          {d.market}
-                        </span>
-                        <span className="font-bold text-[var(--ok)]">{d.claims} claims</span>
-                      </div>
-                    </div>
-                  );
-                })}
+          {/* Step 1 Header */}
+          <div className="flex items-center justify-between border-b border-[var(--hair)] pb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="grid size-6 place-items-center rounded-full bg-[var(--brand)] text-white text-[11px] font-bold">1</span>
+              <div>
+                <h2 className="text-[16px] font-[850] text-[var(--ink)] tracking-tight">Select Your Brand</h2>
+                <p className="text-[12px] text-[var(--ink-muted)]">
+                  Pick a brand to access its approved prescribing dossier and verified claim library.
+                </p>
               </div>
             </div>
+            <span className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] shrink-0">
+              Mandatory Selection
+            </span>
+          </div>
 
-            {/* Group 2: Sample Dossiers by SwishX */}
-            <div className="border-t border-[var(--hair)] pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <FlaskConical className="size-4 text-[var(--brand)]" />
-                  <h2 className="text-[15px] font-bold text-[var(--ink)]">Sample Dossiers by SwishX</h2>
-                  <span className="text-[10.5px] font-bold text-[#b45309] bg-[#fef3c7] px-2 py-0.5 rounded-full border border-[#fde68a]">
-                    Ready to test
-                  </span>
-                </div>
-                <span className="text-[12px] text-[var(--ink-muted)] font-medium">Pre-loaded clinical evidence</span>
-              </div>
+          {/* Search Brands Bar */}
+          <div className="relative">
+            <Search className="size-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={brandSearchQuery}
+              onChange={(e) => setBrandSearchQuery(e.target.value)}
+              placeholder="Search brands by name, molecule, or therapy area..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-black/10 bg-[#fafbf9] text-[13px] text-[var(--ink)] placeholder:text-gray-400 focus:bg-white focus:outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 transition-all shadow-2xs"
+            />
+            {brandSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setBrandSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                {sampleDossiers.map((d) => {
-                  const isSelected = selectedDossierId === d.id;
-                  return (
-                    <div
-                      key={d.id}
-                      onClick={() => handleSelectDossier(d.id)}
-                      className={`relative flex flex-col rounded-[20px] border p-4 transition-all duration-200 cursor-pointer ${
-                        isSelected
-                          ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] ring-offset-2 shadow-md"
-                          : "border-[var(--hair-2)] bg-[#fafbf9] hover:-translate-y-0.5 hover:border-[var(--brand)] hover:bg-white hover:shadow-sm"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-[17px] font-[800] tracking-tight text-[var(--ink)] leading-tight">{d.name}</h3>
-                            <span className="rounded-full bg-[#fef3c7] text-[#92400e] px-2 py-0.5 text-[10px] font-bold border border-[#fde68a]">
-                              Sample
-                            </span>
-                          </div>
-                          <span className="text-[12px] italic text-[var(--ink-3)] font-medium mt-0.5 block">{d.molecule}</span>
-                        </div>
-                        <span
-                          className={`grid size-5 place-items-center rounded-full border transition ${
-                            isSelected
-                              ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                              : "border-[var(--hair-3)] bg-white"
-                          }`}
-                        >
-                          {isSelected && <Check className="size-3" strokeWidth={3.5} />}
-                        </span>
+          {/* Brand Cards List */}
+          <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
+            {filteredBrands.length > 0 ? (
+              filteredBrands.map((brand) => {
+                const isSelected = selectedBrandId === brand.id;
+                return (
+                  <div
+                    key={brand.id}
+                    onClick={() => handleSelectBrand(brand)}
+                    className={cn(
+                      "group relative flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer",
+                      isSelected
+                        ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)]/20 shadow-xs"
+                        : "border-black/[0.07] bg-[#fafbf9] hover:bg-white hover:border-black/20 hover:shadow-2xs"
+                    )}
+                  >
+                    <div className="min-w-0 flex-1 pr-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-[14.5px] font-[850] text-[var(--ink)] tracking-tight truncate">
+                          {brand.name}
+                        </h3>
+                        {brand.hasDossier ? (
+                          <span className="rounded-md bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[9.5px] font-extrabold text-emerald-800 shrink-0">
+                            ✓ Dossier on file
+                          </span>
+                        ) : (
+                          <span className="rounded-md bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-[9.5px] font-extrabold text-amber-800 shrink-0">
+                            No dossier yet
+                          </span>
+                        )}
                       </div>
-
-                      <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-2.5 border border-black/[0.04]">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-[var(--ink-3)] mb-1.5">
-                          <span>Curated Clinical Sample</span>
-                          <span>{d.sections} sections</span>
-                        </div>
-                        <div className="space-y-1.5">
-                          {d.skeletonWidths.map((w, i) => (
-                            <div key={i} className="flex items-center gap-1.5">
-                              <div className="h-1.5 rounded-full bg-black/10" style={{ width: `${w}%` }} />
-                              <sup className="text-[8.5px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="text-[12px] text-[var(--ink-muted)] mt-0.5 truncate">
+                        {brand.genericName}
                       </div>
-
-                      <div className="mt-3.5 flex items-center justify-between border-t border-[var(--hair)] pt-2.5 text-[11.5px]">
-                        <span className="rounded-full bg-white px-2 py-0.5 font-semibold text-[var(--ink-2)] border border-[var(--hair-2)]">
-                          {d.market}
-                        </span>
-                        <span className="font-bold text-[var(--ok)]">{d.claims} claims cited</span>
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {brand.therapyAreas.map((ta) => (
+                          <span
+                            key={ta}
+                            className="inline-block rounded-md bg-white border border-black/10 px-2 py-0.5 text-[10px] font-semibold text-[var(--ink-2)]"
+                          >
+                            {ta}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
 
-            {/* Quick Add Custom Dossier */}
-            <div className="flex items-center justify-between rounded-[16px] border border-[var(--hair-2)] bg-[#fafbf9] p-3 text-[12.5px] text-[var(--ink-3)]">
+                    {/* Radio Button */}
+                    <span
+                      className={cn(
+                        "grid size-5.5 place-items-center rounded-full border transition-all shrink-0",
+                        isSelected
+                          ? "border-[var(--brand)] bg-[var(--brand)] text-white shadow-2xs"
+                          : "border-black/20 bg-white group-hover:border-black/40"
+                      )}
+                    >
+                      {isSelected && <Check className="size-3" strokeWidth={3.5} />}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-[13px] text-gray-500 bg-[#fafbf9] rounded-2xl border border-dashed border-black/10">
+                No brands matching &quot;{brandSearchQuery}&quot;
+              </div>
+            )}
+          </div>
+
+          {/* + Add a New Brand Button */}
+          <button
+            type="button"
+            onClick={() => setIsAddBrandModalOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[var(--line-strong)] hover:border-[var(--brand)] bg-[#fafbf9] hover:bg-white text-[13px] font-bold text-[var(--brand)] transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5"
+          >
+            <Plus className="size-4" />
+            <span>Add a new brand</span>
+          </button>
+
+          {/* ── Brand Dossiers & Documents Section for Selected Brand ── */}
+          <div className="border-t border-[var(--hair)] pt-5">
+            <div className="flex items-center justify-between mb-3.5">
               <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-[var(--brand)] shrink-0" />
-                <span>Need a dossier for another molecule? Synthesize a new one from FDA / EMA labels.</span>
+                <FileText className="size-4 text-[var(--brand)]" />
+                <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">
+                  Dossier Evidence for {selectedBrand.name}
+                </h3>
               </div>
-              <Button variant="ghost" size="sm" className="font-bold text-[var(--brand)] text-[12px] h-7 shrink-0">
-                <Plus className="size-3 mr-1" /> New Dossier
-              </Button>
+              {selectedBrand.hasDossier && (
+                <span className="text-[11.5px] font-bold text-[var(--ok)]">
+                  ✓ 100% PromoMats Grounded
+                </span>
+              )}
             </div>
-          </section>
 
-        {/* Right Column: Sticky Mandatory Dropdowns Form (Fixed to Top) */}
-        <aside className="w-full lg:w-[380px] shrink-0 lg:sticky lg:top-[76px] self-start">
+            {selectedBrand.hasDossier && selectedDossier ? (
+              /* Case A: Brand has Dossier */
+              <div className="space-y-4">
+                <div className="rounded-[20px] border border-[var(--brand)] bg-[var(--tint)] p-4 shadow-xs ring-1 ring-[var(--brand)]/20">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-[16px] font-[850] text-[var(--ink)] tracking-tight">
+                          {selectedDossier.name}
+                        </h4>
+                        {selectedDossier.isSample && (
+                          <span className="rounded-full bg-[#fef3c7] text-[#92400e] px-2 py-0.5 text-[9.5px] font-bold border border-[#fde68a]">
+                            Sample
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[12px] italic text-[var(--ink-3)] font-medium mt-0.5 block">
+                        {selectedDossier.molecule}
+                      </span>
+                    </div>
+                    <span className="rounded-full bg-white px-2.5 py-0.5 font-bold text-[11px] text-[var(--ink-2)] border border-[var(--hair-2)]">
+                      {selectedDossier.market}
+                    </span>
+                  </div>
+
+                  {/* Visual Skeleton Bars */}
+                  <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-2.5 border border-black/[0.04]">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-[var(--ink-3)] mb-1.5">
+                      <span>Brand Dossier Structure</span>
+                      <span>{selectedDossier.sections} sections · {selectedDossier.claims} approved claims</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {selectedDossier.skeletonWidths.map((w, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <div className="h-1.5 rounded-full bg-black/10" style={{ width: `${w}%` }} />
+                          <sup className="text-[8.5px] font-bold text-[var(--brand)]">[{i + 1}]</sup>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Attached Regulatory Documents */}
+                  {selectedDossier.documents && selectedDossier.documents.length > 0 && (
+                    <div className="mt-3.5 space-y-1.5 border-t border-[var(--hair)] pt-3">
+                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                        Attached Clinical Documents
+                      </div>
+                      {selectedDossier.documents.map((doc, dIdx) => (
+                        <div
+                          key={dIdx}
+                          className="flex items-center justify-between text-[11.5px] bg-white/80 border border-black/[0.06] rounded-lg px-2.5 py-1.5"
+                        >
+                          <span className="font-medium text-[var(--ink)] truncate max-w-[80%]">
+                            📄 {doc.name}
+                          </span>
+                          <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            {doc.citations} citations
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Case B: Brand has NO Dossier Yet */
+              <div className="rounded-[22px] border border-dashed border-amber-300 bg-amber-50/50 p-6 text-center space-y-3.5">
+                <div className="size-12 rounded-2xl bg-amber-100 border border-amber-300 text-amber-700 grid place-items-center mx-auto shadow-2xs">
+                  <Sparkles className="size-6 text-amber-600" />
+                </div>
+                <div>
+                  <h4 className="text-[15.5px] font-[850] text-[var(--ink)]">
+                    No Dossier Found for {selectedBrand.name}
+                  </h4>
+                  <p className="text-[12.5px] text-[var(--ink-muted)] max-w-[420px] mx-auto mt-1 leading-relaxed">
+                    SwishX requires an approved brand dossier grounded in FDA/EMA prescribing labels and clinical readouts to synthesize compliant video.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => router.push("/dossiers")}
+                  className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-extrabold text-[12.5px] h-10 px-5 rounded-xl shadow-xs gap-2 cursor-pointer transition-transform hover:-translate-y-0.5"
+                >
+                  <Sparkles className="size-4" />
+                  <span>Create Brand Dossier for {selectedBrand.name}</span>
+                  <ArrowRight className="size-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Right Column: Sticky Mandatory Dropdowns Form */}
+        <aside className="w-full lg:w-[390px] shrink-0 lg:sticky lg:top-[76px] self-start">
           <div className="squircle-card overflow-hidden border border-[var(--line)] bg-white shadow-[var(--shadow-sm)]">
             {/* Header */}
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
@@ -346,8 +564,8 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   Mandatory
                 </span>
               </div>
-              <h2 className="mt-0.5 text-[16px] font-bold tracking-tight text-[var(--ink)]">
-                {activeDossier.name} Dossier
+              <h2 className="mt-0.5 text-[16px] font-[850] tracking-tight text-[var(--ink)]">
+                {selectedBrand.name} Dossier
               </h2>
             </div>
 
@@ -412,7 +630,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                 />
               </div>
 
-              {/* 4. Focus Topics* */}
+              {/* 3. Focus Topics* */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 text-[12.5px] font-semibold text-[var(--ink-2)] tracking-tight">
@@ -446,12 +664,12 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             </div>
           </div>
 
-          {/* Standardized Continue Forward Button (Positioned Below Right Panel) */}
+          {/* Standardized Continue Forward Button */}
           <Button
             onClick={handleContinueToBrief}
             size="lg"
             disabled={!canContinue}
-            className="group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+            className="group mt-3 h-[48px] w-full px-6 rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 cursor-pointer"
           >
             <span>Start Project</span>
             <ArrowRight className="size-4 ml-1.5 transition-transform group-hover:translate-x-1" />
@@ -459,9 +677,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
           <div className="mt-2 flex items-center justify-center gap-1.5 text-[11.5px] text-[var(--ink-muted)]">
             {!canContinue ? (
-              <span className="text-[var(--warn)] font-medium">
-                {!isDossierValid
-                  ? "Please select a brand dossier"
+              <span className="text-[var(--warn)] font-medium text-center">
+                {!selectedBrand.hasDossier
+                  ? `Please create a dossier for ${selectedBrand.name}`
                   : !isAudienceValid
                   ? "Please select an audience"
                   : "Please select at least 1 focus topic"}
@@ -475,6 +693,123 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
           </div>
         </aside>
       </div>
+
+      {/* ── Add Brand Modal Dialog ── */}
+      {isAddBrandModalOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setIsAddBrandModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-[520px] rounded-3xl bg-white p-6 shadow-2xl border border-black/10 space-y-5 animate-in zoom-in-95 duration-150"
+          >
+            <div className="flex items-center justify-between border-b border-black/[0.06] pb-3">
+              <h3 className="text-[18px] font-[850] text-[var(--ink)] tracking-tight">Add brand</h3>
+              <button
+                type="button"
+                onClick={() => setIsAddBrandModalOpen(false)}
+                className="size-7 rounded-full hover:bg-black/5 flex items-center justify-center text-gray-400 hover:text-black transition-colors cursor-pointer"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddBrandSubmit} className="space-y-4">
+              {/* Brand Name */}
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">
+                  Brand / Product Name <span className="text-[var(--brand)]">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newBrandName}
+                  onChange={(e) => setNewBrandName(e.target.value)}
+                  placeholder="e.g. Bisberry"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-black/15 text-[13.5px] font-medium text-[var(--ink)] focus:outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20"
+                />
+              </div>
+
+              {/* Molecule(s) */}
+              <div>
+                <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">
+                  Molecule(s) (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newBrandMolecule}
+                  onChange={(e) => setNewBrandMolecule(e.target.value)}
+                  placeholder="e.g. Diclofenac + Serratiopeptidase"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-black/15 text-[13.5px] font-medium text-[var(--ink)] focus:outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  For combination products, separate each molecule with + (e.g. Cetirizine + Ambroxol).
+                </p>
+              </div>
+
+              {/* Therapy Areas */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-extrabold uppercase tracking-wider text-gray-500">
+                    Therapy Area(s)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllTherapyAreas}
+                    className="text-[11px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+                  >
+                    {newBrandTherapyAreas.length === ALL_THERAPY_AREAS.length
+                      ? "Clear all"
+                      : `Select all (${ALL_THERAPY_AREAS.length})`}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-2 bg-[#f8f9f8] rounded-xl border border-black/[0.06]">
+                  {ALL_THERAPY_AREAS.map((area) => {
+                    const isSelected = newBrandTherapyAreas.includes(area);
+                    return (
+                      <button
+                        type="button"
+                        key={area}
+                        onClick={() => handleToggleTherapyArea(area)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors cursor-pointer border",
+                          isSelected
+                            ? "bg-[var(--brand)] text-white border-[var(--brand)] font-bold shadow-2xs"
+                            : "bg-white text-[var(--ink-2)] border-black/10 hover:border-black/20"
+                        )}
+                      >
+                        {area}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-black/[0.06]">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setIsAddBrandModalOpen(false)}
+                  className="font-bold text-[13px] text-[var(--ink-2)] h-10 px-4 cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={!newBrandName.trim()}
+                  className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold text-[13px] h-10 px-5 rounded-xl cursor-pointer shadow-xs disabled:opacity-40"
+                >
+                  Add brand
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </main>
   );
 
@@ -484,7 +819,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
   return (
     <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
-      {/* Minimal Back Button — no full header bar */}
+      {/* Minimal Back Button */}
       <div className="px-6 pt-5 pb-1">
         <button
           type="button"
