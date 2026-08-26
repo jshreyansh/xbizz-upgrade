@@ -19,31 +19,22 @@ function DossiersContent() {
     }
     return null;
   });
-  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (openId) {
       const match = dossiers.find((d) => d.id.toLowerCase() === openId.toLowerCase());
       if (match) {
         setSelectedDossier(match);
-        setIsCreating(false);
       }
     }
   }, [openId, dossiers]);
 
   const handleSelect = (dossier: BrandDossier) => {
     setSelectedDossier(dossier);
-    setIsCreating(false);
-  };
-
-  const handleCreateNew = () => {
-    setSelectedDossier(null);
-    setIsCreating(true);
   };
 
   const handleBackToList = () => {
     setSelectedDossier(null);
-    setIsCreating(false);
   };
 
   const handleDossierCreated = (newDossier: BrandDossier) => {
@@ -52,9 +43,15 @@ function DossiersContent() {
     }
   };
 
+  /** From the quick Upload/Create flows — add the new dossier to the list and open it. */
+  const handleQuickDossierCreated = (newDossier: BrandDossier) => {
+    handleDossierCreated(newDossier);
+    setSelectedDossier(newDossier);
+  };
+
   return (
     <AppShell pageTitle="Brand Dossiers">
-      {selectedDossier || isCreating ? (
+      {selectedDossier ? (
         <DossierWizard
           initialDossier={selectedDossier}
           onBackToList={handleBackToList}
@@ -64,7 +61,7 @@ function DossiersContent() {
         <DossierListScreen
           dossiers={dossiers}
           onSelectDossier={handleSelect}
-          onCreateNew={handleCreateNew}
+          onDossierCreated={handleQuickDossierCreated}
         />
       )}
     </AppShell>

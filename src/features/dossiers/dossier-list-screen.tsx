@@ -1,18 +1,24 @@
 "use client";
 
+import { useState } from "react";
+import { Upload, Sparkles } from "lucide-react";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
+import { UploadDossierFlow, CreateDossierFlow } from "@/features/dossiers/dossier-quick-flows";
 
 interface DossierListScreenProps {
   dossiers: BrandDossier[];
   onSelectDossier: (dossier: BrandDossier) => void;
-  onCreateNew: () => void;
+  onDossierCreated: (dossier: BrandDossier) => void;
 }
 
 export function DossierListScreen({
   dossiers,
   onSelectDossier,
-  onCreateNew,
+  onDossierCreated,
 }: DossierListScreenProps) {
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+
   return (
     <div className="page-enter space-y-6">
       {/* Header */}
@@ -26,28 +32,47 @@ export function DossierListScreen({
             The single source of truth for your brand — grounded in approved prescribing info, clinical trial readouts, and HEOR models.
           </p>
         </div>
-        <button
-          onClick={onCreateNew}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 20px",
-            borderRadius: "var(--r)",
-            fontWeight: 700,
-            fontSize: 14,
-            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            color: "#fff",
-            boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Create Brand Dossier
-        </button>
+        <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+          <button
+            onClick={() => setUploadOpen(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "11px 20px",
+              borderRadius: "var(--r)",
+              fontWeight: 700,
+              fontSize: 14,
+              background: "#fff",
+              color: "var(--ink-2)",
+              border: "1px solid var(--hair-2)",
+              cursor: "pointer",
+            }}
+          >
+            <Upload size={16} />
+            Upload Dossier
+          </button>
+          <button
+            onClick={() => setCreateOpen(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "11px 20px",
+              borderRadius: "var(--r)",
+              fontWeight: 700,
+              fontSize: 14,
+              background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
+              color: "#fff",
+              boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            <Sparkles size={16} />
+            Create Dossier
+          </button>
+        </div>
       </div>
 
       {/* Grid of Dossiers */}
@@ -202,6 +227,9 @@ export function DossierListScreen({
           </div>
         ))}
       </div>
+
+      {uploadOpen && <UploadDossierFlow onClose={() => setUploadOpen(false)} onCreated={onDossierCreated} />}
+      {createOpen && <CreateDossierFlow onClose={() => setCreateOpen(false)} onCreated={onDossierCreated} />}
     </div>
   );
 }
