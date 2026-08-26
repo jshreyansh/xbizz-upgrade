@@ -348,6 +348,11 @@ button.rounded-full {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes float {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(2%, -3%, 0) scale(1.06); }
+}
+
 @keyframes confetti-fall {
   0% { transform: translate3d(0, -12px, 0) rotate(0deg); opacity: 0; }
   8% { opacity: 1; }

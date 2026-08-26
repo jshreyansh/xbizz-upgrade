@@ -35,6 +35,18 @@ export function OnboardingShell() {
       className="relative flex h-full w-full flex-col overflow-hidden"
       style={{ background: "var(--canvas)" }}
     >
+      {/* Soft ambient light — warm, low-opacity glow, brightest toward the
+          right where the illustration sits */}
+      <div className="pointer-events-none absolute inset-[-20%]" style={{ filter: "blur(90px)" }}>
+        {[
+          { size: "36vw", left: "62%", top: "6%", bg: "radial-gradient(circle,rgba(253,72,22,.16),transparent 68%)" },
+          { size: "30vw", left: "78%", top: "48%", bg: "radial-gradient(circle,rgba(255,154,77,.14),transparent 70%)", delay: "-8s" },
+          { size: "26vw", left: "4%", top: "62%", bg: "radial-gradient(circle,rgba(91,33,182,.06),transparent 70%)", delay: "-14s" },
+        ].map((b, i) => (
+          <span key={i} className="absolute rounded-full" style={{ width: b.size, height: b.size, left: b.left, top: b.top, background: b.bg, animation: `float 24s ease-in-out infinite alternate${b.delay ? ` ${b.delay}` : ""}` }} />
+        ))}
+      </div>
+
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-9 py-7">
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "var(--ink)", fontSize: 20, fontWeight: 800, letterSpacing: "-1px" }}>
