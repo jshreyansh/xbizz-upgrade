@@ -201,6 +201,15 @@ export function StudioScreen() {
     attachments?: string[];
   }) => {
     const targetPos = Math.max(1, Math.min(sceneData.insertPosition, sceneList.length + 1));
+    const tag =
+      sceneData.category === "intro"
+        ? "Intro Hook"
+        : sceneData.category === "outro"
+        ? "CTA Outro"
+        : sceneData.category === "product"
+        ? "Mechanism (MoA)"
+        : "Clinical Statement";
+
     const newScene = {
       id: `scene-${Date.now()}`,
       number: targetPos,
@@ -210,6 +219,7 @@ export function StudioScreen() {
       visual: sceneData.visualText || "High-clarity clinical anatomical visualization with verified safety parameters.",
       claim: "Dossier §5.1 verified",
       evidenceState: "approved" as const,
+      narrativeTag: tag,
     };
 
     const updated = [...sceneList];
@@ -220,7 +230,7 @@ export function StudioScreen() {
     setAddSceneModalOpen(false);
 
     // Toast feedback
-    setToMessage(`Scene ${targetPos} added`);
+    setToMessage(`Scene ${targetPos} added (${tag})`);
     setTimeout(() => {
       setToMessage(null);
     }, 2800);
@@ -585,14 +595,34 @@ export function StudioScreen() {
                       {/* Meta & Content Area */}
                       <div className="flex-1 min-w-0 pt-0.5">
                         {/* Title & Quick Actions */}
-                        <div className="flex items-center justify-between">
-                          <span className={cn("block truncate font-[800] text-[var(--ink)]", isEditor ? "text-[9.5px]" : "text-[15px]")}>
-                            {scene.title}
-                          </span>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={cn("truncate font-[800] text-[var(--ink)]", isEditor ? "text-[9.5px]" : "text-[15px]")}>
+                              {scene.title}
+                            </span>
+                            {!isEditor && (
+                              <span
+                                className={cn(
+                                  "shrink-0 rounded-full px-2.5 py-0.5 text-[9.5px] font-extrabold tracking-wide uppercase shadow-2xs border",
+                                  scene.narrativeTag === "Intro Hook" || scene.number === 1
+                                    ? "bg-amber-500/12 text-amber-800 border-amber-500/25"
+                                    : scene.narrativeTag === "CTA Outro" || scene.number === sceneList.length
+                                    ? "bg-purple-500/12 text-purple-800 border-purple-500/25"
+                                    : scene.narrativeTag?.includes("Evidence") || scene.number === 3
+                                    ? "bg-emerald-500/12 text-emerald-800 border-emerald-500/25"
+                                    : scene.narrativeTag?.includes("Mechanism") || scene.number === 2
+                                    ? "bg-blue-500/12 text-blue-800 border-blue-500/25"
+                                    : "bg-[var(--tint)] text-[var(--brand-deep)] border-[var(--brand)]/20"
+                                )}
+                              >
+                                {scene.narrativeTag || (scene.number === 1 ? "Intro Hook" : scene.number === sceneList.length ? "CTA Outro" : "Evidence")}
+                              </span>
+                            )}
+                          </div>
 
                           {/* Actions in Wide Mode */}
                           {!isEditor ? (
-                          <div className="flex items-center gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1.5 opacity-70 group-hover:opacity-100 transition-opacity shrink-0">
                             <button
                               type="button"
                               onClick={(e) => {
@@ -627,7 +657,14 @@ export function StudioScreen() {
                                 if (editingSceneId === scene.id) {
                                   setEditingSceneId(null);
                                 } else {
-                                  setSceneList((prev) => prev.filter((s) => s.id !== scene.id));
+                                  const filtered = sceneList.filter((s) => s.id !== scene.id);
+                                  const renumbered = filtered.map((s, idx) => ({ ...s, number: idx + 1 }));
+                                  setSceneList(renumbered);
+                                  if (selectedSceneId === scene.id && renumbered.length > 0) {
+                                    setSelectedSceneId(renumbered[0].id);
+                                  }
+                                  setToMessage(`Scene ${scene.number} removed`);
+                                  setTimeout(() => setToMessage(null), 2500);
                                 }
                               }}
                               className="grid size-7 place-items-center rounded-lg text-[var(--ink-muted)] hover:bg-rose-50 hover:text-rose-600 cursor-pointer"

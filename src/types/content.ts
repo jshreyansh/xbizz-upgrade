@@ -47,4 +47,5 @@ export interface Scene {
   visual: string;
   claim: string;
   evidenceState: EvidenceState;
+  narrativeTag?: string;
 }

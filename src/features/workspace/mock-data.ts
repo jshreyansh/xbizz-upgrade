@@ -52,6 +52,7 @@ export const scenes: Scene[] = [
     visual: "A restrained clinical portrait gives way to an abstract skin-barrier landscape.",
     claim: "Disease-burden statement",
     evidenceState: "supported",
+    narrativeTag: "Intro Hook",
   },
   {
     id: "scene-2",
@@ -62,6 +63,7 @@ export const scenes: Scene[] = [
     visual: "A single lime signal travels through a minimal pathway model, isolating the therapeutic target.",
     claim: "Mechanism-of-action statement",
     evidenceState: "approved",
+    narrativeTag: "Mechanism (MoA)",
   },
   {
     id: "scene-3",
@@ -72,6 +74,7 @@ export const scenes: Scene[] = [
     visual: "Evidence resolves into a clean comparative chart with the primary endpoint highlighted.",
     claim: "CLEARSKIN primary endpoint",
     evidenceState: "approved",
+    narrativeTag: "Pivotal Evidence",
   },
   {
     id: "scene-4",
@@ -82,6 +85,7 @@ export const scenes: Scene[] = [
     visual: "A simplified dosing sequence appears beside a calm physician–patient consultation.",
     claim: "Dosing statement",
     evidenceState: "changed",
+    narrativeTag: "Role in Practice",
   },
   {
     id: "scene-5",
@@ -92,5 +96,6 @@ export const scenes: Scene[] = [
     visual: "The pathway resolves into the brand mark, fair-balance area, and HCP call to action.",
     claim: "Call to action",
     evidenceState: "approved",
+    narrativeTag: "CTA Outro",
   },
 ];
