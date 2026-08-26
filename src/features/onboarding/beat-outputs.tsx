@@ -9,7 +9,7 @@ export function BeatOutputs() {
   return (
     <div className="rise-in flex w-full max-w-4xl gap-16 items-center">
       <div style={{ flex: 1, color: "#fff" }}>
-        <div style={{ fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(255,255,255,.45)", fontWeight: 700, marginBottom: 18 }}>How it works · 3 of 3</div>
+        <div style={{ fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(255,255,255,.45)", fontWeight: 700, marginBottom: 18 }}>How it works · 2 of 2</div>
         <h2 style={{ fontSize: "clamp(30px,3vw,44px)", lineHeight: 1.08, fontWeight: 800, letterSpacing: "-1.5px", margin: "0 0 16px" }}>
           Then it becomes{" "}
           <em style={{ fontStyle: "normal", background: "linear-gradient(96deg,#ffd9c7,#ff8a5c 46%,#ffcfb8)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>everything else</em>.

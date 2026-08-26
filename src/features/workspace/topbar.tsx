@@ -1,14 +1,10 @@
 "use client";
 
-import { PERSONA } from "@/features/workspace/mock-personas";
-import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-
 interface TopbarProps {
   pageTitle?: string;
 }
 
 export function Topbar({ pageTitle = "Home" }: TopbarProps) {
-  const toggleTeamDock = useWorkspaceStore((s) => s.toggleTeamDock);
   return (
     <header
       style={{
@@ -34,48 +30,23 @@ export function Topbar({ pageTitle = "Home" }: TopbarProps) {
         Demo Mode
       </span>
 
-      {/* Ask your team button */}
-      <button
-        onClick={toggleTeamDock}
-        style={{
-          marginLeft: "auto",
-          display: "flex",
-          alignItems: "center",
-          gap: 7,
-          padding: "7px 13px",
-          border: "1px solid var(--tint-line)",
-          background: "var(--tint)",
-          color: "var(--brand-deep)",
-          borderRadius: 11,
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
-      >
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)", display: "block" }} />
-        <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-          <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.6-.7L3 21l1.9-5a8.3 8.3 0 0 1-.9-3.8A8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" />
-        </svg>
-        Ask your team <kbd style={{ fontSize: 10, background: "rgba(253,72,22,.12)", padding: "1px 5px", borderRadius: 4, marginLeft: 2 }}>&#8984;J</kbd>
-      </button>
-
-
-
       {/* Icon buttons */}
-      {[
-        { title: "Help", path: "M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.7.3-.9.8-.9 1.5v.5M12 17v.5" },
-        { title: "Notifications", path: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0", badge: true },
-        { title: "Dark mode", path: "M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" },
-      ].map((btn) => (
-        <button
-          key={btn.title}
-          title={btn.title}
-          style={{ width: 36, height: 36, borderRadius: 10, display: "grid", placeItems: "center", color: "var(--ink-3)", position: "relative" }}
-        >
-          <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}><path d={btn.path} /></svg>
-          {btn.badge && <span style={{ position: "absolute", top: 6, right: 6, width: 7, height: 7, borderRadius: "50%", background: "var(--brand)", border: "1.5px solid var(--canvas)" }} />}
-        </button>
-      ))}
+      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+        {[
+          { title: "Help", path: "M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.7.3-.9.8-.9 1.5v.5M12 17v.5" },
+          { title: "Notifications", path: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0", badge: true },
+          { title: "Dark mode", path: "M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" },
+        ].map((btn) => (
+          <button
+            key={btn.title}
+            title={btn.title}
+            style={{ width: 36, height: 36, borderRadius: 10, display: "grid", placeItems: "center", color: "var(--ink-3)", position: "relative" }}
+          >
+            <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}><path d={btn.path} /></svg>
+            {btn.badge && <span style={{ position: "absolute", top: 6, right: 6, width: 7, height: 7, borderRadius: "50%", background: "var(--brand)", border: "1.5px solid var(--canvas)" }} />}
+          </button>
+        ))}
+      </div>
     </header>
   );
 }

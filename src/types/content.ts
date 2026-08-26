@@ -9,7 +9,7 @@ export type EvidenceState = "approved" | "supported" | "changed" | "unsupported"
 export type AuthView = "signin" | "otp" | "workspace" | "team" | "signedout";
 
 /** Onboarding beat index within /onboarding route (1-indexed) */
-export type OnboardingBeat = 1 | 2 | 3 | 4;
+export type OnboardingBeat = 1 | 2 | 3;
 
 export interface SourceReference {
   id: string;

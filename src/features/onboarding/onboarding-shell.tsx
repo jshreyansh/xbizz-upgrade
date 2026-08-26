@@ -3,13 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BeatSources } from "@/features/onboarding/beat-sources";
-import { BeatDossier } from "@/features/onboarding/beat-dossier";
 import { BeatOutputs } from "@/features/onboarding/beat-outputs";
 import { BeatChoice } from "@/features/onboarding/beat-choice";
 import type { OnboardingBeat } from "@/types/content";
 import { LogoMark } from "@/components/ui/logo-mark";
 
-const TOTAL = 4;
+const TOTAL = 3;
 
 export function OnboardingShell() {
   const router = useRouter();
@@ -84,9 +83,8 @@ export function OnboardingShell() {
       {/* Beat content */}
       <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-9 py-8">
         {beat === 1 && <BeatSources />}
-        {beat === 2 && <BeatDossier />}
-        {beat === 3 && <BeatOutputs />}
-        {beat === 4 && <BeatChoice onDone={endIntro} />}
+        {beat === 2 && <BeatOutputs />}
+        {beat === 3 && <BeatChoice onDone={endIntro} />}
       </div>
 
       {/* Bottom nav */}
