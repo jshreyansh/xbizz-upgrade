@@ -16,9 +16,6 @@ const CREATE_TILES: CreateTile[] = [
   { label: "MagicVideo", icon: "video", href: "/create" },
   { label: "MagicCanvas", icon: "image", href: "#" },
   { label: "MagicWeb", icon: "globe", href: "#" },
-  { label: "Doc", icon: "doc", href: "#" },
-  { label: "Mail", icon: "mail", href: "#" },
-  { label: "Avatars", icon: "characters", href: "#" },
 ];
 
 interface NavItem {
@@ -295,42 +292,38 @@ export function Sidebar() {
             </button>
           </div>
 
-          {/* ── MAGIC STUDIO SECTION (6 tiles in 2-column grid under MAGIC STUDIO heading) ── */}
+          {/* ── MAGIC STUDIO SECTION (single-column rows: MagicVideo, MagicCanvas, MagicWeb) ── */}
           <div
             className="relative"
             onMouseEnter={handleMouseEnterCreate}
             onMouseLeave={handleMouseLeaveCreate}
           >
             {!collapsed ? (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5 px-2 pt-1 text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
                   <span>Magic Studio</span>
                 </div>
 
-                {/* 2-Column Grid Format Tiles (Video, Image, Website, Doc, Mail, Characters) */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  {CREATE_TILES.map((tile) => {
-                    const isTileActive = tile.href === "/create" && isCreateActive;
-                    return (
-                      <button
-                        key={tile.label}
-                        onClick={() => handleCreateNav(tile.href)}
-                        className={`group flex items-center gap-1.5 rounded-[12px] border px-2 py-2.5 text-left transition-all duration-150 ${
-                          isTileActive
-                            ? "border-transparent bg-[var(--brand)] text-white font-[750] shadow-[0_3px_10px_rgba(253,72,22,0.32)]"
-                            : "border-transparent bg-black/[0.025] text-[var(--ink-2)] font-semibold hover:border-[var(--hair-2)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
-                        }`}
-                      >
-                        <span className={`transition-colors ${isTileActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"}`}>
-                          <NavIcon name={tile.icon} active={isTileActive} />
-                        </span>
-                        <span className={`truncate text-[10px] tracking-tight font-medium leading-none ${isTileActive ? "text-white font-bold" : ""}`}>
-                          {tile.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                {/* Single-column rows, soft-tint active state (not solid fill) */}
+                {CREATE_TILES.map((tile) => {
+                  const isTileActive = tile.href === "/create" && isCreateActive;
+                  return (
+                    <button
+                      key={tile.label}
+                      onClick={() => handleCreateNav(tile.href)}
+                      className={`group flex w-full h-[40px] items-center gap-3 rounded-[12px] px-3 text-left transition-all duration-150 ${
+                        isTileActive
+                          ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
+                          : "text-[var(--ink-2)] font-medium hover:bg-black/[0.04] hover:text-[var(--ink)]"
+                      }`}
+                    >
+                      <span className={`shrink-0 transition-colors ${isTileActive ? "text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"}`}>
+                        <NavIcon name={tile.icon} active={false} />
+                      </span>
+                      <span className="truncate text-[14px] tracking-tight">{tile.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             ) : (
               /* Collapsed Mode: Magic Studio Icon with Solid Orange Filled Shape in Unselected, Solid Chip in Selected */
@@ -523,23 +516,23 @@ export function Sidebar() {
             <span className="text-[13.5px] font-[800] tracking-tight text-[var(--ink)]">Magic Studio</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
             {CREATE_TILES.map((tile) => {
               const isTileActive = tile.href === "/create" && isCreateActive;
               return (
                 <button
                   key={tile.label}
                   onClick={() => handleCreateNav(tile.href)}
-                  className={`group flex items-center gap-1.5 rounded-[12px] border p-2 text-left transition-all duration-150 ${
+                  className={`group flex w-full items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-left transition-all duration-150 ${
                     isTileActive
-                      ? "border-transparent bg-[var(--brand)] text-white font-bold shadow-xs"
-                      : "border-black/[0.04] bg-[#f8faf8] text-[var(--ink-2)] font-semibold hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand)]"
+                      ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
+                      : "text-[var(--ink-2)] font-semibold hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
                   }`}
                 >
-                  <span className={`transition-colors ${isTileActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
-                    <NavIcon name={tile.icon} active={isTileActive} />
+                  <span className={`transition-colors ${isTileActive ? "text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
+                    <NavIcon name={tile.icon} active={false} />
                   </span>
-                  <span className={`truncate text-[10px] tracking-tight font-bold ${isTileActive ? "text-white" : ""}`}>{tile.label}</span>
+                  <span className="truncate text-[13px] tracking-tight">{tile.label}</span>
                 </button>
               );
             })}
