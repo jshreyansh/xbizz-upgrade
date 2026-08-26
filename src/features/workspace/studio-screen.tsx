@@ -412,14 +412,14 @@ export function StudioScreen() {
             <button
               onClick={handleReturnToScenes}
               className="focus-ring flex items-center gap-1.5 rounded-lg border border-[var(--line)] bg-[#fafbf9] px-2.5 py-1 text-[11px] font-bold text-[var(--ink-2)] transition hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand)] shadow-xs"
-              title="Return to Scenes View"
+              title="Return to Script View"
             >
               <FileText className="size-3.5 text-[var(--brand)]" />
               <span>Script View</span>
             </button>
           ) : (
             <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-extrabold tracking-wide text-[var(--brand-deep)] border border-[var(--tint-line)]">
-              Scenes View
+              Script View
             </span>
           )}
         </div>
@@ -438,17 +438,7 @@ export function StudioScreen() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {!isEditor ? (
-            /* Single Primary "Generate Now" Action in Top Header */
-            <Button
-              onClick={handleOpenGenerateModal}
-              size="sm"
-              className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer"
-            >
-              <Sparkles className="size-3.5 mr-1.5" />
-              <span>Generate Now</span>
-            </Button>
-          ) : (
+          {isEditor && (
             <>
               <Button
                 variant="secondary"
@@ -481,7 +471,7 @@ export function StudioScreen() {
           }}
           className={cn(
             "flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] overflow-hidden transition-colors duration-300",
-            isEditor ? "bg-[#f8f9f7]" : "bg-[#f8faf8] p-4 sm:p-6 lg:p-7"
+            isEditor ? "bg-[#f8f9f7]" : "bg-[#eef1ed] p-4 sm:p-6 lg:p-7"
           )}
         >
           {/* Header in Left Panel: Includes prominent '+ Add Scene' button in Scenes Mode */}
@@ -498,7 +488,7 @@ export function StudioScreen() {
             <div className="flex items-center justify-between pb-4 shrink-0">
               <div>
                 <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight">
-                  Script &amp; Storyboard Scenes
+                  Script
                 </h2>
                 <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
                   Review and shape the clinical narrative before generating the full visual canvas.
@@ -1186,7 +1176,7 @@ export function StudioScreen() {
             maxWidth: isEditor ? 320 : 410,
             transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
-          className="flex flex-col shrink-0 min-h-0 border-l border-[var(--line)] bg-white shadow-[-4px_0_16px_rgba(0,0,0,0.02)] ml-auto"
+          className="flex flex-col shrink-0 min-h-0 border-l border-[var(--line)] bg-white shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 ml-auto"
         >
           {/* Tabs: Apple/Linear-style Segmented Chip Notch Switcher */}
           <div className="p-2.5 border-b border-[var(--line)] bg-[#fafbf9]">

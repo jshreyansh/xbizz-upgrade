@@ -480,14 +480,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button
-            onClick={handleConfirmPlan}
-            size="sm"
-            className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer"
-          >
-            <Sparkles className="size-3.5 mr-1.5" />
-            <span>Generate Now</span>
-          </Button>
           <Button variant="ghost" size="icon" aria-label="More">
             <MoreHorizontal className="size-4" />
           </Button>
@@ -503,7 +495,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             minWidth: "calc(100% - 410px)",
             maxWidth: "calc(100% - 410px)",
           }}
-          className="flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] bg-[#f8faf8] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
+          className="flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
         >
           {isGenerating ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
@@ -1233,7 +1225,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 </PlanSection>
 
                 {/* Sticky Confirmation CTA at the bottom of the Left Stage */}
-                <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#f8faf8] via-[#f8faf8] to-transparent shrink-0 mt-auto">
+                <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#eef1ed] via-[#eef1ed] to-transparent shrink-0 mt-auto">
                   <div className="squircle-card border border-[var(--line)] bg-white p-4 shadow-md rounded-[18px] flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -1268,7 +1260,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             minWidth: 410,
             maxWidth: 410,
           }}
-          className="flex flex-col shrink-0 min-h-0 bg-[#fafbf9] border-l border-[var(--line)] overflow-hidden"
+          className="flex flex-col shrink-0 min-h-0 bg-white border-l border-[var(--line)] shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden"
         >
           {/* Chat Top Online Banner */}
           <div className="p-3.5 border-b border-[var(--line)] bg-white shrink-0">
