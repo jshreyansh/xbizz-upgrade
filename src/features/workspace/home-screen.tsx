@@ -16,7 +16,6 @@ interface TileOption {
   description: string;
   href: string;
   gradient: string;
-  glow: string;
 }
 
 interface ShowcaseItem {
@@ -46,7 +45,6 @@ const CREATION_TILES: TileOption[] = [
     description: "Source-backed MoA reels & clinical evidence videos, in minutes.",
     href: "/create",
     gradient: "linear-gradient(145deg,#6ea2ff,#3d6bff 55%,#1d3fd6)",
-    glow: "rgba(61,107,255,.38)",
   },
   {
     icon: ImageIcon,
@@ -56,7 +54,6 @@ const CREATION_TILES: TileOption[] = [
     description: "Compliant leave-behinds, booth banners & journal ads.",
     href: "#",
     gradient: "linear-gradient(145deg,#c199ff,#9b5bff 55%,#6d1fd8)",
-    glow: "rgba(155,91,255,.38)",
   },
   {
     icon: Globe,
@@ -66,7 +63,6 @@ const CREATION_TILES: TileOption[] = [
     description: "On-label microsites and landing pages, live in hours.",
     href: "/create",
     gradient: "linear-gradient(145deg,#4fdb9c,#16b878 55%,#0a8556)",
-    glow: "rgba(22,184,120,.38)",
   },
 ];
 
@@ -256,54 +252,45 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
         padding: "36px 28px 30px",
         borderRadius: "var(--r-xl)",
         background: hovered ? "#fdfefe" : "#fff",
-        border: hovered ? "1.5px solid var(--brand)" : "1px solid var(--hair)",
-        boxShadow: hovered ? `0 20px 40px -14px ${tile.glow}` : "0 2px 6px rgba(0,0,0,0.02)",
+        border: hovered ? "1px solid var(--hair-2)" : "1px solid var(--hair)",
+        boxShadow: hovered ? "0 16px 32px -18px rgba(16,24,40,.16)" : "0 1px 3px rgba(16,24,40,.03)",
         cursor: "pointer",
         textAlign: "center",
         transition: "all .28s cubic-bezier(0.16, 1, 0.3, 1)",
         position: "relative",
-        minHeight: 260,
+        minHeight: 250,
         overflow: "hidden",
       }}
-      className="hover:-translate-y-1.5 group"
+      className="hover:-translate-y-1 group"
     >
-      {/* Soft radial glow behind the icon — colorful backdrop */}
-      <span
-        aria-hidden
-        style={{
-          position: "absolute",
-          top: -34,
-          left: "50%",
-          width: 170,
-          height: 170,
-          borderRadius: "50%",
-          background: tile.gradient,
-          filter: "blur(38px)",
-          opacity: hovered ? 0.42 : 0.24,
-          transform: "translateX(-50%)",
-          transition: "opacity .3s ease",
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Gradient icon badge — large, colorful, interactive */}
+      {/* Gradient icon badge — refined, premium finish with a soft glass sheen */}
       <span
         style={{
           position: "relative",
           display: "grid",
           placeItems: "center",
-          width: 68,
-          height: 68,
-          borderRadius: 20,
+          width: 60,
+          height: 60,
+          borderRadius: 18,
           flexShrink: 0,
           background: tile.gradient,
           color: "#fff",
-          boxShadow: `0 14px 26px -10px ${tile.glow}, inset 0 1px 0 rgba(255,255,255,.35)`,
+          boxShadow: "0 8px 16px -8px rgba(16,24,40,.28), inset 0 1px 0 rgba(255,255,255,.45), inset 0 -8px 14px -6px rgba(0,0,0,.14)",
           transition: "transform .32s cubic-bezier(0.16, 1, 0.3, 1)",
-          transform: hovered ? "scale(1.1) rotate(-6deg)" : "scale(1) rotate(0deg)",
+          transform: hovered ? "scale(1.06)" : "scale(1)",
         }}
       >
-        <Icon size={30} strokeWidth={1.9} />
+        <span
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: 18,
+            background: "linear-gradient(155deg,rgba(255,255,255,.4),transparent 45%)",
+            pointerEvents: "none",
+          }}
+        />
+        <Icon size={26} strokeWidth={1.75} style={{ position: "relative" }} />
       </span>
 
       {/* Badge */}
@@ -369,7 +356,7 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
           color: hovered ? "#fff" : "var(--brand-deep)",
           background: hovered ? tile.gradient : "var(--tint)",
           border: hovered ? "1px solid transparent" : "1px solid var(--tint-line)",
-          boxShadow: hovered ? `0 10px 20px -10px ${tile.glow}` : "none",
+          boxShadow: hovered ? "0 6px 14px -8px rgba(16,24,40,.22)" : "none",
           transition: "all .24s ease",
         }}
       >
@@ -937,36 +924,6 @@ export function HomeScreen() {
             ? "Upload a dossier or brief and SwishX handles the rest — everything grounded and MLR-ready."
             : "Select a content workflow or explore verified medical showreels."}
         </p>
-      </div>
-
-      {/* Auxiliary strip — guided path for first-time, quick stats for returning */}
-      <div key={`aux-${audience}`} className="rise-in-stagger">
-        {audience === "first" ? (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "14px 20px", borderRadius: "var(--r-l)", background: "var(--tint-2)", border: "1px solid var(--tint-line)" }}>
-            <span style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 750, color: "var(--brand-deep)", marginRight: 4 }}>
-              Your path
-            </span>
-            {["Upload dossier", "Magic Video", "Send for review"].map((step, i, arr) => (
-              <div key={step} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 650, color: "var(--ink-2)" }}>
-                  <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", border: "1px solid var(--hair-2)", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800, color: "var(--ink-3)" }}>
-                    {i + 1}
-                  </span>
-                  {step}
-                </span>
-                {i < arr.length - 1 && <span style={{ width: 20, height: 1, background: "var(--tint-line)" }} />}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: 28, flexWrap: "wrap", padding: "14px 20px", borderRadius: "var(--r-l)", background: "var(--surface-subtle)", border: "1px solid var(--hair)" }}>
-            {[["40+", "regulatory markets"], ["5", "AI co-workers"], ["32", "content formats"], ["0", "uncited claims"]].map(([val, label]) => (
-              <span key={label} style={{ fontSize: 13, color: "var(--ink-2)" }}>
-                <b style={{ fontWeight: 800, color: "var(--ink)" }}>{val}</b> {label}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Creation tiles — bordered cards */}
