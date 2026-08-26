@@ -175,6 +175,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     creationMode,
     sourceType,
     sourcePayload,
+    chatMessages,
+    setChatMessages,
+    addChatMessage,
     setAudience,
     setIntendedUse,
     setFormat,
@@ -267,23 +270,29 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const isPlanReady = unresolvedCount === 0;
   const selectedTreatment = profile.treatments.find((item) => item.id === treatmentId) ?? profile.treatments[0];
 
-  // ── Generation Loading State on Right Panel ──
+  // ── Generation Loading State on Left Panel ──
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState(0);
 
-  // ── Chat State in Right Panel ──
+  // ── Chat Input in Right Panel ──
   const [chatInput, setChatInput] = useState("");
   const [chatContextOpen, setChatContextOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "swishx"; text: string }>>(() => [
-    {
-      role: "user",
-      text: brief || `Create a concise ${brandName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`,
-    },
-    {
-      role: "swishx",
-      text: `I've structured a 5-scene video plan grounded in the **${brandName}** dossier and approved claims. You can review the parameters on the left canvas, or chat with me to make any adjustments.`,
-    },
-  ]);
+
+  // Initialize store chat messages if empty
+  useEffect(() => {
+    if (chatMessages.length === 0) {
+      setChatMessages([
+        {
+          role: "user",
+          text: brief || `Create a concise ${brandName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`,
+        },
+        {
+          role: "swishx",
+          text: `I've structured a 5-scene video plan grounded in the **${brandName}** dossier and approved claims. You can review the parameters on the left canvas, or chat with me to make any adjustments.`,
+        },
+      ]);
+    }
+  }, [chatMessages.length, brief, brandName, setChatMessages]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -342,6 +351,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setIsGenerating(true);
     setGenerationStep(1);
 
+    addChatMessage({
+      role: "swishx",
+      text: `Confirmed plan for **${brandName}**. Generating 5-scene clinical storyboard grounded against approved label citations...`,
+    });
+
     setTimeout(() => {
       setGenerationStep(2);
     }, 600);
@@ -360,8 +374,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     const text = textToSend || chatInput.trim();
     if (!text) return;
 
-    const newMessages = [...chatMessages, { role: "user" as const, text }];
-    setChatMessages(newMessages);
+    addChatMessage({ role: "user", text });
     if (!textToSend) setChatInput("");
 
     setTimeout(() => {
@@ -389,7 +402,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         reply = `Elevated **Mechanism of Action** with dual-inhibition 3D visual cues in Scene 2.`;
       }
 
-      setChatMessages((prev) => [...prev, { role: "swishx", text: reply }]);
+      addChatMessage({ role: "swishx", text: reply });
     }, 500);
   };
 
@@ -456,7 +469,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
       {/* ── Main Split View: 2/3 Left (Plan Canvas), 1/3 Right (Chat Assistant) ── */}
       <div className="flex-1 flex overflow-hidden min-h-0 relative">
-        {/* ── LEFT PANEL (2/3 width = calc(100% - 410px)): High-Fidelity Rich Plan Canvas ── */}
+        {/* ── LEFT PANEL (2/3 width = calc(100% - 410px)): High-Fidelity Rich Plan Canvas OR Loader ── */}
         <section
           style={{
             width: "calc(100% - 410px)",
@@ -465,729 +478,760 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           }}
           className="flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] bg-[#f8faf8] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
         >
-          {/* Header in Left Canvas */}
-          <div className="flex items-center justify-between pb-2 shrink-0">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">
-                  Available Context
-                </span>
-                <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)] border border-emerald-200">
-                  Grounding active
-                </span>
+          {isGenerating ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
+              <div className="size-20 rounded-3xl bg-[var(--tint)] border border-[var(--tint-line)] flex items-center justify-center mb-6 shadow-sm">
+                <Sparkles className="size-10 text-[var(--brand)] animate-pulse" />
               </div>
-              <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight mt-0.5">
-                {brandName} Dossier Plan &amp; Storyboard Parameters
-              </h2>
-              <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
-                Refine the creative treatment, audience focus, and evidence cues before confirming scenes.
+              <h3 className="text-[22px] font-extrabold text-[var(--ink)] tracking-tight">
+                Generating Storyboard Scenes...
+              </h3>
+              <p className="text-[13.5px] text-[var(--ink-muted)] mt-1.5 max-w-[440px]">
+                Structuring clinical narrative, scene narration, and multi-layer visual grounding against 214 approved claims.
               </p>
-            </div>
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[var(--ok)] border border-[var(--line)] shadow-2xs">
-                ✓ 214 approved claims cited
-              </span>
-            </div>
-          </div>
 
-          {/* ─── Rich Accordion Sections with Dynamic Focus Enlargement & Dimming ─── */}
-          <div className="space-y-3 min-w-0 w-full">
-            {/* 1. Creative Treatment (in regular mode) OR Presenter & Voice (in Magic Avatar mode) */}
-            {isMagicAvatar ? (
-              <PlanSection
-                icon={Mic2}
-                title="Presenter, voice and sound"
-                summary={`${presenter || "Dr. Maya Kapoor"} · ${language} · ${music}`}
-                status={presenter ? "Confirmed" : "Needs you"}
-                open={openSection === "voice"}
-                onToggle={() => toggleSection("voice")}
-                tone={presenter ? "done" : "attention"}
-              >
-                <div className="mb-4">
-                  <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
-                    Select AI Presenter Avatar
+              <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-[12.5px]">
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
+                </div>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Synthesized 5-scene clinical narrative</span>
+                </div>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Linking citations to FDA label §5.1</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Header in Left Canvas */}
+              <div className="flex items-center justify-between pb-2 shrink-0">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">
+                      Available Context
+                    </span>
+                    <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)] border border-emerald-200">
+                      Grounding active
+                    </span>
                   </div>
-                  <div className="grid gap-2.5 sm:grid-cols-3">
-                    {presenters.slice(0, 2).map((person) => (
-                      <button
-                        key={person.name}
-                        onClick={() => setPresenter(person.name)}
-                        className={cn(
-                          "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
-                          presenter === person.name
-                            ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
-                            : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
-                        )}
-                      >
-                        <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <span className="block truncate font-bold text-[14px]">{person.name}</span>
-                          <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
-                        </div>
-                        {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => setPresenterLibraryOpen(true)}
-                      className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
-                    >
-                      <span className="flex -space-x-2.5">
-                        {presenters.slice(2).map((person) => (
-                          <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                  <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight mt-0.5">
+                    {brandName} Dossier Plan &amp; Storyboard Parameters
+                  </h2>
+                  <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
+                    Refine the creative treatment, audience focus, and evidence cues before confirming scenes.
+                  </p>
+                </div>
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[var(--ok)] border border-[var(--line)] shadow-2xs">
+                    ✓ 214 approved claims cited
+                  </span>
+                </div>
+              </div>
+
+              {/* ─── Rich Accordion Sections with Dynamic Focus Enlargement & Dimming ─── */}
+              <div className="space-y-3 min-w-0 w-full">
+                {/* 1. Creative Treatment (in regular mode) OR Presenter & Voice (in Magic Avatar mode) */}
+                {isMagicAvatar ? (
+                  <PlanSection
+                    icon={Mic2}
+                    title="Presenter, voice and sound"
+                    summary={`${presenter || "Dr. Maya Kapoor"} · ${language} · ${music}`}
+                    status={presenter ? "Confirmed" : "Needs you"}
+                    open={openSection === "voice"}
+                    onToggle={() => toggleSection("voice")}
+                    tone={presenter ? "done" : "attention"}
+                  >
+                    <div className="mb-4">
+                      <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
+                        Select AI Presenter Avatar
+                      </div>
+                      <div className="grid gap-2.5 sm:grid-cols-3">
+                        {presenters.slice(0, 2).map((person) => (
+                          <button
+                            key={person.name}
+                            onClick={() => setPresenter(person.name)}
+                            className={cn(
+                              "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                              presenter === person.name
+                                ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
+                                : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                            )}
+                          >
+                            <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <span className="block truncate font-bold text-[14px]">{person.name}</span>
+                              <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
+                            </div>
+                            {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
+                          </button>
                         ))}
-                      </span>
-                      <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
-                      <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <DecisionRow
-                    label="Language"
-                    value={language}
-                    icon={<Globe2 className="size-4" />}
-                    editing={editingDecision === "language"}
-                    onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
-                  >
-                    <ChoiceGroup
-                      label="Choose a language"
-                      value={language}
-                      onChange={(next) => {
-                        setLanguage(next);
-                        setEditingDecision(null);
-                      }}
-                      options={["English", "Hindi", "Spanish", "French", "German"]}
-                      icon={() => <Globe2 className="size-4" />}
-                    />
-                  </DecisionRow>
-                  <DecisionRow
-                    label="Voice"
-                    value={voice}
-                    icon={<Mic2 className="size-4" />}
-                    editing={editingDecision === "voice"}
-                    onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
-                    onPreview={() => previewAudio("voice", voice)}
-                    playing={previewingAudio === voice}
-                  >
-                    <AudioChoices
-                      label="Choose and preview a voice"
-                      value={voice}
-                      options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
-                      onChange={(next) => {
-                        setVoice(next);
-                        setEditingDecision(null);
-                      }}
-                      previewing={previewingAudio}
-                      onPreview={(option) => previewAudio("voice", option)}
-                      onOpenLibrary={() => setVoiceLibraryOpen(true)}
-                    />
-                  </DecisionRow>
-                  <DecisionRow
-                    label="Background music"
-                    value={music}
-                    icon={<Music2 className="size-4" />}
-                    editing={editingDecision === "music"}
-                    onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
-                    onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
-                    playing={previewingAudio === music}
-                  >
-                    <AudioChoices
-                      label="Choose and preview music"
-                      value={music}
-                      options={["No music", "Calm clinical", "Warm", "Uplifting"]}
-                      onChange={(next) => {
-                        setMusic(next);
-                        setEditingDecision(null);
-                      }}
-                      previewing={previewingAudio}
-                      onPreview={(option) => previewAudio("music", option)}
-                      music
-                    />
-                  </DecisionRow>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-[var(--line)] flex justify-end">
-                  <Button
-                    onClick={() => {
-                      setConfirmedTreatment(true);
-                      setOpenSection(isProductFocus ? "product-assets" : "message");
-                    }}
-                    className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
-                  >
-                    {isProductFocus ? "Confirm Avatar & Proceed to Product Assets" : "Confirm Avatar & Continue"} <ArrowRight className="size-4 ml-1" />
-                  </Button>
-                </div>
-              </PlanSection>
-            ) : (
-              <PlanSection
-                icon={Film}
-                title="Creative treatment"
-                summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`}
-                status={confirmedTreatment ? "Confirmed" : "Needs you"}
-                open={openSection === "treatment"}
-                onToggle={() => toggleSection("treatment")}
-                tone={confirmedTreatment ? "done" : "attention"}
-              >
-                <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5">
-                  <div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div>
-                  <p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p>
-                </div>
-                <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
-                  {profile.treatments.map((item, index) => {
-                    const selected = treatmentId === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => selectTreatment(item.id)}
-                        className={cn(
-                          "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
-                          selected
-                            ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
-                            : "border-[#e4e9e6] bg-white opacity-85 hover:opacity-100 hover:border-[#ccd7d1]"
-                        )}
-                      >
-                        <div>
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <span className="font-bold text-[14.5px] text-[var(--ink)] flex items-center gap-1.5 leading-tight">
-                              {item.label}
-                            </span>
-                            <span
-                              className={cn(
-                                "grid size-5 shrink-0 place-items-center rounded-full border transition",
-                                selected
-                                  ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                                  : "border-[#d6ddd9] bg-white"
-                              )}
-                            >
-                              {selected && <Check className="size-3" strokeWidth={3.5} />}
-                            </span>
-                          </div>
-                          {index === 0 && (
-                            <span className="inline-block mb-2 rounded-full bg-white px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
-                              Recommended
-                            </span>
-                          )}
-                          <p className="text-[12.5px] leading-relaxed text-[var(--ink-muted)]">
-                            {item.description}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {!confirmedTreatment && (
-                  <Button
-                    onClick={() => {
-                      setConfirmedTreatment(true);
-                      setOpenSection(isProductFocus ? "product-assets" : null);
-                    }}
-                    className="mt-3 bg-[var(--brand)] text-white"
-                  >
-                    Use recommendation <ArrowRight className="size-4" />
-                  </Button>
-                )}
-              </PlanSection>
-            )}
-
-            {/* 2. Elevated Product Packshot & Visual Assets */}
-            <PlanSection
-              icon={PackageCheck}
-              title="Product & Device Visual Assets"
-              summary={
-                productMediaList.length > 0
-                  ? `${productMediaList.length} media attached · 3D packshots grounded`
-                  : isProductFocus
-                  ? "Required for Product Introduction · Please attach product photos/videos"
-                  : "Optional product packshots & 3D device renders"
-              }
-              status={
-                isProductFocus
-                  ? productMediaList.length > 0
-                    ? "Attached"
-                    : "Needs Assets"
-                  : "Optional"
-              }
-              open={openSection === "product-assets"}
-              onToggle={() => toggleSection("product-assets")}
-              tone={productMediaList.length > 0 ? "done" : isProductFocus ? "attention" : "default"}
-            >
-              <div className="space-y-3.5">
-                <div className="rounded-[14px] bg-[#fafbf9] border border-[var(--line)] p-3.5 text-[12.5px] text-[var(--ink-2)] leading-relaxed">
-                  <p className="font-bold text-[var(--ink)] mb-1">
-                    📸 Product Packshots &amp; Device Reference Media
-                  </p>
-                  <p className="text-[var(--ink-muted)] text-[12px]">
-                    Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {productMediaList.map((media) => (
-                    <div
-                      key={media.id}
-                      className="group relative rounded-xl border border-black/[0.08] bg-white overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
-                    >
-                      <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
-                        <img
-                          src={media.preview}
-                          alt={media.name}
-                          className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[8.5px] font-bold text-white uppercase backdrop-blur-xs">
-                          {media.type}
-                        </span>
                         <button
-                          type="button"
-                          onClick={() => setProductMediaList((prev) => prev.filter((m) => m.id !== media.id))}
-                          className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-rose-600 transition cursor-pointer backdrop-blur-xs"
-                          title="Remove media"
+                          onClick={() => setPresenterLibraryOpen(true)}
+                          className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
                         >
-                          <X className="size-3.5" />
+                          <span className="flex -space-x-2.5">
+                            {presenters.slice(2).map((person) => (
+                              <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                            ))}
+                          </span>
+                          <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
+                          <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
                         </button>
                       </div>
-
-                      <div className="p-2.5">
-                        <span className="block truncate text-[12px] font-bold text-[var(--ink)]">
-                          {media.name}
-                        </span>
-                        <span className="text-[10px] text-[var(--ink-muted)] block mt-0.5 font-medium">
-                          {media.size} · Uploaded
-                        </span>
-                      </div>
                     </div>
-                  ))}
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const sampleItem = {
-                        id: `media-${Date.now()}`,
-                        name: "Velmora_Autoinjector_3D_Packshot.png",
-                        type: "image" as const,
-                        preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
-                        size: "4.2 MB",
-                      };
-                      setProductMediaList((prev) => [...prev, sampleItem]);
-                    }}
-                    className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--brand)]/40 bg-white p-4 text-center hover:bg-[var(--tint)] hover:border-[var(--brand)] transition cursor-pointer"
+                    <div className="space-y-2">
+                      <DecisionRow
+                        label="Language"
+                        value={language}
+                        icon={<Globe2 className="size-4" />}
+                        editing={editingDecision === "language"}
+                        onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                      >
+                        <ChoiceGroup
+                          label="Choose a language"
+                          value={language}
+                          onChange={(next) => {
+                            setLanguage(next);
+                            setEditingDecision(null);
+                          }}
+                          options={["English", "Hindi", "Spanish", "French", "German"]}
+                          icon={() => <Globe2 className="size-4" />}
+                        />
+                      </DecisionRow>
+                      <DecisionRow
+                        label="Voice"
+                        value={voice}
+                        icon={<Mic2 className="size-4" />}
+                        editing={editingDecision === "voice"}
+                        onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
+                        onPreview={() => previewAudio("voice", voice)}
+                        playing={previewingAudio === voice}
+                      >
+                        <AudioChoices
+                          label="Choose and preview a voice"
+                          value={voice}
+                          options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                          onChange={(next) => {
+                            setVoice(next);
+                            setEditingDecision(null);
+                          }}
+                          previewing={previewingAudio}
+                          onPreview={(option) => previewAudio("voice", option)}
+                          onOpenLibrary={() => setVoiceLibraryOpen(true)}
+                        />
+                      </DecisionRow>
+                      <DecisionRow
+                        label="Background music"
+                        value={music}
+                        icon={<Music2 className="size-4" />}
+                        editing={editingDecision === "music"}
+                        onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
+                        onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
+                        playing={previewingAudio === music}
+                      >
+                        <AudioChoices
+                          label="Choose and preview music"
+                          value={music}
+                          options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                          onChange={(next) => {
+                            setMusic(next);
+                            setEditingDecision(null);
+                          }}
+                          previewing={previewingAudio}
+                          onPreview={(option) => previewAudio("music", option)}
+                          music
+                        />
+                      </DecisionRow>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-[var(--line)] flex justify-end">
+                      <Button
+                        onClick={() => {
+                          setConfirmedTreatment(true);
+                          setOpenSection(isProductFocus ? "product-assets" : "message");
+                        }}
+                        className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
+                      >
+                        {isProductFocus ? "Confirm Avatar & Proceed to Product Assets" : "Confirm Avatar & Continue"} <ArrowRight className="size-4 ml-1" />
+                      </Button>
+                    </div>
+                  </PlanSection>
+                ) : (
+                  <PlanSection
+                    icon={Film}
+                    title="Creative treatment"
+                    summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`}
+                    status={confirmedTreatment ? "Confirmed" : "Needs you"}
+                    open={openSection === "treatment"}
+                    onToggle={() => toggleSection("treatment")}
+                    tone={confirmedTreatment ? "done" : "attention"}
                   >
-                    <div className="grid size-8 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand)]">
-                      <Plus className="size-4" />
+                    <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5">
+                      <div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div>
+                      <p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p>
                     </div>
-                    <div>
-                      <span className="block text-[12px] font-bold text-[var(--brand)]">
-                        {productMediaList.length === 0 ? "Upload Product Photos / Videos" : "Add More Product Media"}
-                      </span>
-                      <span className="text-[10px] text-[var(--ink-muted)] mt-0.5 block">
-                        PNG, JPG, MP4 · Click to attach asset
-                      </span>
+                    <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
+                      {profile.treatments.map((item, index) => {
+                        const selected = treatmentId === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => selectTreatment(item.id)}
+                            className={cn(
+                              "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
+                              selected
+                                ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
+                                : "border-[#e4e9e6] bg-white opacity-85 hover:opacity-100 hover:border-[#ccd7d1]"
+                            )}
+                          >
+                            <div>
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <span className="font-bold text-[14.5px] text-[var(--ink)] flex items-center gap-1.5 leading-tight">
+                                  {item.label}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "grid size-5 shrink-0 place-items-center rounded-full border transition",
+                                    selected
+                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                      : "border-[#d6ddd9] bg-white"
+                                  )}
+                                >
+                                  {selected && <Check className="size-3" strokeWidth={3.5} />}
+                                </span>
+                              </div>
+                              {index === 0 && (
+                                <span className="inline-block mb-2 rounded-full bg-white px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
+                                  Recommended
+                                </span>
+                              )}
+                              <p className="text-[12.5px] leading-relaxed text-[var(--ink-muted)]">
+                                {item.description}
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-                  </button>
-                </div>
+                    {!confirmedTreatment && (
+                      <Button
+                        onClick={() => {
+                          setConfirmedTreatment(true);
+                          setOpenSection(isProductFocus ? "product-assets" : null);
+                        }}
+                        className="mt-3 bg-[var(--brand)] text-white"
+                      >
+                        Use recommendation <ArrowRight className="size-4" />
+                      </Button>
+                    )}
+                  </PlanSection>
+                )}
 
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      if (productMediaList.length === 0) {
-                        setProductMediaList([
-                          {
+                {/* 2. Elevated Product Packshot & Visual Assets */}
+                <PlanSection
+                  icon={PackageCheck}
+                  title="Product & Device Visual Assets"
+                  summary={
+                    productMediaList.length > 0
+                      ? `${productMediaList.length} media attached · 3D packshots grounded`
+                      : isProductFocus
+                      ? "Required for Product Introduction · Please attach product photos/videos"
+                      : "Optional product packshots & 3D device renders"
+                  }
+                  status={
+                    isProductFocus
+                      ? productMediaList.length > 0
+                        ? "Attached"
+                        : "Needs Assets"
+                      : "Optional"
+                  }
+                  open={openSection === "product-assets"}
+                  onToggle={() => toggleSection("product-assets")}
+                  tone={productMediaList.length > 0 ? "done" : isProductFocus ? "attention" : "default"}
+                >
+                  <div className="space-y-3.5">
+                    <div className="rounded-[14px] bg-[#fafbf9] border border-[var(--line)] p-3.5 text-[12.5px] text-[var(--ink-2)] leading-relaxed">
+                      <p className="font-bold text-[var(--ink)] mb-1">
+                        📸 Product Packshots &amp; Device Reference Media
+                      </p>
+                      <p className="text-[var(--ink-muted)] text-[12px]">
+                        Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {productMediaList.map((media) => (
+                        <div
+                          key={media.id}
+                          className="group relative rounded-xl border border-black/[0.08] bg-white overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
+                        >
+                          <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
+                            <img
+                              src={media.preview}
+                              alt={media.name}
+                              className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[8.5px] font-bold text-white uppercase backdrop-blur-xs">
+                              {media.type}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setProductMediaList((prev) => prev.filter((m) => m.id !== media.id))}
+                              className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-rose-600 transition cursor-pointer backdrop-blur-xs"
+                              title="Remove media"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="p-2.5">
+                            <span className="block truncate text-[12px] font-bold text-[var(--ink)]">
+                              {media.name}
+                            </span>
+                            <span className="text-[10px] text-[var(--ink-muted)] block mt-0.5 font-medium">
+                              {media.size} · Uploaded
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const sampleItem = {
                             id: `media-${Date.now()}`,
                             name: "Velmora_Autoinjector_3D_Packshot.png",
-                            type: "image",
+                            type: "image" as const,
                             preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
                             size: "4.2 MB",
-                          },
-                        ]);
-                      }
-                      setOpenSection("message");
-                    }}
-                    className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
-                  >
-                    Save Product Assets &amp; Next <ArrowRight className="size-3.5 ml-1" />
-                  </Button>
-                </div>
-              </div>
-            </PlanSection>
-
-            {/* 3. Message and Audience */}
-            <PlanSection
-              icon={Target}
-              title="Message and audience"
-              summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
-              status="From brief"
-              open={openSection === "message"}
-              onToggle={() => toggleSection("message")}
-            >
-              <div className="space-y-2">
-                <DecisionRow
-                  label="Audience"
-                  value={audience}
-                  icon={<AudienceIcon value={audience} />}
-                  editing={editingDecision === "audience"}
-                  onEdit={() => setEditingDecision(editingDecision === "audience" ? null : "audience")}
-                >
-                  <ChoiceGroup
-                    label="Choose the primary audience"
-                    value={audience}
-                    onChange={(next) => {
-                      setAudience(next as Audience);
-                      setEditingDecision(null);
-                    }}
-                    options={audienceOptions}
-                    icon={(next) => <AudienceIcon value={next} />}
-                  />
-                </DecisionRow>
-                <DecisionRow
-                  label="Objective"
-                  value={goal}
-                  icon={<Target className="size-4" />}
-                  editing={editingDecision === "objective"}
-                  onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}
-                >
-                  <ChoiceGroup
-                    label="What should this accomplish?"
-                    value={goal}
-                    onChange={(next) => {
-                      setGoal(next);
-                      setStoreGoal(next);
-                      setEditingDecision(null);
-                    }}
-                    options={["New launch", "Awareness", "Adoption", "Retention", "Education"]}
-                    icon={() => <Target className="size-4" />}
-                  />
-                </DecisionRow>
-                <DecisionRow
-                  label="Topics"
-                  value={selectedTopics.join(" · ")}
-                  icon={<LayoutList className="size-4" />}
-                  editing={editingDecision === "topics"}
-                  onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}
-                >
-                  <div className="text-[13px] font-semibold text-[#5f6b65]">Include only what matters</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {topics.map((topic) => (
-                      <button
-                        key={topic}
-                        onClick={() => toggleTopic(topic)}
-                        aria-pressed={selectedTopics.includes(topic)}
-                        className={cn(
-                          "focus-ring min-h-10 rounded-[12px] border px-3 text-[13px] font-medium transition cursor-pointer",
-                          selectedTopics.includes(topic)
-                            ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)]"
-                            : "border-[#e3e8e5] hover:border-[#cbd6d0]"
-                        )}
+                          };
+                          setProductMediaList((prev) => [...prev, sampleItem]);
+                        }}
+                        className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--brand)]/40 bg-white p-4 text-center hover:bg-[var(--tint)] hover:border-[var(--brand)] transition cursor-pointer"
                       >
-                        {selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}
-                        {topic}
+                        <div className="grid size-8 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand)]">
+                          <Plus className="size-4" />
+                        </div>
+                        <div>
+                          <span className="block text-[12px] font-bold text-[var(--brand)]">
+                            {productMediaList.length === 0 ? "Upload Product Photos / Videos" : "Add More Product Media"}
+                          </span>
+                          <span className="text-[10px] text-[var(--ink-muted)] mt-0.5 block">
+                            PNG, JPG, MP4 · Click to attach asset
+                          </span>
+                        </div>
                       </button>
-                    ))}
-                  </div>
-                  <div className="mt-3 flex justify-end">
-                    <Button size="sm" onClick={() => setEditingDecision(null)}>
-                      Done
-                    </Button>
-                  </div>
-                </DecisionRow>
-              </div>
-            </PlanSection>
-
-            {/* 4. Delivery */}
-            <PlanSection
-              icon={MonitorPlay}
-              title="Delivery"
-              summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration}`}
-              status="Recommended"
-              open={openSection === "delivery"}
-              onToggle={() => toggleSection("delivery")}
-            >
-              <div className="space-y-2">
-                <DecisionRow
-                  label="Destinations"
-                  value={displayIntendedUses(intendedUse)}
-                  icon={<ChannelIcon value={parseIntendedUses(intendedUse)[0]} />}
-                  editing={editingDecision === "channel"}
-                  onEdit={() => setEditingDecision(editingDecision === "channel" ? null : "channel")}
-                >
-                  <MultiChoiceGroup
-                    label="Choose one or more destinations"
-                    values={parseIntendedUses(intendedUse)}
-                    onChange={(next) => setIntendedUse(serializeIntendedUses(next))}
-                    onDone={() => setEditingDecision(null)}
-                    options={useOptions}
-                    icon={(next) => <ChannelIcon value={next} />}
-                  />
-                </DecisionRow>
-                <DecisionRow
-                  label={assetType === "video" ? "Frame" : "Format"}
-                  value={effectiveFormat}
-                  icon={<FrameGlyph value={effectiveFormat} />}
-                  editing={editingDecision === "format"}
-                  onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
-                >
-                  <FormatChoices
-                    label="Choose the output shape"
-                    value={effectiveFormat}
-                    options={profile.formatOptions}
-                    onChange={(next) => {
-                      setFormat(next);
-                      setEditingDecision(null);
-                    }}
-                  />
-                </DecisionRow>
-                <DecisionRow
-                  label={assetType === "video" ? "Length" : "Amount"}
-                  value={duration}
-                  icon={<Clock3 className="size-4" />}
-                  editing={editingDecision === "length"}
-                  onEdit={() => setEditingDecision(editingDecision === "length" ? null : "length")}
-                >
-                  <SteppedControl
-                    label={assetType === "video" ? "Video length" : "Content amount"}
-                    value={duration}
-                    options={profile.lengthOptions}
-                    onChange={setDuration}
-                  />
-                  <div className="mt-3 flex justify-end">
-                    <Button size="sm" onClick={() => setEditingDecision(null)}>
-                      Done
-                    </Button>
-                  </div>
-                </DecisionRow>
-              </div>
-            </PlanSection>
-
-            {/* 5. Presenter, Voice and Sound (for standard video mode) */}
-            {!isMagicAvatar && assetType === "video" && treatmentId !== "visual-only" && (
-              <PlanSection
-                icon={Mic2}
-                title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"}
-                summary={
-                  needsPresenter
-                    ? `${presenter || "Choose presenter"} · ${language} · ${music}`
-                    : `${voice} · ${language} · ${music}`
-                }
-                status={needsPresenter && !presenter ? "Needs you" : "Recommended"}
-                open={openSection === "voice"}
-                onToggle={() => toggleSection("voice")}
-                tone={needsPresenter && !presenter ? "attention" : "default"}
-              >
-                {needsPresenter && (
-                  <div className="mb-4">
-                    <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
-                      Who appears on screen?
                     </div>
-                    <div className="grid gap-2.5 sm:grid-cols-3">
-                      {presenters.slice(0, 2).map((person) => (
-                        <button
-                          key={person.name}
-                          onClick={() => setPresenter(person.name)}
-                          className={cn(
-                            "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
-                            presenter === person.name
-                              ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
-                              : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
-                          )}
-                        >
-                          <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
-                          <div className="min-w-0 flex-1">
-                            <span className="block truncate font-bold text-[14px]">{person.name}</span>
-                            <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
-                          </div>
-                          {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => setPresenterLibraryOpen(true)}
-                        className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
+
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          if (productMediaList.length === 0) {
+                            setProductMediaList([
+                              {
+                                id: `media-${Date.now()}`,
+                                name: "Velmora_Autoinjector_3D_Packshot.png",
+                                type: "image",
+                                preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                                size: "4.2 MB",
+                              },
+                            ]);
+                          }
+                          setOpenSection("message");
+                        }}
+                        className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
                       >
-                        <span className="flex -space-x-2.5">
-                          {presenters.slice(2).map((person) => (
-                            <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                        Save Product Assets &amp; Next <ArrowRight className="size-3.5 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                </PlanSection>
+
+                {/* 3. Message and Audience */}
+                <PlanSection
+                  icon={Target}
+                  title="Message and audience"
+                  summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
+                  status="From brief"
+                  open={openSection === "message"}
+                  onToggle={() => toggleSection("message")}
+                >
+                  <div className="space-y-2">
+                    <DecisionRow
+                      label="Audience"
+                      value={audience}
+                      icon={<AudienceIcon value={audience} />}
+                      editing={editingDecision === "audience"}
+                      onEdit={() => setEditingDecision(editingDecision === "audience" ? null : "audience")}
+                    >
+                      <ChoiceGroup
+                        label="Choose the primary audience"
+                        value={audience}
+                        onChange={(next) => {
+                          setAudience(next as Audience);
+                          setEditingDecision(null);
+                        }}
+                        options={audienceOptions}
+                        icon={(next) => <AudienceIcon value={next} />}
+                      />
+                    </DecisionRow>
+                    <DecisionRow
+                      label="Objective"
+                      value={goal}
+                      icon={<Target className="size-4" />}
+                      editing={editingDecision === "objective"}
+                      onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}
+                    >
+                      <ChoiceGroup
+                        label="What should this accomplish?"
+                        value={goal}
+                        onChange={(next) => {
+                          setGoal(next);
+                          setStoreGoal(next);
+                          setEditingDecision(null);
+                        }}
+                        options={["New launch", "Awareness", "Adoption", "Retention", "Education"]}
+                        icon={() => <Target className="size-4" />}
+                      />
+                    </DecisionRow>
+                    <DecisionRow
+                      label="Topics"
+                      value={selectedTopics.join(" · ")}
+                      icon={<LayoutList className="size-4" />}
+                      editing={editingDecision === "topics"}
+                      onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}
+                    >
+                      <div className="text-[13px] font-semibold text-[#5f6b65]">Include only what matters</div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {topics.map((topic) => (
+                          <button
+                            key={topic}
+                            onClick={() => toggleTopic(topic)}
+                            aria-pressed={selectedTopics.includes(topic)}
+                            className={cn(
+                              "focus-ring min-h-10 rounded-[12px] border px-3 text-[13px] font-medium transition cursor-pointer",
+                              selectedTopics.includes(topic)
+                                ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)]"
+                                : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                            )}
+                          >
+                            {selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}
+                            {topic}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="mt-3 flex justify-end">
+                        <Button size="sm" onClick={() => setEditingDecision(null)}>
+                          Done
+                        </Button>
+                      </div>
+                    </DecisionRow>
+                  </div>
+                </PlanSection>
+
+                {/* 4. Delivery */}
+                <PlanSection
+                  icon={MonitorPlay}
+                  title="Delivery"
+                  summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration}`}
+                  status="Recommended"
+                  open={openSection === "delivery"}
+                  onToggle={() => toggleSection("delivery")}
+                >
+                  <div className="space-y-2">
+                    <DecisionRow
+                      label="Destinations"
+                      value={displayIntendedUses(intendedUse)}
+                      icon={<ChannelIcon value={parseIntendedUses(intendedUse)[0]} />}
+                      editing={editingDecision === "channel"}
+                      onEdit={() => setEditingDecision(editingDecision === "channel" ? null : "channel")}
+                    >
+                      <MultiChoiceGroup
+                        label="Choose one or more destinations"
+                        values={parseIntendedUses(intendedUse)}
+                        onChange={(next) => setIntendedUse(serializeIntendedUses(next))}
+                        onDone={() => setEditingDecision(null)}
+                        options={useOptions}
+                        icon={(next) => <ChannelIcon value={next} />}
+                      />
+                    </DecisionRow>
+                    <DecisionRow
+                      label={assetType === "video" ? "Frame" : "Format"}
+                      value={effectiveFormat}
+                      icon={<FrameGlyph value={effectiveFormat} />}
+                      editing={editingDecision === "format"}
+                      onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
+                    >
+                      <FormatChoices
+                        label="Choose the output shape"
+                        value={effectiveFormat}
+                        options={profile.formatOptions}
+                        onChange={(next) => {
+                          setFormat(next);
+                          setEditingDecision(null);
+                        }}
+                      />
+                    </DecisionRow>
+                    <DecisionRow
+                      label={assetType === "video" ? "Length" : "Amount"}
+                      value={duration}
+                      icon={<Clock3 className="size-4" />}
+                      editing={editingDecision === "length"}
+                      onEdit={() => setEditingDecision(editingDecision === "length" ? null : "length")}
+                    >
+                      <SteppedControl
+                        label={assetType === "video" ? "Video length" : "Content amount"}
+                        value={duration}
+                        options={profile.lengthOptions}
+                        onChange={setDuration}
+                      />
+                      <div className="mt-3 flex justify-end">
+                        <Button size="sm" onClick={() => setEditingDecision(null)}>
+                          Done
+                        </Button>
+                      </div>
+                    </DecisionRow>
+                  </div>
+                </PlanSection>
+
+                {/* 5. Presenter, Voice and Sound (for standard video mode) */}
+                {!isMagicAvatar && assetType === "video" && treatmentId !== "visual-only" && (
+                  <PlanSection
+                    icon={Mic2}
+                    title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"}
+                    summary={
+                      needsPresenter
+                        ? `${presenter || "Choose presenter"} · ${language} · ${music}`
+                        : `${voice} · ${language} · ${music}`
+                    }
+                    status={needsPresenter && !presenter ? "Needs you" : "Recommended"}
+                    open={openSection === "voice"}
+                    onToggle={() => toggleSection("voice")}
+                    tone={needsPresenter && !presenter ? "attention" : "default"}
+                  >
+                    {needsPresenter && (
+                      <div className="mb-4">
+                        <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
+                          Who appears on screen?
+                        </div>
+                        <div className="grid gap-2.5 sm:grid-cols-3">
+                          {presenters.slice(0, 2).map((person) => (
+                            <button
+                              key={person.name}
+                              onClick={() => setPresenter(person.name)}
+                              className={cn(
+                                "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                                presenter === person.name
+                                  ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
+                                  : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                              )}
+                            >
+                              <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <span className="block truncate font-bold text-[14px]">{person.name}</span>
+                                <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
+                              </div>
+                              {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
+                            </button>
                           ))}
-                        </span>
-                        <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
-                        <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <DecisionRow
-                    label="Language"
-                    value={language}
-                    icon={<Globe2 className="size-4" />}
-                    editing={editingDecision === "language"}
-                    onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
-                  >
-                    <ChoiceGroup
-                      label="Choose a language"
-                      value={language}
-                      onChange={(next) => {
-                        setLanguage(next);
-                        setEditingDecision(null);
-                      }}
-                      options={["English", "Hindi", "Spanish", "French", "German"]}
-                      icon={() => <Globe2 className="size-4" />}
-                    />
-                  </DecisionRow>
-                  <DecisionRow
-                    label="Voice"
-                    value={voice}
-                    icon={<Mic2 className="size-4" />}
-                    editing={editingDecision === "voice"}
-                    onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
-                    onPreview={() => previewAudio("voice", voice)}
-                    playing={previewingAudio === voice}
-                  >
-                    <AudioChoices
-                      label="Choose and preview a voice"
-                      value={voice}
-                      options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
-                      onChange={(next) => {
-                        setVoice(next);
-                        setEditingDecision(null);
-                      }}
-                      previewing={previewingAudio}
-                      onPreview={(option) => previewAudio("voice", option)}
-                      onOpenLibrary={() => setVoiceLibraryOpen(true)}
-                    />
-                  </DecisionRow>
-                  <DecisionRow
-                    label="Background music"
-                    value={music}
-                    icon={<Music2 className="size-4" />}
-                    editing={editingDecision === "music"}
-                    onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
-                    onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
-                    playing={previewingAudio === music}
-                  >
-                    <AudioChoices
-                      label="Choose and preview music"
-                      value={music}
-                      options={["No music", "Calm clinical", "Warm", "Uplifting"]}
-                      onChange={(next) => {
-                        setMusic(next);
-                        setEditingDecision(null);
-                      }}
-                      previewing={previewingAudio}
-                      onPreview={(option) => previewAudio("music", option)}
-                      music
-                    />
-                  </DecisionRow>
-                </div>
-              </PlanSection>
-            )}
-
-            {/* 6. Brand and Evidence */}
-            <PlanSection
-              icon={ShieldCheck}
-              title="Brand and evidence"
-              summary={
-                derivedPlan.sourceConflict && !sourceConflictResolved
-                  ? "Source authority needs confirmation"
-                  : approvedEvidenceCount > 0
-                  ? `${approvedEvidenceCount} approved sources · brand kit applied`
-                  : "Concept only · approved source needed"
-              }
-              status={
-                derivedPlan.sourceConflict && !sourceConflictResolved
-                  ? "Needs you"
-                  : approvedEvidenceCount > 0
-                  ? "From source"
-                  : "Review"
-              }
-              open={openSection === "brand"}
-              onToggle={() => toggleSection("brand")}
-              tone={derivedPlan.sourceConflict && !sourceConflictResolved ? "attention" : "default"}
-            >
-              {derivedPlan.sourceConflict && !sourceConflictResolved && (
-                <div className="mb-3 rounded-[12px] border border-[#e4c17f] bg-[var(--warning-soft)] p-3.5">
-                  <div className="flex items-start gap-3">
-                    <Info className="mt-0.5 size-5 shrink-0 text-[var(--warning)]" />
-                    <div>
-                      <div className="text-[14px] font-bold text-[#704b13]">Confirm source authority</div>
-                      <p className="mt-1 text-[13px] leading-5 text-[#765b31]">{derivedPlan.sourceConflict}</p>
-                      <button
-                        onClick={() => setSourceConflictResolved(true)}
-                        className="focus-ring mt-2 min-h-10 rounded-[9px] bg-white px-3 text-[13px] font-bold text-[#704b13] shadow-sm"
+                          <button
+                            onClick={() => setPresenterLibraryOpen(true)}
+                            className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
+                          >
+                            <span className="flex -space-x-2.5">
+                              {presenters.slice(2).map((person) => (
+                                <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                              ))}
+                            </span>
+                            <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
+                            <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <DecisionRow
+                        label="Language"
+                        value={language}
+                        icon={<Globe2 className="size-4" />}
+                        editing={editingDecision === "language"}
+                        onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
                       >
-                        Use current {market} source as authority
-                      </button>
+                        <ChoiceGroup
+                          label="Choose a language"
+                          value={language}
+                          onChange={(next) => {
+                            setLanguage(next);
+                            setEditingDecision(null);
+                          }}
+                          options={["English", "Hindi", "Spanish", "French", "German"]}
+                          icon={() => <Globe2 className="size-4" />}
+                        />
+                      </DecisionRow>
+                      <DecisionRow
+                        label="Voice"
+                        value={voice}
+                        icon={<Mic2 className="size-4" />}
+                        editing={editingDecision === "voice"}
+                        onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
+                        onPreview={() => previewAudio("voice", voice)}
+                        playing={previewingAudio === voice}
+                      >
+                        <AudioChoices
+                          label="Choose and preview a voice"
+                          value={voice}
+                          options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                          onChange={(next) => {
+                            setVoice(next);
+                            setEditingDecision(null);
+                          }}
+                          previewing={previewingAudio}
+                          onPreview={(option) => previewAudio("voice", option)}
+                          onOpenLibrary={() => setVoiceLibraryOpen(true)}
+                        />
+                      </DecisionRow>
+                      <DecisionRow
+                        label="Background music"
+                        value={music}
+                        icon={<Music2 className="size-4" />}
+                        editing={editingDecision === "music"}
+                        onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
+                        onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
+                        playing={previewingAudio === music}
+                      >
+                        <AudioChoices
+                          label="Choose and preview music"
+                          value={music}
+                          options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                          onChange={(next) => {
+                            setMusic(next);
+                            setEditingDecision(null);
+                          }}
+                          previewing={previewingAudio}
+                          onPreview={(option) => previewAudio("music", option)}
+                          music
+                        />
+                      </DecisionRow>
                     </div>
+                  </PlanSection>
+                )}
+
+                {/* 6. Brand and Evidence */}
+                <PlanSection
+                  icon={ShieldCheck}
+                  title="Brand and evidence"
+                  summary={
+                    derivedPlan.sourceConflict && !sourceConflictResolved
+                      ? "Source authority needs confirmation"
+                      : approvedEvidenceCount > 0
+                      ? `${approvedEvidenceCount} approved sources · brand kit applied`
+                      : "Concept only · approved source needed"
+                  }
+                  status={
+                    derivedPlan.sourceConflict && !sourceConflictResolved
+                      ? "Needs you"
+                      : approvedEvidenceCount > 0
+                      ? "From source"
+                      : "Review"
+                  }
+                  open={openSection === "brand"}
+                  onToggle={() => toggleSection("brand")}
+                  tone={derivedPlan.sourceConflict && !sourceConflictResolved ? "attention" : "default"}
+                >
+                  {derivedPlan.sourceConflict && !sourceConflictResolved && (
+                    <div className="mb-3 rounded-[12px] border border-[#e4c17f] bg-[var(--warning-soft)] p-3.5">
+                      <div className="flex items-start gap-3">
+                        <Info className="mt-0.5 size-5 shrink-0 text-[var(--warning)]" />
+                        <div>
+                          <div className="text-[14px] font-bold text-[#704b13]">Confirm source authority</div>
+                          <p className="mt-1 text-[13px] leading-5 text-[#765b31]">{derivedPlan.sourceConflict}</p>
+                          <button
+                            onClick={() => setSourceConflictResolved(true)}
+                            className="focus-ring mt-2 min-h-10 rounded-[9px] bg-white px-3 text-[13px] font-bold text-[#704b13] shadow-sm"
+                          >
+                            Use current {market} source as authority
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <InfoCard
+                      icon={PackageCheck}
+                      title="Brand material"
+                      body={`Primary logo, packshot, typography and fair balance for ${brandName} will be applied automatically.`}
+                    />
+                    <InfoCard
+                      icon={BookOpenCheck}
+                      title="Evidence coverage"
+                      body={
+                        approvedEvidenceCount > 0
+                          ? `Mechanism, efficacy and required safety language are linked to current ${market} sources.`
+                          : "This can become a concept storyboard, but it will not be marked evidence-ready."
+                      }
+                    />
+                  </div>
+                  <button
+                    onClick={() => setSourceManagerOpen(true)}
+                    className="focus-ring mt-3 flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)] cursor-pointer"
+                  >
+                    <Plus className="size-4" /> Add or remove sources
+                  </button>
+                </PlanSection>
+
+                {/* 7. Story Structure */}
+                <PlanSection
+                  icon={LayoutList}
+                  title="Story structure"
+                  summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : "sections"}`}
+                  status={derivedPlan.followsSuppliedScript ? "From script" : "Recommended"}
+                  open={openSection === "story"}
+                  onToggle={() => toggleSection("story")}
+                >
+                  <StructureChoices
+                    value={storyStructure}
+                    onChange={setStoryStructure}
+                    options={
+                      assetType === "video"
+                        ? ["Product → Proof", "Problem → Solution", "Mechanism → Evidence"]
+                        : profile.treatments.map((item) => item.label)
+                    }
+                  />
+                </PlanSection>
+
+                {/* Sticky Confirmation CTA at the bottom of the Left Stage */}
+                <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#f8faf8] via-[#f8faf8] to-transparent shrink-0 mt-auto">
+                  <div className="squircle-card border border-[var(--line)] bg-white p-4 shadow-md rounded-[18px] flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="size-4 text-emerald-600" />
+                        <span className="text-[13.5px] font-bold text-[var(--ink)]">Ready to generate scenes</span>
+                      </div>
+                      <p className="text-[11.5px] text-[var(--ink-muted)] mt-0.5">
+                        Grounded against 214 approved claims · Nothing is finalized until you review in Studio.
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={handleConfirmPlan}
+                      disabled={isGenerating}
+                      size="lg"
+                      className="h-11 px-6 rounded-[12px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer shrink-0"
+                    >
+                      <span>Confirm Plan &amp; Build Scenes</span>
+                      <ArrowRight className="size-4 ml-1.5" />
+                    </Button>
                   </div>
                 </div>
-              )}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <InfoCard
-                  icon={PackageCheck}
-                  title="Brand material"
-                  body={`Primary logo, packshot, typography and fair balance for ${brandName} will be applied automatically.`}
-                />
-                <InfoCard
-                  icon={BookOpenCheck}
-                  title="Evidence coverage"
-                  body={
-                    approvedEvidenceCount > 0
-                      ? `Mechanism, efficacy and required safety language are linked to current ${market} sources.`
-                      : "This can become a concept storyboard, but it will not be marked evidence-ready."
-                  }
-                />
               </div>
-              <button
-                onClick={() => setSourceManagerOpen(true)}
-                className="focus-ring mt-3 flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)] cursor-pointer"
-              >
-                <Plus className="size-4" /> Add or remove sources
-              </button>
-            </PlanSection>
-
-            {/* 7. Story Structure */}
-            <PlanSection
-              icon={LayoutList}
-              title="Story structure"
-              summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : "sections"}`}
-              status={derivedPlan.followsSuppliedScript ? "From script" : "Recommended"}
-              open={openSection === "story"}
-              onToggle={() => toggleSection("story")}
-            >
-              <StructureChoices
-                value={storyStructure}
-                onChange={setStoryStructure}
-                options={
-                  assetType === "video"
-                    ? ["Product → Proof", "Problem → Solution", "Mechanism → Evidence"]
-                    : profile.treatments.map((item) => item.label)
-                }
-              />
-            </PlanSection>
-          </div>
-
-          {/* Sticky Confirmation CTA at the bottom of the Left Stage */}
-          <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#f8faf8] via-[#f8faf8] to-transparent shrink-0 mt-auto">
-            <div className="squircle-card border border-[var(--line)] bg-white p-4 shadow-md rounded-[18px] flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-emerald-600" />
-                  <span className="text-[13.5px] font-bold text-[var(--ink)]">Ready to generate scenes</span>
-                </div>
-                <p className="text-[11.5px] text-[var(--ink-muted)] mt-0.5">
-                  Grounded against 214 approved claims · Nothing is finalized until you review in Studio.
-                </p>
-              </div>
-
-              <Button
-                onClick={handleConfirmPlan}
-                disabled={isGenerating}
-                size="lg"
-                className="h-11 px-6 rounded-[12px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer shrink-0"
-              >
-                <span>Confirm Plan &amp; Build Scenes</span>
-                <ArrowRight className="size-4 ml-1.5" />
-              </Button>
-            </div>
-          </div>
+            </>
+          )}
         </section>
 
         {/* ── RIGHT PANEL (1/3 width = 410px): Interactive AI Planning Director Chat Assistant ── */}
@@ -1217,165 +1261,133 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
           </div>
 
-          {isGenerating ? (
-            /* ── Loading State upon confirming plan ── */
-            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
-              <div className="size-16 rounded-2xl bg-[var(--tint)] border border-[var(--tint-line)] flex items-center justify-center mb-5 shadow-sm">
-                <Sparkles className="size-8 text-[var(--brand)] animate-pulse" />
-              </div>
-              <h3 className="text-[18px] font-extrabold text-[var(--ink)] tracking-tight">
-                Generating Storyboard Scenes...
-              </h3>
-              <p className="text-[12.5px] text-[var(--ink-muted)] mt-1.5 max-w-[340px]">
-                Structuring clinical narrative, scene narration, and multi-layer visual grounding against 214 approved claims.
-              </p>
-
-              <div className="mt-6 w-full max-w-[320px] space-y-2 text-left text-[12px]">
-                <div className={cn("flex items-center gap-2.5 p-2.5 rounded-[10px] border transition", generationStep >= 1 ? "bg-white border-black/10 text-[var(--ink)]" : "opacity-40")}>
-                  <Check className={cn("size-4 shrink-0", generationStep >= 1 ? "text-[var(--ok)]" : "text-black/30")} />
-                  <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
-                </div>
-                <div className={cn("flex items-center gap-2.5 p-2.5 rounded-[10px] border transition", generationStep >= 2 ? "bg-white border-black/10 text-[var(--ink)]" : "opacity-40")}>
-                  <Check className={cn("size-4 shrink-0", generationStep >= 2 ? "text-[var(--ok)]" : "text-black/30")} />
-                  <span className="font-semibold">Synthesized 5-scene clinical narrative</span>
-                </div>
-                <div className={cn("flex items-center gap-2.5 p-2.5 rounded-[10px] border transition", generationStep >= 3 ? "bg-white border-black/10 text-[var(--ink)]" : "opacity-40")}>
-                  <Check className={cn("size-4 shrink-0", generationStep >= 3 ? "text-[var(--ok)]" : "text-black/30")} />
-                  <span className="font-semibold">Linking citations to FDA label §5.1</span>
-                </div>
+          {/* Chat Top Online Banner */}
+          <div className="px-3.5 pt-3 shrink-0">
+            <div className="rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-2.5">
+              <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--brand-deep)]">
+                <Sparkles className="size-3.5 text-[var(--brand)]" />
+                <span>Direct with SwishX</span>
+                <span className="ml-auto rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-[9px] font-bold">
+                  {isGenerating ? "Synthesizing..." : "Online"}
+                </span>
               </div>
             </div>
-          ) : (
-            /* ── Normal Interactive Chat State ── */
-            <>
-              {/* Chat Top Online Banner */}
-              <div className="px-3.5 pt-3 shrink-0">
-                <div className="rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-2.5">
-                  <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--brand-deep)]">
-                    <Sparkles className="size-3.5 text-[var(--brand)]" />
-                    <span>Direct with SwishX</span>
-                    <span className="ml-auto rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-[9px] font-bold">
-                      Online
-                    </span>
+          </div>
+
+          {/* Chat Messages Thread */}
+          <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
+            {chatMessages.map((msg, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "flex gap-2.5 max-w-full",
+                  msg.role === "user" ? "ml-auto justify-end" : "mr-auto"
+                )}
+              >
+                {msg.role === "swishx" && (
+                  <div className="size-7 rounded-full bg-[var(--brand)] text-white grid place-items-center font-bold text-[10px] shrink-0 mt-0.5 shadow-2xs">
+                    SX
                   </div>
+                )}
+                <div
+                  className={cn(
+                    "rounded-[15px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-2xs max-w-[85%]",
+                    msg.role === "user"
+                      ? "bg-[var(--brand)] text-white font-medium"
+                      : "bg-white border border-[var(--line)] text-[var(--ink)]"
+                  )}
+                >
+                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  {msg.role === "swishx" && index === 1 && !isGenerating && (
+                    <div className="mt-2.5 pt-2 border-t border-black/[0.06] flex flex-wrap gap-1.5">
+                      {[
+                        "Switch to 9:16 Portrait",
+                        "Elevate MoA in Scene 2",
+                        "Add Dr. Maya Presenter",
+                        "Shorten to 45 seconds",
+                      ].map((chip) => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => handleSendChatMessage(chip)}
+                          className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] hover:bg-[#ffe5dd] border border-[var(--tint-line)] px-2 py-0.5 rounded-full transition cursor-pointer"
+                        >
+                          {chip}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
 
-              {/* Chat Messages Thread */}
-              <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
-                {chatMessages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      "flex gap-2.5 max-w-full",
-                      msg.role === "user" ? "ml-auto justify-end" : "mr-auto"
-                    )}
-                  >
-                    {msg.role === "swishx" && (
-                      <div className="size-7 rounded-full bg-[var(--brand)] text-white grid place-items-center font-bold text-[10px] shrink-0 mt-0.5 shadow-2xs">
-                        SX
-                      </div>
-                    )}
-                    <div
-                      className={cn(
-                        "rounded-[15px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-2xs max-w-[85%]",
-                        msg.role === "user"
-                          ? "bg-[var(--brand)] text-white font-medium"
-                          : "bg-white border border-[var(--line)] text-[var(--ink)]"
-                      )}
-                    >
-                      <p className="whitespace-pre-wrap">{msg.text}</p>
-                      {msg.role === "swishx" && index === 1 && (
-                        <div className="mt-2.5 pt-2 border-t border-black/[0.06] flex flex-wrap gap-1.5">
-                          {[
-                            "Switch to 9:16 Portrait",
-                            "Elevate MoA in Scene 2",
-                            "Add Dr. Maya Presenter",
-                            "Shorten to 45 seconds",
-                          ].map((chip) => (
-                            <button
-                              key={chip}
-                              type="button"
-                              onClick={() => handleSendChatMessage(chip)}
-                              className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] hover:bg-[#ffe5dd] border border-[var(--tint-line)] px-2 py-0.5 rounded-full transition cursor-pointer"
-                            >
-                              {chip}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Bottom Chat Input Bar */}
-              <div className="p-3 border-t border-black/[0.06] bg-white shrink-0">
+          {/* Bottom Chat Input Bar */}
+          <div className="p-3 border-t border-black/[0.06] bg-white shrink-0">
+            <div className="relative">
+              <div className="flex items-center gap-1.5 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-2.5 py-1.5 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-xs transition">
                 <div className="relative">
-                  <div className="flex items-center gap-1.5 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-2.5 py-1.5 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-xs transition">
-                    <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setChatContextOpen(!chatContextOpen)}
+                    className="grid size-6 place-items-center rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5 transition cursor-pointer"
+                    title="Add context"
+                  >
+                    <Plus className="size-3.5" />
+                  </button>
+
+                  {chatContextOpen && (
+                    <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-black/10 bg-white p-1 shadow-lg z-20 space-y-0.5">
                       <button
                         type="button"
-                        onClick={() => setChatContextOpen(!chatContextOpen)}
-                        className="grid size-6 place-items-center rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5 transition cursor-pointer"
-                        title="Add context"
+                        onClick={() => {
+                          setChatContextOpen(false);
+                          handleSendChatMessage("Attach trial citations from CLARITY-CV study.");
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left cursor-pointer"
                       >
-                        <Plus className="size-3.5" />
+                        <FileCheck2 className="size-3 text-[var(--brand)]" />
+                        Attach trial citations
                       </button>
-
-                      {chatContextOpen && (
-                        <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-black/10 bg-white p-1 shadow-lg z-20 space-y-0.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setChatContextOpen(false);
-                              handleSendChatMessage("Attach trial citations from CLARITY-CV study.");
-                            }}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left"
-                          >
-                            <FileCheck2 className="size-3 text-[var(--brand)]" />
-                            Attach trial citations
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setChatContextOpen(false);
-                              handleSendChatMessage("Adjust narrative tone to be more clinical and objective.");
-                            }}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left"
-                          >
-                            <Target className="size-3 text-[var(--brand)]" />
-                            Specify clinical tone
-                          </button>
-                        </div>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setChatContextOpen(false);
+                          handleSendChatMessage("Adjust narrative tone to be more clinical and objective.");
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left cursor-pointer"
+                      >
+                        <Target className="size-3 text-[var(--brand)]" />
+                        Specify clinical tone
+                      </button>
                     </div>
-
-                    <input
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSendChatMessage();
-                      }}
-                      placeholder="Ask or request changes..."
-                      className="flex-1 bg-transparent text-[12.5px] outline-none text-[var(--ink)] placeholder:text-[var(--ink-4)]"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={() => handleSendChatMessage()}
-                      disabled={!chatInput.trim()}
-                      className="grid size-6 place-items-center rounded-lg bg-[var(--brand)] text-white disabled:opacity-30 hover:bg-[var(--brand-deep)] transition cursor-pointer disabled:cursor-not-allowed"
-                    >
-                      <Send className="size-3" />
-                    </button>
-                  </div>
+                  )}
                 </div>
+
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSendChatMessage();
+                  }}
+                  disabled={isGenerating}
+                  placeholder={isGenerating ? "Generating scenes..." : "Ask or request changes..."}
+                  className="flex-1 bg-transparent text-[12.5px] outline-none text-[var(--ink)] placeholder:text-[var(--ink-4)] disabled:opacity-50"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => handleSendChatMessage()}
+                  disabled={!chatInput.trim() || isGenerating}
+                  className="grid size-6 place-items-center rounded-lg bg-[var(--brand)] text-white disabled:opacity-30 hover:bg-[var(--brand-deep)] transition cursor-pointer disabled:cursor-not-allowed"
+                >
+                  <Send className="size-3" />
+                </button>
               </div>
-            </>
-          )}
+            </div>
+          </div>
         </aside>
       </div>
 

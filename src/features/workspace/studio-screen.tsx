@@ -127,9 +127,11 @@ export function StudioScreen() {
   const [sceneList, setSceneList] = useState(scenes);
   const [draggedSceneId, setDraggedSceneId] = useState<string | null>(null);
 
-  // Chat message thread (persists across both modes) - empty by default so suggested prompts show initially
+  // Chat message thread from workspace store (continuous across Brief, Plan, and Studio)
   const [directorInput, setDirectorInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<Array<{ role: "user" | "swishx"; text: string }>>([]);
+  const chatMessages = useWorkspaceStore((s) => s.chatMessages);
+  const setChatMessages = useWorkspaceStore((s) => s.setChatMessages);
+  const addChatMessage = useWorkspaceStore((s) => s.addChatMessage);
 
   // Editor mode multi-layer timeline accordion (Default to CLOSED)
   const [timelineOpen, setTimelineOpen] = useState(false);
@@ -304,9 +306,7 @@ export function StudioScreen() {
     setShowTimePicker(false);
     setIsSelectingRegion(false);
     setShowContextPicker(false);
-    setShowSceneSelectModal(false);
-
-    setChatMessages((prev) => [...prev, { role: "user", text: fullMsg }]);
+    addChatMessage({ role: "user", text: fullMsg });
     setTimeout(() => {
       let replyText = `Applied instruction across ${selectedSceneContextIds.length > 1 ? `${selectedSceneContextIds.length} scenes` : `Scene ${selectedScene.number}`} and verified all 6 source claims.`;
       if (hadRegion) {
@@ -314,13 +314,10 @@ export function StudioScreen() {
       } else if (hadTime) {
         replyText = `Trimmed and paced Scene ${selectedScene.number} between ${timeStart}s – ${timeEnd}s. Audio narration and visual transitions synchronised.`;
       }
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: "swishx",
-          text: replyText,
-        },
-      ]);
+      addChatMessage({
+        role: "swishx",
+        text: replyText,
+      });
     }, 600);
   };
 
@@ -1245,15 +1242,12 @@ export function StudioScreen() {
                             type="button"
                             onClick={() => {
                               setDirectorInput("");
-                              setChatMessages((prev) => [...prev, { role: "user", text: suggestion }]);
+                              addChatMessage({ role: "user", text: suggestion });
                               setTimeout(() => {
-                                setChatMessages((prev) => [
-                                  ...prev,
-                                  {
-                                    role: "swishx",
-                                    text: `Applied "${suggestion}" across Scene ${selectedScene.number} and verified all 6 source claims.`,
-                                  },
-                                ]);
+                                addChatMessage({
+                                  role: "swishx",
+                                  text: `Applied "${suggestion}" across Scene ${selectedScene.number} and verified all 6 source claims.`,
+                                });
                               }, 600);
                             }}
                             className="w-full flex items-center justify-between text-left rounded-xl border border-black/[0.06] bg-[#fafbf9] px-3.5 py-2.5 text-[11.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] transition-all cursor-pointer group"

@@ -31,6 +31,7 @@ interface WorkspaceState {
   directionId: string;
   selectedSceneId: string;
   inspectorTab: InspectorTab;
+  chatMessages: Array<{ role: "user" | "swishx"; text: string }>;
   // Auth & onboarding
   authView: AuthView;
   onboardingBeat: OnboardingBeat;
@@ -39,6 +40,8 @@ interface WorkspaceState {
   teamDockOpen: boolean;
   // Setters
   setView: (view: AppView) => void;
+  setChatMessages: (messages: Array<{ role: "user" | "swishx"; text: string }>) => void;
+  addChatMessage: (message: { role: "user" | "swishx"; text: string }) => void;
   setCreationMode: (mode: CreationMode) => void;
   setSourceType: (type: SourceSelectionType) => void;
   setSourcePayload: (payload: { dossierId?: string; url?: string; text?: string }) => void;
@@ -96,6 +99,7 @@ const initialState = {
   directionId: creativeDirections[0].id,
   selectedSceneId: "scene-3",
   inspectorTab: "edit" as InspectorTab,
+  chatMessages: [] as Array<{ role: "user" | "swishx"; text: string }>,
   authView: "signin" as AuthView,
   onboardingBeat: 1 as OnboardingBeat,
   isFirstRun: true,
@@ -105,6 +109,8 @@ const initialState = {
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   ...initialState,
+  setChatMessages: (chatMessages) => set({ chatMessages }),
+  addChatMessage: (message) => set((state) => ({ chatMessages: [...state.chatMessages, message] })),
   setView: (view) => {
     const documentWithTransitions = typeof document === "undefined" ? null : document as Document & { startViewTransition?: (update: () => void) => { ready?: Promise<unknown> } };
     const reduceMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;

@@ -63,6 +63,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setSelectedSourceIds,
     setDemoScenarioId,
     setView,
+    setChatMessages,
   } = useWorkspaceStore();
 
   const [sourceLibraryOpen, setSourceLibraryOpen] = useState(false);
@@ -107,6 +108,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setPresentationMode(plan.presentationMode);
     setVoice(plan.voice);
     setMusic(plan.music);
+    const bName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
+    setChatMessages([
+      {
+        role: "user",
+        text: brief || `Create a concise ${bName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`,
+      },
+      {
+        role: "swishx",
+        text: `I've structured a 5-scene video plan grounded in the **${bName}** dossier and approved claims. You can review the parameters on the left canvas, or chat with me to make any adjustments.`,
+      },
+    ]);
     setView("directions");
     setVideoSubStage("directions");
   };
