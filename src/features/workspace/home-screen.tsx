@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Video, Image as ImageIcon, User2 } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
+import { cn } from "@/lib/cn";
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 interface TileOption {
@@ -955,36 +956,46 @@ export function HomeScreen() {
       {/* Video Playback Lightbox Modal */}
       {playingVideoItem && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/65 p-4 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setPlayingVideoItem(null)}
           role="dialog"
           aria-modal="true"
         >
           <div
-            className="w-full max-w-[760px] overflow-hidden rounded-[24px] border border-white/40 bg-[#0d1017] shadow-2xl text-white select-none"
+            className={cn(
+              "w-full overflow-hidden rounded-[24px] border border-white/20 bg-[#0d1017] shadow-2xl text-white select-none transition-all flex flex-col max-h-[90vh]",
+              playingVideoItem.aspect === "9/16" ? "max-w-[380px]" : "max-w-[820px]"
+            )}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/30">
-              <div className="flex items-center gap-2.5">
-                <span className="rounded-md bg-[var(--brand)] px-2 py-0.5 text-[10px] font-extrabold uppercase text-white">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/40 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="rounded-md bg-[var(--brand)] px-2 py-0.5 text-[10px] font-extrabold uppercase text-white shrink-0">
                   {playingVideoItem.tag}
                 </span>
-                <span className="text-[14px] font-bold text-white truncate max-w-[420px]">
+                <span className="text-[13.5px] font-bold text-white truncate">
                   {playingVideoItem.title}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setPlayingVideoItem(null)}
-                className="grid size-8 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer"
+                className="grid size-8 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer shrink-0 ml-2"
               >
                 ✕
               </button>
             </div>
 
-            {/* Video Player */}
-            <div className="relative bg-black aspect-video flex items-center justify-center overflow-hidden">
+            {/* Video Player (Aspect-Aware Sizing) */}
+            <div
+              className={cn(
+                "relative bg-black flex items-center justify-center overflow-hidden min-h-0 flex-1",
+                playingVideoItem.aspect === "9/16"
+                  ? "aspect-[9/16] max-h-[62vh]"
+                  : "aspect-video max-h-[65vh]"
+              )}
+            >
               {playingVideoItem.videoSrc ? (
                 <video
                   src={playingVideoItem.videoSrc}
@@ -1002,10 +1013,10 @@ export function HomeScreen() {
             </div>
 
             {/* Footer Controls / Details */}
-            <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-t border-white/10 text-[12px]">
-              <div>
-                <p className="font-semibold text-white/90">{playingVideoItem.subtitle}</p>
-                <p className="text-[11px] text-white/50">Verified Medical Diction · {playingVideoItem.meta}</p>
+            <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-t border-white/10 text-[12px] shrink-0">
+              <div className="min-w-0 pr-3">
+                <p className="font-semibold text-white/90 truncate">{playingVideoItem.subtitle}</p>
+                <p className="text-[11px] text-white/50">{playingVideoItem.meta} · Verified Prescribing Info</p>
               </div>
               <button
                 type="button"
@@ -1013,7 +1024,7 @@ export function HomeScreen() {
                   setPlayingVideoItem(null);
                   router.push("/create");
                 }}
-                className="rounded-xl bg-[var(--brand)] px-4 py-2 text-[12px] font-bold text-white shadow-lg hover:bg-[var(--brand-deep)] transition cursor-pointer"
+                className="rounded-xl bg-[var(--brand)] px-4 py-2 text-[12px] font-bold text-white shadow-lg hover:bg-[var(--brand-deep)] transition cursor-pointer shrink-0"
               >
                 Create with this style →
               </button>

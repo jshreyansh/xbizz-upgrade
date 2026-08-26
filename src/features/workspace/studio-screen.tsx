@@ -4,6 +4,7 @@ import { Player } from "@remotion/player";
 import {
   AlertTriangle,
   ArrowLeft,
+  AtSign,
   BookOpenCheck,
   Check,
   CheckCircle2,
@@ -16,6 +17,8 @@ import {
   FileCheck2,
   FileText,
   Film,
+  FolderPlus,
+  Globe,
   History,
   Image as ImageIcon,
   Layers,
@@ -26,6 +29,7 @@ import {
   MoreHorizontal,
   Music2,
   Package,
+  Paperclip,
   Pencil,
   Play,
   Plus,
@@ -47,7 +51,7 @@ import {
   WandSparkles,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { scenes } from "@/features/workspace/mock-data";
@@ -105,6 +109,12 @@ export function StudioScreen() {
   const [timeRange, setTimeRange] = useState<{ start: number; end: number } | null>(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
+  // ── Chat Input Attached Context (Scenes, Media & Mentions) ──
+  const [selectedSceneContextIds, setSelectedSceneContextIds] = useState<string[]>(() => [scenes[0]?.id || "scene-1"]);
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ id: string; name: string; type: "image" | "file"; size?: string }>>([]);
+  const [showContextPicker, setShowContextPicker] = useState(false);
+  const [showSceneSelectModal, setShowSceneSelectModal] = useState(false);
+
   // Local scenes list allowing dynamic addition and reordering
   const [sceneList, setSceneList] = useState(scenes);
   const [draggedSceneId, setDraggedSceneId] = useState<string | null>(null);
@@ -121,6 +131,13 @@ export function StudioScreen() {
     () => sceneList.find((scene) => scene.id === selectedSceneId) ?? sceneList[0] ?? scenes[0],
     [sceneList, selectedSceneId]
   );
+
+  // Automatically ensure the currently clicked scene is included in the context selection
+  useEffect(() => {
+    if (selectedSceneId && !selectedSceneContextIds.includes(selectedSceneId)) {
+      setSelectedSceneContextIds([selectedSceneId]);
+    }
+  }, [selectedSceneId]);
 
   const isAvatar = creationMode === "magic-avatar";
   const isEditor = studioMode === "editor";
@@ -235,9 +252,19 @@ export function StudioScreen() {
   };
 
   const handleSendChat = () => {
-    if (!directorInput.trim() && !selectedBox && !timeRange) return;
+    if (!directorInput.trim() && !selectedBox && !timeRange && attachedFiles.length === 0 && selectedSceneContextIds.length === 0) return;
     
     let contextualPrefix = "";
+    if (selectedSceneContextIds.length > 0) {
+      const sceneNums = sceneList
+        .filter((s) => selectedSceneContextIds.includes(s.id))
+        .map((s) => `Scene ${s.number}`)
+        .join(", ");
+      contextualPrefix += `[${sceneNums}] `;
+    }
+    if (attachedFiles.length > 0) {
+      contextualPrefix += `[Attached: ${attachedFiles.map((f) => f.name).join(", ")}] `;
+    }
     if (selectedBox) {
       contextualPrefix += `[Region Target: ${Math.round(selectedBox.x)}%,${Math.round(selectedBox.y)}% (${Math.round(selectedBox.width)}%×${Math.round(selectedBox.height)}%)] `;
     }
@@ -245,7 +272,7 @@ export function StudioScreen() {
       contextualPrefix += `[Time Range: ${timeRange.start}s – ${timeRange.end}s] `;
     }
 
-    const rawInput = directorInput.trim() || "Adjust highlighted video region";
+    const rawInput = directorInput.trim() || (attachedFiles.length > 0 ? "Analyze attached media & apply edits" : "Apply directive to selected scenes");
     const fullMsg = contextualPrefix ? `${contextualPrefix}${rawInput}` : rawInput;
 
     const hadRegion = Boolean(selectedBox);
@@ -258,10 +285,12 @@ export function StudioScreen() {
     setTimeRange(null);
     setShowTimePicker(false);
     setIsSelectingRegion(false);
+    setShowContextPicker(false);
+    setShowSceneSelectModal(false);
 
     setChatMessages((prev) => [...prev, { role: "user", text: fullMsg }]);
     setTimeout(() => {
-      let replyText = `Applied "${rawInput}" across Scene ${selectedScene.number} and verified all label claims.`;
+      let replyText = `Applied instruction across ${selectedSceneContextIds.length > 1 ? `${selectedSceneContextIds.length} scenes` : `Scene ${selectedScene.number}`} and verified all 6 source claims.`;
       if (hadRegion) {
         replyText = `Target area re-composited in Scene ${selectedScene.number} according to your spatial selection with balanced lighting and label claim grounding.`;
       } else if (hadTime) {
@@ -1192,10 +1221,59 @@ export function StudioScreen() {
                 </div>
 
                 {/* Input Field & Contextual Widgets (Shrink-0 anchored at bottom) */}
-                <div className="shrink-0 pt-1 space-y-2">
-                  {/* Attached Context Badges */}
-                  {(selectedBox || timeRange) && (
-                    <div className="flex flex-wrap items-center gap-1.5 px-1">
+                <div className="shrink-0 pt-1 space-y-2 relative">
+                  {/* Attached Context Badges Row */}
+                  {(selectedSceneContextIds.length > 0 || attachedFiles.length > 0 || selectedBox || timeRange) && (
+                    <div className="flex flex-wrap items-center gap-1.5 px-0.5">
+                      {/* Attached Scene Context Chips */}
+                      {selectedSceneContextIds.map((scId) => {
+                        const sc = sceneList.find((s) => s.id === scId);
+                        if (!sc) return null;
+                        return (
+                          <span
+                            key={sc.id}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--tint)] border border-[var(--brand)]/25 px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand-deep)] shadow-2xs animate-in fade-in"
+                          >
+                            <FileText className="size-3 text-[var(--brand)] shrink-0" />
+                            <span className="truncate max-w-[130px]">Scene {sc.number}: {sc.title.split(":")[0]}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedSceneContextIds((prev) => prev.filter((id) => id !== sc.id));
+                              }}
+                              className="hover:text-rose-600 ml-0.5 cursor-pointer"
+                              title="Remove scene context"
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        );
+                      })}
+
+                      {/* Attached File / Media Badges */}
+                      {attachedFiles.map((file) => (
+                        <span
+                          key={file.id}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10.5px] font-bold text-emerald-800 shadow-2xs animate-in fade-in"
+                        >
+                          {file.type === "image" ? (
+                            <ImageIcon className="size-3 text-emerald-600 shrink-0" />
+                          ) : (
+                            <Paperclip className="size-3 text-emerald-600 shrink-0" />
+                          )}
+                          <span className="truncate max-w-[120px]">{file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setAttachedFiles((prev) => prev.filter((f) => f.id !== file.id))}
+                            className="hover:text-rose-600 ml-0.5 cursor-pointer"
+                            title="Remove file"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+
+                      {/* Selected Video Area Badge (Editor Mode) */}
                       {selectedBox && (
                         <span className="inline-flex items-center gap-1 rounded-lg bg-[var(--tint)] border border-[var(--brand)]/30 px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand-deep)] shadow-2xs">
                           <ScanLine className="size-3 text-[var(--brand)]" />
@@ -1209,6 +1287,8 @@ export function StudioScreen() {
                           </button>
                         </span>
                       )}
+
+                      {/* Time Range Badge (Editor Mode) */}
                       {timeRange && (
                         <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10.5px] font-bold text-blue-800 shadow-2xs">
                           <Timer className="size-3 text-blue-600" />
@@ -1222,6 +1302,158 @@ export function StudioScreen() {
                           </button>
                         </span>
                       )}
+                    </div>
+                  )}
+
+                  {/* Add Context Dropdown Menu (AI-Style Popover) */}
+                  {showContextPicker && (
+                    <div className="absolute bottom-[52px] left-1 z-30 w-56 rounded-2xl border border-black/[0.1] bg-[#1a1d24] text-white p-1.5 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95">
+                      <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-white/50 border-b border-white/10 mb-1">
+                        Add Context
+                      </div>
+
+                      {/* Option 1: Select Scenes / Slides */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowContextPicker(false);
+                          setShowSceneSelectModal(true);
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12px] font-medium text-white/90 hover:bg-white/10 transition cursor-pointer text-left"
+                      >
+                        <FolderPlus className="size-4 text-[var(--brand)]" />
+                        <span>Select Scenes / Slides</span>
+                      </button>
+
+                      {/* Option 2: Upload Media */}
+                      <label className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12px] font-medium text-white/90 hover:bg-white/10 transition cursor-pointer text-left">
+                        <ImageIcon className="size-4 text-emerald-400" />
+                        <span>Upload Media / Images</span>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf,.doc,.docx"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setAttachedFiles((prev) => [
+                                ...prev,
+                                {
+                                  id: `file-${Date.now()}`,
+                                  name: file.name,
+                                  type: file.type.startsWith("image") ? "image" : "file",
+                                },
+                              ]);
+                              setShowContextPicker(false);
+                            }
+                          }}
+                        />
+                      </label>
+
+                      {/* Option 3: Mention Source / Dossier */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowContextPicker(false);
+                          setDirectorInput((prev) => (prev ? `${prev} @FDA-Label` : "@FDA-Label "));
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12px] font-medium text-white/90 hover:bg-white/10 transition cursor-pointer text-left"
+                      >
+                        <AtSign className="size-4 text-sky-400" />
+                        <span>Mention Brand Dossier</span>
+                      </button>
+
+                      {/* Option 4: Clinical Actions */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowContextPicker(false);
+                          setDirectorInput((prev) => (prev ? `${prev} /evidence-check` : "/evidence-check "));
+                        }}
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12px] font-medium text-white/90 hover:bg-white/10 transition cursor-pointer text-left"
+                      >
+                        <ShieldCheck className="size-4 text-amber-400" />
+                        <span>Verify Label Claims</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Multi-Scene Selection Modal / Popover */}
+                  {showSceneSelectModal && (
+                    <div className="absolute bottom-[52px] left-0 right-0 z-30 rounded-2xl border border-black/[0.1] bg-white p-3 shadow-2xl space-y-2 animate-in fade-in zoom-in-95">
+                      <div className="flex items-center justify-between border-b border-black/[0.06] pb-2">
+                        <div className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink)]">
+                          <Layers className="size-3.5 text-[var(--brand)]" />
+                          <span>Select Target Scenes</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowSceneSelectModal(false)}
+                          className="text-[11px] text-[var(--ink-muted)] hover:text-[var(--ink)] cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+                        {sceneList.map((sc) => {
+                          const isSelected = selectedSceneContextIds.includes(sc.id);
+                          return (
+                            <div
+                              key={sc.id}
+                              onClick={() => {
+                                setSelectedSceneContextIds((prev) =>
+                                  isSelected ? prev.filter((id) => id !== sc.id) : [...prev, sc.id]
+                                );
+                              }}
+                              className={cn(
+                                "flex items-center justify-between p-2 rounded-xl text-[11.5px] cursor-pointer transition border",
+                                isSelected
+                                  ? "bg-[var(--tint)] border-[var(--brand)]/30 text-[var(--brand-deep)] font-semibold"
+                                  : "bg-[#fafbf9] border-black/[0.05] text-[var(--ink)] hover:bg-black/5"
+                              )}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div
+                                  className={cn(
+                                    "size-4 rounded-md grid place-items-center border text-white text-[9px]",
+                                    isSelected
+                                      ? "bg-[var(--brand)] border-[var(--brand)]"
+                                      : "border-black/20 bg-white"
+                                  )}
+                                >
+                                  {isSelected && <Check className="size-3 stroke-[3]" />}
+                                </div>
+                                <span className="truncate">Scene {sc.number}: {sc.title}</span>
+                              </div>
+                              <span className="text-[10px] text-[var(--ink-muted)] shrink-0 ml-1">{sc.duration}s</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-black/[0.05]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedSceneContextIds.length === sceneList.length) {
+                              setSelectedSceneContextIds([]);
+                            } else {
+                              setSelectedSceneContextIds(sceneList.map((s) => s.id));
+                            }
+                          }}
+                          className="text-[11px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+                        >
+                          {selectedSceneContextIds.length === sceneList.length ? "Deselect All" : "Select All Scenes"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowSceneSelectModal(false)}
+                          className="rounded-lg bg-[var(--brand)] px-3 py-1 text-[11px] font-bold text-white shadow-2xs hover:bg-[var(--brand-deep)] transition cursor-pointer"
+                        >
+                          Done ({selectedSceneContextIds.length})
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -1306,7 +1538,25 @@ export function StudioScreen() {
                   )}
 
                   {/* Main Input Box */}
-                  <div className="flex items-center gap-1.5 rounded-2xl border border-black/[0.12] bg-white p-1.5 pl-2.5 focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand-soft)] shadow-xs">
+                  <div className="flex items-center gap-1.5 rounded-2xl border border-black/[0.12] bg-white p-1.5 pl-2 focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand-soft)] shadow-xs">
+                    {/* Add Context (+) Button (Available in both Scenes & Editor mode) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowContextPicker(!showContextPicker);
+                        setShowSceneSelectModal(false);
+                      }}
+                      title="Add context (Scenes, Media, Mentions)"
+                      className={cn(
+                        "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer shrink-0",
+                        showContextPicker || showSceneSelectModal
+                          ? "bg-[var(--ink)] text-white shadow-xs"
+                          : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)]"
+                      )}
+                    >
+                      <Plus className="size-4" />
+                    </button>
+
                     {/* Area Selector Icon Trigger: ONLY visible in Editor Mode */}
                     {isEditor && (
                       <button
@@ -1357,6 +1607,8 @@ export function StudioScreen() {
                           ? "Instruct change for selected area..."
                           : timeRange
                           ? `Direct change for ${timeRange.start}s–${timeRange.end}s...`
+                          : selectedSceneContextIds.length > 1
+                          ? `Direct changes across ${selectedSceneContextIds.length} scenes...`
                           : "Ask or direct changes..."
                       }
                       className="flex-1 bg-transparent text-[12.5px] text-[var(--ink)] placeholder:text-[var(--ink-muted)] outline-none min-w-0 px-1"
@@ -1365,7 +1617,7 @@ export function StudioScreen() {
                     <button
                       type="button"
                       onClick={handleSendChat}
-                      disabled={!directorInput.trim() && !selectedBox && !timeRange}
+                      disabled={!directorInput.trim() && !selectedBox && !timeRange && attachedFiles.length === 0 && selectedSceneContextIds.length === 0}
                       className="grid size-8 place-items-center rounded-xl bg-[var(--brand)] text-white disabled:opacity-30 transition-all hover:bg-[var(--brand-deep)] shadow-xs cursor-pointer shrink-0"
                       title="Send instruction"
                     >
