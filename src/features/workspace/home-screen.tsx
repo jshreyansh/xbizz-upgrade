@@ -2,17 +2,18 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Video, Image as ImageIcon, Globe, ArrowRight } from "lucide-react";
+import { Video, Image as ImageIcon, Globe, ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { PERSONA } from "@/features/workspace/mock-personas";
 import { cn } from "@/lib/cn";
+import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
+import type { BrandDossier } from "@/features/dossiers/dossier-types";
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 interface TileOption {
-  icon: typeof Sparkles;
+  icon: typeof Video;
   title: string;
-  badge: string;
-  tag: string;
+  subtitle: string;
+  accent: string;
   description: string;
   href: string;
   gradient: string;
@@ -32,79 +33,78 @@ interface ShowcaseItem {
 interface ShowcaseLane {
   label: string;
   title: string;
+  subtitle: string;
   items: ShowcaseItem[];
+}
+
+interface RecentProject {
+  studio: string;
+  status: "In MLR" | "Draft" | "Approved";
+  title: string;
+  meta: string;
+  progress: number;
+  updated: string;
+  action: string;
 }
 
 /* ─── Data ───────────────────────────────────────────────────────────────────── */
 const CREATION_TILES: TileOption[] = [
   {
     icon: Video,
-    title: "Magic Video",
-    badge: "Cinema & 3D",
-    tag: "16:9 & 9:16 Reels",
-    description: "Source-backed MoA reels & clinical evidence videos, in minutes.",
+    title: "MagicVideo",
+    subtitle: "Explainer, Avatar",
+    accent: "var(--brand-deep)",
+    description: "Drug explainers and lip-synced doctor presenters, MLR-ready in minutes.",
     href: "/create",
     gradient: "linear-gradient(145deg,#6ea2ff,#3d6bff 55%,#1d3fd6)",
   },
   {
     icon: ImageIcon,
-    title: "Magic Canvas",
-    badge: "Visuals",
-    tag: "Congress & Infographics",
-    description: "Compliant leave-behinds, booth banners & journal ads.",
+    title: "MagicCanvas",
+    subtitle: "Infographics, Detail Aid",
+    accent: "var(--brand-deep)",
+    description: "Leave-behinds, journal ads and banners from your approved claims.",
     href: "#",
     gradient: "linear-gradient(145deg,#c199ff,#9b5bff 55%,#6d1fd8)",
   },
   {
     icon: Globe,
-    title: "Magic Website",
-    badge: "Web & Landing",
-    tag: "HCP & Patient Portals",
-    description: "On-label microsites and landing pages, live in hours.",
+    title: "MagicWeb",
+    subtitle: "Interactive Web for your Brand",
+    accent: "#0a8556",
+    description: "On-label microsites and HCP portals, signed off before publish.",
     href: "/create",
     gradient: "linear-gradient(145deg,#4fdb9c,#16b878 55%,#0a8556)",
   },
 ];
 
+const RECENT_PROJECTS: RecentProject[] = [
+  { studio: "MagicReel", status: "In MLR", title: "Velmora — MoA explainer", meta: "Cardiologists · US · 60s", progress: 85, updated: "Today, 09:15", action: "Open" },
+  { studio: "MagicAvatar", status: "Draft", title: "Dr. Rao — dosing update", meta: "HCP · EU · 45s", progress: 35, updated: "Yesterday", action: "Resume" },
+  { studio: "MagicCanvas", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
+  { studio: "MagicWeb", status: "Draft", title: "Nirvexa launch microsite", meta: "HCP portal · 6 sections", progress: 55, updated: "3 days ago", action: "Resume" },
+];
+
 const SHOWCASE_LANES: ShowcaseLane[] = [
   {
-    label: "Magic Video",
-    title: "Reels that move medicine forward",
+    label: "MagicVideo Samples",
+    title: "See what MagicVideo makes",
+    subtitle: "Real videos made on SwishX — two MagicReel cuts, two MagicAvatar presenters. Play one before you build.",
     items: [
       {
-        title: "Tecentriq clinical pivotal reel",
-        subtitle: "Oncologists · US · FDA",
-        meta: "1:42",
-        aspect: "9/16",
-        gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 45%,#5b7fb8)",
-        hasPlay: true,
-        tag: "MagicReel",
-        videoSrc: "/tecentriq-reel.mp4",
-      },
-      {
-        title: "Mechanism of Action (MoA) 3D",
+        title: "Mechanism of action — cardiology",
         subtitle: "Cardiologists · US · FDA",
-        meta: "0:14",
+        meta: "1:00",
         aspect: "16/9",
-        gradient: "linear-gradient(160deg,#3a1e4d,#63307a 48%,#a06bc4)",
+        gradient: "linear-gradient(160deg,#16233f,#2c4573 50%,#5b7fb8)",
         hasPlay: true,
         tag: "MagicReel",
         videoSrc: "/reel-moa.mp4",
       },
       {
-        title: "Brevanta therapeutic study",
-        subtitle: "Payers · UK · MHRA",
-        meta: "1:15",
-        aspect: "9/16",
-        gradient: "linear-gradient(160deg,#12332c,#1d5a4a 48%,#3f9c7f)",
-        hasPlay: true,
-        tag: "MagicReel",
-        videoSrc: "/Brevanta final draft-web.mp4",
-      },
-      {
-        title: "Clinical laboratory readout",
-        subtitle: "Researchers · Global",
-        meta: "0:42",
+        title: "Dosing & titration explainer",
+        subtitle: "Endocrinology · EU · EMA",
+        meta: "0:30",
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#2a1b0f,#5c3515 48%,#9e6130)",
         hasPlay: true,
@@ -112,50 +112,31 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         videoSrc: "/21617-319452308_medium.mp4",
       },
       {
-        title: "Molecular interaction dynamics",
-        subtitle: "HCPs · EU · EMA",
-        meta: "0:30",
-        aspect: "16/9",
-        gradient: "linear-gradient(160deg,#16233f,#2c4573 50%,#5b7fb8)",
-        hasPlay: true,
-        tag: "MagicReel",
-        videoSrc: "/27019-361107952_medium.mp4",
-      },
-      {
-        title: "Surgical precision & robotics",
-        subtitle: "Surgeons · US · FDA",
-        meta: "0:24",
-        aspect: "16/9",
-        gradient: "linear-gradient(160deg,#1a0a2e,#3b1a5e 48%,#6a3a9e)",
-        hasPlay: true,
-        tag: "MagicReel",
-        videoSrc: "/326638_medium.mp4",
-      },
-      {
-        title: "Cellular therapy pathway",
-        subtitle: "Immunologists · Global",
-        meta: "0:10",
+        title: "Dr. Anita Rao on first-line use",
+        subtitle: "HCP · UK · MHRA",
+        meta: "1:00",
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#0a1f18,#13382c 48%,#1d5442)",
         hasPlay: true,
-        tag: "MagicReel",
-        videoSrc: "/40781-426939561_medium.mp4",
+        tag: "MagicAvatar",
+        videoSrc: "/avatar-showcase.mp4",
       },
       {
-        title: "Diagnostic imaging review",
-        subtitle: "Radiologists · US",
-        meta: "0:20",
+        title: "Patient counselling in clinic",
+        subtitle: "Patients · Global",
+        meta: "0:30",
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#1f1329,#381d4a 48%,#572c73)",
         hasPlay: true,
-        tag: "MagicReel",
-        videoSrc: "/4360-178617258_medium.mp4",
+        tag: "MagicAvatar",
+        videoSrc: "/46621-448480587_medium.mp4",
       },
     ],
   },
   {
-    label: "Magic Website",
-    title: "Microsites your field team can ship same-day",
+    label: "MagicWeb Samples",
+    title: "See what MagicWeb makes",
+    subtitle: "Microsites and HCP portals your field team can ship the same day.",
     items: [
       {
         title: "Velmora HCP portal",
@@ -164,7 +145,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 48%,#5b7fb8)",
         hasPlay: false,
-        tag: "MagicWebsite",
+        tag: "MagicWeb",
       },
       {
         title: "Onkavia patient landing page",
@@ -173,7 +154,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#3a1e4d,#63307a 48%,#a06bc4)",
         hasPlay: false,
-        tag: "MagicWebsite",
+        tag: "MagicWeb",
       },
       {
         title: "Nirvexa congress microsite",
@@ -182,7 +163,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#12332c,#1d5a4a 48%,#3f9c7f)",
         hasPlay: false,
-        tag: "MagicWebsite",
+        tag: "MagicWeb",
       },
       {
         title: "Brevanta sample rep site",
@@ -196,14 +177,15 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
     ],
   },
   {
-    label: "Magic Canvas",
-    title: "Layouts your reps actually use",
+    label: "MagicCanvas Samples",
+    title: "See what MagicCanvas makes",
+    subtitle: "Layouts your reps actually use — journal ads, booth panels, and payer infographics.",
     items: [
       {
         title: "Velmora journal ad",
         subtitle: "FDA · Full-page · A4",
         meta: "A4",
-        aspect: "3/4",
+        aspect: "16/9",
         gradient: "linear-gradient(150deg,#16233f,#2c4573 50%,#5b7fb8)",
         hasPlay: true,
         tag: "MagicCanvas",
@@ -223,7 +205,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         title: "Nirvexa payer infographic",
         subtitle: "HEOR summary · UK",
         meta: "1:1",
-        aspect: "1/1",
+        aspect: "16/9",
         gradient: "linear-gradient(150deg,#0f2e28,#1b5546 50%,#3d9880)",
         hasPlay: true,
         tag: "MagicCanvas",
@@ -248,8 +230,8 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 14,
-        padding: "36px 28px 30px",
+        gap: 10,
+        padding: "34px 28px 28px",
         borderRadius: "var(--r-xl)",
         background: hovered ? "#fdfefe" : "#fff",
         border: hovered ? "1px solid var(--hair-2)" : "1px solid var(--hair)",
@@ -273,6 +255,7 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
           height: 60,
           borderRadius: 18,
           flexShrink: 0,
+          marginBottom: 4,
           background: tile.gradient,
           color: "#fff",
           boxShadow: "0 8px 16px -8px rgba(16,24,40,.28), inset 0 1px 0 rgba(255,255,255,.45), inset 0 -8px 14px -6px rgba(0,0,0,.14)",
@@ -293,24 +276,6 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
         <Icon size={26} strokeWidth={1.75} style={{ position: "relative" }} />
       </span>
 
-      {/* Badge */}
-      <span
-        style={{
-          position: "relative",
-          fontSize: 9.5,
-          fontWeight: 800,
-          letterSpacing: ".04em",
-          textTransform: "uppercase",
-          color: "var(--brand-deep)",
-          background: "var(--tint)",
-          border: "1px solid var(--tint-line)",
-          padding: "2px 8px",
-          borderRadius: 99,
-        }}
-      >
-        {tile.badge}
-      </span>
-
       {/* Title */}
       <h3
         style={{
@@ -326,13 +291,25 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
         {tile.title}
       </h3>
 
+      {/* Colored subtitle */}
+      <span
+        style={{
+          position: "relative",
+          fontSize: 12.5,
+          fontWeight: 750,
+          color: tile.accent,
+        }}
+      >
+        {tile.subtitle}
+      </span>
+
       {/* Description */}
       <p
         style={{
           position: "relative",
           fontSize: 13.5,
           color: "var(--ink-3)",
-          margin: 0,
+          margin: "4px 0 0",
           lineHeight: 1.55,
           fontWeight: 450,
           maxWidth: "30ch",
@@ -367,22 +344,61 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
   );
 }
 
+/* ─── Recent project card ────────────────────────────────────────────────────── */
+const STATUS_STYLE: Record<RecentProject["status"], { bg: string; color: string; bar: string }> = {
+  "In MLR": { bg: "var(--tint)", color: "var(--brand-deep)", bar: "var(--brand)" },
+  Draft: { bg: "var(--surface-subtle)", color: "var(--ink-3)", bar: "var(--brand)" },
+  Approved: { bg: "var(--ok-bg)", color: "var(--ok)", bar: "var(--ok)" },
+};
+
+function RecentProjectCard({ project }: { project: RecentProject }) {
+  const style = STATUS_STYLE[project.status];
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid var(--hair)",
+        borderRadius: "var(--r-l)",
+        padding: "16px 16px 14px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        transition: "all .2s var(--e)",
+      }}
+      className="hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-16px_rgba(16,24,40,.2)]"
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-4)" }}>
+          {project.studio}
+        </span>
+        <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: ".03em", textTransform: "uppercase", color: style.color, background: style.bg, padding: "2px 8px", borderRadius: 99 }}>
+          {project.status}
+        </span>
+      </div>
+
+      <div>
+        <b style={{ display: "block", fontSize: 14.5, fontWeight: 750, color: "var(--ink)", letterSpacing: "-.2px", marginBottom: 3 }}>
+          {project.title}
+        </b>
+        <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{project.meta}</span>
+      </div>
+
+      <div style={{ height: 4, borderRadius: 99, background: "var(--surface-subtle)", overflow: "hidden" }}>
+        <span style={{ display: "block", height: "100%", width: `${project.progress}%`, background: style.bar, borderRadius: 99 }} />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>{project.updated}</span>
+        <span style={{ fontSize: 12, fontWeight: 750, color: "var(--brand)" }}>{project.action}</span>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Showcase Item Card ─────────────────────────────────────────────────────── */
 function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: ShowcaseItem) => void }) {
   const [hovered, setHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Calculate width from aspect ratio
-  const aspectW =
-    item.aspect === "9/16"
-      ? 125
-      : item.aspect === "16/9"
-      ? 260
-      : item.aspect === "1/1"
-      ? 140
-      : item.aspect === "3/4"
-      ? 135
-      : 180;
 
   useEffect(() => {
     if (hovered && item.videoSrc && videoRef.current) {
@@ -399,8 +415,8 @@ function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: Sho
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        width: aspectW,
-        height: 200,
+        width: 268,
+        height: 210,
         borderRadius: "var(--r-l)",
         position: "relative",
         flexShrink: 0,
@@ -440,23 +456,28 @@ function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: Sho
         }}
       />
 
-      {/* Tag pill */}
+      {/* Sample pill, top-left */}
       <div
         style={{
           position: "absolute",
           top: 10,
           left: 10,
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
           fontSize: 9.5,
           fontWeight: 800,
-          background: "rgba(0,0,0,.58)",
-          color: "rgba(255,255,255,.95)",
-          padding: "3px 8px",
+          letterSpacing: ".04em",
+          textTransform: "uppercase",
+          background: "rgba(10,13,20,.68)",
+          color: "#fff",
+          padding: "3px 8px 3px 6px",
           borderRadius: 6,
           backdropFilter: "blur(6px)",
-          letterSpacing: ".03em",
         }}
       >
-        {item.tag}
+        <Play size={8} fill="#fff" color="#fff" />
+        Sample
       </div>
 
       {/* Meta (duration / format) */}
@@ -504,11 +525,24 @@ function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: Sho
       )}
 
       {/* Bottom meta */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 11px", zIndex: 10 }}>
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "10px 12px", zIndex: 10 }}>
+        <span
+          style={{
+            display: "block",
+            fontSize: 9.5,
+            fontWeight: 800,
+            letterSpacing: ".04em",
+            textTransform: "uppercase",
+            color: "#ff9a5e",
+            marginBottom: 2,
+          }}
+        >
+          {item.tag}
+        </span>
         <b
           style={{
             display: "block",
-            fontSize: 12.5,
+            fontSize: 13,
             color: "#fff",
             fontWeight: 750,
             letterSpacing: "-.2px",
@@ -538,9 +572,6 @@ function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: Sho
   );
 }
 
-import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
-import type { BrandDossier } from "@/features/dossiers/dossier-types";
-
 /* ─── Horizontal lane row ────────────────────────────────────────────────────── */
 function ShowcaseLaneRow({
   lane,
@@ -558,12 +589,12 @@ function ShowcaseLaneRow({
     scrollRef.current?.scrollBy({ left: dir === "left" ? -340 : 340, behavior: "smooth" });
   }
 
-  const isDossierLane = lane.label === "Brand Dossiers";
+  const isDossierLane = (lane.label as string) === "Brand Dossiers";
 
   return (
-    <div style={{ marginBottom: isLast ? 0 : 28 }}>
+    <div style={{ marginBottom: isLast ? 0 : 32 }}>
       {/* Lane header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14, gap: 16 }}>
         <div>
           <span
             style={{
@@ -573,59 +604,58 @@ function ShowcaseLaneRow({
               textTransform: "uppercase",
               color: "var(--brand)",
               display: "block",
-              marginBottom: 2,
+              marginBottom: 4,
             }}
           >
             {lane.label}
           </span>
           <h3
             style={{
-              fontSize: 14.5,
+              fontSize: 22,
               fontWeight: 800,
-              letterSpacing: "-.3px",
+              letterSpacing: "-.5px",
               color: "var(--ink)",
-              margin: 0,
+              margin: "0 0 4px",
             }}
           >
             {lane.title}
           </h3>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)", maxWidth: "58ch" }}>{lane.subtitle}</p>
         </div>
 
         {/* Scroll arrows */}
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, flexShrink: 0, marginTop: 4 }}>
           <button
             onClick={() => scroll("left")}
             style={{
-              width: 28,
-              height: 28,
+              width: 30,
+              height: 30,
               borderRadius: "50%",
               border: "1px solid var(--hair)",
               background: "#fff",
               display: "grid",
               placeItems: "center",
               cursor: "pointer",
+              color: "var(--ink-3)",
             }}
           >
-            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
+            <ChevronLeft size={14} />
           </button>
           <button
             onClick={() => scroll("right")}
             style={{
-              width: 28,
-              height: 28,
+              width: 30,
+              height: 30,
               borderRadius: "50%",
               border: "1px solid var(--hair)",
               background: "#fff",
               display: "grid",
               placeItems: "center",
               cursor: "pointer",
+              color: "var(--ink-3)",
             }}
           >
-            <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+            <ChevronRight size={14} />
           </button>
         </div>
       </div>
@@ -861,7 +891,6 @@ function HomeDossierCard({ dossier, onSelect }: { dossier: BrandDossier; onSelec
 export function HomeScreen() {
   const router = useRouter();
   const [playingVideoItem, setPlayingVideoItem] = useState<ShowcaseItem | null>(null);
-  const [audience, setAudience] = useState<"first" | "returning">("first");
 
   function openTile(tile: TileOption) {
     if (tile.href === "/create") {
@@ -874,55 +903,43 @@ export function HomeScreen() {
   }
 
   return (
-    <div className="page-enter space-y-7 max-w-[1140px] pb-12">
-      {/* Preview-only control — switches between the first-time and returning-user experience */}
-      <div style={{ display: "inline-flex", padding: 3, borderRadius: 99, background: "var(--surface-subtle)", border: "1px solid var(--hair)" }}>
-        {(["first", "returning"] as const).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => setAudience(mode)}
-            style={{
-              padding: "6px 14px",
-              borderRadius: 99,
-              fontSize: 12.5,
-              fontWeight: 700,
-              background: audience === mode ? "var(--ink)" : "transparent",
-              color: audience === mode ? "#fff" : "var(--ink-3)",
-              transition: "background .18s var(--e), color .18s var(--e)",
-            }}
-          >
-            {mode === "first" ? "First visit" : "Returning"}
-          </button>
-        ))}
-      </div>
+    <div className="page-enter space-y-9 max-w-[1180px] pb-12">
+      {/* Eyebrow pill */}
+      <div className="pt-1">
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 7,
+            padding: "6px 13px",
+            border: "1px solid var(--tint-line)",
+            background: "var(--tint)",
+            color: "var(--brand-deep)",
+            borderRadius: 99,
+            fontSize: 11.5,
+            fontWeight: 800,
+            letterSpacing: ".05em",
+            textTransform: "uppercase",
+          }}
+        >
+          <i style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)", display: "block" }} />
+          MLR-ready. In minutes.
+        </span>
 
-      {/* Welcome */}
-      <div key={audience} className="pt-1 pb-1 rise-in-stagger">
         <h1
           style={{
-            fontSize: "clamp(24px, 2.5vw, 32px)",
-            lineHeight: 1.2,
+            fontSize: "clamp(30px, 3.4vw, 42px)",
+            lineHeight: 1.1,
             fontWeight: 800,
-            letterSpacing: "-0.8px",
-            margin: 0,
+            letterSpacing: "-1.2px",
+            margin: "14px 0 0",
             color: "var(--ink)",
           }}
         >
-          {audience === "first" ? (
-            <>
-              Welcome, <span style={{ color: "var(--brand)" }}>{PERSONA.firstName}.</span>
-            </>
-          ) : (
-            <>
-              Welcome back, <span style={{ color: "var(--brand)" }}>{PERSONA.firstName}.</span>
-            </>
-          )}
+          What do you want to create today?
         </h1>
-        <p className="mt-1.5 text-[14px] text-[var(--ink-3)] font-medium">
-          {audience === "first"
-            ? "Upload a dossier or brief and SwishX handles the rest — everything grounded and MLR-ready."
-            : "Select a content workflow or explore verified medical showreels."}
+        <p className="mt-2.5 text-[14.5px] text-[var(--ink-3)] font-medium">
+          Pick a studio. Every asset is written from your Brand Dossier, with a source behind each claim.
         </p>
       </div>
 
@@ -939,14 +956,35 @@ export function HomeScreen() {
         ))}
       </div>
 
-      {/* Showcase — 4 horizontal scrollable lanes */}
+      {/* Recent projects */}
+      <div>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 14 }}>
+          <div>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--brand)", display: "block", marginBottom: 4 }}>
+              Pick up where you left off
+            </span>
+            <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.5px", color: "var(--ink)", margin: 0 }}>
+              Recent projects
+            </h2>
+          </div>
+          <span style={{ fontSize: 13, fontWeight: 750, color: "var(--brand)", cursor: "pointer" }}>All projects →</span>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+          {RECENT_PROJECTS.map((project) => (
+            <RecentProjectCard key={project.title} project={project} />
+          ))}
+        </div>
+      </div>
+
+      {/* Showcase lanes */}
       <div
         style={{
           background: "#fff",
           borderRadius: "var(--r-xl)",
           border: "1px solid var(--hair)",
           boxShadow: "var(--sh-1)",
-          padding: "22px 22px 20px",
+          padding: "26px 24px 22px",
         }}
       >
         {SHOWCASE_LANES.map((lane, i) => (
