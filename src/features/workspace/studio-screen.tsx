@@ -1362,6 +1362,38 @@ export function StudioScreen() {
                         <span>Select Scenes / Slides</span>
                       </button>
 
+                      {/* Editor Specific Tool 1: Video Area Selection */}
+                      {isEditor && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowContextPicker(false);
+                            setIsSelectingRegion(true);
+                            setToMessage("Click and drag across the video to select target area");
+                            setTimeout(() => setToMessage(null), 3000);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12px] font-medium text-white/90 hover:bg-white/10 transition cursor-pointer text-left"
+                        >
+                          <ScanLine className="size-4 text-[var(--brand)]" />
+                          <span>Select Video Area</span>
+                        </button>
+                      )}
+
+                      {/* Editor Specific Tool 2: Timestamp / Duration Range */}
+                      {isEditor && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowContextPicker(false);
+                            setShowTimePicker(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12px] font-medium text-white/90 hover:bg-white/10 transition cursor-pointer text-left"
+                        >
+                          <Timer className="size-4 text-blue-400" />
+                          <span>Scene Duration / Range</span>
+                        </button>
+                      )}
+
                       {/* Option 2: Upload Media */}
                       <label className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[12px] font-medium text-white/90 hover:bg-white/10 transition cursor-pointer text-left">
                         <ImageIcon className="size-4 text-emerald-400" />
@@ -1576,14 +1608,14 @@ export function StudioScreen() {
 
                   {/* Main Input Box */}
                   <div className="flex items-center gap-1.5 rounded-2xl border border-black/[0.12] bg-white p-1.5 pl-2 focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand-soft)] shadow-xs">
-                    {/* Add Context (+) Button (Available in both Scenes & Editor mode) */}
+                    {/* Add Context (+) Button */}
                     <button
                       type="button"
                       onClick={() => {
                         setShowContextPicker(!showContextPicker);
                         setShowSceneSelectModal(false);
                       }}
-                      title="Add context (Scenes, Media, Mentions)"
+                      title="Add context (Scenes, Video Area, Duration, Media, Mentions)"
                       className={cn(
                         "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer shrink-0",
                         showContextPicker || showSceneSelectModal
@@ -1593,46 +1625,6 @@ export function StudioScreen() {
                     >
                       <Plus className="size-4" />
                     </button>
-
-                    {/* Area Selector Icon Trigger: ONLY visible in Editor Mode */}
-                    {isEditor && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsSelectingRegion(!isSelectingRegion);
-                          if (!isSelectingRegion) {
-                            setToMessage("Click and drag across the video to select target area");
-                            setTimeout(() => setToMessage(null), 3000);
-                          }
-                        }}
-                        title="Select video area to edit"
-                        className={cn(
-                          "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer shrink-0",
-                          isSelectingRegion || selectedBox
-                            ? "bg-[var(--brand)] text-white shadow-xs"
-                            : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--brand)]"
-                        )}
-                      >
-                        <ScanLine className="size-4" />
-                      </button>
-                    )}
-
-                    {/* Time Range Widget Trigger: ONLY visible in Editor Mode */}
-                    {isEditor && (
-                      <button
-                        type="button"
-                        onClick={() => setShowTimePicker(!showTimePicker)}
-                        title="Add scene timestamp / duration range"
-                        className={cn(
-                          "grid size-7.5 place-items-center rounded-xl transition-all cursor-pointer shrink-0",
-                          timeRange || showTimePicker
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : "text-[var(--ink-muted)] hover:bg-black/5 hover:text-blue-600"
-                        )}
-                      >
-                        <Timer className="size-4" />
-                      </button>
-                    )}
 
                     <input
                       type="text"
