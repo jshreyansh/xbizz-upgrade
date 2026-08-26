@@ -738,7 +738,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-extrabold text-[12.5px] h-10 px-5 rounded-xl shadow-xs gap-2 cursor-pointer transition-transform hover:-translate-y-0.5"
                 >
                   <Sparkles className="size-4" />
-                  <span>Create Brand Dossier for {selectedBrand.name}</span>
+                  <span>Upload or Create for {selectedBrand.name}</span>
                   <ArrowRight className="size-3.5" />
                 </Button>
               </div>
@@ -752,7 +752,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             {/* Header */}
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Configuration</span>
+                <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Video Configuration</span>
                 <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)]">
                   Mandatory
                 </span>
