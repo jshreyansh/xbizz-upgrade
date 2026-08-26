@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Film, UserCircle2, ArrowRight, Play, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, Film, UserCircle2, ArrowRight, Play, Check, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 
 /* ─── Video Showcase Samples ─────────────────────────────────────────────────── */
@@ -165,23 +165,53 @@ export function MagicVideoModeScreen() {
   const curAvatar = AVATAR_SAMPLES[avatarIndex];
 
   return (
-    <div className="mx-auto w-full max-w-[960px] py-1 sm:py-2">
-      {/* Editorial Header */}
-      <div className="text-center max-w-[680px] mx-auto mb-8">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[var(--tint)] px-3.5 py-1 text-[11.5px] font-bold uppercase tracking-wider text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-xs">
-          <Sparkles className="size-3.5 text-[var(--brand)] animate-pulse" />
-          <span>Magic Video Studio</span>
+    <div className="page-enter space-y-6 max-w-[1140px]">
+      {/* Header — Left-aligned matching Brand Dossiers screen */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800, marginBottom: 5 }}>
+            Master Content Workflow
+          </div>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>
+            Magic Video
+          </h1>
+          <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "64ch" }}>
+            Synthesize source-backed MoA animations, doctor avatars, and clinical evidence reels in minutes — grounded in verified label claims.
+          </p>
         </div>
-        <h1 className="mt-3 text-3xl sm:text-4xl font-[900] tracking-tight text-[var(--ink)]">
-          How do you want to create your video?
-        </h1>
-        <p className="mt-2 text-base text-[var(--ink-2)]">
-          Select a production engine &mdash; scripting, scenes, voice, and citations are generated automatically.
-        </p>
+
+        {/* Start from Scratch Action Button (Matches Brand Dossiers Top-Right Action) */}
+        <button
+          type="button"
+          onClick={() => {
+            setCreationMode("magic-reel");
+            setPresentationMode("narrated");
+            setVideoSubStage("intake");
+          }}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "11px 20px",
+            borderRadius: "var(--r)",
+            fontWeight: 700,
+            fontSize: 14,
+            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
+            color: "#fff",
+            boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
+            border: "none",
+            cursor: "pointer",
+            transition: "all .2s ease",
+          }}
+          className="hover:scale-[1.02] active:scale-[0.98]"
+        >
+          <Plus className="size-4 stroke-[2.5]" />
+          <span>Start from Scratch</span>
+        </button>
       </div>
 
-      {/* Mode Grid — Inverted cards (Header & Info on top, Video on bottom) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+      {/* Mode Grid — 2 Engine Selection Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch pt-2">
         {/* ════ CARD 1: MagicReel™ ════ */}
         <div
           onClick={() => handleSelectMode("magic-reel")}
