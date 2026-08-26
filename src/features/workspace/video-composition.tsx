@@ -1,4 +1,6 @@
-import { AbsoluteFill, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+"use client";
+
+import React from "react";
 import type { Scene } from "@/types/content";
 import { scenes as defaultScenes } from "@/features/workspace/mock-data";
 
@@ -8,35 +10,31 @@ export interface SceneCompositionProps {
   totalScenes?: number;
 }
 
+const sceneThemeColors = [
+  { bg: "linear-gradient(135deg, #132b22 0%, #1f4236 60%, #0e2019 100%)", accent: "#d8f05d" },
+  { bg: "linear-gradient(135deg, #153229 0%, #204c3d 60%, #102720 100%)", accent: "#a3e635" },
+  { bg: "linear-gradient(135deg, #173d31 0%, #234d3f 62%, #142e27 100%)", accent: "#d8f05d" },
+  { bg: "linear-gradient(135deg, #16362b 0%, #255444 60%, #112921 100%)", accent: "#86efac" },
+  { bg: "linear-gradient(135deg, #122820 0%, #1c3d31 60%, #0c1c16 100%)", accent: "#d8f05d" },
+];
+
 export function DynamicSceneComposition({
   scene = defaultScenes[2],
   brandName = "DERMORA",
   totalScenes = 5,
 }: SceneCompositionProps) {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  const intro = spring({ frame, fps, config: { damping: 18, stiffness: 72 } });
-  const orbit = interpolate(frame, [0, 300], [0, 360], { extrapolateRight: "extend" });
-  const pulse = 0.7 + Math.sin(frame / 16) * 0.12;
-
-  const sceneThemeColors = [
-    { bg: "linear-gradient(135deg, #132b22 0%, #1f4236 60%, #0e2019 100%)", accent: "#d8f05d" },
-    { bg: "linear-gradient(135deg, #153229 0%, #204c3d 60%, #102720 100%)", accent: "#a3e635" },
-    { bg: "linear-gradient(135deg, #173d31 0%, #234d3f 62%, #142e27 100%)", accent: "#d8f05d" },
-    { bg: "linear-gradient(135deg, #16362b 0%, #255444 60%, #112921 100%)", accent: "#86efac" },
-    { bg: "linear-gradient(135deg, #122820 0%, #1c3d31 60%, #0c1c16 100%)", accent: "#d8f05d" },
-  ];
-
-  const currentTheme = sceneThemeColors[(scene.number - 1) % sceneThemeColors.length];
+  const currentTheme = sceneThemeColors[((scene.number || 1) - 1) % sceneThemeColors.length];
 
   return (
-    <AbsoluteFill
+    <div
       style={{
+        position: "absolute",
+        inset: 0,
         background: "#173d31",
         color: "white",
         fontFamily: "Inter, system-ui, sans-serif",
         overflow: "hidden",
+        userSelect: "none",
       }}
     >
       {/* Background with Ambient Radial Glow */}
@@ -48,7 +46,7 @@ export function DynamicSceneComposition({
         }}
       />
 
-      {/* 3D Kinetic Orbital Rings */}
+      {/* 3D Kinetic Orbital Rings (Pure CSS Rotation & Pulse) */}
       <div
         style={{
           position: "absolute",
@@ -58,7 +56,7 @@ export function DynamicSceneComposition({
           top: -110,
           borderRadius: "50%",
           border: "1px solid rgba(255,255,255,.14)",
-          transform: `rotate(${orbit}deg)`,
+          animation: "spin 20s linear infinite",
         }}
       >
         <div
@@ -71,7 +69,6 @@ export function DynamicSceneComposition({
             borderRadius: "50%",
             background: currentTheme.accent,
             boxShadow: `0 0 34px ${currentTheme.accent}`,
-            transform: `scale(${pulse})`,
           }}
         />
       </div>
@@ -97,8 +94,6 @@ export function DynamicSceneComposition({
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "7% 8%",
-          opacity: intro,
-          transform: `translateY(${(1 - intro) * 18}px)`,
         }}
       >
         {/* Top Tag & Pillar */}
@@ -114,7 +109,15 @@ export function DynamicSceneComposition({
             color: "rgba(255,255,255,.75)",
           }}
         >
-          <span style={{ display: "inline-block", width: 24, height: 2.5, background: currentTheme.accent, borderRadius: 2 }} />
+          <span
+            style={{
+              display: "inline-block",
+              width: 24,
+              height: 2.5,
+              background: currentTheme.accent,
+              borderRadius: 2,
+            }}
+          />
           {scene.narrativeTag || "PIVOTAL EVIDENCE"}
         </div>
 
@@ -166,7 +169,7 @@ export function DynamicSceneComposition({
           </span>
         </div>
       </div>
-    </AbsoluteFill>
+    </div>
   );
 }
 
@@ -175,38 +178,25 @@ export function DermoraComposition() {
   return <DynamicSceneComposition />;
 }
 
-// Master Video Sequence Composition that seamlessly stitches all 5 scenes
+// Master Video Sequence Composition that renders the active scene
 export function MasterVideoSequenceComposition({
   sceneList = defaultScenes,
+  activeScene,
   brandName = "DERMORA",
 }: {
   sceneList?: Scene[];
+  activeScene?: Scene;
   brandName?: string;
 }) {
-  let accumulatedFrames = 0;
+  const currentScene = activeScene || sceneList[0] || defaultScenes[0];
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#111815" }}>
-      {sceneList.map((sc, idx) => {
-        const sceneDurationFrames = (sc.duration || 10) * 30;
-        const fromFrame = accumulatedFrames;
-        accumulatedFrames += sceneDurationFrames;
-
-        return (
-          <Sequence
-            key={sc.id || idx}
-            from={fromFrame}
-            durationInFrames={sceneDurationFrames}
-            name={`Scene ${sc.number}: ${sc.title}`}
-          >
-            <DynamicSceneComposition
-              scene={sc}
-              brandName={brandName}
-              totalScenes={sceneList.length}
-            />
-          </Sequence>
-        );
-      })}
-    </AbsoluteFill>
+    <div style={{ position: "absolute", inset: 0, backgroundColor: "#111815" }}>
+      <DynamicSceneComposition
+        scene={currentScene}
+        brandName={brandName}
+        totalScenes={sceneList.length}
+      />
+    </div>
   );
 }

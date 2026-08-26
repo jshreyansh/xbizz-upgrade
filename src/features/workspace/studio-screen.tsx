@@ -164,16 +164,10 @@ export function StudioScreen() {
       accumulated += duration;
       const end = accumulated;
       return {
-        id: sc.id,
-        number: sc.number,
-        title: sc.title,
-        narration: sc.narration,
+        ...sc,
         start,
         end,
         duration,
-        claim: sc.claim,
-        evidenceState: sc.evidenceState,
-        narrativeTag: sc.narrativeTag,
       };
     });
   }, [sceneList]);
@@ -949,6 +943,7 @@ export function StudioScreen() {
                   <div className="absolute inset-0">
                     <MasterVideoSequenceComposition
                       sceneList={sceneList}
+                      activeScene={activeMasterChapter}
                       brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
                     />
                   </div>
