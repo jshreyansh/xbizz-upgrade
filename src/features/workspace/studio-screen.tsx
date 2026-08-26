@@ -75,6 +75,24 @@ const dossierNames: Record<string, string> = {
   pulmovax: "PulmoVax",
 };
 
+function FormattedMessageText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return (
+    <p className="whitespace-pre-wrap">
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <strong key={i} className="font-bold">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return part;
+      })}
+    </p>
+  );
+}
+
 export function StudioScreen() {
   const { selectedSceneId, setSelectedSceneId, inspectorTab, setInspectorTab, setView, creationMode, sourcePayload } = useWorkspaceStore();
   
@@ -1209,17 +1227,14 @@ export function StudioScreen() {
             {activeTab === "assistant" && (
               <div className="flex flex-1 flex-col h-full min-h-0 p-3.5 gap-2.5 overflow-hidden">
                 {/* Chat Top Banner */}
-                <div className="shrink-0 rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-3">
-                  <div className="flex items-center gap-2 text-[12px] font-bold text-[var(--brand-deep)]">
+                <div className="shrink-0 rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-2.5">
+                  <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--brand-deep)]">
                     <Sparkles className="size-3.5 text-[var(--brand)]" />
                     <span>Direct with SwishX</span>
                     <span className="ml-auto rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-[9px] font-bold">
                       Online
                     </span>
                   </div>
-                  <p className="mt-1 text-[11px] leading-relaxed text-[var(--brand-deep)]/80">
-                    Direct scene pacing, voice styling, or visual emphasis. All instructions remain anchored to verified label claims.
-                  </p>
                 </div>
 
                 {/* Messages Feed: Fills entire available vertical space seamlessly */}
@@ -1228,68 +1243,55 @@ export function StudioScreen() {
                     <div
                       key={idx}
                       className={cn(
-                        "flex flex-col text-[12px] leading-relaxed transition-all",
-                        msg.role === "user" ? "items-end" : "items-start"
+                        "flex gap-2.5 max-w-full",
+                        msg.role === "user" ? "ml-auto justify-end" : "mr-auto"
                       )}
                     >
+                      {msg.role === "swishx" && (
+                        <div className="size-7 rounded-full bg-[var(--brand)] text-white grid place-items-center font-bold text-[10px] shrink-0 mt-0.5 shadow-2xs">
+                          SX
+                        </div>
+                      )}
                       <div
                         className={cn(
-                          "rounded-[16px] px-3.5 py-2.5 text-[12px] shadow-2xs break-words",
+                          "rounded-[15px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-2xs max-w-[85%]",
                           msg.role === "user"
-                            ? "bg-[var(--brand)] text-white font-medium max-w-[85%] rounded-br-xs text-left"
-                            : "bg-[#f4f7f4] border border-black/[0.06] text-[var(--ink)] max-w-[92%] rounded-bl-xs"
+                            ? "bg-[var(--brand)] text-white font-medium"
+                            : "bg-white border border-[var(--line)] text-[var(--ink)]"
                         )}
                       >
-                        {msg.role === "swishx" && (
-                          <div className="flex items-center gap-1.5 text-[9.5px] font-extrabold uppercase tracking-wider text-[var(--brand)] mb-1">
-                            <span className="size-1.5 rounded-full bg-[var(--brand)]" />
-                            <span>SwishX Copilot</span>
+                        <FormattedMessageText text={msg.text} />
+                        {msg.role === "swishx" && idx === 1 && (
+                          <div className="mt-2.5 pt-2 border-t border-black/[0.06] flex flex-wrap gap-1.5">
+                            {[
+                              "Add our company values",
+                              "Include our clinical trial data",
+                              "Make the welcome feel warmer",
+                              "Apply brand compliance palette",
+                            ].map((chip) => (
+                              <button
+                                key={chip}
+                                type="button"
+                                onClick={() => {
+                                  addChatMessage({ role: "user", text: chip });
+                                  setTimeout(() => {
+                                    addChatMessage({
+                                      role: "swishx",
+                                      text: `Applied "${chip}" across Scene ${selectedScene.number} and verified all 6 source claims.`,
+                                    });
+                                  }, 600);
+                                }}
+                                className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] hover:bg-[#ffe5dd] border border-[var(--tint-line)] px-2 py-0.5 rounded-full transition cursor-pointer"
+                              >
+                                {chip}
+                              </button>
+                            ))}
                           </div>
                         )}
-                        <span className="whitespace-pre-wrap">{msg.text}</span>
                       </div>
                     </div>
                   ))}
                   <div ref={studioChatEndRef} />
-
-                  {/* Suggestion Prompt Chips - ONLY shown when chat has not yet started */}
-                  {chatMessages.length === 0 && (
-                    <div className="space-y-2 pt-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-                          Suggested Prompts
-                        </span>
-                        <span className="text-[9px] text-[var(--ink-muted)]">Click to apply</span>
-                      </div>
-                      <div className="grid grid-cols-1 gap-1.5">
-                        {[
-                          "Add our company values",
-                          "Include our clinical trial data",
-                          "Make the welcome feel warmer",
-                          "Apply brand compliance palette",
-                        ].map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            type="button"
-                            onClick={() => {
-                              setDirectorInput("");
-                              addChatMessage({ role: "user", text: suggestion });
-                              setTimeout(() => {
-                                addChatMessage({
-                                  role: "swishx",
-                                  text: `Applied "${suggestion}" across Scene ${selectedScene.number} and verified all 6 source claims.`,
-                                });
-                              }, 600);
-                            }}
-                            className="w-full flex items-center justify-between text-left rounded-xl border border-black/[0.06] bg-[#fafbf9] px-3.5 py-2.5 text-[11.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] transition-all cursor-pointer group"
-                          >
-                            <span className="truncate">{suggestion}</span>
-                            <ChevronRight className="size-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Input Field & Contextual Widgets (Shrink-0 anchored at bottom) */}

@@ -157,6 +157,24 @@ const profiles: Record<AssetType, {
   },
 };
 
+function FormattedMessageText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return (
+    <p className="whitespace-pre-wrap">
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <strong key={i} className="font-bold">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        return part;
+      })}
+    </p>
+  );
+}
+
 export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const {
@@ -1288,7 +1306,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       : "bg-white border border-[var(--line)] text-[var(--ink)]"
                   )}
                 >
-                  <p className="whitespace-pre-wrap">{msg.text}</p>
+                  <FormattedMessageText text={msg.text} />
                   {msg.role === "swishx" && index === 1 && !isGenerating && (
                     <div className="mt-2.5 pt-2 border-t border-black/[0.06] flex flex-wrap gap-1.5">
                       {[
