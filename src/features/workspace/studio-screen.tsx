@@ -1517,13 +1517,12 @@ export function StudioScreen() {
 
         <aside className="w-[410px] shrink-0 border-l border-[var(--line)] bg-white flex flex-col min-h-0 shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10">
           <div className="p-2.5 border-b border-[var(--line)] bg-[#f4f6f4]">
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
+            <div className="grid grid-cols-3 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
               <InspectorTabButton
                 tab="assistant"
                 current={activeTab}
                 onClick={setActiveTab}
-                icon={Sparkles}
-                badge={<span className="size-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />}
+                badge={<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mr-1" />}
               >
                 Chat
               </InspectorTabButton>
@@ -1532,7 +1531,6 @@ export function StudioScreen() {
                   tab="comments"
                   current={activeTab}
                   onClick={setActiveTab}
-                  icon={MessageSquare}
                   count={commentsList.length}
                 >
                   Comments
@@ -1542,7 +1540,6 @@ export function StudioScreen() {
                   tab="edit"
                   current={activeTab}
                   onClick={setActiveTab}
-                  icon={SlidersHorizontal}
                 >
                   Edit
                 </InspectorTabButton>
@@ -1551,7 +1548,6 @@ export function StudioScreen() {
                 tab="evidence"
                 current={activeTab}
                 onClick={setActiveTab}
-                icon={ShieldCheck}
                 count={24}
               >
                 Claims
@@ -2188,7 +2184,6 @@ function InspectorTabButton({
   tab,
   current,
   onClick,
-  icon: Icon,
   badge,
   count,
   children,
@@ -2196,7 +2191,6 @@ function InspectorTabButton({
   tab: string;
   current: string;
   onClick: (tab: any) => void;
-  icon?: any;
   badge?: React.ReactNode;
   count?: number;
   children: React.ReactNode;
@@ -2207,26 +2201,18 @@ function InspectorTabButton({
       type="button"
       onClick={() => onClick(tab)}
       className={cn(
-        "group relative flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-[12.5px] transition-all duration-200 cursor-pointer font-[800] select-none",
+        "group relative flex items-center justify-center gap-1 h-8.5 px-2 rounded-xl text-[12px] transition-all duration-150 cursor-pointer font-[800] select-none whitespace-nowrap",
         active
           ? "bg-white text-[var(--ink)] shadow-xs border border-black/[0.08]"
           : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-white/50 border border-transparent"
       )}
     >
       {badge}
-      {Icon && (
-        <Icon
-          className={cn(
-            "size-3.5 shrink-0 transition-colors",
-            active ? "text-[var(--brand)]" : "text-gray-400 group-hover:text-gray-600"
-          )}
-        />
-      )}
-      <span className="truncate">{children}</span>
+      <span>{children}</span>
       {count !== undefined && (
         <span
           className={cn(
-            "text-[10px] font-extrabold px-1.5 py-0.2 rounded-full transition-colors",
+            "text-[10px] font-extrabold px-1.5 py-0.2 rounded-full transition-colors ml-0.5",
             active
               ? "bg-[var(--tint-strong)] text-[var(--brand-deep)] border border-[var(--brand)]/20"
               : "bg-black/5 text-gray-500"
