@@ -4,49 +4,48 @@ import {
   ArrowRight,
   BookOpenCheck,
   Check,
+  CheckCircle2,
   ChevronDown,
-  ChevronUp,
+  Clock3,
   FileCheck2,
   Film,
   Globe2,
   Home,
   Info,
   Layers,
+  LayoutList,
   Mic2,
   Music2,
   MonitorPlay,
   PackageCheck,
-  Paperclip,
+  Pause,
+  Play,
   Plus,
   Send,
   ShieldCheck,
   Sparkles,
   Target,
   Users,
+  Volume2,
   X,
-  Clock3,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { AudienceIcon } from "@/components/ui/select-icons";
+import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
 import { deriveContentPlan } from "@/features/workspace/content-plan";
+import { displayIntendedUses, parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 
-type PlanSectionId = "audience-goal" | "topics" | "format" | "voice" | "presenter" | "product-assets" | "story";
+type PlanSectionId = "treatment" | "message" | "delivery" | "voice" | "brand" | "story" | "product-assets";
 
 const audienceOptions: Audience[] = ["HCP", "Patient", "Payer", "Field team", "Consumer"];
-const topicOptions = [
-  "Product Introduction",
-  "Mechanism of Action",
-  "Indications",
-  "Dosage & Safety",
-  "Drug Interactions",
-  "Side Effects",
-];
-
+const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
+const topics = ["Product introduction", "Mechanism", "Pivotal evidence", "Dosing & safety", "Patient impact"];
 const presenters = [
   { name: "Dr. Maya Kapoor", role: "Dermatologist · warm, reassuring", image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=160&q=80" },
   { name: "Dr. Rohan Mehta", role: "Physician · clear, authoritative", image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=160&q=80" },
@@ -63,9 +62,98 @@ const voiceList = [
   { name: "Sarah", role: "clinical and precise", accent: "British English", tag: "Clinical Lead" },
   { name: "Marcus", role: "deep and trustworthy", accent: "North American", tag: "Physician" },
   { name: "Elena", role: "calm and scientific", accent: "International", tag: "Research" },
+  { name: "Liam", role: "energetic and direct", accent: "Australian", tag: "Patient Briefing" },
+  { name: "Priya", role: "empathetic and reassuring", accent: "Neutral English", tag: "Patient Care" },
 ];
 
+const profiles: Record<AssetType, {
+  noun: string;
+  recommendation: string;
+  rationale: string;
+  treatments: Array<{ id: string; label: string; description: string }>;
+  units: Array<{ title: string; detail: string; time?: string }>;
+  formatOptions: string[];
+  lengthOptions: string[];
+}> = {
+  video: {
+    noun: "video",
+    recommendation: "Narrated visual story",
+    rationale: "The clearest way to explain the mechanism and evidence without introducing an unnecessary presenter.",
+    treatments: [
+      { id: "narrated", label: "Narrated visual story", description: "Voiceover with branded scenes, evidence and restrained motion." },
+      { id: "presenter", label: "Presenter-led", description: "A doctor or approved presenter delivers the story on screen." },
+      { id: "visual-only", label: "Visual-only", description: "On-screen copy and visuals carry the story without narration." },
+    ],
+    units: [
+      { title: "The unresolved need", detail: "Establish the clinical context", time: "8s" },
+      { title: "Product introduction", detail: "State the molecule's intended role", time: "8s" },
+      { title: "How it works", detail: "Explain the mechanism of action", time: "12s" },
+      { title: "Pivotal evidence", detail: "Present the approved endpoint", time: "20s" },
+      { title: "Close and fair balance", detail: "CTA and required safety", time: "12s" },
+    ],
+    formatOptions: ["16:9", "9:16", "1:1"],
+    lengthOptions: ["30 sec", "45 sec", "60 sec", "90 sec"],
+  },
+  carousel: {
+    noun: "carousel",
+    recommendation: "Evidence-led page story",
+    rationale: "A concise sequence lets readers scan the clinical argument while keeping every claim connected to its source.",
+    treatments: [
+      { id: "evidence", label: "Evidence-led", description: "Lead with the strongest approved result and build context around it." },
+      { id: "story", label: "Story-led", description: "Move from the unmet need to the product and proof." },
+      { id: "data", label: "Data-led", description: "Use charts and concise interpretation as the main structure." },
+    ],
+    units: [
+      { title: "Cover", detail: "One clear launch message" },
+      { title: "Clinical need", detail: "Why this matters" },
+      { title: "Product introduction", detail: "The role of the molecule" },
+      { title: "Mechanism", detail: "Simple scientific explanation" },
+      { title: "Pivotal evidence", detail: "Approved result and citation" },
+      { title: "Close", detail: "CTA and fair balance" },
+    ],
+    formatOptions: ["LinkedIn carousel", "1:1 pages", "16:9 slides"],
+    lengthOptions: ["5 pages", "6 pages", "8 pages"],
+  },
+  infographic: {
+    noun: "infographic",
+    recommendation: "Guided evidence hierarchy",
+    rationale: "A clear top-to-bottom information path makes the science understandable without becoming a dense scientific poster.",
+    treatments: [
+      { id: "guided", label: "Guided evidence hierarchy", description: "Move from context to mechanism, evidence and implication." },
+      { id: "process", label: "Process explanation", description: "Use a sequential scientific pathway as the organizing device." },
+      { id: "comparison", label: "Comparison", description: "Organize the content around two or more evidence states." },
+    ],
+    units: [
+      { title: "Headline", detail: "Primary communication message" },
+      { title: "Clinical context", detail: "Concise unmet need" },
+      { title: "Mechanism", detail: "Scientific pathway" },
+      { title: "Evidence", detail: "Approved endpoint and citation" },
+      { title: "Implication", detail: "CTA and required safety" },
+    ],
+    formatOptions: ["Vertical", "Landscape", "Presentation slide"],
+    lengthOptions: ["Compact", "Standard", "Detailed"],
+  },
+  visual: {
+    noun: "visual",
+    recommendation: "Message-first composition",
+    rationale: "One approved message should dominate; brand and evidence remain visible without overcrowding the asset.",
+    treatments: [
+      { id: "message", label: "Message-first", description: "Lead with the approved communication message." },
+      { id: "product", label: "Product-first", description: "Make the product and packshot the visual anchor." },
+      { id: "evidence", label: "Evidence-first", description: "Use one approved result as the main focus." },
+    ],
+    units: [
+      { title: "Primary message", detail: "The one thing viewers should retain" },
+      { title: "Supporting proof", detail: "One approved evidence point" },
+      { title: "Brand and action", detail: "Logo, CTA and required safety" },
+    ],
+    formatOptions: ["1:1", "4:5", "16:9", "9:16"],
+    lengthOptions: ["Single composition"],
+  },
+};
+
 export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
+  const router = useRouter();
   const {
     assetType,
     brief,
@@ -83,7 +171,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     sourceType,
     sourcePayload,
     setAudience,
-    setMarket,
+    setIntendedUse,
     setFormat,
     setDuration,
     setLanguage,
@@ -110,6 +198,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const brandName = dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora";
   const projectName = `${brandName} HCP launch`;
 
+  const profile = profiles[assetType];
   const derivedPlan = useMemo(
     () =>
       deriveContentPlan({
@@ -127,24 +216,51 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   );
 
   const isMagicAvatar = creationMode === "magic-avatar";
-  const [goal, setGoal] = useState<string>(storeGoal || derivedPlan.goal || "New Launch");
-  const [selectedTopics, setSelectedTopics] = useState<string[]>(
-    storeTopics && storeTopics.length > 0 ? storeTopics : derivedPlan.topics.length > 0 ? derivedPlan.topics : ["Product Introduction", "Mechanism of Action"]
-  );
+  const defaultTreatment = isMagicAvatar ? "presenter" : creationMode === "magic-reel" ? "narrated" : (assetType === "video" ? presentationMode : derivedPlan.treatmentId);
+  const [treatmentId, setTreatmentId] = useState<string>(defaultTreatment);
+  const [goal, setGoal] = useState<string>(storeGoal || derivedPlan.goal || "New launch");
+  const [selectedTopics, setSelectedTopics] = useState<string[]>(storeTopics && storeTopics.length > 0 ? storeTopics : derivedPlan.topics.length > 0 ? derivedPlan.topics : ["Product introduction", "Mechanism"]);
+  const [confirmedTreatment, setConfirmedTreatment] = useState(true);
+  const [sourceConflictResolved, setSourceConflictResolved] = useState(false);
+  const [storyStructure, setStoryStructure] = useState(derivedPlan.storyStructure);
   const [presenter, setPresenter] = useState(
     isMagicAvatar ? "Dr. Maya Kapoor" : (presentationMode === "presenter" ? "Dr. Maya Kapoor" : "")
   );
 
-  // Dynamic Product Media Assets
+  // Dynamic Product Media Assets: Starts EMPTY by default
   const [productMediaList, setProductMediaList] = useState<
     Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string }>
   >([]);
 
-  // Accordion active open section
-  const [openSection, setOpenSection] = useState<PlanSectionId | null>("audience-goal");
+  const isProductFocus =
+    selectedTopics.some((t) => t.toLowerCase().includes("product") || t.toLowerCase().includes("launch")) ||
+    goal.toLowerCase().includes("launch") ||
+    goal.toLowerCase().includes("product") ||
+    brief.toLowerCase().includes("product") ||
+    brief.toLowerCase().includes("pen") ||
+    brief.toLowerCase().includes("autoinjector");
+
+  const [openSection, setOpenSection] = useState<PlanSectionId | null>(
+    isMagicAvatar ? "voice" : isProductFocus && productMediaList.length === 0 ? "product-assets" : "treatment"
+  );
+  const [editingDecision, setEditingDecision] = useState<string | null>(null);
+  const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
   const [presenterLibraryOpen, setPresenterLibraryOpen] = useState(false);
   const [voiceLibraryOpen, setVoiceLibraryOpen] = useState(false);
-  const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
+  const [sourceManagerOpen, setSourceManagerOpen] = useState(false);
+
+  const approvedEvidenceCount = selectedSourceIds.filter((id) => id !== "dermora-reference").length;
+  const needsPresenter = presentationMode === "presenter" || treatmentId === "presenter" || creationMode === "magic-avatar";
+  const needsProductAssets = isProductFocus && productMediaList.length === 0;
+
+  const unresolvedCount =
+    (confirmedTreatment ? 0 : 1) +
+    (needsPresenter && !presenter ? 1 : 0) +
+    (needsProductAssets ? 1 : 0) +
+    (derivedPlan.sourceConflict && !sourceConflictResolved ? 1 : 0);
+
+  const isPlanReady = unresolvedCount === 0;
+  const selectedTreatment = profile.treatments.find((item) => item.id === treatmentId) ?? profile.treatments[0];
 
   // ── Generation Loading State on Right Panel ──
   const [isGenerating, setIsGenerating] = useState(false);
@@ -171,16 +287,25 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   }, [chatMessages, isGenerating]);
 
   const toggleSection = (section: PlanSectionId) => {
+    setEditingDecision(null);
     setOpenSection((current) => (current === section ? null : section));
   };
 
-  const toggleTopic = (topic: string) => {
+  const selectTreatment = (id: string) => {
+    setTreatmentId(id);
+    if (assetType === "video") setPresentationMode(id as PresentationMode);
+    if (id !== "presenter") setPresenter("");
+    if (!derivedPlan.followsSuppliedScript) setStoryStructure(structureForTreatment(assetType, id));
+    setConfirmedTreatment(true);
+    setOpenSection(id === "presenter" ? "voice" : null);
+  };
+
+  const toggleTopic = (topic: string) =>
     setSelectedTopics((current) => {
       const next = current.includes(topic) ? current.filter((item) => item !== topic) : [...current, topic];
       setStoreTopics(next);
       return next;
     });
-  };
 
   const previewAudio = (kind: "voice" | "music", label: string) => {
     stopAudioPreview();
@@ -201,6 +326,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     }
   };
 
+  const effectiveFormat = format.includes("·") ? format.split("·")[0].trim() : format;
+
   const handleBackToBrief = () => {
     setVideoSubStage("intake");
     setView("create");
@@ -210,7 +337,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setView("home");
   };
 
-  // ── Trigger Plan Confirmation & Right Panel Loading Sequence ──
   const handleConfirmPlan = () => {
     setIsGenerating(true);
     setGenerationStep(1);
@@ -224,13 +350,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     }, 1200);
 
     setTimeout(() => {
-      // Transition smoothly into Studio Screen
       setVideoSubStage("studio");
       setView("studio");
     }, 1800);
   };
 
-  // ── Handle Chat Interaction ──
   const handleSendChatMessage = (textToSend?: string) => {
     const text = textToSend || chatInput.trim();
     if (!text) return;
@@ -239,7 +363,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setChatMessages(newMessages);
     if (!textToSend) setChatInput("");
 
-    // Simulate smart contextual assistant reply
     setTimeout(() => {
       const lower = text.toLowerCase();
       let reply = `Understood. I have verified this against the ${brandName} dossier and adjusted the plan canvas accordingly.`;
@@ -253,13 +376,14 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       } else if (lower.includes("presenter") || lower.includes("doctor") || lower.includes("avatar")) {
         setPresenter("Dr. Maya Kapoor");
         setPresentationMode("presenter");
+        setTreatmentId("presenter");
         reply = `Assigned **Dr. Maya Kapoor** (Dermatology Specialist) as the clinical presenter on the plan canvas.`;
       } else if (lower.includes("45") || lower.includes("shorten")) {
         setDuration("45 sec");
         reply = `Adjusted target length to **45 seconds** (compact 4-scene narrative).`;
       } else if (lower.includes("moa") || lower.includes("mechanism")) {
-        if (!selectedTopics.includes("Mechanism of Action")) {
-          toggleTopic("Mechanism of Action");
+        if (!selectedTopics.includes("Mechanism")) {
+          toggleTopic("Mechanism");
         }
         reply = `Elevated **Mechanism of Action** with dual-inhibition 3D visual cues in Scene 2.`;
       }
@@ -296,360 +420,765 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         </span>
       </header>
 
-      {/* ── Main Split View (Studio Style) ── */}
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        {/* ── LEFT PANEL: Plan Canvas Accordion (440px) ── */}
-        <aside className="w-full lg:w-[440px] shrink-0 border-r border-[var(--line)] bg-[#fafbf9] flex flex-col h-full overflow-hidden">
-          {/* Left Panel Header */}
-          <div className="border-b border-[var(--line)] bg-white px-5 py-3.5 shrink-0">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
-                Available Context
-              </span>
-              <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)]">
-                Grounding active
-              </span>
-            </div>
-            <div className="mt-1 flex items-center justify-between">
-              <h2 className="text-[16px] font-bold tracking-tight text-[var(--ink)]">
-                {brandName} Dossier Plan
+      {/* ── Main Split View: 2/3 Left (Plan Canvas), 1/3 Right (Chat Assistant) ── */}
+      <div className="flex-1 flex overflow-hidden min-h-0 relative">
+        {/* ── LEFT PANEL (2/3 width = calc(100% - 410px)): High-Fidelity Rich Plan Canvas ── */}
+        <section
+          style={{
+            width: "calc(100% - 410px)",
+            minWidth: "calc(100% - 410px)",
+            maxWidth: "calc(100% - 410px)",
+          }}
+          className="flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] bg-[#f8faf8] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
+        >
+          {/* Header in Left Canvas */}
+          <div className="flex items-center justify-between pb-2 shrink-0">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">
+                  Available Context
+                </span>
+                <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)] border border-emerald-200">
+                  Grounding active
+                </span>
+              </div>
+              <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight mt-0.5">
+                {brandName} Dossier Plan &amp; Storyboard Parameters
               </h2>
-              <span className="text-[11.5px] font-semibold text-[var(--ok)]">
-                ✓ 214 claims
+              <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
+                Refine the creative treatment, audience focus, and evidence cues before confirming scenes.
+              </p>
+            </div>
+            <div className="hidden sm:flex items-center gap-2">
+              <span className="rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[var(--ok)] border border-[var(--line)] shadow-2xs">
+                ✓ 214 approved claims cited
               </span>
             </div>
           </div>
 
-          {/* Accordion Plan Sections (Scrollable) */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
-            {/* 1. Audience & Goal */}
-            <PlanSection
-              icon={Users}
-              title="Audience & Campaign Goal"
-              summary={`${audience || "HCP"} · ${goal}`}
-              open={openSection === "audience-goal"}
-              onToggle={() => toggleSection("audience-goal")}
-            >
-              <div className="space-y-3 pt-1">
-                <div>
-                  <label className="text-[12px] font-bold text-[var(--ink-2)] block mb-1.5">Target Audience</label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {audienceOptions.map((opt) => (
+          {/* ─── Rich Accordion Sections with Dynamic Focus Enlargement & Dimming ─── */}
+          <div className="space-y-3 min-w-0 w-full">
+            {/* 1. Creative Treatment (in regular mode) OR Presenter & Voice (in Magic Avatar mode) */}
+            {isMagicAvatar ? (
+              <PlanSection
+                icon={Mic2}
+                title="Presenter, voice and sound"
+                summary={`${presenter || "Dr. Maya Kapoor"} · ${language} · ${music}`}
+                status={presenter ? "Confirmed" : "Needs you"}
+                open={openSection === "voice"}
+                onToggle={() => toggleSection("voice")}
+                tone={presenter ? "done" : "attention"}
+              >
+                <div className="mb-4">
+                  <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
+                    Select AI Presenter Avatar
+                  </div>
+                  <div className="grid gap-2.5 sm:grid-cols-3">
+                    {presenters.slice(0, 2).map((person) => (
                       <button
-                        key={opt}
-                        type="button"
-                        onClick={() => setAudience(opt)}
+                        key={person.name}
+                        onClick={() => setPresenter(person.name)}
                         className={cn(
-                          "py-1.5 px-2 rounded-[9px] text-[12px] font-semibold border transition text-center",
-                          audience === opt
-                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
-                            : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-black/20"
+                          "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                          presenter === person.name
+                            ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
+                            : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                         )}
                       >
-                        {opt}
+                        <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate font-bold text-[14px]">{person.name}</span>
+                          <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
+                        </div>
+                        {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
                       </button>
                     ))}
+                    <button
+                      onClick={() => setPresenterLibraryOpen(true)}
+                      className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
+                    >
+                      <span className="flex -space-x-2.5">
+                        {presenters.slice(2).map((person) => (
+                          <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                        ))}
+                      </span>
+                      <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
+                      <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
+                    </button>
                   </div>
                 </div>
-                <div>
-                  <label className="text-[12px] font-bold text-[var(--ink-2)] block mb-1.5">Campaign Goal</label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {["New Launch", "Awareness", "Retention"].map((g) => (
-                      <button
-                        key={g}
-                        type="button"
-                        onClick={() => {
-                          setGoal(g);
-                          setStoreGoal(g);
-                        }}
-                        className={cn(
-                          "py-1.5 px-2 rounded-[9px] text-[12px] font-semibold border transition text-center",
-                          goal === g
-                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
-                            : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-black/20"
-                        )}
-                      >
-                        {g}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </PlanSection>
 
-            {/* 2. Focus Topics */}
-            <PlanSection
-              icon={Layers}
-              title="Focus Topics"
-              summary={`${selectedTopics.length} topics selected`}
-              open={openSection === "topics"}
-              onToggle={() => toggleSection("topics")}
-            >
-              <div className="space-y-1.5 pt-1">
-                <p className="text-[11.5px] text-[var(--ink-muted)] mb-2">
-                  Statements will be synthesized from verified dossier sections for these topics:
-                </p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {topicOptions.map((topic) => {
-                    const isChecked = selectedTopics.includes(topic);
+                <div className="space-y-2">
+                  <DecisionRow
+                    label="Language"
+                    value={language}
+                    icon={<Globe2 className="size-4" />}
+                    editing={editingDecision === "language"}
+                    onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                  >
+                    <ChoiceGroup
+                      label="Choose a language"
+                      value={language}
+                      onChange={(next) => {
+                        setLanguage(next);
+                        setEditingDecision(null);
+                      }}
+                      options={["English", "Hindi", "Spanish", "French", "German"]}
+                      icon={() => <Globe2 className="size-4" />}
+                    />
+                  </DecisionRow>
+                  <DecisionRow
+                    label="Voice"
+                    value={voice}
+                    icon={<Mic2 className="size-4" />}
+                    editing={editingDecision === "voice"}
+                    onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
+                    onPreview={() => previewAudio("voice", voice)}
+                    playing={previewingAudio === voice}
+                  >
+                    <AudioChoices
+                      label="Choose and preview a voice"
+                      value={voice}
+                      options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                      onChange={(next) => {
+                        setVoice(next);
+                        setEditingDecision(null);
+                      }}
+                      previewing={previewingAudio}
+                      onPreview={(option) => previewAudio("voice", option)}
+                      onOpenLibrary={() => setVoiceLibraryOpen(true)}
+                    />
+                  </DecisionRow>
+                  <DecisionRow
+                    label="Background music"
+                    value={music}
+                    icon={<Music2 className="size-4" />}
+                    editing={editingDecision === "music"}
+                    onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
+                    onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
+                    playing={previewingAudio === music}
+                  >
+                    <AudioChoices
+                      label="Choose and preview music"
+                      value={music}
+                      options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                      onChange={(next) => {
+                        setMusic(next);
+                        setEditingDecision(null);
+                      }}
+                      previewing={previewingAudio}
+                      onPreview={(option) => previewAudio("music", option)}
+                      music
+                    />
+                  </DecisionRow>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-[var(--line)] flex justify-end">
+                  <Button
+                    onClick={() => {
+                      setConfirmedTreatment(true);
+                      setOpenSection(isProductFocus ? "product-assets" : "message");
+                    }}
+                    className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
+                  >
+                    {isProductFocus ? "Confirm Avatar & Proceed to Product Assets" : "Confirm Avatar & Continue"} <ArrowRight className="size-4 ml-1" />
+                  </Button>
+                </div>
+              </PlanSection>
+            ) : (
+              <PlanSection
+                icon={Film}
+                title="Creative treatment"
+                summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`}
+                status={confirmedTreatment ? "Confirmed" : "Needs you"}
+                open={openSection === "treatment"}
+                onToggle={() => toggleSection("treatment")}
+                tone={confirmedTreatment ? "done" : "attention"}
+              >
+                <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5">
+                  <div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div>
+                  <p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p>
+                </div>
+                <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
+                  {profile.treatments.map((item, index) => {
+                    const selected = treatmentId === item.id;
                     return (
                       <button
-                        key={topic}
-                        type="button"
-                        onClick={() => toggleTopic(topic)}
+                        key={item.id}
+                        onClick={() => selectTreatment(item.id)}
                         className={cn(
-                          "flex items-center gap-2 p-2 rounded-[10px] text-[12px] font-semibold border text-left transition",
-                          isChecked
-                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)]"
-                            : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-black/20"
+                          "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
+                          selected
+                            ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
+                            : "border-[#e4e9e6] bg-white opacity-85 hover:opacity-100 hover:border-[#ccd7d1]"
                         )}
                       >
-                        <span
-                          className={cn(
-                            "grid size-4 place-items-center rounded border shrink-0",
-                            isChecked ? "bg-[var(--brand)] border-[var(--brand)] text-white" : "border-black/20 bg-white"
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="font-bold text-[14.5px] text-[var(--ink)] flex items-center gap-1.5 leading-tight">
+                              {item.label}
+                            </span>
+                            <span
+                              className={cn(
+                                "grid size-5 shrink-0 place-items-center rounded-full border transition",
+                                selected
+                                  ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                  : "border-[#d6ddd9] bg-white"
+                              )}
+                            >
+                              {selected && <Check className="size-3" strokeWidth={3.5} />}
+                            </span>
+                          </div>
+                          {index === 0 && (
+                            <span className="inline-block mb-2 rounded-full bg-white px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
+                              Recommended
+                            </span>
                           )}
-                        >
-                          {isChecked && <Check className="size-3" strokeWidth={3} />}
-                        </span>
-                        <span className="truncate">{topic}</span>
+                          <p className="text-[12.5px] leading-relaxed text-[var(--ink-muted)]">
+                            {item.description}
+                          </p>
+                        </div>
                       </button>
                     );
                   })}
                 </div>
+                {!confirmedTreatment && (
+                  <Button
+                    onClick={() => {
+                      setConfirmedTreatment(true);
+                      setOpenSection(isProductFocus ? "product-assets" : null);
+                    }}
+                    className="mt-3 bg-[var(--brand)] text-white"
+                  >
+                    Use recommendation <ArrowRight className="size-4" />
+                  </Button>
+                )}
+              </PlanSection>
+            )}
+
+            {/* 2. Elevated Product Packshot & Visual Assets */}
+            <PlanSection
+              icon={PackageCheck}
+              title="Product & Device Visual Assets"
+              summary={
+                productMediaList.length > 0
+                  ? `${productMediaList.length} media attached · 3D packshots grounded`
+                  : isProductFocus
+                  ? "Required for Product Introduction · Please attach product photos/videos"
+                  : "Optional product packshots & 3D device renders"
+              }
+              status={
+                isProductFocus
+                  ? productMediaList.length > 0
+                    ? "Attached"
+                    : "Needs Assets"
+                  : "Optional"
+              }
+              open={openSection === "product-assets"}
+              onToggle={() => toggleSection("product-assets")}
+              tone={productMediaList.length > 0 ? "done" : isProductFocus ? "attention" : "default"}
+            >
+              <div className="space-y-3.5">
+                <div className="rounded-[14px] bg-[#fafbf9] border border-[var(--line)] p-3.5 text-[12.5px] text-[var(--ink-2)] leading-relaxed">
+                  <p className="font-bold text-[var(--ink)] mb-1">
+                    📸 Product Packshots &amp; Device Reference Media
+                  </p>
+                  <p className="text-[var(--ink-muted)] text-[12px]">
+                    Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {productMediaList.map((media) => (
+                    <div
+                      key={media.id}
+                      className="group relative rounded-xl border border-black/[0.08] bg-white overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
+                    >
+                      <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
+                        <img
+                          src={media.preview}
+                          alt={media.name}
+                          className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[8.5px] font-bold text-white uppercase backdrop-blur-xs">
+                          {media.type}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setProductMediaList((prev) => prev.filter((m) => m.id !== media.id))}
+                          className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-rose-600 transition cursor-pointer backdrop-blur-xs"
+                          title="Remove media"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+
+                      <div className="p-2.5">
+                        <span className="block truncate text-[12px] font-bold text-[var(--ink)]">
+                          {media.name}
+                        </span>
+                        <span className="text-[10px] text-[var(--ink-muted)] block mt-0.5 font-medium">
+                          {media.size} · Uploaded
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sampleItem = {
+                        id: `media-${Date.now()}`,
+                        name: "Velmora_Autoinjector_3D_Packshot.png",
+                        type: "image" as const,
+                        preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                        size: "4.2 MB",
+                      };
+                      setProductMediaList((prev) => [...prev, sampleItem]);
+                    }}
+                    className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--brand)]/40 bg-white p-4 text-center hover:bg-[var(--tint)] hover:border-[var(--brand)] transition cursor-pointer"
+                  >
+                    <div className="grid size-8 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand)]">
+                      <Plus className="size-4" />
+                    </div>
+                    <div>
+                      <span className="block text-[12px] font-bold text-[var(--brand)]">
+                        {productMediaList.length === 0 ? "Upload Product Photos / Videos" : "Add More Product Media"}
+                      </span>
+                      <span className="text-[10px] text-[var(--ink-muted)] mt-0.5 block">
+                        PNG, JPG, MP4 · Click to attach asset
+                      </span>
+                    </div>
+                  </button>
+                </div>
+
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (productMediaList.length === 0) {
+                        setProductMediaList([
+                          {
+                            id: `media-${Date.now()}`,
+                            name: "Velmora_Autoinjector_3D_Packshot.png",
+                            type: "image",
+                            preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                            size: "4.2 MB",
+                          },
+                        ]);
+                      }
+                      setOpenSection("message");
+                    }}
+                    className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
+                  >
+                    Save Product Assets &amp; Next <ArrowRight className="size-3.5 ml-1" />
+                  </Button>
+                </div>
               </div>
             </PlanSection>
 
-            {/* 3. Format & Frame */}
+            {/* 3. Message and Audience */}
+            <PlanSection
+              icon={Target}
+              title="Message and audience"
+              summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
+              status="From brief"
+              open={openSection === "message"}
+              onToggle={() => toggleSection("message")}
+            >
+              <div className="space-y-2">
+                <DecisionRow
+                  label="Audience"
+                  value={audience}
+                  icon={<AudienceIcon value={audience} />}
+                  editing={editingDecision === "audience"}
+                  onEdit={() => setEditingDecision(editingDecision === "audience" ? null : "audience")}
+                >
+                  <ChoiceGroup
+                    label="Choose the primary audience"
+                    value={audience}
+                    onChange={(next) => {
+                      setAudience(next as Audience);
+                      setEditingDecision(null);
+                    }}
+                    options={audienceOptions}
+                    icon={(next) => <AudienceIcon value={next} />}
+                  />
+                </DecisionRow>
+                <DecisionRow
+                  label="Objective"
+                  value={goal}
+                  icon={<Target className="size-4" />}
+                  editing={editingDecision === "objective"}
+                  onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}
+                >
+                  <ChoiceGroup
+                    label="What should this accomplish?"
+                    value={goal}
+                    onChange={(next) => {
+                      setGoal(next);
+                      setStoreGoal(next);
+                      setEditingDecision(null);
+                    }}
+                    options={["New launch", "Awareness", "Adoption", "Retention", "Education"]}
+                    icon={() => <Target className="size-4" />}
+                  />
+                </DecisionRow>
+                <DecisionRow
+                  label="Topics"
+                  value={selectedTopics.join(" · ")}
+                  icon={<LayoutList className="size-4" />}
+                  editing={editingDecision === "topics"}
+                  onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}
+                >
+                  <div className="text-[13px] font-semibold text-[#5f6b65]">Include only what matters</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {topics.map((topic) => (
+                      <button
+                        key={topic}
+                        onClick={() => toggleTopic(topic)}
+                        aria-pressed={selectedTopics.includes(topic)}
+                        className={cn(
+                          "focus-ring min-h-10 rounded-[12px] border px-3 text-[13px] font-medium transition cursor-pointer",
+                          selectedTopics.includes(topic)
+                            ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)]"
+                            : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                        )}
+                      >
+                        {selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <Button size="sm" onClick={() => setEditingDecision(null)}>
+                      Done
+                    </Button>
+                  </div>
+                </DecisionRow>
+              </div>
+            </PlanSection>
+
+            {/* 4. Delivery */}
             <PlanSection
               icon={MonitorPlay}
-              title="Format & Duration"
-              summary={`${format || "16:9"} Landscape · ${duration || "60 sec"}`}
-              open={openSection === "format"}
-              onToggle={() => toggleSection("format")}
+              title="Delivery"
+              summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration}`}
+              status="Recommended"
+              open={openSection === "delivery"}
+              onToggle={() => toggleSection("delivery")}
             >
-              <div className="space-y-3 pt-1">
-                <div>
-                  <label className="text-[12px] font-bold text-[var(--ink-2)] block mb-1.5">Output Frame</label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {[
-                      { id: "16:9", label: "16:9", sub: "Landscape" },
-                      { id: "9:16", label: "9:16", sub: "Portrait" },
-                      { id: "1:1", label: "1:1", sub: "Square" },
-                    ].map((f) => (
-                      <button
-                        key={f.id}
-                        type="button"
-                        onClick={() => setFormat(f.id)}
-                        className={cn(
-                          "py-2 px-1.5 rounded-[10px] text-center border transition",
-                          format === f.id
-                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
-                            : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-black/20"
-                        )}
-                      >
-                        <span className="block text-[12px] font-bold">{f.label}</span>
-                        <span className="block text-[9.5px] text-[var(--ink-muted)]">{f.sub}</span>
-                      </button>
-                    ))}
+              <div className="space-y-2">
+                <DecisionRow
+                  label="Destinations"
+                  value={displayIntendedUses(intendedUse)}
+                  icon={<ChannelIcon value={parseIntendedUses(intendedUse)[0]} />}
+                  editing={editingDecision === "channel"}
+                  onEdit={() => setEditingDecision(editingDecision === "channel" ? null : "channel")}
+                >
+                  <MultiChoiceGroup
+                    label="Choose one or more destinations"
+                    values={parseIntendedUses(intendedUse)}
+                    onChange={(next) => setIntendedUse(serializeIntendedUses(next))}
+                    onDone={() => setEditingDecision(null)}
+                    options={useOptions}
+                    icon={(next) => <ChannelIcon value={next} />}
+                  />
+                </DecisionRow>
+                <DecisionRow
+                  label={assetType === "video" ? "Frame" : "Format"}
+                  value={effectiveFormat}
+                  icon={<FrameGlyph value={effectiveFormat} />}
+                  editing={editingDecision === "format"}
+                  onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
+                >
+                  <FormatChoices
+                    label="Choose the output shape"
+                    value={effectiveFormat}
+                    options={profile.formatOptions}
+                    onChange={(next) => {
+                      setFormat(next);
+                      setEditingDecision(null);
+                    }}
+                  />
+                </DecisionRow>
+                <DecisionRow
+                  label={assetType === "video" ? "Length" : "Amount"}
+                  value={duration}
+                  icon={<Clock3 className="size-4" />}
+                  editing={editingDecision === "length"}
+                  onEdit={() => setEditingDecision(editingDecision === "length" ? null : "length")}
+                >
+                  <SteppedControl
+                    label={assetType === "video" ? "Video length" : "Content amount"}
+                    value={duration}
+                    options={profile.lengthOptions}
+                    onChange={setDuration}
+                  />
+                  <div className="mt-3 flex justify-end">
+                    <Button size="sm" onClick={() => setEditingDecision(null)}>
+                      Done
+                    </Button>
                   </div>
-                </div>
-                <div>
-                  <label className="text-[12px] font-bold text-[var(--ink-2)] block mb-1.5">Duration</label>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {["30 sec", "45 sec", "60 sec", "90 sec"].map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        onClick={() => setDuration(d)}
-                        className={cn(
-                          "py-1.5 text-[11.5px] rounded-[9px] text-center border transition font-semibold",
-                          duration === d
-                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
-                            : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-black/20"
-                        )}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                </DecisionRow>
               </div>
             </PlanSection>
 
-            {/* 4. Language & Voiceover */}
-            <PlanSection
-              icon={Mic2}
-              title="Voice & Language"
-              summary={`${language || "English"} · ${voice || "Rohan"} (${music || "Calm clinical"})`}
-              open={openSection === "voice"}
-              onToggle={() => toggleSection("voice")}
-            >
-              <div className="space-y-3 pt-1">
-                <div>
-                  <label className="text-[12px] font-bold text-[var(--ink-2)] block mb-1.5">Narrator Voice</label>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {voiceList.slice(0, 4).map((v) => (
-                      <button
-                        key={v.name}
-                        type="button"
-                        onClick={() => setVoice(v.name)}
-                        className={cn(
-                          "p-2 rounded-[10px] border text-left transition",
-                          voice === v.name
-                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
-                            : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-black/20"
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[12px] font-bold">{v.name}</span>
-                          <span className="text-[9.5px] text-[var(--ink-muted)]">{v.tag}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-[12px] font-bold text-[var(--ink-2)] block mb-1.5">Background Sound</label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {["No music", "Calm clinical", "Warm"].map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setMusic(m)}
-                        className={cn(
-                          "py-1.5 text-[11.5px] rounded-[9px] text-center border transition font-semibold",
-                          music === m
-                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
-                            : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-black/20"
-                        )}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </PlanSection>
-
-            {/* 5. Presenter Avatar (if applicable) */}
-            {(isMagicAvatar || presentationMode === "presenter") && (
+            {/* 5. Presenter, Voice and Sound (for standard video mode) */}
+            {!isMagicAvatar && assetType === "video" && treatmentId !== "visual-only" && (
               <PlanSection
-                icon={Users}
-                title="AI Presenter Avatar"
-                summary={presenter || "Dr. Maya Kapoor"}
-                open={openSection === "presenter"}
-                onToggle={() => toggleSection("presenter")}
+                icon={Mic2}
+                title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"}
+                summary={
+                  needsPresenter
+                    ? `${presenter || "Choose presenter"} · ${language} · ${music}`
+                    : `${voice} · ${language} · ${music}`
+                }
+                status={needsPresenter && !presenter ? "Needs you" : "Recommended"}
+                open={openSection === "voice"}
+                onToggle={() => toggleSection("voice")}
+                tone={needsPresenter && !presenter ? "attention" : "default"}
               >
-                <div className="space-y-2 pt-1">
-                  <div className="grid grid-cols-2 gap-2">
-                    {presenters.slice(0, 2).map((p) => (
+                {needsPresenter && (
+                  <div className="mb-4">
+                    <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
+                      Who appears on screen?
+                    </div>
+                    <div className="grid gap-2.5 sm:grid-cols-3">
+                      {presenters.slice(0, 2).map((person) => (
+                        <button
+                          key={person.name}
+                          onClick={() => setPresenter(person.name)}
+                          className={cn(
+                            "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                            presenter === person.name
+                              ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
+                              : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                          )}
+                        >
+                          <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <span className="block truncate font-bold text-[14px]">{person.name}</span>
+                            <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
+                          </div>
+                          {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
+                        </button>
+                      ))}
                       <button
-                        key={p.name}
-                        type="button"
-                        onClick={() => setPresenter(p.name)}
-                        className={cn(
-                          "flex items-center gap-2 p-2 rounded-[11px] border text-left transition",
-                          presenter === p.name
-                            ? "border-[var(--brand)] bg-[var(--tint)] ring-1 ring-[var(--brand)]"
-                            : "border-black/[0.08] bg-white hover:border-black/20"
-                        )}
+                        onClick={() => setPresenterLibraryOpen(true)}
+                        className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
                       >
-                        <img src={p.image} alt={p.name} className="size-8 rounded-full object-cover shrink-0" />
-                        <div className="min-w-0">
-                          <span className="block text-[12px] font-bold truncate text-[var(--ink)]">{p.name}</span>
-                          <span className="block text-[10px] text-[var(--ink-muted)] truncate">Presenter</span>
-                        </div>
+                        <span className="flex -space-x-2.5">
+                          {presenters.slice(2).map((person) => (
+                            <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                          ))}
+                        </span>
+                        <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
+                        <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
                       </button>
-                    ))}
+                    </div>
                   </div>
+                )}
+                <div className="space-y-2">
+                  <DecisionRow
+                    label="Language"
+                    value={language}
+                    icon={<Globe2 className="size-4" />}
+                    editing={editingDecision === "language"}
+                    onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                  >
+                    <ChoiceGroup
+                      label="Choose a language"
+                      value={language}
+                      onChange={(next) => {
+                        setLanguage(next);
+                        setEditingDecision(null);
+                      }}
+                      options={["English", "Hindi", "Spanish", "French", "German"]}
+                      icon={() => <Globe2 className="size-4" />}
+                    />
+                  </DecisionRow>
+                  <DecisionRow
+                    label="Voice"
+                    value={voice}
+                    icon={<Mic2 className="size-4" />}
+                    editing={editingDecision === "voice"}
+                    onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
+                    onPreview={() => previewAudio("voice", voice)}
+                    playing={previewingAudio === voice}
+                  >
+                    <AudioChoices
+                      label="Choose and preview a voice"
+                      value={voice}
+                      options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                      onChange={(next) => {
+                        setVoice(next);
+                        setEditingDecision(null);
+                      }}
+                      previewing={previewingAudio}
+                      onPreview={(option) => previewAudio("voice", option)}
+                      onOpenLibrary={() => setVoiceLibraryOpen(true)}
+                    />
+                  </DecisionRow>
+                  <DecisionRow
+                    label="Background music"
+                    value={music}
+                    icon={<Music2 className="size-4" />}
+                    editing={editingDecision === "music"}
+                    onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
+                    onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
+                    playing={previewingAudio === music}
+                  >
+                    <AudioChoices
+                      label="Choose and preview music"
+                      value={music}
+                      options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                      onChange={(next) => {
+                        setMusic(next);
+                        setEditingDecision(null);
+                      }}
+                      previewing={previewingAudio}
+                      onPreview={(option) => previewAudio("music", option)}
+                      music
+                    />
+                  </DecisionRow>
                 </div>
               </PlanSection>
             )}
 
-            {/* 6. Product & Device Visual Assets */}
+            {/* 6. Brand and Evidence */}
             <PlanSection
-              icon={PackageCheck}
-              title="Product Visual Assets"
-              summary={productMediaList.length > 0 ? `${productMediaList.length} media attached` : "Add packshot / 3D renders"}
-              open={openSection === "product-assets"}
-              onToggle={() => toggleSection("product-assets")}
+              icon={ShieldCheck}
+              title="Brand and evidence"
+              summary={
+                derivedPlan.sourceConflict && !sourceConflictResolved
+                  ? "Source authority needs confirmation"
+                  : approvedEvidenceCount > 0
+                  ? `${approvedEvidenceCount} approved sources · brand kit applied`
+                  : "Concept only · approved source needed"
+              }
+              status={
+                derivedPlan.sourceConflict && !sourceConflictResolved
+                  ? "Needs you"
+                  : approvedEvidenceCount > 0
+                  ? "From source"
+                  : "Review"
+              }
+              open={openSection === "brand"}
+              onToggle={() => toggleSection("brand")}
+              tone={derivedPlan.sourceConflict && !sourceConflictResolved ? "attention" : "default"}
             >
-              <div className="space-y-2 pt-1">
-                <p className="text-[11.5px] text-[var(--ink-muted)]">
-                  Ground high-resolution packaging, autoinjector pens, or anatomical models in 3D:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {productMediaList.map((m) => (
-                    <div key={m.id} className="relative size-14 rounded-lg overflow-hidden border border-black/10">
-                      <img src={m.preview} alt={m.name} className="size-full object-cover" />
+              {derivedPlan.sourceConflict && !sourceConflictResolved && (
+                <div className="mb-3 rounded-[12px] border border-[#e4c17f] bg-[var(--warning-soft)] p-3.5">
+                  <div className="flex items-start gap-3">
+                    <Info className="mt-0.5 size-5 shrink-0 text-[var(--warning)]" />
+                    <div>
+                      <div className="text-[14px] font-bold text-[#704b13]">Confirm source authority</div>
+                      <p className="mt-1 text-[13px] leading-5 text-[#765b31]">{derivedPlan.sourceConflict}</p>
                       <button
-                        onClick={() => setProductMediaList((prev) => prev.filter((item) => item.id !== m.id))}
-                        className="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full size-4 grid place-items-center"
+                        onClick={() => setSourceConflictResolved(true)}
+                        className="focus-ring mt-2 min-h-10 rounded-[9px] bg-white px-3 text-[13px] font-bold text-[#704b13] shadow-sm"
                       >
-                        <X className="size-2.5" />
+                        Use current {market} source as authority
                       </button>
                     </div>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setProductMediaList((prev) => [
-                        ...prev,
-                        {
-                          id: `p-${Date.now()}`,
-                          name: `${brandName} Delivery Device.png`,
-                          type: "image",
-                          preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=240&q=80",
-                          size: "1.4 MB",
-                        },
-                      ]);
-                    }}
-                    className="size-14 rounded-lg border border-dashed border-black/20 flex flex-col items-center justify-center text-[10px] text-[var(--ink-muted)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer"
-                  >
-                    <Plus className="size-4 mb-0.5" />
-                    <span>Attach</span>
-                  </button>
+                  </div>
                 </div>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <InfoCard
+                  icon={PackageCheck}
+                  title="Brand material"
+                  body={`Primary logo, packshot, typography and fair balance for ${brandName} will be applied automatically.`}
+                />
+                <InfoCard
+                  icon={BookOpenCheck}
+                  title="Evidence coverage"
+                  body={
+                    approvedEvidenceCount > 0
+                      ? `Mechanism, efficacy and required safety language are linked to current ${market} sources.`
+                      : "This can become a concept storyboard, but it will not be marked evidence-ready."
+                  }
+                />
               </div>
+              <button
+                onClick={() => setSourceManagerOpen(true)}
+                className="focus-ring mt-3 flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)] cursor-pointer"
+              >
+                <Plus className="size-4" /> Add or remove sources
+              </button>
+            </PlanSection>
+
+            {/* 7. Story Structure */}
+            <PlanSection
+              icon={LayoutList}
+              title="Story structure"
+              summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : "sections"}`}
+              status={derivedPlan.followsSuppliedScript ? "From script" : "Recommended"}
+              open={openSection === "story"}
+              onToggle={() => toggleSection("story")}
+            >
+              <StructureChoices
+                value={storyStructure}
+                onChange={setStoryStructure}
+                options={
+                  assetType === "video"
+                    ? ["Product → Proof", "Problem → Solution", "Mechanism → Evidence"]
+                    : profile.treatments.map((item) => item.label)
+                }
+              />
             </PlanSection>
           </div>
 
-          {/* Left Panel Sticky Footer CTA */}
-          <div className="p-4 border-t border-[var(--line)] bg-white shrink-0 space-y-2">
-            <Button
-              onClick={handleConfirmPlan}
-              disabled={isGenerating}
-              size="lg"
-              className="h-12 w-full rounded-[13px] text-[14.5px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer"
-            >
-              <span>Confirm Plan &amp; Build Scenes</span>
-              <ArrowRight className="size-4 ml-1.5" />
-            </Button>
-            <div className="flex items-center justify-center gap-1.5 text-[11px] text-[var(--ink-muted)]">
-              <ShieldCheck className="size-3.5 text-[var(--ok)]" />
-              <span>Grounded in verified FDA/EMA label · Nothing created until confirmed</span>
+          {/* Sticky Confirmation CTA at the bottom of the Left Stage */}
+          <div className="sticky bottom-0 pt-4 pb-2 bg-gradient-to-t from-[#f8faf8] via-[#f8faf8] to-transparent shrink-0 mt-auto">
+            <div className="squircle-card border border-[var(--line)] bg-white p-4 shadow-md rounded-[18px] flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-emerald-600" />
+                  <span className="text-[13.5px] font-bold text-[var(--ink)]">Ready to generate scenes</span>
+                </div>
+                <p className="text-[11.5px] text-[var(--ink-muted)] mt-0.5">
+                  Grounded against 214 approved claims · Nothing is finalized until you review in Studio.
+                </p>
+              </div>
+
+              <Button
+                onClick={handleConfirmPlan}
+                disabled={isGenerating}
+                size="lg"
+                className="h-11 px-6 rounded-[12px] text-[14px] font-bold shadow-md bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer shrink-0"
+              >
+                <span>Confirm Plan &amp; Build Scenes</span>
+                <ArrowRight className="size-4 ml-1.5" />
+              </Button>
             </div>
           </div>
-        </aside>
+        </section>
 
-        {/* ── RIGHT PANEL: Chat Canvas / Generation Loader (flex-1) ── */}
-        <main className="flex-1 flex flex-col h-full bg-[#f7f8f6] overflow-hidden min-w-0">
+        {/* ── RIGHT PANEL (1/3 width = 410px): Interactive AI Planning Director Chat Assistant ── */}
+        <aside
+          style={{
+            width: 410,
+            minWidth: 410,
+            maxWidth: 410,
+          }}
+          className="flex flex-col shrink-0 min-h-0 bg-[#fafbf9] border-l border-[var(--line)] overflow-hidden"
+        >
           {isGenerating ? (
             /* ── Loading State upon confirming plan ── */
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
               <div className="size-16 rounded-2xl bg-[var(--tint)] border border-[var(--tint-line)] flex items-center justify-center mb-5 shadow-sm">
                 <Sparkles className="size-8 text-[var(--brand)] animate-pulse" />
               </div>
-              <h3 className="text-[20px] font-extrabold text-[var(--ink)] tracking-tight">
+              <h3 className="text-[18px] font-extrabold text-[var(--ink)] tracking-tight">
                 Generating Storyboard Scenes...
               </h3>
-              <p className="text-[13px] text-[var(--ink-muted)] mt-1.5 max-w-[420px]">
+              <p className="text-[12.5px] text-[var(--ink-muted)] mt-1.5 max-w-[340px]">
                 Structuring clinical narrative, scene narration, and multi-layer visual grounding against 214 approved claims.
               </p>
 
-              {/* Step Checklist Indicator */}
-              <div className="mt-6 w-full max-w-[340px] space-y-2 text-left text-[12.5px]">
+              <div className="mt-6 w-full max-w-[320px] space-y-2 text-left text-[12px]">
                 <div className={cn("flex items-center gap-2.5 p-2.5 rounded-[10px] border transition", generationStep >= 1 ? "bg-white border-black/10 text-[var(--ink)]" : "opacity-40")}>
                   <Check className={cn("size-4 shrink-0", generationStep >= 1 ? "text-[var(--ok)]" : "text-black/30")} />
                   <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
@@ -665,37 +1194,37 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               </div>
             </div>
           ) : (
-            /* ── Normal Interactive Chat State ── */
+            /* ── Normal Interactive Chat State (Same style as Studio Assistant) ── */
             <>
               {/* Top Chat Mini Header */}
-              <div className="h-11 px-5 border-b border-black/[0.06] bg-white/70 backdrop-blur-xs flex items-center justify-between shrink-0">
+              <div className="h-11 px-4 border-b border-black/[0.06] bg-white flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2">
                   <span className="size-2 rounded-full bg-[var(--ok)]" />
                   <span className="text-[12.5px] font-bold text-[var(--ink)]">AI Planning Director</span>
                 </div>
-                <span className="text-[11.5px] font-medium text-[var(--ink-muted)]">
-                  Live Canvas Synchronized
+                <span className="text-[11px] font-medium text-[var(--ink-muted)]">
+                  Live Synchronized
                 </span>
               </div>
 
               {/* Chat Messages Thread */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
                 {chatMessages.map((msg, index) => (
                   <div
                     key={index}
                     className={cn(
-                      "flex gap-3 max-w-[680px]",
+                      "flex gap-2.5 max-w-full",
                       msg.role === "user" ? "ml-auto justify-end" : "mr-auto"
                     )}
                   >
                     {msg.role === "swishx" && (
-                      <div className="size-8 rounded-full bg-[var(--brand)] text-white grid place-items-center font-bold text-[11px] shrink-0 mt-0.5 shadow-2xs">
+                      <div className="size-7 rounded-full bg-[var(--brand)] text-white grid place-items-center font-bold text-[10px] shrink-0 mt-0.5 shadow-2xs">
                         SX
                       </div>
                     )}
                     <div
                       className={cn(
-                        "rounded-[16px] px-4 py-3 text-[13.5px] leading-relaxed shadow-2xs",
+                        "rounded-[15px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-2xs max-w-[85%]",
                         msg.role === "user"
                           ? "bg-[var(--brand)] text-white font-medium"
                           : "bg-white border border-[var(--line)] text-[var(--ink)]"
@@ -703,7 +1232,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     >
                       <p className="whitespace-pre-wrap">{msg.text}</p>
                       {msg.role === "swishx" && index === 1 && (
-                        <div className="mt-3 pt-2.5 border-t border-black/[0.06] flex flex-wrap gap-1.5">
+                        <div className="mt-2.5 pt-2 border-t border-black/[0.06] flex flex-wrap gap-1.5">
                           {[
                             "Switch to 9:16 Portrait",
                             "Elevate MoA in Scene 2",
@@ -714,7 +1243,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               key={chip}
                               type="button"
                               onClick={() => handleSendChatMessage(chip)}
-                              className="text-[11.5px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] hover:bg-[#ffe5dd] border border-[var(--tint-line)] px-2.5 py-1 rounded-full transition cursor-pointer"
+                              className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] hover:bg-[#ffe5dd] border border-[var(--tint-line)] px-2 py-0.5 rounded-full transition cursor-pointer"
                             >
                               {chip}
                             </button>
@@ -727,32 +1256,31 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Bottom Chat Input Bar (Studio Style) */}
-              <div className="p-4 border-t border-black/[0.06] bg-white shrink-0">
-                <div className="max-w-[760px] mx-auto relative">
-                  <div className="flex items-center gap-2 rounded-[14px] border border-black/15 bg-[#f7f8f6] px-3 py-2 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-xs transition">
-                    {/* '+' Context Menu Trigger */}
+              {/* Bottom Chat Input Bar */}
+              <div className="p-3 border-t border-black/[0.06] bg-white shrink-0">
+                <div className="relative">
+                  <div className="flex items-center gap-1.5 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-2.5 py-1.5 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-xs transition">
                     <div className="relative">
                       <button
                         type="button"
                         onClick={() => setChatContextOpen(!chatContextOpen)}
-                        className="grid size-7 place-items-center rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5 transition cursor-pointer"
+                        className="grid size-6 place-items-center rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5 transition cursor-pointer"
                         title="Add context"
                       >
-                        <Plus className="size-4" />
+                        <Plus className="size-3.5" />
                       </button>
 
                       {chatContextOpen && (
-                        <div className="absolute bottom-full left-0 mb-2 w-52 rounded-xl border border-black/10 bg-white p-1.5 shadow-lg z-20 space-y-0.5">
+                        <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-black/10 bg-white p-1 shadow-lg z-20 space-y-0.5">
                           <button
                             type="button"
                             onClick={() => {
                               setChatContextOpen(false);
                               handleSendChatMessage("Attach trial citations from CLARITY-CV study.");
                             }}
-                            className="w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left"
+                            className="w-full flex items-center gap-2 px-2 py-1.5 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left"
                           >
-                            <FileCheck2 className="size-3.5 text-[var(--brand)]" />
+                            <FileCheck2 className="size-3 text-[var(--brand)]" />
                             Attach trial citations
                           </button>
                           <button
@@ -761,9 +1289,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               setChatContextOpen(false);
                               handleSendChatMessage("Adjust narrative tone to be more clinical and objective.");
                             }}
-                            className="w-full flex items-center gap-2 px-2.5 py-2 text-[12px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left"
+                            className="w-full flex items-center gap-2 px-2 py-1.5 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left"
                           >
-                            <Target className="size-3.5 text-[var(--brand)]" />
+                            <Target className="size-3 text-[var(--brand)]" />
                             Specify clinical tone
                           </button>
                         </div>
@@ -777,72 +1305,710 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleSendChatMessage();
                       }}
-                      placeholder="Ask about the plan or request changes..."
-                      className="flex-1 bg-transparent text-[13.5px] outline-none text-[var(--ink)] placeholder:text-[var(--ink-4)]"
+                      placeholder="Ask or request changes..."
+                      className="flex-1 bg-transparent text-[12.5px] outline-none text-[var(--ink)] placeholder:text-[var(--ink-4)]"
                     />
 
                     <button
                       type="button"
                       onClick={() => handleSendChatMessage()}
                       disabled={!chatInput.trim()}
-                      className="grid size-7 place-items-center rounded-lg bg-[var(--brand)] text-white disabled:opacity-30 hover:bg-[var(--brand-deep)] transition cursor-pointer disabled:cursor-not-allowed"
+                      className="grid size-6 place-items-center rounded-lg bg-[var(--brand)] text-white disabled:opacity-30 hover:bg-[var(--brand-deep)] transition cursor-pointer disabled:cursor-not-allowed"
                     >
-                      <Send className="size-3.5" />
+                      <Send className="size-3" />
                     </button>
                   </div>
                 </div>
               </div>
             </>
           )}
-        </main>
+        </aside>
+      </div>
+
+      {/* ── Modals & Drawers ── */}
+      {presenterLibraryOpen && (
+        <PresenterLibrary
+          selected={presenter}
+          onSelect={(name) => {
+            setPresenter(name);
+            setPresenterLibraryOpen(false);
+          }}
+          onClose={() => setPresenterLibraryOpen(false)}
+        />
+      )}
+      {voiceLibraryOpen && (
+        <VoiceLibrary
+          selected={voice}
+          onSelect={(name) => {
+            setVoice(name);
+            setVoiceLibraryOpen(false);
+          }}
+          onClose={() => setVoiceLibraryOpen(false)}
+          previewing={previewingAudio}
+          onPreview={(name) => previewAudio("voice", name)}
+        />
+      )}
+      {sourceManagerOpen && (
+        <SourceManager
+          selectedIds={selectedSourceIds}
+          onToggle={toggleSource}
+          onClose={() => setSourceManagerOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── High Fidelity PlanSection with Smooth Zoom & Focus Animations ──
+function PlanSection({
+  icon: Icon,
+  title,
+  summary,
+  status,
+  open,
+  onToggle,
+  tone = "default",
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  summary: string;
+  status: string;
+  open: boolean;
+  onToggle: () => void;
+  tone?: "default" | "done" | "attention";
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className={cn(
+        "squircle-card relative rounded-[20px] border transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+        open
+          ? "z-20 bg-white scale-[1.015] shadow-[0_12px_36px_rgba(10,13,20,0.08),0_2px_8px_rgba(10,13,20,0.04)] border-[var(--brand)] ring-2 ring-[var(--brand-soft)] my-3"
+          : "z-0 bg-white/90 opacity-[.82] hover:opacity-100 hover:bg-white hover:shadow-sm",
+        !open && (tone === "attention" ? "border-[#ead8b5]" : "border-[var(--line)]")
+      )}
+    >
+      <button
+        onClick={onToggle}
+        className={cn(
+          "focus-ring group flex w-full items-center gap-3.5 px-4 text-left transition-all duration-200 sm:px-5 cursor-pointer",
+          open ? "min-h-[74px]" : "min-h-[64px]"
+        )}
+        aria-expanded={open}
+      >
+        <span
+          className={cn(
+            "squircle-control grid size-10 shrink-0 place-items-center rounded-[12px] transition-transform group-hover:scale-105",
+            tone === "attention"
+              ? "bg-[var(--warning-soft)] text-[var(--warning)]"
+              : tone === "done"
+              ? "bg-[var(--brand)] text-white shadow-xs"
+              : "bg-[#edf3ef] text-[var(--brand)]"
+          )}
+        >
+          {tone === "done" ? (
+            <Check className="size-4" strokeWidth={3} />
+          ) : (
+            <Icon className="size-[19px]" />
+          )}
+        </span>
+
+        <span className="min-w-0 flex-1">
+          <span
+            className={cn(
+              "block font-bold tracking-tight transition-colors",
+              open ? "text-[16px] text-[var(--ink)]" : "text-[15px] text-[var(--ink-2)]"
+            )}
+          >
+            {title}
+          </span>
+          <span className="mt-0.5 block truncate text-[12.5px] text-[var(--ink-muted)]">
+            {summary}
+          </span>
+        </span>
+
+        <span
+          className={cn(
+            "hidden rounded-full px-2.5 py-1 text-[11px] font-bold sm:inline border",
+            tone === "attention"
+              ? "bg-[var(--warning-soft)] text-[var(--warning)] border-[#fde68a]"
+              : tone === "done"
+              ? "bg-[var(--tint)] text-[var(--brand-deep)] border-[var(--tint-line)]"
+              : "bg-[#eef2ef] text-[#66736c] border-[#e2e8e4]"
+          )}
+        >
+          {status}
+        </span>
+
+        <div
+          className={cn(
+            "grid size-7 place-items-center rounded-full transition-all duration-300",
+            open ? "rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:bg-black/5"
+          )}
+        >
+          <ChevronDown className="size-4" />
+        </div>
+      </button>
+
+      <div
+        aria-hidden={!open}
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+          open ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
+        )}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-[var(--line)] bg-[#fafbf9]/60 px-4 py-4.5 sm:px-5">
+            {children}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DecisionRow({
+  label,
+  value,
+  icon,
+  editing,
+  onEdit,
+  onPreview,
+  playing = false,
+  children,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  editing: boolean;
+  onEdit: () => void;
+  onPreview?: () => void;
+  playing?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "squircle-panel overflow-hidden border transition-[opacity,border-color,box-shadow,background-color] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] rounded-[14px]",
+        editing
+          ? "border-[#b7c9c0] bg-[#fbfdfc] opacity-100 shadow-[0_3px_14px_rgb(19_31_26/4%)]"
+          : "border-[#e5e9e6] bg-white opacity-75 hover:opacity-100"
+      )}
+    >
+      <div className="flex min-h-[58px] items-center gap-3 px-3.5">
+        <span className="squircle-control grid size-8 shrink-0 place-items-center rounded-[9px] bg-[#edf3ef] text-[var(--brand)]">
+          {icon}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11.5px] font-medium text-[var(--ink-muted)]">{label}</span>
+          <span className="mt-0.5 block truncate text-[13.5px] font-medium">{value}</span>
+        </span>
+        <div className="flex items-center gap-1.5">
+          {onPreview && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPreview}
+              className={cn("size-8 p-0 rounded-full", playing && "text-[var(--brand)]")}
+              aria-label="Preview sound"
+            >
+              {playing ? <Pause className="size-4" /> : <Volume2 className="size-4" />}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onEdit}
+            className="text-[12.5px] font-semibold text-[var(--brand)]"
+          >
+            {editing ? "Close" : "Change"}
+          </Button>
+        </div>
+      </div>
+      {editing && <div className="border-t border-[var(--line)] bg-white p-3.5">{children}</div>}
+    </div>
+  );
+}
+
+function ChoiceGroup({
+  label,
+  value,
+  options,
+  onChange,
+  icon,
+  className,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+  icon: (value: string) => React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div>
+      <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+        {options.map((option) => {
+          const active = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={cn(
+                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-[13px] font-medium transition cursor-pointer",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+              )}
+            >
+              <span className="grid size-6 place-items-center text-current">{icon(option)}</span>
+              <span className="flex-1">{option}</span>
+              {active && <Check className="size-3.5 text-[var(--brand)] shrink-0" strokeWidth={3} />}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// ── Supporting PlanSection Component ──
-function PlanSection({
-  icon: Icon,
-  title,
-  summary,
-  open,
-  onToggle,
-  children,
+function MultiChoiceGroup({
+  label,
+  values,
+  options,
+  onChange,
+  onDone,
+  icon,
 }: {
-  icon: typeof Film;
-  title: string;
-  summary: string;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
+  label: string;
+  values: string[];
+  options: readonly string[];
+  onChange: (values: string[]) => void;
+  onDone: () => void;
+  icon: (value: string) => React.ReactNode;
 }) {
   return (
-    <div className="rounded-[14px] border border-[var(--line)] bg-white overflow-hidden shadow-2xs">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-3.5 text-left hover:bg-[#fafbf9] transition cursor-pointer"
-      >
-        <div className="flex items-center gap-2.5 min-w-0 pr-2">
-          <div className="grid size-7 place-items-center rounded-lg bg-[var(--brand-soft)] text-[var(--brand)] shrink-0">
-            <Icon className="size-3.5" />
-          </div>
-          <div className="min-w-0">
-            <span className="block text-[13px] font-bold text-[var(--ink)] truncate">{title}</span>
-            <span className="block text-[11px] text-[var(--ink-muted)] truncate">{summary}</span>
-          </div>
-        </div>
-        <div className="text-[var(--ink-muted)] shrink-0">
-          {open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-        </div>
-      </button>
-      {open && <div className="p-3.5 pt-1 border-t border-black/[0.04] bg-[#fafbf9]">{children}</div>}
+    <div>
+      <div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div>
+      <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
+        {options.map((option) => {
+          const active = values.includes(option);
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                const next = active ? values.filter((v) => v !== option) : [...values, option];
+                onChange(next);
+              }}
+              className={cn(
+                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-[13px] font-medium transition cursor-pointer",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+              )}
+            >
+              <span className="grid size-6 place-items-center text-current">{icon(option)}</span>
+              <span className="flex-1">{option}</span>
+              {active && <Check className="size-3.5 text-[var(--brand)] shrink-0" strokeWidth={3} />}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 flex justify-end">
+        <Button size="sm" onClick={onDone}>Done</Button>
+      </div>
     </div>
   );
 }
 
+function FormatChoices({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div>
+      <div className="mt-2.5 grid gap-2 sm:grid-cols-3">
+        {options.map((option) => {
+          const active = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={cn(
+                "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-[12px] border py-3 px-2 text-center text-[13px] font-medium transition cursor-pointer",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-bold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+              )}
+            >
+              <FrameGlyph value={option} />
+              <span>{option}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function FrameGlyph({ value }: { value: string }) {
+  if (value.includes("9:16") || value.includes("Vertical")) return <span className="inline-block h-5 w-3 rounded-[2px] border-2 border-current" />;
+  if (value.includes("1:1") || value.includes("Square")) return <span className="inline-block size-4 rounded-[2px] border-2 border-current" />;
+  return <span className="inline-block h-3.5 w-5 rounded-[2px] border-2 border-current" />;
+}
+
+function SteppedControl({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div>
+      <div className="mt-2.5 grid gap-2 sm:grid-cols-4">
+        {options.map((option) => {
+          const active = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={cn(
+                "focus-ring min-h-10 rounded-[10px] border px-2 text-[12.5px] font-medium transition cursor-pointer",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-bold" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+              )}
+            >
+              {option}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AudioChoices({
+  label,
+  value,
+  options,
+  onChange,
+  previewing,
+  onPreview,
+  onOpenLibrary,
+  music = false,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+  previewing?: string | null;
+  onPreview?: (option: string) => void;
+  onOpenLibrary?: () => void;
+  music?: boolean;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <span className="text-[13px] font-semibold text-[#5f6b65]">{label}</span>
+        {onOpenLibrary && (
+          <button
+            type="button"
+            onClick={onOpenLibrary}
+            className="text-[12.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+          >
+            Voice Library →
+          </button>
+        )}
+      </div>
+      <div className="mt-2.5 space-y-2">
+        {options.map((option) => {
+          const base = option.split("·")[0].trim();
+          const active = value === option || value === base;
+          const isPlaying = previewing === option || previewing === base;
+          return (
+            <div
+              key={option}
+              className={cn(
+                "flex items-center justify-between rounded-[12px] border p-2.5 transition",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4]" : "border-[#e3e8e5]"
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => onChange(base)}
+                className="flex-1 text-left text-[13px] font-medium text-[var(--ink)] cursor-pointer"
+              >
+                {option}
+              </button>
+              {onPreview && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onPreview(base)}
+                  className={cn("size-8 p-0 rounded-full", isPlaying && "text-[var(--brand)]")}
+                  aria-label="Preview"
+                >
+                  {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
+                </Button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StructureChoices({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: readonly string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-3">
+      {options.map((option) => {
+        const active = value === option;
+        return (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            className={cn(
+              "focus-ring flex flex-col justify-between rounded-[14px] border p-3.5 text-left transition cursor-pointer",
+              active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+            )}
+          >
+            <div>
+              <span className="block text-[14px] font-bold text-[var(--ink)]">{option}</span>
+              <span className="mt-1 block text-[12px] text-[var(--ink-muted)]">{structureDescription(option)}</span>
+            </div>
+            {active && <Check className="mt-3 size-4 text-[var(--brand)] self-end" strokeWidth={3} />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function InfoCard({ icon: Icon, title, body }: { icon: typeof Film; title: string; body: string }) {
+  return (
+    <div className="rounded-[14px] border border-[#e3e8e5] bg-white p-3.5">
+      <div className="flex items-center gap-2 font-bold text-[13.5px] text-[var(--ink)]">
+        <Icon className="size-4 text-[var(--brand)]" />
+        {title}
+      </div>
+      <p className="mt-1 text-[12.5px] leading-5 text-[var(--ink-muted)]">{body}</p>
+    </div>
+  );
+}
+
+function structureDescription(option: string) {
+  if (option.includes("Proof")) return "Lead with the clinical need, then prove the efficacy.";
+  if (option.includes("Solution")) return "Establish problem states, then introduce product value.";
+  if (option.includes("Evidence")) return "Focus on dual inhibition pathway and clinical study outcomes.";
+  return "Organized around clear narrative chapters.";
+}
+
+function FacePhoto({ person, className }: { person: (typeof presenters)[number]; className: string }) {
+  return <img src={person.image} alt={person.name} className={cn("object-cover", className)} />;
+}
+
+function PresenterLibrary({
+  selected,
+  onSelect,
+  onClose,
+}: {
+  selected: string;
+  onSelect: (name: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="w-full max-w-[680px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Presenter Library</div>
+            <h2 className="mt-1 text-[21px] font-bold tracking-tight">Choose clinical avatar presenter</h2>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="size-4" />
+          </Button>
+        </div>
+        <div className="max-h-[460px] overflow-y-auto grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
+          {presenters.map((person) => {
+            const active = selected === person.name;
+            return (
+              <button
+                key={person.name}
+                type="button"
+                onClick={() => onSelect(person.name)}
+                className={cn(
+                  "flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
+                  active ? "border-[var(--brand)] bg-[var(--tint)] ring-1 ring-[var(--brand)]" : "border-[#e3e8e5] hover:border-[#c8d4ce]"
+                )}
+              >
+                <FacePhoto person={person} className="size-14 rounded-[14px]" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-bold text-[var(--ink)]">{person.name}</span>
+                  <span className="mt-0.5 block text-[12px] leading-4 text-[var(--ink-muted)]">{person.role}</span>
+                </span>
+                {active && <Check className="size-4 text-[var(--brand)] shrink-0" strokeWidth={3} />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VoiceLibrary({
+  selected,
+  onSelect,
+  onClose,
+  previewing,
+  onPreview,
+}: {
+  selected: string;
+  onSelect: (name: string) => void;
+  onClose: () => void;
+  previewing?: string | null;
+  onPreview: (name: string) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="w-full max-w-[620px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Voice Library</div>
+            <h2 className="mt-1 text-[21px] font-bold tracking-tight">Select narrator voice</h2>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="size-4" />
+          </Button>
+        </div>
+        <div className="max-h-[460px] overflow-y-auto space-y-2 p-4 sm:p-6">
+          {voiceList.map((v) => {
+            const active = selected.includes(v.name);
+            const isPlaying = previewing === v.name;
+            return (
+              <div
+                key={v.name}
+                className={cn(
+                  "flex items-center justify-between rounded-[14px] border p-3 transition",
+                  active ? "border-[var(--brand)] bg-[var(--tint)]" : "border-[#e3e8e5]"
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-[14px] text-[var(--ink)]">{v.name}</span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+                      {v.tag}
+                    </span>
+                  </div>
+                  <span className="text-[12px] text-[var(--ink-muted)] block mt-0.5">{v.accent} · {v.role}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => onPreview(v.name)}>
+                    {isPlaying ? <Pause className="size-4 text-[var(--brand)]" /> : <Play className="size-4" />}
+                  </Button>
+                  <Button size="sm" variant={active ? "primary" : "secondary"} onClick={() => onSelect(v.name)}>
+                    {active ? "Selected" : "Select"}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SourceManager({
+  selectedIds,
+  onToggle,
+  onClose,
+}: {
+  selectedIds: string[];
+  onToggle: (id: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="w-full max-w-[700px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Regulatory Sources</div>
+            <h2 className="mt-1 text-[21px] font-bold tracking-tight">Verified evidence citations</h2>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="size-4" />
+          </Button>
+        </div>
+        <div className="max-h-[430px] space-y-2 overflow-y-auto p-4 sm:p-6">
+          {planningSources.map((source) => {
+            const active = selectedIds.includes(source.id);
+            return (
+              <div
+                key={source.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-[14px] border p-3 transition",
+                  active ? "border-[var(--brand)] bg-[var(--tint)]" : "border-[#e3e8e5]"
+                )}
+              >
+                <FileCheck2 className="size-5 text-[var(--brand)] shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-[14px] font-bold text-[var(--ink)]">{source.name}</span>
+                  <span className="block truncate text-[12px] text-[var(--ink-muted)]">{source.detail}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onToggle(source.id)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-[9px] text-[12px] font-bold transition cursor-pointer",
+                    active ? "bg-white text-[var(--ink)] border border-black/10" : "bg-[var(--brand)] text-white"
+                  )}
+                >
+                  {active ? "Attached" : "Attach"}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function structureForTreatment(assetType: AssetType, treatmentId: string) {
+  if (assetType === "video") {
+    if (treatmentId === "presenter") return "Presenter introduction · Mechanism · Study outcomes · Practice summary";
+    if (treatmentId === "visual-only") return "Message statement · Mechanism graphic · Result callout · Required safety";
+    return "The unresolved need · Product introduction · How it works · Pivotal evidence · Close and fair balance";
+  }
+  return "Cover · Clinical need · Product introduction · Mechanism · Pivotal evidence · Close";
+}
+
 function stopAudioPreview() {
-  if ("speechSynthesis" in window) {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
     window.speechSynthesis.cancel();
   }
 }
@@ -864,6 +2030,6 @@ function playMusicTone(label: string) {
     osc.start();
     osc.stop(ctx.currentTime + 1.9);
   } catch {
-    // Ignore audio context autoplay restrictions
+    // Ignore audio autoplay restrictions
   }
 }
