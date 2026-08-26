@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowLeft,
   ArrowRight,
   BookOpenCheck,
   Check,
@@ -10,21 +11,24 @@ import {
   FileCheck2,
   Film,
   Globe2,
-  Home,
+  History,
   Info,
   Layers,
   LayoutList,
   Mic2,
+  MoreHorizontal,
   Music2,
   MonitorPlay,
   PackageCheck,
   Pause,
   Play,
   Plus,
+  Redo2,
   Send,
   ShieldCheck,
   Sparkles,
   Target,
+  Undo2,
   Users,
   Volume2,
   X,
@@ -33,6 +37,7 @@ import type { LucideIcon } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { SwishXMark } from "@/components/ui/swishx-mark";
 import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
 import { deriveContentPlan } from "@/features/workspace/content-plan";
 import { displayIntendedUses, parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
@@ -333,10 +338,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setView("create");
   };
 
-  const handleGoHome = () => {
-    setView("home");
-  };
-
   const handleConfirmPlan = () => {
     setIsGenerating(true);
     setGenerationStep(1);
@@ -393,31 +394,64 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f7f8f6] h-screen overflow-hidden">
-      {/* ── Persistent Minimal Top Bar ── */}
-      <header className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.06] bg-white/80 backdrop-blur-sm shrink-0 z-10">
+    <div className="min-h-screen flex flex-col bg-[#edf0ed] h-screen overflow-hidden">
+      {/* ─── Top Studio-Matched Header Bar (Same as Scenes & Editor) ─── */}
+      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-[var(--line)] bg-white px-3 sm:px-5">
         <button
-          type="button"
           onClick={handleBackToBrief}
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer shrink-0"
+          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-[var(--ink-muted)] hover:bg-black/5 cursor-pointer"
+          aria-label="Back to brief"
         >
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}><path d="M15 18l-6-6 6-6" /></svg>
-          Back
+          <ArrowLeft className="size-4" />
         </button>
-        <div className="w-px h-4 bg-black/10" />
-        <button
-          type="button"
-          onClick={handleGoHome}
-          className="grid size-6 place-items-center text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer shrink-0"
-          title="Home"
-        >
-          <Home className="size-4" />
-        </button>
-        <div className="w-px h-4 bg-black/10" />
-        <span className="text-[13px] font-semibold text-[var(--ink)] truncate">{projectName}</span>
-        <span className="rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-2 py-0.5 text-[10px] font-bold text-[var(--brand-deep)]">
-          Draft v1
-        </span>
+        <SwishXMark compact />
+        <div className="mx-3 h-5 w-px bg-[var(--line)]" />
+
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-[12.5px] font-[800] text-[var(--ink)]">{projectName}</span>
+            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-[9px] font-bold text-[#69736e] sm:inline">
+              Draft v1
+            </span>
+          </div>
+          <div className="mt-0.5 hidden text-[9.5px] text-[var(--ink-muted)] sm:block">
+            Saved just now · {presenter || "Maya Kapoor"}
+          </div>
+        </div>
+
+        {/* State Switcher in Header */}
+        <div className="ml-6 hidden items-center gap-1 sm:flex">
+          <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-extrabold tracking-wide text-[var(--brand-deep)] border border-[var(--tint-line)]">
+            Plan View
+          </span>
+        </div>
+
+        <div className="ml-4 hidden items-center gap-0.5 lg:flex">
+          <Button variant="ghost" size="icon" aria-label="Undo">
+            <Undo2 className="size-4" />
+          </Button>
+          <Button variant="ghost" size="icon" aria-label="Redo" disabled>
+            <Redo2 className="size-4" />
+          </Button>
+          <div className="mx-1 h-5 w-px bg-[var(--line)]" />
+          <Button variant="ghost" size="sm">
+            <History className="size-3.5" /> Versions
+          </Button>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            onClick={handleConfirmPlan}
+            size="sm"
+            className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer"
+          >
+            <Sparkles className="size-3.5 mr-1.5" />
+            <span>Generate Now</span>
+          </Button>
+          <Button variant="ghost" size="icon" aria-label="More">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </div>
       </header>
 
       {/* ── Main Split View: 2/3 Left (Plan Canvas), 1/3 Right (Chat Assistant) ── */}
@@ -1165,6 +1199,24 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           }}
           className="flex flex-col shrink-0 min-h-0 bg-[#fafbf9] border-l border-[var(--line)] overflow-hidden"
         >
+          {/* Header Segmented Tabs matching Studio Inspector */}
+          <div className="p-3 border-b border-[var(--line)] bg-white shrink-0">
+            <div className="grid grid-cols-2 rounded-2xl bg-[#ebefe9] p-1 gap-1 border border-black/[0.03] shadow-inner">
+              <button
+                type="button"
+                className="py-1.5 rounded-xl text-[12px] font-bold transition-all shadow-xs bg-white text-[var(--ink)] cursor-pointer"
+              >
+                Chat
+              </button>
+              <button
+                type="button"
+                className="py-1.5 rounded-xl text-[12px] font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-all cursor-pointer"
+              >
+                Claims (24)
+              </button>
+            </div>
+          </div>
+
           {isGenerating ? (
             /* ── Loading State upon confirming plan ── */
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
@@ -1194,21 +1246,23 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               </div>
             </div>
           ) : (
-            /* ── Normal Interactive Chat State (Same style as Studio Assistant) ── */
+            /* ── Normal Interactive Chat State ── */
             <>
-              {/* Top Chat Mini Header */}
-              <div className="h-11 px-4 border-b border-black/[0.06] bg-white flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[var(--ok)]" />
-                  <span className="text-[12.5px] font-bold text-[var(--ink)]">AI Planning Director</span>
+              {/* Chat Top Online Banner */}
+              <div className="px-3.5 pt-3 shrink-0">
+                <div className="rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-2.5">
+                  <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--brand-deep)]">
+                    <Sparkles className="size-3.5 text-[var(--brand)]" />
+                    <span>Direct with SwishX</span>
+                    <span className="ml-auto rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-[9px] font-bold">
+                      Online
+                    </span>
+                  </div>
                 </div>
-                <span className="text-[11px] font-medium text-[var(--ink-muted)]">
-                  Live Synchronized
-                </span>
               </div>
 
               {/* Chat Messages Thread */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+              <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
                 {chatMessages.map((msg, index) => (
                   <div
                     key={index}

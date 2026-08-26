@@ -67,8 +67,16 @@ const evidenceConfig: Record<EvidenceState, { label: string; className: string }
   unsupported: { label: "Unsupported", className: "bg-[var(--danger-soft)] text-[var(--danger)]" },
 };
 
+const dossierNames: Record<string, string> = {
+  velmora: "Velmora",
+  onkavia: "Onkavia",
+  nirvexa: "Nirvexa",
+  cardioxa: "Cardioxa",
+  pulmovax: "PulmoVax",
+};
+
 export function StudioScreen() {
-  const { selectedSceneId, setSelectedSceneId, inspectorTab, setInspectorTab, setView, creationMode } = useWorkspaceStore();
+  const { selectedSceneId, setSelectedSceneId, inspectorTab, setInspectorTab, setView, creationMode, sourcePayload } = useWorkspaceStore();
   
   // Single fluid layout mode: "scenes" (wide 2-column view) -> "editor" (3-column canvas view)
   const [studioMode, setStudioMode] = useState<"scenes" | "editor">("scenes");
@@ -341,7 +349,9 @@ export function StudioScreen() {
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate text-[12.5px] font-[800] text-[var(--ink)]">DERMORA HCP launch</span>
+            <span className="truncate text-[12.5px] font-[800] text-[var(--ink)]">
+              {sourcePayload?.dossierId ? `${dossierNames[sourcePayload.dossierId] || "Velmora"} HCP launch` : "DERMORA HCP launch"}
+            </span>
             <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-[9px] font-bold text-[#69736e] sm:inline">
               Draft v1
             </span>

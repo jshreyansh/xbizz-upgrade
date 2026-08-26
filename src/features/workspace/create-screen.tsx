@@ -1,18 +1,22 @@
 "use client";
 
 import {
+  ArrowLeft,
   ArrowRight,
   FileText,
   Film,
   FlaskConical,
   Globe2,
-  Home,
+  History,
   Info,
   Layers,
+  MoreHorizontal,
   Paperclip,
+  Redo2,
   Search,
   ShieldCheck,
   Target,
+  Undo2,
   Upload,
   UserCircle2,
   Users,
@@ -24,6 +28,7 @@ import {
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { SwishXMark } from "@/components/ui/swishx-mark";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario, type DemoScenarioCategory } from "@/features/workspace/demo-scenarios";
 import { planningSources } from "@/features/workspace/mock-data";
@@ -110,10 +115,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setVideoSubStage("source-select");
   };
 
-  const handleGoHome = () => {
-    setView("home");
-  };
-
   const loadScenario = (scenario: DemoScenario) => {
     setBrief(scenario.inputs.brief);
     setAudience(scenario.inputs.audience);
@@ -162,30 +163,55 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f7f8f6]">
-      {/* Persistent minimal top bar */}
-      <header className="flex items-center gap-3 px-5 py-3 border-b border-black/[0.06] bg-white/80 backdrop-blur-sm">
+      {/* ─── Top Studio-Matched Header Bar ─── */}
+      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-[var(--line)] bg-white px-3 sm:px-5">
         <button
-          type="button"
           onClick={handleBackToSource}
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer shrink-0"
+          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-[var(--ink-muted)] hover:bg-black/5 cursor-pointer"
+          aria-label="Back to setup"
         >
-          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}><path d="M15 18l-6-6 6-6" /></svg>
-          Back
+          <ArrowLeft className="size-4" />
         </button>
-        <div className="w-px h-4 bg-black/10" />
-        <button
-          type="button"
-          onClick={handleGoHome}
-          className="grid size-6 place-items-center text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors cursor-pointer shrink-0"
-          title="Home"
-        >
-          <Home className="size-4" />
-        </button>
-        <div className="w-px h-4 bg-black/10" />
-        <span className="text-[13px] font-semibold text-[var(--ink)] truncate">{projectName}</span>
-        <span className="rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-2 py-0.5 text-[10px] font-bold text-[var(--brand-deep)]">
-          Draft v1
-        </span>
+        <SwishXMark compact />
+        <div className="mx-3 h-5 w-px bg-[var(--line)]" />
+
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-[12.5px] font-[800] text-[var(--ink)]">{projectName}</span>
+            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-[9px] font-bold text-[#69736e] sm:inline">
+              Draft v1
+            </span>
+          </div>
+          <div className="mt-0.5 hidden text-[9.5px] text-[var(--ink-muted)] sm:block">
+            Saved just now · Maya Kapoor
+          </div>
+        </div>
+
+        {/* State Switcher in Header */}
+        <div className="ml-6 hidden items-center gap-1 sm:flex">
+          <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-extrabold tracking-wide text-[var(--brand-deep)] border border-[var(--tint-line)]">
+            Brief View
+          </span>
+        </div>
+
+        <div className="ml-4 hidden items-center gap-0.5 lg:flex">
+          <Button variant="ghost" size="icon" aria-label="Undo">
+            <Undo2 className="size-4" />
+          </Button>
+          <Button variant="ghost" size="icon" aria-label="Redo" disabled>
+            <Redo2 className="size-4" />
+          </Button>
+          <div className="mx-1 h-5 w-px bg-[var(--line)]" />
+          <Button variant="ghost" size="sm">
+            <History className="size-3.5" /> Versions
+          </Button>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="ghost" size="icon" aria-label="More">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </div>
       </header>
 
       {/* Center stage */}
