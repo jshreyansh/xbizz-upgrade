@@ -191,6 +191,116 @@ export function StudioScreen() {
   const [selectedCanvasElementId, setSelectedCanvasElementId] = useState<string | null>("headline");
   const [hoveredCanvasElementId, setHoveredCanvasElementId] = useState<string | null>(null);
 
+  interface AttachedChatContext {
+    id: string;
+    type: "element" | "scene" | "file" | "dossier";
+    label: string;
+    detail?: string;
+  }
+
+  const [attachedContexts, setAttachedContexts] = useState<AttachedChatContext[]>([]);
+  const [chatContextMenuOpen, setChatContextMenuOpen] = useState(false);
+  const chatFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Edit draft states for Scene Inspector
+  const [editDraftHeadline, setEditDraftHeadline] = useState(selectedScene.title);
+  const [editDraftNarration, setEditDraftNarration] = useState(selectedScene.narration);
+  const [editDraftVisual, setEditDraftVisual] = useState(selectedScene.visual || "");
+  const [editDraftNegativeVisual, setEditDraftNegativeVisual] = useState(
+    selectedScene.negativeVisual || "Overly stylized cartoons, text overlays, harsh shadows, low quality rendering."
+  );
+  const [editDraftDuration, setEditDraftDuration] = useState(selectedScene.duration || 10);
+
+  useEffect(() => {
+    setEditDraftHeadline(selectedScene.title);
+    setEditDraftNarration(selectedScene.narration);
+    setEditDraftVisual(selectedScene.visual || "");
+    setEditDraftNegativeVisual(
+      selectedScene.negativeVisual || "Overly stylized cartoons, text overlays, harsh shadows, low quality rendering."
+    );
+    setEditDraftDuration(selectedScene.duration || 10);
+  }, [selectedScene]);
+
+  const handleSelectCanvasElement = (elementId: string) => {
+    setSelectedCanvasElementId(elementId);
+
+    let label = "Element";
+    let detail = "";
+    if (elementId === "headline") {
+      label = `Scene ${selectedScene.number} · Headline`;
+      detail = `"${selectedScene.title}"`;
+    } else if (elementId === "narration") {
+      label = `Scene ${selectedScene.number} · Voiceover Sync`;
+      detail = `"${selectedScene.narration}"`;
+    } else if (elementId === "moa") {
+      label = `Scene ${selectedScene.number} · 3D MoA Target`;
+      detail = selectedScene.visual || "3D kinematic target model";
+    } else if (elementId === "tag") {
+      label = `Scene ${selectedScene.number} · Tag`;
+      detail = `(${selectedScene.narrativeTag || "Evidence"})`;
+    } else if (elementId === "claim") {
+      label = `Scene ${selectedScene.number} · Claim Badge`;
+      detail = selectedScene.claim;
+    }
+
+    setAttachedContexts((prev) => {
+      const filtered = prev.filter((c) => c.type !== "element");
+      return [
+        ...filtered,
+        {
+          id: `element-${elementId}-${Date.now()}`,
+          type: "element",
+          label,
+          detail,
+        },
+      ];
+    });
+  };
+
+  const handleSaveAndCentralizeToChat = () => {
+    // 1. Update scene in sceneList
+    setSceneList((prev) =>
+      prev.map((s) =>
+        s.id === selectedScene.id
+          ? {
+              ...s,
+              title: editDraftHeadline,
+              narration: editDraftNarration,
+              visual: editDraftVisual,
+              negativeVisual: editDraftNegativeVisual,
+              duration: editDraftDuration,
+            }
+          : s
+      )
+    );
+
+    // 2. Switch tab to Chat
+    setActiveTab("assistant");
+
+    // 3. Post user action message in chat
+    const userMsgText = `Applied edits for **Scene ${selectedScene.number}: ${editDraftHeadline}**:\n• **Headline:** "${editDraftHeadline}"\n• **Narration:** "${editDraftNarration}"\n• **Visual Prompt:** "${editDraftVisual}"\n• **Negative Visual:** "${editDraftNegativeVisual}"\n• **Duration:** ${editDraftDuration}s`;
+
+    addChatMessage({
+      role: "user",
+      text: userMsgText,
+    });
+
+    // 4. SwishX AI responds with confirmation and propagation options
+    setTimeout(() => {
+      addChatMessage({
+        role: "swishx",
+        text: `✓ Applied updates to **Scene ${selectedScene.number}: ${editDraftHeadline}**. The visual canvas, narration sync (${editDraftDuration}s), and kinematic rendering parameters have been updated.\n\nWould you like me to propagate this visual tone and pacing across the remaining scenes in the storyboard?`,
+        chips: [
+          `🪄 Update other scenes to match Scene ${selectedScene.number} style`,
+          `✓ Keep remaining scenes as is`,
+        ],
+      });
+    }, 450);
+
+    setToMessage(`Saved Scene ${selectedScene.number} and sent to SwishX chat`);
+    setTimeout(() => setToMessage(null), 3000);
+  };
+
   useEffect(() => {
     if (!scenePlaying) return;
     const interval = setInterval(() => {
@@ -445,14 +555,43 @@ export function StudioScreen() {
 
   const handleToggleResolveComment = (commentId: string) => setCommentsList((prev) => prev.map((c) => c.id === commentId ? { ...c, isResolved: !c.isResolved } : c));
 
-  const handleSendChatMessage = () => {
-    if (!directorInput.trim()) return;
-    const rawInput = directorInput.trim();
+  const handleSendChatMessage = (presetText?: string) => {
+    const rawInput = (presetText || directorInput).trim();
+    if (!rawInput) return;
+
+    let fullPrompt = rawInput;
+    if (!presetText && attachedContexts.length > 0) {
+      const contextPrefix = attachedContexts
+        .map((c) => `[Context: ${c.label} - ${c.detail}]`)
+        .join("\n");
+      fullPrompt = `${contextPrefix}\n\n${rawInput}`;
+    }
+
     setDirectorInput("");
-    addChatMessage({ role: "user", text: rawInput });
+    setAttachedContexts([]);
+    addChatMessage({ role: "user", text: fullPrompt });
+
     const isCommentIntent = rawInput.toLowerCase().includes("comment") || rawInput.toLowerCase().includes("note") || rawInput.toLowerCase().includes("feedback");
+
     setTimeout(() => {
-      if (isReview && isCommentIntent) {
+      if (rawInput.includes("Update other scenes")) {
+        setSceneList((prev) =>
+          prev.map((s) => ({
+            ...s,
+            visual: `${s.visual} (enhanced with 3D kinematic lighting and high-contrast clinical boundaries)`,
+            negativeVisual: "Overly stylized cartoons, text overlays, harsh shadows, low quality rendering.",
+          }))
+        );
+        addChatMessage({
+          role: "swishx",
+          text: `✓ Successfully propagated visual styling and pacing across all ${sceneList.length} scenes in the storyboard. All regulatory citations (§5.1, CLEARSKIN trial) remain grounded.`,
+        });
+      } else if (rawInput.includes("Keep remaining")) {
+        addChatMessage({
+          role: "swishx",
+          text: `Understood! Preserving individual scene customizations. You can continue editing in the canvas or click **Generate Video** on top right when ready.`,
+        });
+      } else if (isReview && isCommentIntent) {
         const timeMatch = rawInput.match(/0:\d{2}|\d{1,2}s|\d{1,2}\s*sec/i);
         const extractedSec = timeMatch ? parseInt(timeMatch[0].replace(/[^0-9]/g, ""), 10) : Math.floor(masterCurrentTime);
         const formatted = `0:${extractedSec.toString().padStart(2, "0")}`;
@@ -475,9 +614,9 @@ export function StudioScreen() {
       } else if (isReview) {
         addChatMessage({ role: "swishx", text: `I've analyzed your question against the **${dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora"}** FDA prescribing information and PromoMats evidence library. All clinical claims are 100% grounded.` });
       } else {
-        addChatMessage({ role: "swishx", text: `Applied instruction across Scene ${selectedScene.number} and verified all clinical claims against the prescribing information.` });
+        addChatMessage({ role: "swishx", text: `Applied direction across Scene ${selectedScene.number}. All visual boundaries and claim groundings have been refreshed.` });
       }
-    }, 600);
+    }, 500);
   };
 
   return (
@@ -928,13 +1067,13 @@ export function StudioScreen() {
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedCanvasElementId("bg");
+                      handleSelectCanvasElement("background");
                     }}
                     onMouseEnter={() => setHoveredCanvasElementId("bg")}
                     onMouseLeave={() => setHoveredCanvasElementId(null)}
                     className={cn(
                       "absolute inset-0 transition-all",
-                      selectedCanvasElementId === "bg" && "ring-2 ring-emerald-400"
+                      selectedCanvasElementId === "background" && "ring-2 ring-emerald-400"
                     )}
                   >
                     <div className="absolute inset-0 bg-radial from-[#1e4d3f] via-[#173d31] to-[#0f2820]" />
@@ -944,13 +1083,13 @@ export function StudioScreen() {
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedCanvasElementId("visual-3d");
+                      handleSelectCanvasElement("moa");
                     }}
                     onMouseEnter={() => setHoveredCanvasElementId("visual-3d")}
                     onMouseLeave={() => setHoveredCanvasElementId(null)}
                     className={cn(
                       "absolute right-4 top-4 size-56 sm:size-72 rounded-full transition-all cursor-pointer",
-                      selectedCanvasElementId === "visual-3d"
+                      selectedCanvasElementId === "moa"
                         ? "border-2 border-dashed border-[var(--brand)] ring-4 ring-[var(--brand)]/20"
                         : hoveredCanvasElementId === "visual-3d"
                         ? "border border-dashed border-white/50"
@@ -970,7 +1109,7 @@ export function StudioScreen() {
                     <div
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedCanvasElementId("tag");
+                        handleSelectCanvasElement("tag");
                       }}
                       onMouseEnter={() => setHoveredCanvasElementId("tag")}
                       onMouseLeave={() => setHoveredCanvasElementId(null)}
@@ -992,7 +1131,7 @@ export function StudioScreen() {
                     <div
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedCanvasElementId("headline");
+                        handleSelectCanvasElement("headline");
                       }}
                       onMouseEnter={() => setHoveredCanvasElementId("headline")}
                       onMouseLeave={() => setHoveredCanvasElementId(null)}
@@ -1035,7 +1174,7 @@ export function StudioScreen() {
                     <div
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedCanvasElementId("narration");
+                        handleSelectCanvasElement("narration");
                       }}
                       onMouseEnter={() => setHoveredCanvasElementId("narration")}
                       onMouseLeave={() => setHoveredCanvasElementId(null)}
@@ -1061,7 +1200,16 @@ export function StudioScreen() {
                     </div>
 
                     {/* Bottom Grounding Badge */}
-                    <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] text-white/60">
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectCanvasElement("claim");
+                      }}
+                      className={cn(
+                        "pointer-events-auto flex items-center justify-between pt-2 border-t border-white/10 text-[10px] text-white/60 cursor-pointer p-1 rounded transition-colors",
+                        selectedCanvasElementId === "claim" && "ring-1 ring-emerald-400 bg-black/20"
+                      )}
+                    >
                       <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}® · HCP Prescribing Brief</span>
                       <span className="rounded bg-emerald-950/80 border border-emerald-400/40 text-emerald-300 px-2 py-0.5 font-bold">
                         🛡 {selectedScene.claim}
@@ -1396,6 +1544,20 @@ export function StudioScreen() {
                         )}
                       >
                         <FormattedMessageText text={msg.text} />
+                        {msg.chips && msg.chips.length > 0 && (
+                          <div className="mt-2.5 pt-2 border-t border-black/[0.06] flex flex-wrap gap-1.5">
+                            {msg.chips.map((chip, chipIdx) => (
+                              <button
+                                key={chipIdx}
+                                type="button"
+                                onClick={() => handleSendChatMessage(chip)}
+                                className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] hover:bg-[var(--tint-strong)] border border-[var(--brand)]/30 px-2.5 py-1 rounded-full transition cursor-pointer shadow-2xs hover:-translate-y-0.5"
+                              >
+                                {chip}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1411,6 +1573,38 @@ export function StudioScreen() {
                     }}
                     className="flex flex-col gap-2 rounded-2xl border border-black/[0.08] bg-white p-2.5 shadow-xs focus-within:border-[var(--brand)] focus-within:ring-2 focus-within:ring-[var(--brand)]/15"
                   >
+                    {/* Attached Context Chips */}
+                    {attachedContexts.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 p-1.5 bg-[#f4f6f4] rounded-xl border border-black/[0.06]">
+                        {attachedContexts.map((ctx) => (
+                          <span
+                            key={ctx.id}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-[var(--brand)]/30 px-2 py-0.5 text-[11px] font-bold text-[var(--brand-deep)] shadow-2xs"
+                          >
+                            {ctx.type === "element" ? (
+                              <Sparkles className="size-3 text-[var(--brand)] shrink-0" />
+                            ) : ctx.type === "scene" ? (
+                              <Film className="size-3 text-[var(--brand)] shrink-0" />
+                            ) : ctx.type === "file" ? (
+                              <Paperclip className="size-3 text-[var(--brand)] shrink-0" />
+                            ) : (
+                              <FileCheck2 className="size-3 text-[var(--brand)] shrink-0" />
+                            )}
+                            <span className="truncate max-w-[200px]">
+                              <strong>{ctx.label}:</strong> {ctx.detail}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setAttachedContexts((prev) => prev.filter((c) => c.id !== ctx.id))}
+                              className="size-3.5 rounded-full hover:bg-black/10 flex items-center justify-center text-gray-400 hover:text-black cursor-pointer"
+                            >
+                              <X className="size-2.5" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     <textarea
                       value={directorInput}
                       onChange={(e) => setDirectorInput(e.target.value)}
@@ -1428,14 +1622,123 @@ export function StudioScreen() {
                       rows={2}
                       className="w-full resize-none text-[12.5px] text-[var(--ink)] placeholder:text-[var(--ink-muted)] focus:outline-none"
                     />
+
                     <div className="flex items-center justify-between pt-1 border-t border-black/[0.04]">
-                      <div className="text-[10px] text-[var(--ink-muted)]">
-                        {isReview ? "💡 Ask questions or add comments via AI" : "💡 Grounded against FDA Dossier"}
+                      <div className="flex items-center gap-2">
+                        {/* Plus Context Menu Button */}
+                        <div className="relative">
+                          <input
+                            type="file"
+                            ref={chatFileInputRef}
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setAttachedContexts((prev) => [
+                                  ...prev,
+                                  {
+                                    id: `file-${Date.now()}`,
+                                    type: "file",
+                                    label: "File",
+                                    detail: file.name,
+                                  },
+                                ]);
+                                setToMessage(`Attached: ${file.name}`);
+                                setTimeout(() => setToMessage(null), 2500);
+                              }
+                            }}
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => setChatContextMenuOpen(!chatContextMenuOpen)}
+                            className="size-7 rounded-lg text-gray-600 hover:text-[var(--ink)] hover:bg-black/5 flex items-center justify-center transition-colors cursor-pointer border border-black/10 bg-white shadow-2xs"
+                            title="Add context (Scenes, Files, Citations)"
+                          >
+                            <Plus className="size-3.5 text-[var(--brand)]" />
+                          </button>
+
+                          {chatContextMenuOpen && (
+                            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl z-50 space-y-1">
+                              <div className="px-2 py-1 text-[9.5px] font-extrabold uppercase tracking-wider text-gray-400">
+                                Attach Context to Chat
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  chatFileInputRef.current?.click();
+                                  setChatContextMenuOpen(false);
+                                }}
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[12px] font-medium text-[var(--ink)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] rounded-xl transition text-left cursor-pointer"
+                              >
+                                <Paperclip className="size-3.5 text-[var(--brand)]" />
+                                <span>Upload file from computer</span>
+                              </button>
+
+                              <div className="border-t border-black/[0.06] my-1" />
+                              <div className="px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider text-gray-400">
+                                Attach Scene Scope
+                              </div>
+                              <div className="max-h-40 overflow-y-auto space-y-0.5">
+                                {sceneList.map((sc) => (
+                                  <button
+                                    key={sc.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setAttachedContexts((prev) => {
+                                        if (prev.some((c) => c.id === `scene-${sc.id}`)) return prev;
+                                        return [
+                                          ...prev,
+                                          {
+                                            id: `scene-${sc.id}`,
+                                            type: "scene",
+                                            label: `Scene ${sc.number}`,
+                                            detail: sc.title,
+                                          },
+                                        ];
+                                      });
+                                      setChatContextMenuOpen(false);
+                                    }}
+                                    className="w-full flex items-center justify-between px-2.5 py-1 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f6f4] rounded-lg transition text-left cursor-pointer"
+                                  >
+                                    <span className="truncate">Scene {sc.number}: {sc.title}</span>
+                                    <span className="text-[9.5px] text-gray-400 font-bold shrink-0 ml-1">({sc.narrativeTag || "Evidence"})</span>
+                                  </button>
+                                ))}
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAttachedContexts((prev) => [
+                                    ...prev,
+                                    {
+                                      id: `all-scenes-${Date.now()}`,
+                                      type: "scene",
+                                      label: "All Scenes",
+                                      detail: `All ${sceneList.length} storyboard scenes`,
+                                    },
+                                  ]);
+                                  setChatContextMenuOpen(false);
+                                }}
+                                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-[11.5px] font-bold text-[var(--brand-deep)] bg-[var(--tint)]/70 hover:bg-[var(--tint)] rounded-xl transition text-left cursor-pointer"
+                              >
+                                <Layers className="size-3 text-[var(--brand)]" />
+                                <span>Attach All Scenes Scope</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-[10px] text-[var(--ink-muted)]">
+                          {isReview ? "💡 Ask questions or add comments via AI" : "💡 Grounded against FDA Dossier"}
+                        </div>
                       </div>
+
                       <Button
                         type="submit"
                         size="sm"
-                        disabled={!directorInput.trim()}
+                        disabled={!directorInput.trim() && attachedContexts.length === 0}
                         className="size-7 rounded-full bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white p-0 flex items-center justify-center cursor-pointer shadow-xs disabled:opacity-30"
                       >
                         <Send className="size-3.5" />
@@ -1565,65 +1868,101 @@ export function StudioScreen() {
               </div>
             )}
 
-            {/* ── TAB 2 (In Editor Mode): EDIT PROPERTIES ── */}
+            {/* ── TAB 2 (In Editor Mode): EDIT PROPERTIES & CENTRALIZED FLOW ── */}
             {activeTab === "edit" && !isReview && (
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="border-b border-[var(--line)] pb-3">
-                  <div className="text-[9px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
-                    Scene Inspector
+                <div className="border-b border-[var(--line)] pb-3 flex items-center justify-between">
+                  <div>
+                    <div className="text-[9px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                      Scene Inspector
+                    </div>
+                    <h3 className="text-[15px] font-[850] text-[var(--ink)] mt-0.5">
+                      Scene {selectedScene.number}: {selectedScene.title}
+                    </h3>
                   </div>
-                  <h3 className="text-[15px] font-[850] text-[var(--ink)] mt-0.5">
-                    Scene {selectedScene.number}: {selectedScene.title}
-                  </h3>
+                  <span className="rounded-full bg-[var(--tint)] border border-[var(--brand)]/30 px-2.5 py-0.5 text-[10.5px] font-extrabold text-[var(--brand-deep)]">
+                    ({selectedScene.narrativeTag || "Evidence"})
+                  </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3.5">
+                  {/* 1. Headline Text (Chapter Title) */}
                   <div>
-                    <label className="text-[11.5px] font-bold text-[var(--ink-2)] block mb-1">Headline Text</label>
+                    <label className="text-[11.5px] font-bold text-[var(--ink-2)] flex items-center justify-between mb-1">
+                      <span>Headline Text (Chapter Title)</span>
+                      <span className="text-[10px] text-gray-400 font-normal">On-screen header</span>
+                    </label>
                     <input
                       type="text"
-                      value={selectedScene.title}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSceneList((prev) =>
-                          prev.map((s) => (s.id === selectedScene.id ? { ...s, title: val } : s))
-                        );
-                      }}
-                      className="w-full rounded-xl border border-black/10 p-2.5 text-[12px] font-medium"
+                      value={editDraftHeadline}
+                      onChange={(e) => setEditDraftHeadline(e.target.value)}
+                      placeholder="Scene headline..."
+                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-white p-2.5 text-[12px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 shadow-2xs transition-all"
                     />
                   </div>
 
+                  {/* 2. Narration Script */}
                   <div>
-                    <label className="text-[11.5px] font-bold text-[var(--ink-2)] block mb-1">Narration Script</label>
+                    <label className="text-[11.5px] font-bold text-[var(--ink-2)] flex items-center justify-between mb-1">
+                      <span>Narration Script</span>
+                      <span className="text-[10px] text-gray-400 font-normal">
+                        {editDraftNarration ? `${editDraftNarration.split(" ").filter(Boolean).length} words` : "Empty"}
+                      </span>
+                    </label>
                     <textarea
-                      value={selectedScene.narration}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSceneList((prev) =>
-                          prev.map((s) => (s.id === selectedScene.id ? { ...s, narration: val } : s))
-                        );
-                      }}
+                      value={editDraftNarration}
+                      onChange={(e) => setEditDraftNarration(e.target.value)}
                       rows={3}
-                      className="w-full rounded-xl border border-black/10 p-2.5 text-[12px] font-medium resize-none"
+                      placeholder="Voiceover narration script..."
+                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-white p-2.5 text-[12px] font-medium resize-none focus:outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 shadow-2xs transition-all"
                     />
                   </div>
 
+                  {/* 3. Visual Prompt */}
                   <div>
-                    <label className="text-[11.5px] font-bold text-[var(--ink-2)] block mb-1">Duration (Seconds)</label>
+                    <label className="text-[11.5px] font-bold text-[var(--ink-2)] flex items-center justify-between mb-1">
+                      <span>Visual Prompt</span>
+                      <span className="text-[10px] text-gray-400 font-normal">Kinematic direction</span>
+                    </label>
+                    <textarea
+                      value={editDraftVisual}
+                      onChange={(e) => setEditDraftVisual(e.target.value)}
+                      rows={3}
+                      placeholder="Visual rendering prompt for scene..."
+                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-white p-2.5 text-[12px] font-medium resize-none focus:outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 shadow-2xs transition-all"
+                    />
+                  </div>
+
+                  {/* 4. Negative Visual Prompt */}
+                  <div>
+                    <label className="text-[11.5px] font-bold text-[var(--ink-2)] flex items-center justify-between mb-1">
+                      <span>Negative Visual Prompt</span>
+                      <span className="text-[10px] text-gray-400 font-normal">What to avoid</span>
+                    </label>
+                    <textarea
+                      value={editDraftNegativeVisual}
+                      onChange={(e) => setEditDraftNegativeVisual(e.target.value)}
+                      rows={2}
+                      placeholder="Elements to exclude (e.g. cartoons, blurry edges, harsh text)..."
+                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-white p-2.5 text-[12px] font-medium resize-none focus:outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 shadow-2xs transition-all"
+                    />
+                  </div>
+
+                  {/* 5. Duration */}
+                  <div>
+                    <label className="text-[11.5px] font-bold text-[var(--ink-2)] block mb-1">
+                      Scene Duration
+                    </label>
                     <div className="flex items-center gap-2">
                       {[8, 10, 14, 20].map((dur) => (
                         <button
                           key={dur}
                           type="button"
-                          onClick={() => {
-                            setSceneList((prev) =>
-                              prev.map((s) => (s.id === selectedScene.id ? { ...s, duration: dur } : s))
-                            );
-                          }}
+                          onClick={() => setEditDraftDuration(dur)}
                           className={cn(
-                            "rounded-lg border px-3 py-1 text-[11px] font-bold transition-colors cursor-pointer",
-                            selectedScene.duration === dur
-                              ? "bg-[var(--brand)] text-white border-[var(--brand)]"
+                            "flex-1 rounded-xl border py-1.5 text-[11px] font-bold transition-all cursor-pointer",
+                            editDraftDuration === dur
+                              ? "bg-[var(--brand)] text-white border-[var(--brand)] shadow-xs"
                               : "bg-white border-black/10 text-[var(--ink-2)] hover:bg-[#fafbf9]"
                           )}
                         >
@@ -1631,6 +1970,21 @@ export function StudioScreen() {
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Centralized Save & Apply Action Button */}
+                  <div className="pt-2 border-t border-[var(--line)]">
+                    <Button
+                      type="button"
+                      onClick={handleSaveAndCentralizeToChat}
+                      className="w-full h-10 bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-extrabold text-[12.5px] rounded-xl shadow-xs gap-2 cursor-pointer transition-transform active:scale-[0.98]"
+                    >
+                      <Sparkles className="size-4" />
+                      <span>Save &amp; Apply with SwishX</span>
+                    </Button>
+                    <p className="text-[10px] text-[var(--ink-muted)] text-center mt-1.5">
+                      Switches to Chat &amp; verifies clinical claims across storyboard
+                    </p>
                   </div>
                 </div>
               </div>

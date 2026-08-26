@@ -32,7 +32,7 @@ interface WorkspaceState {
   selectedSceneId: string;
   inspectorTab: InspectorTab;
   selectedQuality: "hd" | "cinematic";
-  chatMessages: Array<{ role: "user" | "swishx"; text: string }>;
+  chatMessages: Array<{ role: "user" | "swishx"; text: string; chips?: string[] }>;
   // Auth & onboarding
   authView: AuthView;
   onboardingBeat: OnboardingBeat;
@@ -42,8 +42,8 @@ interface WorkspaceState {
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
-  setChatMessages: (messages: Array<{ role: "user" | "swishx"; text: string }>) => void;
-  addChatMessage: (message: { role: "user" | "swishx"; text: string }) => void;
+  setChatMessages: (messages: Array<{ role: "user" | "swishx"; text: string; chips?: string[] }>) => void;
+  addChatMessage: (message: { role: "user" | "swishx"; text: string; chips?: string[] }) => void;
   setCreationMode: (mode: CreationMode) => void;
   setSourceType: (type: SourceSelectionType) => void;
   setSourcePayload: (payload: { dossierId?: string; url?: string; text?: string }) => void;
