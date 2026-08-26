@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Clock,
   Download,
   Expand,
   FileCheck2,
@@ -400,12 +401,15 @@ export function StudioScreen() {
     });
   };
 
+  const [videoGenStep, setVideoGenStep] = useState(1);
+
   const handleOpenGenerateVideoModal = () => setGenerateVideoModalOpen(true);
 
   const handleConfirmVideoGeneration = () => {
     setGenerateVideoModalOpen(false);
     setStudioMode("generating");
     setActiveTab("assistant");
+    setVideoGenStep(1);
     const creditsDeducted = selectedQuality === "cinematic" ? "7,500" : "2,500";
     addChatMessage({
       role: "swishx",
@@ -413,6 +417,16 @@ export function StudioScreen() {
     });
     setToMessage(`Video generation queued · ${creditsDeducted} credits deducted`);
     setTimeout(() => setToMessage(null), 3500);
+
+    setTimeout(() => setVideoGenStep(2), 1200);
+    setTimeout(() => setVideoGenStep(3), 2400);
+    setTimeout(() => setVideoGenStep(4), 3800);
+    setTimeout(() => {
+      setVideoGenStep(5);
+      setTimeout(() => {
+        handleEnterReviewView();
+      }, 1600);
+    }, 5200);
   };
 
   const handleEnterReviewView = () => {
@@ -471,6 +485,18 @@ export function StudioScreen() {
     }
     setToMessage("Scene deleted");
     setTimeout(() => setToMessage(null), 2000);
+  };
+
+  const handleUpdateSceneTitle = (id: string, nextTitle: string) => {
+    setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, title: nextTitle } : s)));
+  };
+
+  const handleUpdateSceneNarration = (id: string, nextNarration: string) => {
+    setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, narration: nextNarration } : s)));
+  };
+
+  const handleUpdateSceneTag = (id: string, nextTag: string) => {
+    setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, narrativeTag: nextTag } : s)));
   };
 
   const handleCreateSceneFromModal = (sceneData: {
@@ -678,362 +704,356 @@ export function StudioScreen() {
             maxWidth: isReview ? 240 : isEditor ? 220 : "calc(100% - 410px)",
             transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
-          className={cn("flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] overflow-hidden transition-colors duration-300", isReview ? "bg-[#fafbf9]" : isEditor ? "bg-[#f8f9f7]" : "bg-[#eef1ed] p-4 sm:p-6 lg:p-7")}
+          className={cn(
+            "flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] overflow-hidden transition-colors duration-300",
+            isGenerating ? "bg-[#eef1ed] p-4 sm:p-6 lg:p-7" : isReview ? "bg-[#fafbf9]" : isEditor ? "bg-[#f8f9f7]" : "bg-[#eef1ed] p-4 sm:p-6 lg:p-7"
+          )}
         >
-          {isReview ? (
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--line)] px-3.5 bg-white">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#596660] flex items-center gap-1.5"><Film className="size-3.5 text-[var(--brand)]" /> <span>Video Chapters · {chapters.length}</span></span>
-              <span className="text-[10px] font-bold text-[var(--ink-muted)]">{totalDurationSeconds}s</span>
-            </div>
-          ) : isEditor ? (
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--line)] px-3 bg-white">
-              <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#77817c]">Scenes · {totalDurationSeconds} sec</span>
+          {isGenerating ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
+              <div className="size-20 rounded-3xl bg-[var(--tint)] border border-[var(--tint-line)] flex items-center justify-center mb-6 shadow-sm">
+                <Sparkles className="size-10 text-[var(--brand)] animate-pulse" />
+              </div>
+
+              <h3 className="text-[22px] font-extrabold text-[var(--ink)] tracking-tight">
+                Generating High-Resolution Video Master...
+              </h3>
+              <p className="text-[13.5px] text-[var(--ink-muted)] mt-1.5 max-w-[460px]">
+                Synthesizing kinematic 3D scene models, rendering voiceover audio sync, and verifying fair balance across all {sceneList.length} scenes.
+              </p>
+
+              <div className="mt-8 w-full max-w-[380px] space-y-2.5 text-left text-[12.5px]">
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 1 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                  <Check className={cn("size-4.5 shrink-0", videoGenStep >= 1 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Parsed {sceneList.length} storyboard scenes &amp; timing</span>
+                </div>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 2 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                  <Check className={cn("size-4.5 shrink-0", videoGenStep >= 2 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Synthesized 3D visual kinematics &amp; lighting</span>
+                </div>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 3 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                  <Check className={cn("size-4.5 shrink-0", videoGenStep >= 3 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Synced clinical voiceover narration</span>
+                </div>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 4 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                  <Check className={cn("size-4.5 shrink-0", videoGenStep >= 4 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Linking citations to FDA label §5.1</span>
+                </div>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 5 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                  {videoGenStep >= 5 ? (
+                    <Check className="size-4.5 shrink-0 text-[var(--ok)]" strokeWidth={2.5} />
+                  ) : (
+                    <Sparkles className="size-4.5 shrink-0 text-[var(--brand)] animate-spin" />
+                  )}
+                  <span className="font-semibold">Final cloud master render ({selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"})</span>
+                </div>
+              </div>
+
+              <div className="mt-8 flex items-center gap-4 text-[12px] text-[var(--ink-muted)]">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <span>✉ Email notification queued</span>
+                </span>
+                <span>•</span>
+                <button
+                  type="button"
+                  onClick={handleEnterReviewView}
+                  className="font-bold text-[var(--brand)] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Preview Master Video</span>
+                  <ArrowRight className="size-3.5" />
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="flex items-center justify-between pb-4 shrink-0">
-              <div>
-                <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight">
-                  Script
-                </h2>
-                <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
-                  Review and shape the clinical narrative before generating the full visual canvas.
-                </p>
-              </div>
-              <Button
-                type="button"
-                onClick={handleAddDirectScriptScene}
-                size="sm"
-                className="bg-white border border-[var(--line)] text-[var(--ink)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
-              >
-                <Plus className="size-3.5 text-[var(--brand)]" />
-                <span>Add Script Scene</span>
-              </Button>
-            </div>
-          )}
+            <>
+              {isReview ? (
+                <div className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--line)] px-3.5 bg-white">
+                  <span className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#596660] flex items-center gap-1.5"><Film className="size-3.5 text-[var(--brand)]" /> <span>Video Chapters · {chapters.length}</span></span>
+                  <span className="text-[10px] font-bold text-[var(--ink-muted)]">{totalDurationSeconds}s</span>
+                </div>
+              ) : isEditor ? (
+                <div className="flex h-11 shrink-0 items-center justify-between border-b border-[var(--line)] px-3 bg-white">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#77817c]">Scenes · {totalDurationSeconds} sec</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between pb-4 shrink-0">
+                  <div>
+                    <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight">
+                      Script
+                    </h2>
+                    <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
+                      Review and shape the clinical narrative before generating the full visual canvas.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleAddDirectScriptScene}
+                    size="sm"
+                    className="bg-white border border-[var(--line)] text-[var(--ink)] hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)] font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <Plus className="size-3.5 text-[var(--brand)]" />
+                    <span>Add Script Scene</span>
+                  </Button>
+                </div>
+              )}
 
-          <div className={cn("flex-1 min-h-0 overflow-y-auto space-y-2.5", isReview ? "p-2.5 space-y-2" : isEditor ? "p-2.5" : "p-1 pr-2 space-y-3")}>
-            {isReview
-              ? chapters.map((ch) => {
-                  const isCurrent = activeMasterChapter?.id === ch.id;
-                  return (
-                    <button
-                      key={ch.id}
-                      type="button"
-                      onClick={() => {
-                        setMasterCurrentTime(ch.start);
-                        setMasterPlaying(true);
-                      }}
-                      className={cn(
-                        "group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer",
-                        isCurrent
-                          ? "border-[var(--brand)] bg-[var(--tint)] shadow-xs ring-1 ring-[var(--brand)]"
-                          : "border-black/[0.06] bg-white hover:border-black/20 hover:bg-[#fafbf9]"
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-1 mb-1">
-                        <span
+              <div className={cn("flex-1 min-h-0 overflow-y-auto space-y-2.5", isReview ? "p-2.5 space-y-2" : isEditor ? "p-2.5" : "p-1 pr-2 space-y-3")}>
+                {isReview
+                  ? chapters.map((ch) => {
+                      const isCurrent = activeMasterChapter?.id === ch.id;
+                      return (
+                        <button
+                          key={ch.id}
+                          type="button"
+                          onClick={() => {
+                            setMasterCurrentTime(ch.start);
+                            setMasterPlaying(true);
+                          }}
                           className={cn(
-                            "rounded-md px-1.5 py-0.5 text-[9.5px] font-extrabold",
-                            isCurrent ? "bg-[var(--brand)] text-white" : "bg-black/5 text-[var(--ink-muted)]"
+                            "group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer",
+                            isCurrent
+                              ? "border-[var(--brand)] bg-[var(--tint)] shadow-xs ring-1 ring-[var(--brand)]"
+                              : "border-black/[0.06] bg-white hover:border-black/20 hover:bg-[#fafbf9]"
                           )}
                         >
-                          0:{ch.start.toString().padStart(2, "0")} – 0:{ch.end.toString().padStart(2, "0")}
-                        </span>
-                        {isCurrent && (
-                          <span className="flex items-center gap-1 text-[9.5px] font-extrabold text-[var(--brand-deep)]">
-                            <Play className="size-2.5 fill-current" /> Playing
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[12px] font-bold text-[var(--ink)] line-clamp-1">
-                        {ch.number}. {ch.title}
-                      </div>
-                      <p className="text-[10.5px] text-[var(--ink-muted)] line-clamp-2 mt-0.5 leading-snug">
-                        {ch.narration}
-                      </p>
-                    </button>
-                  );
-                })
-              : (
-                <>
-                  {sceneList.map((scene, idx) => {
-                    const active = scene.id === selectedSceneId;
-                    const isDragging = scene.id === draggedSceneId;
-
-                    return (
-                      <div
-                        key={scene.id}
-                        draggable={!isEditor}
-                        onDragStart={() => handleDragStart(scene.id)}
-                        onDragOver={(e) => handleDragOver(e, scene.id)}
-                        onDragEnd={handleDragEnd}
-                        onClick={() => {
-                          setSelectedSceneId(scene.id);
-                          setSceneCurrentTime(0);
-                        }}
-                        className={cn(
-                          "group relative rounded-[16px] border transition-all cursor-pointer bg-white",
-                          active
-                            ? "border-[var(--brand)] ring-2 ring-[var(--brand)]/15 shadow-sm"
-                            : "border-black/[0.07] hover:border-black/20",
-                          isDragging && "opacity-40 border-dashed border-[var(--brand)]",
-                          isEditor ? "p-2" : "p-4"
-                        )}
-                      >
-                        {isEditor ? (
-                          <div className="space-y-1.5">
-                            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-[#173d31] flex items-center justify-center">
-                              <DynamicSceneComposition
-                                scene={scene}
-                                brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
-                              />
-                              <div className="absolute top-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[8.5px] font-extrabold text-white">
-                                {scene.number}
-                              </div>
-                            </div>
-                            <div className="px-0.5">
-                              <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">{scene.title}</div>
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span
+                              className={cn(
+                                "rounded-md px-1.5 py-0.5 text-[9.5px] font-extrabold",
+                                isCurrent ? "bg-[var(--brand)] text-white" : "bg-black/5 text-[var(--ink-muted)]"
+                              )}
+                            >
+                              0:{ch.start.toString().padStart(2, "0")} – 0:{ch.end.toString().padStart(2, "0")}
+                            </span>
+                            <span className="text-[9.5px] text-[var(--ink-muted)] font-bold">{ch.duration}s</span>
+                          </div>
+                          <div className="text-[11.5px] font-bold text-[var(--ink)] line-clamp-1 group-hover:text-[var(--brand-deep)]">
+                            {ch.number}. {ch.title}
+                          </div>
+                          <div className="text-[10px] text-[var(--ink-muted)] line-clamp-1 mt-0.5">{ch.narration}</div>
+                        </button>
+                      );
+                    })
+                  : isEditor
+                  ? sceneList.map((sc) => {
+                      const isSelected = selectedScene.id === sc.id;
+                      const isGenerated = generatedSceneIds.includes(sc.id);
+                      return (
+                        <button
+                          key={sc.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedSceneId(sc.id);
+                            setSelectedCanvasElementId("headline");
+                            setSceneCurrentTime(0);
+                            setScenePlaying(true);
+                          }}
+                          className={cn(
+                            "group relative flex w-full flex-col rounded-xl border p-2 text-left transition-all cursor-pointer",
+                            isSelected
+                              ? "border-[var(--brand)] bg-white shadow-xs ring-1 ring-[var(--brand)]"
+                              : "border-black/[0.06] bg-white hover:border-black/20"
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-1 mb-1.5">
+                            <span className="text-[10.5px] font-bold text-[var(--ink)]">
+                              Scene {sc.number}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              {isGenerated ? (
+                                <span className="size-1.5 rounded-full bg-emerald-500" />
+                              ) : (
+                                <Sparkles className="size-2.5 text-[var(--brand)] animate-spin" />
+                              )}
+                              <span className="text-[9.5px] text-[var(--ink-muted)] font-medium">{sc.duration}s</span>
                             </div>
                           </div>
-                        ) : (
-                          /* Script Mode Rich Card */
-                          <div className="space-y-3">
-                            {/* Card Header with Drag Handle, Scene Number, Narrative Tag, and Actions */}
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0 flex-1">
-                                <div
-                                  title="Drag to reorder scene"
-                                  className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-[var(--ink)] p-0.5 shrink-0"
-                                >
+
+                          <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-black/10 bg-[#173d31]">
+                            <DynamicSceneComposition scene={sc} compact />
+                          </div>
+
+                          <div className="mt-1.5 text-[11px] font-semibold text-[var(--ink-2)] line-clamp-1">
+                            {sc.title}
+                          </div>
+                        </button>
+                      );
+                    })
+                  : (
+                    <>
+                      {sceneList.map((sc, idx) => {
+                        const isDragging = draggedSceneId === sc.id;
+                        return (
+                          <div
+                            key={sc.id}
+                            draggable
+                            onDragStart={() => handleDragStart(sc.id)}
+                            onDragOver={(e) => handleDragOver(e, sc.id)}
+                            onDrop={(e) => e.preventDefault()}
+                            onDragEnd={handleDragEnd}
+                            className={cn(
+                              "relative flex flex-col rounded-2xl border bg-white p-4 transition-all duration-200 shadow-2xs hover:shadow-xs",
+                              isDragging ? "opacity-40 border-dashed border-[var(--brand)]" : "border-black/[0.08]"
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-black/[0.04]">
+                              <div className="flex items-center gap-2">
+                                <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-[var(--ink)] p-0.5 rounded transition-colors" title="Drag to reorder">
                                   <GripVertical className="size-4" />
                                 </div>
-                                <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-[var(--ink)] text-[11px] font-black text-white">
-                                  {scene.number}
+                                <span className="flex size-6 items-center justify-center rounded-lg bg-[#111614] text-[11px] font-bold text-white shadow-2xs">
+                                  {sc.number}
                                 </span>
-
-                                {/* Editable Title Input */}
                                 <input
                                   type="text"
-                                  value={scene.title}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setSceneList((prev) =>
-                                      prev.map((s) => (s.id === scene.id ? { ...s, title: val } : s))
-                                    );
-                                  }}
-                                  className="text-[13.5px] font-extrabold text-[var(--ink)] bg-transparent hover:bg-black/5 focus:bg-white rounded-md px-1.5 py-0.5 border border-transparent focus:border-[var(--brand)] focus:outline-none transition-all truncate flex-1"
-                                  placeholder="Scene Title..."
+                                  value={sc.title}
+                                  onChange={(e) => handleUpdateSceneTitle(sc.id, e.target.value)}
+                                  className="text-[13.5px] font-[850] text-[var(--ink)] bg-transparent border-b border-transparent hover:border-black/20 focus:border-[var(--brand)] focus:outline-none px-1 py-0.5 rounded transition-all"
+                                  placeholder="Scene Title"
                                 />
+                              </div>
 
-                                {/* Interactive Narrative Tag Pill */}
-                                <div className="relative group/tag shrink-0">
+                              <div className="flex items-center gap-1.5">
+                                <div className="relative">
                                   <select
-                                    value={scene.narrativeTag || "Evidence"}
-                                    onChange={(e) => {
-                                      const nextTag = e.target.value;
-                                      setSceneList((prev) =>
-                                        prev.map((s) =>
-                                          s.id === scene.id ? { ...s, narrativeTag: nextTag } : s
-                                        )
-                                      );
-                                      setToMessage(`Scene ${scene.number} tagged as (${nextTag})`);
-                                      setTimeout(() => setToMessage(null), 2000);
-                                    }}
-                                    className="appearance-none focus-ring cursor-pointer rounded-full bg-[var(--tint)] border border-[var(--brand)]/30 pl-2.5 pr-6 py-0.5 text-[11px] font-bold text-[var(--brand-deep)] hover:bg-[var(--tint-strong)] transition-all"
+                                    value={sc.narrativeTag || "Evidence"}
+                                    onChange={(e) => handleUpdateSceneTag(sc.id, e.target.value)}
+                                    className="appearance-none bg-[var(--tint)] border border-[var(--brand)]/25 text-[var(--brand-deep)] text-[10.5px] font-bold rounded-lg px-2 py-0.5 pr-5 cursor-pointer hover:bg-[var(--tint-strong)] transition-colors focus:outline-none"
                                   >
-                                    {NARRATIVE_TAG_OPTIONS.map((tag) => (
-                                      <option key={tag.id} value={tag.id}>
-                                        ({tag.label})
+                                    {NARRATIVE_TAG_OPTIONS.map((tagOpt) => (
+                                      <option key={tagOpt.id} value={tagOpt.id}>
+                                        ({tagOpt.label})
                                       </option>
                                     ))}
                                   </select>
-                                  <ChevronDown className="size-2.5 text-[var(--brand-deep)] absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                  <ChevronDown className="size-2.5 text-[var(--brand-deep)] absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-70" />
                                 </div>
-                              </div>
 
-                              {/* Action controls: Move Up, Move Down, Duration, Delete */}
-                              <div className="flex items-center gap-1 shrink-0">
-                                <span className="rounded-md bg-black/5 px-2 py-0.5 text-[10px] font-bold text-[var(--ink-muted)]">
-                                  ⏱ {scene.duration}s
+                                <span className="flex items-center gap-1 rounded-md bg-[#f4f6f4] px-2 py-0.5 text-[10.5px] font-bold text-[var(--ink-muted)] border border-black/5">
+                                  <Clock className="size-2.5" />
+                                  {sc.duration || 10}s
                                 </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMoveScene(idx, "up");
-                                  }}
-                                  disabled={idx === 0}
-                                  title="Move Up"
-                                  className="size-6 rounded hover:bg-black/5 flex items-center justify-center text-gray-500 disabled:opacity-20 cursor-pointer"
-                                >
-                                  <ArrowUp className="size-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMoveScene(idx, "down");
-                                  }}
-                                  disabled={idx === sceneList.length - 1}
-                                  title="Move Down"
-                                  className="size-6 rounded hover:bg-black/5 flex items-center justify-center text-gray-500 disabled:opacity-20 cursor-pointer"
-                                >
-                                  <ArrowDown className="size-3" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteScene(scene.id);
-                                  }}
-                                  title="Delete Scene"
-                                  className="size-6 rounded hover:bg-rose-50 text-gray-400 hover:text-rose-600 flex items-center justify-center cursor-pointer transition-colors"
-                                >
-                                  <Trash2 className="size-3" />
-                                </button>
+
+                                <div className="flex items-center gap-0.5 ml-1 border-l border-black/10 pl-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveScene(idx, "up")}
+                                    disabled={idx === 0}
+                                    title="Move Up"
+                                    className="p-1 rounded text-gray-400 hover:text-[var(--ink)] hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+                                  >
+                                    <ArrowUp className="size-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveScene(idx, "down")}
+                                    disabled={idx === sceneList.length - 1}
+                                    title="Move Down"
+                                    className="p-1 rounded text-gray-400 hover:text-[var(--ink)] hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+                                  >
+                                    <ArrowDown className="size-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteScene(sc.id)}
+                                    title="Delete Scene"
+                                    className="p-1 rounded text-gray-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer ml-0.5"
+                                  >
+                                    <Trash2 className="size-3" />
+                                  </button>
+                                </div>
                               </div>
                             </div>
 
-                            {/* Narration Textarea */}
-                            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.05] p-3 focus-within:border-[var(--brand)] focus-within:ring-1 focus-within:ring-[var(--brand)]/20 transition-all">
-                              <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] mb-1">
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
                                 <span>Narration Script</span>
-                                <span className="text-[9.5px] font-medium lowercase text-gray-400">
-                                  {scene.narration ? `${scene.narration.split(" ").filter(Boolean).length} words` : "Empty"}
+                                <span className="font-semibold lowercase">
+                                  {sc.narration ? `${sc.narration.split(" ").filter(Boolean).length} words` : "0 words"}
                                 </span>
                               </div>
                               <textarea
-                                value={scene.narration}
-                                onChange={(e) => {
-                                  const nextVal = e.target.value;
-                                  setSceneList((prev) =>
-                                    prev.map((s) => (s.id === scene.id ? { ...s, narration: nextVal } : s))
-                                  );
-                                }}
-                                placeholder="Write narration script for this scene..."
-                                className="w-full bg-transparent text-[12.5px] text-[var(--ink)] leading-relaxed resize-none focus:outline-none font-medium placeholder:text-gray-400"
+                                value={sc.narration}
+                                onChange={(e) => handleUpdateSceneNarration(sc.id, e.target.value)}
+                                placeholder="Enter clinical voiceover script for this scene..."
                                 rows={2}
+                                className="w-full rounded-xl border border-black/10 bg-[#fafbf9] p-2.5 text-[12.5px] leading-relaxed text-[var(--ink)] focus:bg-white focus:outline-none focus:border-[var(--brand)] focus:ring-1 focus:ring-[var(--brand)]/20 transition-all resize-none shadow-2xs"
                               />
                             </div>
 
-                            {/* Bottom Card Footer with PromoMats Grounding */}
-                            <div className="flex items-center justify-between text-[10.5px] text-[var(--ink-muted)] pt-0.5">
-                              <span className="flex items-center gap-1 font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                🛡 {scene.claim}
+                            <div className="flex items-center justify-between pt-2 mt-2 border-t border-black/[0.04] text-[10.5px]">
+                              <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                                <ShieldCheck className="size-3 text-emerald-600" />
+                                <span>{sc.claim}</span>
                               </span>
-                              <span className="text-[10px] font-medium text-gray-500">
-                                Tag: <strong className="text-[var(--ink)]">({scene.narrativeTag || "Evidence"})</strong>
+                              <span className="text-[10px] text-gray-400">
+                                Tag: <strong>({sc.narrativeTag || "Evidence"})</strong>
                               </span>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
 
-                  {/* Direct Add Script Scene Bottom Button */}
-                  <button
-                    type="button"
-                    onClick={handleAddDirectScriptScene}
-                    className="w-full py-3 border-2 border-dashed border-[var(--line-strong)] hover:border-[var(--brand)] bg-white/70 hover:bg-white rounded-2xl flex items-center justify-center gap-2 text-[12.5px] font-bold text-[var(--ink-2)] hover:text-[var(--brand)] transition-all cursor-pointer shadow-2xs"
-                  >
-                    <Plus className="size-4 text-[var(--brand)]" />
-                    <span>+ Add Script Scene</span>
-                  </button>
-                </>
-              )}
-          </div>
-
-          {!isEditor && !isReview && !isGenerating && (
-            <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
-              <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-[0_16px_40px_rgba(0,0,0,0.32)] backdrop-blur-md max-w-[580px] w-auto">
-                <div className="flex items-center gap-2.5 min-w-0 pr-1">{isScriptComplete ? <Sparkles className="size-4.5 text-[var(--brand)] shrink-0" /> : <AlertCircle className="size-4.5 text-amber-400 shrink-0" />}<div className="min-w-0"><div className="text-[12.5px] font-bold text-white tracking-tight truncate">{isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}</div></div></div>
-                <Button onClick={handleStartSceneEditor} disabled={!isScriptComplete} size="sm" className={cn("h-9.5 px-5 rounded-full text-[13px] font-bold shadow-sm transition-all duration-200 shrink-0", isScriptComplete ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:-translate-y-0.5 cursor-pointer" : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5")}><Sparkles className="size-3.5 mr-1.5" /> <span>Generate Scenes</span></Button>
+                      <button
+                        type="button"
+                        onClick={handleAddDirectScriptScene}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black/15 p-4 text-[12.5px] font-bold text-[var(--ink-2)] hover:border-[var(--brand)] hover:bg-[var(--tint)]/50 hover:text-[var(--brand-deep)] transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Plus className="size-4 text-[var(--brand)]" />
+                        <span>Add Script Scene</span>
+                      </button>
+                    </>
+                  )}
               </div>
-            </div>
+
+              {!isEditor && !isReview && !isGenerating && (
+                <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
+                  <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-[0_16px_40px_rgba(0,0,0,0.32)] backdrop-blur-md max-w-[580px] w-auto">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                      {isScriptComplete ? (
+                        <Sparkles className="size-4.5 text-[var(--brand)] shrink-0" />
+                      ) : (
+                        <AlertCircle className="size-4.5 text-amber-400 shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-[12.5px] font-bold text-white tracking-tight truncate">
+                          {isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleStartSceneEditor}
+                      disabled={!isScriptComplete}
+                      size="sm"
+                      className={cn(
+                        "h-9.5 px-5 rounded-full text-[13px] font-bold shadow-sm transition-all duration-200 shrink-0",
+                        isScriptComplete
+                          ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:-translate-y-0.5 cursor-pointer"
+                          : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                      )}
+                    >
+                      <Sparkles className="size-3.5 mr-1.5" /> <span>Generate Scenes</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </aside>
 
         <main
           style={{
-            flex: isEditor || isReview || isGenerating ? 1 : "0 0 0px",
-            width: isEditor || isReview || isGenerating ? "auto" : "0px",
+            flex: isEditor || isReview ? 1 : "0 0 0px",
+            width: isEditor || isReview ? "auto" : "0px",
             minWidth: 0,
-            opacity: isEditor || isReview || isGenerating ? 1 : 0,
+            opacity: isEditor || isReview ? 1 : 0,
             transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
             "flex flex-col min-h-0 overflow-hidden",
-            !isEditor && !isReview && !isGenerating && "pointer-events-none"
+            !isEditor && !isReview && "pointer-events-none"
           )}
         >
-          {/* ══════════════════════════════════════════════════════════════════
-              MODE 1: ASYNCHRONOUS NEURAL VIDEO GENERATION LOADER
-             ══════════════════════════════════════════════════════════════════ */}
-          {isGenerating && (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 bg-[#101915] text-white relative overflow-hidden">
-              <div className="absolute -top-24 -left-24 size-80 rounded-full bg-[var(--brand)]/15 blur-3xl" />
-              <div className="absolute -bottom-24 -right-24 size-80 rounded-full bg-emerald-500/15 blur-3xl" />
-
-              <div className="relative z-10 w-full max-w-[560px] bg-white/5 backdrop-blur-xl border border-white/10 rounded-[28px] p-8 shadow-2xl space-y-6 text-center">
-                <div className="size-16 rounded-2xl bg-[var(--brand)]/20 border border-[var(--brand)]/40 grid place-items-center mx-auto shadow-lg">
-                  <Sparkles className="size-8 text-[var(--brand)] animate-spin" />
-                </div>
-
-                <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-300 px-3 py-1 text-[11px] font-extrabold mb-2">
-                    <span className="size-2 rounded-full bg-orange-400 animate-ping" />
-                    <span>Rendering Cloud Master · {selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}</span>
-                  </div>
-                  <h2 className="text-[22px] font-[850] tracking-tight text-white">
-                    Generating High-Resolution Clinical Video
-                  </h2>
-                  <p className="text-[12.5px] text-white/70 mt-1.5 leading-relaxed">
-                    Synthesizing 5 clinical scenes ({totalDurationSeconds}s), 3D MoA orbital meshes, and verified PromoMats voiceover sync.
-                  </p>
-                </div>
-
-                {/* Step Milestones */}
-                <div className="rounded-2xl bg-black/30 border border-white/10 p-4 text-left space-y-2.5 text-[11.5px]">
-                  <div className="flex items-center justify-between text-emerald-400 font-bold">
-                    <span className="flex items-center gap-2">✓ Script &amp; Voiceover Synthesis</span>
-                    <span>Done</span>
-                  </div>
-                  <div className="flex items-center justify-between text-emerald-400 font-bold">
-                    <span className="flex items-center gap-2">✓ 3D Anatomical MoA Meshes</span>
-                    <span>Done</span>
-                  </div>
-                  <div className="flex items-center justify-between text-orange-400 font-bold">
-                    <span className="flex items-center gap-2">
-                      <Sparkles className="size-3 animate-spin" /> Neural Frame Rendering
-                    </span>
-                    <span>84%</span>
-                  </div>
-                  <div className="flex items-center justify-between text-white/40 font-medium">
-                    <span className="flex items-center gap-2">○ PromoMats Watermarking &amp; Export</span>
-                    <span>Pending</span>
-                  </div>
-                </div>
-
-                {/* Email Notice */}
-                <div className="rounded-xl bg-white/10 border border-white/10 p-3.5 text-[11.5px] text-white/80 text-left">
-                  <span>
-                    An email notification will arrive once processing is complete. You can continue chatting with SwishX in the meantime.
-                  </span>
-                </div>
-
-                {/* Jump to Review */}
-                <Button
-                  onClick={handleEnterReviewView}
-                  className="w-full bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold h-11 rounded-xl shadow-md cursor-pointer gap-2"
-                >
-                  <span>View Master Video in Shared Review</span>
-                  <ArrowRight className="size-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* ══════════════════════════════════════════════════════════════════
               MODE 2: CANVA-STYLE SCENE CANVAS EDITOR (studioMode === "editor")
              ══════════════════════════════════════════════════════════════════ */}

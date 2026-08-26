@@ -8,6 +8,7 @@ export interface SceneCompositionProps {
   scene?: Scene;
   brandName?: string;
   totalScenes?: number;
+  compact?: boolean;
 }
 
 const sceneThemeColors = [
