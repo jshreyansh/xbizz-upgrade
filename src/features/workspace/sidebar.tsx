@@ -13,9 +13,9 @@ interface CreateTile {
 }
 
 const CREATE_TILES: CreateTile[] = [
-  { label: "Video", icon: "video", href: "/create" },
-  { label: "Image", icon: "image", href: "#" },
-  { label: "Website", icon: "globe", href: "#" },
+  { label: "MagicVideo", icon: "video", href: "/create" },
+  { label: "MagicCanvas", icon: "image", href: "#" },
+  { label: "MagicWeb", icon: "globe", href: "#" },
   { label: "Doc", icon: "doc", href: "#" },
   { label: "Mail", icon: "mail", href: "#" },
   { label: "Avatars", icon: "characters", href: "#" },
@@ -315,7 +315,7 @@ export function Sidebar() {
                       <button
                         key={tile.label}
                         onClick={() => handleCreateNav(tile.href)}
-                        className={`group flex items-center gap-2.5 rounded-[12px] border px-3 py-2.5 text-left transition-all duration-150 ${
+                        className={`group flex items-center gap-1.5 rounded-[12px] border px-2 py-2.5 text-left transition-all duration-150 ${
                           isTileActive
                             ? "border-transparent bg-[var(--brand)] text-white font-[750] shadow-[0_3px_10px_rgba(253,72,22,0.32)]"
                             : "border-transparent bg-black/[0.025] text-[var(--ink-2)] font-semibold hover:border-[var(--hair-2)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
@@ -324,7 +324,7 @@ export function Sidebar() {
                         <span className={`transition-colors ${isTileActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"}`}>
                           <NavIcon name={tile.icon} active={isTileActive} />
                         </span>
-                        <span className={`truncate text-[12.5px] font-medium leading-none ${isTileActive ? "text-white font-bold" : ""}`}>
+                        <span className={`truncate text-[10px] tracking-tight font-medium leading-none ${isTileActive ? "text-white font-bold" : ""}`}>
                           {tile.label}
                         </span>
                       </button>
@@ -530,7 +530,7 @@ export function Sidebar() {
                 <button
                   key={tile.label}
                   onClick={() => handleCreateNav(tile.href)}
-                  className={`group flex items-center gap-2 rounded-[12px] border p-2 text-left transition-all duration-150 ${
+                  className={`group flex items-center gap-1.5 rounded-[12px] border p-2 text-left transition-all duration-150 ${
                     isTileActive
                       ? "border-transparent bg-[var(--brand)] text-white font-bold shadow-xs"
                       : "border-black/[0.04] bg-[#f8faf8] text-[var(--ink-2)] font-semibold hover:border-[var(--brand)] hover:bg-[var(--tint)] hover:text-[var(--brand)]"
@@ -539,7 +539,7 @@ export function Sidebar() {
                   <span className={`transition-colors ${isTileActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
                     <NavIcon name={tile.icon} active={isTileActive} />
                   </span>
-                  <span className={`truncate text-[12px] font-bold ${isTileActive ? "text-white" : ""}`}>{tile.label}</span>
+                  <span className={`truncate text-[10px] tracking-tight font-bold ${isTileActive ? "text-white" : ""}`}>{tile.label}</span>
                 </button>
               );
             })}
