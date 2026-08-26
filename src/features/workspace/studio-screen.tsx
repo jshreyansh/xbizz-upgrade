@@ -112,10 +112,7 @@ export function StudioScreen() {
 
   // Add Scene Modal State
   const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
-
-  // Generate Now Quality Modal State (HD vs Cinematic)
-  const [generateQualityModalOpen, setGenerateQualityModalOpen] = useState(false);
-  const [selectedQuality, setSelectedQuality] = useState<"hd" | "cinematic">("hd");
+  const selectedQuality = useWorkspaceStore((s) => s.selectedQuality);
 
   // Simulated Asynchronous Scene Generation States
   // Tracks which scene IDs have finished rendering. All scenes not in this array show skeleton loader state.
@@ -203,14 +200,8 @@ export function StudioScreen() {
   const isAvatar = creationMode === "magic-avatar";
   const isEditor = studioMode === "editor";
 
-  // Trigger quality confirmation modal when clicking Generate Now
-  const handleOpenGenerateModal = () => {
-    setGenerateQualityModalOpen(true);
-  };
-
   // Transition from Scenes Mode to Editor Mode upon confirming quality with simulated progressive rendering
   const handleConfirmGeneration = () => {
-    setGenerateQualityModalOpen(false);
     setStudioMode("editor");
     setActiveTab("assistant");
     setGeneratedSceneIds([]); // Start with all scenes loading
@@ -1863,14 +1854,6 @@ export function StudioScreen() {
       )}
 
       {/* ── Modals ── */}
-      {generateQualityModalOpen && (
-        <GenerateQualityModal
-          selectedQuality={selectedQuality}
-          onSelectQuality={setSelectedQuality}
-          onConfirm={handleConfirmGeneration}
-          onClose={() => setGenerateQualityModalOpen(false)}
-        />
-      )}
       {addSceneModalOpen && (
         <AddSceneModal
           sceneCount={sceneList.length}
@@ -2703,124 +2686,6 @@ function AddSceneModal({
             </Button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-function GenerateQualityModal({
-  selectedQuality,
-  onSelectQuality,
-  onConfirm,
-  onClose,
-}: {
-  selectedQuality: "hd" | "cinematic";
-  onSelectQuality: (q: "hd" | "cinematic") => void;
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/50 p-4 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Select Video Generation Quality"
-    >
-      <div className="rise-in w-full max-w-[620px] overflow-hidden rounded-[24px] border border-white/50 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[var(--line)] px-6 py-4.5 bg-[#fafbf9]">
-          <div>
-            <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand)]">
-              <Sparkles className="size-3.5" /> Generation Engine
-            </div>
-            <h2 className="mt-0.5 text-[20px] font-[850] tracking-tight text-[var(--ink)]">
-              Select Output Quality
-            </h2>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="size-8 rounded-full hover:bg-black/5">
-            <X className="size-4" />
-          </Button>
-        </div>
-
-        {/* Quality Cards Grid matching user screenshot */}
-        <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* HD Card */}
-            <button
-              type="button"
-              onClick={() => onSelectQuality("hd")}
-              className={cn(
-                "flex flex-col items-center justify-between rounded-[20px] border-2 p-6 text-center transition-all cursor-pointer",
-                selectedQuality === "hd"
-                  ? "border-orange-500 bg-white ring-4 ring-orange-500/10 shadow-sm"
-                  : "border-[var(--line)] bg-[#fafbf9] hover:border-black/20 hover:bg-white"
-              )}
-            >
-              <div className="space-y-2">
-                <h3 className="text-[22px] font-[850] text-[var(--ink)]">HD</h3>
-                <p className="text-[12px] text-[var(--ink-muted)] leading-relaxed px-2">
-                  Lifelike motion that stops the scroll — for launches &amp; big moments.
-                </p>
-              </div>
-
-              <div className="mt-6 space-y-2.5 w-full">
-                <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11.5px] font-extrabold text-orange-600">
-                  ⚡ 2,500 credits
-                </span>
-                <div className="text-[11.5px] text-[var(--ink-muted)] font-medium flex items-center justify-center gap-1">
-                  <span>⏱</span> 7–9 min
-                </div>
-              </div>
-            </button>
-
-            {/* Cinematic Card */}
-            <button
-              type="button"
-              onClick={() => onSelectQuality("cinematic")}
-              className={cn(
-                "flex flex-col items-center justify-between rounded-[20px] border-2 p-6 text-center transition-all cursor-pointer",
-                selectedQuality === "cinematic"
-                  ? "border-orange-500 bg-white ring-4 ring-orange-500/10 shadow-sm"
-                  : "border-[var(--line)] bg-[#fafbf9] hover:border-black/20 hover:bg-white"
-              )}
-            >
-              <div className="space-y-2">
-                <h3 className="text-[22px] font-[850] text-[var(--ink)]">Cinematic</h3>
-                <p className="text-[12px] text-[var(--ink-muted)] leading-relaxed px-2">
-                  Ultra-realistic, fully generated scenes — for flagship launches.
-                </p>
-              </div>
-
-              <div className="mt-6 space-y-2.5 w-full">
-                <span className="inline-flex items-center justify-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11.5px] font-extrabold text-orange-600">
-                  ⚡ 7,500 credits
-                </span>
-                <div className="text-[11.5px] text-[var(--ink-muted)] font-medium flex items-center justify-center gap-1">
-                  <span>⏱</span> 12–14 min
-                </div>
-              </div>
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between pt-4 border-t border-[var(--line)]">
-            <div className="text-[11px] text-[var(--ink-muted)]">
-              Generation will render in the canvas editor.
-            </div>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="secondary" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={onConfirm}
-                className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-5 cursor-pointer shadow-xs"
-              >
-                <Sparkles className="size-3.5 mr-1.5" />
-                Generate ({selectedQuality === "hd" ? "2,500 credits" : "7,500 credits"})
-              </Button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

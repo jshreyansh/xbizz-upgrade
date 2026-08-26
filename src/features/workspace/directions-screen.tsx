@@ -1573,22 +1573,22 @@ function PlanSection({
       className={cn(
         "squircle-card relative transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
         open
-          ? "z-20 bg-white scale-[1.012] shadow-[0_16px_40px_rgba(10,13,20,0.09),0_2px_8px_rgba(10,13,20,0.04)] border-2 border-[var(--brand)] ring-4 ring-[var(--brand-soft)] rounded-[20px] my-3.5"
-          : "z-0 bg-white/75 opacity-[.78] hover:opacity-100 hover:bg-white hover:shadow-xs border border-black/[0.08] rounded-[14px] my-1"
+          ? "z-20 w-full scale-100 bg-white border border-[var(--brand)] shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
+          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-white hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-[14px] my-1"
       )}
     >
       <button
         onClick={onToggle}
         className={cn(
-          "focus-ring group flex w-full items-center gap-3 px-3.5 text-left transition-all duration-200 sm:px-4 cursor-pointer",
-          open ? "min-h-[70px]" : "min-h-[46px] py-1.5"
+          "focus-ring group flex w-full items-center gap-3 text-left transition-all duration-200 cursor-pointer",
+          open ? "min-h-[70px] px-4 sm:px-5" : "min-h-[44px] py-1.5 px-3 sm:px-3.5"
         )}
         aria-expanded={open}
       >
         <span
           className={cn(
             "squircle-control grid shrink-0 place-items-center transition-transform group-hover:scale-105",
-            open ? "size-10 rounded-[12px]" : "size-7.5 rounded-[9px]",
+            open ? "size-10 rounded-[12px]" : "size-7 rounded-[8px]",
             tone === "attention"
               ? "bg-[var(--warning-soft)] text-[var(--warning)]"
               : tone === "done"
@@ -1597,7 +1597,7 @@ function PlanSection({
           )}
         >
           {tone === "done" ? (
-            <Check className={cn(open ? "size-4" : "size-3.5")} strokeWidth={3} />
+            <Check className={cn(open ? "size-4" : "size-3")} strokeWidth={3} />
           ) : (
             <Icon className={cn(open ? "size-[19px]" : "size-3.5")} />
           )}
@@ -1607,7 +1607,7 @@ function PlanSection({
           <span
             className={cn(
               "block font-bold tracking-tight transition-colors leading-snug",
-              open ? "text-[16px] text-[var(--ink)]" : "text-[13.5px] text-[var(--ink-2)]"
+              open ? "text-[16px] text-[var(--ink)]" : "text-[13px] text-[var(--ink-2)]"
             )}
           >
             {title}
@@ -1615,7 +1615,7 @@ function PlanSection({
           <span
             className={cn(
               "block truncate text-[var(--ink-muted)]",
-              open ? "mt-0.5 text-[12.5px]" : "text-[11.5px] max-w-[420px]"
+              open ? "mt-0.5 text-[12.5px]" : "text-[11px] max-w-[380px]"
             )}
           >
             {summary}
@@ -1625,7 +1625,7 @@ function PlanSection({
         <span
           className={cn(
             "hidden rounded-full font-bold sm:inline border",
-            open ? "px-2.5 py-1 text-[11px]" : "px-2 py-0.5 text-[10px]",
+            open ? "px-2.5 py-1 text-[11px]" : "px-2 py-0.5 text-[9.5px]",
             tone === "attention"
               ? "bg-[var(--warning-soft)] text-[var(--warning)] border-[#fde68a]"
               : tone === "done"
@@ -1641,10 +1641,10 @@ function PlanSection({
             "grid place-items-center rounded-full transition-all duration-300",
             open
               ? "size-7 rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]"
-              : "size-6 text-[var(--ink-muted)] group-hover:bg-black/5"
+              : "size-5.5 text-[var(--ink-muted)] group-hover:bg-black/5"
           )}
         >
-          <ChevronDown className={cn(open ? "size-4" : "size-3.5")} />
+          <ChevronDown className={cn(open ? "size-4" : "size-3")} />
         </div>
       </button>
 
