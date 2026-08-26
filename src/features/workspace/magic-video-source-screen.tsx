@@ -452,6 +452,26 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] items-start w-full">
         {/* Left Column: Brand & Dossier Directory */}
         <section className="squircle-card min-w-0 w-full border border-[var(--line)] bg-white p-5 shadow-[var(--shadow-sm)] sm:p-6 space-y-5">
+          {/* Section Step 1 Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--line)]">
+            <div className="flex items-center gap-2.5">
+              <span className="grid size-6 place-items-center rounded-full bg-[var(--brand)] text-white text-[11px] font-extrabold shadow-2xs">
+                1
+              </span>
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] block">
+                  Step 1
+                </span>
+                <h2 className="text-[16px] font-[850] text-[var(--ink)] tracking-tight">
+                  Select the Brand and Dossier
+                </h2>
+              </div>
+            </div>
+            <span className="rounded-full bg-[var(--ok-bg)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--ok)]">
+              Mandatory
+            </span>
+          </div>
+
           {/* ── STEP 1: BRAND SELECTION (MINIMIZED OR EXPANDED) ── */}
           {!isChangingBrand ? (
             /* Minimized Sleek Selected Brand Bar */
@@ -752,7 +772,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             {/* Header */}
             <div className="border-b border-[var(--line)] bg-[#fafbf9] px-4 py-3">
               <div className="flex items-center justify-between">
-                <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Video Configuration</span>
+                <span className="text-[11.5px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                  Step 2 · Video Configuration
+                </span>
                 <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)]">
                   Mandatory
                 </span>
@@ -872,7 +894,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             {!canContinue ? (
               <span className="text-[var(--warn)] font-medium text-center">
                 {!selectedBrand.hasDossier
-                  ? `Please create a dossier for ${selectedBrand.name}`
+                  ? `Please upload or create a dossier for ${selectedBrand.name}`
                   : !isAudienceValid
                   ? "Please select an audience"
                   : "Please select at least 1 focus topic"}
@@ -880,7 +902,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             ) : (
               <>
                 <ShieldCheck className="size-3.5 text-[var(--brand)]" />
-                <span>All mandatory inputs configured</span>
+                <span>Step 1 and 2 are mandatory</span>
               </>
             )}
           </div>
