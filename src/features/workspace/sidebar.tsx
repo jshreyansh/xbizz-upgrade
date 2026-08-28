@@ -14,7 +14,7 @@ interface CreateTile {
 
 const CREATE_TILES: CreateTile[] = [
   { label: "Video", icon: "video", href: "/create" },
-  { label: "Canvas", icon: "image", href: "#" },
+  { label: "Creatives", icon: "image", href: "#" },
   { label: "Web", icon: "globe", href: "#" },
 ];
 
@@ -304,7 +304,7 @@ export function Sidebar() {
             </button>
           </div>
 
-          {/* ── MAGIC STUDIO SECTION (single-column rows: Video, Canvas, Web) ── */}
+          {/* ── MAGIC STUDIO SECTION (single-column rows: Video, Creatives, Web) ── */}
           <div
             className="relative"
             onMouseEnter={handleMouseEnterCreate}

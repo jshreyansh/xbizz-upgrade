@@ -60,7 +60,7 @@ const CREATION_TILES: TileOption[] = [
   },
   {
     icon: ImageIcon,
-    title: "Canvas",
+    title: "Creatives",
     subtitle: "Infographics, Detail Aid",
     accent: "var(--brand-deep)",
     description: "Leave-behinds, journal ads and banners from your approved claims.",
@@ -81,7 +81,7 @@ const CREATION_TILES: TileOption[] = [
 const RECENT_PROJECTS: RecentProject[] = [
   { studio: "Reel", status: "In MLR", title: "Velmora — MoA explainer", meta: "Cardiologists · US · 60s", progress: 85, updated: "Today, 09:15", action: "Open" },
   { studio: "Avatar", status: "Draft", title: "Dr. Rao — dosing update", meta: "HCP · EU · 45s", progress: 35, updated: "Yesterday", action: "Resume" },
-  { studio: "Canvas", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
+  { studio: "Creatives", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
   { studio: "Web", status: "Draft", title: "Nirvexa launch microsite", meta: "HCP portal · 6 sections", progress: 55, updated: "3 days ago", action: "Resume" },
 ];
 
@@ -177,7 +177,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
     ],
   },
   {
-    label: "Canvas Samples",
+    label: "Creatives Samples",
     title: "Print and digital, done right",
     subtitle: "Layouts your reps actually use — journal ads, booth panels, and payer infographics.",
     items: [
@@ -188,7 +188,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#16233f,#2c4573 50%,#5b7fb8)",
         hasPlay: true,
-        tag: "Canvas",
+        tag: "Creatives",
         videoSrc: "/326638_medium.mp4",
       },
       {
@@ -198,7 +198,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#33193f,#5b2c70 50%,#9a63bc)",
         hasPlay: true,
-        tag: "Canvas",
+        tag: "Creatives",
         videoSrc: "/21617-319452308_medium.mp4",
       },
       {
@@ -208,7 +208,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#0f2e28,#1b5546 50%,#3d9880)",
         hasPlay: true,
-        tag: "Canvas",
+        tag: "Creatives",
         videoSrc: "/46621-448480587_medium.mp4",
       },
     ],

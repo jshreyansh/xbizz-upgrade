@@ -25,7 +25,7 @@ interface StudioRow {
 
 const STUDIO_BREAKDOWN: StudioRow[] = [
   { studio: "Video", color: "#3d6bff", assets: 54, share: 42 },
-  { studio: "Canvas", color: "#9b5bff", assets: 41, share: 32 },
+  { studio: "Creatives", color: "#9b5bff", assets: 41, share: 32 },
   { studio: "Web", color: "#16b878", assets: 33, share: 26 },
 ];
 
@@ -38,7 +38,7 @@ interface TopAsset {
 
 const TOP_ASSETS: TopAsset[] = [
   { title: "Velmora — MoA explainer", studio: "Video", metric: "1.2k views", status: "Approved" },
-  { title: "Onkavia detail aid", studio: "Canvas", metric: "860 views", status: "Approved" },
+  { title: "Onkavia detail aid", studio: "Creatives", metric: "860 views", status: "Approved" },
   { title: "Nirvexa launch microsite", studio: "Web", metric: "540 visits", status: "In MLR" },
   { title: "Dr. Rao — dosing update", studio: "Video", metric: "410 views", status: "Draft" },
 ];
