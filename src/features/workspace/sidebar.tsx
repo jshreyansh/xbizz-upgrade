@@ -280,24 +280,22 @@ export function Sidebar() {
               } ${
                 isHomeActive
                   ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
-                  : "text-[var(--ink-2)] hover:bg-black/[0.04] hover:text-[var(--ink)]"
+                  : "text-[var(--ink-2)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
               }`}
             >
               <div
                 className={`grid size-7 place-items-center rounded-[9px] transition-all shrink-0 ${
                   isHomeActive
                     ? "text-white"
-                    : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"
+                    : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"
                 }`}
               >
                 <NavIcon name="home" active={isHomeActive} />
               </div>
               <span
                 className={`tracking-tight ${
-                  collapsed
-                    ? "text-[10.5px] font-[750] leading-none"
-                    : "text-[14px] font-[750]"
-                } ${isHomeActive ? "text-white" : "text-[var(--ink)]"}`}
+                  collapsed ? "text-[10.5px] leading-none" : "text-[14px]"
+                } ${isHomeActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-[var(--ink)]"}`}
               >
                 Home
               </span>
@@ -326,10 +324,10 @@ export function Sidebar() {
                       className={`group flex w-full h-[40px] items-center gap-3 rounded-[12px] px-3 text-left transition-all duration-150 ${
                         isTileActive
                           ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
-                          : "text-[var(--ink-2)] font-medium hover:bg-black/[0.04] hover:text-[var(--ink)]"
+                          : "text-[var(--ink-2)] font-normal hover:font-bold hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
                       }`}
                     >
-                      <span className={`shrink-0 transition-colors ${isTileActive ? "text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"}`}>
+                      <span className={`shrink-0 transition-colors ${isTileActive ? "text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
                         <NavIcon name={tile.icon} active={false} />
                       </span>
                       <span className="truncate text-[14px] tracking-tight">{tile.label}</span>
@@ -346,7 +344,7 @@ export function Sidebar() {
                   className={`group relative flex w-[58px] flex-col items-center justify-center rounded-[14px] py-2 px-1 gap-1 transition-all duration-200 ${
                     isCreateActive
                       ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
-                      : "text-[var(--ink-2)] hover:bg-black/[0.04] hover:text-[var(--ink)]"
+                      : "text-[var(--ink-2)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
                   }`}
                   title="Studio"
                 >
@@ -357,7 +355,7 @@ export function Sidebar() {
                   >
                     <NavIcon name="studioFilled" active={isCreateActive} />
                   </div>
-                  <span className={`text-[10.5px] font-[750] tracking-tight leading-none text-center ${isCreateActive ? "text-white" : "text-[var(--ink)]"}`}>
+                  <span className={`text-[10.5px] tracking-tight leading-none text-center ${isCreateActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-[var(--ink)]"}`}>
                     Studio
                   </span>
                 </button>
@@ -394,18 +392,16 @@ export function Sidebar() {
                       } ${
                         isActive
                           ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
-                          : "text-[var(--ink-2)] hover:bg-black/[0.04] hover:text-[var(--ink)] font-medium"
+                          : "text-[var(--ink-2)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
                       }`}
                     >
-                      <span className={`shrink-0 ${isActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--ink)]"}`}>
+                      <span className={`shrink-0 ${isActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
                         <NavIcon name={item.icon} active={isActive} />
                       </span>
                       <span
                         className={`tracking-tight truncate ${
-                          collapsed
-                            ? "text-[10.5px] font-[750] leading-none"
-                            : "flex-1 text-left text-[14px] font-[750]"
-                        } ${isActive ? "text-white" : "text-[var(--ink)]"}`}
+                          collapsed ? "text-[10.5px] leading-none" : "flex-1 text-left text-[14px]"
+                        } ${isActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-[var(--ink)]"}`}
                       >
                         {collapsed ? item.shortLabel : item.label}
                       </span>
@@ -538,7 +534,7 @@ export function Sidebar() {
                   className={`group flex w-full items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-left transition-all duration-150 ${
                     isTileActive
                       ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
-                      : "text-[var(--ink-2)] font-semibold hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
+                      : "text-[var(--ink-2)] font-normal hover:font-bold hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
                   }`}
                 >
                   <span className={`transition-colors ${isTileActive ? "text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
