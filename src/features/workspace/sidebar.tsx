@@ -13,9 +13,9 @@ interface CreateTile {
 }
 
 const CREATE_TILES: CreateTile[] = [
-  { label: "MagicVideo", icon: "video", href: "/create" },
-  { label: "MagicCanvas", icon: "image", href: "#" },
-  { label: "MagicWeb", icon: "globe", href: "#" },
+  { label: "Video", icon: "video", href: "/create" },
+  { label: "Canvas", icon: "image", href: "#" },
+  { label: "Web", icon: "globe", href: "#" },
 ];
 
 interface NavItem {
@@ -44,6 +44,12 @@ const ASSET_GROUPS: NavGroup[] = [
     label: "Review",
     items: [
       { label: "MLR Review", shortLabel: "MLR", icon: "shield", href: "#", badge: 12 },
+    ],
+  },
+  {
+    label: "Insights",
+    items: [
+      { label: "Analytics", shortLabel: "Analytics", icon: "chart", href: "/analytics" },
     ],
   },
 ];
@@ -134,6 +140,12 @@ function NavIcon({ name, active = false }: { name: string; active?: boolean }): 
     shield: (
       <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
         <path d="M12 2l8 4v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />
+      </svg>
+    ),
+    chart: (
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M3 3v18h18" />
+        <path d="M7 16l4-6 3 4 5-8" />
       </svg>
     ),
     settings: (
@@ -292,7 +304,7 @@ export function Sidebar() {
             </button>
           </div>
 
-          {/* ── MAGIC STUDIO SECTION (single-column rows: MagicVideo, MagicCanvas, MagicWeb) ── */}
+          {/* ── MAGIC STUDIO SECTION (single-column rows: Video, Canvas, Web) ── */}
           <div
             className="relative"
             onMouseEnter={handleMouseEnterCreate}
@@ -301,7 +313,7 @@ export function Sidebar() {
             {!collapsed ? (
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5 px-2 pt-1 text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-                  <span>Magic Studio</span>
+                  <span>Studio</span>
                 </div>
 
                 {/* Single-column rows, soft-tint active state (not solid fill) */}
@@ -326,7 +338,7 @@ export function Sidebar() {
                 })}
               </div>
             ) : (
-              /* Collapsed Mode: Magic Studio Icon with Solid Orange Filled Shape in Unselected, Solid Chip in Selected */
+              /* Collapsed Mode: Studio Icon with Solid Orange Filled Shape in Unselected, Solid Chip in Selected */
               <div className="flex flex-col items-center gap-1">
                 <div className="my-1 h-px w-6 bg-black/10" />
                 <button
@@ -336,7 +348,7 @@ export function Sidebar() {
                       ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
                       : "text-[var(--ink-2)] hover:bg-black/[0.04] hover:text-[var(--ink)]"
                   }`}
-                  title="Magic Studio"
+                  title="Studio"
                 >
                   <div
                     className={`grid size-7 place-items-center rounded-[9px] transition-transform group-hover:scale-105 shrink-0 ${
@@ -513,7 +525,7 @@ export function Sidebar() {
             <span className="grid size-6 place-items-center rounded-lg bg-[var(--tint)] text-[var(--brand)]">
               <NavIcon name="studioFilled" active={false} />
             </span>
-            <span className="text-[13.5px] font-[800] tracking-tight text-[var(--ink)]">Magic Studio</span>
+            <span className="text-[13.5px] font-[800] tracking-tight text-[var(--ink)]">Studio</span>
           </div>
 
           <div className="space-y-1">

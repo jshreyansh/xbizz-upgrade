@@ -51,7 +51,7 @@ interface RecentProject {
 const CREATION_TILES: TileOption[] = [
   {
     icon: Video,
-    title: "MagicVideo",
+    title: "Video",
     subtitle: "Explainer, Avatar",
     accent: "var(--brand-deep)",
     description: "Drug explainers and lip-synced doctor presenters, MLR-ready in minutes.",
@@ -60,7 +60,7 @@ const CREATION_TILES: TileOption[] = [
   },
   {
     icon: ImageIcon,
-    title: "MagicCanvas",
+    title: "Canvas",
     subtitle: "Infographics, Detail Aid",
     accent: "var(--brand-deep)",
     description: "Leave-behinds, journal ads and banners from your approved claims.",
@@ -69,7 +69,7 @@ const CREATION_TILES: TileOption[] = [
   },
   {
     icon: Globe,
-    title: "MagicWeb",
+    title: "Web",
     subtitle: "Interactive Web for your Brand",
     accent: "#0a8556",
     description: "On-label microsites and HCP portals, signed off before publish.",
@@ -79,17 +79,17 @@ const CREATION_TILES: TileOption[] = [
 ];
 
 const RECENT_PROJECTS: RecentProject[] = [
-  { studio: "MagicReel", status: "In MLR", title: "Velmora — MoA explainer", meta: "Cardiologists · US · 60s", progress: 85, updated: "Today, 09:15", action: "Open" },
-  { studio: "MagicAvatar", status: "Draft", title: "Dr. Rao — dosing update", meta: "HCP · EU · 45s", progress: 35, updated: "Yesterday", action: "Resume" },
-  { studio: "MagicCanvas", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
-  { studio: "MagicWeb", status: "Draft", title: "Nirvexa launch microsite", meta: "HCP portal · 6 sections", progress: 55, updated: "3 days ago", action: "Resume" },
+  { studio: "Reel", status: "In MLR", title: "Velmora — MoA explainer", meta: "Cardiologists · US · 60s", progress: 85, updated: "Today, 09:15", action: "Open" },
+  { studio: "Avatar", status: "Draft", title: "Dr. Rao — dosing update", meta: "HCP · EU · 45s", progress: 35, updated: "Yesterday", action: "Resume" },
+  { studio: "Canvas", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
+  { studio: "Web", status: "Draft", title: "Nirvexa launch microsite", meta: "HCP portal · 6 sections", progress: 55, updated: "3 days ago", action: "Resume" },
 ];
 
 const SHOWCASE_LANES: ShowcaseLane[] = [
   {
-    label: "MagicVideo Samples",
-    title: "See what MagicVideo makes",
-    subtitle: "Real videos made on SwishX — two MagicReel cuts, two MagicAvatar presenters. Play one before you build.",
+    label: "Video Samples",
+    title: "Reels and avatars your team already shipped",
+    subtitle: "Real videos made on SwishX — two Reel cuts, two Avatar presenters. Play one before you build.",
     items: [
       {
         title: "Mechanism of action — cardiology",
@@ -98,7 +98,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#16233f,#2c4573 50%,#5b7fb8)",
         hasPlay: true,
-        tag: "MagicReel",
+        tag: "Reel",
         videoSrc: "/reel-moa.mp4",
       },
       {
@@ -108,7 +108,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#2a1b0f,#5c3515 48%,#9e6130)",
         hasPlay: true,
-        tag: "MagicReel",
+        tag: "Reel",
         videoSrc: "/21617-319452308_medium.mp4",
       },
       {
@@ -118,7 +118,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#0a1f18,#13382c 48%,#1d5442)",
         hasPlay: true,
-        tag: "MagicAvatar",
+        tag: "Avatar",
         videoSrc: "/avatar-showcase.mp4",
       },
       {
@@ -128,14 +128,14 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#1f1329,#381d4a 48%,#572c73)",
         hasPlay: true,
-        tag: "MagicAvatar",
+        tag: "Avatar",
         videoSrc: "/46621-448480587_medium.mp4",
       },
     ],
   },
   {
-    label: "MagicWeb Samples",
-    title: "See what MagicWeb makes",
+    label: "Web Samples",
+    title: "Microsites, live in a day",
     subtitle: "Microsites and HCP portals your field team can ship the same day.",
     items: [
       {
@@ -145,7 +145,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 48%,#5b7fb8)",
         hasPlay: false,
-        tag: "MagicWeb",
+        tag: "Web",
       },
       {
         title: "Onkavia patient landing page",
@@ -154,7 +154,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#3a1e4d,#63307a 48%,#a06bc4)",
         hasPlay: false,
-        tag: "MagicWeb",
+        tag: "Web",
       },
       {
         title: "Nirvexa congress microsite",
@@ -163,7 +163,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#12332c,#1d5a4a 48%,#3f9c7f)",
         hasPlay: false,
-        tag: "MagicWeb",
+        tag: "Web",
       },
       {
         title: "Brevanta sample rep site",
@@ -177,8 +177,8 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
     ],
   },
   {
-    label: "MagicCanvas Samples",
-    title: "See what MagicCanvas makes",
+    label: "Canvas Samples",
+    title: "Print and digital, done right",
     subtitle: "Layouts your reps actually use — journal ads, booth panels, and payer infographics.",
     items: [
       {
@@ -188,7 +188,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#16233f,#2c4573 50%,#5b7fb8)",
         hasPlay: true,
-        tag: "MagicCanvas",
+        tag: "Canvas",
         videoSrc: "/326638_medium.mp4",
       },
       {
@@ -198,7 +198,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#33193f,#5b2c70 50%,#9a63bc)",
         hasPlay: true,
-        tag: "MagicCanvas",
+        tag: "Canvas",
         videoSrc: "/21617-319452308_medium.mp4",
       },
       {
@@ -208,7 +208,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#0f2e28,#1b5546 50%,#3d9880)",
         hasPlay: true,
-        tag: "MagicCanvas",
+        tag: "Canvas",
         videoSrc: "/46621-448480587_medium.mp4",
       },
     ],

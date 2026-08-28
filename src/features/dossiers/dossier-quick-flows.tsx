@@ -291,6 +291,8 @@ function buildMockDossier(input: {
   indication: string;
   regulatoryAnchor: RegulatoryBody;
   sectionTitles?: string[];
+  category?: string;
+  targetAudience?: string[];
 }): BrandDossier {
   const id = `${input.brandName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now().toString(36)}`;
   const gradients = [
@@ -334,6 +336,8 @@ function buildMockDossier(input: {
     lastUpdated: "Just now",
     status: "complete",
     isSample: false,
+    category: input.category,
+    targetAudience: input.targetAudience,
     sources: [
       { id: "src-1", name: `${input.regulatoryAnchor} Approved Prescribing Information`, type: "label", date: "This year", status: "approved", details: "Core label", citationCount: sections.length * 3 },
       { id: "src-2", name: "PubMed literature review", type: "pubmed", date: "This year", status: "approved", details: "Published trial data", citationCount: sections.length * 2 },
@@ -351,6 +355,8 @@ function buildMockDossier(input: {
 const REGULATORY_BODIES: RegulatoryBody[] = ["FDA", "EMA", "MHRA", "PMDA"];
 const PREVIEW_SECTIONS = ["Indication & Positioning", "Mechanism of Action", "Clinical Evidence", "Safety Profile", "Dosing & Administration", "Payer & HEOR Summary"];
 const OTHER_PRODUCT_ID = "__other__";
+const DOSSIER_CATEGORIES = ["Patient Related", "HCP Related", "Payer Related", "Commercial"];
+const TARGET_AUDIENCES = ["Trade Partner", "HCP", "Patient", "Payer"];
 
 /* ─── Single consolidated flow — one CTA on the list page opens this.
    Steps: pick the product -> choose Create or Upload -> that path's
@@ -373,7 +379,11 @@ export function NewDossierFlow({
   const [brandName, setBrandName] = useState("");
   const [genericName, setGenericName] = useState("");
   const [anchor, setAnchor] = useState<RegulatoryBody>("FDA");
+  const [category, setCategory] = useState("");
+  const [audiences, setAudiences] = useState<string[]>([]);
+  const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
   const isOtherProduct = productId === OTHER_PRODUCT_ID;
+  const supportingFilesRef = useRef<HTMLInputElement>(null);
 
   // Upload path
   const [fileName, setFileName] = useState<string | null>(null);
@@ -381,6 +391,15 @@ export function NewDossierFlow({
 
   // Create path
   const [indication, setIndication] = useState("");
+
+  function toggleAudience(a: string) {
+    setAudiences((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
+  }
+
+  function handleSupportingFilesPicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length) setSupportingFiles((prev) => [...prev, ...files]);
+  }
 
   const [dossier, setDossier] = useState<BrandDossier | null>(null);
 
@@ -405,12 +424,12 @@ export function NewDossierFlow({
   }
 
   function startVerification() {
-    setDossier(buildMockDossier({ brandName, genericName, indication: `Extracted from ${fileName}`, regulatoryAnchor: anchor }));
+    setDossier(buildMockDossier({ brandName, genericName, indication: `Extracted from ${fileName}`, regulatoryAnchor: anchor, category, targetAudience: audiences }));
     setStep("processing");
   }
 
   function startAnalysis() {
-    setDossier(buildMockDossier({ brandName, genericName, indication, regulatoryAnchor: anchor, sectionTitles: PREVIEW_SECTIONS }));
+    setDossier(buildMockDossier({ brandName, genericName, indication, regulatoryAnchor: anchor, sectionTitles: PREVIEW_SECTIONS, category, targetAudience: audiences }));
     setStep("processing");
   }
 
@@ -480,10 +499,89 @@ export function NewDossierFlow({
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
                 placeholder="e.g. Velmora"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, marginBottom: 22, color: "var(--ink)" }}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, marginBottom: 16, color: "var(--ink)" }}
               />
             </>
           )}
+
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier category</label>
+          <div style={{ position: "relative", marginBottom: 16 }}>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 34px 10px 12px",
+                borderRadius: "var(--r)",
+                border: "1px solid var(--hair-2)",
+                fontSize: 13.5,
+                color: category ? "var(--ink)" : "var(--ink-4)",
+                background: "#fff",
+                appearance: "none",
+                cursor: "pointer",
+              }}
+            >
+              <option value="">Choose a category…</option>
+              {DOSSIER_CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={15} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
+          </div>
+
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Target audience</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {TARGET_AUDIENCES.map((a) => {
+              const selected = audiences.includes(a);
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => toggleAudience(a)}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: 99,
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    color: selected ? "#fff" : "var(--ink-3)",
+                    background: selected ? "var(--ink)" : "var(--surface-subtle)",
+                    border: "1px solid var(--hair)",
+                  }}
+                >
+                  {a}
+                </button>
+              );
+            })}
+          </div>
+
+          <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Supporting documents (optional)</label>
+          <button
+            type="button"
+            onClick={() => supportingFilesRef.current?.click()}
+            style={{
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 6,
+              padding: "16px",
+              borderRadius: "var(--r-l)",
+              border: `1.5px dashed ${supportingFiles.length ? "var(--brand)" : "var(--hair-2)"}`,
+              background: supportingFiles.length ? "var(--tint-2)" : "var(--surface-subtle)",
+              cursor: "pointer",
+              marginBottom: 22,
+            }}
+          >
+            <Upload size={18} color={supportingFiles.length ? "var(--brand-deep)" : "var(--ink-4)"} />
+            <span style={{ fontSize: 12, fontWeight: 650, color: supportingFiles.length ? "var(--brand-deep)" : "var(--ink-3)" }}>
+              {supportingFiles.length
+                ? `${supportingFiles.length} file${supportingFiles.length > 1 ? "s" : ""} attached — click to add more`
+                : "Any label, deck, or reference doc — we'll bring it into the dossier flow"}
+            </span>
+          </button>
+          <input ref={supportingFilesRef} type="file" multiple onChange={handleSupportingFilesPicked} style={{ display: "none" }} />
 
           <button
             type="button"
@@ -560,9 +658,15 @@ export function NewDossierFlow({
       {step === "upload-input" && (
         <div style={{ padding: "32px 28px 28px" }}>
           <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Upload {brandName}&rsquo;s dossier</h3>
-          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 20px" }}>
+          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 12px" }}>
             We&rsquo;ll verify and validate it against the {anchor} anchor.
           </p>
+          {supportingFiles.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 12px", borderRadius: "var(--r)", background: "var(--tint-2)", border: "1px solid var(--tint-line)", fontSize: 12, color: "var(--brand-deep)", fontWeight: 650, marginBottom: 16 }}>
+              <FileText size={13} />
+              {supportingFiles.length} supporting document{supportingFiles.length > 1 ? "s" : ""} carried over from the product step
+            </div>
+          )}
 
           <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier file</label>
           <button
@@ -614,9 +718,15 @@ export function NewDossierFlow({
       {step === "create-input" && (
         <div style={{ padding: "32px 28px 28px" }}>
           <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Create {brandName}&rsquo;s dossier</h3>
-          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 20px" }}>
+          <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "0 0 12px" }}>
             Give us the brief — we&rsquo;ll analyze approved sources and draft a preview.
           </p>
+          {supportingFiles.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 12px", borderRadius: "var(--r)", background: "var(--tint-2)", border: "1px solid var(--tint-line)", fontSize: 12, color: "var(--brand-deep)", fontWeight: 650, marginBottom: 16 }}>
+              <FileText size={13} />
+              {supportingFiles.length} supporting document{supportingFiles.length > 1 ? "s" : ""} carried over from the product step
+            </div>
+          )}
 
           <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Indication / brief</label>
           <textarea

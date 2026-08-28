@@ -73,6 +73,10 @@ export interface BrandDossier {
   verifiedClaimsCount?: number;
   totalClaimsCount?: number;
   isSample?: boolean;
+  /** How this dossier is classified — e.g. "Patient Related", "HCP Related". */
+  category?: string;
+  /** Who this dossier's content is ultimately written for. */
+  targetAudience?: string[];
   sources: DossierSource[];
   sections: DossierSection[];
   /** Who needs to sign off before this dossier can be used to create content. */
