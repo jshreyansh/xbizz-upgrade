@@ -3,6 +3,7 @@
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
   Check,
   ChevronDown,
   FileText,
@@ -577,19 +578,21 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 </button>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="hidden sm:inline text-[11px] font-mono text-[var(--ink-muted)]">
-                  {brief.length > 0 ? `${brief.length} chars · ⌘↵ to send` : "⌘↵ to send"}
+              {/* Far Right Bottom Action: Send Arrow CTA */}
+              <div className="flex items-center gap-2.5 ml-auto shrink-0 pl-2">
+                <span className="hidden sm:inline text-[10.5px] font-mono text-[var(--ink-muted)]">
+                  {brief.length > 0 ? `${brief.length} chars · ⌘↵` : "⌘↵ to send"}
                 </span>
 
                 <button
                   type="button"
                   onClick={preparePlan}
                   disabled={!brief.trim()}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white px-4 py-2 text-[13px] font-extrabold shadow-sm transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  title="Generate Plan (⌘↵)"
+                  aria-label="Generate Plan"
+                  className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:shadow-md hover:scale-105"
                 >
-                  <span>Generate Plan</span>
-                  <ArrowRight className="size-3.5" />
+                  <ArrowUp className="size-4.5 stroke-[2.8]" />
                 </button>
               </div>
             </div>
