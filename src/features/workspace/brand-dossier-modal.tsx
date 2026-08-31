@@ -5,15 +5,14 @@ import { createPortal } from "react-dom";
 import {
   Building2,
   Check,
-  ChevronRight,
   FileText,
   FolderPlus,
   Plus,
   Search,
   ShieldCheck,
-  Sparkles,
   X,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -87,7 +86,7 @@ export const INITIAL_BRANDS: BrandItem[] = [
   { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
   { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
   { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
-  { id: "abd-1", name: "ABD 1", genericName: "Abacavir + Dolutegravir", therapyAreas: ["Anti-infectives & Antimicrobials"], hasDossier: false },
+  { id: "abd-1", name: "ABD 1", genericName: "Abacavir + Dolutegravir", therapyAreas: ["Anti-infectives"], hasDossier: false },
   { id: "dermora", name: "Dermora", genericName: "dermoclizine fumarate", therapyAreas: ["Dermatology"], hasDossier: false },
   { id: "pulmavia", name: "Pulmavia", genericName: "pulmavatinib citrate", therapyAreas: ["Respiratory"], hasDossier: false },
   { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyAreas: ["Nephrology & Urology"], hasDossier: false },
@@ -254,17 +253,14 @@ interface BrandDossierModalProps {
 }
 
 export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossierModalProps) {
-  const sourcePayload = useWorkspaceStore((s) => s.sourcePayload);
   const setSourcePayload = useWorkspaceStore((s) => s.setSourcePayload);
   const setSourceType = useWorkspaceStore((s) => s.setSourceType);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
   const setView = useWorkspaceStore((s) => s.setView);
 
-  // Derive initial brand & dossier
-  const initialDossier = DOSSIERS[sourcePayload?.dossierId || "velmora-commercial"] || DOSSIERS["velmora-commercial"];
-  const [selectedBrandId, setSelectedBrandId] = useState<string>(initialDossier.brandId);
-  const [selectedDossierId, setSelectedDossierId] = useState<string>(initialDossier.id);
-  const [brandSelectorOpen, setBrandSelectorOpen] = useState(false);
+  // No brand selected by default per user requirement
+  const [selectedBrandId, setSelectedBrandId] = useState<string>("");
+  const [selectedDossierId, setSelectedDossierId] = useState<string>("");
   const [brandSearch, setBrandSearch] = useState("");
 
   const [mounted, setMounted] = useState(false);
@@ -272,11 +268,21 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setMounted(true);
   }, []);
 
+  // Reset selection when modal opens
+  useEffect(() => {
+    if (open) {
+      setSelectedBrandId("");
+      setSelectedDossierId("");
+      setBrandSearch("");
+    }
+  }, [open]);
+
   const selectedBrand = useMemo(() => {
-    return INITIAL_BRANDS.find((b) => b.id === selectedBrandId) || INITIAL_BRANDS[0];
+    return INITIAL_BRANDS.find((b) => b.id === selectedBrandId) || null;
   }, [selectedBrandId]);
 
   const availableDossiers = useMemo(() => {
+    if (!selectedBrandId) return [];
     return Object.values(DOSSIERS).filter((d) => d.brandId === selectedBrandId);
   }, [selectedBrandId]);
 
@@ -294,7 +300,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   if (!open || !mounted) return null;
 
   const handleStartProject = () => {
-    if (!selectedDossierId) return;
+    if (!selectedBrandId || !selectedDossierId) return;
     setSourceType("dossier");
     setSourcePayload({ dossierId: selectedDossierId });
     if (onSelectDossier) {
@@ -307,8 +313,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const handleSelectBrand = (brand: BrandItem) => {
     setSelectedBrandId(brand.id);
-    setBrandSelectorOpen(false);
-    setBrandSearch("");
+    // Auto-select primary dossier if available, or reset
     if (brand.hasDossier && brand.dossierIds && brand.dossierIds.length > 0) {
       setSelectedDossierId(brand.dossierIds[0]);
     } else {
@@ -323,18 +328,18 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       role="dialog"
       aria-modal="true"
     >
-      <div className="relative flex h-[94vh] max-h-[960px] w-full max-w-[1360px] flex-col rounded-[28px] border border-black/10 bg-[#fafbfa] shadow-2xl overflow-hidden">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-[var(--line)] bg-white px-8 py-5">
+      <div className="relative flex h-[94vh] max-h-[960px] w-full max-w-[1380px] flex-col rounded-[28px] border border-black/10 bg-[#fafbfa] shadow-2xl overflow-hidden">
+        {/* Modal Top Header */}
+        <div className="flex items-center justify-between border-b border-[var(--line)] bg-white px-8 py-4.5">
           <div className="flex items-center gap-3.5">
             <div className="flex size-8 items-center justify-center rounded-full bg-[var(--brand)] text-[13px] font-bold text-white shadow-xs">
               1
             </div>
             <div>
-              <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
                 Starter Step
               </div>
-              <h2 className="text-[19px] font-[850] text-[var(--ink)] tracking-tight">
+              <h2 className="text-[18px] font-[850] text-[var(--ink)] tracking-tight">
                 Select Brand &amp; Dossier
               </h2>
             </div>
@@ -349,122 +354,144 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-6">
-          {/* Selected Brand Banner */}
-          <div className="rounded-[22px] border-2 border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)]/50 to-white p-5 shadow-2xs">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="grid size-12 place-items-center rounded-xl bg-white border border-[var(--brand)]/30 text-[14px] font-extrabold text-[var(--brand-deep)] shadow-2xs shrink-0">
-                  {selectedBrand.name.slice(0, 2).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--brand-deep)]">
-                      Selected Brand
-                    </span>
-                    <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.2 text-[9.5px] font-bold">
-                      {selectedBrand.hasDossier ? `✓ ${availableDossiers.length} Dossiers on file` : "No dossier yet"}
-                    </span>
-                  </div>
-                  <div className="text-[17px] font-[850] text-[var(--ink)] truncate">
-                    {selectedBrand.name}{" "}
-                    <span className="text-[13.5px] font-normal text-[var(--ink-muted)] italic">
-                      ({selectedBrand.genericName})
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {selectedBrand.therapyAreas.map((area) => (
-                      <span
-                        key={area}
-                        className="rounded-md bg-black/5 px-2 py-0.5 text-[10px] font-semibold text-[var(--ink-2)]"
-                      >
-                        {area}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+        {/* Modal Body: 2 Clearly Structured Steps */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-7">
+          {/* ════ STEP 1: CHOOSE BRAND ════ */}
+          <div className="space-y-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">
+                  1
+                </span>
+                <span className="text-[14px] font-[850] text-[var(--ink)]">
+                  Select Brand
+                </span>
+                <span className="text-[11.5px] text-[var(--ink-muted)]">
+                  (Choose the pharmaceutical brand to ground your video)
+                </span>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setBrandSelectorOpen(!brandSelectorOpen)}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white hover:border-[var(--brand)] px-3.5 py-2.5 text-[12.5px] font-bold text-[var(--brand-deep)] shadow-2xs hover:bg-[var(--tint)]/40 transition-colors cursor-pointer shrink-0"
-              >
-                <Building2 className="size-4 text-[var(--brand)]" />
-                <span>{brandSelectorOpen ? "Close list" : "Change brand"}</span>
-              </button>
+              {/* Search input */}
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-2.5 size-3.5 text-[var(--ink-muted)]" />
+                <input
+                  type="text"
+                  value={brandSearch}
+                  onChange={(e) => setBrandSearch(e.target.value)}
+                  placeholder="Search brand, molecule, area..."
+                  className="w-full rounded-xl border border-black/10 bg-white pl-8 pr-3 py-1.5 text-[12px] focus:outline-none focus:border-[var(--brand)] shadow-2xs"
+                />
+              </div>
             </div>
 
-            {/* Brand Dropdown Search & List */}
-            {brandSelectorOpen && (
-              <div className="mt-4 pt-4 border-t border-[var(--line)] space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-3 size-4 text-[var(--ink-muted)]" />
-                  <input
-                    type="text"
-                    value={brandSearch}
-                    onChange={(e) => setBrandSearch(e.target.value)}
-                    placeholder="Search brand name, generic name, or therapy area..."
-                    className="w-full rounded-xl border border-black/10 bg-white pl-10 pr-3.5 py-2.5 text-[13px] focus:outline-none focus:border-[var(--brand)] shadow-2xs"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
-                  {filteredBrands.map((brand) => {
-                    const isCurrent = brand.id === selectedBrandId;
-                    return (
-                      <button
-                        key={brand.id}
-                        type="button"
-                        onClick={() => handleSelectBrand(brand)}
-                        className={cn(
-                          "flex items-center justify-between p-3 rounded-xl border text-left transition-colors cursor-pointer",
-                          isCurrent
-                            ? "border-[var(--brand)] bg-white ring-1 ring-[var(--brand)]/20"
-                            : "border-black/5 bg-white/70 hover:bg-white hover:border-black/15"
-                        )}
-                      >
-                        <div className="min-w-0 pr-2">
-                          <div className="text-[13px] font-bold text-[var(--ink)] truncate">
-                            {brand.name}
-                          </div>
-                          <div className="text-[11px] text-[var(--ink-muted)] truncate">
-                            {brand.genericName}
-                          </div>
+            {/* Brands Responsive Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {filteredBrands.map((brand) => {
+                const isSelected = brand.id === selectedBrandId;
+                return (
+                  <button
+                    key={brand.id}
+                    type="button"
+                    onClick={() => handleSelectBrand(brand)}
+                    className={cn(
+                      "group relative flex flex-col justify-between p-3.5 rounded-[18px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
+                      isSelected
+                        ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/20 shadow-sm"
+                        : "border-black/[0.07] bg-white/75 hover:bg-white hover:border-black/20 hover:-translate-y-0.5"
+                    )}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        <div
+                          className={cn(
+                            "grid size-8 place-items-center rounded-lg text-[11.5px] font-black border transition-colors",
+                            isSelected
+                              ? "bg-[var(--brand)] text-white border-[var(--brand)]"
+                              : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)] group-hover:bg-[var(--tint)]"
+                          )}
+                        >
+                          {brand.name.slice(0, 2).toUpperCase()}
                         </div>
-                        {brand.hasDossier ? (
-                          <span className="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded shrink-0">
-                            {brand.dossierIds?.length || 1} dossiers
-                          </span>
-                        ) : (
-                          <span className="text-[9.5px] font-medium text-[var(--ink-muted)] shrink-0">
-                            No dossier
+
+                        {isSelected && (
+                          <span className="flex size-5 items-center justify-center rounded-full bg-[var(--brand)] text-white">
+                            <Check className="size-3 stroke-[3]" />
                           </span>
                         )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                      </div>
+
+                      <div className="text-[13.5px] font-[850] text-[var(--ink)] truncate">
+                        {brand.name}
+                      </div>
+                      <div className="text-[10.5px] text-[var(--ink-muted)] truncate italic">
+                        {brand.genericName}
+                      </div>
+                    </div>
+
+                    <div className="mt-2.5 pt-2 border-t border-black/[0.05] flex items-center justify-between gap-1">
+                      <span className="text-[9.5px] text-[var(--ink-muted)] truncate">
+                        {brand.therapyAreas[0] || "General"}
+                      </span>
+                      {brand.hasDossier ? (
+                        <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 text-[9px] font-bold shrink-0">
+                          {brand.dossierIds?.length || 1} {brand.dossierIds?.length === 1 ? "dossier" : "dossiers"}
+                        </span>
+                      ) : (
+                        <span className="text-[9px] text-[var(--ink-muted)] italic shrink-0">
+                          No dossier
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Dossiers Selection Section (2-Column Grid on Wide Screens) */}
-          <div className="space-y-3.5">
+          {/* ════ STEP 2: CHOOSE DOSSIER ════ */}
+          <div className="space-y-3.5 pt-2 border-t border-[var(--line)]">
             <div className="flex items-center justify-between">
-              <span className="text-[12px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center gap-1.5">
-                <FileText className="size-4 text-[var(--brand)]" />
-                Available Dossiers &amp; Regulatory Sources
-              </span>
-              {availableDossiers.length > 0 && (
-                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-0.5 rounded-full">
-                  ✓ {availableDossiers.length} Options Available · Pick One
+              <div className="flex items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">
+                  2
+                </span>
+                <span className="text-[14px] font-[850] text-[var(--ink)]">
+                  {selectedBrand
+                    ? `Available Dossiers for ${selectedBrand.name}`
+                    : "Available Dossiers & Regulatory Sources"}
+                </span>
+                {selectedBrand && availableDossiers.length > 0 && (
+                  <span className="text-[11px] text-[var(--ink-muted)]">
+                    ({availableDossiers.length} approved options on file)
+                  </span>
+                )}
+              </div>
+
+              {selectedBrand && availableDossiers.length > 0 && (
+                <span className="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  ✓ Verified SmPC / Label Data
                 </span>
               )}
             </div>
 
-            {availableDossiers.length > 0 ? (
+            {/* Conditional Display Based on Brand Selection */}
+            {!selectedBrand ? (
+              /* State A: No Brand Selected Yet */
+              <div className="rounded-[22px] border-2 border-dashed border-black/12 bg-white/60 p-10 text-center space-y-2.5">
+                <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]">
+                  <FileText className="size-6 text-[var(--brand)]" />
+                </div>
+                <div className="max-w-[420px] mx-auto">
+                  <h4 className="text-[15px] font-[850] text-[var(--ink)]">
+                    Select a brand above to view its approved dossiers
+                  </h4>
+                  <p className="text-[12px] text-[var(--ink-muted)] mt-0.5 leading-relaxed">
+                    Choose from your organization's brand library in Step 1 to load associated SmPC, FDA prescribing info, and clinical evidence packages.
+                  </p>
+                </div>
+              </div>
+            ) : availableDossiers.length > 0 ? (
+              /* State B: Brand Selected with Dossiers Available (2-Column Grid) */
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {availableDossiers.map((dossier) => {
                   const isSelected = selectedDossierId === dossier.id;
@@ -560,23 +587,23 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 })}
               </div>
             ) : (
-              /* Empty state if brand has no dossier */
-              <div className="rounded-[24px] border-2 border-dashed border-black/15 bg-white p-10 text-center space-y-3">
+              /* State C: Brand Selected but No Dossiers Exist */
+              <div className="rounded-[24px] border-2 border-dashed border-black/15 bg-white p-9 text-center space-y-3">
                 <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
                   <FolderPlus className="size-6" />
                 </div>
                 <div className="max-w-[420px] mx-auto">
-                  <h4 className="text-[16px] font-[850] text-[var(--ink)]">
+                  <h4 className="text-[15px] font-[850] text-[var(--ink)]">
                     No dossier found for {selectedBrand.name}
                   </h4>
-                  <p className="text-[12.5px] text-[var(--ink-muted)] mt-1">
-                    Upload FDA prescribing labels or clinical trial protocols to initialize an approved dossier.
+                  <p className="text-[12px] text-[var(--ink-muted)] mt-1">
+                    Upload FDA prescribing labels or clinical trial protocols to initialize an approved dossier for this brand.
                   </p>
                 </div>
                 <Button
                   variant="primary"
                   size="sm"
-                  className="gap-2 text-[12.5px] font-bold"
+                  className="gap-2 text-[12px] font-bold"
                   onClick={() => {
                     setSelectedDossierId("velmora-commercial");
                   }}
@@ -593,13 +620,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         <div className="flex items-center justify-between border-t border-[var(--line)] bg-white px-8 py-4">
           <div className="flex items-center gap-2">
             <span className="text-[12.5px] text-[var(--ink-muted)]">
-              {selectedDossierId ? (
-                <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                  <ShieldCheck className="size-4 text-emerald-600" />
-                  {DOSSIERS[selectedDossierId]?.name || "Dossier Selected"}
+              {!selectedBrandId ? (
+                "Please select a brand in Step 1 to continue"
+              ) : !selectedDossierId ? (
+                <span>
+                  Selected Brand: <strong className="text-[var(--ink)]">{selectedBrand?.name}</strong> · Please pick a dossier in Step 2
                 </span>
               ) : (
-                "Please select a brand dossier to continue"
+                <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
+                  <ShieldCheck className="size-4 text-emerald-600" />
+                  {DOSSIERS[selectedDossierId]?.name || "Dossier Selected"} ({selectedBrand?.name})
+                </span>
               )}
             </span>
           </div>
@@ -611,7 +642,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             <Button
               variant="primary"
               size="sm"
-              disabled={!selectedDossierId}
+              disabled={!selectedBrandId || !selectedDossierId}
               onClick={handleStartProject}
               className="gap-2 font-bold px-5 shadow-sm"
             >
