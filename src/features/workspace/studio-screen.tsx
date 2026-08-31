@@ -146,6 +146,13 @@ export function StudioScreen() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleCopilotPanel]);
 
+  // In Script Stage (studioMode === "scenes"), edit tab should not be available
+  useEffect(() => {
+    if (studioMode === "scenes" && activeTab === "edit") {
+      setActiveTab("assistant");
+    }
+  }, [studioMode, activeTab]);
+
   const [generatedSceneIds, setGeneratedSceneIds] = useState<string[]>([]);
   const [toastMessage, setToMessage] = useState<string | null>(null);
 
@@ -759,21 +766,21 @@ export function StudioScreen() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Toggle Right Copilot Inspector Panel Button */}
-          <Button
-            variant="ghost"
-            size="sm"
+          {/* Toggle Right Sidebar Panel Button (Icon Only) */}
+          <button
+            type="button"
             onClick={toggleCopilotPanel}
-            className="gap-1.5 text-[12px] font-bold text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-black/5 cursor-pointer"
-            title="Toggle Copilot Panel (⌘\)"
-          >
-            {copilotPanelOpen ? (
-              <PanelRightClose className="size-4 text-[var(--ink-muted)]" />
-            ) : (
-              <PanelRightOpen className="size-4 text-[var(--brand)]" />
+            className={cn(
+              "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
+              copilotPanelOpen
+                ? "border-black/15 bg-black/5 text-[var(--ink)] hover:bg-black/10"
+                : "border-black/10 bg-white text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--brand)] shadow-2xs"
             )}
-            <span className="hidden sm:inline">{copilotPanelOpen ? "Hide Copilot" : "Show Copilot"}</span>
-          </Button>
+            title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
+            aria-label="Toggle sidebar"
+          >
+            <PanelRight className="size-4" />
+          </button>
 
           {isEditor && (
             <>
@@ -1892,63 +1899,6 @@ export function StudioScreen() {
           )}
         </main>
 
-        {/* Collapsed Copilot Floating Strip / Quick Re-open Dock */}
-        {!copilotPanelOpen && (
-          <div className="absolute right-4 top-4 z-30 flex items-center gap-1 rounded-2xl bg-white/95 backdrop-blur-md border border-black/10 shadow-lg p-1.5 animate-in fade-in slide-in-from-right-4 duration-200">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("assistant");
-                setCopilotPanelOpen(true);
-              }}
-              className={cn(
-                "flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[11.5px] font-bold transition cursor-pointer",
-                activeTab === "assistant" ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "text-[var(--ink-2)] hover:bg-black/5"
-              )}
-              title="Open SwishX Chat"
-            >
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Chat</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab(isReview ? "comments" : "edit");
-                setCopilotPanelOpen(true);
-              }}
-              className={cn(
-                "rounded-xl px-2.5 py-1.5 text-[11.5px] font-semibold transition cursor-pointer",
-                (activeTab === "edit" || activeTab === "comments") ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "text-[var(--ink-2)] hover:bg-black/5"
-              )}
-              title={isReview ? "Open Comments" : "Open Edit Inspector"}
-            >
-              {isReview ? "Comments" : "Edit"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("evidence");
-                setCopilotPanelOpen(true);
-              }}
-              className={cn(
-                "rounded-xl px-2.5 py-1.5 text-[11.5px] font-semibold transition cursor-pointer",
-                activeTab === "evidence" ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "text-[var(--ink-2)] hover:bg-black/5"
-              )}
-              title="Open Claims"
-            >
-              Claims (24)
-            </button>
-            <button
-              type="button"
-              onClick={() => setCopilotPanelOpen(true)}
-              className="grid size-7 place-items-center rounded-lg bg-[var(--brand)] text-white hover:bg-[var(--brand-deep)] shadow-xs transition ml-1 cursor-pointer"
-              title="Expand Copilot Panel (⌘\)"
-            >
-              <PanelRightOpen className="size-3.5" />
-            </button>
-          </div>
-        )}
-
         <aside
           style={{
             width: copilotPanelOpen ? 410 : 0,
@@ -1961,53 +1911,66 @@ export function StudioScreen() {
             !copilotPanelOpen && "border-none pointer-events-none"
           )}
         >
-          <div className="p-2 border-b border-[var(--line)] bg-[#f4f6f4] flex items-center gap-1.5">
-            <div className="flex-1 grid grid-cols-3 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
-              <InspectorTabButton
-                tab="assistant"
-                current={activeTab}
-                onClick={setActiveTab}
-                badge={<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mr-1" />}
-              >
-                Chat
-              </InspectorTabButton>
-              {isReview ? (
+          <div className="p-2.5 border-b border-[var(--line)] bg-[#f4f6f4]">
+            {studioMode === "scenes" ? (
+              /* ── SCRIPT STAGE: Only Chat & Claims Tabs (No Edit Tab) ── */
+              <div className="grid grid-cols-2 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
                 <InspectorTabButton
-                  tab="comments"
+                  tab="assistant"
                   current={activeTab}
                   onClick={setActiveTab}
-                  count={commentsList.length}
+                  badge={<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mr-1" />}
                 >
-                  Comments
+                  Chat
                 </InspectorTabButton>
-              ) : (
                 <InspectorTabButton
-                  tab="edit"
+                  tab="evidence"
                   current={activeTab}
                   onClick={setActiveTab}
+                  count={24}
                 >
-                  Edit
+                  Claims
                 </InspectorTabButton>
-              )}
-              <InspectorTabButton
-                tab="evidence"
-                current={activeTab}
-                onClick={setActiveTab}
-                count={24}
-              >
-                Claims
-              </InspectorTabButton>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setCopilotPanelOpen(false)}
-              title="Collapse Copilot Panel (⌘\)"
-              className="grid size-8 place-items-center rounded-xl text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5 transition-colors cursor-pointer shrink-0"
-              aria-label="Collapse panel"
-            >
-              <PanelRightClose className="size-4" />
-            </button>
+              </div>
+            ) : (
+              /* ── CANVAS EDITOR / REVIEW STAGES: Chat, Edit / Comments, Claims ── */
+              <div className="grid grid-cols-3 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
+                <InspectorTabButton
+                  tab="assistant"
+                  current={activeTab}
+                  onClick={setActiveTab}
+                  badge={<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mr-1" />}
+                >
+                  Chat
+                </InspectorTabButton>
+                {isReview ? (
+                  <InspectorTabButton
+                    tab="comments"
+                    current={activeTab}
+                    onClick={setActiveTab}
+                    count={commentsList.length}
+                  >
+                    Comments
+                  </InspectorTabButton>
+                ) : (
+                  <InspectorTabButton
+                    tab="edit"
+                    current={activeTab}
+                    onClick={setActiveTab}
+                  >
+                    Edit
+                  </InspectorTabButton>
+                )}
+                <InspectorTabButton
+                  tab="evidence"
+                  current={activeTab}
+                  onClick={setActiveTab}
+                  count={24}
+                >
+                  Claims
+                </InspectorTabButton>
+              </div>
+            )}
           </div>
 
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col">

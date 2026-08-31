@@ -506,21 +506,21 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Toggle Right Copilot Assistant Panel Button */}
-          <Button
-            variant="ghost"
-            size="sm"
+          {/* Toggle Right Sidebar Panel Button (Icon Only) */}
+          <button
+            type="button"
             onClick={toggleCopilotPanel}
-            className="gap-1.5 text-[12px] font-bold text-[var(--ink-2)] hover:text-[var(--ink)] hover:bg-black/5 cursor-pointer"
-            title="Toggle Copilot Panel (⌘\)"
-          >
-            {copilotPanelOpen ? (
-              <PanelRightClose className="size-4 text-[var(--ink-muted)]" />
-            ) : (
-              <PanelRightOpen className="size-4 text-[var(--brand)]" />
+            className={cn(
+              "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
+              copilotPanelOpen
+                ? "border-black/15 bg-black/5 text-[var(--ink)] hover:bg-black/10"
+                : "border-black/10 bg-white text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--brand)] shadow-2xs"
             )}
-            <span className="hidden sm:inline">{copilotPanelOpen ? "Hide Chat" : "Show Chat"}</span>
-          </Button>
+            title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
+            aria-label="Toggle sidebar"
+          >
+            <PanelRight className="size-4" />
+          </button>
 
           <Button variant="ghost" size="icon" aria-label="More">
             <MoreHorizontal className="size-4" />
@@ -528,34 +528,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         </div>
       </header>
 
-      {/* ── Main Split View: 2/3 Left (Plan Canvas), 1/3 Right (Chat Assistant) ── */}
+      {/* ── Main Split View: Left (Plan Canvas), Right (Chat Assistant) ── */}
       <div className="flex-1 flex overflow-hidden min-h-0 relative">
-        {/* Collapsed Copilot Floating Strip / Quick Re-open Dock */}
-        {!copilotPanelOpen && (
-          <div className="absolute right-4 top-4 z-30 flex items-center gap-1 rounded-2xl bg-white/95 backdrop-blur-md border border-black/10 shadow-lg p-1.5 animate-in fade-in slide-in-from-right-4 duration-200">
-            <button
-              type="button"
-              onClick={() => setCopilotPanelOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11.5px] font-bold text-[var(--brand-deep)] hover:bg-[var(--tint)] transition cursor-pointer"
-              title="Open Direct with SwishX"
-            >
-              <Sparkles className="size-3.5 text-[var(--brand)]" />
-              <span>Direct with SwishX</span>
-              <span className="rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.2 text-[9px] font-bold ml-1">
-                Online
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setCopilotPanelOpen(true)}
-              className="grid size-7 place-items-center rounded-lg bg-[var(--brand)] text-white hover:bg-[var(--brand-deep)] shadow-xs transition ml-0.5 cursor-pointer"
-              title="Expand Chat Panel (⌘\)"
-            >
-              <PanelRightOpen className="size-3.5" />
-            </button>
-          </div>
-        )}
-
         {/* ── LEFT PANEL (Plan Canvas OR Loader) ── */}
         <section
           style={{
@@ -1450,8 +1424,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           )}
         >
           {/* Chat Top Online Banner */}
-          <div className="p-3 border-b border-[var(--line)] bg-white shrink-0 flex items-center justify-between gap-2">
-            <div className="flex-1 rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-2.5">
+          <div className="p-3.5 border-b border-[var(--line)] bg-white shrink-0">
+            <div className="rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-2.5">
               <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--brand-deep)]">
                 <Sparkles className="size-3.5 text-[var(--brand)]" />
                 <span>Direct with SwishX</span>
@@ -1460,16 +1434,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 </span>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setCopilotPanelOpen(false)}
-              title="Collapse Chat (⌘\)"
-              className="grid size-8 place-items-center rounded-xl text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5 transition cursor-pointer shrink-0"
-              aria-label="Collapse chat panel"
-            >
-              <PanelRightClose className="size-4" />
-            </button>
           </div>
 
           {/* Chat Messages Thread */}
