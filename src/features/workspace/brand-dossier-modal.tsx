@@ -13,10 +13,10 @@ import {
   X,
   ArrowRight,
   Sparkles,
-  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 
 export interface BrandItem {
@@ -702,7 +702,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   >
                     {quickCreating ? (
                       <>
-                        <Loader2 className="size-3.5 animate-spin" />
+                        <LogoMark size={14} className="animate-brand-spin" />
                         <span>Building dossier…</span>
                       </>
                     ) : (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check, ArrowRight } from "lucide-react";
 import { ConfettiBurst } from "@/features/dossiers/confetti-burst";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import type { BrandDossier, DossierSection, RegulatoryBody } from "@/features/dossiers/dossier-types";
 
 /* ─── Shared building blocks for the New Brand Dossier pages ────────────────
@@ -45,21 +46,7 @@ export function ProcessingChecklist({
 
   return (
     <div style={{ padding: "20px 4px 8px", textAlign: "center" }}>
-      <div
-        style={{
-          width: 52,
-          height: 52,
-          margin: "0 auto 18px",
-          borderRadius: 16,
-          display: "grid",
-          placeItems: "center",
-          background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-          color: "#fff",
-          boxShadow: "0 10px 22px -10px rgba(253,72,22,.5)",
-        }}
-      >
-        <Loader2 size={22} className="animate-spin" />
-      </div>
+      <BrandLoader size={52} className="mb-[18px]" />
       <h3 style={{ fontSize: 17, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>
         {title}
       </h3>
