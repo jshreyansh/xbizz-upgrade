@@ -30,24 +30,17 @@ export function Topbar({ pageTitle = "Home" }: TopbarProps) {
         {/* Page context */}
         <b style={{ fontSize: 14.5, fontWeight: 720, letterSpacing: "-.3px", color: "var(--ink)" }}>{pageTitle}</b>
 
-        {/* Demo pill */}
-        <span style={{ display: "flex", alignItems: "center", gap: 7, padding: "6px 13px", border: "1px solid var(--tint-line)", background: "var(--tint)", color: "var(--brand-deep)", borderRadius: 99, fontSize: 12.5, fontWeight: 700 }}>
-          <i style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)", display: "block", animation: "blink 2s infinite" }} />
-          Demo Mode
-        </span>
-
-        {/* Watch demo */}
-        <button
-          type="button"
-          onClick={() => setDemoOpen(true)}
-          style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "6px 13px", borderRadius: 99, border: "1px solid var(--hair-2)", background: "#fff", color: "var(--ink-2)", fontSize: 12.5, fontWeight: 700 }}
-        >
-          <Play size={11} fill="var(--brand)" color="var(--brand)" />
-          Watch demo
-        </button>
-
-        {/* Icon buttons */}
+        {/* Right-aligned: Watch demo + icon buttons */}
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+          <button
+            type="button"
+            onClick={() => setDemoOpen(true)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "6px 13px", borderRadius: 99, border: "1px solid var(--hair-2)", background: "#fff", color: "var(--ink-2)", fontSize: 12.5, fontWeight: 700 }}
+          >
+            <Play size={11} fill="var(--brand)" color="var(--brand)" />
+            Watch demo
+          </button>
+
           {[
             { title: "Help", path: "M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.7.3-.9.8-.9 1.5v.5M12 17v.5" },
             { title: "Notifications", path: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0", badge: true },
