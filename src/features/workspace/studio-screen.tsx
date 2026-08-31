@@ -233,6 +233,12 @@ export function StudioScreen() {
     } else if (elementId === "narration") {
       label = `Scene ${selectedScene.number} · Voiceover Sync`;
       detail = `"${selectedScene.narration}"`;
+    } else if (elementId === "image") {
+      label = `Scene ${selectedScene.number} · Image Chart Layer`;
+      detail = `"CLEARSKIN_Phase_III_ForestPlot_Wk16.png"`;
+    } else if (elementId === "video-clip") {
+      label = `Scene ${selectedScene.number} · 3D Video Clip Layer`;
+      detail = `"Cellular_Receptor_Binding_4K.mp4"`;
     } else if (elementId === "moa") {
       label = `Scene ${selectedScene.number} · 3D MoA Target`;
       detail = selectedScene.visual || "3D kinematic target model";
@@ -1147,6 +1153,142 @@ export function StudioScreen() {
                       <span className="text-[9px] font-bold text-white/50 lowercase ml-1">(0:00–0:{selectedScene.duration})</span>
                     </div>
 
+                    {/* Right-Side Media & Graphics Showcase (Selectable Image & Video Clip Elements) */}
+                    <div className="absolute right-5 top-11 bottom-14 w-[38%] flex flex-col gap-2.5 z-20 pointer-events-none">
+                      {/* Selectable Element 1: Clinical Chart Image */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectCanvasElement("image");
+                        }}
+                        onMouseEnter={() => setHoveredCanvasElementId("image")}
+                        onMouseLeave={() => setHoveredCanvasElementId(null)}
+                        className={cn(
+                          "pointer-events-auto relative flex-1 rounded-2xl p-2.5 bg-black/65 backdrop-blur-md border transition-all cursor-pointer shadow-lg select-none flex flex-col justify-between",
+                          selectedCanvasElementId === "image"
+                            ? "border-2 border-dashed border-[var(--brand)] ring-4 ring-[var(--brand)]/25 bg-black/85 shadow-2xl"
+                            : hoveredCanvasElementId === "image"
+                            ? "border border-dashed border-white/60 bg-black/75"
+                            : "border-white/15 hover:border-white/30"
+                        )}
+                      >
+                        <div className="flex items-center justify-between text-[9.5px]">
+                          <span className="font-extrabold text-[#d8f05d] uppercase tracking-wider bg-[#d8f05d]/15 px-1.5 py-0.5 rounded border border-[#d8f05d]/30">
+                            📊 Image Layer
+                          </span>
+                          <span className="text-white/60 font-semibold">Pivotal Readout</span>
+                        </div>
+
+                        {/* Bar Chart Mockup */}
+                        <div className="space-y-1.5 my-0.5">
+                          <div>
+                            <div className="flex justify-between text-[9px] font-bold text-white mb-0.5">
+                              <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora"} 200mg</span>
+                              <span className="text-[#d8f05d]">78.4%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                              <div className="w-[78.4%] h-full bg-gradient-to-r from-[#d8f05d] to-emerald-400 rounded-full" />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between text-[8.5px] font-semibold text-white/60 mb-0.5">
+                              <span>Placebo Control</span>
+                              <span>21.1%</span>
+                            </div>
+                            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                              <div className="w-[21.1%] h-full bg-white/40 rounded-full" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-[8px] text-white/50 flex justify-between border-t border-white/10 pt-0.5">
+                          <span>Wk 16 · p &lt; 0.001</span>
+                          <span>FDA Label §14.1</span>
+                        </div>
+
+                        {/* Floating Formatting Pill when selected */}
+                        {selectedCanvasElementId === "image" && (
+                          <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-[#111614] border border-white/20 px-2.5 py-1 text-[10px] font-bold text-white shadow-xl whitespace-nowrap">
+                            <ImageIcon className="size-3 text-[var(--brand)]" />
+                            <span>Image Layer</span>
+                            <span className="text-white/40">|</span>
+                            <span className="text-emerald-400">⏱ 0:02 – 0:12</span>
+                            <span className="text-white/40">|</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setToMessage("Replaced with Forest Plot Efficacy Curve");
+                                setTimeout(() => setToMessage(null), 2000);
+                              }}
+                              className="text-[var(--brand)] hover:underline flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <Sparkles className="size-2.5" /> Replace
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Selectable Element 2: 3D Video Clip */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectCanvasElement("video-clip");
+                        }}
+                        onMouseEnter={() => setHoveredCanvasElementId("video-clip")}
+                        onMouseLeave={() => setHoveredCanvasElementId(null)}
+                        className={cn(
+                          "pointer-events-auto relative rounded-2xl p-2 bg-black/65 backdrop-blur-md border transition-all cursor-pointer shadow-lg select-none flex items-center gap-2.5",
+                          selectedCanvasElementId === "video-clip"
+                            ? "border-2 border-dashed border-[var(--brand)] ring-4 ring-[var(--brand)]/25 bg-black/85 shadow-2xl"
+                            : hoveredCanvasElementId === "video-clip"
+                            ? "border border-dashed border-white/60 bg-black/75"
+                            : "border-white/15 hover:border-white/30"
+                        )}
+                      >
+                        <div className="size-9 rounded-xl bg-gradient-to-br from-emerald-900 to-teal-800 border border-white/20 flex items-center justify-center relative shrink-0 overflow-hidden shadow-inner">
+                          <Play className="size-3 fill-white text-white ml-0.5 drop-shadow" />
+                          <span className="absolute bottom-0.5 right-1 text-[6.5px] font-extrabold text-white bg-black/70 px-0.5 rounded">
+                            0:14s
+                          </span>
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[7.5px] font-extrabold text-sky-300 uppercase tracking-wide bg-sky-500/15 px-1 py-0.2 rounded border border-sky-400/30">
+                              🎬 Video Clip
+                            </span>
+                            <span className="text-[7.5px] text-white/60">4K · 60fps</span>
+                          </div>
+                          <div className="text-[10px] font-bold text-white truncate mt-0.5">
+                            3D Receptor Binding Kinematics
+                          </div>
+                        </div>
+
+                        {/* Floating Formatting Pill when selected */}
+                        {selectedCanvasElementId === "video-clip" && (
+                          <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-[#111614] border border-white/20 px-2.5 py-1 text-[10px] font-bold text-white shadow-xl whitespace-nowrap">
+                            <Film className="size-3 text-[var(--brand)]" />
+                            <span>Video Clip</span>
+                            <span className="text-white/40">|</span>
+                            <span className="text-emerald-400">⏱ 0:04 – 0:14</span>
+                            <span className="text-white/40">|</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setToMessage("Swapped to receptor binding 3D animation");
+                                setTimeout(() => setToMessage(null), 2000);
+                              }}
+                              className="text-[var(--brand)] hover:underline flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <Sparkles className="size-2.5" /> Swap Clip
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     {/* Core Headline Overlay */}
                     <div
                       onClick={(e) => {
@@ -1156,7 +1298,7 @@ export function StudioScreen() {
                       onMouseEnter={() => setHoveredCanvasElementId("headline")}
                       onMouseLeave={() => setHoveredCanvasElementId(null)}
                       className={cn(
-                        "pointer-events-auto relative max-w-[70%] p-2.5 rounded-xl transition-all cursor-pointer",
+                        "pointer-events-auto relative max-w-[56%] p-2.5 rounded-xl transition-all cursor-pointer",
                         selectedCanvasElementId === "headline"
                           ? "border-2 border-dashed border-[var(--brand)] bg-black/40 ring-4 ring-[var(--brand)]/20"
                           : hoveredCanvasElementId === "headline"
@@ -1164,7 +1306,7 @@ export function StudioScreen() {
                           : ""
                       )}
                     >
-                      <h3 className="text-[24px] sm:text-[28px] font-[850] tracking-tight leading-tight text-white drop-shadow-md">
+                      <h3 className="text-[22px] sm:text-[26px] font-[850] tracking-tight leading-tight text-white drop-shadow-md">
                         {selectedScene.title}
                       </h3>
 
@@ -1199,7 +1341,7 @@ export function StudioScreen() {
                       onMouseEnter={() => setHoveredCanvasElementId("narration")}
                       onMouseLeave={() => setHoveredCanvasElementId(null)}
                       className={cn(
-                        "pointer-events-auto relative max-w-[75%] p-2 rounded-xl transition-all cursor-pointer",
+                        "pointer-events-auto relative max-w-[58%] p-2 rounded-xl transition-all cursor-pointer",
                         selectedCanvasElementId === "narration"
                           ? "border-2 border-dashed border-[var(--brand)] bg-black/40 ring-4 ring-[var(--brand)]/20"
                           : hoveredCanvasElementId === "narration"
@@ -1207,7 +1349,7 @@ export function StudioScreen() {
                           : ""
                       )}
                     >
-                      <p className="text-[12.5px] sm:text-[13.5px] leading-relaxed text-white/85">
+                      <p className="text-[12px] sm:text-[13px] leading-relaxed text-white/85">
                         {selectedScene.narration}
                       </p>
                       {selectedCanvasElementId === "narration" && (
@@ -1315,7 +1457,13 @@ export function StudioScreen() {
 
                     <div className="flex flex-col divide-y divide-[var(--line)]">
                       {/* Track 1: Background */}
-                      <div className="h-8 flex items-center bg-[#fafbf9]">
+                      <div
+                        onClick={() => handleSelectCanvasElement("moa")}
+                        className={cn(
+                          "h-8 flex items-center transition-colors cursor-pointer",
+                          selectedCanvasElementId === "moa" ? "bg-[var(--tint)]/40" : "bg-[#fafbf9] hover:bg-white"
+                        )}
+                      >
                         <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-[var(--line)] bg-white text-[10.5px] font-bold">
                           <ImageIcon className="size-3.5 text-emerald-600" />
                           <span className="truncate">1. Bg Canvas</span>
@@ -1328,7 +1476,13 @@ export function StudioScreen() {
                       </div>
 
                       {/* Track 2: 3D MoA Model */}
-                      <div className="h-8 flex items-center bg-[#fafbf9]">
+                      <div
+                        onClick={() => handleSelectCanvasElement("moa")}
+                        className={cn(
+                          "h-8 flex items-center transition-colors cursor-pointer",
+                          selectedCanvasElementId === "moa" ? "bg-[var(--tint)]/40" : "bg-[#fafbf9] hover:bg-white"
+                        )}
+                      >
                         <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-[var(--line)] bg-white text-[10.5px] font-bold">
                           <Film className="size-3.5 text-[var(--brand)]" />
                           <span className="truncate">2. 3D MoA Target</span>
@@ -1340,11 +1494,55 @@ export function StudioScreen() {
                         </div>
                       </div>
 
-                      {/* Track 3: Headline Copy */}
-                      <div className="h-8 flex items-center bg-[#fafbf9]">
+                      {/* Track 3: Clinical Chart Image Layer */}
+                      <div
+                        onClick={() => handleSelectCanvasElement("image")}
+                        className={cn(
+                          "h-8 flex items-center transition-colors cursor-pointer",
+                          selectedCanvasElementId === "image" ? "bg-[var(--tint)]/40" : "bg-[#fafbf9] hover:bg-white"
+                        )}
+                      >
+                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-[var(--line)] bg-white text-[10.5px] font-bold">
+                          <ImageIcon className="size-3.5 text-lime-600" />
+                          <span className="truncate">3. Chart Image</span>
+                        </div>
+                        <div className="flex-1 h-full p-1">
+                          <div className="h-full w-[85%] rounded bg-lime-100 border border-lime-300 flex items-center px-2 text-[9.5px] font-bold text-lime-950 truncate">
+                            CLEARSKIN_Phase_III_ForestPlot.png [0:02 – 0:12]
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Track 4: 3D Video Clip Layer */}
+                      <div
+                        onClick={() => handleSelectCanvasElement("video-clip")}
+                        className={cn(
+                          "h-8 flex items-center transition-colors cursor-pointer",
+                          selectedCanvasElementId === "video-clip" ? "bg-[var(--tint)]/40" : "bg-[#fafbf9] hover:bg-white"
+                        )}
+                      >
+                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-[var(--line)] bg-white text-[10.5px] font-bold">
+                          <Film className="size-3.5 text-sky-600" />
+                          <span className="truncate">4. B-Roll Video</span>
+                        </div>
+                        <div className="flex-1 h-full p-1">
+                          <div className="h-full w-[75%] rounded bg-sky-100 border border-sky-300 flex items-center px-2 text-[9.5px] font-bold text-sky-950 truncate">
+                            Cellular_Receptor_Binding_4K.mp4 [0:04 – 0:{selectedScene.duration}]
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Track 5: Headline Copy */}
+                      <div
+                        onClick={() => handleSelectCanvasElement("headline")}
+                        className={cn(
+                          "h-8 flex items-center transition-colors cursor-pointer",
+                          selectedCanvasElementId === "headline" ? "bg-[var(--tint)]/40" : "bg-[#fafbf9] hover:bg-white"
+                        )}
+                      >
                         <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-[var(--line)] bg-white text-[10.5px] font-bold">
                           <Type className="size-3.5 text-blue-600" />
-                          <span className="truncate">3. Text Headline</span>
+                          <span className="truncate">5. Text Headline</span>
                         </div>
                         <div className="flex-1 h-full p-1">
                           <div className="h-full w-3/4 rounded bg-blue-50 border border-blue-200 flex items-center px-2 text-[9.5px] font-bold text-blue-900 truncate">
@@ -1353,15 +1551,21 @@ export function StudioScreen() {
                         </div>
                       </div>
 
-                      {/* Track 4: Voiceover */}
-                      <div className="h-8 flex items-center bg-[#fafbf9]">
+                      {/* Track 6: Voiceover */}
+                      <div
+                        onClick={() => handleSelectCanvasElement("narration")}
+                        className={cn(
+                          "h-8 flex items-center transition-colors cursor-pointer",
+                          selectedCanvasElementId === "narration" ? "bg-[var(--tint)]/40" : "bg-[#fafbf9] hover:bg-white"
+                        )}
+                      >
                         <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-[var(--line)] bg-white text-[10.5px] font-bold">
                           <Mic2 className="size-3.5 text-amber-600" />
-                          <span className="truncate">4. Voiceover</span>
+                          <span className="truncate">6. Voiceover</span>
                         </div>
                         <div className="flex-1 h-full p-1">
                           <div className="h-full w-4/5 rounded bg-amber-50 border border-amber-200 flex items-center px-2 text-[9.5px] font-bold text-amber-900 truncate">
-                            Rohan VO · Clinical narration [0:01 – 0:13]
+                            Eleanor VO · Clinical narration [0:01 – 0:13]
                           </div>
                         </div>
                       </div>
@@ -1997,7 +2201,80 @@ export function StudioScreen() {
                     />
                   </div>
 
-                  {/* 5. Duration */}
+                  {/* 5. Attached Scene Media (Images & Video Clips) */}
+                  <div className="rounded-xl border border-[var(--line)] bg-[#fafbf9] p-3 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11.5px] font-extrabold text-[var(--ink)] flex items-center gap-1.5">
+                        <Layers className="size-3.5 text-[var(--brand)]" />
+                        Attached Scene Media
+                      </span>
+                      <span className="text-[10px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+                        2 Media Layers
+                      </span>
+                    </div>
+
+                    {/* Media Item 1: Clinical Chart Image */}
+                    <div className="rounded-lg border border-black/8 bg-white p-2 flex items-center justify-between gap-2 shadow-2xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="size-8 rounded-md bg-lime-50 border border-lime-200 flex items-center justify-center text-lime-700 shrink-0">
+                          <ImageIcon className="size-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold text-[var(--ink)] truncate">
+                            CLEARSKIN_Phase_III_ForestPlot.png
+                          </div>
+                          <div className="text-[9.5px] text-[var(--ink-muted)] flex items-center gap-1.5">
+                            <span>Image Layer</span>
+                            <span>·</span>
+                            <span className="text-emerald-700 font-semibold">0:02 – 0:12s</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleSelectCanvasElement("image");
+                          setToMessage("Directing SwishX to replace chart image asset");
+                          setTimeout(() => setToMessage(null), 2500);
+                        }}
+                        className="rounded-lg bg-[#edf1ee] hover:bg-[#e0e5e1] text-[10px] font-bold text-[var(--ink-2)] px-2 py-1 transition-colors cursor-pointer shrink-0"
+                      >
+                        Replace
+                      </button>
+                    </div>
+
+                    {/* Media Item 2: 3D Video Clip */}
+                    <div className="rounded-lg border border-black/8 bg-white p-2 flex items-center justify-between gap-2 shadow-2xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="size-8 rounded-md bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 shrink-0">
+                          <Film className="size-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] font-bold text-[var(--ink)] truncate">
+                            Cellular_Receptor_Binding_4K.mp4
+                          </div>
+                          <div className="text-[9.5px] text-[var(--ink-muted)] flex items-center gap-1.5">
+                            <span>Video Clip</span>
+                            <span>·</span>
+                            <span className="text-sky-700 font-semibold">0:04 – 0:{selectedScene.duration}s (60fps)</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleSelectCanvasElement("video-clip");
+                          setToMessage("Directing SwishX to swap kinematic video clip");
+                          setTimeout(() => setToMessage(null), 2500);
+                        }}
+                        className="rounded-lg bg-[#edf1ee] hover:bg-[#e0e5e1] text-[10px] font-bold text-[var(--ink-2)] px-2 py-1 transition-colors cursor-pointer shrink-0"
+                      >
+                        Swap
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 6. Duration */}
                   <div>
                     <label className="text-[11.5px] font-bold text-[var(--ink-2)] block mb-1">
                       Scene Duration
