@@ -38,6 +38,8 @@ export interface DossierSection {
   heldOutCount: number;
   citations: string[];
   unverifiedClaims?: UnverifiedClaim[];
+  /** True once this section has been revised via the chat-based refinement panel. */
+  edited?: boolean;
 }
 
 export type ApprovalStatus = "pending" | "reviewing" | "approved" | "changes-requested";
@@ -84,6 +86,9 @@ export interface BrandDossier {
   sections: DossierSection[];
   /** Who needs to sign off before this dossier can be used to create content. */
   approvals: DossierApproval[];
+  /** Free-form change requests logged from the chat-based refinement panel
+   *  that didn't map to a specific section or approval. */
+  changeLog?: string[];
 }
 
 /** An entry in the brand picker — not every brand has a dossier yet. */

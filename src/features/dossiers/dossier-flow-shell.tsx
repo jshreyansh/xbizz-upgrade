@@ -11,10 +11,12 @@ interface DossierFlowShellProps {
   stepLabel: string;
   /** Explicit back target — omit to use router.back(). */
   backHref?: string;
+  /** Widens the card for two-column layouts (e.g. preview + refinement chat). */
+  wide?: boolean;
   children: React.ReactNode;
 }
 
-export function DossierFlowShell({ step, stepLabel, backHref, children }: DossierFlowShellProps) {
+export function DossierFlowShell({ step, stepLabel, backHref, wide, children }: DossierFlowShellProps) {
   const router = useRouter();
   const reset = useDossierDraftStore((s) => s.reset);
 
@@ -31,7 +33,7 @@ export function DossierFlowShell({ step, stepLabel, backHref, children }: Dossie
   const progress = (step / TOTAL_STEPS) * 100;
 
   return (
-    <div className="page-enter" style={{ maxWidth: 640, margin: "0 auto", paddingBottom: 48 }}>
+    <div className="page-enter" style={{ maxWidth: wide ? 1080 : 640, margin: "0 auto", paddingBottom: 48, transition: "max-width .3s var(--e)" }}>
       {/* Header row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
         <button

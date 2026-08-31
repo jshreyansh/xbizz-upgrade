@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, ArrowRight, Sparkles, WifiOff } from "lucide-react";
+import { FileText } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
 import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
 import { ProcessingChecklist, SuccessScreen, buildMockDossier, REGULATORY_BODIES, PREVIEW_SECTIONS } from "@/features/dossiers/dossier-flow-pieces";
+import { DossierPreviewChat } from "@/features/dossiers/dossier-preview-chat";
 import { mapAiResultToBrandDossier, type AiDossierResult } from "@/features/dossiers/ai-dossier-prompt";
 import type { BrandDossier, RegulatoryBody } from "@/features/dossiers/dossier-types";
 
@@ -93,7 +94,7 @@ export default function NewDossierCreatePage() {
 
   return (
     <AppShell pageTitle="New Brand Dossier">
-      <DossierFlowShell step={3} stepLabel="Create" backHref={phase === "input" ? "/dossiers/new/path" : undefined}>
+      <DossierFlowShell step={3} stepLabel="Create" backHref={phase === "input" ? "/dossiers/new/path" : undefined} wide={phase === "preview"}>
         {phase === "input" && (
           <>
             <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Create {brandName}&rsquo;s dossier</h1>
@@ -170,64 +171,11 @@ export default function NewDossierCreatePage() {
         )}
 
         {phase === "preview" && dossier && (
-          <>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
-              <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>
-                Preview — {dossier.brandName}
-              </h1>
-              {dossier.generatedBy === "ai" ? (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--brand-deep)", background: "var(--tint)", border: "1px solid var(--tint-line)", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
-                  <Sparkles size={11} />
-                  Generated with Claude
-                </span>
-              ) : (
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--ink-4)", background: "var(--surface-subtle)", border: "1px solid var(--hair)", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
-                  <WifiOff size={11} />
-                  Offline preview data
-                </span>
-              )}
-            </div>
-            <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "0 0 18px" }}>
-              {dossier.sectionsCount} sections drafted and grounded to {dossier.sourcesCount} sources.
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 26, maxHeight: 320, overflowY: "auto" }}>
-              {dossier.sections.map((s) => (
-                <div
-                  key={s.id}
-                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 13px", borderRadius: "var(--r)", background: "var(--surface-subtle)", border: "1px solid var(--hair)" }}
-                >
-                  <span style={{ width: 22, height: 22, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", background: "var(--ok-bg)", border: "1px solid var(--ok-line)", fontSize: 10.5, fontWeight: 800, color: "var(--ok)" }}>
-                    {s.number}
-                  </span>
-                  <span style={{ fontSize: 13.5, fontWeight: 650, color: "var(--ink-2)", flex: 1 }}>{s.title}</span>
-                  <span style={{ fontSize: 9.5, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".03em", color: "var(--ink-4)" }}>{s.claimsCount} claims</span>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setPhase("success")}
-              style={{
-                width: "100%",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-                padding: "13px 0",
-                borderRadius: "var(--r)",
-                fontWeight: 750,
-                fontSize: 14.5,
-                color: "#fff",
-                background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-                boxShadow: "0 12px 24px -12px rgba(253,72,22,.6)",
-              }}
-            >
-              Looks good — finish
-              <ArrowRight size={15} />
-            </button>
-          </>
+          <DossierPreviewChat
+            dossier={dossier}
+            onChange={(updater) => setDossier((prev) => (prev ? updater(prev) : prev))}
+            onFinish={() => setPhase("success")}
+          />
         )}
 
         {phase === "success" && dossier && (

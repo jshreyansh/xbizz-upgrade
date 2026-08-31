@@ -7,9 +7,10 @@ import { AppShell } from "@/features/workspace/app-shell";
 import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
 import { ProcessingChecklist, SuccessScreen, buildMockDossier } from "@/features/dossiers/dossier-flow-pieces";
+import { DossierPreviewChat } from "@/features/dossiers/dossier-preview-chat";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 
-type Phase = "input" | "processing" | "success";
+type Phase = "input" | "processing" | "preview" | "success";
 
 export default function NewDossierUploadPage() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function NewDossierUploadPage() {
 
   return (
     <AppShell pageTitle="New Brand Dossier">
-      <DossierFlowShell step={3} stepLabel="Upload" backHref={phase === "input" ? "/dossiers/new/path" : undefined}>
+      <DossierFlowShell step={3} stepLabel="Upload" backHref={phase === "input" ? "/dossiers/new/path" : undefined} wide={phase === "preview"}>
         {phase === "input" && (
           <>
             <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Upload {brandName}&rsquo;s dossier</h1>
@@ -115,7 +116,16 @@ export default function NewDossierUploadPage() {
           <ProcessingChecklist
             title="Verifying & validating"
             items={["Scanning document structure", "Extracting brand & indication", "Matching regulatory anchor", "Cross-referencing citations"]}
-            onDone={() => setPhase("success")}
+            onDone={() => setPhase("preview")}
+          />
+        )}
+
+        {phase === "preview" && dossier && (
+          <DossierPreviewChat
+            dossier={dossier}
+            onChange={(updater) => setDossier((prev) => (prev ? updater(prev) : prev))}
+            onFinish={() => setPhase("success")}
+            finishLabel="Confirm & finish"
           />
         )}
 
