@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, BookOpen, ShieldCheck, FileSearch } from "lucide-react";
+import { Sparkles, BookOpen, ShieldCheck, FileSearch, Clock } from "lucide-react";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
 
@@ -277,6 +277,30 @@ export function DossierListScreen({
                 <span style={{ fontSize: 10, color: "var(--ink-4)", textTransform: "uppercase", fontWeight: 700 }}>Sources</span>
               </div>
             </div>
+
+            {/* Approval status */}
+            {(() => {
+              const pendingApprovals = dossier.approvals.filter((a) => a.status === "pending" || a.status === "reviewing");
+              const pendingCount = pendingApprovals.length;
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    color: pendingCount > 0 ? "var(--warn)" : "var(--ok)",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Clock size={12} />
+                  {pendingCount > 0
+                    ? `${pendingCount} of ${dossier.approvals.length} approvals pending — ${pendingApprovals.map((a) => a.role).join(", ")}`
+                    : "All approvals cleared"}
+                </div>
+              );
+            })()}
 
             {/* Footer action */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "var(--ink-4)" }}>
