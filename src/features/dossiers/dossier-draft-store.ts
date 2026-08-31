@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import type { BrandDossier, RegulatoryBody } from "@/features/dossiers/dossier-types";
 
-export type DossierFlowPath = "create" | "upload" | null;
+export type DossierFlowPath = "create" | "upload" | "longform" | null;
 
 interface DossierDraftState {
   // Step 1 — product & classification

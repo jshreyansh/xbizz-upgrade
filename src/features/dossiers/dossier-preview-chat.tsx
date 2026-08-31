@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, WifiOff, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Sparkles, WifiOff, PenLine, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { useAssistantChat, DossierAssistantPanel, isQuestion } from "@/features/dossiers/dossier-assistant-chat";
 import type { BrandDossier, ApprovalStatus } from "@/features/dossiers/dossier-types";
 
@@ -116,6 +116,11 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--brand-deep)", background: "var(--tint)", border: "1px solid var(--tint-line)", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
             <Sparkles size={11} />
             Generated with Claude
+          </span>
+        ) : dossier.generatedBy === "manual" ? (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "#5b21b6", background: "#f3ecfe", border: "1px solid #e4d4fb", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
+            <PenLine size={11} />
+            Manually authored
           </span>
         ) : (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--ink-4)", background: "var(--surface-subtle)", border: "1px solid var(--hair)", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
