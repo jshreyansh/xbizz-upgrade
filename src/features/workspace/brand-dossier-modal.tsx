@@ -312,22 +312,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-3 sm:p-6 lg:p-8 animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
     >
-      <div className="relative flex max-h-[90vh] w-full max-w-[780px] flex-col rounded-[26px] border border-black/10 bg-[#fafbfa] shadow-2xl overflow-hidden">
+      <div className="relative flex h-[94vh] max-h-[960px] w-full max-w-[1360px] flex-col rounded-[28px] border border-black/10 bg-[#fafbfa] shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-[var(--line)] bg-white px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex size-7 items-center justify-center rounded-full bg-[var(--brand)] text-[12px] font-bold text-white shadow-xs">
+        <div className="flex items-center justify-between border-b border-[var(--line)] bg-white px-8 py-5">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-8 items-center justify-center rounded-full bg-[var(--brand)] text-[13px] font-bold text-white shadow-xs">
               1
             </div>
             <div>
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+              <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
                 Starter Step
               </div>
-              <h2 className="text-[17px] font-[850] text-[var(--ink)]">
+              <h2 className="text-[19px] font-[850] text-[var(--ink)] tracking-tight">
                 Select Brand &amp; Dossier
               </h2>
             </div>
@@ -335,20 +335,20 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           <button
             type="button"
             onClick={onClose}
-            className="grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors cursor-pointer"
+            className="grid size-9 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors cursor-pointer"
             aria-label="Close"
           >
-            <X className="size-4" />
+            <X className="size-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-8 space-y-6">
           {/* Selected Brand Banner */}
-          <div className="rounded-[18px] border-2 border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)]/50 to-white p-4 shadow-2xs">
+          <div className="rounded-[22px] border-2 border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)]/50 to-white p-5 shadow-2xs">
             <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="grid size-11 place-items-center rounded-xl bg-white border border-[var(--brand)]/30 text-[13px] font-extrabold text-[var(--brand-deep)] shadow-2xs shrink-0">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="grid size-12 place-items-center rounded-xl bg-white border border-[var(--brand)]/30 text-[14px] font-extrabold text-[var(--brand-deep)] shadow-2xs shrink-0">
                   {selectedBrand.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
@@ -360,9 +360,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       {selectedBrand.hasDossier ? `✓ ${availableDossiers.length} Dossiers on file` : "No dossier yet"}
                     </span>
                   </div>
-                  <div className="text-[16px] font-[850] text-[var(--ink)] truncate">
+                  <div className="text-[17px] font-[850] text-[var(--ink)] truncate">
                     {selectedBrand.name}{" "}
-                    <span className="text-[13px] font-normal text-[var(--ink-muted)] italic">
+                    <span className="text-[13.5px] font-normal text-[var(--ink-muted)] italic">
                       ({selectedBrand.genericName})
                     </span>
                   </div>
@@ -370,7 +370,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     {selectedBrand.therapyAreas.map((area) => (
                       <span
                         key={area}
-                        className="rounded-md bg-black/5 px-2 py-0.5 text-[9.5px] font-semibold text-[var(--ink-2)]"
+                        className="rounded-md bg-black/5 px-2 py-0.5 text-[10px] font-semibold text-[var(--ink-2)]"
                       >
                         {area}
                       </span>
@@ -382,9 +382,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               <button
                 type="button"
                 onClick={() => setBrandSelectorOpen(!brandSelectorOpen)}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white hover:border-[var(--brand)] px-3 py-2 text-[12px] font-bold text-[var(--brand-deep)] shadow-2xs hover:bg-[var(--tint)]/40 transition-colors cursor-pointer shrink-0"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white hover:border-[var(--brand)] px-3.5 py-2.5 text-[12.5px] font-bold text-[var(--brand-deep)] shadow-2xs hover:bg-[var(--tint)]/40 transition-colors cursor-pointer shrink-0"
               >
-                <Building2 className="size-3.5 text-[var(--brand)]" />
+                <Building2 className="size-4 text-[var(--brand)]" />
                 <span>{brandSelectorOpen ? "Close list" : "Change brand"}</span>
               </button>
             </div>
@@ -393,17 +393,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             {brandSelectorOpen && (
               <div className="mt-4 pt-4 border-t border-[var(--line)] space-y-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-2.5 size-3.5 text-[var(--ink-muted)]" />
+                  <Search className="absolute left-3.5 top-3 size-4 text-[var(--ink-muted)]" />
                   <input
                     type="text"
                     value={brandSearch}
                     onChange={(e) => setBrandSearch(e.target.value)}
                     placeholder="Search brand name, generic name, or therapy area..."
-                    className="w-full rounded-xl border border-black/10 bg-white pl-9 pr-3 py-2 text-[12.5px] focus:outline-none focus:border-[var(--brand)] shadow-2xs"
+                    className="w-full rounded-xl border border-black/10 bg-white pl-10 pr-3.5 py-2.5 text-[13px] focus:outline-none focus:border-[var(--brand)] shadow-2xs"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
                   {filteredBrands.map((brand) => {
                     const isCurrent = brand.id === selectedBrandId;
                     return (
@@ -412,17 +412,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         type="button"
                         onClick={() => handleSelectBrand(brand)}
                         className={cn(
-                          "flex items-center justify-between p-2.5 rounded-xl border text-left transition-colors cursor-pointer",
+                          "flex items-center justify-between p-3 rounded-xl border text-left transition-colors cursor-pointer",
                           isCurrent
                             ? "border-[var(--brand)] bg-white ring-1 ring-[var(--brand)]/20"
                             : "border-black/5 bg-white/70 hover:bg-white hover:border-black/15"
                         )}
                       >
                         <div className="min-w-0 pr-2">
-                          <div className="text-[12.5px] font-bold text-[var(--ink)] truncate">
+                          <div className="text-[13px] font-bold text-[var(--ink)] truncate">
                             {brand.name}
                           </div>
-                          <div className="text-[10.5px] text-[var(--ink-muted)] truncate">
+                          <div className="text-[11px] text-[var(--ink-muted)] truncate">
                             {brand.genericName}
                           </div>
                         </div>
@@ -443,22 +443,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             )}
           </div>
 
-          {/* Dossiers Selection Section */}
-          <div className="space-y-3">
+          {/* Dossiers Selection Section (2-Column Grid on Wide Screens) */}
+          <div className="space-y-3.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11.5px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center gap-1.5">
-                <FileText className="size-3.5 text-[var(--brand)]" />
+              <span className="text-[12px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center gap-1.5">
+                <FileText className="size-4 text-[var(--brand)]" />
                 Available Dossiers &amp; Regulatory Sources
               </span>
               {availableDossiers.length > 0 && (
-                <span className="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-0.5 rounded-full">
                   ✓ {availableDossiers.length} Options Available · Pick One
                 </span>
               )}
             </div>
 
             {availableDossiers.length > 0 ? (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {availableDossiers.map((dossier) => {
                   const isSelected = selectedDossierId === dossier.id;
                   return (
@@ -466,74 +466,76 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       key={dossier.id}
                       onClick={() => setSelectedDossierId(dossier.id)}
                       className={cn(
-                        "group relative rounded-[20px] border-2 p-4 transition-all duration-200 cursor-pointer shadow-2xs",
+                        "group relative rounded-[22px] border-2 p-5 transition-all duration-200 cursor-pointer shadow-2xs flex flex-col justify-between",
                         isSelected
                           ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
                           : "border-black/[0.08] bg-white/80 hover:border-black/20 hover:bg-white"
                       )}
                     >
-                      {/* Top Row: Radio & Name */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div
-                            className={cn(
-                              "mt-0.5 size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                              isSelected
-                                ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                                : "border-black/25 group-hover:border-black/40"
-                            )}
-                          >
-                            {isSelected && <Check className="size-3 stroke-[3]" />}
+                      <div>
+                        {/* Top Row: Radio & Name */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div
+                              className={cn(
+                                "mt-0.5 size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                                isSelected
+                                  ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                  : "border-black/25 group-hover:border-black/40"
+                              )}
+                            >
+                              {isSelected && <Check className="size-3 stroke-[3]" />}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="text-[15px] font-[850] text-[var(--ink)] leading-snug">
+                                {dossier.name}
+                              </div>
+                              <div className="text-[12px] text-[var(--ink-muted)] italic mt-0.5">
+                                {dossier.molecule}
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="min-w-0">
-                            <div className="text-[14.5px] font-[850] text-[var(--ink)] leading-snug">
-                              {dossier.name}
-                            </div>
-                            <div className="text-[11.5px] text-[var(--ink-muted)] italic">
-                              {dossier.molecule}
-                            </div>
-                          </div>
-                        </div>
-
-                        <span className="inline-flex items-center gap-1 rounded-md bg-black/5 px-2 py-1 text-[11px] font-extrabold text-[var(--ink-2)] shrink-0">
-                          {dossier.market}
-                        </span>
-                      </div>
-
-                      {/* Dossier Structure Skeleton Bar */}
-                      <div className="mt-3 pt-3 border-t border-black/[0.05]">
-                        <div className="flex items-center justify-between text-[10.5px] text-[var(--ink-muted)] mb-1.5">
-                          <span className="font-semibold">Dossier Structure</span>
-                          <span className="font-bold text-[var(--ink-2)]">
-                            {dossier.sections} sections · {dossier.claims} approved claims
+                          <span className="inline-flex items-center gap-1 rounded-md bg-black/5 px-2.5 py-1 text-[11px] font-extrabold text-[var(--ink-2)] shrink-0">
+                            {dossier.market}
                           </span>
                         </div>
-                        <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden flex gap-0.5">
-                          {dossier.skeletonWidths.map((w, idx) => (
-                            <div
-                              key={idx}
-                              style={{ width: `${w}%` }}
-                              className={cn(
-                                "h-full rounded-full transition-all",
-                                isSelected ? "bg-[var(--brand)]/70" : "bg-black/20"
-                              )}
-                            />
-                          ))}
+
+                        {/* Dossier Structure Skeleton Bar */}
+                        <div className="mt-3.5 pt-3 border-t border-black/[0.05]">
+                          <div className="flex items-center justify-between text-[11px] text-[var(--ink-muted)] mb-1.5">
+                            <span className="font-semibold">Dossier Structure</span>
+                            <span className="font-bold text-[var(--ink-2)]">
+                              {dossier.sections} sections · {dossier.claims} approved claims
+                            </span>
+                          </div>
+                          <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden flex gap-0.5">
+                            {dossier.skeletonWidths.map((w, idx) => (
+                              <div
+                                key={idx}
+                                style={{ width: `${w}%` }}
+                                className={cn(
+                                  "h-full rounded-full transition-all",
+                                  isSelected ? "bg-[var(--brand)]/70" : "bg-black/20"
+                                )}
+                              />
+                            ))}
+                          </div>
                         </div>
                       </div>
 
                       {/* Attached Documents Citations */}
                       {dossier.documents && dossier.documents.length > 0 && (
-                        <div className="mt-3 space-y-1.5">
+                        <div className="mt-3.5 pt-2 space-y-1.5">
                           <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
                             Attached Clinical Documents &amp; Labels ({dossier.documents.length})
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                            {dossier.documents.map((doc, idx) => (
+                          <div className="space-y-1.5">
+                            {dossier.documents.slice(0, 3).map((doc, idx) => (
                               <div
                                 key={idx}
-                                className="flex items-center justify-between gap-1.5 rounded-lg bg-[#fafbf9] border border-black/5 px-2.5 py-1 text-[11px]"
+                                className="flex items-center justify-between gap-2 rounded-lg bg-[#fafbf9] border border-black/5 px-2.5 py-1 text-[11.5px]"
                               >
                                 <span className="truncate text-[var(--ink-2)] font-medium">
                                   📄 {doc.name}
@@ -552,22 +554,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               </div>
             ) : (
               /* Empty state if brand has no dossier */
-              <div className="rounded-[20px] border-2 border-dashed border-black/15 bg-white p-8 text-center space-y-3">
+              <div className="rounded-[24px] border-2 border-dashed border-black/15 bg-white p-10 text-center space-y-3">
                 <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
                   <FolderPlus className="size-6" />
                 </div>
-                <div className="max-w-[400px] mx-auto">
-                  <h4 className="text-[15px] font-[850] text-[var(--ink)]">
+                <div className="max-w-[420px] mx-auto">
+                  <h4 className="text-[16px] font-[850] text-[var(--ink)]">
                     No dossier found for {selectedBrand.name}
                   </h4>
-                  <p className="text-[12px] text-[var(--ink-muted)] mt-1">
+                  <p className="text-[12.5px] text-[var(--ink-muted)] mt-1">
                     Upload FDA prescribing labels or clinical trial protocols to initialize an approved dossier.
                   </p>
                 </div>
                 <Button
                   variant="primary"
                   size="sm"
-                  className="gap-2 text-[12px] font-bold"
+                  className="gap-2 text-[12.5px] font-bold"
                   onClick={() => {
                     setSelectedDossierId("velmora-commercial");
                   }}
@@ -581,9 +583,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between border-t border-[var(--line)] bg-white px-6 py-4">
+        <div className="flex items-center justify-between border-t border-[var(--line)] bg-white px-8 py-4">
           <div className="flex items-center gap-2">
-            <span className="text-[12px] text-[var(--ink-muted)]">
+            <span className="text-[12.5px] text-[var(--ink-muted)]">
               {selectedDossierId ? (
                 <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
                   <ShieldCheck className="size-4 text-emerald-600" />
@@ -595,8 +597,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={onClose}>
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" size="sm" onClick={onClose} className="px-4">
               Cancel
             </Button>
             <Button
@@ -604,7 +606,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               size="sm"
               disabled={!selectedDossierId}
               onClick={handleStartProject}
-              className="gap-2 font-bold px-4 shadow-sm"
+              className="gap-2 font-bold px-5 shadow-sm"
             >
               <span>Start Project</span>
               <ArrowRight className="size-3.5" />
