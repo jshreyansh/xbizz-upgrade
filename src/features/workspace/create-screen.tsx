@@ -170,17 +170,20 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     () => [
       {
         id: "hcp-launch",
-        tag: "HCP Launch",
+        tag: "HCP Launch Video",
+        oneLiner: "Highlight clinical need, mechanism & pivotal endpoints",
         prompt: `Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for ${currentBrandName}.`,
       },
       {
         id: "moa-efficacy",
         tag: "Mechanism & Efficacy",
+        oneLiner: "45s animation on receptor binding & safety profile",
         prompt: `Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety for ${currentBrandName}.`,
       },
       {
         id: "presenter-briefing",
         tag: "Clinical Briefing",
+        oneLiner: "Presenter-led walkthrough with fair balance data",
         prompt: `Generate a presenter-led clinical briefing explaining the dual mechanism of action and fair balance safety profile for ${currentBrandName}.`,
       },
     ],
@@ -255,15 +258,15 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       {/* Center stage (Expansive, Wide Chat Input with Minimal Text & Clean Whitespace) */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-14">
         <div className="w-full flex flex-col items-center space-y-6">
-          {/* ── Minimal Hero Heading ── */}
+          {/* ── Static Hero Heading ── */}
           <div className="text-center space-y-1.5 max-w-[720px]">
             <h1 className="text-[28px] sm:text-[34px] font-[850] text-[var(--ink)] tracking-tight">
-              What video would you like to create for <span className="text-[var(--brand)]">{currentBrandName}</span>?
+              What video would you like to create today?
             </h1>
           </div>
 
-          {/* ── 3 Compact, Single-Line Prompt Pills (Centered above input) ── */}
-          <div className="flex flex-wrap items-center justify-center gap-2 max-w-[800px]">
+          {/* ── 3 Intelligible One-Liner Prompt Suggestion Cards (3-column grid) ── */}
+          <div className="w-full max-w-[940px] grid grid-cols-1 md:grid-cols-3 gap-3">
             {samplePrompts.map((sample) => {
               const isSelected = brief.trim() === sample.prompt.trim();
               return (
@@ -273,15 +276,26 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   onClick={() => setBrief(sample.prompt)}
                   title={sample.prompt}
                   className={cn(
-                    "group inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-200 cursor-pointer shadow-2xs hover:-translate-y-0.5",
+                    "group flex items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:-translate-y-0.5 hover:shadow-xs",
                     isSelected
-                      ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20 font-bold"
-                      : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] hover:bg-white"
+                      ? "border-[var(--brand)] bg-[var(--tint)]/70 ring-2 ring-[var(--brand)]/20 shadow-xs"
+                      : "border-black/[0.08] bg-white hover:border-[var(--brand)] hover:bg-white"
                   )}
                 >
-                  <Sparkles className="size-3 text-[var(--brand)] shrink-0" />
-                  <span>{sample.tag}</span>
-                  <ArrowRight className="size-2.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="grid size-7 place-items-center rounded-lg bg-[var(--tint)] text-[var(--brand-deep)] shrink-0 border border-[var(--tint-line)]">
+                      <Sparkles className="size-3.5 text-[var(--brand)]" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[12px] font-bold text-[var(--ink)] truncate">
+                        {sample.tag}
+                      </div>
+                      <div className="text-[11px] text-[var(--ink-muted)] truncate group-hover:text-[var(--ink-2)] transition-colors">
+                        {sample.oneLiner}
+                      </div>
+                    </div>
+                  </div>
+                  <ArrowRight className="size-3.5 text-[var(--brand)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
                 </button>
               );
             })}
