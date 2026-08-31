@@ -30,7 +30,7 @@ import {
   LayoutGrid,
   TriangleAlert,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
@@ -40,6 +40,12 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import type { PlanningSource, Audience } from "@/types/content";
+
+const TYPEWRITER_HEADLINES = [
+  "What video would you like to create today?",
+  "Describe your brief in detail to generate directly from text",
+  "Use the example prompts below to start creating an asset",
+];
 
 export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,6 +86,43 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const [sourceQuery, setSourceQuery] = useState("");
   const [clarificationOpen, setClarificationOpen] = useState(false);
   const [localFiles, setLocalFiles] = useState<string[]>([]);
+
+  // ── Typewriter Animated Switching Headline Hook ──
+  const [headlineIndex, setHeadlineIndex] = useState(0);
+  const [displayedHeadline, setDisplayedHeadline] = useState(TYPEWRITER_HEADLINES[0]);
+  const [isDeletingHeadline, setIsDeletingHeadline] = useState(false);
+
+  useEffect(() => {
+    const currentPhrase = TYPEWRITER_HEADLINES[headlineIndex];
+    let timer: NodeJS.Timeout;
+
+    if (!isDeletingHeadline) {
+      if (displayedHeadline.length < currentPhrase.length) {
+        timer = setTimeout(() => {
+          setDisplayedHeadline(currentPhrase.slice(0, displayedHeadline.length + 1));
+        }, 36);
+      } else {
+        // Hold full phrase for 4 seconds
+        timer = setTimeout(() => {
+          setIsDeletingHeadline(true);
+        }, 4000);
+      }
+    } else {
+      if (displayedHeadline.length > 0) {
+        timer = setTimeout(() => {
+          setDisplayedHeadline(currentPhrase.slice(0, displayedHeadline.length - 1));
+        }, 18);
+      } else {
+        // Pause briefly at empty before typing next phrase
+        timer = setTimeout(() => {
+          setIsDeletingHeadline(false);
+          setHeadlineIndex((prev) => (prev + 1) % TYPEWRITER_HEADLINES.length);
+        }, 350);
+      }
+    }
+
+    return () => clearTimeout(timer);
+  }, [displayedHeadline, isDeletingHeadline, headlineIndex]);
 
   const creationMode = useWorkspaceStore((s) => s.creationMode);
   const setCreationMode = useWorkspaceStore((s) => s.setCreationMode);
@@ -274,10 +317,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       {/* Center stage (Expansive, Wide Chat Input with Minimal Text & Clean Whitespace) */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-14">
         <div className="w-full flex flex-col items-center space-y-6">
-          {/* ── Static Hero Heading ── */}
-          <div className="text-center space-y-1.5 max-w-[720px]">
-            <h1 className="text-[28px] sm:text-[34px] font-[850] text-[var(--ink)] tracking-tight">
-              What video would you like to create today?
+          {/* ── Typewriter Animated Switching Hero Heading ── */}
+          <div className="text-center max-w-[840px] min-h-[44px] sm:min-h-[50px] flex items-center justify-center">
+            <h1 className="text-[26px] sm:text-[32px] md:text-[34px] font-[850] text-[var(--ink)] tracking-tight inline-flex items-center justify-center flex-wrap">
+              <span>{displayedHeadline || "\u00A0"}</span>
+              <span className="inline-block w-[3px] h-[0.85em] bg-[var(--brand)] ml-2 rounded-full animate-pulse align-middle shrink-0" />
             </h1>
           </div>
 
