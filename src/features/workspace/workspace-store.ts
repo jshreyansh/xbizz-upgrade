@@ -39,6 +39,7 @@ interface WorkspaceState {
   isFirstRun: boolean;
   navCollapsed: boolean;
   teamDockOpen: boolean;
+  copilotPanelOpen: boolean;
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
@@ -74,6 +75,8 @@ interface WorkspaceState {
   setNavCollapsed: (collapsed: boolean) => void;
   setTeamDockOpen: (open: boolean) => void;
   toggleTeamDock: () => void;
+  setCopilotPanelOpen: (open: boolean) => void;
+  toggleCopilotPanel: () => void;
   reset: () => void;
 }
 
@@ -108,6 +111,7 @@ const initialState = {
   isFirstRun: true,
   navCollapsed: false,
   teamDockOpen: false,
+  copilotPanelOpen: true,
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -164,5 +168,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setNavCollapsed: (navCollapsed) => set({ navCollapsed }),
   setTeamDockOpen: (teamDockOpen) => set({ teamDockOpen }),
   toggleTeamDock: () => set((state) => ({ teamDockOpen: !state.teamDockOpen })),
+  setCopilotPanelOpen: (copilotPanelOpen) => set({ copilotPanelOpen }),
+  toggleCopilotPanel: () => set((state) => ({ copilotPanelOpen: !state.copilotPanelOpen })),
   reset: () => set(initialState),
 }));
