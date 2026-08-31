@@ -6,28 +6,34 @@ import { AppShell } from "@/features/workspace/app-shell";
 import { DossierListScreen } from "@/features/dossiers/dossier-list-screen";
 import { DossierWizard } from "@/features/dossiers/dossier-wizard";
 import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
+import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 
 function DossiersContent() {
   const searchParams = useSearchParams();
   const openId = searchParams.get("open");
 
-  const [dossiers, setDossiers] = useState<BrandDossier[]>(MOCK_DOSSIERS);
+  // Dossiers created via the /dossiers/new pages this session (in-memory,
+  // survives navigating away from those pages) come before the seed data.
+  const createdDossiers = useDossierDraftStore((s) => s.createdDossiers);
+  const allDossiers: BrandDossier[] = [...createdDossiers, ...MOCK_DOSSIERS];
+
   const [selectedDossier, setSelectedDossier] = useState<BrandDossier | null>(() => {
     if (openId) {
-      return MOCK_DOSSIERS.find((d) => d.id.toLowerCase() === openId.toLowerCase()) || null;
+      return allDossiers.find((d) => d.id.toLowerCase() === openId.toLowerCase()) || null;
     }
     return null;
   });
 
   useEffect(() => {
     if (openId) {
-      const match = dossiers.find((d) => d.id.toLowerCase() === openId.toLowerCase());
+      const match = allDossiers.find((d) => d.id.toLowerCase() === openId.toLowerCase());
       if (match) {
         setSelectedDossier(match);
       }
     }
-  }, [openId, dossiers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId]);
 
   const handleSelect = (dossier: BrandDossier) => {
     setSelectedDossier(dossier);
@@ -38,14 +44,6 @@ function DossiersContent() {
   };
 
   const handleDossierCreated = (newDossier: BrandDossier) => {
-    if (!dossiers.some((d) => d.id === newDossier.id)) {
-      setDossiers([newDossier, ...dossiers]);
-    }
-  };
-
-  /** From the quick Upload/Create flows — add the new dossier to the list and open it. */
-  const handleQuickDossierCreated = (newDossier: BrandDossier) => {
-    handleDossierCreated(newDossier);
     setSelectedDossier(newDossier);
   };
 
@@ -58,11 +56,7 @@ function DossiersContent() {
           onDossierCreated={handleDossierCreated}
         />
       ) : (
-        <DossierListScreen
-          dossiers={dossiers}
-          onSelectDossier={handleSelect}
-          onDossierCreated={handleQuickDossierCreated}
-        />
+        <DossierListScreen dossiers={allDossiers} onSelectDossier={handleSelect} />
       )}
     </AppShell>
   );

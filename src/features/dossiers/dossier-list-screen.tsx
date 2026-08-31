@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Sparkles, BookOpen, ShieldCheck, FileSearch } from "lucide-react";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
-import { NewDossierFlow } from "@/features/dossiers/dossier-quick-flows";
+import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
 
 interface DossierListScreenProps {
   dossiers: BrandDossier[];
   onSelectDossier: (dossier: BrandDossier) => void;
-  onDossierCreated: (dossier: BrandDossier) => void;
 }
 
 const EXPLAINER_POINTS = [
@@ -20,10 +20,15 @@ const EXPLAINER_POINTS = [
 export function DossierListScreen({
   dossiers,
   onSelectDossier,
-  onDossierCreated,
 }: DossierListScreenProps) {
-  const [flowOpen, setFlowOpen] = useState(false);
+  const router = useRouter();
+  const resetDraft = useDossierDraftStore((s) => s.reset);
   const [isNewUser, setIsNewUser] = useState(true);
+
+  function startNewDossier() {
+    resetDraft();
+    router.push("/dossiers/new");
+  }
 
   const sampleDossiers = dossiers.filter((d) => d.isSample);
   const visibleDossiers = isNewUser ? sampleDossiers : dossiers;
@@ -63,7 +68,7 @@ export function DossierListScreen({
             ))}
           </div>
           <button
-            onClick={() => setFlowOpen(true)}
+            onClick={startNewDossier}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -283,8 +288,6 @@ export function DossierListScreen({
           </div>
         ))}
       </div>
-
-      {flowOpen && <NewDossierFlow onClose={() => setFlowOpen(false)} onCreated={onDossierCreated} />}
     </div>
   );
 }
