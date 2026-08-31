@@ -18,6 +18,31 @@ export const OTHER_PRODUCT_ID = "__other__";
 export const DOSSIER_CATEGORIES = ["Patient Related", "HCP Related", "Payer Related", "Commercial"];
 export const TARGET_AUDIENCES = ["Trade Partner", "HCP", "Patient", "Payer"];
 
+/* ─── Per-section auto-write templates, used by the Create flow's review
+   step to (re)draft a section's content on demand without another API
+   call — e.g. after editing, or for a section added by hand. Unknown/
+   custom titles fall back to a generic templated paragraph. ─────────── */
+const SECTION_TEMPLATES: Record<string, (brand: string, generic: string) => string> = {
+  "indication & positioning": (b, g) =>
+    `${b} (${g}) is positioned to address a clearly defined patient population where current standards of care leave room for improvement. Its indication reflects a favorable benefit-risk profile established through the supporting clinical program. Positioning emphasizes differentiated efficacy and a manageable safety profile relative to existing therapies in this space.`,
+  "mechanism of action": (b, g) =>
+    `${g} exerts its therapeutic effect through targeted modulation of the underlying disease pathway, offering a mode of action distinct from earlier-generation agents. This mechanism supports both efficacy and tolerability across the studied population and has been characterized through nonclinical and early clinical pharmacology work for ${b}.`,
+  "clinical evidence": (b, g) =>
+    `The clinical program for ${b} (${g}) demonstrates consistent efficacy across the primary and key secondary endpoints studied. Results support the proposed positioning and are consistent with the mechanism of action, with a safety profile aligned with expectations for the drug class.`,
+  "safety profile": (b, g) =>
+    `${b} has demonstrated a manageable and consistent safety profile across the studied population, with adverse events generally mild to moderate in severity. Ongoing pharmacovigilance continues to monitor for any emerging signals specific to ${g}.`,
+  "dosing & administration": (b, g) =>
+    `${b} is administered according to a regimen designed to balance efficacy and tolerability, with dosing informed by the pharmacokinetic profile of ${g}. Administration guidance should be confirmed against the current approved label before use in promotional or educational materials.`,
+  "payer & heor summary": (b, g) =>
+    `The health-economic case for ${b} centers on its value relative to existing standard-of-care options, supported by outcomes data from the ${g} clinical program. Payer conversations typically focus on total cost of care and the durability of the observed clinical benefit.`,
+};
+
+export function autoWriteSection(title: string, brandName: string, genericName: string): string {
+  const template = SECTION_TEMPLATES[title.trim().toLowerCase()];
+  if (template) return template(brandName, genericName || brandName.toLowerCase());
+  return `Auto-drafted summary of ${title.toLowerCase()} for ${brandName} (${genericName || brandName.toLowerCase()}), covering the key points this section is expected to address. Edit this to reflect the specifics for your brand before finalizing.`;
+}
+
 /* ─── Staggered "working" checklist, shared by both paths ───────────────── */
 export function ProcessingChecklist({
   title,
