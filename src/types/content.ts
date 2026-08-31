@@ -49,4 +49,8 @@ export interface Scene {
   claim: string;
   evidenceState: EvidenceState;
   narrativeTag?: string;
+  mediaType?: "none" | "image" | "video" | "both";
+  mediaImageSrc?: string;
+  mediaVideoSrc?: string;
+  mediaLabel?: string;
 }

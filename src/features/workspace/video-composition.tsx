@@ -74,186 +74,177 @@ export function DynamicSceneComposition({
         />
       </div>
 
-      {/* Right-Side Media & Graphics Showcase (Images & Video Clip elements) */}
-      <div
-        style={{
-          position: "absolute",
-          right: "6%",
-          top: "14%",
-          bottom: "16%",
-          width: "38%",
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          zIndex: 10,
-          pointerEvents: "none",
-        }}
-      >
-        {/* Element 1: Clinical Trial Chart Graphic (Image Layer) */}
+      {/* Right-Side Media & Graphics Showcase (Rendered selectively for ~60% of scenes) */}
+      {scene.mediaType && scene.mediaType !== "none" && (
         <div
           style={{
-            flex: 1,
-            borderRadius: 14,
-            background: "rgba(10, 24, 19, 0.75)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.16)",
-            padding: "10px 14px",
+            position: "absolute",
+            right: "5%",
+            top: "12%",
+            bottom: "14%",
+            width: "42%",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
+            gap: 12,
+            zIndex: 10,
+            pointerEvents: "none",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span
-                style={{
-                  fontSize: 9,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: currentTheme.accent,
-                  background: "rgba(216,240,93,0.12)",
-                  padding: "2px 6px",
-                  borderRadius: 4,
-                  border: "1px solid rgba(216,240,93,0.25)",
-                }}
-              >
-                📊 Image Layer
-              </span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>
-                Pivotal Readout
-              </span>
-            </div>
-            <span style={{ fontSize: 9.5, color: "rgba(255,255,255,0.5)", fontWeight: 600 }}>
-              Wk 16 (p &lt; 0.001)
-            </span>
-          </div>
-
-          {/* Bar Chart Visualization */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "6px 0" }}>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, fontWeight: 700, color: "white", marginBottom: 2 }}>
-                <span>{brandName} 200mg</span>
-                <span style={{ color: currentTheme.accent }}>78.4%</span>
-              </div>
-              <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ width: "78.4%", height: "100%", background: `linear-gradient(90deg, ${currentTheme.accent}, #22c55e)`, borderRadius: 3 }} />
-              </div>
-            </div>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9.5, fontWeight: 600, color: "rgba(255,255,255,0.6)", marginBottom: 2 }}>
-                <span>Placebo Control</span>
-                <span>21.1%</span>
-              </div>
-              <div style={{ width: "100%", height: 5, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
-                <div style={{ width: "21.1%", height: "100%", background: "rgba(255,255,255,0.4)", borderRadius: 3 }} />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.5)", display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 4 }}>
-            <span>N=1,420 Patients</span>
-            <span>FDA Label §14.1</span>
-          </div>
-        </div>
-
-        {/* Element 2: 3D Microscopic Mechanism Video Clip Layer */}
-        <div
-          style={{
-            flex: 0.9,
-            borderRadius: 14,
-            background: "rgba(8, 20, 16, 0.8)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.14)",
-            padding: "8px 12px",
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.35)",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          {/* Animated Video Clip Preview Thumbnail */}
-          <div
-            style={{
-              width: 52,
-              height: 42,
-              borderRadius: 8,
-              background: "linear-gradient(135deg, #0d382b, #1d6e53)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "relative",
-              flexShrink: 0,
-            }}
-          >
+          {/* If scene has an image or both (e.g. Scene 3 Anatomical Heart) */}
+          {(scene.mediaType === "image" || scene.mediaType === "both") && (
             <div
               style={{
-                width: 16,
-                height: 16,
-                borderRadius: "50%",
-                background: "rgba(255,255,255,0.9)",
+                flex: scene.mediaType === "both" ? 1.1 : 1,
+                borderRadius: 16,
+                background: "rgba(10, 24, 19, 0.75)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255, 255, 255, 0.18)",
+                padding: "10px 14px",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
+                gap: 12,
+                boxShadow: "0 10px 36px rgba(0,0,0,0.4)",
+                overflow: "hidden",
+                position: "relative",
               }}
             >
+              {/* Real Anatomical Heart Image */}
               <div
                 style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: "6px solid #112921",
-                  borderTop: "3.5px solid transparent",
-                  borderBottom: "3.5px solid transparent",
-                  marginLeft: 1.5,
-                }}
-              />
-            </div>
-            <span
-              style={{
-                position: "absolute",
-                bottom: 2,
-                right: 3,
-                fontSize: 7.5,
-                fontWeight: 800,
-                color: "white",
-                background: "rgba(0,0,0,0.7)",
-                padding: "0.5px 3px",
-                borderRadius: 2,
-              }}
-            >
-              0:14s
-            </span>
-          </div>
-
-          {/* Video Metadata */}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <span
-                style={{
-                  fontSize: 8.5,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "#38bdf8",
-                  background: "rgba(56, 189, 248, 0.12)",
-                  padding: "1px 5px",
-                  borderRadius: 3,
+                  width: 90,
+                  height: 100,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.5))",
                 }}
               >
-                🎬 Video Clip
-              </span>
-              <span style={{ fontSize: 8.5, color: "rgba(255,255,255,0.6)" }}>4K · 60fps</span>
+                <img
+                  src={scene.mediaImageSrc || "/anatomical-heart.png"}
+                  alt={scene.mediaLabel || "Anatomical Model"}
+                  style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }}
+                />
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span
+                    style={{
+                      fontSize: 9,
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                      color: currentTheme.accent,
+                      background: "rgba(216,240,93,0.12)",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      border: "1px solid rgba(216,240,93,0.25)",
+                    }}
+                  >
+                    🫀 Image Asset
+                  </span>
+                  <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>Draggable</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: "white", marginTop: 4 }}>
+                  {scene.mediaLabel || "Anatomical Cardiac Structure"}
+                </div>
+                <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>
+                  Grounded in FDA Dossier §4.2
+                </div>
+              </div>
             </div>
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: "white", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              3D Receptor Binding Kinematics
+          )}
+
+          {/* If scene has a video or both (e.g. Scene 2, Scene 3, Scene 4) */}
+          {(scene.mediaType === "video" || scene.mediaType === "both") && (
+            <div
+              style={{
+                flex: scene.mediaType === "both" ? 1 : 1.4,
+                borderRadius: 16,
+                background: "rgba(8, 20, 16, 0.85)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(255, 255, 255, 0.18)",
+                overflow: "hidden",
+                boxShadow: "0 10px 36px rgba(0,0,0,0.4)",
+                position: "relative",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {/* Real Video Player */}
+              <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>
+                <video
+                  src={scene.mediaVideoSrc || "/reel-moa.mp4"}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+
+                {/* Video Badges */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    left: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    zIndex: 2,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 8.5,
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      color: "#38bdf8",
+                      background: "rgba(15, 23, 42, 0.75)",
+                      backdropFilter: "blur(6px)",
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                      border: "1px solid rgba(56, 189, 248, 0.4)",
+                    }}
+                  >
+                    🎬 Video Clip
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 8.5,
+                      fontWeight: 700,
+                      color: "white",
+                      background: "rgba(0,0,0,0.6)",
+                      padding: "2px 5px",
+                      borderRadius: 4,
+                    }}
+                  >
+                    4K · 60fps
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 8,
+                    left: 8,
+                    right: 8,
+                    background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)",
+                    padding: "6px 8px 2px",
+                    borderRadius: "0 0 8px 8px",
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {scene.mediaLabel || "3D Mechanism Kinematics"}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      </div>
+      )}
 
       {/* Structured Scene Content Overlay */}
       <div
@@ -293,7 +284,7 @@ export function DynamicSceneComposition({
         </div>
 
         {/* Core Headline & Narration Subtitle */}
-        <div style={{ maxWidth: "52%" }}>
+        <div style={{ maxWidth: scene.mediaType && scene.mediaType !== "none" ? "52%" : "82%" }}>
           <div
             style={{
               fontSize: 26,

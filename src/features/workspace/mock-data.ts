@@ -54,6 +54,7 @@ export const scenes: Scene[] = [
     claim: "Disease-burden statement",
     evidenceState: "supported",
     narrativeTag: "Intro",
+    mediaType: "none",
   },
   {
     id: "scene-2",
@@ -66,6 +67,9 @@ export const scenes: Scene[] = [
     claim: "Mechanism-of-action statement",
     evidenceState: "approved",
     narrativeTag: "Mechanism",
+    mediaType: "video",
+    mediaVideoSrc: "/reel-moa.mp4",
+    mediaLabel: "3D Receptor MoA Kinematics",
   },
   {
     id: "scene-3",
@@ -78,6 +82,10 @@ export const scenes: Scene[] = [
     claim: "CLEARSKIN primary endpoint",
     evidenceState: "approved",
     narrativeTag: "Evidence",
+    mediaType: "both",
+    mediaImageSrc: "/anatomical-heart.png",
+    mediaVideoSrc: "/4360-178617258_medium.mp4",
+    mediaLabel: "Cardiac & Vascular Model",
   },
   {
     id: "scene-4",
@@ -90,6 +98,9 @@ export const scenes: Scene[] = [
     claim: "Dosing statement",
     evidenceState: "changed",
     narrativeTag: "Dosing",
+    mediaType: "video",
+    mediaVideoSrc: "/21617-319452308_medium.mp4",
+    mediaLabel: "Clinical Patient Consultation",
   },
   {
     id: "scene-5",
@@ -102,5 +113,6 @@ export const scenes: Scene[] = [
     claim: "Call to action",
     evidenceState: "approved",
     narrativeTag: "Outro",
+    mediaType: "none",
   },
 ];
