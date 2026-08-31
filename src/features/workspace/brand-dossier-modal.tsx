@@ -13,6 +13,7 @@ import {
   X,
   ArrowRight,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -246,6 +247,36 @@ export const DOSSIERS: Record<string, DossierItem> = {
   },
 };
 
+const QUICK_DOSSIER_GRADIENTS = [
+  "linear-gradient(140deg,#ff7a3d,#c9310a)",
+  "linear-gradient(140deg,#4f83ff,#1d4ed8)",
+  "linear-gradient(140deg,#9b6bff,#5b21b6)",
+  "linear-gradient(140deg,#22c07a,#12784a)",
+];
+
+/** Builds a lightweight marketing & branding dossier entirely offline —
+ *  no Anthropic key or network call needed. Meant for "I need a dossier
+ *  right now to keep making my video/canvas/website" mid-flow, not the
+ *  full Brand Dossiers page flow (see /dossiers/new for that). */
+function createQuickDossier(brand: BrandItem, brief: string): DossierItem {
+  const id = `${brand.id}-quick-${Date.now().toString(36)}`;
+  const gradient = QUICK_DOSSIER_GRADIENTS[Math.floor(Math.random() * QUICK_DOSSIER_GRADIENTS.length)];
+  return {
+    id,
+    brandId: brand.id,
+    name: `${brand.name} Marketing & Branding Dossier`,
+    molecule: brand.genericName,
+    market: "🌐 Global · Marketing",
+    sections: 6,
+    claims: 24,
+    heldOut: 0,
+    avatarBg: gradient,
+    skeletonWidths: [82, 68, 90, 60, 76, 70],
+    isSample: false,
+    documents: brief.trim() ? [{ name: `Brief: ${brief.trim().slice(0, 70)}`, citations: 0 }] : undefined,
+  };
+}
+
 interface BrandDossierModalProps {
   open: boolean;
   onClose: () => void;
@@ -263,6 +294,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [selectedDossierId, setSelectedDossierId] = useState<string>("");
   const [brandSearch, setBrandSearch] = useState("");
 
+  // Dossiers quick-created inline (see "State C" below) — kept for the
+  // life of the component, not reset when the modal re-opens, so a
+  // dossier made in one session doesn't disappear the next time.
+  const [extraDossiers, setExtraDossiers] = useState<Record<string, DossierItem>>({});
+  const [extraBrandDossierIds, setExtraBrandDossierIds] = useState<Record<string, string[]>>({});
+  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
+  const [quickCreateBrief, setQuickCreateBrief] = useState("");
+  const [quickCreating, setQuickCreating] = useState(false);
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -274,28 +314,58 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setSelectedBrandId("");
       setSelectedDossierId("");
       setBrandSearch("");
+      setQuickCreateOpen(false);
+      setQuickCreateBrief("");
+      setQuickCreating(false);
     }
   }, [open]);
 
+  const allBrands = useMemo(() => {
+    return INITIAL_BRANDS.map((b) => {
+      const extraIds = extraBrandDossierIds[b.id];
+      if (!extraIds?.length) return b;
+      return { ...b, hasDossier: true, dossierIds: [...(b.dossierIds || []), ...extraIds] };
+    });
+  }, [extraBrandDossierIds]);
+
+  const allDossiers = useMemo(() => ({ ...DOSSIERS, ...extraDossiers }), [extraDossiers]);
+
   const selectedBrand = useMemo(() => {
-    return INITIAL_BRANDS.find((b) => b.id === selectedBrandId) || null;
-  }, [selectedBrandId]);
+    return allBrands.find((b) => b.id === selectedBrandId) || null;
+  }, [allBrands, selectedBrandId]);
 
   const availableDossiers = useMemo(() => {
     if (!selectedBrandId) return [];
-    return Object.values(DOSSIERS).filter((d) => d.brandId === selectedBrandId);
-  }, [selectedBrandId]);
+    return Object.values(allDossiers).filter((d) => d.brandId === selectedBrandId);
+  }, [allDossiers, selectedBrandId]);
 
   const filteredBrands = useMemo(() => {
     const q = brandSearch.toLowerCase().trim();
-    if (!q) return INITIAL_BRANDS;
-    return INITIAL_BRANDS.filter(
+    if (!q) return allBrands;
+    return allBrands.filter(
       (b) =>
         b.name.toLowerCase().includes(q) ||
         b.genericName.toLowerCase().includes(q) ||
         b.therapyAreas.some((t) => t.toLowerCase().includes(q))
     );
-  }, [brandSearch]);
+  }, [allBrands, brandSearch]);
+
+  function handleQuickCreate() {
+    if (!selectedBrand) return;
+    setQuickCreating(true);
+    setTimeout(() => {
+      const newDossier = createQuickDossier(selectedBrand, quickCreateBrief);
+      setExtraDossiers((prev) => ({ ...prev, [newDossier.id]: newDossier }));
+      setExtraBrandDossierIds((prev) => ({
+        ...prev,
+        [selectedBrand.id]: [...(prev[selectedBrand.id] || []), newDossier.id],
+      }));
+      setSelectedDossierId(newDossier.id);
+      setQuickCreating(false);
+      setQuickCreateOpen(false);
+      setQuickCreateBrief("");
+    }, 1100);
+  }
 
   if (!open || !mounted) return null;
 
@@ -586,6 +656,64 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   );
                 })}
               </div>
+            ) : quickCreateOpen ? (
+              /* State C2: Quick-create a marketing & branding dossier, offline —
+                 no Anthropic key needed. Keeps the user inside video/canvas/
+                 website creation instead of sending them to /dossiers/new. */
+              <div className="rounded-[24px] border-2 border-black/10 bg-white p-7 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="grid size-9 place-items-center rounded-xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]">
+                    <Sparkles className="size-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-[14.5px] font-[850] text-[var(--ink)]">
+                      Quick marketing & branding dossier for {selectedBrand.name}
+                    </h4>
+                    <p className="text-[11.5px] text-[var(--ink-muted)]">
+                      A lightweight starter dossier, generated instantly — no external service required.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-[var(--ink-2)] mb-1.5 block">
+                    Brief (optional)
+                  </label>
+                  <textarea
+                    value={quickCreateBrief}
+                    onChange={(e) => setQuickCreateBrief(e.target.value)}
+                    rows={3}
+                    disabled={quickCreating}
+                    placeholder={`What is ${selectedBrand.name} for, and who's the audience?`}
+                    className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-[13px] text-[var(--ink)] resize-none disabled:opacity-60"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <Button variant="secondary" size="sm" disabled={quickCreating} onClick={() => setQuickCreateOpen(false)} className="px-4">
+                    Back
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={quickCreating}
+                    onClick={handleQuickCreate}
+                    className="gap-2 font-bold px-5 flex-1 justify-center"
+                  >
+                    {quickCreating ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />
+                        <span>Building dossier…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="size-3.5" />
+                        <span>Create dossier</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
             ) : (
               /* State C: Brand Selected but No Dossiers Exist */
               <div className="rounded-[24px] border-2 border-dashed border-black/15 bg-white p-9 text-center space-y-3">
@@ -597,19 +725,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     No dossier found for {selectedBrand.name}
                   </h4>
                   <p className="text-[12px] text-[var(--ink-muted)] mt-1">
-                    Upload FDA prescribing labels or clinical trial protocols to initialize an approved dossier for this brand.
+                    Create a quick marketing &amp; branding dossier now so you can keep going — you can build the full regulatory dossier later from the Brand Dossiers page.
                   </p>
                 </div>
                 <Button
                   variant="primary"
                   size="sm"
                   className="gap-2 text-[12px] font-bold"
-                  onClick={() => {
-                    setSelectedDossierId("velmora-commercial");
-                  }}
+                  onClick={() => setQuickCreateOpen(true)}
                 >
                   <Plus className="size-3.5" />
-                  <span>Upload or Create for {selectedBrand.name}</span>
+                  <span>Create for {selectedBrand.name}</span>
                 </Button>
               </div>
             )}
@@ -629,7 +755,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               ) : (
                 <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
                   <ShieldCheck className="size-4 text-emerald-600" />
-                  {DOSSIERS[selectedDossierId]?.name || "Dossier Selected"} ({selectedBrand?.name})
+                  {allDossiers[selectedDossierId]?.name || "Dossier Selected"} ({selectedBrand?.name})
                 </span>
               )}
             </span>
