@@ -120,7 +120,7 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
         ) : dossier.generatedBy === "manual" ? (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "#5b21b6", background: "#f3ecfe", border: "1px solid #e4d4fb", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
             <PenLine size={11} />
-            Manually authored
+            Long-form draft
           </span>
         ) : (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--ink-4)", background: "var(--surface-subtle)", border: "1px solid var(--hair)", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
@@ -223,16 +223,19 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
           )}
         </div>
 
-        {/* ── Right: refinement chat ── */}
-        <DossierAssistantPanel
-          messages={messages}
-          thinking={thinking}
-          onSend={send}
-          onAttachFile={handleAttachFile}
-          placeholder='e.g. "fix the safety section wording"'
-          subtitle="Fix, approve & attach by prompt"
-          quickReplies={["What can you do here?"]}
-        />
+        {/* ── Right: refinement chat — sticky so it stays in view while the
+            preview column scrolls, matching every other step. ── */}
+        <div style={{ position: "sticky", top: 16 }}>
+          <DossierAssistantPanel
+            messages={messages}
+            thinking={thinking}
+            onSend={send}
+            onAttachFile={handleAttachFile}
+            placeholder='e.g. "fix the safety section wording"'
+            subtitle="Fix, approve & attach by prompt"
+            quickReplies={["What can you do here?"]}
+          />
+        </div>
       </div>
 
       <button

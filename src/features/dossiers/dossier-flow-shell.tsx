@@ -91,7 +91,9 @@ export function DossierFlowShell({ step, stepLabel, backHref, wide, chat, childr
         {chat ? (
           <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 22, alignItems: "start" }}>
             <div style={{ minWidth: 0 }}>{children}</div>
-            {chat}
+            {/* Sticky so the agent stays in view while the left column's
+                content (e.g. the long form's section list) scrolls past. */}
+            <div style={{ position: "sticky", top: 16 }}>{chat}</div>
           </div>
         ) : (
           children

@@ -39,24 +39,6 @@ export default function NewDossierUploadPage() {
   function respond(text: string): string {
     const lower = text.toLowerCase();
 
-    if (phase === "success") {
-      if (isQuestion(text)) {
-        return "The document's verified and saved. From here you can start a video or creative from it, invite reviewers for MLR sign-off, or open it to inspect the sections in full.";
-      }
-      if (/(video|reel|creative)/.test(lower)) {
-        setTimeout(() => router.push("/create"), 700);
-        return "Great choice — taking you to start a video from this dossier.";
-      }
-      if (/(view|open|inspect)/.test(lower)) {
-        setTimeout(() => finish(true), 700);
-        return "Opening the dossier now.";
-      }
-      if (/(review|invite|reviewer|approv)/.test(lower)) {
-        return "Noted — reviewers will see this dossier in their MLR queue once it's published.";
-      }
-      return "You can start a video from this dossier, invite reviewers, or view the dossier now — just say the word.";
-    }
-
     if (isQuestion(text)) {
       return "Attach your existing dossier document (PDF, DOCX, or PPTX) and I'll verify it against the regulatory anchor and cross-reference its citations — no need to rewrite anything.";
     }
@@ -102,7 +84,7 @@ export default function NewDossierUploadPage() {
         backHref={phase === "input" ? "/dossiers/new/path" : undefined}
         wide={phase === "preview"}
         chat={
-          phase === "preview"
+          phase === "preview" || phase === "success"
             ? undefined
             : (
                 <DossierAssistantPanel
@@ -120,15 +102,9 @@ export default function NewDossierUploadPage() {
                   }
                   disabled={phase === "processing"}
                   disabledNote="Verifying — hang tight…"
-                  placeholder={phase === "success" ? 'e.g. "start a video from this"' : 'Attach a file, or say "verify"'}
-                  subtitle={phase === "success" ? "What's next?" : "Fill this step by prompt"}
-                  quickReplies={
-                    phase === "success"
-                      ? ["Start a video from this", "Invite reviewers", "View dossier"]
-                      : phase === "input"
-                      ? ["What does this step do?"]
-                      : undefined
-                  }
+                  placeholder='Attach a file, or say "verify"'
+                  subtitle="Fill this step by prompt"
+                  quickReplies={phase === "input" ? ["What does this step do?"] : undefined}
                 />
               )
         }

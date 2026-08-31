@@ -79,24 +79,6 @@ export default function NewDossierCreatePage() {
   function respond(text: string): string {
     const lower = text.toLowerCase();
 
-    if (phase === "success") {
-      if (isQuestion(text)) {
-        return "The dossier's saved and ready. From here you can start a video or creative from it, invite reviewers for MLR sign-off, or open it to inspect the sections in full.";
-      }
-      if (/(video|reel|creative)/.test(lower)) {
-        setTimeout(() => router.push("/create"), 700);
-        return "Great choice — taking you to start a video from this dossier.";
-      }
-      if (/(view|open|inspect)/.test(lower)) {
-        setTimeout(() => finish(true), 700);
-        return "Opening the dossier now.";
-      }
-      if (/(review|invite|reviewer|approv)/.test(lower)) {
-        return "Noted — reviewers will see this dossier in their MLR queue once it's published.";
-      }
-      return 'You can start a video from this dossier, invite reviewers, or view the dossier now — just say the word, or use the buttons below.';
-    }
-
     if (isQuestion(text)) {
       return "Give me a short brief — what this brand is for and who it's for — and a regulatory anchor if you know it. I'll analyze approved label & literature and draft the dossier from there.";
     }
@@ -154,7 +136,7 @@ export default function NewDossierCreatePage() {
         backHref={phase === "input" ? "/dossiers/new/path" : undefined}
         wide={phase === "preview"}
         chat={
-          phase === "preview"
+          phase === "preview" || phase === "success"
             ? undefined
             : (
                 <DossierAssistantPanel
@@ -163,15 +145,9 @@ export default function NewDossierCreatePage() {
                   onSend={send}
                   disabled={phase === "processing"}
                   disabledNote="Analyzing — hang tight…"
-                  placeholder={phase === "success" ? 'e.g. "start a video from this"' : "Tell me the brief, or the anchor"}
-                  subtitle={phase === "success" ? "What's next?" : "Fill this step by prompt"}
-                  quickReplies={
-                    phase === "success"
-                      ? ["Start a video from this", "Invite reviewers", "View dossier"]
-                      : phase === "input"
-                      ? ["What does this step do?"]
-                      : undefined
-                  }
+                  placeholder="Tell me the brief, or the anchor"
+                  subtitle="Fill this step by prompt"
+                  quickReplies={phase === "input" ? ["What does this step do?"] : undefined}
                 />
               )
         }

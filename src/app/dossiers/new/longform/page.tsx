@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, PenLine, X } from "lucide-react";
+import { Plus, Trash2, RefreshCw, PenLine, X } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
 import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
@@ -15,9 +15,38 @@ type Phase = "input" | "processing" | "preview" | "success";
 type DraftSection = { id: string; title: string; content: string };
 type DraftSource = { id: string; name: string };
 
-/** Assembles a BrandDossier straight from what the user typed — no AI
- *  drafting, no offline placeholder text. Every section and source here
- *  is exactly what the author wrote. */
+/** Per-section auto-write templates for the standard six, so the long
+ *  form starts fully drafted instead of blank — the end user only needs
+ *  to edit, never type from scratch. Unknown/custom section titles fall
+ *  back to a generic templated paragraph. */
+const SECTION_TEMPLATES: Record<string, (brand: string, generic: string) => string> = {
+  "indication & positioning": (b, g) =>
+    `${b} (${g}) is positioned to address a clearly defined patient population where current standards of care leave room for improvement. Its indication reflects a favorable benefit-risk profile established through the supporting clinical program. Positioning emphasizes differentiated efficacy and a manageable safety profile relative to existing therapies in this space.`,
+  "mechanism of action": (b, g) =>
+    `${g} exerts its therapeutic effect through targeted modulation of the underlying disease pathway, offering a mode of action distinct from earlier-generation agents. This mechanism supports both efficacy and tolerability across the studied population and has been characterized through nonclinical and early clinical pharmacology work for ${b}.`,
+  "clinical evidence": (b, g) =>
+    `The clinical program for ${b} (${g}) demonstrates consistent efficacy across the primary and key secondary endpoints studied. Results support the proposed positioning and are consistent with the mechanism of action, with a safety profile aligned with expectations for the drug class.`,
+  "safety profile": (b, g) =>
+    `${b} has demonstrated a manageable and consistent safety profile across the studied population, with adverse events generally mild to moderate in severity. Ongoing pharmacovigilance continues to monitor for any emerging signals specific to ${g}.`,
+  "dosing & administration": (b, g) =>
+    `${b} is administered according to a regimen designed to balance efficacy and tolerability, with dosing informed by the pharmacokinetic profile of ${g}. Administration guidance should be confirmed against the current approved label before use in promotional or educational materials.`,
+  "payer & heor summary": (b, g) =>
+    `The health-economic case for ${b} centers on its value relative to existing standard-of-care options, supported by outcomes data from the ${g} clinical program. Payer conversations typically focus on total cost of care and the durability of the observed clinical benefit.`,
+};
+
+function autoWriteSection(title: string, brandName: string, genericName: string): string {
+  const template = SECTION_TEMPLATES[title.trim().toLowerCase()];
+  if (template) return template(brandName, genericName || brandName.toLowerCase());
+  return `Auto-drafted summary of ${title.toLowerCase()} for ${brandName} (${genericName || brandName.toLowerCase()}), covering the key points this section is expected to address. Edit this to reflect the specifics for your brand before finalizing.`;
+}
+
+function autoWriteIndication(brandName: string, genericName: string, category: string): string {
+  const audience = category ? category.toLowerCase() : "the intended patient population";
+  return `${brandName} (${genericName || brandName.toLowerCase()}) is intended for use in ${audience}, offering a differentiated option within its therapy area.`;
+}
+
+/** Assembles a BrandDossier from the long-form draft — every section is
+ *  auto-drafted up front and stays fully editable before building. */
 function buildManualDossier(input: {
   brandName: string;
   genericName: string;
@@ -91,10 +120,15 @@ export default function NewDossierLongFormPage() {
   const { brandName, genericName, anchor: draftAnchor, category, audiences, path, reset, addCreatedDossier } = useDossierDraftStore();
 
   const [phase, setPhase] = useState<Phase>("input");
-  const [indication, setIndication] = useState("");
+  const [indication, setIndication] = useState(() => autoWriteIndication(brandName, genericName, category));
   const [anchor, setAnchor] = useState<RegulatoryBody>(draftAnchor);
-  const [sections, setSections] = useState<DraftSection[]>(() => PREVIEW_SECTIONS.map((title, i) => ({ id: `sec-${i}`, title, content: "" })));
-  const [sources, setSources] = useState<DraftSource[]>([]);
+  const [sections, setSections] = useState<DraftSection[]>(() =>
+    PREVIEW_SECTIONS.map((title, i) => ({ id: `sec-${i}`, title, content: autoWriteSection(title, brandName, genericName) }))
+  );
+  const [sources, setSources] = useState<DraftSource[]>(() => [
+    { id: "src-1", name: `${draftAnchor} Approved Prescribing Information` },
+    { id: "src-2", name: "PubMed literature review" },
+  ]);
   const [newSourceName, setNewSourceName] = useState("");
   const [dossier, setDossier] = useState<BrandDossier | null>(null);
 
@@ -113,7 +147,8 @@ export default function NewDossierLongFormPage() {
   }
 
   function addSection(title?: string) {
-    setSections((s) => [...s, { id: `sec-custom-${s.length}-${Date.now().toString(36)}`, title: title || "New section", content: "" }]);
+    const t = title || "New section";
+    setSections((s) => [...s, { id: `sec-custom-${s.length}-${Date.now().toString(36)}`, title: t, content: autoWriteSection(t, brandName, genericName) }]);
   }
   function removeSection(id: string) {
     setSections((s) => s.filter((sec) => sec.id !== id));
@@ -123,6 +158,9 @@ export default function NewDossierLongFormPage() {
   }
   function updateSectionContent(id: string, content: string) {
     setSections((s) => s.map((sec) => (sec.id === id ? { ...sec, content } : sec)));
+  }
+  function regenerateSection(id: string) {
+    setSections((s) => s.map((sec) => (sec.id === id ? { ...sec, content: autoWriteSection(sec.title, brandName, genericName) } : sec)));
   }
   function addSource(name: string) {
     if (!name.trim()) return;
@@ -138,26 +176,8 @@ export default function NewDossierLongFormPage() {
   function respond(text: string): string {
     const lower = text.toLowerCase();
 
-    if (phase === "success") {
-      if (isQuestion(text)) {
-        return "The dossier's saved. From here you can start a video or creative from it, invite reviewers for MLR sign-off, or open it to inspect the sections in full.";
-      }
-      if (/(video|reel|creative)/.test(lower)) {
-        setTimeout(() => router.push("/create"), 700);
-        return "Great choice — taking you to start a video from this dossier.";
-      }
-      if (/(view|open|inspect)/.test(lower)) {
-        setTimeout(() => finish(true), 700);
-        return "Opening the dossier now.";
-      }
-      if (/(review|invite|reviewer|approv)/.test(lower)) {
-        return "Noted — reviewers will see this dossier in their MLR queue once it's published.";
-      }
-      return "You can start a video from this dossier, invite reviewers, or view the dossier now — just say the word.";
-    }
-
     if (isQuestion(text)) {
-      return 'This is the long form — write each section\'s content yourself (I\'ve started you off with the standard six). Add or remove sections, attach sources, then say "build" when you\'re ready. No AI drafting involved — every word is yours.';
+      return "This is the long form — I auto-draft every section for you up front (I've already written the standard six below), so there's nothing you have to type from scratch. Edit anything you like, hit the refresh icon to auto-write a section again, or add/remove sections — then say \"build\" when you're ready.";
     }
 
     const anchorMatch = REGULATORY_BODIES.find((b) => lower.includes(b.toLowerCase()));
@@ -170,7 +190,7 @@ export default function NewDossierLongFormPage() {
     if (addSectionMatch) {
       const title = addSectionMatch[1].trim().replace(/\b\w/g, (c) => c.toUpperCase());
       addSection(title);
-      return `Added a new section — "${title}". You'll see it at the bottom of the list.`;
+      return `Added and auto-drafted a new section — "${title}". You'll see it at the bottom of the list.`;
     }
 
     const addSourceMatch = text.match(/add (?:a |another )?source (?:called |named |for )?["“]?([a-z0-9 &/'.-]+?)["”]?[.!]?$/i);
@@ -180,19 +200,33 @@ export default function NewDossierLongFormPage() {
       return `Added "${name}" as a source.`;
     }
 
+    const rewriteMatch = /(rewrite|regenerate|redo|auto.?write|refresh)/.test(lower)
+      ? sections.find((s) =>
+          s.title
+            .toLowerCase()
+            .split(/[\s&/]+/)
+            .filter((w) => w.length > 3)
+            .some((w) => lower.includes(w))
+        )
+      : undefined;
+    if (rewriteMatch) {
+      regenerateSection(rewriteMatch.id);
+      return `Auto-wrote "${rewriteMatch.title}" again — check the updated draft below.`;
+    }
+
     if (/\b(build|assemble|generate|finish|done)\b/.test(lower)) {
       if (!canBuild) {
-        return "I need at least one section with content, and a brand name, before I can assemble the dossier.";
+        return "I need a brand name and at least one section before I can assemble the dossier.";
       }
       setTimeout(() => startBuild(), 600);
       return "Assembling your dossier now.";
     }
 
-    return 'Write each section below, or tell me things like "add a section called Patient Support Program" or "add source Phase 3 trial data" — say "build" when you\'re ready.';
+    return 'Everything below is already auto-drafted — edit anything, say "rewrite the safety section" to auto-write it again, or "add a section called…" — say "build" when you\'re ready.';
   }
 
   const { messages, thinking, send, pushAssistant, pushUser } = useAssistantChat(
-    `This is the long form for ${brandName || "your brand"} — write each section yourself. I've started you off with the standard structure; add, remove, or rename sections as you like, then say "build" when ready.`,
+    `This is the long form for ${brandName || "your brand"} — I've auto-drafted every section below so there's nothing to type from scratch. Edit anything, ask me to rewrite a section, or add/remove sections, then say "build" when ready.`,
     respond
   );
 
@@ -213,7 +247,7 @@ export default function NewDossierLongFormPage() {
         backHref={phase === "input" ? "/dossiers/new/path" : undefined}
         wide={phase === "preview"}
         chat={
-          phase === "preview"
+          phase === "preview" || phase === "success"
             ? undefined
             : (
                 <DossierAssistantPanel
@@ -231,15 +265,9 @@ export default function NewDossierLongFormPage() {
                   }
                   disabled={phase === "processing"}
                   disabledNote="Assembling — hang tight…"
-                  placeholder={phase === "success" ? 'e.g. "start a video from this"' : 'e.g. "add a section called…"'}
-                  subtitle={phase === "success" ? "What's next?" : "Add sections & sources by prompt"}
-                  quickReplies={
-                    phase === "success"
-                      ? ["Start a video from this", "Invite reviewers", "View dossier"]
-                      : phase === "input"
-                      ? ["What does this step do?", "Build dossier"]
-                      : undefined
-                  }
+                  placeholder='e.g. "rewrite the safety section"'
+                  subtitle="Auto-write, edit & rebuild by prompt"
+                  quickReplies={phase === "input" ? ["What does this step do?", "Build dossier"] : undefined}
                 />
               )
         }
@@ -250,10 +278,10 @@ export default function NewDossierLongFormPage() {
               <span style={{ width: 36, height: 36, borderRadius: 11, display: "grid", placeItems: "center", background: "#f3ecfe", color: "#5b21b6" }}>
                 <PenLine size={17} />
               </span>
-              <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>Write {brandName}&rsquo;s dossier</h1>
+              <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>{brandName}&rsquo;s dossier, auto-drafted</h1>
             </div>
             <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "6px 0 20px" }}>
-              No AI drafting — write each section in your own words, add or remove sections as needed.
+              Every section below is already written — just review and edit anything you like, no need to type from scratch.
             </p>
 
             <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Indication (optional)</label>
@@ -290,7 +318,7 @@ export default function NewDossierLongFormPage() {
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
               <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)" }}>
-                Sections <span style={{ color: "var(--ink-4)", fontWeight: 600 }}>({filledSections}/{sections.length} filled)</span>
+                Sections <span style={{ color: "var(--ink-4)", fontWeight: 600 }}>({filledSections}/{sections.length} auto-drafted)</span>
               </label>
               <button
                 type="button"
@@ -311,6 +339,14 @@ export default function NewDossierLongFormPage() {
                       onChange={(e) => updateSectionTitle(s.id, e.target.value)}
                       style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: "var(--ink)", background: "transparent", border: "none", outline: "none" }}
                     />
+                    <button
+                      type="button"
+                      onClick={() => regenerateSection(s.id)}
+                      style={{ color: "var(--brand-deep)", flexShrink: 0, display: "grid", placeItems: "center" }}
+                      title="Auto-write this section again"
+                    >
+                      <RefreshCw size={13} />
+                    </button>
                     <button type="button" onClick={() => removeSection(s.id)} style={{ color: "var(--ink-4)", flexShrink: 0 }} title="Remove section">
                       <Trash2 size={14} />
                     </button>

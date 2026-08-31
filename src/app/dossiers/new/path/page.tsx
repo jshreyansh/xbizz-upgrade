@@ -21,28 +21,28 @@ export default function NewDossierPathPage() {
   function respond(text: string): string {
     const lower = text.toLowerCase();
     if (isQuestion(text)) {
-      return "Create has AI draft everything from approved label & literature — fastest if you're starting fresh. Upload lets you bring an existing document in for verification. Long form lets you type every section yourself, start to finish. All three end up MLR-ready.";
+      return "Create has AI draft everything from approved label & literature — fastest if you're starting fresh. Upload lets you bring an existing document in for verification. Long form auto-drafts every section for you up front, section by section, so you just review and edit. All three end up MLR-ready.";
     }
     if (/(upload|existing|already have|deck|pdf|doc|file)/.test(lower)) {
       setPath("upload");
       setTimeout(() => router.push("/dossiers/new/upload"), 800);
       return "Got it — taking you to Upload so you can bring your existing document.";
     }
-    if (/(long.?form|manual|myself|type it|write it myself|from scratch by hand)/.test(lower)) {
+    if (/(long.?form|manual|section by section|from scratch by hand)/.test(lower)) {
       setPath("longform");
       setTimeout(() => router.push("/dossiers/new/longform"), 800);
-      return "Got it — taking you to the long form so you can author every section yourself.";
+      return "Got it — taking you to the long form, auto-drafted section by section for you to review.";
     }
     if (/(create|scratch|ai|draft|generate|write)/.test(lower)) {
       setPath("create");
       setTimeout(() => router.push("/dossiers/new/create"), 800);
       return "Got it — I'll draft it from approved sources. Taking you to Create.";
     }
-    return 'Let me know — should I draft this from scratch, bring in an existing document, or write it yourself in the long form? Just say "create", "upload", or "long form".';
+    return 'Let me know — should I draft this from scratch, bring in an existing document, or auto-draft it section by section in the long form? Just say "create", "upload", or "long form".';
   }
 
   const { messages, thinking, send } = useAssistantChat(
-    `Should I draft ${brandName || "this"}'s dossier from scratch, do you have an existing document to bring in, or would you rather write it yourself in the long form?`,
+    `Should I draft ${brandName || "this"}'s dossier from scratch, do you have an existing document to bring in, or would you like it auto-drafted section by section in the long form?`,
     respond
   );
 
@@ -118,7 +118,7 @@ export default function NewDossierPathPage() {
               <PenLine size={20} />
             </span>
             <b style={{ fontSize: 14.5, fontWeight: 800, color: "var(--ink)" }}>Long form</b>
-            <span style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>Write every section yourself</span>
+            <span style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.4 }}>Auto-drafted — yours to edit</span>
           </button>
         </div>
       </DossierFlowShell>
