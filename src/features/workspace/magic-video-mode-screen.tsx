@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Sparkles, Film, UserCircle2, ArrowRight, Play, Check, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
+import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 
 /* ─── Video Showcase Samples ─────────────────────────────────────────────────── */
 interface VideoSample {
@@ -106,6 +107,7 @@ export function MagicVideoModeScreen() {
   const [avatarIndex, setAvatarIndex] = useState(0);
   const [reelFeature, setReelFeature] = useState(0);
   const [avatarFeature, setAvatarFeature] = useState(0);
+  const [dossierModalOpen, setDossierModalOpen] = useState(false);
 
   const reelVideoRef = useRef<HTMLVideoElement>(null);
   const avatarVideoRef = useRef<HTMLVideoElement>(null);
@@ -158,7 +160,7 @@ export function MagicVideoModeScreen() {
     } else {
       setPresentationMode("narrated");
     }
-    setVideoSubStage("source-select");
+    setDossierModalOpen(true);
   };
 
   const curReel = REEL_SAMPLES[reelIndex];
@@ -186,7 +188,7 @@ export function MagicVideoModeScreen() {
           onClick={() => {
             setCreationMode("magic-reel");
             setPresentationMode("narrated");
-            setVideoSubStage("intake");
+            setDossierModalOpen(true);
           }}
           style={{
             display: "inline-flex",
@@ -442,6 +444,12 @@ export function MagicVideoModeScreen() {
           </div>
         </div>
       </div>
+
+      {/* Brand & Dossier Selection Pop-up Modal */}
+      <BrandDossierModal
+        open={dossierModalOpen}
+        onClose={() => setDossierModalOpen(false)}
+      />
     </div>
   );
 }
