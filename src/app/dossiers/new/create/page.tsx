@@ -2,12 +2,52 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, ArrowRight } from "lucide-react";
+import { FileText, ArrowRight, Sparkles, WifiOff } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
 import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
 import { ProcessingChecklist, SuccessScreen, buildMockDossier, REGULATORY_BODIES, PREVIEW_SECTIONS } from "@/features/dossiers/dossier-flow-pieces";
+import { mapAiResultToBrandDossier, type AiDossierResult } from "@/features/dossiers/ai-dossier-prompt";
 import type { BrandDossier, RegulatoryBody } from "@/features/dossiers/dossier-types";
+
+/** Calls the real Brand Dossier Generator; falls back to the offline mock
+ *  whenever the API isn't configured, errors, or is unreachable — so the
+ *  flow never breaks even without an ANTHROPIC_API_KEY set. */
+async function generateDossier(input: {
+  brandName: string;
+  genericName: string;
+  indication: string;
+  anchor: RegulatoryBody;
+  category: string;
+  audiences: string[];
+}): Promise<BrandDossier> {
+  try {
+    const res = await fetch("/api/generate-dossier", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rawInput: input.indication }),
+    });
+    if (!res.ok) throw new Error("generator unavailable");
+    const data: { result: AiDossierResult } = await res.json();
+    return mapAiResultToBrandDossier(data.result, {
+      brandName: input.brandName,
+      genericName: input.genericName,
+      regulatoryAnchor: input.anchor,
+      category: input.category,
+      targetAudience: input.audiences,
+    });
+  } catch {
+    return buildMockDossier({
+      brandName: input.brandName,
+      genericName: input.genericName,
+      indication: input.indication,
+      regulatoryAnchor: input.anchor,
+      sectionTitles: PREVIEW_SECTIONS,
+      category: input.category,
+      targetAudience: input.audiences,
+    });
+  }
+}
 
 type Phase = "input" | "processing" | "preview" | "success";
 
@@ -29,9 +69,17 @@ export default function NewDossierCreatePage() {
 
   if (!brandName || path !== "create") return null;
 
-  function startAnalysis() {
-    setDossier(buildMockDossier({ brandName, genericName, indication, regulatoryAnchor: anchor, sectionTitles: PREVIEW_SECTIONS, category, targetAudience: audiences }));
+  async function startAnalysis() {
     setPhase("processing");
+    // Run the real generation alongside a minimum display time so the
+    // processing checklist always finishes its animation — whether the
+    // API responds in 200ms or a few seconds.
+    const [generated] = await Promise.all([
+      generateDossier({ brandName, genericName, indication, anchor, category, audiences }),
+      new Promise((resolve) => setTimeout(resolve, 3400)),
+    ]);
+    setDossier(generated);
+    setPhase("preview");
   }
 
   function finish(andOpen: boolean) {
@@ -117,15 +165,28 @@ export default function NewDossierCreatePage() {
           <ProcessingChecklist
             title="Analyzing brand & building preview"
             items={["Reading approved label & literature", "Drafting section outline", "Grounding claims to sources", "Building preview"]}
-            onDone={() => setPhase("preview")}
+            onDone={() => {}}
           />
         )}
 
         {phase === "preview" && dossier && (
           <>
-            <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>
-              Preview — {dossier.brandName}
-            </h1>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
+              <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>
+                Preview — {dossier.brandName}
+              </h1>
+              {dossier.generatedBy === "ai" ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--brand-deep)", background: "var(--tint)", border: "1px solid var(--tint-line)", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
+                  <Sparkles size={11} />
+                  Generated with Claude
+                </span>
+              ) : (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--ink-4)", background: "var(--surface-subtle)", border: "1px solid var(--hair)", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
+                  <WifiOff size={11} />
+                  Offline preview data
+                </span>
+              )}
+            </div>
             <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "0 0 18px" }}>
               {dossier.sectionsCount} sections drafted and grounded to {dossier.sourcesCount} sources.
             </p>

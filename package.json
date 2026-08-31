@@ -15,6 +15,7 @@
     "verify:scenarios": "bun scripts/verify-demo-scenarios.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
     "@remotion/player": "4.0.516",
     "@tanstack/react-query": "^5.90.2",
     "@tiptap/core": "^3.6.6",

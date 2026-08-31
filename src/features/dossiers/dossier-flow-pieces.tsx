@@ -263,6 +263,7 @@ export function buildMockDossier(input: {
     lastUpdated: "Just now",
     status: "complete",
     isSample: false,
+    generatedBy: "mock",
     category: input.category,
     targetAudience: input.targetAudience,
     sources: [
