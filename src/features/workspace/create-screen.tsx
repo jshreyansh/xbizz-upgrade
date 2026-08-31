@@ -252,73 +252,44 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         </div>
       </header>
 
-      {/* Center stage (Expansive, Chat-first layout like Claude / ChatGPT / Lovable) */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
-        <div className="w-full max-w-[840px] space-y-6">
-          {/* ── Hero Welcome Greeting ── */}
-          <div className="text-center space-y-2 mb-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[var(--tint)] px-3.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
-              <Sparkles className="size-3 text-[var(--brand)]" />
-              <span>AI Video Creation Studio</span>
-            </div>
+      {/* Center stage (Expansive, Wide Chat Input with Minimal Text & Clean Whitespace) */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-14">
+        <div className="w-full flex flex-col items-center space-y-6">
+          {/* ── Minimal Hero Heading ── */}
+          <div className="text-center space-y-1.5 max-w-[720px]">
             <h1 className="text-[28px] sm:text-[34px] font-[850] text-[var(--ink)] tracking-tight">
               What video would you like to create for <span className="text-[var(--brand)]">{currentBrandName}</span>?
             </h1>
-            <p className="text-[13.5px] text-[var(--ink-muted)] max-w-[560px] mx-auto leading-relaxed">
-              Describe your campaign objective or audience need. SwishX generates compliant scenes grounded in approved clinical dossiers.
-            </p>
           </div>
 
-          {/* ── 3 Interactive Example Prompt Starter Cards (Grid layout) ── */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center gap-1.5">
-                <Sparkles className="size-3 text-[var(--brand)]" />
-                Example Prompts
-              </span>
-              <span className="text-[11px] text-[var(--ink-muted)] font-medium">Click any prompt to start</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {samplePrompts.map((sample) => {
-                const isSelected = brief.trim() === sample.prompt.trim();
-                return (
-                  <button
-                    key={sample.id}
-                    type="button"
-                    onClick={() => setBrief(sample.prompt)}
-                    className={cn(
-                      "group flex flex-col justify-between p-3.5 rounded-[18px] border text-left transition-all duration-200 cursor-pointer h-full shadow-2xs hover:-translate-y-0.5 hover:shadow-sm",
-                      isSelected
-                        ? "border-[var(--brand)] bg-[var(--tint)]/65 ring-2 ring-[var(--brand)]/20 shadow-xs"
-                        : "border-black/[0.08] bg-white hover:border-[var(--brand)] hover:bg-white"
-                    )}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-[var(--tint)] px-2 py-0.5 text-[10px] font-extrabold text-[var(--brand-deep)] border border-[var(--tint-line)] shrink-0">
-                          <Sparkles className="size-2.5 text-[var(--brand)]" />
-                          {sample.tag}
-                        </span>
-                        <ArrowRight className="size-3 text-[var(--brand)] opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <p className="text-[12px] font-medium text-[var(--ink-2)] line-clamp-3 group-hover:text-[var(--ink)] transition-colors leading-relaxed">
-                        {sample.prompt}
-                      </p>
-                    </div>
-                    <div className="mt-2.5 pt-2 border-t border-black/[0.04] text-[10.5px] font-bold text-[var(--brand)] flex items-center gap-1">
-                      <span>Use prompt</span>
-                      <ArrowRight className="size-2.5" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+          {/* ── 3 Compact, Single-Line Prompt Pills (Centered above input) ── */}
+          <div className="flex flex-wrap items-center justify-center gap-2 max-w-[800px]">
+            {samplePrompts.map((sample) => {
+              const isSelected = brief.trim() === sample.prompt.trim();
+              return (
+                <button
+                  key={sample.id}
+                  type="button"
+                  onClick={() => setBrief(sample.prompt)}
+                  title={sample.prompt}
+                  className={cn(
+                    "group inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-all duration-200 cursor-pointer shadow-2xs hover:-translate-y-0.5",
+                    isSelected
+                      ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20 font-bold"
+                      : "border-black/[0.08] bg-white text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] hover:bg-white"
+                  )}
+                >
+                  <Sparkles className="size-3 text-[var(--brand)] shrink-0" />
+                  <span>{sample.tag}</span>
+                  <ArrowRight className="size-2.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
+              );
+            })}
           </div>
 
-          {/* ── Main AI Chat Input Container (Claude / Lovable / ChatGPT style) ── */}
-          <div className="rounded-[24px] border border-black/[0.08] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.06)] focus-within:border-[var(--brand)] focus-within:ring-4 focus-within:ring-[var(--brand)]/10 transition-all duration-200 overflow-hidden">
-            <div className="p-5 pb-2">
+          {/* ── Prominently Wide AI Chat Input Box (Commands the Screen) ── */}
+          <div className="w-full max-w-[940px] rounded-[26px] border border-black/[0.09] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.07)] focus-within:border-[var(--brand)] focus-within:ring-4 focus-within:ring-[var(--brand)]/10 transition-all duration-200 overflow-hidden">
+            <div className="p-6 pb-3">
               <textarea
                 value={brief}
                 onChange={(e) => setBrief(e.target.value)}
@@ -327,17 +298,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 }}
                 rows={4}
                 placeholder={`Ask SwishX or describe what you want to create (e.g. "Create a concise ${currentBrandName} HCP launch video for dermatologists explaining clinical need, mechanism, and pivotal PASI 90 evidence")...`}
-                className="w-full resize-none bg-transparent text-[15px] leading-relaxed outline-none placeholder:text-[var(--ink-4)] text-[var(--ink)] font-normal"
+                className="w-full resize-none bg-transparent text-[15.5px] leading-relaxed outline-none placeholder:text-[var(--ink-4)] text-[var(--ink)] font-normal"
               />
             </div>
 
             {/* Attached local files preview if any */}
             {localFiles.length > 0 && (
-              <div className="px-5 pb-2 flex flex-wrap gap-1.5">
+              <div className="px-6 pb-2.5 flex flex-wrap gap-1.5">
                 {localFiles.map((file) => (
                   <span key={file} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf1f4] px-2.5 py-1 text-[11.5px] font-medium text-[#52616a] border border-black/[0.06]">
                     <Paperclip className="size-3" />
-                    <span className="max-w-[150px] truncate">{file}</span>
+                    <span className="max-w-[160px] truncate">{file}</span>
                     <button onClick={() => removeAttachment(file)} className="hover:text-black cursor-pointer"><X className="size-3" /></button>
                   </span>
                 ))}
@@ -345,10 +316,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             )}
 
             {/* Bottom Toolbar & Action Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/[0.05] bg-[#fafbf9]/80 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-black/[0.05] bg-[#fafbf9]/90 px-5 py-3.5">
               <div className="flex items-center gap-2">
                 {/* Engine Selector Pill */}
-                <div className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-2.5 py-1.5 text-[11.5px] font-bold text-[var(--ink-2)] shadow-2xs">
+                <div className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-3 py-1.5 text-[12px] font-bold text-[var(--ink-2)] shadow-2xs">
                   {creationMode === "magic-avatar" ? (
                     <UserCircle2 className="size-3.5 text-[var(--brand)]" />
                   ) : (
@@ -361,9 +332,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-2.5 py-1.5 text-[11.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer shadow-2xs"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-3 py-1.5 text-[12px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer shadow-2xs"
                 >
-                  <Paperclip className="size-3 text-[var(--brand)]" />
+                  <Paperclip className="size-3.5 text-[var(--brand)]" />
                   <span>Attach</span>
                 </button>
 
@@ -371,9 +342,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 <button
                   type="button"
                   onClick={() => setScenarioLibraryOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-2.5 py-1.5 text-[11.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer shadow-2xs"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-3 py-1.5 text-[12px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer shadow-2xs"
                 >
-                  <FlaskConical className="size-3 text-[var(--ink-muted)]" />
+                  <FlaskConical className="size-3.5 text-[var(--ink-muted)]" />
                   <span>Browse library</span>
                 </button>
               </div>
@@ -387,7 +358,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   type="button"
                   onClick={preparePlan}
                   disabled={!brief.trim()}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white px-4 py-2 text-[12.5px] font-extrabold shadow-sm transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white px-4 py-2 text-[13px] font-extrabold shadow-sm transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <span>Generate Plan</span>
                   <ArrowRight className="size-3.5" />
@@ -398,7 +369,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
           {/* Clarification warning */}
           {clarificationOpen && (
-            <div className="rounded-[16px] border border-[#f0cfa0] bg-[#fffbf2] p-4 text-[13px] text-[#78531d] shadow-2xs">
+            <div className="w-full max-w-[940px] rounded-[18px] border border-[#f0cfa0] bg-[#fffbf2] p-4 text-[13px] text-[#78531d] shadow-2xs">
               <div className="flex items-start gap-2.5">
                 <Info className="mt-0.5 size-4 shrink-0 text-[#b57314]" />
                 <div>
@@ -411,43 +382,31 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
           )}
 
-          {/* ── Active Context & Evidence Grounding Bar ── */}
-          <div className="rounded-[20px] border border-black/[0.06] bg-white p-4 space-y-3 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)] flex items-center gap-1.5">
-                <ShieldCheck className="size-3.5 text-emerald-600" />
-                Active Regulatory Grounding
+          {/* ── Compact Grounding Strip (Clean horizontal centered pills) ── */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1 max-w-[840px]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-1 text-[11.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
+              <ShieldCheck className="size-3.5 text-[var(--brand)]" />
+              {sourceDisplayName}
+            </span>
+            {audience && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11.5px] font-semibold text-[var(--ink-2)] border border-black/[0.08] shadow-2xs">
+                <Users className="size-3.5 text-[var(--brand)]" />
+                {audience}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Grounding Locked
+            )}
+            {topics.length > 0 && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11.5px] font-semibold text-[var(--ink-2)] border border-black/[0.08] shadow-2xs">
+                <Layers className="size-3.5 text-[var(--brand)]" />
+                {topics.length} {topics.length === 1 ? "topic" : "topics"}
               </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--tint)] px-3 py-1.5 text-[12px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
-                <ShieldCheck className="size-3 text-[var(--brand)]" />
-                {sourceDisplayName}
-              </span>
-              {audience && (
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#f4f5f3] px-3 py-1.5 text-[12px] font-semibold text-[var(--ink)] border border-black/[0.06]">
-                  <Users className="size-3 text-[var(--brand)]" />
-                  {audience}
-                </span>
-              )}
-              {topics.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#f4f5f3] px-3 py-1.5 text-[12px] font-semibold text-[var(--ink)] border border-black/[0.06]">
-                  <Layers className="size-3 text-[var(--brand)]" />
-                  {topics.length} {topics.length === 1 ? "topic" : "topics"}
-                </span>
-              )}
-              {selectedSources.map((source) => (
-                <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
-              ))}
-              {localFiles.map((file) => (
-                <AttachmentChip key={file} label={file} onRemove={() => removeAttachment(file)} />
-              ))}
-            </div>
+            )}
+            {selectedSources.map((source) => (
+              <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
+            ))}
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full ml-1">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Grounding Locked
+            </span>
           </div>
         </div>
       </main>
