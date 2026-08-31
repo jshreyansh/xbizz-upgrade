@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Building2,
   Check,
@@ -266,6 +267,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [brandSelectorOpen, setBrandSelectorOpen] = useState(false);
   const [brandSearch, setBrandSearch] = useState("");
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const selectedBrand = useMemo(() => {
     return INITIAL_BRANDS.find((b) => b.id === selectedBrandId) || INITIAL_BRANDS[0];
   }, [selectedBrandId]);
@@ -285,7 +291,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     );
   }, [brandSearch]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
   const handleStartProject = () => {
     if (!selectedDossierId) return;
@@ -310,9 +316,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-3 sm:p-6 lg:p-8 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/65 backdrop-blur-md p-3 sm:p-6 lg:p-8 animate-in fade-in duration-200"
+      style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       role="dialog"
       aria-modal="true"
     >
@@ -614,6 +621,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
