@@ -47,6 +47,39 @@ const TYPEWRITER_HEADLINES = [
   "Use the example prompts below to start creating an asset",
 ];
 
+const PRESENTERS = [
+  {
+    id: "maya",
+    name: "Dr. Maya Kapoor",
+    role: "Dermatologist · warm, reassuring",
+    image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=160&q=80",
+  },
+  {
+    id: "rohan",
+    name: "Dr. Rohan Mehta",
+    role: "Physician · clear, authoritative",
+    image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=160&q=80",
+  },
+  {
+    id: "aisha",
+    name: "Dr. Aisha Shah",
+    role: "Medical presenter · calm, precise",
+    image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=160&q=80",
+  },
+  {
+    id: "daniel",
+    name: "Dr. Daniel Lee",
+    role: "Physician · conversational",
+    image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=160&q=80",
+  },
+  {
+    id: "elena",
+    name: "Dr. Elena Rostova",
+    role: "Oncology specialist · measured",
+    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=160&q=80",
+  },
+];
+
 export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +115,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const [sourceLibraryOpen, setSourceLibraryOpen] = useState(false);
   const [scenarioLibraryOpen, setScenarioLibraryOpen] = useState(false);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
-  const [activePopover, setActivePopover] = useState<"engine" | "aspect" | "audience" | "topics" | null>(null);
+  const [activePopover, setActivePopover] = useState<"engine" | "aspect" | "audience" | "topics" | "character" | null>(null);
+  const [selectedPresenterId, setSelectedPresenterId] = useState<string>("maya");
+  const selectedPresenter = PRESENTERS.find((p) => p.id === selectedPresenterId) || PRESENTERS[0];
   const [sourceQuery, setSourceQuery] = useState("");
   const [clarificationOpen, setClarificationOpen] = useState(false);
   const [localFiles, setLocalFiles] = useState<string[]>([]);
@@ -308,6 +343,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* Sample Briefs Button moved to Top Header */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setScenarioLibraryOpen(true)}
+            className="gap-1.5 text-[12px] font-bold text-[var(--ink-2)] hover:text-[var(--brand)] hover:bg-[var(--tint)] transition cursor-pointer"
+          >
+            <FlaskConical className="size-3.5 text-[var(--brand)]" />
+            <span>Sample Briefs</span>
+          </Button>
+
           <Button variant="ghost" size="icon" aria-label="More">
             <MoreHorizontal className="size-4" />
           </Button>
@@ -392,31 +438,42 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               </div>
             )}
 
-            {/* Bottom Toolbar & Action Bar (Configurable Chips Flow: Engine, Aspect Ratio, Audience, Topics, Attach) */}
+            {/* Bottom Toolbar & Action Bar (Configurable Chips Flow: Attach, Engine, Aspect Ratio, Audience, Topics, Character) */}
             <div
-              className="relative flex flex-wrap items-center justify-between gap-2.5 border-t border-black/[0.06] bg-[#fafbf9]/95 px-4 py-3 rounded-b-[26px]"
+              className="relative flex flex-wrap items-center justify-between gap-2 border-t border-black/[0.06] bg-[#fafbf9]/95 px-3.5 py-2.5 rounded-b-[26px]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex flex-wrap items-center gap-1.5">
-                {/* 1. Engine Selector Chip */}
+                {/* 1. Attachment Icon Button (Leftmost Position, Icon Only) */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach clinical materials, briefs, or PDFs"
+                  aria-label="Attach documents"
+                  className="grid size-7 place-items-center rounded-xl border border-black/10 bg-white text-[var(--ink-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition cursor-pointer shadow-2xs shrink-0"
+                >
+                  <Paperclip className="size-3.5" />
+                </button>
+
+                {/* 2. Engine Selector Chip */}
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setActivePopover(activePopover === "engine" ? null : "engine")}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11.5px] font-bold transition cursor-pointer shadow-2xs",
+                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
                       activePopover === "engine"
                         ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
                         : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
                     )}
                   >
                     {creationMode === "magic-avatar" ? (
-                      <UserCircle2 className="size-3.5 text-[var(--brand)]" />
+                      <UserCircle2 className="size-3 text-[var(--brand)]" />
                     ) : (
-                      <Film className="size-3.5 text-[var(--brand)]" />
+                      <Film className="size-3 text-[var(--brand)]" />
                     )}
                     <span>{creationMode === "magic-avatar" ? "MagicAvatar™" : "MagicReel™"}</span>
-                    <ChevronDown className="size-3 text-[var(--ink-muted)]" />
+                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
                   </button>
 
                   {activePopover === "engine" && (
@@ -429,7 +486,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                           setActivePopover(null);
                         }}
                         className={cn(
-                          "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11.5px] transition cursor-pointer",
+                          "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11px] transition cursor-pointer",
                           creationMode === "magic-reel" ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
                         )}
                       >
@@ -447,7 +504,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                           setActivePopover(null);
                         }}
                         className={cn(
-                          "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11.5px] transition cursor-pointer",
+                          "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11px] transition cursor-pointer",
                           creationMode === "magic-avatar" ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
                         )}
                       >
@@ -461,28 +518,62 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   )}
                 </div>
 
-                {/* 2. Aspect Ratio / Output Frame Chip */}
+                {/* 3. Aspect Ratio / Output Frame Chip (Geometric Shape Icons) */}
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setActivePopover(activePopover === "aspect" ? null : "aspect")}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11.5px] font-bold transition cursor-pointer shadow-2xs",
+                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
                       activePopover === "aspect"
                         ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
                         : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
                     )}
                   >
-                    <span className="text-[11px] font-mono">📺 {format || "16:9"}</span>
-                    <ChevronDown className="size-3 text-[var(--ink-muted)]" />
+                    {format === "9:16" ? (
+                      <svg className="size-3 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none"><rect x="3.5" y="1" width="9" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>
+                    ) : format === "1:1" ? (
+                      <svg className="size-3 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>
+                    ) : (
+                      <svg className="size-3 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>
+                    )}
+                    <span className="font-mono">{format || "16:9"}</span>
+                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
                   </button>
 
                   {activePopover === "aspect" && (
                     <div className="absolute bottom-full left-0 mb-2 z-40 w-52 rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                       {[
-                        { id: "16:9", label: "16:9 Landscape", desc: "Desktop, Keynote & Decks" },
-                        { id: "9:16", label: "9:16 Portrait", desc: "Mobile & WhatsApp Reels" },
-                        { id: "1:1", label: "1:1 Square", desc: "Feed & Web Portals" },
+                        {
+                          id: "16:9",
+                          label: "16:9 Landscape",
+                          desc: "Desktop, Keynote & Decks",
+                          icon: (
+                            <svg className="size-3.5 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none">
+                              <rect x="1" y="3.5" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          id: "9:16",
+                          label: "9:16 Portrait",
+                          desc: "Mobile & WhatsApp Reels",
+                          icon: (
+                            <svg className="size-3.5 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none">
+                              <rect x="3.5" y="1" width="9" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          id: "1:1",
+                          label: "1:1 Square",
+                          desc: "Feed & Web Portals",
+                          icon: (
+                            <svg className="size-3.5 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none">
+                              <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+                            </svg>
+                          ),
+                        },
                       ].map((item) => (
                         <button
                           key={item.id}
@@ -496,9 +587,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                             (format || "16:9") === item.id ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
                           )}
                         >
-                          <div>
-                            <div className="text-[11.5px]">{item.label}</div>
-                            <div className="text-[9.5px] text-[var(--ink-muted)] font-normal">{item.desc}</div>
+                          <div className="flex items-center gap-2">
+                            {item.icon}
+                            <div>
+                              <div className="text-[11px] font-bold">{item.label}</div>
+                              <div className="text-[9px] text-[var(--ink-muted)] font-normal">{item.desc}</div>
+                            </div>
                           </div>
                           {(format || "16:9") === item.id && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
                         </button>
@@ -507,30 +601,31 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   )}
                 </div>
 
-                {/* 3. Target Audience Chip */}
+                {/* 4. Target Audience Chip (Default: "Audience") */}
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setActivePopover(activePopover === "audience" ? null : "audience")}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11.5px] font-bold transition cursor-pointer shadow-2xs",
+                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
                       activePopover === "audience"
                         ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
                         : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
                     )}
                   >
                     <Users className="size-3 text-[var(--brand)]" />
-                    <span>{audience || "HCP"}</span>
-                    <ChevronDown className="size-3 text-[var(--ink-muted)]" />
+                    <span>{audience ? audience : "Audience"}</span>
+                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
                   </button>
 
                   {activePopover === "audience" && (
-                    <div className="absolute bottom-full left-0 mb-2 z-40 w-60 rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                    <div className="absolute bottom-full left-0 mb-2 z-40 w-56 rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
                       {[
                         { id: "HCP", label: "HCP (Physicians & Specialists)" },
-                        { id: "Patients", label: "Patients & Caregivers" },
-                        { id: "Payers", label: "Payers & Formulary Committees" },
-                        { id: "Field Force", label: "Field Sales & Medical Liaisons" },
+                        { id: "Patient", label: "Patients & Caregivers" },
+                        { id: "Payer", label: "Payers & Formulary Committees" },
+                        { id: "Field team", label: "Field Sales & Medical Liaisons" },
+                        { id: "Consumer", label: "General Consumer / DTC" },
                       ].map((item) => (
                         <button
                           key={item.id}
@@ -540,7 +635,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                             setActivePopover(null);
                           }}
                           className={cn(
-                            "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11.5px] transition cursor-pointer",
+                            "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11px] transition cursor-pointer",
                             audience === item.id ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
                           )}
                         >
@@ -552,27 +647,27 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   )}
                 </div>
 
-                {/* 4. Focus Topics Multi-select Chip */}
+                {/* 5. Topics Multi-select Chip (Label: "Topics") */}
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setActivePopover(activePopover === "topics" ? null : "topics")}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-[11.5px] font-bold transition cursor-pointer shadow-2xs",
+                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
                       activePopover === "topics"
                         ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
                         : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
                     )}
                   >
                     <Layers className="size-3 text-[var(--brand)]" />
-                    <span>{topics.length > 0 ? `${topics.length} topics` : "Focus Topics"}</span>
-                    <ChevronDown className="size-3 text-[var(--ink-muted)]" />
+                    <span>{topics.length > 0 ? `Topics (${topics.length})` : "Topics"}</span>
+                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
                   </button>
 
                   {activePopover === "topics" && (
                     <div className="absolute bottom-full left-0 mb-2 z-40 w-64 rounded-2xl border border-black/10 bg-white p-2 shadow-xl space-y-1 animate-in fade-in zoom-in-95 duration-150">
                       <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
-                        Select Focus Topics
+                        Select Topics
                       </div>
                       {[
                         "Product Introduction",
@@ -594,7 +689,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                             )}
                           >
                             <span>{topic}</span>
-                            <div className={cn("size-4 rounded-md border flex items-center justify-center", isSelected ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20")}>
+                            <div className={cn("size-3.5 rounded-md border flex items-center justify-center", isSelected ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20")}>
                               {isSelected && <Check className="size-2.5 stroke-[3]" />}
                             </div>
                           </button>
@@ -604,30 +699,102 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   )}
                 </div>
 
-                {/* 5. Attach Material */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-2.5 py-1.5 text-[11.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer shadow-2xs"
-                >
-                  <Paperclip className="size-3.5 text-[var(--brand)]" />
-                  <span>Attach</span>
-                </button>
+                {/* 6. Presenter / Character Selector Chip (Avatar Library & Top Doctors) */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setActivePopover(activePopover === "character" ? null : "character")}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
+                      activePopover === "character"
+                        ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
+                        : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
+                    )}
+                  >
+                    {selectedPresenter ? (
+                      <img src={selectedPresenter.image} alt={selectedPresenter.name} className="size-3.5 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <UserCircle2 className="size-3 text-[var(--brand)]" />
+                    )}
+                    <span>{selectedPresenter ? selectedPresenter.name.split(" ")[1] || selectedPresenter.name : "Character"}</span>
+                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
+                  </button>
 
-                {/* 6. Sample Briefs */}
-                <button
-                  type="button"
-                  onClick={() => setScenarioLibraryOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-black/10 bg-white px-2.5 py-1.5 text-[11.5px] font-semibold text-[var(--ink-2)] hover:border-[var(--brand)] hover:text-[var(--brand)] transition cursor-pointer shadow-2xs"
-                >
-                  <FlaskConical className="size-3.5 text-[var(--ink-muted)]" />
-                  <span>Sample briefs</span>
-                </button>
+                  {activePopover === "character" && (
+                    <div className="absolute bottom-full left-0 mb-2 z-40 w-[330px] sm:w-[370px] rounded-2xl border border-black/10 bg-white p-3 shadow-xl space-y-2.5 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                        Select AI Presenter Avatar
+                      </div>
+
+                      {/* Featured Doctors matching Avatar Selector */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {PRESENTERS.slice(0, 2).map((item) => {
+                          const isSelected = selectedPresenterId === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedPresenterId(item.id);
+                                setVoice(`${item.name.split(" ")[1]} · clear and measured`);
+                                setActivePopover(null);
+                              }}
+                              className={cn(
+                                "flex flex-col p-2 rounded-xl border text-left transition cursor-pointer relative",
+                                isSelected
+                                  ? "border-[var(--brand)] bg-[var(--tint)]/50 ring-2 ring-[var(--brand)]/20"
+                                  : "border-black/10 bg-[#fafbf9] hover:bg-white hover:border-black/20"
+                              )}
+                            >
+                              <div className="flex items-center justify-between w-full mb-1">
+                                <img src={item.image} alt={item.name} className="size-7 rounded-full object-cover border border-black/10 shadow-2xs" />
+                                {isSelected && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                              </div>
+                              <div className="text-[10.5px] font-bold text-[var(--ink)] leading-tight">{item.name}</div>
+                              <div className="text-[9px] text-[var(--ink-muted)] leading-tight mt-0.5 truncate">{item.role}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Avatar Library Options */}
+                      <div className="pt-2 border-t border-black/5 space-y-1">
+                        <div className="text-[10px] font-bold text-[var(--ink-muted)] px-1">Avatar Library</div>
+                        <div className="grid grid-cols-1 gap-1 max-h-[110px] overflow-y-auto">
+                          {PRESENTERS.slice(2).map((item) => {
+                            const isSelected = selectedPresenterId === item.id;
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedPresenterId(item.id);
+                                  setVoice(`${item.name.split(" ")[1]} · clear and measured`);
+                                  setActivePopover(null);
+                                }}
+                                className={cn(
+                                  "flex items-center justify-between p-1.5 rounded-lg text-left transition cursor-pointer",
+                                  isSelected ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
+                                )}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <img src={item.image} alt={item.name} className="size-5 rounded-full object-cover shrink-0" />
+                                  <span className="text-[10.5px] truncate">{item.name} · {item.role}</span>
+                                </div>
+                                {isSelected && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Far Right Bottom Action: Send Arrow CTA */}
               <div className="flex items-center gap-2.5 ml-auto shrink-0 pl-2">
-                <span className="hidden sm:inline text-[10.5px] font-mono text-[var(--ink-muted)]">
+                <span className="hidden sm:inline text-[10px] font-mono text-[var(--ink-muted)]">
                   {brief.length > 0 ? `${brief.length} chars · ⌘↵` : "⌘↵ to send"}
                 </span>
 
@@ -637,9 +804,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   disabled={!brief.trim()}
                   title="Generate Plan (⌘↵)"
                   aria-label="Generate Plan"
-                  className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:shadow-md hover:scale-105"
+                  className="grid size-8 place-items-center rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:shadow-md hover:scale-105"
                 >
-                  <ArrowUp className="size-4.5 stroke-[2.8]" />
+                  <ArrowUp className="size-4 stroke-[2.8]" />
                 </button>
               </div>
             </div>
