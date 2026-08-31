@@ -8,6 +8,7 @@ import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore, applyProductSelection } from "@/features/dossiers/dossier-draft-store";
 import { BRAND_REGISTRY } from "@/features/dossiers/mock-dossiers";
 import { DOSSIER_CATEGORIES, TARGET_AUDIENCES, OTHER_PRODUCT_ID } from "@/features/dossiers/dossier-flow-pieces";
+import { PERSONA } from "@/features/workspace/mock-personas";
 
 export default function NewDossierProductPage() {
   const router = useRouter();
@@ -18,10 +19,16 @@ export default function NewDossierProductPage() {
   const category = useDossierDraftStore((s) => s.category);
   const audiences = useDossierDraftStore((s) => s.audiences);
   const supportingFiles = useDossierDraftStore((s) => s.supportingFiles);
+  const createdDossiers = useDossierDraftStore((s) => s.createdDossiers);
   const setOtherBrandName = useDossierDraftStore((s) => s.setOtherBrandName);
   const setCategory = useDossierDraftStore((s) => s.setCategory);
   const toggleAudience = useDossierDraftStore((s) => s.toggleAudience);
   const addSupportingFiles = useDossierDraftStore((s) => s.addSupportingFiles);
+
+  // First time this session that this user has landed on the creation
+  // flow — a lightweight, demo-appropriate proxy for "first-time,
+  // post-login" since there's no backend to check real account history.
+  const isFirstTime = createdDossiers.length === 0;
 
   const isOtherProduct = productId === OTHER_PRODUCT_ID;
   const productChosen = isOtherProduct ? brandName.trim().length > 0 : productId.length > 0;
@@ -39,13 +46,37 @@ export default function NewDossierProductPage() {
   return (
     <AppShell pageTitle="New Brand Dossier">
       <DossierFlowShell step={1} stepLabel="Product" backHref="/dossiers">
+        {isFirstTime && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 14px",
+              borderRadius: "var(--r)",
+              background: "var(--tint-2)",
+              border: "1px solid var(--tint-line)",
+              marginBottom: 18,
+            }}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>👋</span>
+            <span style={{ fontSize: 13, fontWeight: 650, color: "var(--brand-deep)" }}>
+              Welcome, {PERSONA.firstName} — let&rsquo;s build your first brand dossier.
+            </span>
+          </div>
+        )}
+
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
           <span style={{ width: 36, height: 36, borderRadius: 11, display: "grid", placeItems: "center", background: "var(--tint)", color: "var(--brand-deep)" }}>
             <Sparkles size={17} />
           </span>
           <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>New brand dossier</h1>
         </div>
-        <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "6px 0 22px" }}>Which product is this for?</p>
+        <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "6px 0 22px" }}>
+          {isFirstTime
+            ? "This becomes the single source of truth every studio reads from — let's set it up together."
+            : "Which product is this for?"}
+        </p>
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Product</label>
         <div style={{ position: "relative", marginBottom: isOtherProduct ? 16 : 22 }}>
