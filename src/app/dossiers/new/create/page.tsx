@@ -8,6 +8,7 @@ import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
 import { ProcessingChecklist, SuccessScreen, buildMockDossier, REGULATORY_BODIES, PREVIEW_SECTIONS } from "@/features/dossiers/dossier-flow-pieces";
 import { DossierPreviewChat } from "@/features/dossiers/dossier-preview-chat";
+import { useAssistantChat, DossierAssistantPanel, isQuestion } from "@/features/dossiers/dossier-assistant-chat";
 import { mapAiResultToBrandDossier, type AiDossierResult } from "@/features/dossiers/ai-dossier-prompt";
 import type { BrandDossier, RegulatoryBody } from "@/features/dossiers/dossier-types";
 
@@ -68,10 +69,72 @@ export default function NewDossierCreatePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function finish(andOpen: boolean) {
+    if (dossier) addCreatedDossier(dossier);
+    const id = dossier?.id;
+    reset();
+    router.push(andOpen && id ? `/dossiers?open=${id}` : "/dossiers");
+  }
+
+  function respond(text: string): string {
+    const lower = text.toLowerCase();
+
+    if (phase === "success") {
+      if (isQuestion(text)) {
+        return "The dossier's saved and ready. From here you can start a video or creative from it, invite reviewers for MLR sign-off, or open it to inspect the sections in full.";
+      }
+      if (/(video|reel|creative)/.test(lower)) {
+        setTimeout(() => router.push("/create"), 700);
+        return "Great choice — taking you to start a video from this dossier.";
+      }
+      if (/(view|open|inspect)/.test(lower)) {
+        setTimeout(() => finish(true), 700);
+        return "Opening the dossier now.";
+      }
+      if (/(review|invite|reviewer|approv)/.test(lower)) {
+        return "Noted — reviewers will see this dossier in their MLR queue once it's published.";
+      }
+      return 'You can start a video from this dossier, invite reviewers, or view the dossier now — just say the word, or use the buttons below.';
+    }
+
+    if (isQuestion(text)) {
+      return "Give me a short brief — what this brand is for and who it's for — and a regulatory anchor if you know it. I'll analyze approved label & literature and draft the dossier from there.";
+    }
+
+    const anchorMatch = REGULATORY_BODIES.find((b) => lower.includes(b.toLowerCase()));
+    const notes: string[] = [];
+    if (anchorMatch) {
+      setAnchor(anchorMatch);
+      notes.push(`the regulatory anchor to ${anchorMatch}`);
+    }
+    const looksLikeBrief = text.trim().length > 20 && !/^(go|start|analy[sz]e)\b/i.test(text.trim());
+    if (looksLikeBrief) {
+      setIndication(text);
+      notes.push("the brief");
+    }
+    if (/\b(go|start|analy[sz]e)\b/i.test(lower)) {
+      if (indication.trim() || looksLikeBrief) {
+        setTimeout(() => startAnalysis(), 700);
+        return "On it — analyzing now.";
+      }
+      return "I need a brief first — tell me what this brand is for and who it's for.";
+    }
+    if (notes.length) return `Done — set ${notes.join(" and ")}. Say "go" whenever you're ready to analyze.`;
+    return 'Tell me the brief (what it\'s for, who it\'s for) and the regulatory anchor — or just say "go" once the form is filled in.';
+  }
+
+  const { messages, thinking, send, pushAssistant } = useAssistantChat(
+    `Tell me the brief for ${brandName}, and the regulatory anchor if you know it — I'll fill this step in for you.`,
+    respond
+  );
+
   if (!brandName || path !== "create") return null;
+
+  const canAnalyze = indication.trim().length > 0;
 
   async function startAnalysis() {
     setPhase("processing");
+    pushAssistant("Analyzing your brief now — I'll let you know the moment the draft's ready.");
     // Run the real generation alongside a minimum display time so the
     // processing checklist always finishes its animation — whether the
     // API responds in 200ms or a few seconds.
@@ -83,18 +146,36 @@ export default function NewDossierCreatePage() {
     setPhase("preview");
   }
 
-  function finish(andOpen: boolean) {
-    if (dossier) addCreatedDossier(dossier);
-    const id = dossier?.id;
-    reset();
-    router.push(andOpen && id ? `/dossiers?open=${id}` : "/dossiers");
-  }
-
-  const canAnalyze = indication.trim().length > 0;
-
   return (
     <AppShell pageTitle="New Brand Dossier">
-      <DossierFlowShell step={3} stepLabel="Create" backHref={phase === "input" ? "/dossiers/new/path" : undefined} wide={phase === "preview"}>
+      <DossierFlowShell
+        step={3}
+        stepLabel="Create"
+        backHref={phase === "input" ? "/dossiers/new/path" : undefined}
+        wide={phase === "preview"}
+        chat={
+          phase === "preview"
+            ? undefined
+            : (
+                <DossierAssistantPanel
+                  messages={messages}
+                  thinking={thinking}
+                  onSend={send}
+                  disabled={phase === "processing"}
+                  disabledNote="Analyzing — hang tight…"
+                  placeholder={phase === "success" ? 'e.g. "start a video from this"' : "Tell me the brief, or the anchor"}
+                  subtitle={phase === "success" ? "What's next?" : "Fill this step by prompt"}
+                  quickReplies={
+                    phase === "success"
+                      ? ["Start a video from this", "Invite reviewers", "View dossier"]
+                      : phase === "input"
+                      ? ["What does this step do?"]
+                      : undefined
+                  }
+                />
+              )
+        }
+      >
         {phase === "input" && (
           <>
             <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Create {brandName}&rsquo;s dossier</h1>

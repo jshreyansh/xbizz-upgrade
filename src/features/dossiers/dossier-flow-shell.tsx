@@ -13,10 +13,14 @@ interface DossierFlowShellProps {
   backHref?: string;
   /** Widens the card for two-column layouts (e.g. preview + refinement chat). */
   wide?: boolean;
+  /** Assistant chat panel — when provided, renders as a right-hand column
+   *  next to `children` and forces the wide layout, so every step can be
+   *  driven by prompt alongside its manual form controls. */
+  chat?: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function DossierFlowShell({ step, stepLabel, backHref, wide, children }: DossierFlowShellProps) {
+export function DossierFlowShell({ step, stepLabel, backHref, wide, chat, children }: DossierFlowShellProps) {
   const router = useRouter();
   const reset = useDossierDraftStore((s) => s.reset);
 
@@ -31,9 +35,10 @@ export function DossierFlowShell({ step, stepLabel, backHref, wide, children }: 
   }
 
   const progress = (step / TOTAL_STEPS) * 100;
+  const isWide = wide || !!chat;
 
   return (
-    <div className="page-enter" style={{ maxWidth: wide ? 1080 : 640, margin: "0 auto", paddingBottom: 48, transition: "max-width .3s var(--e)" }}>
+    <div className="page-enter" style={{ maxWidth: isWide ? 1080 : 640, margin: "0 auto", paddingBottom: 48, transition: "max-width .3s var(--e)" }}>
       {/* Header row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
         <button
@@ -83,7 +88,14 @@ export function DossierFlowShell({ step, stepLabel, backHref, wide, children }: 
           padding: "32px 32px 30px",
         }}
       >
-        {children}
+        {chat ? (
+          <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 22, alignItems: "start" }}>
+            <div style={{ minWidth: 0 }}>{children}</div>
+            {chat}
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </div>
   );

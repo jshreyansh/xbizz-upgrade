@@ -8,6 +8,7 @@ import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore, applyProductSelection } from "@/features/dossiers/dossier-draft-store";
 import { BRAND_REGISTRY } from "@/features/dossiers/mock-dossiers";
 import { DOSSIER_CATEGORIES, TARGET_AUDIENCES, OTHER_PRODUCT_ID } from "@/features/dossiers/dossier-flow-pieces";
+import { useAssistantChat, DossierAssistantPanel, isQuestion } from "@/features/dossiers/dossier-assistant-chat";
 import { PERSONA } from "@/features/workspace/mock-personas";
 
 export default function NewDossierProductPage() {
@@ -16,11 +17,13 @@ export default function NewDossierProductPage() {
 
   const productId = useDossierDraftStore((s) => s.productId);
   const brandName = useDossierDraftStore((s) => s.brandName);
+  const genericName = useDossierDraftStore((s) => s.genericName);
   const category = useDossierDraftStore((s) => s.category);
   const audiences = useDossierDraftStore((s) => s.audiences);
   const supportingFiles = useDossierDraftStore((s) => s.supportingFiles);
   const createdDossiers = useDossierDraftStore((s) => s.createdDossiers);
   const setOtherBrandName = useDossierDraftStore((s) => s.setOtherBrandName);
+  const setOtherGenericName = useDossierDraftStore((s) => s.setOtherGenericName);
   const setCategory = useDossierDraftStore((s) => s.setCategory);
   const toggleAudience = useDossierDraftStore((s) => s.toggleAudience);
   const addSupportingFiles = useDossierDraftStore((s) => s.addSupportingFiles);
@@ -43,9 +46,69 @@ export default function NewDossierProductPage() {
     if (files.length) addSupportingFiles(files);
   }
 
+  function respond(text: string): string {
+    const lower = text.toLowerCase();
+
+    if (isQuestion(text)) {
+      return "This step sets up the dossier's identity: which product it's for, its category (Patient/HCP/Payer/Commercial related), and who reads it. Tell me those three things, or fill them in below — either way I'll keep them in sync.";
+    }
+
+    const notes: string[] = [];
+
+    const brandMatch = BRAND_REGISTRY.find((b) => lower.includes(b.name.toLowerCase()));
+    if (brandMatch) {
+      handleProductChange(brandMatch.id);
+      notes.push(`the product to ${brandMatch.name}`);
+    }
+
+    const categoryMatch = DOSSIER_CATEGORIES.find((c) => lower.includes(c.toLowerCase()));
+    if (categoryMatch) {
+      setCategory(categoryMatch);
+      notes.push(`the category to "${categoryMatch}"`);
+    }
+
+    const audienceMatches = TARGET_AUDIENCES.filter((a) => lower.includes(a.toLowerCase()) && !audiences.includes(a));
+    if (audienceMatches.length) {
+      audienceMatches.forEach((a) => toggleAudience(a));
+      notes.push(`the audience to ${audienceMatches.join(", ")}`);
+    }
+
+    if (/(next|continue|go|proceed)/.test(lower) && (productChosen || brandMatch)) {
+      setTimeout(() => router.push("/dossiers/new/path"), 700);
+      return notes.length
+        ? `Done — set ${notes.join(" and ")}. Moving to the next step now.`
+        : "Moving to the next step now.";
+    }
+
+    if (notes.length) return `Done — set ${notes.join(" and ")}. Say "next" whenever you're ready to continue.`;
+    return 'Tell me the product, dossier category, or audience — e.g. "Renalis, patient related, for HCP and payer" — and I\'ll set it for you. You can also just fill in the fields directly.';
+  }
+
+  const { messages, thinking, send } = useAssistantChat(
+    isFirstTime
+      ? `Welcome, ${PERSONA.firstName} — tell me the product and I'll set up the rest, or use the fields below.`
+      : "Tell me the product, category, or audience and I'll fill this step in for you.",
+    respond
+  );
+
   return (
     <AppShell pageTitle="New Brand Dossier">
-      <DossierFlowShell step={1} stepLabel="Product" backHref="/dossiers">
+      <DossierFlowShell
+        step={1}
+        stepLabel="Product"
+        backHref="/dossiers"
+        chat={
+          <DossierAssistantPanel
+            messages={messages}
+            thinking={thinking}
+            onSend={send}
+            onAttachFile={(file) => addSupportingFiles([file])}
+            placeholder='e.g. "Renalis, patient related, for HCP"'
+            subtitle="Set up this step by prompt"
+            quickReplies={productChosen ? ["Next", "What does this step do?"] : ["What does this step do?"]}
+          />
+        }
+      >
         {isFirstTime && (
           <div
             style={{
@@ -110,15 +173,26 @@ export default function NewDossierProductPage() {
         </div>
 
         {isOtherProduct && (
-          <>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Brand name</label>
-            <input
-              value={brandName}
-              onChange={(e) => setOtherBrandName(e.target.value)}
-              placeholder="e.g. Velmora"
-              style={{ width: "100%", padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14, marginBottom: 22, color: "var(--ink)" }}
-            />
-          </>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 22 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Brand name</label>
+              <input
+                value={brandName}
+                onChange={(e) => setOtherBrandName(e.target.value)}
+                placeholder="e.g. Velmora"
+                style={{ width: "100%", padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14, color: "var(--ink)" }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Generic / molecule name</label>
+              <input
+                value={genericName}
+                onChange={(e) => setOtherGenericName(e.target.value)}
+                placeholder="e.g. velmoxaban mesylate"
+                style={{ width: "100%", padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14, color: "var(--ink)" }}
+              />
+            </div>
+          </div>
         )}
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier category</label>

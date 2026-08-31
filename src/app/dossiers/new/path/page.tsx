@@ -6,6 +6,7 @@ import { Sparkles, Upload } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
 import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
+import { useAssistantChat, DossierAssistantPanel, isQuestion } from "@/features/dossiers/dossier-assistant-chat";
 
 export default function NewDossierPathPage() {
   const router = useRouter();
@@ -17,11 +18,48 @@ export default function NewDossierPathPage() {
     if (!brandName) router.replace("/dossiers/new");
   }, [brandName, router]);
 
+  function respond(text: string): string {
+    const lower = text.toLowerCase();
+    if (isQuestion(text)) {
+      return "Create has AI draft everything from approved label & literature — fastest if you're starting fresh. Upload lets you bring an existing document in for verification instead. Either way, it ends up MLR-ready.";
+    }
+    if (/(upload|existing|already have|deck|pdf|doc|file)/.test(lower)) {
+      setPath("upload");
+      setTimeout(() => router.push("/dossiers/new/upload"), 800);
+      return "Got it — taking you to Upload so you can bring your existing document.";
+    }
+    if (/(create|scratch|ai|draft|generate|write)/.test(lower)) {
+      setPath("create");
+      setTimeout(() => router.push("/dossiers/new/create"), 800);
+      return "Got it — I'll draft it from approved sources. Taking you to Create.";
+    }
+    return 'Let me know — should I draft this from scratch, or do you already have a document to upload? Just say "create" or "upload".';
+  }
+
+  const { messages, thinking, send } = useAssistantChat(
+    `Should I draft ${brandName || "this"}'s dossier from scratch, or do you have an existing document to bring in?`,
+    respond
+  );
+
   if (!brandName) return null;
 
   return (
     <AppShell pageTitle="New Brand Dossier">
-      <DossierFlowShell step={2} stepLabel="Choose a path" backHref="/dossiers/new">
+      <DossierFlowShell
+        step={2}
+        stepLabel="Choose a path"
+        backHref="/dossiers/new"
+        chat={
+          <DossierAssistantPanel
+            messages={messages}
+            thinking={thinking}
+            onSend={send}
+            placeholder='"create" or "upload"'
+            subtitle="Pick a path by prompt"
+            quickReplies={["Create from scratch", "Upload a document", "What's the difference?"]}
+          />
+        }
+      >
         <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)", textAlign: "center" }}>
           How do you want to build {brandName}&rsquo;s dossier?
         </h1>

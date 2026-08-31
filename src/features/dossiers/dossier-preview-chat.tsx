@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Sparkles, WifiOff, Paperclip, Send, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
-import { LogoMark } from "@/components/ui/logo-mark";
+import { Sparkles, WifiOff, ArrowRight, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { useAssistantChat, DossierAssistantPanel, isQuestion } from "@/features/dossiers/dossier-assistant-chat";
 import type { BrandDossier, ApprovalStatus } from "@/features/dossiers/dossier-types";
 
 /* ─── Chat-based refinement panel, shown alongside the generated preview on
@@ -12,8 +11,6 @@ import type { BrandDossier, ApprovalStatus } from "@/features/dossiers/dossier-t
    whether or not the real AI generator is configured; every accepted
    change is applied straight to the dossier draft so the left-hand
    preview updates live. ───────────────────────────────────────────────── */
-
-type ChatMessage = { id: string; role: "user" | "assistant"; text: string };
 
 const APPROVAL_STYLES: Record<ApprovalStatus, { bg: string; fg: string; label: string }> = {
   pending: { bg: "var(--surface-subtle)", fg: "var(--ink-4)", label: "Pending" },
@@ -30,28 +27,6 @@ interface DossierPreviewChatProps {
 }
 
 export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = "Looks good — finish" }: DossierPreviewChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "m0",
-      role: "assistant",
-      text: `Here's the first draft of ${dossier.brandName}'s dossier. Tell me what to fix, flag for approval, or attach a supporting document — I'll update the preview on the left live.`,
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [thinking, setThinking] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const counterRef = useRef(0);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, thinking]);
-
-  function pushMessage(role: ChatMessage["role"], text: string) {
-    counterRef.current += 1;
-    setMessages((m) => [...m, { id: `m${counterRef.current}`, role, text }]);
-  }
-
   function findSectionMatch(lower: string) {
     return dossier.sections.find((s) =>
       s.title
@@ -68,75 +43,67 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
     );
   }
 
-  function handleSend() {
-    const text = input.trim();
-    if (!text || thinking) return;
-    pushMessage("user", text);
-    setInput("");
-    setThinking(true);
+  function respond(text: string): string {
+    const lower = text.toLowerCase();
 
-    setTimeout(() => {
-      const lower = text.toLowerCase();
-      let reply: string;
+    if (isQuestion(text)) {
+      return "I can fix a section's wording, flag a role for approval, or attach a supporting document as a cited source — just tell me what to do, or attach a file with the 📎 icon. Everything updates in the preview on the left instantly.";
+    }
 
-      if (/(fix|change|update|edit|revise|rewrite|correct)/.test(lower)) {
-        const section = findSectionMatch(lower);
-        if (section) {
-          onChange((d) => ({
-            ...d,
-            claimsCited: d.claimsCited + 1,
-            sections: d.sections.map((s) =>
-              s.id === section.id
-                ? { ...s, content: `${s.content} Revised per your note — "${text}".`, claimsCount: s.claimsCount + 1, edited: true }
-                : s
-            ),
-          }));
-          reply = `Updated "${section.title}" — you'll see it marked as edited in the preview.`;
-        } else {
-          onChange((d) => ({ ...d, changeLog: [...(d.changeLog ?? []), text] }));
-          reply = "Got it — I've logged that as an open item for the medical writer to address.";
-        }
-      } else if (/(approv|pending review|reviewer|sign.?off)/.test(lower)) {
-        const approval = findApprovalMatch(lower) ?? dossier.approvals.find((a) => a.status === "pending");
-        if (approval) {
-          onChange((d) => ({
-            ...d,
-            approvals: d.approvals.map((a) => (a.role === approval.role ? { ...a, status: "reviewing" } : a)),
-          }));
-          reply = `Marked as pending review — ${approval.role} will see this in their approval queue below.`;
-        } else {
-          reply = "All approvals are already cleared for this dossier.";
-        }
-      } else if (/(upload|attach|document|file|support)/.test(lower)) {
-        reply = "Sure — click the 📎 icon below and I'll attach it as a cited source right away.";
-      } else {
-        onChange((d) => ({ ...d, changeLog: [...(d.changeLog ?? []), text] }));
-        reply = "Noted — I've logged that for the review team.";
+    if (/(fix|change|update|edit|revise|rewrite|correct)/.test(lower)) {
+      const section = findSectionMatch(lower);
+      if (section) {
+        onChange((d) => ({
+          ...d,
+          claimsCited: d.claimsCited + 1,
+          sections: d.sections.map((s) =>
+            s.id === section.id
+              ? { ...s, content: `${s.content} Revised per your note — "${text}".`, claimsCount: s.claimsCount + 1, edited: true }
+              : s
+          ),
+        }));
+        return `Updated "${section.title}" — you'll see it marked as edited in the preview.`;
       }
+      onChange((d) => ({ ...d, changeLog: [...(d.changeLog ?? []), text] }));
+      return "Got it — I've logged that as an open item for the medical writer to address.";
+    }
 
-      pushMessage("assistant", reply);
-      setThinking(false);
-    }, 650 + Math.random() * 450);
+    if (/(approv|pending review|reviewer|sign.?off)/.test(lower)) {
+      const approval = findApprovalMatch(lower) ?? dossier.approvals.find((a) => a.status === "pending");
+      if (approval) {
+        onChange((d) => ({
+          ...d,
+          approvals: d.approvals.map((a) => (a.role === approval.role ? { ...a, status: "reviewing" } : a)),
+        }));
+        return `Marked as pending review — ${approval.role} will see this in their approval queue below.`;
+      }
+      return "All approvals are already cleared for this dossier.";
+    }
+
+    if (/(upload|attach|document|file|support)/.test(lower)) {
+      return "Sure — click the 📎 icon below and I'll attach it as a cited source right away.";
+    }
+
+    onChange((d) => ({ ...d, changeLog: [...(d.changeLog ?? []), text] }));
+    return "Noted — I've logged that for the review team.";
   }
 
-  function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    pushMessage("user", `📎 Attached ${file.name}`);
-    setThinking(true);
-    setTimeout(() => {
-      onChange((d) => ({
-        ...d,
-        sourcesCount: d.sourcesCount + 1,
-        sources: [
-          ...d.sources,
-          { id: `src-user-${d.sources.length + 1}`, name: file.name, type: "slides", date: "Just now", status: "approved", details: "Attached by you", citationCount: 0 },
-        ],
-      }));
-      pushMessage("assistant", `Added "${file.name}" as a cited source — it now shows in Sources on the left.`);
-      setThinking(false);
-    }, 550);
-    e.target.value = "";
+  const { messages, thinking, send, pushUser, pushAssistant } = useAssistantChat(
+    `Here's the first draft of ${dossier.brandName}'s dossier. Tell me what to fix, flag for approval, or attach a supporting document — I'll update the preview on the left live.`,
+    respond
+  );
+
+  function handleAttachFile(file: File) {
+    pushUser(`📎 Attached ${file.name}`);
+    onChange((d) => ({
+      ...d,
+      sourcesCount: d.sourcesCount + 1,
+      sources: [
+        ...d.sources,
+        { id: `src-user-${d.sources.length + 1}`, name: file.name, type: "slides", date: "Just now", status: "approved", details: "Attached by you", citationCount: 0 },
+      ],
+    }));
+    pushAssistant(`Added "${file.name}" as a cited source — it now shows in Sources on the left.`);
   }
 
   return (
@@ -252,86 +219,15 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
         </div>
 
         {/* ── Right: refinement chat ── */}
-        <div style={{ display: "flex", flexDirection: "column", border: "1px solid var(--hair)", borderRadius: "var(--r-l)", background: "var(--surface-subtle)", height: 460 }}>
-          <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--hair)" }}>
-            <b style={{ fontSize: 13, fontWeight: 750, color: "var(--ink)" }}>Ask for changes</b>
-            <p style={{ margin: "2px 0 0", fontSize: 11, color: "var(--ink-4)" }}>Prompt-based edits, approvals & documents</p>
-          </div>
-
-          <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
-            {messages.map((m) => (
-              <div key={m.id} style={{ display: "flex", gap: 8, alignItems: "flex-start", flexDirection: m.role === "user" ? "row-reverse" : "row" }}>
-                {m.role === "assistant" && (
-                  <span style={{ width: 22, height: 22, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", background: "linear-gradient(140deg,#ff7a3d,var(--brand) 55%,#d8320c)" }}>
-                    <LogoMark size={12} className="text-white" />
-                  </span>
-                )}
-                <div
-                  style={{
-                    maxWidth: "80%",
-                    fontSize: 12.5,
-                    lineHeight: 1.45,
-                    padding: "8px 11px",
-                    borderRadius: 12,
-                    color: m.role === "user" ? "#fff" : "var(--ink-2)",
-                    background: m.role === "user" ? "linear-gradient(180deg,#ff5b2d,var(--brand))" : "#fff",
-                    border: m.role === "user" ? "none" : "1px solid var(--hair)",
-                  }}
-                >
-                  {m.text}
-                </div>
-              </div>
-            ))}
-            {thinking && (
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ width: 22, height: 22, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", background: "linear-gradient(140deg,#ff7a3d,var(--brand) 55%,#d8320c)" }}>
-                  <LogoMark size={12} className="text-white animate-brand-spin" />
-                </span>
-                <span style={{ fontSize: 12, color: "var(--ink-4)", fontStyle: "italic" }}>thinking…</span>
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "10px 12px", borderTop: "1px solid var(--hair)" }}>
-            <button
-              type="button"
-              title="Attach a supporting document"
-              onClick={() => fileRef.current?.click()}
-              style={{ width: 32, height: 32, borderRadius: "var(--r)", flexShrink: 0, display: "grid", placeItems: "center", color: "var(--ink-3)", background: "#fff", border: "1px solid var(--hair)" }}
-            >
-              <Paperclip size={14} />
-            </button>
-            <input ref={fileRef} type="file" onChange={handleFilePicked} style={{ display: "none" }} />
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSend();
-              }}
-              placeholder="e.g. “fix the safety section wording”"
-              style={{ flex: 1, minWidth: 0, padding: "8px 11px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 12.5, color: "var(--ink)" }}
-            />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!input.trim() || thinking}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "var(--r)",
-                flexShrink: 0,
-                display: "grid",
-                placeItems: "center",
-                color: "#fff",
-                background: !input.trim() || thinking ? "var(--ink-4)" : "linear-gradient(180deg,#ff5b2d,var(--brand))",
-                opacity: !input.trim() || thinking ? 0.5 : 1,
-                border: "none",
-              }}
-            >
-              <Send size={13} />
-            </button>
-          </div>
-        </div>
+        <DossierAssistantPanel
+          messages={messages}
+          thinking={thinking}
+          onSend={send}
+          onAttachFile={handleAttachFile}
+          placeholder='e.g. "fix the safety section wording"'
+          subtitle="Fix, approve & attach by prompt"
+          quickReplies={["What can you do here?"]}
+        />
       </div>
 
       <button

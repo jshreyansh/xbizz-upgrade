@@ -32,6 +32,7 @@ interface DossierDraftState {
 
   setProduct: (id: string) => void;
   setOtherBrandName: (name: string) => void;
+  setOtherGenericName: (name: string) => void;
   setCategory: (category: string) => void;
   toggleAudience: (audience: string) => void;
   addSupportingFiles: (files: File[]) => void;
@@ -64,6 +65,7 @@ export const useDossierDraftStore = create<DossierDraftState>((set) => ({
 
   setProduct: (productId) => set({ productId }),
   setOtherBrandName: (brandName) => set({ brandName }),
+  setOtherGenericName: (genericName) => set({ genericName }),
   setCategory: (category) => set({ category }),
   toggleAudience: (audience) =>
     set((s) => ({
