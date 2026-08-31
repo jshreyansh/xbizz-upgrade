@@ -321,7 +321,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           <div className="text-center max-w-[840px] min-h-[44px] sm:min-h-[50px] flex items-center justify-center">
             <h1 className="text-[26px] sm:text-[32px] md:text-[34px] font-[850] text-[var(--ink)] tracking-tight inline-flex items-center justify-center flex-wrap">
               <span>{displayedHeadline || "\u00A0"}</span>
-              <span className="inline-block w-[3px] h-[0.85em] bg-[var(--brand)] ml-2 rounded-full animate-pulse align-middle shrink-0" />
+              <span
+                className="inline-block w-[3px] h-[0.85em] bg-[var(--brand)] ml-2 rounded-full animate-cursor-blink align-middle shrink-0"
+                aria-hidden="true"
+              />
             </h1>
           </div>
 

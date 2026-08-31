@@ -359,6 +359,22 @@ button.rounded-full {
   100% { transform: translate3d(var(--confetti-drift, 0px), 260px, 0) rotate(var(--confetti-spin, 360deg)); opacity: 0; }
 }
 
+@keyframes cursor-blink {
+  0%, 48% {
+    opacity: 1;
+  }
+  50%, 98% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-cursor-blink {
+  animation: cursor-blink 0.85s step-end infinite;
+}
+
 @keyframes success-pop-in {
   0% { transform: scale(0.6); opacity: 0; }
   60% { transform: scale(1.08); opacity: 1; }
