@@ -15,6 +15,7 @@ import {
   Redo2,
   Search,
   ShieldCheck,
+  Sparkles,
   Target,
   Undo2,
   Upload,
@@ -96,6 +97,18 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     event.target.value = "";
   };
 
+  const getBrandDisplayName = (id?: string) => {
+    if (!id) return "Velmora";
+    if (id.startsWith("velmora")) return "Velmora";
+    if (id.startsWith("onkavia")) return "Onkavia";
+    if (id.startsWith("nirvexa")) return "Nirvexa";
+    if (id.startsWith("cardioxa")) return "Cardioxa";
+    if (id.startsWith("pulmovax")) return "PulmoVax";
+    return id.charAt(0).toUpperCase() + id.slice(1);
+  };
+
+  const currentBrandName = getBrandDisplayName(sourcePayload.dossierId);
+
   const preparePlan = () => {
     if (!requestIsSpecific) {
       setClarificationOpen(true);
@@ -108,7 +121,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setPresentationMode(plan.presentationMode);
     setVoice(plan.voice);
     setMusic(plan.music);
-    const bName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
+    const bName = currentBrandName;
     setChatMessages([
       {
         role: "user",
@@ -153,24 +166,37 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       ? "30\u201390s lip-synced presenter video with clinical slide overlays"
       : "Open custom prompt & duration";
 
-  const dossierNames: Record<string, string> = {
-    velmora: "Velmora",
-    onkavia: "Onkavia",
-    nirvexa: "Nirvexa",
-    cardioxa: "Cardioxa",
-    pulmovax: "PulmoVax",
-  };
+  const samplePrompts = useMemo(
+    () => [
+      {
+        id: "hcp-launch",
+        tag: "HCP Launch",
+        prompt: `Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for ${currentBrandName}.`,
+      },
+      {
+        id: "moa-efficacy",
+        tag: "Mechanism & Efficacy",
+        prompt: `Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety for ${currentBrandName}.`,
+      },
+      {
+        id: "presenter-briefing",
+        tag: "Clinical Briefing",
+        prompt: `Generate a presenter-led clinical briefing explaining the dual mechanism of action and fair balance safety profile for ${currentBrandName}.`,
+      },
+    ],
+    [currentBrandName]
+  );
 
   const sourceDisplayName =
     sourceType === "dossier"
-      ? `${dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora"} Dossier`
+      ? `${currentBrandName} Dossier`
       : sourceType === "url"
       ? "Web / Study Link"
       : "Custom Plain Text";
 
   const projectName =
     sourceType === "dossier"
-      ? `${dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora"} HCP launch`
+      ? `${currentBrandName} HCP launch`
       : "New Video Project";
 
   return (
@@ -228,7 +254,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
       {/* Center stage */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-10">
-        <div className="w-full max-w-[680px] space-y-6">
+        <div className="w-full max-w-[680px] space-y-5">
           {/* Engine indicator pill */}
           <div className="flex items-center gap-3 rounded-[16px] border border-[var(--line)] bg-white px-4 py-3 shadow-xs">
             <div className="grid size-9 place-items-center rounded-[10px] bg-[var(--brand)] text-white shadow-sm shrink-0">
@@ -245,6 +271,49 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
           </div>
 
+          {/* ── 3 Floating Example Prompt Suggestion Chips Above Input ── */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center gap-1.5">
+                <Sparkles className="size-3 text-[var(--brand)]" />
+                Example Prompts
+              </span>
+              <span className="text-[11px] text-[var(--ink-muted)] font-medium">Click any chip to use as brief</span>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {samplePrompts.map((sample) => {
+                const isSelected = brief.trim() === sample.prompt.trim();
+                return (
+                  <button
+                    key={sample.id}
+                    type="button"
+                    onClick={() => setBrief(sample.prompt)}
+                    className={cn(
+                      "group flex items-center justify-between gap-3 rounded-2xl border px-3.5 py-2.5 text-left transition-all duration-200 cursor-pointer",
+                      isSelected
+                        ? "border-[var(--brand)] bg-[var(--tint)]/70 shadow-xs ring-1 ring-[var(--brand)]/20"
+                        : "border-black/[0.08] bg-white hover:border-[var(--brand)] hover:bg-white hover:shadow-xs"
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-[var(--tint)] px-2 py-0.5 text-[10px] font-extrabold text-[var(--brand-deep)] border border-[var(--tint-line)] shrink-0">
+                        <Sparkles className="size-2.5 text-[var(--brand)]" />
+                        {sample.tag}
+                      </span>
+                      <span className="text-[12.5px] font-medium text-[var(--ink-2)] group-hover:text-[var(--ink)] transition-colors truncate">
+                        {sample.prompt}
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-bold text-[var(--brand)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0 flex items-center gap-1">
+                      Use brief <ArrowRight className="size-3" />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Main brief input card */}
           <div className="rounded-[20px] border border-[var(--line)] bg-white shadow-[0_2px_16px_rgba(0,0,0,0.06)] overflow-hidden">
             <div className="p-5 pb-3">
@@ -258,7 +327,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) preparePlan();
                 }}
                 rows={5}
-                placeholder={`e.g. Create a concise ${dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora"} HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence.`}
+                placeholder={`e.g. Create a concise ${currentBrandName} HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence.`}
                 className="w-full resize-none bg-transparent text-[14.5px] leading-relaxed outline-none placeholder:text-[var(--ink-4)] text-[var(--ink)]"
               />
             </div>
