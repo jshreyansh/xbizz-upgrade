@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, BookOpen, ShieldCheck, FileSearch } from "lucide-react";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { NewDossierFlow } from "@/features/dossiers/dossier-quick-flows";
 
@@ -11,12 +11,22 @@ interface DossierListScreenProps {
   onDossierCreated: (dossier: BrandDossier) => void;
 }
 
+const EXPLAINER_POINTS = [
+  { icon: BookOpen, title: "One record per brand", body: "Every claim, indication, and dosing detail lives in one place — not scattered across decks." },
+  { icon: FileSearch, title: "Every claim has a source", body: "Sections are written straight from the approved label, trial registries, and published literature." },
+  { icon: ShieldCheck, title: "Reviewed before it's reused", body: "Medical and MLR sign off once — every asset generated from it inherits that approval." },
+];
+
 export function DossierListScreen({
   dossiers,
   onSelectDossier,
   onDossierCreated,
 }: DossierListScreenProps) {
   const [flowOpen, setFlowOpen] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(true);
+
+  const sampleDossiers = dossiers.filter((d) => d.isSample);
+  const visibleDossiers = isNewUser ? sampleDossiers : dossiers;
 
   return (
     <div className="page-enter space-y-6">
@@ -31,32 +41,99 @@ export function DossierListScreen({
             The single source of truth for your brand — grounded in approved prescribing info, clinical trial readouts, and HEOR models.
           </p>
         </div>
-        <button
-          onClick={() => setFlowOpen(true)}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <div style={{ display: "inline-flex", padding: 3, borderRadius: 99, background: "var(--surface-subtle)", border: "1px solid var(--hair)" }}>
+            {([true, false] as const).map((val) => (
+              <button
+                key={String(val)}
+                type="button"
+                onClick={() => setIsNewUser(val)}
+                style={{
+                  padding: "5px 12px",
+                  borderRadius: 99,
+                  fontSize: 11.5,
+                  fontWeight: 700,
+                  background: isNewUser === val ? "var(--ink)" : "transparent",
+                  color: isNewUser === val ? "#fff" : "var(--ink-3)",
+                  transition: "background .18s var(--e), color .18s var(--e)",
+                }}
+              >
+                {val ? "New user" : "Returning user"}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setFlowOpen(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "11px 20px",
+              borderRadius: "var(--r)",
+              fontWeight: 700,
+              fontSize: 14,
+              background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
+              color: "#fff",
+              boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
+              border: "none",
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            <Sparkles size={16} />
+            Create Brand Dossier
+          </button>
+        </div>
+      </div>
+
+      {/* New-user explainer — what a Brand Dossier actually is, before showing examples */}
+      {isNewUser && (
+        <div
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 20px",
-            borderRadius: "var(--r)",
-            fontWeight: 700,
-            fontSize: 14,
-            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            color: "#fff",
-            boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
-            border: "none",
-            cursor: "pointer",
-            flexShrink: 0,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 14,
+            background: "#fff",
+            border: "1px solid var(--hair)",
+            borderRadius: "var(--r-xl)",
+            padding: "20px 22px",
+            boxShadow: "var(--sh-1)",
           }}
         >
-          <Sparkles size={16} />
-          Create Brand Dossier
-        </button>
-      </div>
+          {EXPLAINER_POINTS.map((point) => {
+            const Icon = point.icon;
+            return (
+              <div key={point.title} style={{ display: "flex", gap: 12 }}>
+                <span style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: "grid", placeItems: "center", background: "var(--tint)", color: "var(--brand-deep)" }}>
+                  <Icon size={16} />
+                </span>
+                <div>
+                  <b style={{ display: "block", fontSize: 13, fontWeight: 750, color: "var(--ink)", marginBottom: 2 }}>{point.title}</b>
+                  <p style={{ margin: 0, fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5 }}>{point.body}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {isNewUser && (
+        <div>
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--brand)", display: "block", marginBottom: 4 }}>
+            Curated examples
+          </span>
+          <h2 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.4px", color: "var(--ink)", margin: "0 0 4px" }}>
+            Inspect one before you build your own
+          </h2>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)" }}>
+            These are fully-worked samples — open one to see the section structure, cited claims, and approval trail a real dossier carries.
+          </p>
+        </div>
+      )}
 
       {/* Grid of Dossiers */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 18 }}>
-        {dossiers.map((dossier) => (
+        {visibleDossiers.map((dossier) => (
           <div
             key={dossier.id}
             onClick={() => onSelectDossier(dossier)}

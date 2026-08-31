@@ -888,9 +888,34 @@ function HomeDossierCard({ dossier, onSelect }: { dossier: BrandDossier; onSelec
 }
 
 /* ─── HomeScreen Component ───────────────────────────────────────────────────── */
+const EXAMPLE_DOSSIERS = MOCK_DOSSIERS.filter((d) => d.isSample);
+
+const EXAMPLE_STARTERS: ShowcaseItem[] = [
+  {
+    title: "Mechanism of action — cardiology",
+    subtitle: "Example MagicReel · Cardiologists",
+    meta: "1:00",
+    aspect: "16/9",
+    gradient: "linear-gradient(160deg,#16233f,#2c4573 50%,#5b7fb8)",
+    hasPlay: true,
+    tag: "Example",
+    videoSrc: "/reel-moa.mp4",
+  },
+  {
+    title: "Velmora HCP portal",
+    subtitle: "Example microsite · FDA Anchor",
+    meta: "5 pages",
+    aspect: "16/9",
+    gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 48%,#5b7fb8)",
+    hasPlay: false,
+    tag: "Example",
+  },
+];
+
 export function HomeScreen() {
   const router = useRouter();
   const [playingVideoItem, setPlayingVideoItem] = useState<ShowcaseItem | null>(null);
+  const [isNewUser, setIsNewUser] = useState(true);
 
   function openTile(tile: TileOption) {
     if (tile.href === "/create") {
@@ -956,25 +981,90 @@ export function HomeScreen() {
         ))}
       </div>
 
-      {/* Recent projects */}
+      {/* Recent projects — new-user empty state vs returning-user activity.
+          The toggle below is a preview control for this demo (no backend
+          to detect account age from), not a real user-facing setting. */}
       <div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 14 }}>
           <div>
             <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--brand)", display: "block", marginBottom: 4 }}>
-              Pick up where you left off
+              {isNewUser ? "New here? Start with an example" : "Pick up where you left off"}
             </span>
             <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.5px", color: "var(--ink)", margin: 0 }}>
-              Recent projects
+              {isNewUser ? "Try a finished example first" : "Recent projects"}
             </h2>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 750, color: "var(--brand)", cursor: "pointer" }}>All projects →</span>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {!isNewUser && <span style={{ fontSize: 13, fontWeight: 750, color: "var(--brand)", cursor: "pointer" }}>All projects →</span>}
+            <div style={{ display: "inline-flex", padding: 3, borderRadius: 99, background: "var(--surface-subtle)", border: "1px solid var(--hair)" }}>
+              {([true, false] as const).map((val) => (
+                <button
+                  key={String(val)}
+                  type="button"
+                  onClick={() => setIsNewUser(val)}
+                  style={{
+                    padding: "5px 12px",
+                    borderRadius: 99,
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    background: isNewUser === val ? "var(--ink)" : "transparent",
+                    color: isNewUser === val ? "#fff" : "var(--ink-3)",
+                    transition: "background .18s var(--e), color .18s var(--e)",
+                  }}
+                >
+                  {val ? "New user" : "Returning user"}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
-          {RECENT_PROJECTS.map((project) => (
-            <RecentProjectCard key={project.title} project={project} />
-          ))}
-        </div>
+        {isNewUser ? (
+          <>
+            <p style={{ margin: "0 0 16px", fontSize: 13.5, color: "var(--ink-3)" }}>
+              You haven&rsquo;t created anything yet. Preview a sample dossier or a finished asset, then build your own the same way.
+            </p>
+            <div style={{ display: "flex", gap: 14, overflowX: "auto", padding: "2px 2px 8px" }}>
+              {EXAMPLE_DOSSIERS.map((dossier) => (
+                <HomeDossierCard
+                  key={dossier.id}
+                  dossier={dossier}
+                  onSelect={() => router.push(`/dossiers?open=${dossier.id}`)}
+                />
+              ))}
+              {EXAMPLE_STARTERS.map((item, idx) => (
+                <ShowcaseCard key={idx} item={item} onPlay={(i) => setPlayingVideoItem(i)} />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => router.push("/dossiers")}
+              style={{
+                marginTop: 16,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "11px 20px",
+                borderRadius: "var(--r)",
+                fontWeight: 750,
+                fontSize: 14,
+                color: "#fff",
+                background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
+                boxShadow: "0 12px 24px -12px rgba(253,72,22,.6)",
+              }}
+            >
+              Create your first dossier
+              <ArrowRight size={15} />
+            </button>
+          </>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+            {RECENT_PROJECTS.map((project) => (
+              <RecentProjectCard key={project.title} project={project} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Showcase lanes */}
