@@ -990,6 +990,34 @@ export function InfographicStudioScreen() {
                 </div>
 
                 <div className="p-3 border-t border-black/[0.06] bg-white shrink-0 space-y-2">
+                  {/* Attached Primary Action Bar in Creative Editor Mode */}
+                  {studioMode === "editor" && (
+                    <div className="rounded-xl border border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)] via-white to-[var(--tint)] p-2.5 shadow-2xs flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="size-6 rounded-full bg-[var(--brand)]/15 text-[var(--brand)] grid place-items-center shrink-0">
+                          <ImageIcon className="size-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">
+                            Ready for production
+                          </div>
+                          <div className="text-[9.5px] text-[var(--ink-muted)] truncate">
+                            {pagesList.length} {pagesList.length === 1 ? "page" : "pages"} customized
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={() => setConfirmGenerateModalOpen(true)}
+                        size="sm"
+                        className="h-7.5 px-3 rounded-lg text-[11.5px] font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:scale-[1.02] gap-1"
+                      >
+                        <Sparkles className="size-3 mr-0.5 fill-current" />
+                        <span>Generate and Publish</span>
+                      </Button>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-3 py-2 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-xs transition">
                     <Plus className="size-3.5 text-[var(--ink-muted)] shrink-0" />
                     <input
