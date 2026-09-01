@@ -201,6 +201,7 @@ export function InfographicStudioScreen() {
   const [selectedBlockId, setSelectedBlockId] = useState<"header" | "heroStat" | "moa" | "chart" | "isi">("heroStat");
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [confirmGenerateModalOpen, setConfirmGenerateModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Multi-page management
@@ -473,11 +474,11 @@ export function InfographicStudioScreen() {
               </Button>
               <Button
                 size="sm"
-                onClick={handlePublishCreative}
+                onClick={() => setConfirmGenerateModalOpen(true)}
                 className="gap-1.5 bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white text-[12px] font-bold shadow-xs cursor-pointer px-4.5 hover:scale-[1.02] transition-transform"
               >
                 <Sparkles className="size-3.5" />
-                <span>Publish &amp; Review →</span>
+                <span>Generate and Publish</span>
               </Button>
             </>
           )}
@@ -1352,6 +1353,150 @@ export function InfographicStudioScreen() {
                 </div>
                 <Download className="size-4 text-[var(--brand)]" />
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CONFIRM CREATIVE GENERATION MODAL (Matching Exact Form & Rate Spec with Quality & MLR Layer) ── */}
+      {confirmGenerateModalOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm Creative Generation"
+        >
+          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-[24px] border border-white/50 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.18)] text-left">
+            <div className="flex items-center justify-between border-b border-[var(--line)] px-6 py-4.5 bg-[#fafbf9]">
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--brand)]">
+                  <Sparkles className="size-3.5" /> Generation Engine
+                </div>
+                <h2 className="mt-0.5 text-[20px] font-[850] tracking-tight text-[var(--ink)]">
+                  Confirm Creative Generation
+                </h2>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setConfirmGenerateModalOpen(false)}
+                className="size-8 rounded-full hover:bg-black/5 cursor-pointer"
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Cost & Spec Card */}
+              <div className="rounded-2xl bg-[#121614] border border-white/10 p-5 text-white shadow-md">
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <div>
+                    <div className="text-[11px] font-extrabold uppercase tracking-wider text-white/60">
+                      Credits Deducted
+                    </div>
+                    <div className="text-[20px] font-[900] text-white mt-0.5">
+                      ⚡ {(pagesList.length * 300).toLocaleString()} Credits
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-[var(--brand)]/20 border border-[var(--brand)] px-3 py-1 text-[11px] font-bold text-[var(--brand)]">
+                    Vector 300 DPI
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-3 text-[11.5px] text-white/75">
+                  <div>
+                    <span className="text-white/50 block text-[10px] uppercase font-bold">Pages &amp; Format</span>
+                    <strong className="text-white">
+                      {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} · {pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-white/50 block text-[10px] uppercase font-bold">Estimated Render Time</span>
+                    <strong className="text-white">~30–45 sec</strong>
+                  </div>
+                  <div>
+                    <span className="text-white/50 block text-[10px] uppercase font-bold">Team Balance</span>
+                    <strong className="text-emerald-400">50,000 Credits</strong>
+                  </div>
+                  <div>
+                    <span className="text-white/50 block text-[10px] uppercase font-bold">Balance Remaining</span>
+                    <strong className="text-white">
+                      {(50000 - pagesList.length * 300).toLocaleString()} Credits
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Automated Quality & MLR Pre-Flight Verification Card */}
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 space-y-2.5 text-[12px]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-emerald-900">
+                    <ShieldCheck className="size-4 text-emerald-700 shrink-0" />
+                    <span>Quality &amp; MLR Pre-Flight Verification</span>
+                  </div>
+                  <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold">
+                    6/6 Passed · 0 Blockers
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-emerald-900/90 pt-1">
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-[var(--ink)]">24 Verified Claims Cited</span>
+                      <span className="text-[10px] text-[var(--ink-muted)]">Linked to CDSCO / FDA SmPC §1.1 &amp; §2.4</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-[var(--ink)]">Fair Balance &amp; ISI Present</span>
+                      <span className="text-[10px] text-[var(--ink-muted)]">eGFR ≥25 &amp; box warnings verified</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-[var(--ink)]">Editorial &amp; Spelling Clear</span>
+                      <span className="text-[10px] text-[var(--ink-muted)]">Medical nomenclature validated</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-[var(--ink)]">Vector Layout &amp; Contrast</span>
+                      <span className="text-[10px] text-[var(--ink-muted)]">300 DPI CMYK ready hierarchy</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Informational Notice */}
+              <p className="text-[12px] text-[var(--ink-muted)] leading-relaxed">
+                Generation renders in the background using publication vector models. You will receive an email notification when processing completes, and can continue working in SwishX.
+              </p>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[var(--line)]">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setConfirmGenerateModalOpen(false)}
+                  className="font-bold cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setConfirmGenerateModalOpen(false);
+                    handlePublishCreative();
+                  }}
+                  className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-5 cursor-pointer shadow-xs gap-1.5"
+                >
+                  <Sparkles className="size-3.5" />
+                  <span>Confirm &amp; Generate Creative</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

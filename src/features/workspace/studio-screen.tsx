@@ -823,7 +823,7 @@ export function StudioScreen() {
 
           {isEditor && (
             <>
-              <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><Sparkles className="size-3.5" /> <span>Generate Video</span></Button>
+              <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><Sparkles className="size-3.5" /> <span>Generate and Publish</span></Button>
             </>
           )}
           {isReview && (
@@ -2176,7 +2176,7 @@ export function StudioScreen() {
                         className="h-7.5 px-3 rounded-lg text-[11.5px] font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:scale-[1.02]"
                       >
                         <Zap className="size-3 mr-1 fill-current" />
-                        <span>Generate Video</span>
+                        <span>Generate and Publish</span>
                       </Button>
                     </div>
                   )}
@@ -2821,6 +2821,50 @@ export function StudioScreen() {
                     <strong className="text-white">
                       {(50000 - (selectedQuality === "cinematic" ? 7500 : 2500)).toLocaleString()} Credits
                     </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Automated Quality & MLR Pre-Flight Verification Card */}
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 space-y-2.5 text-[12px]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-bold text-emerald-900">
+                    <ShieldCheck className="size-4 text-emerald-700 shrink-0" />
+                    <span>Quality &amp; MLR Pre-Flight Verification</span>
+                  </div>
+                  <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold">
+                    6/6 Passed · 0 Blockers
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-emerald-900/90 pt-1">
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-[var(--ink)]">24 Verified Claims Cited</span>
+                      <span className="text-[10px] text-[var(--ink-muted)]">Linked to FDA Prescribing Info §14</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-[var(--ink)]">Fair Balance &amp; ISI Present</span>
+                      <span className="text-[10px] text-[var(--ink-muted)]">Contraindication footnotes verified</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-[var(--ink)]">Medical Terminology Clear</span>
+                      <span className="text-[10px] text-[var(--ink-muted)]">Generic name &amp; dosing accurate</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-[var(--ink)]">Script Pacing &amp; Audio Sync</span>
+                      <span className="text-[10px] text-[var(--ink-muted)]">Optimal 135 wpm speech cadence</span>
+                    </div>
                   </div>
                 </div>
               </div>
