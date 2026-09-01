@@ -1855,6 +1855,7 @@ export function StudioScreen() {
                       sceneList={sceneList}
                       activeScene={activeMasterChapter}
                       brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
+                      isPlaying={masterPlaying}
                     />
                   </div>
 

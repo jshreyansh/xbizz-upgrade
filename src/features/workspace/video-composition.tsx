@@ -9,6 +9,7 @@ export interface SceneCompositionProps {
   brandName?: string;
   totalScenes?: number;
   compact?: boolean;
+  isPlaying?: boolean;
 }
 
 const sceneThemeColors = [
@@ -23,8 +24,19 @@ export function DynamicSceneComposition({
   scene = defaultScenes[2],
   brandName = "DERMORA",
   totalScenes = 5,
+  isPlaying = true,
 }: SceneCompositionProps) {
   const currentTheme = sceneThemeColors[((scene.number || 1) - 1) % sceneThemeColors.length];
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  React.useEffect(() => {
+    if (!videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  }, [isPlaying, scene.mediaVideoSrc]);
 
   return (
     <div
@@ -79,73 +91,72 @@ export function DynamicSceneComposition({
         <div
           style={{
             position: "absolute",
-            right: "5%",
-            top: "12%",
-            bottom: "14%",
+            right: 48,
+            top: 40,
+            bottom: 40,
             width: "42%",
             display: "flex",
             flexDirection: "column",
-            gap: 12,
+            gap: 14,
             zIndex: 10,
-            pointerEvents: "none",
           }}
         >
           {/* If scene has an image or both (e.g. Scene 3 Anatomical Heart) */}
           {(scene.mediaType === "image" || scene.mediaType === "both") && (
             <div
               style={{
-                flex: scene.mediaType === "both" ? 1.1 : 1,
+                flex: scene.mediaType === "both" ? 1 : 1.4,
                 borderRadius: 16,
-                background: "rgba(10, 24, 19, 0.75)",
+                background: "rgba(10, 25, 20, 0.78)",
                 backdropFilter: "blur(12px)",
-                border: "1px solid rgba(255, 255, 255, 0.18)",
-                padding: "10px 14px",
+                border: "1px solid rgba(216, 240, 93, 0.22)",
+                padding: 12,
                 display: "flex",
                 alignItems: "center",
                 gap: 12,
-                boxShadow: "0 10px 36px rgba(0,0,0,0.4)",
-                overflow: "hidden",
+                boxShadow: "0 10px 36px rgba(0,0,0,0.35)",
                 position: "relative",
               }}
             >
-              {/* Real Anatomical Heart Image */}
               <div
                 style={{
-                  width: 90,
-                  height: 100,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: scene.mediaType === "both" ? 64 : 84,
+                  height: scene.mediaType === "both" ? 64 : 84,
+                  borderRadius: 12,
+                  background: "radial-gradient(circle, rgba(216,240,93,0.15), transparent 70%)",
+                  border: "1px solid rgba(216,240,93,0.3)",
+                  display: "grid",
+                  placeItems: "center",
+                  padding: 4,
                   flexShrink: 0,
-                  filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.5))",
                 }}
               >
                 <img
                   src={scene.mediaImageSrc || "/anatomical-heart.png"}
-                  alt={scene.mediaLabel || "Anatomical Model"}
-                  style={{ maxHeight: "100%", maxWidth: "100%", objectFit: "contain" }}
+                  alt="Anatomical Media"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
                 />
               </div>
-
-              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span
-                    style={{
-                      fontSize: 9,
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                      color: currentTheme.accent,
-                      background: "rgba(216,240,93,0.12)",
-                      padding: "2px 6px",
-                      borderRadius: 4,
-                      border: "1px solid rgba(216,240,93,0.25)",
-                    }}
-                  >
-                    🫀 Image Asset
-                  </span>
-                  <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>Draggable</span>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    background: "rgba(216,240,93,0.15)",
+                    color: "#d8f05d",
+                    fontSize: 8.5,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    border: "1px solid rgba(216,240,93,0.25)",
+                  }}
+                >
+                  🫀 Image Asset
                 </div>
+                <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginLeft: 6 }}>Draggable</span>
                 <div style={{ fontSize: 13, fontWeight: 800, color: "white", marginTop: 4 }}>
                   {scene.mediaLabel || "Anatomical Cardiac Structure"}
                 </div>
@@ -175,8 +186,9 @@ export function DynamicSceneComposition({
               {/* Real Video Player */}
               <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>
                 <video
+                  ref={videoRef}
                   src={scene.mediaVideoSrc || "/reel-moa.mp4"}
-                  autoPlay
+                  autoPlay={isPlaying}
                   loop
                   muted
                   playsInline
@@ -249,60 +261,63 @@ export function DynamicSceneComposition({
       {/* Structured Scene Content Overlay */}
       <div
         style={{
-          position: "relative",
+          position: "absolute",
+          top: 40,
+          left: 48,
+          right: scene.mediaType && scene.mediaType !== "none" ? "46%" : 48,
+          bottom: 40,
           display: "flex",
-          height: "100%",
           flexDirection: "column",
           justifyContent: "space-between",
-          padding: "6% 7%",
-          zIndex: 15,
+          zIndex: 10,
         }}
       >
-        {/* Top Tag & Pillar */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            fontSize: 12,
-            fontWeight: 800,
-            letterSpacing: ".18em",
-            textTransform: "uppercase",
-            color: "rgba(255,255,255,.75)",
-          }}
-        >
+        {/* Top Badges */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <span
             style={{
-              display: "inline-block",
-              width: 24,
-              height: 2.5,
-              background: currentTheme.accent,
-              borderRadius: 2,
+              padding: "4px 10px",
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.12)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              fontSize: 10.5,
+              fontWeight: 800,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              color: currentTheme.accent,
             }}
-          />
-          {scene.narrativeTag || "PIVOTAL EVIDENCE"}
+          >
+            {scene.narrativeTag || "EVIDENCE"}
+          </span>
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>
+            {brandName} HCP Storyboard
+          </span>
         </div>
 
-        {/* Core Headline & Narration Subtitle */}
-        <div style={{ maxWidth: scene.mediaType && scene.mediaType !== "none" ? "52%" : "82%" }}>
-          <div
+        {/* Center Headline and Narration Script */}
+        <div style={{ marginTop: "auto", marginBottom: "auto", maxWidth: 520 }}>
+          <h2
             style={{
-              fontSize: 26,
+              fontSize: 27,
+              fontWeight: 900,
               lineHeight: 1.15,
-              fontWeight: 800,
-              letterSpacing: "-.035em",
+              letterSpacing: "-0.02em",
               color: "#ffffff",
-              textShadow: "0 2px 12px rgba(0,0,0,0.3)",
+              textShadow: "0 2px 14px rgba(0,0,0,0.5)",
+              marginBottom: 10,
             }}
           >
             {scene.title}
-          </div>
-          <div
+          </h2>
+
+          <p
             style={{
-              marginTop: 10,
-              fontSize: 12.5,
+              fontSize: 13.5,
+              fontWeight: 500,
               lineHeight: 1.45,
-              color: "rgba(255,255,255,.85)",
+              color: "rgba(255,255,255,0.85)",
+              textShadow: "0 1px 8px rgba(0,0,0,0.6)",
               display: "-webkit-box",
               WebkitLineClamp: 3,
               WebkitBoxOrient: "vertical",
@@ -310,25 +325,23 @@ export function DynamicSceneComposition({
             }}
           >
             {scene.narration}
-          </div>
+          </p>
         </div>
 
-        {/* Bottom Metadata & Compliance Footnote */}
+        {/* Bottom Compliance & Footnote Info */}
         <div
           style={{
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+            paddingTop: 10,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            fontSize: 10,
-            color: "rgba(255,255,255,.55)",
-            borderTop: "1px solid rgba(255,255,255,.1)",
-            paddingTop: 10,
+            fontSize: 9.5,
+            color: "rgba(255,255,255,0.55)",
           }}
         >
-          <span>{brandName}® · For US Healthcare Professionals Only</span>
-          <span>
-            Scene 0{scene.number} / 0{totalScenes}
-          </span>
+          <span>{brandName}™ · For US Healthcare Professionals Only</span>
+          <span>Approved SmPC §4.2 · ClearSkin-1 Trial</span>
         </div>
       </div>
     </div>
@@ -345,10 +358,12 @@ export function MasterVideoSequenceComposition({
   sceneList = defaultScenes,
   activeScene,
   brandName = "DERMORA",
+  isPlaying = false,
 }: {
   sceneList?: Scene[];
   activeScene?: Scene;
   brandName?: string;
+  isPlaying?: boolean;
 }) {
   const currentScene = activeScene || sceneList[0] || defaultScenes[0];
 
@@ -358,6 +373,7 @@ export function MasterVideoSequenceComposition({
         scene={currentScene}
         brandName={brandName}
         totalScenes={sceneList.length}
+        isPlaying={isPlaying}
       />
     </div>
   );

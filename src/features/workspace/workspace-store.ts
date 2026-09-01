@@ -42,10 +42,10 @@ interface WorkspaceState {
   copilotPanelOpen: boolean;
   // Infographic / Creative specific states
   pageShape: "3:4" | "16:9" | "A4";
-  infographicPages: "1" | "2";
+  infographicPages: "1" | "2" | "3" | string;
   infographicTemplate: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease";
   infographicLogoPlacement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none";
-  infographicActivePage: 1 | 2;
+  infographicActivePage: number;
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
@@ -84,10 +84,10 @@ interface WorkspaceState {
   setCopilotPanelOpen: (open: boolean) => void;
   toggleCopilotPanel: () => void;
   setPageShape: (shape: "3:4" | "16:9" | "A4") => void;
-  setInfographicPages: (pages: "1" | "2") => void;
+  setInfographicPages: (pages: "1" | "2" | "3" | string) => void;
   setInfographicTemplate: (template: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease") => void;
   setInfographicLogoPlacement: (placement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none") => void;
-  setInfographicActivePage: (page: 1 | 2) => void;
+  setInfographicActivePage: (page: number) => void;
   reset: () => void;
 }
 
