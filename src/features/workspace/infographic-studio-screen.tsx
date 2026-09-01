@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -288,6 +289,50 @@ export function InfographicStudioScreen() {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, activeTab, studioMode]);
 
+  const [mlrCheckResolved, setMlrCheckResolved] = useState(false);
+  const [qaCheckResolved, setQaCheckResolved] = useState(false);
+  const hasBlockers = !mlrCheckResolved || !qaCheckResolved;
+  const blockerCount = (!mlrCheckResolved ? 1 : 0) + (!qaCheckResolved ? 1 : 0);
+
+  const handleFixMlrBlocker = () => {
+    setConfirmGenerateModalOpen(false);
+    if (!copilotPanelOpen) toggleCopilotPanel();
+    setActiveTab("assistant");
+    setChatInput("@MLR Check: Please revise the primary efficacy comparison to cite verified EMBRACE-3 PASI 90 placebo rates (p < 0.001) without unverified superiority claims.");
+    showToast("Tagged MLR issue in SwishX Chat");
+  };
+
+  const handleFixQaBlocker = () => {
+    setConfirmGenerateModalOpen(false);
+    if (!copilotPanelOpen) toggleCopilotPanel();
+    setActiveTab("assistant");
+    setChatInput("@Quality Check: Remove redundant subtitle phrasing and standardize chemical nomenclature formatting.");
+    showToast("Tagged Quality issue in SwishX Chat");
+  };
+
+  const handleAutoFixBoth = () => {
+    setMlrCheckResolved(true);
+    setQaCheckResolved(true);
+    updateCurrentPage((prev) => ({
+      ...prev,
+      header: {
+        ...prev.header,
+        subtitle: "First-in-Class Dual Mechanism Kinase Inhibitor · Once-Daily 200mg Oral Formulation",
+      },
+      heroStat: {
+        ...prev.heroStat,
+        metric: "52% PASI 90",
+        comparison: "vs 18% Placebo (p < 0.001)",
+        detail: "52% of patients achieved PASI 90 at Week 16 vs 18% in placebo cohort (p < 0.001), sustained through Week 52.",
+      },
+    }));
+    addChatMessage({
+      role: "swishx",
+      text: "✓ **Quality & MLR Pre-Flight Passed**: Auto-resolved both blockers. Grounded hero efficacy in EMBRACE-3 Table 2.4 and polished headline phrasing. Ready to Generate and Publish.",
+    });
+    showToast("Resolved 2 pre-flight blockers with AI");
+  };
+
   const handleSendMessage = (directText?: string) => {
     const text = directText || chatInput.trim();
     if (!text) return;
@@ -299,7 +344,29 @@ export function InfographicStudioScreen() {
       const lower = text.toLowerCase();
       let reply = `Understood. I have adjusted the graphic layout grounded in the **${brandName}** dossier.`;
 
-      if (lower.includes("headline") || lower.includes("header") || lower.includes("title")) {
+      if (lower.includes("mlr") || lower.includes("comparative") || lower.includes("embrace-3")) {
+        setMlrCheckResolved(true);
+        updateCurrentPage((prev) => ({
+          ...prev,
+          heroStat: {
+            ...prev.heroStat,
+            metric: "52% PASI 90",
+            comparison: "vs 18% Placebo (p < 0.001)",
+            detail: "52% of patients achieved PASI 90 at Week 16 vs 18% in placebo (p < 0.001), sustained through Week 52.",
+          },
+        }));
+        reply = "✓ **MLR Blocker Resolved**: Updated primary efficacy hero card to cite EMBRACE-3 Table 2.4 (52% PASI 90 vs 18% Placebo, p < 0.001). Removed ungrounded superiority claims. Pre-flight check cleared.";
+      } else if (lower.includes("quality") || lower.includes("phrasing") || lower.includes("subtitle") || lower.includes("nomenclature") || lower.includes("cadence")) {
+        setQaCheckResolved(true);
+        updateCurrentPage((prev) => ({
+          ...prev,
+          header: {
+            ...prev.header,
+            subtitle: "First-in-Class Dual Mechanism Kinase Inhibitor · Once-Daily 200mg Oral Formulation",
+          },
+        }));
+        reply = "✓ **Quality Blocker Resolved**: Condensed and standardized headline tagline. Chemical and generic drug nomenclature verified.";
+      } else if (lower.includes("headline") || lower.includes("header") || lower.includes("title")) {
         updateCurrentPage((prev) => ({
           ...prev,
           header: {
@@ -1428,40 +1495,109 @@ export function InfographicStudioScreen() {
               </div>
 
               {/* Automated Quality & MLR Pre-Flight Verification Card */}
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 space-y-2.5 text-[12px]">
+              <div
+                className={cn(
+                  "rounded-2xl border p-4 space-y-2.5 text-[12px] transition",
+                  hasBlockers
+                    ? "border-amber-200 bg-amber-50/60 text-amber-950"
+                    : "border-emerald-200 bg-emerald-50/70 text-emerald-900"
+                )}
+              >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-emerald-900">
-                    <ShieldCheck className="size-4 text-emerald-700 shrink-0" />
+                  <div className="flex items-center gap-2 font-bold">
+                    {hasBlockers ? (
+                      <AlertTriangle className="size-4 text-amber-700 shrink-0" />
+                    ) : (
+                      <ShieldCheck className="size-4 text-emerald-700 shrink-0" />
+                    )}
                     <span>Quality &amp; MLR Pre-Flight Verification</span>
                   </div>
-                  <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold">
-                    6/6 Passed · 0 Blockers
+                  <span
+                    className={cn(
+                      "rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold",
+                      hasBlockers
+                        ? "bg-rose-100 text-rose-800 border-rose-300"
+                        : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                    )}
+                  >
+                    {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-emerald-900/90 pt-1">
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
-                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block text-[var(--ink)]">24 Verified Claims Cited</span>
-                      <span className="text-[10px] text-[var(--ink-muted)]">Linked to CDSCO / FDA SmPC §1.1 &amp; §2.4</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+                  {/* 1. MLR Check Card (With Blocker & Fix Action) */}
+                  {!mlrCheckResolved ? (
+                    <div className="flex flex-col justify-between bg-rose-50/90 rounded-lg p-2.5 border border-rose-200 text-rose-950">
+                      <div className="flex items-start gap-1.5">
+                        <AlertTriangle className="size-3.5 text-rose-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block text-rose-900">MLR: Unverified Comparative Claim</span>
+                          <span className="text-[10px] text-rose-800/80 leading-tight block mt-0.5">
+                            Hero card compares efficacy without citing comparator placebo cohort.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleFixMlrBlocker}
+                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                      >
+                        <Sparkles className="size-2.5" />
+                        <span>Fix with SwishX →</span>
+                      </button>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                  ) : (
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
+                      <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-[var(--ink)]">24 Verified Claims Cited</span>
+                        <span className="text-[10px] text-[var(--ink-muted)]">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. Quality Check Card (With Blocker & Fix Action) */}
+                  {!qaCheckResolved ? (
+                    <div className="flex flex-col justify-between bg-amber-50/90 rounded-lg p-2.5 border border-amber-200 text-amber-950">
+                      <div className="flex items-start gap-1.5">
+                        <AlertTriangle className="size-3.5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block text-amber-900">Quality: Subtitle Phrasing Redundancy</span>
+                          <span className="text-[10px] text-amber-800/80 leading-tight block mt-0.5">
+                            Tagline contains redundant descriptors and unstandardized dosing syntax.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleFixQaBlocker}
+                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                      >
+                        <Sparkles className="size-2.5" />
+                        <span>Fix with SwishX →</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
+                      <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-[var(--ink)]">Editorial &amp; Spelling Clear</span>
+                        <span className="text-[10px] text-[var(--ink-muted)]">Nomenclature and syntax verified</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. Fair Balance & ISI Present */}
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
                     <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold block text-[var(--ink)]">Fair Balance &amp; ISI Present</span>
                       <span className="text-[10px] text-[var(--ink-muted)]">eGFR ≥25 &amp; box warnings verified</span>
                     </div>
                   </div>
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
-                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block text-[var(--ink)]">Editorial &amp; Spelling Clear</span>
-                      <span className="text-[10px] text-[var(--ink-muted)]">Medical nomenclature validated</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+
+                  {/* 4. Vector Layout & Contrast */}
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
                     <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold block text-[var(--ink)]">Vector Layout &amp; Contrast</span>
@@ -1469,6 +1605,23 @@ export function InfographicStudioScreen() {
                     </div>
                   </div>
                 </div>
+
+                {/* Optional Auto-Fix helper */}
+                {hasBlockers && (
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-[11px] font-semibold text-[var(--ink-2)] border border-black/5 mt-1">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="size-3 text-[var(--brand)]" />
+                      Want SwishX to auto-fix both blockers instantly?
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAutoFixBoth}
+                      className="text-[var(--brand)] font-bold hover:underline cursor-pointer"
+                    >
+                      Auto-Fix Both ⚡
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Informational Notice */}
@@ -1476,26 +1629,47 @@ export function InfographicStudioScreen() {
                 Generation renders in the background using publication vector models. You will receive an email notification when processing completes, and can continue working in SwishX.
               </p>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[var(--line)]">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setConfirmGenerateModalOpen(false)}
-                  className="font-bold cursor-pointer"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setConfirmGenerateModalOpen(false);
-                    handlePublishCreative();
-                  }}
-                  className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-5 cursor-pointer shadow-xs gap-1.5"
-                >
-                  <Sparkles className="size-3.5" />
-                  <span>Confirm &amp; Generate Creative</span>
-                </Button>
+              <div className="flex items-center justify-between pt-2 border-t border-[var(--line)]">
+                {hasBlockers ? (
+                  <span className="text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                    <AlertTriangle className="size-3 shrink-0" />
+                    Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+                    All Quality &amp; MLR checks verified
+                  </span>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setConfirmGenerateModalOpen(false)}
+                    className="font-bold cursor-pointer"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={hasBlockers}
+                    onClick={() => {
+                      if (hasBlockers) return;
+                      setConfirmGenerateModalOpen(false);
+                      handlePublishCreative();
+                    }}
+                    className={cn(
+                      "font-bold px-5 gap-1.5 transition-all",
+                      hasBlockers
+                        ? "bg-black/10 text-black/35 cursor-not-allowed border-none shadow-none"
+                        : "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white cursor-pointer shadow-xs"
+                    )}
+                  >
+                    <Sparkles className="size-3.5" />
+                    <span>Confirm &amp; Generate Creative</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

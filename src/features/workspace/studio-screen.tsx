@@ -524,10 +524,60 @@ export function StudioScreen() {
   };
 
   const [videoGenStep, setVideoGenStep] = useState(1);
+  const [mlrCheckResolved, setMlrCheckResolved] = useState(false);
+  const [qaCheckResolved, setQaCheckResolved] = useState(false);
+  const hasBlockers = !mlrCheckResolved || !qaCheckResolved;
+  const blockerCount = (!mlrCheckResolved ? 1 : 0) + (!qaCheckResolved ? 1 : 0);
+
+  const handleFixMlrBlocker = () => {
+    setGenerateVideoModalOpen(false);
+    setCopilotPanelOpen(true);
+    setActiveTab("assistant");
+    const prompt = "@MLR Check: Please revise comparative wording in Scene 3 to strictly cite EMBRACE-3 PASI 90 rate (p < 0.001) without unverified superiority claims.";
+    setDirectorInput(prompt);
+    setAttachedContexts([{ id: "mlr-fix", type: "scene", label: "MLR Blocker", detail: "Comparative claim in Scene 3" }]);
+    setToMessage("Tagged MLR issue in SwishX Chat");
+    setTimeout(() => setToMessage(null), 2500);
+  };
+
+  const handleFixQaBlocker = () => {
+    setGenerateVideoModalOpen(false);
+    setCopilotPanelOpen(true);
+    setActiveTab("assistant");
+    const prompt = "@Quality Check: Tighten Scene 3 voiceover narration to 135 wpm speech cadence and remove redundant cellular descriptors.";
+    setDirectorInput(prompt);
+    setAttachedContexts([{ id: "qa-fix", type: "scene", label: "Quality Blocker", detail: "Voiceover density >150 wpm" }]);
+    setToMessage("Tagged Quality issue in SwishX Chat");
+    setTimeout(() => setToMessage(null), 2500);
+  };
+
+  const handleAutoFixBoth = () => {
+    setMlrCheckResolved(true);
+    setQaCheckResolved(true);
+    setSceneList((prev) =>
+      prev.map((s, idx) =>
+        idx === 2
+          ? {
+              ...s,
+              title: "Pivotal EMBRACE-3 PASI 90 Response",
+              headline: "Pivotal EMBRACE-3 PASI 90 Response",
+              narration: "In the EMBRACE-3 trial, 52% of patients achieved PASI 90 at Week 16 versus 18% with placebo (p < 0.001).",
+            }
+          : s
+      )
+    );
+    addChatMessage({
+      role: "swishx",
+      text: "✓ **Quality & MLR Pre-Flight Passed**: Auto-resolved both blockers. Rephrased Scene 3 to cite EMBRACE-3 Table 2.4 and adjusted narration to 135 wpm speech cadence. Ready to Generate and Publish.",
+    });
+    setToMessage("Resolved 2 pre-flight blockers with AI");
+    setTimeout(() => setToMessage(null), 2500);
+  };
 
   const handleOpenGenerateVideoModal = () => setGenerateVideoModalOpen(true);
 
   const handleConfirmVideoGeneration = () => {
+    if (hasBlockers) return;
     setGenerateVideoModalOpen(false);
     setStudioMode("generating");
     setActiveTab("assistant");
@@ -759,6 +809,40 @@ export function StudioScreen() {
         };
         setCommentsList((prev) => [createdComment, ...prev]);
         addChatMessage({ role: "swishx", text: `✓ I've added a timestamped reviewer comment at **${formatted}** (${activeMasterChapter?.title}): *" ${createdComment.text} "*` });
+      } else if (rawInput.toLowerCase().includes("mlr") || rawInput.toLowerCase().includes("comparative") || rawInput.toLowerCase().includes("embrace-3")) {
+        setMlrCheckResolved(true);
+        setSceneList((prev) =>
+          prev.map((s, idx) =>
+            idx === 2
+              ? {
+                  ...s,
+                  title: "Pivotal EMBRACE-3 PASI 90 Response",
+                  headline: "Pivotal EMBRACE-3 PASI 90 Response",
+                  narration: "In the EMBRACE-3 trial, 52% of patients achieved PASI 90 at Week 16 versus 18% with placebo (p < 0.001).",
+                }
+              : s
+          )
+        );
+        addChatMessage({
+          role: "swishx",
+          text: `✓ **MLR Blocker Resolved**: Rephrased Scene 3 to cite verified EMBRACE-3 PASI 90 readout (52% vs 18% placebo, p < 0.001). Removed ungrounded superiority claims. MLR pre-flight clearance granted.`,
+        });
+      } else if (rawInput.toLowerCase().includes("quality") || rawInput.toLowerCase().includes("cadence") || rawInput.toLowerCase().includes("pacing") || rawInput.toLowerCase().includes("135 wpm")) {
+        setQaCheckResolved(true);
+        setSceneList((prev) =>
+          prev.map((s, idx) =>
+            idx === 2
+              ? {
+                  ...s,
+                  narration: "52% of patients achieved PASI 90 at Week 16 versus 18% with placebo (p < 0.001), sustained through Week 52.",
+                }
+              : s
+          )
+        );
+        addChatMessage({
+          role: "swishx",
+          text: `✓ **Quality Blocker Resolved**: Condensed Scene 3 narration script to 135 wpm speech cadence. Removed redundant descriptors. Audio-visual pacing verified.`,
+        });
       } else if (isReview) {
         addChatMessage({ role: "swishx", text: `I've analyzed your question against the **${dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora"}** FDA prescribing information and PromoMats evidence library. All clinical claims are 100% grounded.` });
       } else {
@@ -2826,47 +2910,133 @@ export function StudioScreen() {
               </div>
 
               {/* Automated Quality & MLR Pre-Flight Verification Card */}
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 space-y-2.5 text-[12px]">
+              <div
+                className={cn(
+                  "rounded-2xl border p-4 space-y-2.5 text-[12px] transition",
+                  hasBlockers
+                    ? "border-amber-200 bg-amber-50/60 text-amber-950"
+                    : "border-emerald-200 bg-emerald-50/70 text-emerald-900"
+                )}
+              >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold text-emerald-900">
-                    <ShieldCheck className="size-4 text-emerald-700 shrink-0" />
+                  <div className="flex items-center gap-2 font-bold">
+                    {hasBlockers ? (
+                      <AlertTriangle className="size-4 text-amber-700 shrink-0" />
+                    ) : (
+                      <ShieldCheck className="size-4 text-emerald-700 shrink-0" />
+                    )}
                     <span>Quality &amp; MLR Pre-Flight Verification</span>
                   </div>
-                  <span className="rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold">
-                    6/6 Passed · 0 Blockers
+                  <span
+                    className={cn(
+                      "rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold",
+                      hasBlockers
+                        ? "bg-rose-100 text-rose-800 border-rose-300"
+                        : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                    )}
+                  >
+                    {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-emerald-900/90 pt-1">
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
-                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block text-[var(--ink)]">24 Verified Claims Cited</span>
-                      <span className="text-[10px] text-[var(--ink-muted)]">Linked to FDA Prescribing Info §14</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+                  {/* 1. MLR Check Card (With Blocker & Fix Action) */}
+                  {!mlrCheckResolved ? (
+                    <div className="flex flex-col justify-between bg-rose-50/90 rounded-lg p-2.5 border border-rose-200 text-rose-950">
+                      <div className="flex items-start gap-1.5">
+                        <AlertTriangle className="size-3.5 text-rose-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block text-rose-900">MLR: Unverified Comparative Claim</span>
+                          <span className="text-[10px] text-rose-800/80 leading-tight block mt-0.5">
+                            Scene 3 claims superiority without citing head-to-head trial comparator.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleFixMlrBlocker}
+                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                      >
+                        <Sparkles className="size-2.5" />
+                        <span>Fix with SwishX →</span>
+                      </button>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+                  ) : (
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
+                      <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-[var(--ink)]">24 Verified Claims Cited</span>
+                        <span className="text-[10px] text-[var(--ink-muted)]">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. Quality Check Card (With Blocker & Fix Action) */}
+                  {!qaCheckResolved ? (
+                    <div className="flex flex-col justify-between bg-amber-50/90 rounded-lg p-2.5 border border-amber-200 text-amber-950">
+                      <div className="flex items-start gap-1.5">
+                        <AlertTriangle className="size-3.5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block text-amber-900">Quality: Narration Density &gt;150 wpm</span>
+                          <span className="text-[10px] text-amber-800/80 leading-tight block mt-0.5">
+                            Scene 3 voiceover exceeds speech pacing limits with redundant words.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleFixQaBlocker}
+                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                      >
+                        <Sparkles className="size-2.5" />
+                        <span>Fix with SwishX →</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
+                      <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-[var(--ink)]">Script Pacing &amp; Audio Sync</span>
+                        <span className="text-[10px] text-[var(--ink-muted)]">Optimal 135 wpm speech cadence</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. Fair Balance & ISI Present */}
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
                     <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold block text-[var(--ink)]">Fair Balance &amp; ISI Present</span>
                       <span className="text-[10px] text-[var(--ink-muted)]">Contraindication footnotes verified</span>
                     </div>
                   </div>
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
+
+                  {/* 4. Medical Terminology */}
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
                     <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold block text-[var(--ink)]">Medical Terminology Clear</span>
                       <span className="text-[10px] text-[var(--ink-muted)]">Generic name &amp; dosing accurate</span>
                     </div>
                   </div>
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2 border border-emerald-100">
-                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block text-[var(--ink)]">Script Pacing &amp; Audio Sync</span>
-                      <span className="text-[10px] text-[var(--ink-muted)]">Optimal 135 wpm speech cadence</span>
-                    </div>
-                  </div>
                 </div>
+
+                {/* Optional Auto-Fix helper */}
+                {hasBlockers && (
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-[11px] font-semibold text-[var(--ink-2)] border border-black/5 mt-1">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="size-3 text-[var(--brand)]" />
+                      Want SwishX to auto-fix both blockers instantly?
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAutoFixBoth}
+                      className="text-[var(--brand)] font-bold hover:underline cursor-pointer"
+                    >
+                      Auto-Fix Both ⚡
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Informational Notice */}
@@ -2874,23 +3044,43 @@ export function StudioScreen() {
                 Generation renders in the background using neural motion models. You will receive an email notification when processing completes, and can continue working in SwishX.
               </p>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[var(--line)]">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setGenerateVideoModalOpen(false)}
-                  className="font-bold"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleConfirmVideoGeneration}
-                  className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-5 cursor-pointer shadow-xs gap-1.5"
-                >
-                  <Sparkles className="size-3.5" />
-                  <span>Confirm &amp; Generate Video</span>
-                </Button>
+              <div className="flex items-center justify-between pt-2 border-t border-[var(--line)]">
+                {hasBlockers ? (
+                  <span className="text-[11px] text-rose-600 font-semibold flex items-center gap-1">
+                    <AlertTriangle className="size-3 shrink-0" />
+                    Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+                    All Quality &amp; MLR checks verified
+                  </span>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setGenerateVideoModalOpen(false)}
+                    className="font-bold"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={hasBlockers}
+                    onClick={handleConfirmVideoGeneration}
+                    className={cn(
+                      "font-bold px-5 gap-1.5 transition-all",
+                      hasBlockers
+                        ? "bg-black/10 text-black/35 cursor-not-allowed border-none shadow-none"
+                        : "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white cursor-pointer shadow-xs"
+                    )}
+                  >
+                    <Sparkles className="size-3.5" />
+                    <span>Confirm &amp; Generate Video</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
