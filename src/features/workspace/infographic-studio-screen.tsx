@@ -533,25 +533,14 @@ export function InfographicStudioScreen() {
         {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
         <div className="flex items-center gap-2">
           {studioMode === "editor" && (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setExportModalOpen(true)}
-                className="gap-1.5 text-[12px] font-bold border-black/15 hover:border-[var(--brand)] px-3.5 cursor-pointer"
-              >
-                <Download className="size-3.5" />
-                <span>Export PDF</span>
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setConfirmGenerateModalOpen(true)}
-                className="gap-1.5 bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white text-[12px] font-bold shadow-xs cursor-pointer px-4.5 hover:scale-[1.02] transition-transform"
-              >
-                <Sparkles className="size-3.5" />
-                <span>Generate and Publish</span>
-              </Button>
-            </>
+            <Button
+              size="sm"
+              onClick={() => setConfirmGenerateModalOpen(true)}
+              className="gap-1.5 bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white text-[12px] font-bold shadow-xs cursor-pointer px-4.5 hover:scale-[1.02] transition-transform"
+            >
+              <Sparkles className="size-3.5" />
+              <span>Generate and Publish</span>
+            </Button>
           )}
 
           {studioMode === "review" && (
