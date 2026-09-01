@@ -170,54 +170,24 @@ export function CreativesModeScreen() {
 
   return (
     <div className="page-enter space-y-6 max-w-[1140px] text-left">
-      {/* Header — Identical layout to Magic Video */}
+      {/* Header — Left-aligned matching Brand Dossiers and Video screen */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800, marginBottom: 5 }}>
             Master Content Workflow
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>
-            Magic Canvas
+            Create Creatives with AI
           </h1>
           <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "64ch" }}>
             Synthesize source-backed infographics, visual detail aids, congress posters, and journal ads in minutes — grounded in verified label claims.
           </p>
         </div>
-
-        {/* Start from Scratch Action Button */}
-        <button
-          type="button"
-          onClick={() => {
-            setAssetType("infographic");
-            setCreationMode("scratch");
-            setVideoSubStage("intake");
-            setView("create");
-          }}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 20px",
-            borderRadius: "var(--r)",
-            fontWeight: 700,
-            fontSize: 14,
-            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            color: "#fff",
-            boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
-            border: "none",
-            cursor: "pointer",
-            transition: "all .2s ease",
-          }}
-          className="hover:scale-[1.02] active:scale-[0.98]"
-        >
-          <Plus className="size-4 stroke-[2.5]" />
-          <span>Start from Scratch</span>
-        </button>
       </div>
 
-      {/* Mode Grid — 2 Engine Selection Cards (Exact 2x2 Grid Matching Magic Video) */}
+      {/* Mode Grid — 2 Engine Selection Cards (Exact 2x2 Grid Matching Video Studio) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch pt-2">
-        {/* ════ CARD 1: MagicChart™ (Infographic) ════ */}
+        {/* ════ CARD 1: Image (Infographic) (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
           className="group relative flex flex-col rounded-[24px] border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-[var(--brand)] hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
@@ -231,13 +201,13 @@ export function CreativesModeScreen() {
                 </div>
                 <div>
                   <h3 className="text-lg font-[800] text-[var(--ink)] flex items-center gap-1.5">
-                    MagicChart™
+                    Image (Infographic)
                   </h3>
-                  <p className="text-xs text-[var(--ink-2)] font-medium">HCP &amp; Patient Infographic</p>
+                  <p className="text-xs text-[var(--ink-2)] font-medium">Start from scratch · HCP &amp; Patient Infographic</p>
                 </div>
               </div>
               <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-bold text-[var(--brand)] border border-[var(--tint-line)]">
-                Most Popular
+                Start from Scratch
               </span>
             </div>
 
@@ -338,9 +308,9 @@ export function CreativesModeScreen() {
                 </div>
                 <div>
                   <h3 className="text-lg font-[800] text-[var(--ink)] flex items-center gap-1.5">
-                    MagicDeck™
+                    Image (Deck)
                   </h3>
-                  <p className="text-xs text-[var(--ink-2)] font-medium">Visual Detail Aid &amp; Slides</p>
+                  <p className="text-xs text-[var(--ink-2)] font-medium">Visual Detail Aid &amp; Slide Panels</p>
                 </div>
               </div>
               <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10.5px] font-bold text-blue-700 border border-blue-200">
