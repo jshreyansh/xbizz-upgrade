@@ -110,7 +110,7 @@ const initialState = {
   presentationMode: "narrated" as PresentationMode,
   voice: "Rohan · clear and measured",
   music: "No music",
-  selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"],
+  selectedSourceIds: [],
   demoScenarioId: "hcp-launch",
   directionId: creativeDirections[0].id,
   selectedSceneId: "scene-3",

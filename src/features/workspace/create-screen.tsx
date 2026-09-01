@@ -420,7 +420,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 <button
                   key={sample.id}
                   type="button"
-                  onClick={() => setBrief(sample.prompt)}
+                  onClick={() => {
+                    setBrief(sample.prompt);
+                    setSelectedSourceIds(["dermora-core", "dermora-claims", "dermora-brand"]);
+                  }}
                   className={cn(
                     "group flex items-center justify-between gap-3.5 rounded-2xl border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",
                     isSelected
@@ -1054,8 +1057,21 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 {topics.length} {topics.length === 1 ? "topic" : "topics"}
               </span>
             )}
-            {selectedSources.map((source) => (
-              <SourceChip key={source.id} source={source} onRemove={() => toggleSource(source.id)} />
+            {selectedSources.map((source) => {
+              const dynamicSource = {
+                ...source,
+                name: source.name.replace(/DERMORA/g, currentBrandName),
+              };
+              return (
+                <SourceChip key={source.id} source={dynamicSource} onRemove={() => toggleSource(source.id)} />
+              );
+            })}
+            {localFiles.map((file) => (
+              <AttachmentChip
+                key={file}
+                label={file}
+                onRemove={() => setLocalFiles((prev) => prev.filter((f) => f !== file))}
+              />
             ))}
             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full ml-1">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -1082,6 +1098,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           onToggle={toggleSource}
           onUpload={() => { setSourceLibraryOpen(false); fileInputRef.current?.click(); }}
           onClose={() => setSourceLibraryOpen(false)}
+          brandName={currentBrandName}
         />
       )}
       {scenarioLibraryOpen && (
@@ -1181,7 +1198,25 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
   );
 }
 
-function SourceLibraryModal({ selectedIds, query, onQueryChange, sources, onToggle, onUpload, onClose }: { selectedIds: string[]; query: string; onQueryChange: (q: string) => void; sources: PlanningSource[]; onToggle: (id: string) => void; onUpload: () => void; onClose: () => void }) {
+function SourceLibraryModal({
+  selectedIds,
+  query,
+  onQueryChange,
+  sources,
+  onToggle,
+  onUpload,
+  onClose,
+  brandName = "Brand",
+}: {
+  selectedIds: string[];
+  query: string;
+  onQueryChange: (q: string) => void;
+  sources: PlanningSource[];
+  onToggle: (id: string) => void;
+  onUpload: () => void;
+  onClose: () => void;
+  brandName?: string;
+}) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/38 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
       <div className="flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-[22px] border border-white/60 bg-white shadow-2xl">
@@ -1204,8 +1239,8 @@ function SourceLibraryModal({ selectedIds, query, onQueryChange, sources, onTogg
             return (
               <div key={source.id} className={cn("flex items-center justify-between rounded-[14px] border p-3 transition", active ? "border-[#adc4b8] bg-[#edf5f0]" : "border-[var(--line)] bg-white")}>
                 <div className="min-w-0 flex-1 pr-3">
-                  <b className="block truncate text-[13.5px] font-semibold">{source.name}</b>
-                  <span className="block truncate text-[12px] text-[var(--ink-muted)]">{source.detail}</span>
+                  <b className="block truncate text-[13.5px] font-semibold">{source.name.replace(/DERMORA/g, brandName)}</b>
+                  <span className="block truncate text-[12px] text-[var(--ink-muted)]">{source.detail.replace(/DERMORA/g, brandName)}</span>
                 </div>
                 <Button size="sm" variant={active ? "secondary" : "primary"} onClick={() => onToggle(source.id)} className="shrink-0 text-[12px]">
                   {active ? "Remove" : "Attach"}
