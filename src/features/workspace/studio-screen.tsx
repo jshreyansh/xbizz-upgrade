@@ -66,6 +66,7 @@ import {
   MasterVideoSequenceComposition,
 } from "@/features/workspace/video-composition";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab } from "@/types/content";
 
@@ -195,6 +196,9 @@ export function StudioScreen() {
   const isEditor = studioMode === "editor";
   const isGenerating = studioMode === "generating";
   const isReview = studioMode === "review";
+
+  const brandName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
+  const projectTitle = `${brandName} HCP launch`;
 
   const totalDurationSeconds = useMemo(
     () => sceneList.reduce((acc, sc) => acc + (sc.duration || 10), 0),
@@ -524,6 +528,7 @@ export function StudioScreen() {
   };
 
   const [videoGenStep, setVideoGenStep] = useState(1);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [mlrCheckResolved, setMlrCheckResolved] = useState(false);
   const [qaCheckResolved, setQaCheckResolved] = useState(false);
   const hasBlockers = !mlrCheckResolved || !qaCheckResolved;
@@ -912,7 +917,26 @@ export function StudioScreen() {
           )}
           {isReview && (
             <>
-              <Button size="sm" onClick={() => { setToMessage("Preparing high-res MP4 download..."); setTimeout(() => setToMessage(null), 2500); }} className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><Download className="size-3.5" /> <span>Export MP4</span></Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setShareModalOpen(true)}
+                className="border border-black/10 bg-white hover:bg-black/5 text-[var(--ink)] font-bold px-3.5 cursor-pointer shadow-xs gap-1.5"
+              >
+                <Share2 className="size-3.5 text-[var(--brand)]" />
+                <span>Share Link</span>
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setToMessage("Preparing high-res MP4 download...");
+                  setTimeout(() => setToMessage(null), 2500);
+                }}
+                className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"
+              >
+                <Download className="size-3.5" />
+                <span>Export MP4</span>
+              </Button>
             </>
           )}
         </div>
@@ -3086,6 +3110,24 @@ export function StudioScreen() {
           </div>
         </div>
       )}
+
+      {/* Share & Distribute Modal */}
+      <ShareReviewModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        assetType="video"
+        assetTitle={projectTitle}
+        brandName={brandName}
+        durationSeconds={totalDurationSeconds}
+        onExportDirect={() => {
+          setToMessage("Preparing high-res 1080p MP4 master download...");
+          setTimeout(() => setToMessage(null), 2500);
+        }}
+        onShowToast={(msg) => {
+          setToMessage(msg);
+          setTimeout(() => setToMessage(null), 3000);
+        }}
+      />
     </div>
   );
 }

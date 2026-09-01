@@ -41,6 +41,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 
 export type CreativeStudioMode = "editor" | "generating" | "review";
@@ -1328,51 +1329,18 @@ export function InfographicStudioScreen() {
         )}
       </div>
 
-      {/* ── SHARE MODAL ── */}
-      {shareModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-[460px] rounded-2xl bg-white p-6 shadow-2xl border border-black/10 text-left space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="size-8 rounded-full bg-[var(--tint)] text-[var(--brand)] grid place-items-center font-bold">
-                  <Share2 className="size-4" />
-                </span>
-                <h3 className="text-[16px] font-black text-[var(--ink)]">Share Review Link</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShareModalOpen(false)}
-                className="size-7 rounded-full hover:bg-black/5 grid place-items-center text-[var(--ink-muted)]"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <p className="text-[12.5px] text-[var(--ink-muted)]">
-              Anyone with this internal review link can inspect clinical claims, leave comments, and download high-resolution PDF proofs.
-            </p>
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-[#f7f8f6] border border-black/10">
-              <input
-                type="text"
-                readOnly
-                value={`https://swishx.biz/review/creatives/${brandName.toLowerCase()}-hcp-v1`}
-                className="flex-1 bg-transparent text-[11.5px] font-mono text-[var(--ink)] outline-none select-all"
-              />
-              <Button
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard?.writeText(`https://swishx.biz/review/creatives/${brandName.toLowerCase()}-hcp-v1`);
-                  showToast("Shareable link copied to clipboard");
-                  setShareModalOpen(false);
-                }}
-                className="h-7.5 px-3 rounded-lg bg-[var(--brand)] text-white text-[11px] font-bold"
-              >
-                <Copy className="size-3 mr-1" />
-                Copy
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── SHARE & DISTRIBUTE MODAL ── */}
+      <ShareReviewModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        assetType="infographic"
+        assetTitle={`${brandName} HCP Infographic`}
+        brandName={brandName}
+        onExportDirect={() => {
+          setExportModalOpen(true);
+        }}
+        onShowToast={(msg) => showToast(msg)}
+      />
 
       {/* ── EXPORT MODAL ── */}
       {exportModalOpen && (
