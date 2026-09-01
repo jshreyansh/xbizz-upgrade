@@ -916,28 +916,14 @@ export function StudioScreen() {
             </>
           )}
           {isReview && (
-            <>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setShareModalOpen(true)}
-                className="border border-black/10 bg-white hover:bg-black/5 text-[var(--ink)] font-bold px-3.5 cursor-pointer shadow-xs gap-1.5"
-              >
-                <Share2 className="size-3.5 text-[var(--brand)]" />
-                <span>Share Link</span>
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => {
-                  setToMessage("Preparing high-res MP4 download...");
-                  setTimeout(() => setToMessage(null), 2500);
-                }}
-                className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"
-              >
-                <Download className="size-3.5" />
-                <span>Export MP4</span>
-              </Button>
-            </>
+            <Button
+              size="sm"
+              onClick={() => setShareModalOpen(true)}
+              className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"
+            >
+              <Share2 className="size-3.5" />
+              <span>Share Link</span>
+            </Button>
           )}
         </div>
       </header>

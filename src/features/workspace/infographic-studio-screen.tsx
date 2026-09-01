@@ -544,25 +544,14 @@ export function InfographicStudioScreen() {
           )}
 
           {studioMode === "review" && (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShareModalOpen(true)}
-                className="gap-1.5 text-[12px] font-bold border-black/15 hover:border-[var(--brand)] px-3.5 cursor-pointer"
-              >
-                <Share2 className="size-3.5" />
-                <span>Share Link</span>
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setExportModalOpen(true)}
-                className="gap-1.5 bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white text-[12px] font-bold shadow-xs cursor-pointer px-4.5"
-              >
-                <Download className="size-3.5" />
-                <span>Export PDF</span>
-              </Button>
-            </>
+            <Button
+              size="sm"
+              onClick={() => setShareModalOpen(true)}
+              className="gap-1.5 bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white text-[12px] font-bold shadow-xs cursor-pointer px-4 hover:scale-[1.02] transition-transform"
+            >
+              <Share2 className="size-3.5" />
+              <span>Share Link</span>
+            </Button>
           )}
 
           <button

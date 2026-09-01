@@ -41,6 +41,7 @@ export function ShareReviewModal({
 }: ShareReviewModalProps) {
   const [copied, setCopied] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [creativeFormat, setCreativeFormat] = useState<"pdf" | "png" | "jpg">("pdf");
 
   if (!open) return null;
 
@@ -77,11 +78,20 @@ export function ShareReviewModal({
   };
 
   const handleExport = () => {
-    if (onExportDirect) {
-      onExportDirect();
+    if (assetType === "video") {
+      if (onExportDirect) {
+        onExportDirect();
+      } else {
+        onShowToast?.(`✓ Starting download: ${assetTitle} · MP4 (1080p Master)`);
+      }
     } else {
-      const format = assetType === "video" ? "MP4 (1080p)" : "PDF (300 DPI)";
-      onShowToast?.(`✓ Starting download: ${assetTitle} · ${format}`);
+      const formatLabel =
+        creativeFormat === "pdf"
+          ? "PDF (300 DPI CMYK Print)"
+          : creativeFormat === "png"
+          ? "PNG (4K Lossless Image)"
+          : "JPG (High-Quality RGB)";
+      onShowToast?.(`✓ Starting download: ${assetTitle} · ${formatLabel}`);
     }
     onClose();
   };
@@ -241,35 +251,98 @@ export function ShareReviewModal({
                 </div>
               </button>
 
-              {/* Option C: Export as MP4 / PDF */}
-              <button
-                type="button"
-                onClick={handleExport}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-black/10 bg-white hover:border-[var(--brand)] hover:bg-[#fff9f6] transition-all text-left shadow-2xs group cursor-pointer"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-9 rounded-xl bg-[var(--tint)] text-[var(--brand)] grid place-items-center shrink-0 border border-[var(--tint-line)]">
-                    <Download className="size-5" />
+              {/* Option C: Export Master File (Video MP4 or Creative PDF/PNG/JPG) */}
+              {assetType === "video" ? (
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl border border-black/10 bg-white hover:border-[var(--brand)] hover:bg-[#fff9f6] transition-all text-left shadow-2xs group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-9 rounded-xl bg-[var(--tint)] text-[var(--brand)] grid place-items-center shrink-0 border border-[var(--tint-line)]">
+                      <Download className="size-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-[13px] font-bold text-[var(--ink)] flex items-center gap-1.5">
+                        <span>Export as MP4</span>
+                        <span className="rounded-md bg-[var(--tint)] text-[var(--brand-deep)] text-[10px] font-bold px-1.5 py-0.2 border border-[var(--tint-line)]">
+                          1080p HD
+                        </span>
+                      </h4>
+                      <p className="text-[11.5px] text-[var(--ink-muted)]">
+                        Download final high-bitrate video master with full narration &amp; captions
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-[13px] font-bold text-[var(--ink)] flex items-center gap-1.5">
-                      <span>{assetType === "video" ? "Export as MP4" : "Export as PDF"}</span>
-                      <span className="rounded-md bg-[var(--tint)] text-[var(--brand-deep)] text-[10px] font-bold px-1.5 py-0.2 border border-[var(--tint-line)]">
-                        {assetType === "video" ? "1080p HD" : "300 DPI Print"}
-                      </span>
-                    </h4>
-                    <p className="text-[11.5px] text-[var(--ink-muted)]">
-                      {assetType === "video"
-                        ? "Download final high-bitrate video master with full narration"
-                        : "Download vector graphic proof with complete ISI fair balance"}
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-[var(--brand)] opacity-80 group-hover:opacity-100 shrink-0 ml-2">
+                    <span>Download</span>
+                    <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+              ) : (
+                <div className="w-full flex flex-col p-3.5 rounded-2xl border border-black/10 bg-white shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="size-8 rounded-xl bg-[var(--tint)] text-[var(--brand)] grid place-items-center shrink-0 border border-[var(--tint-line)]">
+                        <Download className="size-4.5" />
+                      </div>
+                      <div>
+                        <h4 className="text-[13px] font-bold text-[var(--ink)] flex items-center gap-1.5">
+                          <span>Export Master Graphic</span>
+                          <span className="rounded-md bg-[var(--tint)] text-[var(--brand-deep)] text-[10px] font-bold px-1.5 py-0.2 border border-[var(--tint-line)] uppercase">
+                            {creativeFormat} format
+                          </span>
+                        </h4>
+                      </div>
+                    </div>
+
+                    {/* Format Selector Pills (PDF / PNG / JPG) */}
+                    <div className="flex items-center gap-1 p-0.5 bg-[#f0f2ef] rounded-xl border border-black/5 shrink-0">
+                      {(
+                        [
+                          { id: "pdf", label: "PDF" },
+                          { id: "png", label: "PNG" },
+                          { id: "jpg", label: "JPG" },
+                        ] as const
+                      ).map((fmt) => (
+                        <button
+                          key={fmt.id}
+                          type="button"
+                          onClick={() => setCreativeFormat(fmt.id)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                            creativeFormat === fmt.id
+                              ? "bg-white text-[var(--brand)] shadow-2xs border border-black/10"
+                              : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                          )}
+                        >
+                          {fmt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                    <p className="text-[11.5px] text-[var(--ink-muted)] pr-3 leading-snug">
+                      {creativeFormat === "pdf" &&
+                        "Print-ready vector PDF proof with complete ISI fair balance tables & 3mm bleed."}
+                      {creativeFormat === "png" &&
+                        "Lossless 4K transparent/solid image asset (2400×3200px) for slides & displays."}
+                      {creativeFormat === "jpg" &&
+                        "Standard compressed high-quality RGB image optimized for web portals & emails."}
                     </p>
+
+                    <Button
+                      size="sm"
+                      onClick={handleExport}
+                      className="h-8 px-4 rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white text-[11.5px] font-bold shrink-0 cursor-pointer shadow-xs gap-1"
+                    >
+                      <Download className="size-3.5" />
+                      <span>Export {creativeFormat.toUpperCase()}</span>
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-bold text-[var(--brand)] opacity-80 group-hover:opacity-100 shrink-0 ml-2">
-                  <span>Download</span>
-                  <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </button>
+              )}
             </div>
           </div>
 
