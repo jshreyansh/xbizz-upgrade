@@ -220,6 +220,8 @@ export function InfographicStudioScreen() {
     return pagesList.find((p) => p.id === activePageId) || pagesList[0] || DEFAULT_PAGE_1;
   }, [pagesList, activePageId]);
 
+  const isReview = studioMode === "review";
+
   // Reviewer Comments State
   const [commentsList, setCommentsList] = useState([
     {
@@ -403,6 +405,7 @@ export function InfographicStudioScreen() {
     setTimeout(() => {
       setStudioMode("review");
       setActiveTab("comments");
+      if (!copilotPanelOpen) toggleCopilotPanel();
       showToast("Creative published · Opened Shared Review View");
     }, 2300);
   };
@@ -627,16 +630,18 @@ export function InfographicStudioScreen() {
             {/* Pages Strip Header */}
             <div className="p-3 border-b border-[var(--line)] bg-white flex items-center justify-between">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
-                Pages ({pagesList.length})
+                {isReview ? `Pages · ${pagesList.length}` : `Pages (${pagesList.length})`}
               </span>
-              <button
-                type="button"
-                onClick={handleAddPage}
-                className="p-1 text-[var(--brand)] hover:bg-[var(--tint)] rounded cursor-pointer transition-colors"
-                title="Add Page"
-              >
-                <Plus className="size-4 stroke-[2.5]" />
-              </button>
+              {!isReview && (
+                <button
+                  type="button"
+                  onClick={handleAddPage}
+                  className="p-1 text-[var(--brand)] hover:bg-[var(--tint)] rounded cursor-pointer transition-colors"
+                  title="Add Page"
+                >
+                  <Plus className="size-4 stroke-[2.5]" />
+                </button>
+              )}
             </div>
 
             {/* Page Thumbnails List */}
