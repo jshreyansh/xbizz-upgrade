@@ -6,15 +6,20 @@ import {
   ArrowUp,
   Check,
   ChevronDown,
+  ChevronRight,
   FileText,
   Film,
   FlaskConical,
   Globe2,
   History,
+  Image as ImageIcon,
   Info,
   Layers,
+  Monitor,
   MoreHorizontal,
+  Palette,
   Paperclip,
+  Plus,
   Redo2,
   Search,
   ShieldCheck,
@@ -41,13 +46,25 @@ import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import type { PlanningSource, Audience } from "@/types/content";
 
-const TYPEWRITER_HEADLINES = [
+const VIDEO_HEADLINES = [
   "What video would you like to create today?",
   "Describe your brief in detail to generate directly from text",
   "Use the example prompts below to start creating an asset",
 ];
 
+const INFOGRAPHIC_HEADLINES = [
+  "What infographic would you like to design today?",
+  "Describe your clinical brief to generate directly from approved claims",
+  "Use the example prompts below to create a high-impact leave-behind",
+];
+
 const PRESENTERS = [
+  {
+    id: "none",
+    name: "No Avatar",
+    role: "Voiceover narration & cinematic 3D motion only",
+    image: "",
+  },
   {
     id: "maya",
     name: "Dr. Maya Kapoor",
@@ -85,6 +102,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   const {
     assetType,
+    setAssetType,
     brief,
     audience,
     market,
@@ -92,6 +110,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     goal,
     topics,
     format,
+    pageShape,
+    infographicPages,
+    infographicTemplate,
     selectedSourceIds,
     demoScenarioId,
     setBrief,
@@ -99,6 +120,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setMarket,
     setIntendedUse,
     setFormat,
+    setPageShape,
+    setInfographicPages,
+    setInfographicTemplate,
     setTopics,
     setDuration,
     setLanguage,
@@ -112,10 +136,15 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setChatMessages,
   } = useWorkspaceStore();
 
+  const isInfographic = assetType === "infographic";
+  const activeHeadlines = isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
+
   const [sourceLibraryOpen, setSourceLibraryOpen] = useState(false);
   const [scenarioLibraryOpen, setScenarioLibraryOpen] = useState(false);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
-  const [activePopover, setActivePopover] = useState<"engine" | "aspect" | "audience" | "topics" | "character" | null>(null);
+  const [activePopover, setActivePopover] = useState<"engine" | "aspect" | "pageshape" | "audience" | "topics" | "character" | "pages" | "template" | null>(null);
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  const [activeTier2, setActiveTier2] = useState<"engine" | "aspect" | "audience" | "topics" | "character" | "template" | null>(null);
   const [selectedPresenterId, setSelectedPresenterId] = useState<string>("maya");
   const selectedPresenter = PRESENTERS.find((p) => p.id === selectedPresenterId) || PRESENTERS[0];
   const [sourceQuery, setSourceQuery] = useState("");
@@ -124,11 +153,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   // ── Typewriter Animated Switching Headline Hook ──
   const [headlineIndex, setHeadlineIndex] = useState(0);
-  const [displayedHeadline, setDisplayedHeadline] = useState(TYPEWRITER_HEADLINES[0]);
+  const [displayedHeadline, setDisplayedHeadline] = useState(activeHeadlines[0]);
   const [isDeletingHeadline, setIsDeletingHeadline] = useState(false);
 
   useEffect(() => {
-    const currentPhrase = TYPEWRITER_HEADLINES[headlineIndex];
+    const currentPhrase = activeHeadlines[headlineIndex % activeHeadlines.length];
     let timer: NodeJS.Timeout;
 
     if (!isDeletingHeadline) {
@@ -151,13 +180,13 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         // Pause briefly at empty before typing next phrase
         timer = setTimeout(() => {
           setIsDeletingHeadline(false);
-          setHeadlineIndex((prev) => (prev + 1) % TYPEWRITER_HEADLINES.length);
+          setHeadlineIndex((prev) => (prev + 1) % activeHeadlines.length);
         }, 350);
       }
     }
 
     return () => clearTimeout(timer);
-  }, [displayedHeadline, isDeletingHeadline, headlineIndex]);
+  }, [displayedHeadline, isDeletingHeadline, headlineIndex, activeHeadlines]);
 
   const creationMode = useWorkspaceStore((s) => s.creationMode);
   const setCreationMode = useWorkspaceStore((s) => s.setCreationMode);
@@ -258,24 +287,27 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     () => [
       {
         id: "hcp-launch",
-        tag: "HCP Launch Video",
-        oneLiner: "Highlight clinical need, mechanism & pivotal endpoints",
-        prompt: `Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for ${currentBrandName}.`,
+        tag: isInfographic ? "HCP Clinical Leave-Behind" : "HCP Launch Video",
+        prompt: isInfographic
+          ? `Create a high-impact clinical leave-behind infographic for ${currentBrandName} summarizing pivotal Phase III PASI 90 clearance, dual mechanism of action, and licensed indication cut-offs.`
+          : `Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for ${currentBrandName}.`,
       },
       {
         id: "moa-efficacy",
-        tag: "Mechanism & Efficacy",
-        oneLiner: "45s animation on receptor binding & safety profile",
-        prompt: `Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety for ${currentBrandName}.`,
+        tag: isInfographic ? "3D MoA Cellular Cascade" : "Mechanism & Efficacy",
+        prompt: isInfographic
+          ? `Design a 3D cellular mechanism of action visual flow showing receptor binding, downstream kinase blockade, and plaque reduction for ${currentBrandName}.`
+          : `Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety for ${currentBrandName}.`,
       },
       {
         id: "presenter-briefing",
-        tag: "Clinical Briefing",
-        oneLiner: "Presenter-led walkthrough with fair balance data",
-        prompt: `Generate a presenter-led clinical briefing explaining the dual mechanism of action and fair balance safety profile for ${currentBrandName}.`,
+        tag: isInfographic ? "Clinical Readout & Cut-Offs" : "Clinical Briefing",
+        prompt: isInfographic
+          ? `Summarize the EMBRACE-3 pivotal trial endpoints (52% PASI 90 vs 18% placebo) with eGFR ≥25 prescribing cut-offs and mandatory ISI fair balance for ${currentBrandName}.`
+          : `Generate a presenter-led clinical briefing explaining the dual mechanism of action and fair balance safety profile for ${currentBrandName}.`,
       },
     ],
-    [currentBrandName]
+    [currentBrandName, isInfographic]
   );
 
   const sourceDisplayName =
@@ -374,8 +406,15 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </h1>
           </div>
 
-          {/* ── 3 Intelligible One-Liner Prompt Suggestion Cards (3-column grid) ── */}
-          <div className="w-full max-w-[940px] grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* ── Example Prompt Suggestions (Stacked Top Above & Below so Prompts are Fully Visible) ── */}
+          <div className="w-full max-w-[940px] flex flex-col gap-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                Example Prompts
+              </span>
+              <span className="text-[10.5px] text-[var(--ink-muted)]">Click any prompt to load into brief</span>
+            </div>
+
             {samplePrompts.map((sample) => {
               const isSelected = brief.trim() === sample.prompt.trim();
               return (
@@ -383,28 +422,26 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   key={sample.id}
                   type="button"
                   onClick={() => setBrief(sample.prompt)}
-                  title={sample.prompt}
                   className={cn(
-                    "group flex items-center justify-between gap-3 rounded-2xl border p-3 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:-translate-y-0.5 hover:shadow-xs",
+                    "group flex items-center justify-between gap-3.5 rounded-2xl border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",
                     isSelected
                       ? "border-[var(--brand)] bg-[var(--tint)]/70 ring-2 ring-[var(--brand)]/20 shadow-xs"
-                      : "border-black/[0.08] bg-white hover:border-[var(--brand)] hover:bg-white"
+                      : "border-black/[0.08] bg-white hover:border-[var(--brand)]/80 hover:bg-[#fffcfb]"
                   )}
                 >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="grid size-7 place-items-center rounded-lg bg-[var(--tint)] text-[var(--brand-deep)] shrink-0 border border-[var(--tint-line)]">
-                      <Sparkles className="size-3.5 text-[var(--brand)]" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[12px] font-bold text-[var(--ink)] truncate">
-                        {sample.tag}
-                      </div>
-                      <div className="text-[11px] text-[var(--ink-muted)] truncate group-hover:text-[var(--ink-2)] transition-colors">
-                        {sample.oneLiner}
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span className="inline-flex items-center rounded-lg bg-[var(--tint)] px-2 py-0.5 text-[11px] font-extrabold text-[var(--brand-deep)] border border-[var(--tint-line)] shrink-0">
+                      {sample.tag}
+                    </span>
+                    <span className="text-[12.5px] text-[var(--ink)] font-medium leading-normal line-clamp-2 sm:line-clamp-1 flex-1">
+                      "{sample.prompt}"
+                    </span>
                   </div>
-                  <ArrowRight className="size-3.5 text-[var(--brand)] opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0" />
+
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-[var(--brand)] opacity-80 group-hover:opacity-100 shrink-0 ml-2">
+                    <span className="hidden sm:inline">Use prompt</span>
+                    <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
                 </button>
               );
             })}
@@ -438,358 +475,506 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               </div>
             )}
 
-            {/* Bottom Toolbar & Action Bar (Configurable Chips Flow: Attach, Engine, Aspect Ratio, Audience, Topics, Character) */}
+            {/* Bottom Toolbar & Action Bar (Claude-style clean toolbar with unified options modal) */}
             <div
-              className="relative flex flex-wrap items-center justify-between gap-2 border-t border-black/[0.06] bg-[#fafbf9]/95 px-3.5 py-2.5 rounded-b-[26px]"
+              className="relative flex items-center justify-between gap-2 border-t border-black/[0.06] bg-[#fafbf9]/95 px-3.5 py-2.5 rounded-b-[26px]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex flex-wrap items-center gap-1.5">
-                {/* 1. Attachment Icon Button (Leftmost Position, Icon Only) */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  title="Attach clinical materials, briefs, or PDFs"
-                  aria-label="Attach documents"
-                  className="grid size-7 place-items-center rounded-xl border border-black/10 bg-white text-[var(--ink-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] transition cursor-pointer shadow-2xs shrink-0"
-                >
-                  <Paperclip className="size-3.5" />
-                </button>
-
-                {/* 2. Engine Selector Chip */}
+              <div className="flex items-center gap-2.5">
+                {/* ─── Claude-style '+' Plus Button with Non-flickering 2-Panel Flyout Menu ─── */}
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => setActivePopover(activePopover === "engine" ? null : "engine")}
+                    onClick={() => {
+                      setPlusMenuOpen(!plusMenuOpen);
+                      setActiveTier2(activeTier2 || "audience");
+                    }}
+                    title="Configure generation parameters, audience, topics, aspect ratio, presenter avatar"
+                    aria-label="Add options"
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
-                      activePopover === "engine"
-                        ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
-                        : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
+                      "grid size-8 place-items-center rounded-xl border transition-all cursor-pointer shadow-2xs shrink-0",
+                      plusMenuOpen
+                        ? "border-[var(--brand)] bg-[var(--brand)] text-white ring-2 ring-[var(--brand)]/20 shadow-xs"
+                        : "border-black/10 bg-white text-[var(--ink-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] hover:bg-white"
                     )}
                   >
-                    {creationMode === "magic-avatar" ? (
-                      <UserCircle2 className="size-3 text-[var(--brand)]" />
-                    ) : (
-                      <Film className="size-3 text-[var(--brand)]" />
-                    )}
-                    <span>{creationMode === "magic-avatar" ? "MagicAvatar™" : "MagicReel™"}</span>
-                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
+                    <Plus className={cn("size-4 transition-transform duration-200", plusMenuOpen && "rotate-45")} />
                   </button>
 
-                  {activePopover === "engine" && (
-                    <div className="absolute bottom-full left-0 mb-2 z-40 w-56 rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                  {/* Pop-up Multi-Tier Menu (Level 1 is stationary; Level 2 adjusts height independently) */}
+                  {plusMenuOpen && (
+                    <div
+                      className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-2xl border border-black/10 bg-white p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] space-y-0.5"
+                    >
+                      {/* ── Tier 1: Main Menu Categories (Left Stationary Panel) ── */}
+                      {/* 1. Attach Files */}
                       <button
                         type="button"
                         onClick={() => {
-                          setCreationMode("magic-reel");
-                          setPresentationMode("narrated");
-                          setActivePopover(null);
+                          setPlusMenuOpen(false);
+                          fileInputRef.current?.click();
                         }}
-                        className={cn(
-                          "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11px] transition cursor-pointer",
-                          creationMode === "magic-reel" ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
-                        )}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[12px] font-medium text-[var(--ink)] hover:bg-black/5 text-left cursor-pointer transition-colors"
                       >
-                        <div className="flex items-center gap-2">
-                          <Film className="size-3.5 text-[var(--brand)]" />
-                          <span>MagicReel™ (Cinematic)</span>
-                        </div>
-                        {creationMode === "magic-reel" && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                        <Paperclip className="size-4 text-[var(--brand)] shrink-0" />
+                        <span className="flex-1">Add files or briefs</span>
                       </button>
+
+                      <div className="h-px w-full bg-black/6 my-1" />
+
+                      {/* 2. Target Audience */}
                       <button
                         type="button"
-                        onClick={() => {
-                          setCreationMode("magic-avatar");
-                          setPresentationMode("presenter");
-                          setActivePopover(null);
-                        }}
+                        onMouseEnter={() => setActiveTier2("audience")}
+                        onClick={() => setActiveTier2(activeTier2 === "audience" ? null : "audience")}
                         className={cn(
-                          "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11px] transition cursor-pointer",
-                          creationMode === "magic-avatar" ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                          activeTier2 === "audience"
+                            ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                            : "text-[var(--ink)] hover:bg-black/5"
                         )}
                       >
-                        <div className="flex items-center gap-2">
-                          <UserCircle2 className="size-3.5 text-[var(--brand)]" />
-                          <span>MagicAvatar™ (Doctor)</span>
+                        <div className="flex items-center gap-2.5">
+                          <Users className="size-4 text-[var(--brand)] shrink-0" />
+                          <span>Target Audience</span>
                         </div>
-                        {creationMode === "magic-avatar" && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                        <ChevronRight className="size-3.5 opacity-60" />
                       </button>
-                    </div>
-                  )}
-                </div>
 
-                {/* 3. Aspect Ratio / Output Frame Chip (Geometric Shape Icons) */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setActivePopover(activePopover === "aspect" ? null : "aspect")}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
-                      activePopover === "aspect"
-                        ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
-                        : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
-                    )}
-                  >
-                    {format === "9:16" ? (
-                      <svg className="size-3 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none"><rect x="3.5" y="1" width="9" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>
-                    ) : format === "1:1" ? (
-                      <svg className="size-3 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>
-                    ) : (
-                      <svg className="size-3 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none"><rect x="1" y="3.5" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.8" /></svg>
-                    )}
-                    <span className="font-mono">{format || "16:9"}</span>
-                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
-                  </button>
+                      {/* 3. Output Size & Aspect */}
+                      <button
+                        type="button"
+                        onMouseEnter={() => setActiveTier2("aspect")}
+                        onClick={() => setActiveTier2(activeTier2 === "aspect" ? null : "aspect")}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                          activeTier2 === "aspect"
+                            ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                            : "text-[var(--ink)] hover:bg-black/5"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Monitor className="size-4 text-[var(--brand)] shrink-0" />
+                          <span>Size &amp; Aspect Ratio</span>
+                        </div>
+                        <ChevronRight className="size-3.5 opacity-60" />
+                      </button>
 
-                  {activePopover === "aspect" && (
-                    <div className="absolute bottom-full left-0 mb-2 z-40 w-52 rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-                      {[
-                        {
-                          id: "16:9",
-                          label: "16:9 Landscape",
-                          desc: "Desktop, Keynote & Decks",
-                          icon: (
-                            <svg className="size-3.5 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none">
-                              <rect x="1" y="3.5" width="14" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
-                            </svg>
-                          ),
-                        },
-                        {
-                          id: "9:16",
-                          label: "9:16 Portrait",
-                          desc: "Mobile & WhatsApp Reels",
-                          icon: (
-                            <svg className="size-3.5 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none">
-                              <rect x="3.5" y="1" width="9" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
-                            </svg>
-                          ),
-                        },
-                        {
-                          id: "1:1",
-                          label: "1:1 Square",
-                          desc: "Feed & Web Portals",
-                          icon: (
-                            <svg className="size-3.5 text-[var(--brand)] shrink-0" viewBox="0 0 16 16" fill="none">
-                              <rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
-                            </svg>
-                          ),
-                        },
-                      ].map((item) => (
+                      {/* 4. Clinical Focus Topics */}
+                      <button
+                        type="button"
+                        onMouseEnter={() => setActiveTier2("topics")}
+                        onClick={() => setActiveTier2(activeTier2 === "topics" ? null : "topics")}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                          activeTier2 === "topics"
+                            ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                            : "text-[var(--ink)] hover:bg-black/5"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Layers className="size-4 text-[var(--brand)] shrink-0" />
+                          <span>Clinical Topics</span>
+                        </div>
+                        <ChevronRight className="size-3.5 opacity-60" />
+                      </button>
+
+                      {/* 5. Presenter / Avatar */}
+                      <button
+                        type="button"
+                        onMouseEnter={() => setActiveTier2("character")}
+                        onClick={() => setActiveTier2(activeTier2 === "character" ? null : "character")}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                          activeTier2 === "character"
+                            ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                            : "text-[var(--ink)] hover:bg-black/5"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <UserCircle2 className="size-4 text-[var(--brand)] shrink-0" />
+                          <span>Presenter &amp; Avatar</span>
+                        </div>
+                        <ChevronRight className="size-3.5 opacity-60" />
+                      </button>
+
+                      {/* 6. Studio Engine */}
+                      <button
+                        type="button"
+                        onMouseEnter={() => setActiveTier2("engine")}
+                        onClick={() => setActiveTier2(activeTier2 === "engine" ? null : "engine")}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                          activeTier2 === "engine"
+                            ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                            : "text-[var(--ink)] hover:bg-black/5"
+                        )}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Film className="size-4 text-[var(--brand)] shrink-0" />
+                          <span>Creation Engine</span>
+                        </div>
+                        <ChevronRight className="size-3.5 opacity-60" />
+                      </button>
+
+                      {/* 7. Infographic Layout / Templates (if Infographic mode) */}
+                      {isInfographic && (
                         <button
-                          key={item.id}
                           type="button"
-                          onClick={() => {
-                            setFormat(item.id);
-                            setActivePopover(null);
-                          }}
+                          onMouseEnter={() => setActiveTier2("template")}
+                          onClick={() => setActiveTier2(activeTier2 === "template" ? null : "template")}
                           className={cn(
-                            "flex w-full items-center justify-between p-2 rounded-xl text-left transition cursor-pointer",
-                            (format || "16:9") === item.id ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
+                            "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                            activeTier2 === "template"
+                              ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                              : "text-[var(--ink)] hover:bg-black/5"
                           )}
                         >
-                          <div className="flex items-center gap-2">
-                            {item.icon}
-                            <div>
-                              <div className="text-[11px] font-bold">{item.label}</div>
-                              <div className="text-[9px] text-[var(--ink-muted)] font-normal">{item.desc}</div>
-                            </div>
+                          <div className="flex items-center gap-2.5">
+                            <Palette className="size-4 text-[var(--brand)] shrink-0" />
+                            <span>Design &amp; Layout</span>
                           </div>
-                          {(format || "16:9") === item.id && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                          <ChevronRight className="size-3.5 opacity-60" />
                         </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      )}
 
-                {/* 4. Target Audience Chip (Default: "Audience") */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setActivePopover(activePopover === "audience" ? null : "audience")}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
-                      activePopover === "audience"
-                        ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
-                        : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
-                    )}
-                  >
-                    <Users className="size-3 text-[var(--brand)]" />
-                    <span>{audience ? audience : "Audience"}</span>
-                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
-                  </button>
-
-                  {activePopover === "audience" && (
-                    <div className="absolute bottom-full left-0 mb-2 z-40 w-56 rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
-                      {[
-                        { id: "HCP", label: "HCP (Physicians & Specialists)" },
-                        { id: "Patient", label: "Patients & Caregivers" },
-                        { id: "Payer", label: "Payers & Formulary Committees" },
-                        { id: "Field team", label: "Field Sales & Medical Liaisons" },
-                        { id: "Consumer", label: "General Consumer / DTC" },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => {
-                            setAudience(item.id as Audience);
-                            setActivePopover(null);
-                          }}
-                          className={cn(
-                            "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11px] transition cursor-pointer",
-                            audience === item.id ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
-                          )}
+                      {/* ── Tier 2: Submenu Panel (Anchored to Tier 1, independent height based on its items, bottom-aligned, zero displacement) ── */}
+                      {activeTier2 && (
+                        <div
+                          className="absolute left-full bottom-0 ml-2 w-[310px] rounded-2xl border border-black/10 bg-white p-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3"
                         >
-                          <span>{item.label}</span>
-                          {audience === item.id && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* 5. Topics Multi-select Chip (Label: "Topics") */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setActivePopover(activePopover === "topics" ? null : "topics")}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
-                      activePopover === "topics"
-                        ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
-                        : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
-                    )}
-                  >
-                    <Layers className="size-3 text-[var(--brand)]" />
-                    <span>{topics.length > 0 ? `Topics (${topics.length})` : "Topics"}</span>
-                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
-                  </button>
-
-                  {activePopover === "topics" && (
-                    <div className="absolute bottom-full left-0 mb-2 z-40 w-64 rounded-2xl border border-black/10 bg-white p-2 shadow-xl space-y-1 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
-                        Select Topics
-                      </div>
-                      {[
-                        "Product Introduction",
-                        "Mechanism of Action (MoA)",
-                        "Clinical Efficacy & Endpoints",
-                        "Safety & Tolerability",
-                        "Dosing & Administration",
-                        "Patient Selection & Eligibility",
-                      ].map((topic) => {
-                        const isSelected = topics.includes(topic);
-                        return (
-                          <button
-                            key={topic}
-                            type="button"
-                            onClick={() => toggleTopic(topic)}
-                            className={cn(
-                              "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11px] font-medium transition cursor-pointer",
-                              isSelected ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/5 text-[var(--ink)]"
-                            )}
-                          >
-                            <span>{topic}</span>
-                            <div className={cn("size-3.5 rounded-md border flex items-center justify-center", isSelected ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20")}>
-                              {isSelected && <Check className="size-2.5 stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* 6. Presenter / Character Selector Chip (Avatar Library & Top Doctors) */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setActivePopover(activePopover === "character" ? null : "character")}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-xl border px-2 py-1 text-[11px] font-semibold transition cursor-pointer shadow-2xs h-7",
-                      activePopover === "character"
-                        ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] ring-2 ring-[var(--brand)]/20"
-                        : "border-black/10 bg-white text-[var(--ink)] hover:border-[var(--brand)]"
-                    )}
-                  >
-                    {selectedPresenter ? (
-                      <img src={selectedPresenter.image} alt={selectedPresenter.name} className="size-3.5 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <UserCircle2 className="size-3 text-[var(--brand)]" />
-                    )}
-                    <span>{selectedPresenter ? selectedPresenter.name.split(" ")[1] || selectedPresenter.name : "Character"}</span>
-                    <ChevronDown className="size-2.5 text-[var(--ink-muted)]" />
-                  </button>
-
-                  {activePopover === "character" && (
-                    <div className="absolute bottom-full left-0 mb-2 z-40 w-[330px] sm:w-[370px] rounded-2xl border border-black/10 bg-white p-3 shadow-xl space-y-2.5 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
-                        Select AI Presenter Avatar
-                      </div>
-
-                      {/* Featured Doctors matching Avatar Selector */}
-                      <div className="grid grid-cols-2 gap-2">
-                        {PRESENTERS.slice(0, 2).map((item) => {
-                          const isSelected = selectedPresenterId === item.id;
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedPresenterId(item.id);
-                                setVoice(`${item.name.split(" ")[1]} · clear and measured`);
-                                setActivePopover(null);
-                              }}
-                              className={cn(
-                                "flex flex-col p-2 rounded-xl border text-left transition cursor-pointer relative",
-                                isSelected
-                                  ? "border-[var(--brand)] bg-[var(--tint)]/50 ring-2 ring-[var(--brand)]/20"
-                                  : "border-black/10 bg-[#fafbf9] hover:bg-white hover:border-black/20"
-                              )}
-                            >
-                              <div className="flex items-center justify-between w-full mb-1">
-                                <img src={item.image} alt={item.name} className="size-7 rounded-full object-cover border border-black/10 shadow-2xs" />
-                                {isSelected && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                          {activeTier2 === "audience" && (
+                            <div className="space-y-1">
+                              <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
+                                <span>Target Audience</span>
+                                <span className="text-emerald-700 font-bold uppercase">{audience}</span>
                               </div>
-                              <div className="text-[10.5px] font-bold text-[var(--ink)] leading-tight">{item.name}</div>
-                              <div className="text-[9px] text-[var(--ink-muted)] leading-tight mt-0.5 truncate">{item.role}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
+                              {[
+                                { id: "HCP", label: "HCPs & Specialists", desc: "Doctors, Specialists, Hospitalists" },
+                                { id: "Patient", label: "Patients & Caregivers", desc: "Treatment understanding, adherence" },
+                                { id: "Field team", label: "Field Force & Reps", desc: "Detailing aids & objection handling" },
+                                { id: "Payer", label: "Payers & Formularies", desc: "HEOR, QALY & budget impact" },
+                                { id: "Consumer", label: "Consumers & OTC", desc: "General public & retail awareness" },
+                              ].map((item) => {
+                                const isSelected = audience === item.id;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setAudience(item.id as Audience);
+                                    }}
+                                    className={cn(
+                                      "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
+                                      isSelected
+                                        ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
+                                        : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                    )}
+                                  >
+                                    <div>
+                                      <div className="text-[12px] font-bold">{item.label}</div>
+                                      <div className="text-[10px] text-[var(--ink-muted)] font-normal">{item.desc}</div>
+                                    </div>
+                                    {isSelected && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
 
-                      {/* Avatar Library Options */}
-                      <div className="pt-2 border-t border-black/5 space-y-1">
-                        <div className="text-[10px] font-bold text-[var(--ink-muted)] px-1">Avatar Library</div>
-                        <div className="grid grid-cols-1 gap-1 max-h-[110px] overflow-y-auto">
-                          {PRESENTERS.slice(2).map((item) => {
-                            const isSelected = selectedPresenterId === item.id;
-                            return (
+                          {activeTier2 === "aspect" && (
+                            <div className="space-y-1">
+                              <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
+                                <span>{isInfographic ? "Infographic Shape" : "Video Aspect Ratio"}</span>
+                                <span className="text-emerald-700 font-bold uppercase">
+                                  {isInfographic ? pageShape : format || "16:9"}
+                                </span>
+                              </div>
+                              {(isInfographic
+                                ? [
+                                    { id: "3:4", label: "3:4 Tablet Detailer", desc: "Held upright & iPad friendly" },
+                                    { id: "16:9", label: "16:9 Landscape Slide", desc: "Screens & presentations" },
+                                    { id: "A4", label: "A4 Print Document", desc: "Print leave-behind standard" },
+                                  ]
+                                : [
+                                    { id: "16:9", label: "16:9 Landscape Master", desc: "Desktop, Keynote & Decks" },
+                                    { id: "9:16", label: "9:16 Vertical Reel", desc: "Mobile & WhatsApp Briefs" },
+                                    { id: "1:1", label: "1:1 Square Feed", desc: "iPad Detailing & Social" },
+                                    { id: "4:5", label: "4:5 Portrait Social", desc: "Professional Networks" },
+                                  ]
+                              ).map((item) => {
+                                const isSelected = isInfographic ? pageShape === item.id : (format || "16:9") === item.id;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                      if (isInfographic) {
+                                        setPageShape(item.id as any);
+                                      } else {
+                                        setFormat(item.id);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
+                                      isSelected
+                                        ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
+                                        : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                    )}
+                                  >
+                                    <div>
+                                      <div className="text-[12px] font-bold">{item.label}</div>
+                                      <div className="text-[10px] text-[var(--ink-muted)] font-normal">{item.desc}</div>
+                                    </div>
+                                    {isSelected && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {activeTier2 === "topics" && (
+                            <div className="space-y-1">
+                              <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
+                                <span>Clinical Focus Topics</span>
+                                <span className="text-emerald-700 font-bold uppercase">{topics.length} ACTIVE</span>
+                              </div>
+                              {[
+                                "Efficacy & Clinical Readout",
+                                "Mechanism of Action (MoA)",
+                                "Safety & Tolerability Profile",
+                                "Dosing & Administration",
+                                "Patient Compliance & QoL",
+                                "Comparative Head-to-Head",
+                              ].map((topic) => {
+                                const isSelected = topics.includes(topic);
+                                return (
+                                  <button
+                                    key={topic}
+                                    type="button"
+                                    onClick={() => toggleTopic(topic)}
+                                    className={cn(
+                                      "flex w-full items-center justify-between p-2 rounded-xl text-left text-[11.5px] font-medium transition-colors cursor-pointer",
+                                      isSelected
+                                        ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold border border-[var(--tint-line)]"
+                                        : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                    )}
+                                  >
+                                    <span className="truncate pr-2">{topic}</span>
+                                    <div
+                                      className={cn(
+                                        "size-4 rounded-md border flex items-center justify-center shrink-0",
+                                        isSelected
+                                          ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                          : "border-black/25 bg-white"
+                                      )}
+                                    >
+                                      {isSelected && <Check className="size-3 stroke-[3]" />}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {activeTier2 === "character" && (
+                            <div className="space-y-1">
+                              <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
+                                <span>Presenter &amp; Avatar</span>
+                                <span className="text-emerald-700 font-bold uppercase">
+                                  {selectedPresenterId === "none" ? "NO AVATAR" : selectedPresenter.name.split(" ")[1]}
+                                </span>
+                              </div>
+                              {PRESENTERS.map((item) => {
+                                const isSelected = selectedPresenterId === item.id;
+                                return (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedPresenterId(item.id);
+                                      if (item.id === "none") {
+                                        setPresentationMode("narrated");
+                                      } else {
+                                        setVoice(`${item.name.split(" ")[1] || item.name} · clear and measured`);
+                                        if (creationMode === "magic-avatar") {
+                                          setPresentationMode("presenter");
+                                        }
+                                      }
+                                    }}
+                                    className={cn(
+                                      "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
+                                      isSelected
+                                        ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
+                                        : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      {item.id === "none" ? (
+                                        <div className="grid size-6 place-items-center rounded-full bg-black/5 text-[var(--ink)] shrink-0">
+                                          <Film className="size-3 text-[var(--brand)]" />
+                                        </div>
+                                      ) : (
+                                        <img src={item.image} alt={item.name} className="size-6 rounded-full object-cover shrink-0" />
+                                      )}
+                                      <div className="min-w-0">
+                                        <div className="text-[12px] font-bold truncate">{item.name}</div>
+                                        <div className="text-[9.5px] text-[var(--ink-muted)] font-normal truncate">{item.role}</div>
+                                      </div>
+                                    </div>
+                                    {isSelected && <Check className="size-3.5 text-[var(--brand)] stroke-[3] shrink-0 ml-1" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {activeTier2 === "engine" && (
+                            <div className="space-y-1">
+                              <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
+                                <span>Creation Studio Engine</span>
+                                <span className="text-emerald-700 font-bold uppercase">
+                                  {isInfographic ? "INFOGRAPHIC" : creationMode === "magic-avatar" ? "MAGICAVATAR" : "MAGICREEL"}
+                                </span>
+                              </div>
                               <button
-                                key={item.id}
                                 type="button"
                                 onClick={() => {
-                                  setSelectedPresenterId(item.id);
-                                  setVoice(`${item.name.split(" ")[1]} · clear and measured`);
-                                  setActivePopover(null);
+                                  setAssetType("video");
+                                  setCreationMode("magic-reel");
+                                  setPresentationMode("narrated");
                                 }}
                                 className={cn(
-                                  "flex items-center justify-between p-1.5 rounded-lg text-left transition cursor-pointer",
-                                  isSelected ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]" : "hover:bg-black/5 text-[var(--ink)]"
+                                  "flex w-full items-center justify-between p-2.5 rounded-xl text-left transition-colors cursor-pointer",
+                                  !isInfographic && creationMode === "magic-reel"
+                                    ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
+                                    : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
                                 )}
                               >
-                                <div className="flex items-center gap-2 min-w-0">
-                                  <img src={item.image} alt={item.name} className="size-5 rounded-full object-cover shrink-0" />
-                                  <span className="text-[10.5px] truncate">{item.name} · {item.role}</span>
+                                <div className="flex items-center gap-2.5">
+                                  <Film className="size-4 text-[var(--brand)] shrink-0" />
+                                  <div>
+                                    <div className="text-[12px] font-bold">MagicReel™ (Video)</div>
+                                    <div className="text-[10px] text-[var(--ink-muted)] font-normal">Cinematic 3D MoA &amp; evidence cut</div>
+                                  </div>
                                 </div>
-                                {isSelected && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                                {!isInfographic && creationMode === "magic-reel" && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
                               </button>
-                            );
-                          })}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAssetType("video");
+                                  setCreationMode("magic-avatar");
+                                  setPresentationMode("presenter");
+                                }}
+                                className={cn(
+                                  "flex w-full items-center justify-between p-2.5 rounded-xl text-left transition-colors cursor-pointer",
+                                  !isInfographic && creationMode === "magic-avatar"
+                                    ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
+                                    : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <UserCircle2 className="size-4 text-[var(--brand)] shrink-0" />
+                                  <div>
+                                    <div className="text-[12px] font-bold">MagicAvatar™ (Doctor)</div>
+                                    <div className="text-[10px] text-[var(--ink-muted)] font-normal">AI physician presenter</div>
+                                  </div>
+                                </div>
+                                {!isInfographic && creationMode === "magic-avatar" && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAssetType("infographic");
+                                }}
+                                className={cn(
+                                  "flex w-full items-center justify-between p-2.5 rounded-xl text-left transition-colors cursor-pointer",
+                                  isInfographic
+                                    ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
+                                    : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <ImageIcon className="size-4 text-[var(--brand)] shrink-0" />
+                                  <div>
+                                    <div className="text-[12px] font-bold">MagicCanvas™ (Infographic)</div>
+                                    <div className="text-[10px] text-[var(--ink-muted)] font-normal">Leave-behinds &amp; clinical charts</div>
+                                  </div>
+                                </div>
+                                {isInfographic && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                              </button>
+                            </div>
+                          )}
+
+                          {activeTier2 === "template" && isInfographic && (
+                            <div className="space-y-2">
+                              <div className="space-y-1">
+                                <div className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                                  Pages Count
+                                </div>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                  {[
+                                    { id: "1", label: "1 Page" },
+                                    { id: "2", label: "2 Pages" },
+                                  ].map((item) => (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      onClick={() => setInfographicPages(item.id as "1" | "2")}
+                                      className={cn(
+                                        "p-2 rounded-xl text-center text-[11px] font-bold border transition-colors cursor-pointer",
+                                        infographicPages === item.id
+                                          ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)]"
+                                          : "border-black/10 bg-white hover:bg-black/5 text-[var(--ink)]"
+                                      )}
+                                    >
+                                      {item.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="space-y-1 pt-1 border-t border-black/5">
+                                <div className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                                  Design Template
+                                </div>
+                                {[
+                                  { id: "stat-hero", label: "Stat Hero" },
+                                  { id: "trial-summary", label: "Trial Summary" },
+                                  { id: "bench-data", label: "Bench Data" },
+                                  { id: "moa-scroll", label: "Anatomy & MoA" },
+                                ].map((item) => (
+                                  <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => setInfographicTemplate(item.id as any)}
+                                    className={cn(
+                                      "flex w-full items-center justify-between p-1.5 px-2.5 rounded-lg text-left text-[11.5px] transition-colors cursor-pointer",
+                                      infographicTemplate === item.id
+                                        ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]"
+                                        : "hover:bg-black/5 text-[var(--ink)]"
+                                    )}
+                                  >
+                                    <span>{item.label}</span>
+                                    {infographicTemplate === item.id && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
                 </div>
+
+                {/* Subtitle / Helper in bottom bar */}
+                <span className="text-[11px] text-[var(--ink-muted)] font-medium select-none">
+                  Customize audience, ratio, topics &amp; avatars via <strong className="text-[var(--brand)]">+</strong>
+                </span>
               </div>
 
               {/* Far Right Bottom Action: Send Arrow CTA */}

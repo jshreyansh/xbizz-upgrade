@@ -55,6 +55,7 @@ import {
   Volume2,
   VolumeX,
   X,
+  Zap,
 } from "lucide-react";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,7 @@ export function StudioScreen() {
     inspectorTab,
     setInspectorTab,
     setView,
+    setVideoSubStage,
     creationMode,
     sourcePayload,
     copilotPanelOpen,
@@ -189,6 +191,7 @@ export function StudioScreen() {
     [sceneList, selectedSceneId]
   );
 
+  const isScenes = studioMode === "scenes";
   const isEditor = studioMode === "editor";
   const isGenerating = studioMode === "generating";
   const isReview = studioMode === "review";
@@ -216,6 +219,39 @@ export function StudioScreen() {
 
   const [scenePlaying, setScenePlaying] = useState(false);
   const [sceneCurrentTime, setSceneCurrentTime] = useState(2.4);
+  const canvasVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Sync canvas video element playback with scenePlaying
+  useEffect(() => {
+    if (!canvasVideoRef.current) return;
+    if (scenePlaying) {
+      canvasVideoRef.current.play().catch(() => {});
+    } else {
+      canvasVideoRef.current.pause();
+    }
+  }, [scenePlaying]);
+
+  // Sync canvas video element currentTime with scene scrubber
+  useEffect(() => {
+    if (!canvasVideoRef.current) return;
+    if (Math.abs(canvasVideoRef.current.currentTime - sceneCurrentTime) > 0.35) {
+      try {
+        canvasVideoRef.current.currentTime = sceneCurrentTime;
+      } catch {}
+    }
+  }, [sceneCurrentTime]);
+
+  // Reset video and pause state when switching scenes
+  useEffect(() => {
+    setScenePlaying(false);
+    setSceneCurrentTime(0);
+    if (canvasVideoRef.current) {
+      canvasVideoRef.current.pause();
+      try {
+        canvasVideoRef.current.currentTime = 0;
+      } catch {}
+    }
+  }, [selectedScene.id]);
   const [selectedCanvasElementId, setSelectedCanvasElementId] = useState<string | null>("headline");
   const [hoveredCanvasElementId, setHoveredCanvasElementId] = useState<string | null>(null);
 
@@ -270,13 +306,16 @@ export function StudioScreen() {
 
   const handlePointerMoveElement = (e: React.PointerEvent, elementId: string) => {
     if (draggingElementId !== elementId || !dragStartRef.current) return;
-    const dx = e.clientX - dragStartRef.current.clientX;
-    const dy = e.clientY - dragStartRef.current.clientY;
+    const { startX, startY, clientX, clientY } = dragStartRef.current;
+    const dx = e.clientX - clientX;
+    const dy = e.clientY - clientY;
+    const nextX = Math.round(startX + dx);
+    const nextY = Math.round(startY + dy);
     setElementOffsets((prev) => ({
       ...prev,
       [elementId]: {
-        x: Math.round(dragStartRef.current!.startX + dx),
-        y: Math.round(dragStartRef.current!.startY + dy),
+        x: nextX,
+        y: nextY,
       },
     }));
   };
@@ -1357,10 +1396,10 @@ export function StudioScreen() {
                                 : "border-white/20 hover:border-white/40"
                             )}
                           >
-                            {/* Real Looping Video Player */}
+                            {/* Real Looping Video Player (Synced with scene play/pause) */}
                             <video
+                              ref={canvasVideoRef}
                               src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
-                              autoPlay
                               loop
                               muted
                               playsInline
@@ -1490,7 +1529,7 @@ export function StudioScreen() {
                       )}
                     </div>
 
-                    {/* Subtitle / Narration Script Overlay (Draggable) */}
+                    {/* Subtitle / Narration Script Overlay (Word-by-Word Voiceover Sync) */}
                     <div
                       onPointerDown={(e) => handlePointerDownElement(e, "narration")}
                       onPointerMove={(e) => handlePointerMoveElement(e, "narration")}
@@ -1501,18 +1540,64 @@ export function StudioScreen() {
                         transform: `translate(${elementOffsets["narration"]?.x || 0}px, ${elementOffsets["narration"]?.y || 0}px)`,
                       }}
                       className={cn(
-                        "pointer-events-auto relative p-2 rounded-xl transition-shadow cursor-grab active:cursor-grabbing",
+                        "pointer-events-auto relative p-2.5 rounded-2xl transition-all cursor-grab active:cursor-grabbing select-none backdrop-blur-md",
                         selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[56%]" : "max-w-[80%]",
                         selectedCanvasElementId === "narration"
-                          ? "border-2 border-dashed border-[var(--brand)] bg-black/40 ring-4 ring-[var(--brand)]/20"
+                          ? "border-2 border-dashed border-[var(--brand)] bg-black/60 ring-4 ring-[var(--brand)]/20 shadow-2xl"
                           : hoveredCanvasElementId === "narration"
-                          ? "border border-dashed border-white/60 bg-black/20"
-                          : ""
+                          ? "border border-dashed border-white/60 bg-black/40"
+                          : "border border-white/15 bg-black/30 hover:border-white/30"
                       )}
                     >
-                      <p className="text-[12px] sm:text-[13px] leading-relaxed text-white/85 select-none">
-                        {selectedScene.narration}
+                      {/* Subtitle Sync Indicator Header */}
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--brand)]/25 border border-[var(--brand)]/40 text-[9px] font-extrabold uppercase tracking-wider text-[var(--brand-light,#ff9e80)]">
+                          <Mic2 className="size-2.5" /> Subtitle · Voiceover Sync
+                        </span>
+                        {scenePlaying && (
+                          <span className="flex items-center gap-1 text-[8.5px] font-mono text-emerald-400">
+                            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            Live Track
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Text-by-Text Word Karaoke Subtitle Display */}
+                      <p className="text-[13px] sm:text-[14px] font-normal leading-relaxed text-white drop-shadow-sm">
+                        {(() => {
+                          const words = (selectedScene.narration || "").trim().split(/\s+/);
+                          const totalWords = words.length;
+                          const dur = selectedScene.duration || 10;
+                          // Scale active progress from 0.2s to dur - 0.6s
+                          const activeProgress = Math.max(0, Math.min(1, (sceneCurrentTime - 0.2) / Math.max(0.1, dur - 0.8)));
+                          const currentWordIndex = Math.min(
+                            totalWords - 1,
+                            Math.floor(activeProgress * totalWords)
+                          );
+
+                          return words.map((word, idx) => {
+                            const isPast = idx < currentWordIndex;
+                            const isCurrent = idx === currentWordIndex;
+
+                            return (
+                              <span
+                                key={`${word}-${idx}`}
+                                className={cn(
+                                  "inline-block mr-1 transition-all duration-150 rounded px-0.5",
+                                  isCurrent
+                                    ? "text-[var(--brand-light,#ff9e80)] font-bold scale-105 bg-[var(--brand)]/20 shadow-xs ring-1 ring-[var(--brand)]/35 -translate-y-0.5"
+                                    : isPast
+                                    ? "text-white font-medium opacity-100"
+                                    : "text-white/35 font-normal"
+                                )}
+                              >
+                                {word}
+                              </span>
+                            );
+                          });
+                        })()}
                       </p>
+
                       {selectedCanvasElementId === "narration" && (
                         <div className="absolute -top-8 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-[#111614] border border-white/20 px-2.5 py-1 text-[10px] font-bold text-white shadow-xl whitespace-nowrap">
                           <Mic2 className="size-3 text-[var(--brand)]" />
@@ -2031,8 +2116,70 @@ export function StudioScreen() {
                   <div ref={studioChatEndRef} />
                 </div>
 
-                {/* Chat Input Box */}
-                <div className="p-3 border-t border-[var(--line)] bg-[#fafbf9]">
+                {/* Chat Input Box with Attached Primary Action Bar */}
+                <div className="p-3 border-t border-[var(--line)] bg-[#fafbf9] space-y-2">
+                  {/* Attached Primary Action Bar in Script Mode */}
+                  {isScenes && (
+                    <div className="rounded-xl border border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)] via-white to-[var(--tint)] p-2.5 shadow-2xs flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="size-6 rounded-full bg-[var(--brand)]/15 text-[var(--brand)] grid place-items-center shrink-0">
+                          <Sparkles className="size-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">
+                            {isScriptComplete ? "Script approved & claims grounded" : "Script in progress"}
+                          </div>
+                          <div className="text-[9.5px] text-[var(--ink-muted)] truncate">
+                            {sceneList.length} scenes structured · ready for canvas
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleStartSceneEditor}
+                        disabled={!isScriptComplete}
+                        size="sm"
+                        className={cn(
+                          "h-7.5 px-3 rounded-lg text-[11.5px] font-bold shadow-xs transition-all shrink-0 cursor-pointer",
+                          isScriptComplete
+                            ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:scale-[1.02]"
+                            : "bg-black/10 text-black/40 cursor-not-allowed"
+                        )}
+                      >
+                        <Sparkles className="size-3 mr-1" />
+                        <span>Generate Scenes</span>
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Attached Primary Action Bar in Scene Editor Mode */}
+                  {isEditor && (
+                    <div className="rounded-xl border border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)] via-white to-[var(--tint)] p-2.5 shadow-2xs flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="size-6 rounded-full bg-[var(--brand)]/15 text-[var(--brand)] grid place-items-center shrink-0">
+                          <Film className="size-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">
+                            Ready for production
+                          </div>
+                          <div className="text-[9.5px] text-[var(--ink-muted)] truncate">
+                            {sceneList.length} scenes customized
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleOpenGenerateVideoModal}
+                        size="sm"
+                        className="h-7.5 px-3 rounded-lg text-[11.5px] font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:scale-[1.02]"
+                      >
+                        <Zap className="size-3 mr-1 fill-current" />
+                        <span>Generate Video</span>
+                      </Button>
+                    </div>
+                  )}
+
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Video, Image as ImageIcon, Globe, ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
@@ -916,16 +917,32 @@ export function HomeScreen() {
   const router = useRouter();
   const [playingVideoItem, setPlayingVideoItem] = useState<ShowcaseItem | null>(null);
   const [isNewUser, setIsNewUser] = useState(true);
+  const [dossierModalOpen, setDossierModalOpen] = useState(false);
 
   function openTile(tile: TileOption) {
-    if (tile.href === "/create") {
-      useWorkspaceStore.getState().setView("create");
+    if (tile.title === "Video") {
+      useWorkspaceStore.getState().setAssetType("video");
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
-    }
-    if (tile.href !== "#") {
+      useWorkspaceStore.getState().setView("create");
+      router.push("/create");
+    } else if (tile.title === "Creatives") {
+      useWorkspaceStore.getState().setAssetType("infographic");
+      useWorkspaceStore.getState().setCreationMode("magic-chart");
+      useWorkspaceStore.getState().setVideoSubStage("mode-select");
+      useWorkspaceStore.getState().setView("create");
+      router.push("/create");
+    } else if (tile.href !== "#") {
       router.push(tile.href);
     }
   }
+
+  const handleSelectDossier = (dossierId: string) => {
+    useWorkspaceStore.getState().setSourcePayload({ dossierId });
+    useWorkspaceStore.getState().setVideoSubStage("intake");
+    useWorkspaceStore.getState().setView("create");
+    setDossierModalOpen(false);
+    router.push("/create");
+  };
 
   return (
     <div className="page-enter space-y-9 max-w-[1180px] pb-12">
@@ -1166,6 +1183,13 @@ export function HomeScreen() {
           </div>
         </div>
       )}
+
+      {/* Brand & Dossier Starter Modal */}
+      <BrandDossierModal
+        open={dossierModalOpen}
+        onClose={() => setDossierModalOpen(false)}
+        onSelectDossier={handleSelectDossier}
+      />
     </div>
   );
 }

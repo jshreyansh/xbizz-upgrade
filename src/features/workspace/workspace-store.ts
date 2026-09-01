@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { creativeDirections } from "@/features/workspace/mock-data";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, OnboardingBeat, PresentationMode } from "@/types/content";
 
-export type CreationMode = "magic-reel" | "magic-avatar" | "scratch";
+export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
 export type VideoSubStage = "mode-select" | "source-select" | "intake" | "directions" | "studio";
 
@@ -40,6 +40,12 @@ interface WorkspaceState {
   navCollapsed: boolean;
   teamDockOpen: boolean;
   copilotPanelOpen: boolean;
+  // Infographic / Creative specific states
+  pageShape: "3:4" | "16:9" | "A4";
+  infographicPages: "1" | "2";
+  infographicTemplate: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease";
+  infographicLogoPlacement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none";
+  infographicActivePage: 1 | 2;
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
@@ -77,6 +83,11 @@ interface WorkspaceState {
   toggleTeamDock: () => void;
   setCopilotPanelOpen: (open: boolean) => void;
   toggleCopilotPanel: () => void;
+  setPageShape: (shape: "3:4" | "16:9" | "A4") => void;
+  setInfographicPages: (pages: "1" | "2") => void;
+  setInfographicTemplate: (template: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease") => void;
+  setInfographicLogoPlacement: (placement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none") => void;
+  setInfographicActivePage: (page: 1 | 2) => void;
   reset: () => void;
 }
 
@@ -112,6 +123,11 @@ const initialState = {
   navCollapsed: false,
   teamDockOpen: false,
   copilotPanelOpen: true,
+  pageShape: "3:4" as "3:4" | "16:9" | "A4",
+  infographicPages: "1" as "1" | "2",
+  infographicTemplate: "stat-hero" as "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease",
+  infographicLogoPlacement: "bottom-right" as "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none",
+  infographicActivePage: 1 as 1 | 2,
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -170,5 +186,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   toggleTeamDock: () => set((state) => ({ teamDockOpen: !state.teamDockOpen })),
   setCopilotPanelOpen: (copilotPanelOpen) => set({ copilotPanelOpen }),
   toggleCopilotPanel: () => set((state) => ({ copilotPanelOpen: !state.copilotPanelOpen })),
+  setPageShape: (pageShape) => set({ pageShape }),
+  setInfographicPages: (infographicPages) => set({ infographicPages }),
+  setInfographicTemplate: (infographicTemplate) => set({ infographicTemplate }),
+  setInfographicLogoPlacement: (infographicLogoPlacement) => set({ infographicLogoPlacement }),
+  setInfographicActivePage: (infographicActivePage) => set({ infographicActivePage }),
   reset: () => set(initialState),
 }));

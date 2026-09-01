@@ -9,13 +9,13 @@ import { LogoMark } from "@/components/ui/logo-mark";
 interface CreateTile {
   label: string;
   icon: string;
-  href: string;
+  targetAsset: string;
 }
 
 const CREATE_TILES: CreateTile[] = [
-  { label: "Video", icon: "video", href: "/create" },
-  { label: "Creatives", icon: "image", href: "#" },
-  { label: "Web", icon: "globe", href: "#" },
+  { label: "Video", icon: "video", targetAsset: "video" },
+  { label: "Creatives", icon: "image", targetAsset: "infographic" },
+  { label: "Web", icon: "globe", targetAsset: "web" },
 ];
 
 interface NavItem {
@@ -101,51 +101,35 @@ function NavIcon({ name, active = false }: { name: string; active?: boolean }): 
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
       </svg>
     ),
-    doc: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-      </svg>
-    ),
-    mail: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <rect x="2" y="4" width="20" height="16" rx="2.5" />
-        <path d="M22 7l-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-      </svg>
-    ),
-    characters: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" />
-      </svg>
-    ),
     dossier: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
       </svg>
     ),
     library: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M3 7l2-3h5l2 3h9v12H3z" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M4 6h16M4 12h16M4 18h7" />
       </svg>
     ),
     claims: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M7 7v10M11 7v10M17 7v10M21 7v10" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <path d="m9 15 2 2 4-4" />
       </svg>
     ),
     shield: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M12 2l8 4v6c0 5-3.4 8.6-8 10-4.6-1.4-8-5-8-10V6z" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="m9 12 2 2 4-4" />
       </svg>
     ),
     chart: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M3 3v18h18" />
-        <path d="M7 16l4-6 3 4 5-8" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
       </svg>
     ),
     settings: (
@@ -166,6 +150,7 @@ export function Sidebar() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
   const setView = useWorkspaceStore((s) => s.setView);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
+  const assetType = useWorkspaceStore((s) => s.assetType);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [createFlyoutOpen, setCreateFlyoutOpen] = useState(false);
@@ -179,14 +164,19 @@ export function Sidebar() {
     router.push("/auth");
   }
 
-  function handleCreateNav(href: string) {
+  function handleCreateNav(targetAsset: string) {
     setCreateFlyoutOpen(false);
-    if (href === "/create") {
-      setView("create");
-      setVideoSubStage("mode-select");
+    if (targetAsset === "video") {
+      useWorkspaceStore.getState().setAssetType("video");
+      useWorkspaceStore.getState().setVideoSubStage("mode-select");
+      useWorkspaceStore.getState().setView("create");
       router.push("/create");
-    } else if (href !== "#") {
-      router.push(href);
+    } else if (targetAsset === "infographic") {
+      useWorkspaceStore.getState().setAssetType("infographic");
+      useWorkspaceStore.getState().setCreationMode("magic-chart");
+      useWorkspaceStore.getState().setVideoSubStage("mode-select");
+      useWorkspaceStore.getState().setView("create");
+      router.push("/create");
     }
   }
 
@@ -316,12 +306,15 @@ export function Sidebar() {
 
                 {/* Single-column rows, soft-tint active state (not solid fill) */}
                 {CREATE_TILES.map((tile) => {
-                  const isTileActive = tile.href === "/create" && isCreateActive;
+                  const isTileActive =
+                    isCreateActive &&
+                    ((tile.targetAsset === "video" && assetType === "video") ||
+                      (tile.targetAsset === "infographic" && assetType === "infographic"));
                   return (
                     <button
                       key={tile.label}
-                      onClick={() => handleCreateNav(tile.href)}
-                      className={`group flex w-full h-[40px] items-center gap-3 rounded-[12px] px-3 text-left transition-all duration-150 ${
+                      onClick={() => handleCreateNav(tile.targetAsset)}
+                      className={`group flex w-full h-[40px] items-center gap-3 rounded-[12px] px-3 text-left transition-all duration-150 cursor-pointer ${
                         isTileActive
                           ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
                           : "text-[var(--ink-2)] font-normal hover:font-bold hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
@@ -340,8 +333,8 @@ export function Sidebar() {
               <div className="flex flex-col items-center gap-1">
                 <div className="my-1 h-px w-6 bg-black/10" />
                 <button
-                  onClick={() => handleCreateNav("/create")}
-                  className={`group relative flex w-[58px] flex-col items-center justify-center rounded-[14px] py-2 px-1 gap-1 transition-all duration-200 ${
+                  onClick={() => handleCreateNav("video")}
+                  className={`group relative flex w-[58px] flex-col items-center justify-center rounded-[14px] py-2 px-1 gap-1 transition-all duration-200 cursor-pointer ${
                     isCreateActive
                       ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
                       : "text-[var(--ink-2)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
@@ -526,12 +519,15 @@ export function Sidebar() {
 
           <div className="space-y-1">
             {CREATE_TILES.map((tile) => {
-              const isTileActive = tile.href === "/create" && isCreateActive;
+              const isTileActive =
+                isCreateActive &&
+                ((tile.targetAsset === "video" && assetType === "video") ||
+                  (tile.targetAsset === "infographic" && assetType === "infographic"));
               return (
                 <button
                   key={tile.label}
-                  onClick={() => handleCreateNav(tile.href)}
-                  className={`group flex w-full items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-left transition-all duration-150 ${
+                  onClick={() => handleCreateNav(tile.targetAsset)}
+                  className={`group flex w-full items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-left transition-all duration-150 cursor-pointer ${
                     isTileActive
                       ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
                       : "text-[var(--ink-2)] font-normal hover:font-bold hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"

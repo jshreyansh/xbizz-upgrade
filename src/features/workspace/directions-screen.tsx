@@ -47,6 +47,7 @@ import { deriveContentPlan } from "@/features/workspace/content-plan";
 import { displayIntendedUses, parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { InfographicDirectionsScreen } from "@/features/workspace/infographic-directions-screen";
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 
@@ -181,8 +182,13 @@ function FormattedMessageText({ text }: { text: string }) {
 
 export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
+  const assetType = useWorkspaceStore((state) => state.assetType);
+
+  if (assetType === "infographic") {
+    return <InfographicDirectionsScreen />;
+  }
+
   const {
-    assetType,
     brief,
     audience,
     market,
@@ -1363,47 +1369,47 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     }
                   />
                 </PlanSection>
+              </div>
 
-                {/* Centered Floating Confirmation CTA at the bottom of the Left Stage */}
-                <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
-                  <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-[0_16px_40px_rgba(0,0,0,0.32)] backdrop-blur-md max-w-[580px] w-auto">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                      {isPlanReady ? (
-                        <CheckCircle2 className="size-4.5 text-emerald-400 shrink-0" />
-                      ) : (
-                        <AlertCircle className="size-4.5 text-amber-400 shrink-0" />
-                      )}
-                      <div className="min-w-0">
-                        <div className="text-[12.5px] font-bold text-white tracking-tight truncate">
-                          {isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
-                        </div>
-                        <p className="text-[11px] text-white/70 truncate">
-                          {isPlanReady
-                            ? "Grounded against 214 approved claims"
-                            : needsProductAssets
-                            ? "Please attach product visual assets"
-                            : needsPresenter && !presenter
-                            ? "Please select an AI presenter"
-                            : "Please confirm creative treatment"}
-                        </p>
+              {/* Centered Floating Confirmation CTA at the bottom of the Left Stage */}
+              <div className="sticky bottom-4 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full pt-6 pb-2">
+                <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-[0_16px_40px_rgba(0,0,0,0.32)] backdrop-blur-md max-w-[580px] w-auto">
+                  <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                    {isPlanReady ? (
+                      <CheckCircle2 className="size-4.5 text-emerald-400 shrink-0" />
+                    ) : (
+                      <AlertCircle className="size-4.5 text-amber-400 shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="text-[12.5px] font-bold text-white tracking-tight truncate">
+                        {isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
                       </div>
+                      <p className="text-[11px] text-white/70 truncate">
+                        {isPlanReady
+                          ? "Grounded against 214 approved claims"
+                          : needsProductAssets
+                          ? "Please attach product visual assets"
+                          : needsPresenter && !presenter
+                          ? "Please select an AI presenter"
+                          : "Please confirm creative treatment"}
+                      </p>
                     </div>
-
-                    <Button
-                      onClick={handleConfirmPlan}
-                      disabled={!isPlanReady || isGenerating}
-                      size="sm"
-                      className={cn(
-                        "h-9.5 px-5 rounded-full text-[13px] font-bold shadow-sm transition-all duration-200 shrink-0",
-                        isPlanReady && !isGenerating
-                          ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:-translate-y-0.5 cursor-pointer"
-                          : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                      )}
-                    >
-                      <span>Confirm Plan &amp; Build Script</span>
-                      <ArrowRight className="size-3.5 ml-1.5" />
-                    </Button>
                   </div>
+
+                  <Button
+                    onClick={handleConfirmPlan}
+                    disabled={!isPlanReady || isGenerating}
+                    size="sm"
+                    className={cn(
+                      "h-9.5 px-5 rounded-full text-[13px] font-bold shadow-sm transition-all duration-200 shrink-0",
+                      isPlanReady && !isGenerating
+                        ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:-translate-y-0.5 cursor-pointer"
+                        : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                    )}
+                  >
+                    <span>Confirm Plan &amp; Build Script</span>
+                    <ArrowRight className="size-3.5 ml-1.5" />
+                  </Button>
                 </div>
               </div>
             </>
@@ -1485,8 +1491,40 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Bottom Chat Input Bar */}
-          <div className="p-3 border-t border-black/[0.06] bg-white shrink-0">
+          {/* Bottom Chat Input Bar with Attached Primary Confirmation Bar */}
+          <div className="p-3 border-t border-black/[0.06] bg-white shrink-0 space-y-2">
+            {/* Attached Primary Action Bar above chat input */}
+            <div className="rounded-xl border border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)] via-white to-[var(--tint)] p-2.5 shadow-2xs flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={cn("size-6 rounded-full grid place-items-center shrink-0", isPlanReady ? "bg-emerald-600 text-white" : "bg-black/10 text-[var(--ink-muted)]")}>
+                  {isPlanReady ? <Check className="size-3.5 stroke-[3]" /> : <Sparkles className="size-3 text-[var(--brand)]" />}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">
+                    {isPlanReady ? "Ready to generate script" : "Review plan parameters"}
+                  </div>
+                  <div className="text-[9.5px] text-[var(--ink-muted)] truncate">
+                    {isPlanReady ? "Grounded against 214 approved claims" : "Confirm creative & assets"}
+                  </div>
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={handleConfirmPlan}
+                disabled={!isPlanReady || isGenerating}
+                size="sm"
+                className={cn(
+                  "h-7.5 px-3 rounded-lg text-[11.5px] font-bold shadow-xs transition-all shrink-0 cursor-pointer",
+                  isPlanReady && !isGenerating
+                    ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:scale-[1.02]"
+                    : "bg-black/10 text-black/40 cursor-not-allowed"
+                )}
+              >
+                <span>Confirm Plan &amp; Build Script</span>
+                <ArrowRight className="size-3 ml-1" />
+              </Button>
+            </div>
+
             <div className="relative">
               <div className="flex items-center gap-1.5 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-2.5 py-1.5 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-xs transition">
                 <div className="relative">
