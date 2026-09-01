@@ -894,7 +894,7 @@ const EXAMPLE_DOSSIERS = MOCK_DOSSIERS.filter((d) => d.isSample);
 const EXAMPLE_STARTERS: ShowcaseItem[] = [
   {
     title: "Mechanism of action — cardiology",
-    subtitle: "Example MagicReel · Cardiologists",
+    subtitle: "Example Video · Cardiologists",
     meta: "1:00",
     aspect: "16/9",
     gradient: "linear-gradient(160deg,#16233f,#2c4573 50%,#5b7fb8)",

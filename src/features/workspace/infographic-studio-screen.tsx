@@ -459,7 +459,7 @@ export function InfographicStudioScreen() {
               </span>
             </div>
             <div className="mt-0.5 hidden text-[9.5px] text-[var(--ink-muted)] sm:block">
-              Saved just now · MagicCanvas™ · {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} ({pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"})
+              Saved just now · Canvas Studio · {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} ({pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"})
             </div>
           </div>
 

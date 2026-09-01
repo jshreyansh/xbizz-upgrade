@@ -116,7 +116,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
   {
     type: "video",
     title: "Velmora — MOA in 45 seconds",
-    engine: "MagicReel™",
+    engine: "Video",
     duration: "0:45",
     audience: "Cardiologists · US",
     market: "FDA",
@@ -126,7 +126,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
   {
     type: "video",
     title: "Dr. Alvarez — digital twin",
-    engine: "MagicAvatar™",
+    engine: "Avatar Video",
     duration: "0:58",
     audience: "Patients · US",
     market: "FDA",
@@ -136,7 +136,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
   {
     type: "video",
     title: "Onkavia — congress recap",
-    engine: "MagicReel™",
+    engine: "Video",
     duration: "1:12",
     audience: "Oncologists · EU",
     market: "EMA",
@@ -146,7 +146,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
   {
     type: "video",
     title: "Nirvexa — access & value",
-    engine: "MagicReel™",
+    engine: "Video",
     duration: "1:30",
     audience: "Payers · UK",
     market: "MHRA",
@@ -159,7 +159,7 @@ export const SAMPLE_CANVAS: SampleAsset[] = [
   {
     type: "canvas",
     title: "Velmora — journal ad",
-    engine: "MagicCanvas",
+    engine: "Infographic",
     duration: "A4",
     audience: "Cardiologists · US",
     market: "FDA",
@@ -169,7 +169,7 @@ export const SAMPLE_CANVAS: SampleAsset[] = [
   {
     type: "canvas",
     title: "Onkavia — congress panel",
-    engine: "MagicCanvas",
+    engine: "Infographic",
     duration: "2×1m",
     audience: "Oncologists · EU",
     market: "EMA",
@@ -179,7 +179,7 @@ export const SAMPLE_CANVAS: SampleAsset[] = [
   {
     type: "canvas",
     title: "Nirvexa — payer infographic",
-    engine: "MagicCanvas",
+    engine: "Infographic",
     duration: "1:1",
     audience: "Payers · UK",
     market: "MHRA",
@@ -189,7 +189,7 @@ export const SAMPLE_CANVAS: SampleAsset[] = [
   {
     type: "canvas",
     title: "Glucenta — savings card",
-    engine: "MagicCanvas",
+    engine: "Infographic",
     duration: "3.5×2in",
     audience: "Patients · US",
     market: "FDA",

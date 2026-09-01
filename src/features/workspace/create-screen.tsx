@@ -276,12 +276,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setScenarioLibraryOpen(false);
   };
 
-  const modeDisplayName =
-    creationMode === "magic-reel"
-      ? "MagicReel\u2122 \u00b7 Short Video"
-      : creationMode === "magic-avatar"
-      ? "MagicAvatar\u2122 \u00b7 Digital Twin"
-      : "Custom Video \u00b7 Scratch";
+  const modeDisplayName = isInfographic
+    ? "Image (Infographic)"
+    : creationMode === "magic-avatar"
+    ? "Video (Avatar)"
+    : "Video";
 
   const samplePrompts = useMemo(
     () => [
@@ -834,7 +833,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                               <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
                                 <span>Creation Studio Engine</span>
                                 <span className="text-emerald-700 font-bold uppercase">
-                                  {isInfographic ? "INFOGRAPHIC" : creationMode === "magic-avatar" ? "MAGICAVATAR" : "MAGICREEL"}
+                                  {isInfographic ? "IMAGE (INFOGRAPHIC)" : creationMode === "magic-avatar" ? "VIDEO (AVATAR)" : "VIDEO"}
                                 </span>
                               </div>
                               <button
@@ -854,7 +853,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                 <div className="flex items-center gap-2.5">
                                   <Film className="size-4 text-[var(--brand)] shrink-0" />
                                   <div>
-                                    <div className="text-[12px] font-bold">MagicReel™ (Video)</div>
+                                    <div className="text-[12px] font-bold">Video</div>
                                     <div className="text-[10px] text-[var(--ink-muted)] font-normal">Cinematic 3D MoA &amp; evidence cut</div>
                                   </div>
                                 </div>
@@ -878,8 +877,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                 <div className="flex items-center gap-2.5">
                                   <UserCircle2 className="size-4 text-[var(--brand)] shrink-0" />
                                   <div>
-                                    <div className="text-[12px] font-bold">MagicAvatar™ (Doctor)</div>
-                                    <div className="text-[10px] text-[var(--ink-muted)] font-normal">AI physician presenter</div>
+                                    <div className="text-[12px] font-bold">Video (Avatar)</div>
+                                    <div className="text-[10px] text-[var(--ink-muted)] font-normal">AI physician presenter &amp; digital twin</div>
                                   </div>
                                 </div>
                                 {!isInfographic && creationMode === "magic-avatar" && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
@@ -900,11 +899,31 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                 <div className="flex items-center gap-2.5">
                                   <ImageIcon className="size-4 text-[var(--brand)] shrink-0" />
                                   <div>
-                                    <div className="text-[12px] font-bold">MagicCanvas™ (Infographic)</div>
-                                    <div className="text-[10px] text-[var(--ink-muted)] font-normal">Leave-behinds &amp; clinical charts</div>
+                                    <div className="text-[12px] font-bold">Image (Infographic)</div>
+                                    <div className="text-[10px] text-[var(--ink-muted)] font-normal">Clinical leave-behinds &amp; trial charts</div>
                                   </div>
                                 </div>
                                 {isInfographic && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAssetType("infographic");
+                                  setPageShape("16:9");
+                                }}
+                                className={cn(
+                                  "flex w-full items-center justify-between p-2.5 rounded-xl text-left transition-colors cursor-pointer",
+                                  "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5">
+                                  <Layers className="size-4 text-[var(--brand)] shrink-0" />
+                                  <div>
+                                    <div className="text-[12px] font-bold">Image (Deck)</div>
+                                    <div className="text-[10px] text-[var(--ink-muted)] font-normal">Multi-slide clinical presentation deck</div>
+                                  </div>
+                                </div>
                               </button>
                             </div>
                           )}

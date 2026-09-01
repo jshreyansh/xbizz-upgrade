@@ -301,7 +301,7 @@ export function Sidebar() {
             {!collapsed ? (
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5 px-2 pt-1 text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-                  <span>Studio</span>
+                  <span>Magic Studio</span>
                 </div>
 
                 {/* Single-column rows, soft-tint active state (not solid fill) */}

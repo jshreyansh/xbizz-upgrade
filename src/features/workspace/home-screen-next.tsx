@@ -38,11 +38,11 @@ interface ShowcaseAsset {
 }
 
 const SHOWCASE: ShowcaseAsset[] = [
-  { type: "video", title: "MOA in 45 seconds", brand: "Velmora", engine: "Magic Video", meta: "0:45", audience: "Cardiologists · US", gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 45%,#5b7fb8)" },
-  { type: "video", title: "Digital twin explainer", brand: "Dr. Alvarez", engine: "Magic Video", meta: "0:58", audience: "Patients · US", gradient: "linear-gradient(160deg,#4a2a1b,#7d4c2f 46%,#b8865b)" },
-  { type: "canvas", title: "Journal advert", brand: "Velmora", engine: "Magic Canvas", meta: "A4 · print", audience: "Cardiologists · US", gradient: "linear-gradient(150deg,#16233f,#2c4573 50%,#5b7fb8)" },
-  { type: "website", title: "HCP microsite", brand: "Nirvexa", engine: "Magic Website", meta: "6 pages", audience: "Payers · UK", gradient: "linear-gradient(150deg,#12332c,#1d5a4a 50%,#3f9c7f)" },
-  { type: "canvas", title: "Congress booth panel", brand: "Onkavia", engine: "Magic Canvas", meta: "2×1m", audience: "Oncologists · EU", gradient: "linear-gradient(150deg,#33193f,#5b2c70 50%,#9a63bc)" },
+  { type: "video", title: "MOA in 45 seconds", brand: "Velmora", engine: "Video", meta: "0:45", audience: "Cardiologists · US", gradient: "linear-gradient(160deg,#1b2a4a,#2f4a7d 45%,#5b7fb8)" },
+  { type: "video", title: "Digital twin explainer", brand: "Dr. Alvarez", engine: "Avatar Video", meta: "0:58", audience: "Patients · US", gradient: "linear-gradient(160deg,#4a2a1b,#7d4c2f 46%,#b8865b)" },
+  { type: "canvas", title: "Journal advert", brand: "Velmora", engine: "Infographic", meta: "A4 · print", audience: "Cardiologists · US", gradient: "linear-gradient(150deg,#16233f,#2c4573 50%,#5b7fb8)" },
+  { type: "website", title: "HCP microsite", brand: "Nirvexa", engine: "Web Experience", meta: "6 pages", audience: "Payers · UK", gradient: "linear-gradient(150deg,#12332c,#1d5a4a 50%,#3f9c7f)" },
+  { type: "canvas", title: "Congress booth panel", brand: "Onkavia", engine: "Infographic", meta: "2×1m", audience: "Oncologists · EU", gradient: "linear-gradient(150deg,#33193f,#5b2c70 50%,#9a63bc)" },
 ];
 
 interface CreationOption {
@@ -64,14 +64,14 @@ const CREATION_OPTIONS: CreationOption[] = [
   },
   {
     icon: Clapperboard,
-    title: "Magic Video",
+    title: "Video",
     description: "Cited, narrated reels built from your dossier.",
     href: "/create",
     gradient: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
   },
   {
     icon: LayoutTemplate,
-    title: "Magic Canvas",
+    title: "Canvas & Creatives",
     description: "Print and digital layouts — ads, leave-behinds, banners.",
     href: "#",
     gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)",
@@ -293,7 +293,7 @@ export function HomeScreenNext() {
         {audience === "first" ? (
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", padding: "14px 20px", borderRadius: "var(--r-l)", background: "var(--tint-2)", border: "1px solid var(--tint-line)" }}>
             <span style={{ fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", fontWeight: 750, color: "var(--brand-deep)", marginRight: 4 }}>Your path</span>
-            {["Brand dossier", "Magic Video", "Send for review"].map((step, i, arr) => (
+            {["Brand dossier", "Video & Creatives", "Send for review"].map((step, i, arr) => (
               <div key={step} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 650, color: "var(--ink-2)" }}>
                   <span style={{ width: 18, height: 18, borderRadius: "50%", background: "#fff", border: "1px solid var(--hair-2)", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800, color: "var(--ink-3)" }}>{i + 1}</span>
@@ -314,8 +314,8 @@ export function HomeScreenNext() {
         )}
       </div>
 
-      {/* ── Showcase — Magic Video · Magic Canvas · Magic Website ─── */}
-      <Panel eyebrow="Magic Video · Magic Canvas · Magic Website" title="See what your team already shipped" subtitle="Every piece below is cited, MLR-cleared, and ready to reuse." delay={90}>
+      {/* ── Showcase — Video · Creatives · Web ─── */}
+      <Panel eyebrow="Video · Creatives · Web" title="See what your team already shipped" subtitle="Every piece below is cited, MLR-cleared, and ready to reuse." delay={90}>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
           {SHOWCASE.map((asset, i) => (
             <ShowcaseCard

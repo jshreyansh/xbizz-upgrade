@@ -448,7 +448,7 @@ export function InfographicDirectionsScreen() {
             </span>
           </div>
           <div className="mt-0.5 hidden text-[9.5px] text-[var(--ink-muted)] sm:block">
-            Saved just now · MagicCanvas™ MLR Ready
+            Saved just now · Canvas Studio · MLR Ready
           </div>
         </div>
 

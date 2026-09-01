@@ -175,46 +175,17 @@ export function MagicVideoModeScreen() {
             Master Content Workflow
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>
-            Magic Video
+            Create Videos with AI
           </h1>
           <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "64ch" }}>
             Synthesize source-backed MoA animations, doctor avatars, and clinical evidence reels in minutes — grounded in verified label claims.
           </p>
         </div>
-
-        {/* Start from Scratch Action Button (Matches Brand Dossiers Top-Right Action) */}
-        <button
-          type="button"
-          onClick={() => {
-            setCreationMode("magic-reel");
-            setPresentationMode("narrated");
-            setDossierModalOpen(true);
-          }}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 20px",
-            borderRadius: "var(--r)",
-            fontWeight: 700,
-            fontSize: 14,
-            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            color: "#fff",
-            boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
-            border: "none",
-            cursor: "pointer",
-            transition: "all .2s ease",
-          }}
-          className="hover:scale-[1.02] active:scale-[0.98]"
-        >
-          <Plus className="size-4 stroke-[2.5]" />
-          <span>Start from Scratch</span>
-        </button>
       </div>
 
       {/* Mode Grid — 2 Engine Selection Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch pt-2">
-        {/* ════ CARD 1: MagicReel™ ════ */}
+        {/* ════ CARD 1: Video (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-reel")}
           className="group relative flex flex-col rounded-[24px] border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-[var(--brand)] hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
@@ -228,13 +199,13 @@ export function MagicVideoModeScreen() {
                 </div>
                 <div>
                   <h3 className="text-lg font-[800] text-[var(--ink)] flex items-center gap-1.5">
-                    MagicReel™
+                    Video
                   </h3>
-                  <p className="text-xs text-[var(--ink-2)] font-medium">Cinematic Medical Explainer</p>
+                  <p className="text-xs text-[var(--ink-2)] font-medium">Start from scratch · Cinematic Medical Explainer</p>
                 </div>
               </div>
               <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-bold text-[var(--brand)] border border-[var(--tint-line)]">
-                Most Popular
+                Start from Scratch
               </span>
             </div>
 
@@ -343,9 +314,9 @@ export function MagicVideoModeScreen() {
                 </div>
                 <div>
                   <h3 className="text-lg font-[800] text-[var(--ink)] flex items-center gap-1.5">
-                    MagicAvatar™
+                    Avatar Video
                   </h3>
-                  <p className="text-xs text-[var(--ink-2)] font-medium">Clinical Presenter &amp; Twin</p>
+                  <p className="text-xs text-[var(--ink-2)] font-medium">Clinical Presenter &amp; Digital Twin</p>
                 </div>
               </div>
               <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-bold text-[var(--brand)] border border-[var(--tint-line)]">

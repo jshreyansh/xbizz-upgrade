@@ -36,13 +36,13 @@ export default function CreatePage() {
   if (videoSubStage === "mode-select") {
     if (assetType === "infographic") {
       return (
-        <AppShell pageTitle="Magic Canvas">
+        <AppShell pageTitle="Creatives">
           <CreativesModeScreen />
         </AppShell>
       );
     }
     return (
-      <AppShell pageTitle="Magic Video">
+      <AppShell pageTitle="Create Videos with AI">
         <MagicVideoModeScreen />
       </AppShell>
     );
