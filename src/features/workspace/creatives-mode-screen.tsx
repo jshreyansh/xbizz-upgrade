@@ -187,7 +187,7 @@ export function CreativesModeScreen() {
 
       {/* Mode Grid — 2 Engine Selection Cards (Exact 2x2 Grid Matching Video Studio) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch pt-2">
-        {/* ════ CARD 1: Image (Infographic) (Start from Scratch) ════ */}
+        {/* ════ CARD 1: Infographic/Chart (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
           className="group relative flex flex-col rounded-[24px] border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-[var(--brand)] hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
@@ -201,7 +201,7 @@ export function CreativesModeScreen() {
                 </div>
                 <div>
                   <h3 className="text-lg font-[800] text-[var(--ink)] flex items-center gap-1.5">
-                    Image (Infographic)
+                    Infographic/Chart
                   </h3>
                   <p className="text-xs text-[var(--ink-2)] font-medium">Start from scratch · HCP &amp; Patient Infographic</p>
                 </div>
@@ -294,7 +294,7 @@ export function CreativesModeScreen() {
           </div>
         </div>
 
-        {/* ════ CARD 2: MagicDeck™ (Visual Detail Aid & Slides) ════ */}
+        {/* ════ CARD 2: Presentation/Deck (Visual Detail Aid & Slides) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
           className="group relative flex flex-col rounded-[24px] border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
@@ -308,7 +308,7 @@ export function CreativesModeScreen() {
                 </div>
                 <div>
                   <h3 className="text-lg font-[800] text-[var(--ink)] flex items-center gap-1.5">
-                    Image (Deck)
+                    Presentation/Deck
                   </h3>
                   <p className="text-xs text-[var(--ink-2)] font-medium">Visual Detail Aid &amp; Slide Panels</p>
                 </div>
