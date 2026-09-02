@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock3,
+  ExternalLink,
+  Eye,
   FileCheck2,
   FileText,
   Film,
@@ -50,6 +52,7 @@ import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { InfographicDirectionsScreen } from "@/features/workspace/infographic-directions-screen";
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
+import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 
@@ -306,6 +309,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     { name: `${brandName || "Brand"}_Clinical_Study_Report_Phase3.pdf`, size: "4.2 MB", date: "Today" },
     { name: `${brandName || "Brand"}_Core_Visual_Aid_Brief.docx`, size: "840 KB", date: "Today" },
   ]);
+  const [previewDossier, setPreviewDossier] = useState<DossierPreviewData | null>(null);
   const docUploadRef = useRef<HTMLInputElement>(null);
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
   const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
@@ -625,78 +629,90 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   tone="done"
                 >
                   <div className="space-y-4">
-                    <p className="text-[12.5px] text-[var(--ink-2)] leading-relaxed">
-                      Select how SwishX grounds every scene, script sentence, and citation against verified evidence and research materials.
-                    </p>
-
-                    {/* Pre-built dossiers matching the brand/disease */}
-                    <div className="space-y-2">
+                    {/* Pre-built dossiers matching the brand/disease - Distinct Informational Tray */}
+                    <div className="rounded-[18px] bg-[#f4f6f3] border border-[#e2e8e3] p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
-                          Prebuilt Approved Dossiers ({brandName || "Brand"})
-                        </span>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                          ✓ Verified SmPC / Label Data
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="size-4 text-emerald-700" />
+                          <span className="text-[12px] font-extrabold text-[var(--ink)]">
+                            Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/70 border border-emerald-300 px-2 py-0.2 rounded-full">
+                            ✓ SmPC / Label Data Active
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-[var(--ink-muted)]">Click View to inspect full claims &amp; sources</span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                         {[
                           {
                             name: `${brandName || "Velmora"} Core SmPC & Prescribing Info`,
+                            molecule: "tirzelamide",
                             market: "🇺🇸 US · FDA",
-                            claims: "214 claims",
-                            doc: "Prescribing Info (Rev. 04/2026)",
-                            citations: "112 citations",
+                            sections: 18,
+                            claims: 214,
+                            documents: [
+                              { name: "FDA Approved Prescribing Information (Rev. 04/2026)", citations: 112 },
+                              { name: "CLARITY-CV Phase III Pivotal Trial Readout", citations: 64 },
+                            ],
                           },
                           {
                             name: `${brandName || "Velmora"} Phase III Pivotal Readout`,
+                            molecule: "tirzelamide",
                             market: "🌐 Global · NEJM",
-                            claims: "64 claims",
-                            doc: "CLARITY-CV Phase III Trial",
-                            citations: "64 citations",
+                            sections: 12,
+                            claims: 64,
+                            documents: [
+                              { name: "CLARITY-CV Phase III Pivotal Trial Readout", citations: 64 },
+                              { name: "ClinicalTrials.gov Protocol NCT04892110", citations: 18 },
+                            ],
                           },
                           {
                             name: `${brandName || "Velmora"} HEOR & Value Evidence`,
+                            molecule: "tirzelamide",
                             market: "🇪🇺 EU · EMA",
-                            claims: "128 claims",
-                            doc: "QALY & Budget Impact Model",
-                            citations: "30 citations",
+                            sections: 14,
+                            claims: 128,
+                            documents: [
+                              { name: "Global Health Economics & QALY Impact Dossier", citations: 76 },
+                              { name: "30-Day Hospital Readmission Reduction Model", citations: 52 },
+                            ],
                           },
                         ].map((dossier, idx) => (
                           <div
                             key={idx}
-                            className={cn(
-                              "p-3 rounded-[14px] border text-left flex flex-col justify-between transition-all",
-                              sourceGroundingMode === "my-sources"
-                                ? "opacity-50 border-black/10 bg-[#f9faf9] grayscale"
-                                : "border-[#e3e8e5] bg-white shadow-2xs"
-                            )}
+                            className="p-3 rounded-[14px] bg-white border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
                           >
                             <div className="space-y-1">
-                              <div className="flex items-center justify-between gap-1">
+                              <div className="flex items-center justify-between">
                                 <span className="text-[10px] font-extrabold uppercase tracking-wide text-[var(--ink-muted)]">
                                   {dossier.market}
                                 </span>
                                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
-                                  {dossier.claims}
+                                  {dossier.claims} claims
                                 </span>
                               </div>
                               <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug line-clamp-1">
                                 {dossier.name}
                               </div>
                             </div>
-                            <div className="mt-2 pt-2 border-t border-black/5 flex items-center justify-between text-[11px] text-[var(--ink-muted)]">
-                              <span className="truncate max-w-[130px]">📄 {dossier.doc}</span>
-                              <span className="font-semibold text-[var(--ink-2)] shrink-0">{dossier.citations}</span>
-                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setPreviewDossier(dossier)}
+                              className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-[10px] bg-[#f0f4f1] hover:bg-[var(--tint)] text-[var(--brand-deep)] text-[11.5px] font-bold border border-[#d8e0da] transition-colors cursor-pointer"
+                            >
+                              <Eye className="size-3.5 text-[var(--brand)]" />
+                              <span>View Dossier</span>
+                            </button>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* 3 Grounding Options */}
-                    <div className="space-y-2 pt-2 border-t border-black/5">
+                    {/* 3 Grounding Options - Concise & Clear */}
+                    <div className="space-y-2 pt-1">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
                         Select Grounding Source Mode
                       </span>
@@ -704,18 +720,18 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         {[
                           {
                             id: "both" as const,
-                            title: "Both SwishX dossiers and My sources / attachments",
-                            desc: "Both documents are referenced, and every claim is cited to the one it came from.",
+                            title: "Both SwishX dossiers and My attachments",
+                            desc: "Combines verified regulatory label data with your uploaded attachments.",
                           },
                           {
                             id: "my-sources" as const,
-                            title: "Only My sources and attachments",
-                            desc: "The dossier is ignored as a source; claims are grounded strictly in your files.",
+                            title: "Only My sources & attachments",
+                            desc: "Strictly uses your files; ignores the prebuilt regulatory dossier.",
                           },
                           {
                             id: "swishx-only" as const,
                             title: "Only SwishX approved dossiers",
-                            desc: "Grounds strictly on verified SmPC, FDA prescribing info, and clinical packages.",
+                            desc: "Strictly uses verified SmPC and FDA prescribing label packages.",
                           },
                         ].map((opt) => {
                           const isSelected = sourceGroundingMode === opt.id;
@@ -725,7 +741,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               type="button"
                               onClick={() => setSourceGroundingMode(opt.id)}
                               className={cn(
-                                "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[95px]",
+                                "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
                                 isSelected
                                   ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs ring-2 ring-[var(--brand)]/15"
                                   : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
@@ -744,7 +760,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                   {isSelected && <Check className="size-3 stroke-[3]" />}
                                 </div>
                               </div>
-                              <div className="text-[11px] text-[var(--ink-muted)] mt-2 leading-snug">{opt.desc}</div>
+                              <div className="text-[11px] text-[var(--ink-muted)] mt-1.5 leading-snug">{opt.desc}</div>
                             </button>
                           );
                         })}
@@ -756,7 +772,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       <div className="space-y-2 pt-2 border-t border-black/5 animate-in fade-in duration-150">
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
-                            My Uploaded Documents & Briefs ({uploadedDocs.length})
+                            My Uploaded Documents &amp; Briefs ({uploadedDocs.length})
                           </span>
                           <button
                             type="button"
@@ -1783,6 +1799,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           selectedIds={selectedSourceIds}
           onToggle={toggleSource}
           onClose={() => setSourceManagerOpen(false)}
+        />
+      )}
+      {previewDossier && (
+        <DossierPreviewModal
+          dossier={previewDossier}
+          onClose={() => setPreviewDossier(null)}
         />
       )}
     </div>
