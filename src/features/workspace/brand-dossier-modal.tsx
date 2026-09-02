@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   Building2,
   Check,
+  ChevronDown,
   FileText,
   FolderPlus,
   Plus,
@@ -23,6 +24,10 @@ import {
   Square,
   FileSpreadsheet,
   Sparkles,
+  FlaskConical,
+  Truck,
+  ShoppingCart,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
@@ -56,46 +61,11 @@ export interface DossierItem {
 }
 
 export const INITIAL_BRANDS: BrandItem[] = [
-  {
-    id: "velmora",
-    name: "Velmora",
-    genericName: "tirzelamide",
-    therapyAreas: ["Dermatology", "Cardiology"],
-    hasDossier: true,
-    dossierIds: ["velmora-commercial", "velmora-smpc", "velmora-heor"],
-  },
-  {
-    id: "onkavia",
-    name: "Onkavia",
-    genericName: "relunocitinib",
-    therapyAreas: ["Oncology"],
-    hasDossier: true,
-    dossierIds: ["onkavia-ema", "onkavia-fda"],
-  },
-  {
-    id: "nirvexa",
-    name: "Nirvexa",
-    genericName: "brentaxaban",
-    therapyAreas: ["Immunology"],
-    hasDossier: true,
-    dossierIds: ["nirvexa-mhra", "nirvexa-fda"],
-  },
-  {
-    id: "cardioxa",
-    name: "Cardioxa",
-    genericName: "levomilnacipran ER",
-    therapyAreas: ["Cardiology"],
-    hasDossier: true,
-    dossierIds: ["cardioxa-sample"],
-  },
-  {
-    id: "pulmovax",
-    name: "PulmoVax",
-    genericName: "albuterol / budesonide",
-    therapyAreas: ["Respiratory"],
-    hasDossier: true,
-    dossierIds: ["pulmovax-sample"],
-  },
+  { id: "velmora", name: "Velmora", genericName: "tirzelamide", therapyAreas: ["Dermatology", "Cardiology"], hasDossier: true, dossierIds: ["velmora-commercial", "velmora-smpc", "velmora-heor"] },
+  { id: "onkavia", name: "Onkavia", genericName: "relunocitinib", therapyAreas: ["Oncology"], hasDossier: true, dossierIds: ["onkavia-ema", "onkavia-fda"] },
+  { id: "nirvexa", name: "Nirvexa", genericName: "brentaxaban", therapyAreas: ["Immunology"], hasDossier: true, dossierIds: ["nirvexa-mhra", "nirvexa-fda"] },
+  { id: "cardioxa", name: "Cardioxa", genericName: "levomilnacipran ER", therapyAreas: ["Cardiology"], hasDossier: true, dossierIds: ["cardioxa-sample"] },
+  { id: "pulmovax", name: "PulmoVax", genericName: "albuterol / budesonide", therapyAreas: ["Respiratory"], hasDossier: true, dossierIds: ["pulmovax-sample"] },
   { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
   { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
   { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
@@ -107,156 +77,135 @@ export const INITIAL_BRANDS: BrandItem[] = [
 
 export const DOSSIERS: Record<string, DossierItem> = {
   "velmora-commercial": {
-    id: "velmora-commercial",
-    brandId: "velmora",
-    name: "Velmora Commercial Launch Dossier",
-    molecule: "tirzelamide",
-    market: "🇺🇸 US · FDA",
-    sections: 18,
-    claims: 214,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
-    skeletonWidths: [88, 72, 94, 60, 80],
-    documents: [
-      { name: "FDA Approved Prescribing Information (Rev. 04/2026)", citations: 112 },
-      { name: "CLARITY-CV Phase III Pivotal Readout (NEJM 2025)", citations: 64 },
-      { name: "Global HEOR Budget Impact & QALY Analysis", citations: 20 },
-      { name: "ClinicalTrials.gov Protocol NCT04892110", citations: 18 },
-    ],
+    id: "velmora-commercial", brandId: "velmora", name: "Velmora Commercial Launch Dossier", molecule: "tirzelamide", market: "🇺🇸 US · FDA",
+    sections: 18, claims: 214, heldOut: 0, avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)", skeletonWidths: [88, 72, 94, 60, 80],
+    documents: [{ name: "FDA Approved Prescribing Information (Rev. 04/2026)", citations: 112 }, { name: "CLARITY-CV Phase III Pivotal Readout (NEJM 2025)", citations: 64 }, { name: "Global HEOR Budget Impact & QALY Analysis", citations: 20 }, { name: "ClinicalTrials.gov Protocol NCT04892110", citations: 18 }],
   },
   "velmora-smpc": {
-    id: "velmora-smpc",
-    brandId: "velmora",
-    name: "Velmora EU Summary of Product Characteristics (SmPC)",
-    molecule: "tirzelamide",
-    market: "🇪🇺 EU · EMA",
-    sections: 19,
-    claims: 186,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#22c07a,#12784a)",
-    skeletonWidths: [92, 65, 84, 55, 78],
-    documents: [
-      { name: "EMA Approved Summary of Product Characteristics (SmPC)", citations: 104 },
-      { name: "EU Multi-Center CLARITY-EU Phase III Sub-study", citations: 52 },
-      { name: "European HTA Joint Clinical Assessment Submission", citations: 30 },
-    ],
+    id: "velmora-smpc", brandId: "velmora", name: "Velmora EU Summary of Product Characteristics (SmPC)", molecule: "tirzelamide", market: "🇪🇺 EU · EMA",
+    sections: 19, claims: 186, heldOut: 0, avatarBg: "linear-gradient(140deg,#22c07a,#12784a)", skeletonWidths: [92, 65, 84, 55, 78],
+    documents: [{ name: "EMA Approved Summary of Product Characteristics (SmPC)", citations: 104 }, { name: "EU Multi-Center CLARITY-EU Phase III Sub-study", citations: 52 }, { name: "European HTA Joint Clinical Assessment Submission", citations: 30 }],
   },
   "velmora-heor": {
-    id: "velmora-heor",
-    brandId: "velmora",
-    name: "Velmora HEOR & Value Evidence Dossier",
-    molecule: "tirzelamide",
-    market: "🌐 Global · HEOR",
-    sections: 14,
-    claims: 128,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#f59e0b,#d97706)",
-    skeletonWidths: [80, 85, 70, 90, 65],
-    documents: [
-      { name: "Global Health Economics & QALY Impact Dossier", citations: 76 },
-      { name: "30-Day Hospital Readmission Reduction Health Economic Model", citations: 52 },
-    ],
+    id: "velmora-heor", brandId: "velmora", name: "Velmora HEOR & Value Evidence Dossier", molecule: "tirzelamide", market: "🌐 Global · HEOR",
+    sections: 14, claims: 128, heldOut: 0, avatarBg: "linear-gradient(140deg,#f59e0b,#d97706)", skeletonWidths: [80, 85, 70, 90, 65],
+    documents: [{ name: "Global Health Economics & QALY Impact Dossier", citations: 76 }, { name: "30-Day Hospital Readmission Reduction Health Economic Model", citations: 52 }],
   },
   "onkavia-ema": {
-    id: "onkavia-ema",
-    brandId: "onkavia",
-    name: "Onkavia Clinical Reference Dossier",
-    molecule: "relunocitinib",
-    market: "🇪🇺 EU · EMA",
-    sections: 19,
-    claims: 188,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#22c07a,#12784a)",
-    skeletonWidths: [92, 65, 84, 55, 78],
-    documents: [
-      { name: "EMA Summary of Product Characteristics (SmPC)", citations: 96 },
-      { name: "EMBRACE-3 Pivotal Trial Readout (Lancet Oncology)", citations: 58 },
-      { name: "EU HEOR Relative Effectiveness Dossier", citations: 34 },
-    ],
+    id: "onkavia-ema", brandId: "onkavia", name: "Onkavia Clinical Reference Dossier", molecule: "relunocitinib", market: "🇪🇺 EU · EMA",
+    sections: 19, claims: 188, heldOut: 0, avatarBg: "linear-gradient(140deg,#22c07a,#12784a)", skeletonWidths: [92, 65, 84, 55, 78],
+    documents: [{ name: "EMA Summary of Product Characteristics (SmPC)", citations: 96 }, { name: "EMBRACE-3 Pivotal Trial Readout (Lancet Oncology)", citations: 58 }, { name: "EU HEOR Relative Effectiveness Dossier", citations: 34 }],
   },
   "onkavia-fda": {
-    id: "onkavia-fda",
-    brandId: "onkavia",
-    name: "Onkavia US Prescribing Dossier",
-    molecule: "relunocitinib",
-    market: "🇺🇸 US · FDA",
-    sections: 17,
-    claims: 172,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
-    skeletonWidths: [85, 70, 90, 65, 75],
-    documents: [
-      { name: "FDA Prescribing Information §14 Clinical Studies", citations: 88 },
-      { name: "US Oncology Core Visual Claims Library", citations: 54 },
-      { name: "NCCN Clinical Practice Guidelines in Oncology Review", citations: 30 },
-    ],
+    id: "onkavia-fda", brandId: "onkavia", name: "Onkavia US Prescribing Dossier", molecule: "relunocitinib", market: "🇺🇸 US · FDA",
+    sections: 17, claims: 172, heldOut: 0, avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)", skeletonWidths: [85, 70, 90, 65, 75],
+    documents: [{ name: "FDA Prescribing Information §14 Clinical Studies", citations: 88 }, { name: "US Oncology Core Visual Claims Library", citations: 54 }, { name: "NCCN Clinical Practice Guidelines in Oncology Review", citations: 30 }],
   },
   "nirvexa-mhra": {
-    id: "nirvexa-mhra",
-    brandId: "nirvexa",
-    name: "Nirvexa Regulatory Launch Dossier",
-    molecule: "brentaxaban",
-    market: "🇬🇧 UK · MHRA",
-    sections: 16,
-    claims: 142,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#a855f7,#7e22ce)",
-    skeletonWidths: [80, 88, 65, 75, 90],
-    documents: [
-      { name: "MHRA Assessment Report & Great Britain Authorisation", citations: 74 },
-      { name: "NICE Single Technology Appraisal (STA) Submission", citations: 48 },
-      { name: "Pivotal TARGET-RA Phase III Study Readout", citations: 20 },
-    ],
+    id: "nirvexa-mhra", brandId: "nirvexa", name: "Nirvexa Regulatory Launch Dossier", molecule: "brentaxaban", market: "🇬🇧 UK · MHRA",
+    sections: 16, claims: 142, heldOut: 0, avatarBg: "linear-gradient(140deg,#a855f7,#7e22ce)", skeletonWidths: [80, 88, 65, 75, 90],
+    documents: [{ name: "MHRA Assessment Report & Great Britain Authorisation", citations: 74 }, { name: "NICE Single Technology Appraisal (STA) Submission", citations: 48 }, { name: "Pivotal TARGET-RA Phase III Study Readout", citations: 20 }],
   },
   "nirvexa-fda": {
-    id: "nirvexa-fda",
-    brandId: "nirvexa",
-    name: "Nirvexa US Commercial Claims Library",
-    molecule: "brentaxaban",
-    market: "🇺🇸 US · FDA",
-    sections: 15,
-    claims: 136,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
-    skeletonWidths: [82, 74, 86, 68, 70],
-    documents: [
-      { name: "FDA Approved Label (Full Prescribing Info)", citations: 82 },
-      { name: "US Rheumatology Advisory Board Consensus", citations: 34 },
-      { name: "ACR Guidelines Evidence Synthesis", citations: 20 },
-    ],
+    id: "nirvexa-fda", brandId: "nirvexa", name: "Nirvexa US Commercial Claims Library", molecule: "brentaxaban", market: "🇺🇸 US · FDA",
+    sections: 15, claims: 136, heldOut: 0, avatarBg: "linear-gradient(140deg,#4f83ff,#1d4ed8)", skeletonWidths: [82, 74, 86, 68, 70],
+    documents: [{ name: "FDA Approved Label (Full Prescribing Info)", citations: 82 }, { name: "US Rheumatology Advisory Board Consensus", citations: 34 }, { name: "ACR Guidelines Evidence Synthesis", citations: 20 }],
   },
   "cardioxa-sample": {
-    id: "cardioxa-sample",
-    brandId: "cardioxa",
-    name: "Cardioxa Cardiology Evidence Brief",
-    molecule: "levomilnacipran ER",
-    market: "🇺🇸 US · FDA",
-    sections: 14,
-    claims: 96,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#ef4444,#b91c1c)",
-    skeletonWidths: [78, 82, 60, 70, 85],
-    documents: [
-      { name: "FDA Approved Prescribing Information", citations: 58 },
-      { name: "Heart Failure Association Clinical Review", citations: 38 },
-    ],
+    id: "cardioxa-sample", brandId: "cardioxa", name: "Cardioxa Cardiology Evidence Brief", molecule: "levomilnacipran ER", market: "🇺🇸 US · FDA",
+    sections: 14, claims: 96, heldOut: 0, avatarBg: "linear-gradient(140deg,#ef4444,#b91c1c)", skeletonWidths: [78, 82, 60, 70, 85],
+    documents: [{ name: "FDA Approved Prescribing Information", citations: 58 }, { name: "Heart Failure Association Clinical Review", citations: 38 }],
   },
   "pulmovax-sample": {
-    id: "pulmovax-sample",
-    brandId: "pulmovax",
-    name: "PulmoVax Respiratory Core Dossier",
-    molecule: "albuterol / budesonide",
-    market: "🇺🇸 US · FDA",
-    sections: 15,
-    claims: 110,
-    heldOut: 0,
-    avatarBg: "linear-gradient(140deg,#06b6d4,#0891b2)",
-    skeletonWidths: [85, 75, 90, 65, 80],
-    documents: [
-      { name: "FDA Approved Label & Inhaler Instructions", citations: 68 },
-      { name: "MANDALA Phase III Pivotal Trial Readout", citations: 42 },
-    ],
+    id: "pulmovax-sample", brandId: "pulmovax", name: "PulmoVax Respiratory Core Dossier", molecule: "albuterol / budesonide", market: "🇺🇸 US · FDA",
+    sections: 15, claims: 110, heldOut: 0, avatarBg: "linear-gradient(140deg,#06b6d4,#0891b2)", skeletonWidths: [85, 75, 90, 65, 80],
+    documents: [{ name: "FDA Approved Label & Inhaler Instructions", citations: 68 }, { name: "MANDALA Phase III Pivotal Trial Readout", citations: 42 }],
   },
+};
+
+// ── Disease / Therapy Area options ──
+const DISEASE_OPTIONS = [
+  { id: "dermatology", label: "Dermatology", desc: "Psoriasis, Eczema, Acne, Atopic Dermatitis" },
+  { id: "oncology", label: "Oncology", desc: "Lung Cancer, Breast Cancer, Melanoma, Lymphoma" },
+  { id: "cardiology", label: "Cardiology", desc: "Heart Failure, Atrial Fibrillation, Hypertension" },
+  { id: "immunology", label: "Immunology & Rheumatology", desc: "Rheumatoid Arthritis, Lupus, Crohn's Disease" },
+  { id: "respiratory", label: "Respiratory", desc: "Asthma, COPD, Interstitial Pulmonary Fibrosis" },
+  { id: "neurology", label: "Neurology", desc: "Multiple Sclerosis, Parkinson's, Alzheimer's" },
+  { id: "diabetes", label: "Diabetes & Metabolism", desc: "Type 1 & Type 2 Diabetes, Obesity, Thyroid" },
+  { id: "nephrology", label: "Nephrology & Urology", desc: "CKD, IgA Nephropathy, Bladder Cancer" },
+  { id: "gastroenterology", label: "Gastroenterology", desc: "IBD, Ulcerative Colitis, GERD, NAFLD" },
+  { id: "anti-infectives", label: "Anti-infectives", desc: "HIV, TB, Bacterial Infections, Antifungals" },
+  { id: "psychiatry", label: "Psychiatry & CNS", desc: "Depression, Schizophrenia, ADHD, Anxiety" },
+  { id: "endocrinology", label: "Endocrinology", desc: "Thyroid Disorders, Adrenal, Pituitary Conditions" },
+];
+
+// ── HCP Specialities ──
+const HCP_SPECIALITIES = [
+  "Dermatologist", "Oncologist", "Cardiologist", "Rheumatologist", "Neurologist",
+  "Pulmonologist", "Gastroenterologist", "Nephrologist", "Immunologist",
+  "General Practitioner", "Endocrinologist", "Psychiatrist", "Hospitalist", "Surgeon",
+];
+
+// ── Updated Audience Options ──
+const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: string; icon: any }> = [
+  { id: "HCP", title: "HCP", subtitle: "Doctors, Specialists, Key Opinion Leaders", icon: Stethoscope },
+  { id: "Patient", title: "Patients", subtitle: "Disease understanding, treatment adherence, QoL", icon: HeartHandshake },
+  { id: "Field team", title: "Field Force", subtitle: "Detailing aids, objection handling, MSL decks", icon: Briefcase },
+  { id: "Hospital", title: "Hospital Procurement", subtitle: "Formulary decisions, HEOR, budget impact", icon: Building2 },
+  { id: "Distributor", title: "Distributors", subtitle: "Trade, supply chain, market access teams", icon: Truck },
+  { id: "Consumer", title: "Consumers", subtitle: "General public, symptom recognition, brand awareness", icon: ShoppingCart },
+];
+
+// ── Audience-aware Clinical Topics ──
+const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; detail: string }>> = {
+  HCP: [
+    { id: "moa", label: "Mechanism of Action", detail: "Receptor binding, phosphorylation blockade, cellular cascade" },
+    { id: "efficacy", label: "Efficacy & Clinical Readout", detail: "Primary endpoints, PASI 90 / MACE reduction, responder rates" },
+    { id: "safety", label: "Safety & Tolerability", detail: "Adverse events, hepatic/renal cut-offs, black-box warnings" },
+    { id: "dosing", label: "Dosing & Administration", detail: "Once-daily oral regimen, titration schedule, missed dose guidance" },
+    { id: "patient-profile", label: "Patient Profile", detail: "Indication, contraindications, comorbidities, eGFR thresholds" },
+    { id: "head-to-head", label: "Comparative Head-to-Head", detail: "Non-inferiority and superiority metrics vs Standard of Care" },
+  ],
+  Patient: [
+    { id: "how-it-works", label: "How it Works", detail: "Simple explanation of mechanism in plain language" },
+    { id: "what-to-expect", label: "What to Expect", detail: "Onset of action, how quickly you may see results" },
+    { id: "side-effects", label: "Side Effects & Safety", detail: "Common side effects, when to contact your doctor" },
+    { id: "how-to-take", label: "How to Take It", detail: "Dosing schedule, missed dose instructions, storage" },
+    { id: "living-with", label: "Living with the Condition", detail: "Lifestyle tips, diet, support resources" },
+    { id: "real-outcomes", label: "Real Patient Outcomes", detail: "PRO scores, quality of life improvements, adherence data" },
+  ],
+  "Field team": [
+    { id: "key-messages", label: "Key Selling Messages", detail: "Core brand claims, approved differentiation points" },
+    { id: "objection-handling", label: "Objection Handling", detail: "Common HCP objections and evidence-based responses" },
+    { id: "clinical-evidence", label: "Clinical Evidence Summary", detail: "Pivotal trial highlights condensed for field use" },
+    { id: "dosing-guide", label: "Dosing Guide", detail: "Quick-reference dosing, titration, administration reminders" },
+    { id: "competitive", label: "Competitive Positioning", detail: "Head-to-head data, market positioning vs competitors" },
+    { id: "fair-balance", label: "Fair Balance & ISI", detail: "Required safety statements and black-box warnings" },
+  ],
+  Hospital: [
+    { id: "budget-impact", label: "Budget Impact", detail: "Cost-per-patient analysis, hospital formulary cost model" },
+    { id: "heor", label: "HEOR & QALY", detail: "Health economic outcomes, quality-adjusted life year data" },
+    { id: "formulary", label: "Formulary Positioning", detail: "Formulary placement rationale, tier status, step edits" },
+    { id: "cost-effectiveness", label: "Cost-Effectiveness", detail: "ICERs, NNT, comparative cost vs standard of care" },
+    { id: "contracting", label: "Contracting & GPO", detail: "GPO contracts, rebate structure, pull-through support" },
+    { id: "hta", label: "HTA Submissions", detail: "NICE, HAS, G-BA dossier highlights for procurement teams" },
+  ],
+  Distributor: [
+    { id: "product-overview", label: "Product Overview", detail: "Indication, mechanism summary, approved markets" },
+    { id: "market-opportunity", label: "Market Opportunity", detail: "Patient population size, market growth forecasts" },
+    { id: "supply-logistics", label: "Supply & Logistics", detail: "Cold-chain requirements, shelf life, supply timelines" },
+    { id: "sku-packaging", label: "SKU & Packaging", detail: "Available pack sizes, barcode, unit-of-use details" },
+    { id: "reimbursement", label: "Reimbursement Landscape", detail: "Payer coverage, co-pay programs, access support" },
+    { id: "distribution-terms", label: "Distribution Terms", detail: "Trade terms, margin, exclusivity, territory rights" },
+  ],
+  Consumer: [
+    { id: "what-it-does", label: "What it Does", detail: "Plain-language description of the medicine's purpose" },
+    { id: "who-its-for", label: "Who it's For", detail: "Who is prescribed this medicine and why" },
+    { id: "how-to-take-consumer", label: "How to Take It", detail: "Simple dosing instructions and reminders" },
+    { id: "side-effects-consumer", label: "Possible Side Effects", detail: "Most common side effects in everyday language" },
+    { id: "talk-to-doctor", label: "Talking to Your Doctor", detail: "Questions to ask your healthcare provider" },
+    { id: "lifestyle", label: "Lifestyle Tips", detail: "Diet, exercise, and habit advice alongside treatment" },
+  ],
 };
 
 const QUICK_DOSSIER_GRADIENTS = [
@@ -270,28 +219,12 @@ function createQuickDossier(brand: BrandItem, brief: string): DossierItem {
   const id = `${brand.id}-quick-${Date.now().toString(36)}`;
   const gradient = QUICK_DOSSIER_GRADIENTS[Math.floor(Math.random() * QUICK_DOSSIER_GRADIENTS.length)];
   return {
-    id,
-    brandId: brand.id,
-    name: `${brand.name} Marketing & Branding Dossier`,
-    molecule: brand.genericName,
-    market: "🌐 Global · Marketing",
-    sections: 6,
-    claims: 24,
-    heldOut: 0,
-    avatarBg: gradient,
-    skeletonWidths: [82, 68, 90, 60, 76, 70],
-    isSample: false,
+    id, brandId: brand.id, name: `${brand.name} Marketing & Branding Dossier`, molecule: brand.genericName,
+    market: "🌐 Global · Marketing", sections: 6, claims: 24, heldOut: 0, avatarBg: gradient,
+    skeletonWidths: [82, 68, 90, 60, 76, 70], isSample: false,
     documents: brief.trim() ? [{ name: `Brief: ${brief.trim().slice(0, 70)}`, citations: 0 }] : undefined,
   };
 }
-
-const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: string; icon: any }> = [
-  { id: "HCP", title: "HCPs & Specialists", subtitle: "Physicians, Specialists, Key Opinion Leaders, Hospitalists", icon: Stethoscope },
-  { id: "Patient", title: "Patients & Caregivers", subtitle: "Disease understanding, treatment adherence, QoL", icon: HeartHandshake },
-  { id: "Field team", title: "Field Force & Reps", subtitle: "Detailing aids, objection handling, MSL decks", icon: Briefcase },
-  { id: "Payer", title: "Payers & Formularies", subtitle: "Health economics, QALY impact, budget models", icon: Building2 },
-  { id: "Consumer", title: "Consumers & OTC", subtitle: "General public, symptom recognition, brand awareness", icon: Users },
-];
 
 const VIDEO_SIZE_OPTIONS = [
   { id: "16:9", ratio: "16:9", label: "Landscape Master", desc: "1920×1080 · Desktop, Congress Displays, Web Portals", icon: Monitor },
@@ -305,15 +238,6 @@ const INFOGRAPHIC_SIZE_OPTIONS = [
   { id: "16:9", ratio: "16:9", label: "Landscape Slide", desc: "1920×1080 · Slide Decks, Congress Scientific Panels", icon: Monitor },
   { id: "A4", ratio: "A4", label: "Print Document", desc: "2480×3508 · Print-Ready CMYK Journal Leave-Behind", icon: FileSpreadsheet },
   { id: "9:16", ratio: "9:16", label: "Mobile Digest", desc: "1080×1920 · Digital Leave-Behind for Smartphones", icon: Smartphone },
-];
-
-const CLINICAL_TOPIC_OPTIONS = [
-  { id: "efficacy", label: "Efficacy & Clinical Readout", detail: "Primary endpoints, PASI 90 / MACE reduction, responder rates" },
-  { id: "moa", label: "Mechanism of Action (MoA)", detail: "Receptor binding, phosphorylation blockade, cellular cascade" },
-  { id: "safety", label: "Safety & Tolerability Profile", detail: "Adverse events, hepatic/renal cut-offs, black-box warnings" },
-  { id: "dosing", label: "Dosing & Administration", detail: "Once-daily oral regimen, titration schedule, missed dose guidance" },
-  { id: "qol", label: "Patient Compliance & QoL", detail: "Convenience vs injections, patient-reported outcome scores" },
-  { id: "head-to-head", label: "Comparative Head-to-Head", detail: "Non-inferiority and superiority metrics vs Standard of Care" },
 ];
 
 interface BrandDossierModalProps {
@@ -333,79 +257,82 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const setPageShapeStore = useWorkspaceStore((s) => s.setPageShape);
   const setTopicsStore = useWorkspaceStore((s) => s.setTopics);
 
-  // Stepper state: Step 1 (Brand & Dossier) -> Step 2 (Audience, Size, Topics)
   const [step, setStep] = useState<1 | 2>(1);
 
-  // Step 1 selections
+  // Step 1
+  const [sourceMode, setSourceMode] = useState<"brand" | "disease">("brand");
+  const [brandSearch, setBrandSearch] = useState("");
+  const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
+  const [diseaseSearch, setDiseaseSearch] = useState("");
+  const [diseaseDropdownOpen, setDiseaseDropdownOpen] = useState(false);
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const [selectedDossierId, setSelectedDossierId] = useState<string>("");
-  const [brandSearch, setBrandSearch] = useState("");
+  const [selectedDiseaseId, setSelectedDiseaseId] = useState<string>("");
 
-  // Dossiers quick-created inline
+  // Quick-create
   const [extraDossiers, setExtraDossiers] = useState<Record<string, DossierItem>>({});
   const [extraBrandDossierIds, setExtraBrandDossierIds] = useState<Record<string, string[]>>({});
   const [quickCreateOpen, setQuickCreateOpen] = useState(false);
   const [quickCreateBrief, setQuickCreateBrief] = useState("");
   const [quickCreating, setQuickCreating] = useState(false);
 
-  // Step 2 selections
+  // Step 2
   const [audience, setAudience] = useState<Audience>("HCP");
+  const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
+  const [specialityDropdownOpen, setSpecialityDropdownOpen] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>(assetType === "infographic" ? "3:4" : "16:9");
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([
-    "Efficacy & Clinical Readout",
-    "Mechanism of Action (MoA)",
-  ]);
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
   const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
-  // Reset selection when modal opens
   useEffect(() => {
     if (open) {
       setStep(1);
-      setSelectedBrandId("");
-      setSelectedDossierId("");
-      setBrandSearch("");
-      setQuickCreateOpen(false);
-      setQuickCreateBrief("");
-      setQuickCreating(false);
-      setAudience("HCP");
+      setSourceMode("brand");
+      setSelectedBrandId(""); setSelectedDossierId(""); setSelectedDiseaseId("");
+      setBrandSearch(""); setDiseaseSearch("");
+      setBrandDropdownOpen(false); setDiseaseDropdownOpen(false);
+      setQuickCreateOpen(false); setQuickCreateBrief(""); setQuickCreating(false);
+      setAudience("HCP"); setSelectedSpecialities([]);
       setSelectedSize(assetType === "infographic" ? "3:4" : "16:9");
-      setSelectedTopics(["Efficacy & Clinical Readout", "Mechanism of Action (MoA)"]);
+      const def = TOPICS_BY_AUDIENCE["HCP"];
+      setSelectedTopics([def[0].label, def[1].label]);
     }
   }, [open, assetType]);
 
-  const allBrands = useMemo(() => {
-    return INITIAL_BRANDS.map((b) => {
-      const extraIds = extraBrandDossierIds[b.id];
-      if (!extraIds?.length) return b;
-      return { ...b, hasDossier: true, dossierIds: [...(b.dossierIds || []), ...extraIds] };
-    });
-  }, [extraBrandDossierIds]);
+  useEffect(() => {
+    const topics = TOPICS_BY_AUDIENCE[audience];
+    if (topics) setSelectedTopics([topics[0].label, topics[1].label]);
+    setSelectedSpecialities([]);
+  }, [audience]);
+
+  const allBrands = useMemo(() => INITIAL_BRANDS.map((b) => {
+    const extraIds = extraBrandDossierIds[b.id];
+    if (!extraIds?.length) return b;
+    return { ...b, hasDossier: true, dossierIds: [...(b.dossierIds || []), ...extraIds] };
+  }), [extraBrandDossierIds]);
 
   const allDossiers = useMemo(() => ({ ...DOSSIERS, ...extraDossiers }), [extraDossiers]);
-
-  const selectedBrand = useMemo(() => {
-    return allBrands.find((b) => b.id === selectedBrandId) || null;
-  }, [allBrands, selectedBrandId]);
-
-  const availableDossiers = useMemo(() => {
-    if (!selectedBrandId) return [];
-    return Object.values(allDossiers).filter((d) => d.brandId === selectedBrandId);
-  }, [allDossiers, selectedBrandId]);
+  const selectedBrand = useMemo(() => allBrands.find((b) => b.id === selectedBrandId) || null, [allBrands, selectedBrandId]);
+  const selectedDisease = useMemo(() => DISEASE_OPTIONS.find((d) => d.id === selectedDiseaseId) || null, [selectedDiseaseId]);
+  const availableDossiers = useMemo(() => selectedBrandId ? Object.values(allDossiers).filter((d) => d.brandId === selectedBrandId) : [], [allDossiers, selectedBrandId]);
 
   const filteredBrands = useMemo(() => {
     const q = brandSearch.toLowerCase().trim();
     if (!q) return allBrands;
-    return allBrands.filter(
-      (b) =>
-        b.name.toLowerCase().includes(q) ||
-        b.genericName.toLowerCase().includes(q) ||
-        b.therapyAreas.some((t) => t.toLowerCase().includes(q))
-    );
+    return allBrands.filter((b) => b.name.toLowerCase().includes(q) || b.genericName.toLowerCase().includes(q) || b.therapyAreas.some((t) => t.toLowerCase().includes(q)));
   }, [allBrands, brandSearch]);
+
+  const filteredDiseases = useMemo(() => {
+    const q = diseaseSearch.toLowerCase().trim();
+    if (!q) return DISEASE_OPTIONS;
+    return DISEASE_OPTIONS.filter((d) => d.label.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q));
+  }, [diseaseSearch]);
+
+  const currentTopics = TOPICS_BY_AUDIENCE[audience] || TOPICS_BY_AUDIENCE.HCP;
+  const sizeOptions = assetType === "infographic" ? INFOGRAPHIC_SIZE_OPTIONS : VIDEO_SIZE_OPTIONS;
+  const canProceedStep1 = sourceMode === "brand" ? !!(selectedBrandId && selectedDossierId) : !!selectedDiseaseId;
 
   function handleQuickCreate() {
     if (!selectedBrand) return;
@@ -413,578 +340,411 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setTimeout(() => {
       const newDossier = createQuickDossier(selectedBrand, quickCreateBrief);
       setExtraDossiers((prev) => ({ ...prev, [newDossier.id]: newDossier }));
-      setExtraBrandDossierIds((prev) => ({
-        ...prev,
-        [selectedBrand.id]: [...(prev[selectedBrand.id] || []), newDossier.id],
-      }));
+      setExtraBrandDossierIds((prev) => ({ ...prev, [selectedBrand.id]: [...(prev[selectedBrand.id] || []), newDossier.id] }));
       setSelectedDossierId(newDossier.id);
-      setQuickCreating(false);
-      setQuickCreateOpen(false);
-      setQuickCreateBrief("");
+      setQuickCreating(false); setQuickCreateOpen(false); setQuickCreateBrief("");
     }, 1100);
   }
 
-  const sizeOptions = assetType === "infographic" ? INFOGRAPHIC_SIZE_OPTIONS : VIDEO_SIZE_OPTIONS;
-
-  const toggleTopic = (topicLabel: string) => {
-    if (selectedTopics.includes(topicLabel)) {
-      if (selectedTopics.length > 1) {
-        setSelectedTopics(selectedTopics.filter((t) => t !== topicLabel));
-      }
-    } else {
-      setSelectedTopics([...selectedTopics, topicLabel]);
-    }
+  const toggleTopic = (label: string) => {
+    if (selectedTopics.includes(label)) { if (selectedTopics.length > 1) setSelectedTopics(selectedTopics.filter((t) => t !== label)); }
+    else setSelectedTopics([...selectedTopics, label]);
   };
 
-  if (!open || !mounted) return null;
+  const toggleSpeciality = (spec: string) => {
+    setSelectedSpecialities((prev) => prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]);
+  };
+
+  const handleSelectBrand = (brand: BrandItem) => {
+    setSelectedBrandId(brand.id);
+    setBrandSearch(brand.name);
+    setBrandDropdownOpen(false);
+    setSelectedDossierId(brand.hasDossier && brand.dossierIds?.length ? brand.dossierIds[0] : "");
+  };
+
+  const handleSelectDisease = (disease: typeof DISEASE_OPTIONS[0]) => {
+    setSelectedDiseaseId(disease.id);
+    setDiseaseSearch(disease.label);
+    setDiseaseDropdownOpen(false);
+  };
 
   const handleStartProject = () => {
-    if (!selectedBrandId || !selectedDossierId) return;
-
-    // Commit all parameters to Workspace store
     setSourceType("dossier");
-    setSourcePayload({ dossierId: selectedDossierId });
+    setSourcePayload({ dossierId: sourceMode === "brand" ? selectedDossierId : selectedDiseaseId });
     setAudienceStore(audience);
     setTopicsStore(selectedTopics);
-
     if (assetType === "infographic") {
-      const mainSize = selectedSize as "3:4" | "16:9" | "A4";
-      setPageShapeStore(mainSize === "A4" ? "A4" : mainSize === "16:9" ? "16:9" : "3:4");
-    } else {
-      setFormatStore(selectedSize);
-    }
-
-    if (onSelectDossier) {
-      onSelectDossier(selectedBrandId, selectedDossierId);
-    }
+      const s = selectedSize as "3:4" | "16:9" | "A4";
+      setPageShapeStore(s === "A4" ? "A4" : s === "16:9" ? "16:9" : "3:4");
+    } else setFormatStore(selectedSize);
+    if (onSelectDossier && selectedBrandId && selectedDossierId) onSelectDossier(selectedBrandId, selectedDossierId);
     setView("create");
     setVideoSubStage("intake");
     onClose();
   };
 
-  const handleSelectBrand = (brand: BrandItem) => {
-    setSelectedBrandId(brand.id);
-    if (brand.hasDossier && brand.dossierIds && brand.dossierIds.length > 0) {
-      setSelectedDossierId(brand.dossierIds[0]);
-    } else {
-      setSelectedDossierId("");
-    }
-  };
+  if (!open || !mounted) return null;
 
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/65 backdrop-blur-md p-3 sm:p-6 lg:p-8 animate-in fade-in duration-200"
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
-      role="dialog"
-      aria-modal="true"
+      role="dialog" aria-modal="true"
     >
       <div className="relative flex h-[94vh] max-h-[960px] w-full max-w-[1380px] flex-col rounded-[28px] border border-black/10 bg-[#fafbfa] shadow-2xl overflow-hidden text-left">
-        {/* ── Modal Top Header with Centered 2-Step Progress Indicator ── */}
-        <div className="relative flex items-center justify-between border-b border-[var(--line)] bg-white px-8 py-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
-              {step === 1 ? "Step 1 of 2" : "Step 2 of 2"}
-            </span>
-          </div>
 
-          {/* Stepper centered in the middle of the modal header */}
+        {/* ── Header ── */}
+        <div className="relative flex items-center justify-between border-b border-[var(--line)] bg-white px-8 py-4 shrink-0">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">{step === 1 ? "Step 1 of 2" : "Step 2 of 2"}</span>
           <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-4 select-none">
             <div className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "flex size-7 items-center justify-center rounded-full text-[12px] font-bold transition-all",
-                  step === 1
-                    ? "bg-[var(--brand)] text-white shadow-xs"
-                    : "bg-emerald-600 text-white"
-                )}
-              >
+              <span className={cn("flex size-7 items-center justify-center rounded-full text-[12px] font-bold transition-all", step === 1 ? "bg-[var(--brand)] text-white shadow-xs" : "bg-emerald-600 text-white")}>
                 {step === 2 ? <Check className="size-4 stroke-[3]" /> : "1"}
               </span>
               <span className={cn("text-[13px] font-bold", step === 1 ? "text-[var(--ink)]" : "text-[var(--ink-muted)]")}>
-                Brand &amp; Dossier
+                {sourceMode === "disease" ? "Disease & Context" : "Brand & Dossier"}
               </span>
             </div>
-
             <div className="h-0.5 w-10 bg-black/15" />
-
             <div className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "flex size-7 items-center justify-center rounded-full text-[12px] font-bold transition-all",
-                  step === 2
-                    ? "bg-[var(--brand)] text-white shadow-xs ring-2 ring-[var(--brand)]/20"
-                    : "bg-black/10 text-[var(--ink-muted)]"
-                )}
-              >
-                2
-              </span>
-              <span className={cn("text-[13px] font-bold", step === 2 ? "text-[var(--ink)]" : "text-[var(--ink-muted)]")}>
-                Audience, Size &amp; Topics
-              </span>
+              <span className={cn("flex size-7 items-center justify-center rounded-full text-[12px] font-bold transition-all", step === 2 ? "bg-[var(--brand)] text-white shadow-xs ring-2 ring-[var(--brand)]/20" : "bg-black/10 text-[var(--ink-muted)]")}>2</span>
+              <span className={cn("text-[13px] font-bold", step === 2 ? "text-[var(--ink)]" : "text-[var(--ink-muted)]")}>Audience, Size & Topics</span>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid size-9 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors cursor-pointer"
-            aria-label="Close"
-          >
+          <button type="button" onClick={onClose} className="grid size-9 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors cursor-pointer" aria-label="Close">
             <X className="size-5" />
           </button>
         </div>
 
-        {/* ── Modal Body: Step 1 vs Step 2 ── */}
+        {/* ── Body ── */}
         <div className="flex-1 overflow-y-auto p-8 space-y-7">
-          {/* ═══════════════════════════════════════════════════════════════
-              STEP 1: SELECT BRAND & APPROVED DOSSIER
-             ═══════════════════════════════════════════════════════════════ */}
+
+          {/* ═══════ STEP 1 ═══════ */}
           {step === 1 && (
-            <div className="space-y-7 animate-in fade-in duration-200">
-              {/* 1.1 Brand Selection Grid */}
-              <div className="space-y-3.5">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">
-                      1
-                    </span>
-                    <span className="text-[14px] font-[850] text-[var(--ink)]">
-                      Select Brand
-                    </span>
-                    <span className="text-[11.5px] text-[var(--ink-muted)]">
-                      (Choose the pharmaceutical brand to ground your content)
-                    </span>
-                  </div>
-
-                  {/* Search input */}
-                  <div className="relative w-full sm:w-72">
-                    <Search className="absolute left-3 top-2.5 size-3.5 text-[var(--ink-muted)]" />
-                    <input
-                      type="text"
-                      value={brandSearch}
-                      onChange={(e) => setBrandSearch(e.target.value)}
-                      placeholder="Search brand, molecule, area..."
-                      className="w-full rounded-xl border border-black/10 bg-white pl-8 pr-3 py-1.5 text-[12px] focus:outline-none focus:border-[var(--brand)] shadow-2xs"
-                    />
-                  </div>
-                </div>
-
-                {/* Brands Responsive Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {filteredBrands.map((brand) => {
-                    const isSelected = brand.id === selectedBrandId;
-                    return (
-                      <button
-                        key={brand.id}
-                        type="button"
-                        onClick={() => handleSelectBrand(brand)}
-                        className={cn(
-                          "group relative flex flex-col justify-between p-3.5 rounded-[18px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
-                          isSelected
-                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/20 shadow-sm"
-                            : "border-black/[0.07] bg-white/75 hover:bg-white hover:border-black/20 hover:-translate-y-0.5"
-                        )}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between gap-1 mb-2">
-                            <div
-                              className={cn(
-                                "grid size-8 place-items-center rounded-lg text-[11.5px] font-black border transition-colors",
-                                isSelected
-                                  ? "bg-[var(--brand)] text-white border-[var(--brand)]"
-                                  : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)] group-hover:bg-[var(--tint)]"
-                              )}
-                            >
-                              {brand.name.slice(0, 2).toUpperCase()}
-                            </div>
-
-                            {isSelected && (
-                              <span className="flex size-5 items-center justify-center rounded-full bg-[var(--brand)] text-white">
-                                <Check className="size-3 stroke-[3]" />
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="text-[13.5px] font-[850] text-[var(--ink)] truncate">
-                            {brand.name}
-                          </div>
-                          <div className="text-[10.5px] text-[var(--ink-muted)] truncate italic">
-                            {brand.genericName}
-                          </div>
-                        </div>
-
-                        <div className="mt-2.5 pt-2 border-t border-black/[0.05] flex items-center justify-between gap-1">
-                          <span className="text-[9.5px] text-[var(--ink-muted)] truncate">
-                            {brand.therapyAreas[0] || "General"}
-                          </span>
-                          {brand.hasDossier ? (
-                            <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 text-[9px] font-bold shrink-0">
-                              {brand.dossierIds?.length || 1} {brand.dossierIds?.length === 1 ? "dossier" : "dossiers"}
-                            </span>
-                          ) : (
-                            <span className="text-[9px] text-[var(--ink-muted)] italic shrink-0">
-                              No dossier
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="flex items-center gap-2">
+                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">1</span>
+                <span className="text-[14px] font-[850] text-[var(--ink)]">Select Source</span>
+                <span className="text-[11.5px] text-[var(--ink-muted)]">(Start from a brand or a disease area)</span>
               </div>
 
-              {/* 1.2 Dossier Selection */}
-              <div className="space-y-3.5 pt-2 border-t border-[var(--line)]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">
-                      2
-                    </span>
-                    <span className="text-[14px] font-[850] text-[var(--ink)]">
-                      {selectedBrand
-                        ? `Available Dossiers for ${selectedBrand.name}`
-                        : "Available Dossiers & Regulatory Sources"}
-                    </span>
-                    {selectedBrand && availableDossiers.length > 0 && (
-                      <span className="text-[11px] text-[var(--ink-muted)]">
-                        ({availableDossiers.length} approved options on file)
-                      </span>
+              {/* Mode toggle */}
+              <div className="inline-flex rounded-[14px] border border-black/10 bg-white p-1 gap-1 shadow-2xs">
+                <button type="button" onClick={() => { setSourceMode("brand"); setSelectedDiseaseId(""); setDiseaseSearch(""); }}
+                  className={cn("flex items-center gap-2 rounded-[10px] px-5 py-2 text-[12.5px] font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-[var(--brand)] text-white shadow-xs" : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5")}>
+                  <ShieldCheck className="size-3.5" /> Brand
+                </button>
+                <button type="button" onClick={() => { setSourceMode("disease"); setSelectedBrandId(""); setSelectedDossierId(""); setBrandSearch(""); }}
+                  className={cn("flex items-center gap-2 rounded-[10px] px-5 py-2 text-[12.5px] font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-[var(--brand)] text-white shadow-xs" : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5")}>
+                  <FlaskConical className="size-3.5" /> Disease / Therapy Area
+                </button>
+              </div>
+
+              {/* ── Brand path ── */}
+              {sourceMode === "brand" && (
+                <div className="space-y-5">
+                  {/* Search combobox */}
+                  <div className="relative max-w-[520px]" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setBrandDropdownOpen(false); }}>
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-[13px] size-4 text-[var(--ink-muted)]" />
+                      <input type="text" value={brandSearch}
+                        onChange={(e) => { setBrandSearch(e.target.value); setBrandDropdownOpen(true); if (!e.target.value) setSelectedBrandId(""); }}
+                        onFocus={() => setBrandDropdownOpen(true)}
+                        placeholder="Search brand name, molecule, or therapy area..."
+                        className="w-full rounded-[14px] border border-black/12 bg-white pl-10 pr-4 py-2.5 text-[13.5px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all" />
+                      {selectedBrandId && (
+                        <span className="absolute right-3.5 top-[11px] flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          <Check className="size-3 stroke-[3]" /> Selected
+                        </span>
+                      )}
+                    </div>
+                    {brandDropdownOpen && filteredBrands.length > 0 && (
+                      <div className="absolute z-50 left-0 right-0 mt-1.5 rounded-[18px] border border-black/10 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.14)] overflow-hidden max-h-[320px] overflow-y-auto">
+                        {filteredBrands.map((brand) => {
+                          const isSel = brand.id === selectedBrandId;
+                          return (
+                            <button key={brand.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelectBrand(brand); }}
+                              className={cn("flex w-full items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "hover:bg-black/[0.03] text-[var(--ink)]")}>
+                              <div className={cn("grid size-8 place-items-center rounded-lg text-[11px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)]")}>{brand.name.slice(0, 2).toUpperCase()}</div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[13px] font-[850]">{brand.name}</div>
+                                <div className="text-[11px] text-[var(--ink-muted)] italic">{brand.genericName} · {brand.therapyAreas[0]}</div>
+                              </div>
+                              <div className="shrink-0 flex items-center gap-2">
+                                {brand.hasDossier
+                                  ? <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 text-[9.5px] font-bold">{brand.dossierIds?.length} dossier{(brand.dossierIds?.length ?? 0) > 1 ? "s" : ""}</span>
+                                  : <span className="text-[9.5px] text-[var(--ink-muted)] italic">No dossier</span>}
+                                {isSel && <Check className="size-4 text-[var(--brand)] stroke-[3]" />}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
 
-                  {selectedBrand && availableDossiers.length > 0 && (
-                    <span className="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      ✓ Verified SmPC / Label Data
-                    </span>
+                  {/* Dossier section */}
+                  {!selectedBrandId ? (
+                    <div className="rounded-[22px] border-2 border-dashed border-black/12 bg-white/60 p-10 text-center space-y-2.5 max-w-[520px]">
+                      <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]"><FileText className="size-6 text-[var(--brand)]" /></div>
+                      <h4 className="text-[15px] font-[850] text-[var(--ink)]">Search and select a brand above</h4>
+                      <p className="text-[12px] text-[var(--ink-muted)] leading-relaxed">Type a brand name, molecule, or therapy area to load its approved dossier.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 pt-2 border-t border-[var(--line)]">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">2</span>
+                          <span className="text-[14px] font-[850] text-[var(--ink)]">{selectedBrand ? `Available Dossiers for ${selectedBrand.name}` : "Available Dossiers"}</span>
+                          {availableDossiers.length > 0 && <span className="text-[11px] text-[var(--ink-muted)]">({availableDossiers.length} on file)</span>}
+                        </div>
+                        {availableDossiers.length > 0 && <span className="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">✓ Verified SmPC / Label Data</span>}
+                      </div>
+
+                      {availableDossiers.length > 0 ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {availableDossiers.map((dossier) => {
+                            const isSel = selectedDossierId === dossier.id;
+                            return (
+                              <div key={dossier.id} onClick={() => setSelectedDossierId(dossier.id)}
+                                className={cn("group relative rounded-[22px] border-2 p-5 transition-all duration-200 cursor-pointer shadow-2xs flex flex-col justify-between", isSel ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm" : "border-black/[0.08] bg-white/80 hover:border-black/20 hover:bg-white")}>
+                                <div>
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-3 min-w-0">
+                                      <div className={cn("mt-0.5 size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/25 group-hover:border-black/40")}>{isSel && <Check className="size-3 stroke-[3]" />}</div>
+                                      <div className="min-w-0">
+                                        <div className="text-[15px] font-[850] text-[var(--ink)] leading-snug">{dossier.name}</div>
+                                        <div className="text-[12px] text-[var(--ink-muted)] italic mt-0.5">{dossier.molecule}</div>
+                                      </div>
+                                    </div>
+                                    <span className="inline-flex items-center gap-1 rounded-md bg-black/5 px-2.5 py-1 text-[11px] font-extrabold text-[var(--ink-2)] shrink-0">{dossier.market}</span>
+                                  </div>
+                                  <div className="mt-3.5 pt-3 border-t border-black/[0.05]">
+                                    <div className="flex items-center justify-between text-[11px] text-[var(--ink-muted)] mb-1.5"><span className="font-semibold">Dossier Structure</span><span className="font-bold text-[var(--ink-2)]">{dossier.sections} sections · {dossier.claims} claims</span></div>
+                                    <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden flex gap-0.5">{dossier.skeletonWidths.map((w, i) => <div key={i} style={{ width: `${w}%` }} className={cn("h-full rounded-full transition-all", isSel ? "bg-[var(--brand)]/70" : "bg-black/20")} />)}</div>
+                                  </div>
+                                </div>
+                                {dossier.documents && dossier.documents.length > 0 && (
+                                  <div className="mt-3.5 pt-2 space-y-1.5">
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Attached Documents ({dossier.documents.length})</div>
+                                    <div className="space-y-1.5">{dossier.documents.slice(0, 3).map((doc, i) => (
+                                      <div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-[#fafbf9] border border-black/5 px-2.5 py-1 text-[11.5px]">
+                                        <span className="truncate text-[var(--ink-2)] font-medium">📄 {doc.name}</span>
+                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded shrink-0">{doc.citations} citations</span>
+                                      </div>
+                                    ))}</div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : quickCreateOpen ? (
+                        <div className="rounded-[24px] border-2 border-black/10 bg-white p-7 space-y-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="grid size-9 place-items-center rounded-xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]"><Sparkles className="size-4" /></div>
+                            <div><h4 className="text-[14.5px] font-[850] text-[var(--ink)]">Quick dossier for {selectedBrand?.name}</h4><p className="text-[11.5px] text-[var(--ink-muted)]">Generated instantly — build the full regulatory dossier later.</p></div>
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-[var(--ink-2)] mb-1.5 block">Brief (optional)</label>
+                            <textarea value={quickCreateBrief} onChange={(e) => setQuickCreateBrief(e.target.value)} rows={3} disabled={quickCreating}
+                              placeholder={`What is ${selectedBrand?.name} for, and who's the audience?`}
+                              className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-[13px] text-[var(--ink)] resize-none disabled:opacity-60" />
+                          </div>
+                          <div className="flex items-center gap-2.5">
+                            <Button variant="secondary" size="sm" disabled={quickCreating} onClick={() => setQuickCreateOpen(false)} className="px-4">Back</Button>
+                            <Button variant="primary" size="sm" disabled={quickCreating} onClick={handleQuickCreate} className="gap-2 font-bold px-5 flex-1 justify-center">
+                              {quickCreating ? (<><LogoMark size={14} className="animate-brand-spin" /><span>Building…</span></>) : (<><Sparkles className="size-3.5" /><span>Create dossier</span></>)}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-[24px] border-2 border-dashed border-black/15 bg-white p-9 text-center space-y-3">
+                          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200"><FolderPlus className="size-6" /></div>
+                          <div className="max-w-[420px] mx-auto">
+                            <h4 className="text-[15px] font-[850] text-[var(--ink)]">No dossier found for {selectedBrand?.name}</h4>
+                            <p className="text-[12px] text-[var(--ink-muted)] mt-1">Create a quick marketing & branding dossier to keep going.</p>
+                          </div>
+                          <Button variant="primary" size="sm" className="gap-2 text-[12px] font-bold" onClick={() => setQuickCreateOpen(true)}>
+                            <Plus className="size-3.5" /><span>Create for {selectedBrand?.name}</span>
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
+              )}
 
-                {!selectedBrand ? (
-                  <div className="rounded-[22px] border-2 border-dashed border-black/12 bg-white/60 p-10 text-center space-y-2.5">
-                    <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]">
-                      <FileText className="size-6 text-[var(--brand)]" />
+              {/* ── Disease path ── */}
+              {sourceMode === "disease" && (
+                <div className="space-y-4">
+                  <div className="relative max-w-[520px]" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDiseaseDropdownOpen(false); }}>
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-[13px] size-4 text-[var(--ink-muted)]" />
+                      <input type="text" value={diseaseSearch}
+                        onChange={(e) => { setDiseaseSearch(e.target.value); setDiseaseDropdownOpen(true); if (!e.target.value) setSelectedDiseaseId(""); }}
+                        onFocus={() => setDiseaseDropdownOpen(true)}
+                        placeholder="Search disease, therapy area, condition..."
+                        className="w-full rounded-[14px] border border-black/12 bg-white pl-10 pr-4 py-2.5 text-[13.5px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all" />
+                      {selectedDiseaseId && (
+                        <span className="absolute right-3.5 top-[11px] flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          <Check className="size-3 stroke-[3]" /> Selected
+                        </span>
+                      )}
                     </div>
-                    <div className="max-w-[420px] mx-auto">
-                      <h4 className="text-[15px] font-[850] text-[var(--ink)]">
-                        Select a brand above to view its approved dossiers
-                      </h4>
-                      <p className="text-[12px] text-[var(--ink-muted)] mt-0.5 leading-relaxed">
-                        Choose from your organization's brand library in Step 1 to load associated SmPC, FDA prescribing info, and clinical evidence packages.
-                      </p>
-                    </div>
-                  </div>
-                ) : availableDossiers.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {availableDossiers.map((dossier) => {
-                      const isSelected = selectedDossierId === dossier.id;
-                      return (
-                        <div
-                          key={dossier.id}
-                          onClick={() => setSelectedDossierId(dossier.id)}
-                          className={cn(
-                            "group relative rounded-[22px] border-2 p-5 transition-all duration-200 cursor-pointer shadow-2xs flex flex-col justify-between",
-                            isSelected
-                              ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                              : "border-black/[0.08] bg-white/80 hover:border-black/20 hover:bg-white"
-                          )}
-                        >
-                          <div>
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-start gap-3 min-w-0">
-                                <div
-                                  className={cn(
-                                    "mt-0.5 size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                                    isSelected
-                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                                      : "border-black/25 group-hover:border-black/40"
-                                  )}
-                                >
-                                  {isSelected && <Check className="size-3 stroke-[3]" />}
-                                </div>
-
-                                <div className="min-w-0">
-                                  <div className="text-[15px] font-[850] text-[var(--ink)] leading-snug">
-                                    {dossier.name}
-                                  </div>
-                                  <div className="text-[12px] text-[var(--ink-muted)] italic mt-0.5">
-                                    {dossier.molecule}
-                                  </div>
-                                </div>
+                    {diseaseDropdownOpen && filteredDiseases.length > 0 && (
+                      <div className="absolute z-50 left-0 right-0 mt-1.5 rounded-[18px] border border-black/10 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.14)] overflow-hidden max-h-[320px] overflow-y-auto">
+                        {filteredDiseases.map((disease) => {
+                          const isSel = disease.id === selectedDiseaseId;
+                          return (
+                            <button key={disease.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelectDisease(disease); }}
+                              className={cn("flex w-full items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "hover:bg-black/[0.03] text-[var(--ink)]")}>
+                              <div className={cn("grid size-8 place-items-center rounded-lg text-[11px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)]")}>{disease.label.slice(0, 2).toUpperCase()}</div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[13px] font-[850]">{disease.label}</div>
+                                <div className="text-[11px] text-[var(--ink-muted)]">{disease.desc}</div>
                               </div>
-
-                              <span className="inline-flex items-center gap-1 rounded-md bg-black/5 px-2.5 py-1 text-[11px] font-extrabold text-[var(--ink-2)] shrink-0">
-                                {dossier.market}
-                              </span>
-                            </div>
-
-                            {/* Dossier Structure Skeleton Bar */}
-                            <div className="mt-3.5 pt-3 border-t border-black/[0.05]">
-                              <div className="flex items-center justify-between text-[11px] text-[var(--ink-muted)] mb-1.5">
-                                <span className="font-semibold">Dossier Structure</span>
-                                <span className="font-bold text-[var(--ink-2)]">
-                                  {dossier.sections} sections · {dossier.claims} approved claims
-                                </span>
-                              </div>
-                              <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden flex gap-0.5">
-                                {dossier.skeletonWidths.map((w, idx) => (
-                                  <div
-                                    key={idx}
-                                    style={{ width: `${w}%` }}
-                                    className={cn(
-                                      "h-full rounded-full transition-all",
-                                      isSelected ? "bg-[var(--brand)]/70" : "bg-black/20"
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Attached Documents Citations */}
-                          {dossier.documents && dossier.documents.length > 0 && (
-                            <div className="mt-3.5 pt-2 space-y-1.5">
-                              <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
-                                Attached Clinical Documents &amp; Labels ({dossier.documents.length})
-                              </div>
-                              <div className="space-y-1.5">
-                                {dossier.documents.slice(0, 3).map((doc, idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center justify-between gap-2 rounded-lg bg-[#fafbf9] border border-black/5 px-2.5 py-1 text-[11.5px]"
-                                  >
-                                    <span className="truncate text-[var(--ink-2)] font-medium">
-                                      📄 {doc.name}
-                                    </span>
-                                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded shrink-0">
-                                      {doc.citations} citations
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : quickCreateOpen ? (
-                  /* Quick-create a marketing & branding dossier, offline */
-                  <div className="rounded-[24px] border-2 border-black/10 bg-white p-7 space-y-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="grid size-9 place-items-center rounded-xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]">
-                        <Sparkles className="size-4" />
+                              {isSel && <Check className="size-4 text-[var(--brand)] stroke-[3] shrink-0" />}
+                            </button>
+                          );
+                        })}
                       </div>
-                      <div>
-                        <h4 className="text-[14.5px] font-[850] text-[var(--ink)]">
-                          Quick marketing &amp; branding dossier for {selectedBrand.name}
-                        </h4>
-                        <p className="text-[11.5px] text-[var(--ink-muted)]">
-                          A lightweight starter dossier, generated instantly — no external service required.
-                        </p>
+                    )}
+                  </div>
+
+                  {selectedDisease ? (
+                    <div className="max-w-[520px] rounded-[18px] border-2 border-[var(--brand)] bg-[var(--tint)]/40 p-4 flex items-center gap-3">
+                      <div className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] text-white shrink-0 text-[11.5px] font-black">{selectedDisease.label.slice(0, 2).toUpperCase()}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[14px] font-[850] text-[var(--ink)]">{selectedDisease.label}</div>
+                        <div className="text-[11.5px] text-[var(--ink-muted)]">{selectedDisease.desc}</div>
                       </div>
+                      <span className="text-[10px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] border border-[var(--tint-line)] px-2 py-0.5 rounded-full shrink-0">No brand dossier</span>
                     </div>
-
-                    <div>
-                      <label className="text-[11px] font-bold text-[var(--ink-2)] mb-1.5 block">
-                        Brief (optional)
-                      </label>
-                      <textarea
-                        value={quickCreateBrief}
-                        onChange={(e) => setQuickCreateBrief(e.target.value)}
-                        rows={3}
-                        disabled={quickCreating}
-                        placeholder={`What is ${selectedBrand.name} for, and who's the audience?`}
-                        className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-[13px] text-[var(--ink)] resize-none disabled:opacity-60"
-                      />
+                  ) : (
+                    <div className="max-w-[520px] rounded-[18px] border-2 border-dashed border-black/12 bg-white/60 p-7 text-center space-y-2">
+                      <FlaskConical className="size-7 mx-auto text-[var(--brand)]/50" />
+                      <p className="text-[12.5px] text-[var(--ink-muted)]">Select a therapy area to continue. Content will be grounded in general clinical evidence for that disease — no brand dossier required.</p>
                     </div>
-
-                    <div className="flex items-center gap-2.5">
-                      <Button variant="secondary" size="sm" disabled={quickCreating} onClick={() => setQuickCreateOpen(false)} className="px-4">
-                        Back
-                      </Button>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        disabled={quickCreating}
-                        onClick={handleQuickCreate}
-                        className="gap-2 font-bold px-5 flex-1 justify-center"
-                      >
-                        {quickCreating ? (
-                          <>
-                            <LogoMark size={14} className="animate-brand-spin" />
-                            <span>Building dossier…</span>
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="size-3.5" />
-                            <span>Create dossier</span>
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Brand Selected but No Dossiers Exist */
-                  <div className="rounded-[24px] border-2 border-dashed border-black/15 bg-white p-9 text-center space-y-3">
-                    <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200">
-                      <FolderPlus className="size-6" />
-                    </div>
-                    <div className="max-w-[420px] mx-auto">
-                      <h4 className="text-[15px] font-[850] text-[var(--ink)]">
-                        No dossier found for {selectedBrand.name}
-                      </h4>
-                      <p className="text-[12px] text-[var(--ink-muted)] mt-1">
-                        Create a quick marketing &amp; branding dossier now so you can keep going — you can build the full regulatory dossier later from the Brand Dossiers page.
-                      </p>
-                    </div>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="gap-2 text-[12px] font-bold"
-                      onClick={() => setQuickCreateOpen(true)}
-                    >
-                      <Plus className="size-3.5" />
-                      <span>Create for {selectedBrand.name}</span>
-                    </Button>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
-          {/* ═══════════════════════════════════════════════════════════════
-              STEP 2: TARGET AUDIENCE, SIZE (SINGLE-SELECT), AND TOPICS
-             ═══════════════════════════════════════════════════════════════ */}
+          {/* ═══════ STEP 2 ═══════ */}
           {step === 2 && (
             <div className="space-y-7 animate-in fade-in duration-200">
+
               {/* 2.1 Target Audience */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">
-                      1
-                    </span>
-                    <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">
-                      Target Audience
-                    </h3>
-                    <span className="text-[11.5px] text-[var(--ink-muted)]">
-                      (Who is this clinical content tailored for?)
-                    </span>
+                    <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">1</span>
+                    <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">Target Audience</h3>
+                    <span className="text-[11.5px] text-[var(--ink-muted)]">(Who is this content tailored for?)</span>
                   </div>
                   <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)]">
                     Active: {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                   {AUDIENCE_OPTIONS.map((item) => {
-                    const isSelected = audience === item.id;
+                    const isSel = audience === item.id;
                     const IconComp = item.icon;
                     return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setAudience(item.id)}
-                        className={cn(
-                          "group relative flex flex-col justify-between p-4 rounded-[20px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
-                          isSelected
-                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                            : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20"
-                        )}
-                      >
+                      <button key={item.id} type="button" onClick={() => setAudience(item.id)}
+                        className={cn("group relative flex flex-col justify-between p-4 rounded-[20px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs", isSel ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm" : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20")}>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <div
-                              className={cn(
-                                "grid size-8 place-items-center rounded-xl transition-colors",
-                                isSelected
-                                  ? "bg-[var(--brand)] text-white shadow-2xs"
-                                  : "bg-[var(--tint)] text-[var(--brand-deep)] group-hover:bg-[var(--brand)] group-hover:text-white"
-                              )}
-                            >
+                            <div className={cn("grid size-8 place-items-center rounded-xl transition-colors", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-[var(--tint)] text-[var(--brand-deep)] group-hover:bg-[var(--brand)] group-hover:text-white")}>
                               <IconComp className="size-4" />
                             </div>
-                            {isSelected && (
-                              <span className="flex size-5 items-center justify-center rounded-full bg-[var(--brand)] text-white">
-                                <Check className="size-3 stroke-[3]" />
-                              </span>
-                            )}
+                            {isSel && <span className="flex size-5 items-center justify-center rounded-full bg-[var(--brand)] text-white"><Check className="size-3 stroke-[3]" /></span>}
                           </div>
                           <div>
-                            <div className="text-[13px] font-[850] text-[var(--ink)]">
-                              {item.title}
-                            </div>
-                            <div className="text-[11px] text-[var(--ink-muted)] mt-0.5 leading-snug">
-                              {item.subtitle}
-                            </div>
+                            <div className="text-[13px] font-[850] text-[var(--ink)]">{item.title}</div>
+                            <div className="text-[10.5px] text-[var(--ink-muted)] mt-0.5 leading-snug">{item.subtitle}</div>
                           </div>
                         </div>
                       </button>
                     );
                   })}
                 </div>
+
+                {/* HCP Speciality */}
+                {audience === "HCP" && (
+                  <div className="pt-2 space-y-2.5 pl-1">
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="size-3.5 text-[var(--brand)]" />
+                      <span className="text-[12px] font-bold text-[var(--ink-2)]">Doctor Speciality</span>
+                      <span className="text-[11px] text-[var(--ink-muted)]">(optional · multi-select)</span>
+                    </div>
+
+                    {selectedSpecialities.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedSpecialities.map((spec) => (
+                          <span key={spec} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-2.5 py-1 text-[11.5px] font-bold text-[var(--brand-deep)]">
+                            {spec}
+                            <button type="button" onClick={() => toggleSpeciality(spec)} className="hover:text-[var(--brand)] cursor-pointer"><X className="size-3" /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="relative max-w-[300px]" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setSpecialityDropdownOpen(false); }}>
+                      <button type="button" onClick={() => setSpecialityDropdownOpen(!specialityDropdownOpen)}
+                        className="flex w-full items-center justify-between gap-2 rounded-[12px] border border-black/12 bg-white px-3.5 py-2.5 text-[12.5px] text-[var(--ink-muted)] hover:border-[var(--brand)] transition-colors cursor-pointer shadow-2xs">
+                        <span>{selectedSpecialities.length > 0 ? "Add more specialities..." : "Select speciality..."}</span>
+                        <ChevronDown className={cn("size-4 transition-transform", specialityDropdownOpen && "rotate-180")} />
+                      </button>
+                      {specialityDropdownOpen && (
+                        <div className="absolute z-50 left-0 right-0 mt-1.5 rounded-[16px] border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)] overflow-hidden max-h-[240px] overflow-y-auto">
+                          {HCP_SPECIALITIES.map((spec) => {
+                            const isSel = selectedSpecialities.includes(spec);
+                            return (
+                              <button key={spec} type="button" onMouseDown={(e) => { e.preventDefault(); toggleSpeciality(spec); }}
+                                className={cn("flex w-full items-center justify-between px-4 py-2.5 text-[12.5px] font-medium text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/[0.03] text-[var(--ink)]")}>
+                                <span>{spec}</span>
+                                {isSel && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* 2.2 Output Size & Format Ratio (Single Select) */}
+              {/* 2.2 Output Size */}
               <div className="space-y-3 pt-4 border-t border-[var(--line)]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">
-                      2
-                    </span>
-                    <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">
-                      Output Size &amp; Format Ratio
-                    </h3>
-                    <span className="text-[11.5px] text-[var(--ink-muted)]">
-                      (Choose target aspect ratio for generation)
-                    </span>
+                    <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">2</span>
+                    <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">Output Size & Format Ratio</h3>
+                    <span className="text-[11.5px] text-[var(--ink-muted)]">(Choose target aspect ratio)</span>
                   </div>
                   <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                     Active: {sizeOptions.find((s) => s.id === selectedSize)?.label} ({selectedSize})
                   </span>
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {sizeOptions.map((opt) => {
-                    const isSelected = selectedSize === opt.id;
+                    const isSel = selectedSize === opt.id;
                     return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setSelectedSize(opt.id)}
-                        className={cn(
-                          "group relative flex flex-col justify-between p-4 rounded-[20px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
-                          isSelected
-                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                            : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20"
-                        )}
-                      >
+                      <button key={opt.id} type="button" onClick={() => setSelectedSize(opt.id)}
+                        className={cn("group relative flex flex-col justify-between p-4 rounded-[20px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs", isSel ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm" : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20")}>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <div
-                                className={cn(
-                                  "grid size-8 place-items-center rounded-xl font-mono text-[11px] font-extrabold transition-colors",
-                                  isSelected
-                                    ? "bg-[var(--brand)] text-white shadow-2xs"
-                                    : "bg-black/5 text-[var(--ink)] group-hover:bg-[var(--tint)] group-hover:text-[var(--brand-deep)]"
-                                )}
-                              >
-                                {opt.ratio}
-                              </div>
-                              <span className="text-[13px] font-[850] text-[var(--ink)]">
-                                {opt.label}
-                              </span>
+                              <div className={cn("grid size-8 place-items-center rounded-xl font-mono text-[11px] font-extrabold transition-colors", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-black/5 text-[var(--ink)] group-hover:bg-[var(--tint)] group-hover:text-[var(--brand-deep)]")}>{opt.ratio}</div>
+                              <span className="text-[13px] font-[850] text-[var(--ink)]">{opt.label}</span>
                             </div>
-                            {isSelected && (
-                              <span className="flex size-5 items-center justify-center rounded-full bg-[var(--brand)] text-white">
-                                <Check className="size-3 stroke-[3]" />
-                              </span>
-                            )}
+                            {isSel && <span className="flex size-5 items-center justify-center rounded-full bg-[var(--brand)] text-white"><Check className="size-3 stroke-[3]" /></span>}
                           </div>
-                          <div className="text-[11px] text-[var(--ink-muted)] leading-snug">
-                            {opt.desc}
-                          </div>
+                          <div className="text-[11px] text-[var(--ink-muted)] leading-snug">{opt.desc}</div>
                         </div>
                       </button>
                     );
@@ -992,57 +752,28 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 </div>
               </div>
 
-              {/* 2.3 Clinical Focus Topics */}
+              {/* 2.3 Focus Topics (audience-aware) */}
               <div className="space-y-3 pt-4 border-t border-[var(--line)]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">
-                      3
-                    </span>
-                    <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">
-                      Key Clinical Topics
-                    </h3>
-                    <span className="text-[11.5px] text-[var(--ink-muted)]">
-                      (Select focus claims grounded in the {selectedBrand?.name} dossier)
-                    </span>
+                    <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">3</span>
+                    <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">Key Focus Topics</h3>
+                    <span className="text-[11.5px] text-[var(--ink-muted)]">(Tailored for {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title})</span>
                   </div>
-                  <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)]">
-                    {selectedTopics.length} Focus Areas
-                  </span>
+                  <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)]">{selectedTopics.length} Focus Areas</span>
                 </div>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {CLINICAL_TOPIC_OPTIONS.map((top) => {
-                    const isSelected = selectedTopics.includes(top.label);
+                  {currentTopics.map((top) => {
+                    const isSel = selectedTopics.includes(top.label);
                     return (
-                      <button
-                        key={top.id}
-                        type="button"
-                        onClick={() => toggleTopic(top.label)}
-                        className={cn(
-                          "group relative flex items-start gap-3 p-3.5 rounded-[18px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
-                          isSelected
-                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                            : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "mt-0.5 size-4.5 rounded-md border flex items-center justify-center shrink-0 transition-colors",
-                            isSelected
-                              ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                              : "border-black/20 bg-white group-hover:border-black/40"
-                          )}
-                        >
-                          {isSelected && <Check className="size-3 stroke-[3]" />}
+                      <button key={top.id} type="button" onClick={() => toggleTopic(top.label)}
+                        className={cn("group relative flex items-start gap-3 p-3.5 rounded-[18px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs", isSel ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm" : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20")}>
+                        <div className={cn("mt-0.5 size-[18px] rounded-md border flex items-center justify-center shrink-0 transition-colors", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white group-hover:border-black/40")}>
+                          {isSel && <Check className="size-3 stroke-[3]" />}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug">
-                            {top.label}
-                          </div>
-                          <div className="text-[11px] text-[var(--ink-muted)] mt-0.5 leading-snug">
-                            {top.detail}
-                          </div>
+                          <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug">{top.label}</div>
+                          <div className="text-[11px] text-[var(--ink-muted)] mt-0.5 leading-snug">{top.detail}</div>
                         </div>
                       </button>
                     );
@@ -1053,73 +784,44 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           )}
         </div>
 
-        {/* ── Modal Footer with Step 1 / Step 2 Actions ── */}
+        {/* ── Footer ── */}
         <div className="flex items-center justify-between border-t border-[var(--line)] bg-white px-8 py-4 shrink-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {step === 1 ? (
               <span className="text-[12.5px] text-[var(--ink-muted)]">
-                {!selectedBrandId ? (
-                  "Please select a brand in Step 1 to continue"
-                ) : !selectedDossierId ? (
-                  <span>
-                    Selected Brand: <strong className="text-[var(--ink)]">{selectedBrand?.name}</strong> · Please pick a dossier in Step 2
-                  </span>
-                ) : (
-                  <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
-                    <ShieldCheck className="size-4 text-emerald-600" />
-                    {allDossiers[selectedDossierId]?.name || "Dossier Selected"} ({selectedBrand?.name})
-                  </span>
-                )}
+                {sourceMode === "brand"
+                  ? !selectedBrandId ? "Search and select a brand to continue"
+                    : !selectedDossierId ? <span>Brand: <strong className="text-[var(--ink)]">{selectedBrand?.name}</strong> · Select a dossier above</span>
+                    : <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5"><ShieldCheck className="size-4 text-emerald-600" />{allDossiers[selectedDossierId]?.name} ({selectedBrand?.name})</span>
+                  : !selectedDiseaseId ? "Search and select a disease or therapy area to continue"
+                  : <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5"><FlaskConical className="size-4 text-[var(--brand)]" />{selectedDisease?.label}</span>
+                }
               </span>
             ) : (
-              <div className="flex items-center gap-2 text-[12.5px] text-[var(--ink-muted)]">
-                <span className="font-bold text-[var(--ink)]">{selectedBrand?.name}</span>
-                <span>·</span>
-                <span>{audience}</span>
-                <span>·</span>
-                <span>{selectedSize}</span>
-                <span>·</span>
-                <span>{selectedTopics.length} Topics</span>
+              <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-[var(--ink-muted)]">
+                <span className="font-bold text-[var(--ink)]">{sourceMode === "brand" ? selectedBrand?.name : selectedDisease?.label}</span>
+                <span>·</span><span>{AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}</span>
+                {audience === "HCP" && selectedSpecialities.length > 0 && <><span>·</span><span className="truncate max-w-[200px]">{selectedSpecialities.join(", ")}</span></>}
+                <span>·</span><span>{selectedSize}</span>
+                <span>·</span><span>{selectedTopics.length} Topics</span>
               </div>
             )}
           </div>
-
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {step === 2 ? (
               <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setStep(1)}
-                  className="gap-1.5 px-4 cursor-pointer font-bold text-[12.5px]"
-                >
-                  <ArrowLeft className="size-3.5" />
-                  <span>Back to Brand</span>
+                <Button variant="secondary" size="sm" onClick={() => setStep(1)} className="gap-1.5 px-4 cursor-pointer font-bold text-[12.5px]">
+                  <ArrowLeft className="size-3.5" /><span>Back</span>
                 </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={handleStartProject}
-                  className="gap-2 font-bold px-6 shadow-sm cursor-pointer"
-                >
-                  <span>Start Project</span>
-                  <ArrowRight className="size-3.5" />
+                <Button variant="primary" size="sm" onClick={handleStartProject} className="gap-2 font-bold px-6 shadow-sm cursor-pointer">
+                  <span>Start Project</span><ArrowRight className="size-3.5" />
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="secondary" size="sm" onClick={onClose} className="px-4 cursor-pointer">
-                  Cancel
-                </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  disabled={!selectedBrandId || !selectedDossierId}
-                  onClick={() => setStep(2)}
-                  className="gap-2 font-bold px-5 shadow-sm cursor-pointer disabled:opacity-40"
-                >
-                  <span>Continue to Setup</span>
-                  <ArrowRight className="size-3.5" />
+                <Button variant="secondary" size="sm" onClick={onClose} className="px-4 cursor-pointer">Cancel</Button>
+                <Button variant="primary" size="sm" disabled={!canProceedStep1} onClick={() => setStep(2)} className="gap-2 font-bold px-5 shadow-sm cursor-pointer disabled:opacity-40">
+                  <span>Continue to Setup</span><ArrowRight className="size-3.5" />
                 </Button>
               </>
             )}

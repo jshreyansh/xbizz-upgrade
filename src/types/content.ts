@@ -1,5 +1,5 @@
 export type AssetType = "video" | "visual" | "carousel" | "infographic";
-export type Audience = "HCP" | "Patient" | "Payer" | "Field team" | "Consumer";
+export type Audience = "HCP" | "Patient" | "Field team" | "Hospital" | "Distributor" | "Consumer";
 export type PresentationMode = "narrated" | "presenter" | "visual-only";
 export type AppView = "home" | "create" | "directions" | "studio";
 export type InspectorTab = "edit" | "assistant" | "evidence";

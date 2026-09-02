@@ -43,7 +43,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 
 type InfographicSubStep = "brief" | "content";
-type PlanSectionId = "treatment" | "audience" | "format" | "design" | "objective" | "assets" | "brand";
+type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
 
 interface AudienceOption {
   id: string;
@@ -328,7 +328,13 @@ export function InfographicDirectionsScreen() {
   const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
 
   const [currentStep, setCurrentStep] = useState<InfographicSubStep>("brief");
-  const [openSection, setOpenSection] = useState<PlanSectionId | null>("format");
+  const [openSection, setOpenSection] = useState<PlanSectionId | null>("sources");
+  const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
+  const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>([
+    { name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`, size: "3.6 MB", date: "Today" },
+    { name: `${brandName}_Visual_Claims_Master.docx`, size: "720 KB", date: "Today" },
+  ]);
+  const docUploadRef = useRef<HTMLInputElement>(null);
 
   // Local state for brief questions
   const [selectedAudienceId, setSelectedAudienceId] = useState<string>(audience === "Patient" ? "patient" : audience === "Consumer" ? "consumer" : "hcp");
@@ -343,7 +349,6 @@ export function InfographicDirectionsScreen() {
       url: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
     },
   ]);
-  const [docHandling, setDocHandling] = useState<"alongside" | "only-doc">("alongside");
 
   // Expanded citations state in Content step
   const [expandedCitations, setExpandedCitations] = useState<Record<number, boolean>>({
@@ -534,7 +539,226 @@ export function InfographicDirectionsScreen() {
 
               {/* ─── Rich Accordion Sections with Distinct Icons & Zoom Animation ─── */}
               <div className="space-y-3 min-w-0 w-full">
-                {/* 1. Format & Page Shape */}
+                {/* 1. Research & Sources (Unified Top Starting Tile) */}
+                <CreativePlanSection
+                  icon={ShieldCheck}
+                  title="Research and Sources"
+                  summary={
+                    sourceGroundingMode === "both"
+                      ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
+                      : sourceGroundingMode === "my-sources"
+                      ? `${uploadedDocs.length} custom files active · Dossier ignored`
+                      : `${brandName} SmPC Approved Dossier · 214 claims`
+                  }
+                  status="From source"
+                  tone="done"
+                  open={openSection === "sources"}
+                  onToggle={() => setOpenSection(openSection === "sources" ? null : "sources")}
+                >
+                  <div className="space-y-4">
+                    <p className="text-[12.5px] text-[var(--ink-2)] leading-relaxed">
+                      Select how SwishX grounds every clinical chart, scientific claim, and citation against verified evidence and research materials.
+                    </p>
+
+                    {/* Pre-built dossiers matching the brand/disease */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                          Prebuilt Approved Dossiers ({brandName})
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          ✓ Verified SmPC / Label Data
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                        {[
+                          {
+                            name: `${brandName} Core SmPC & Prescribing Info`,
+                            market: "🇺🇸 US · FDA",
+                            claims: "214 claims",
+                            doc: "Prescribing Info (Rev. 04/2026)",
+                            citations: "112 citations",
+                          },
+                          {
+                            name: `${brandName} Phase III Pivotal Readout`,
+                            market: "🌐 Global · NEJM",
+                            claims: "64 claims",
+                            doc: "CLARITY-CV Phase III Trial",
+                            citations: "64 citations",
+                          },
+                          {
+                            name: `${brandName} HEOR & Value Evidence`,
+                            market: "🇪🇺 EU · EMA",
+                            claims: "128 claims",
+                            doc: "QALY & Budget Impact Model",
+                            citations: "30 citations",
+                          },
+                        ].map((dossier, idx) => (
+                          <div
+                            key={idx}
+                            className={cn(
+                              "p-3 rounded-[14px] border text-left flex flex-col justify-between transition-all",
+                              sourceGroundingMode === "my-sources"
+                                ? "opacity-50 border-black/10 bg-[#f9faf9] grayscale"
+                                : "border-[#e3e8e5] bg-white shadow-2xs"
+                            )}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-[10px] font-extrabold uppercase tracking-wide text-[var(--ink-muted)]">
+                                  {dossier.market}
+                                </span>
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                                  {dossier.claims}
+                                </span>
+                              </div>
+                              <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug line-clamp-1">
+                                {dossier.name}
+                              </div>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-black/5 flex items-center justify-between text-[11px] text-[var(--ink-muted)]">
+                              <span className="truncate max-w-[130px]">📄 {dossier.doc}</span>
+                              <span className="font-semibold text-[var(--ink-2)] shrink-0">{dossier.citations}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 3 Grounding Options */}
+                    <div className="space-y-2 pt-2 border-t border-black/5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                        Select Grounding Source Mode
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        {[
+                          {
+                            id: "both" as const,
+                            title: "Both SwishX dossiers and My sources / attachments",
+                            desc: "Both documents are referenced, and every claim is cited to the one it came from.",
+                          },
+                          {
+                            id: "my-sources" as const,
+                            title: "Only My sources and attachments",
+                            desc: "The dossier is ignored as a source; claims are grounded strictly in your files.",
+                          },
+                          {
+                            id: "swishx-only" as const,
+                            title: "Only SwishX approved dossiers",
+                            desc: "Grounds strictly on verified SmPC, FDA prescribing info, and clinical packages.",
+                          },
+                        ].map((opt) => {
+                          const isSelected = sourceGroundingMode === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => setSourceGroundingMode(opt.id)}
+                              className={cn(
+                                "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[95px]",
+                                isSelected
+                                  ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs ring-2 ring-[var(--brand)]/15"
+                                  : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="font-bold text-[13px] leading-snug">{opt.title}</div>
+                                <div
+                                  className={cn(
+                                    "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
+                                    isSelected
+                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                      : "border-[#cbd6d0]"
+                                  )}
+                                >
+                                  {isSelected && <Check className="size-3 stroke-[3]" />}
+                                </div>
+                              </div>
+                              <div className="text-[11px] text-[var(--ink-muted)] mt-2 leading-snug">{opt.desc}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Uploaded Documents Context */}
+                    {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources") && (
+                      <div className="space-y-2 pt-2 border-t border-black/5 animate-in fade-in duration-150">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                            My Uploaded Documents & Briefs ({uploadedDocs.length})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => docUploadRef.current?.click()}
+                            className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+                          >
+                            <Plus className="size-3.5" />
+                            <span>Add more files</span>
+                          </button>
+                        </div>
+
+                        <input
+                          ref={docUploadRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const newFiles = Array.from(e.target.files).map((f) => ({
+                                name: f.name,
+                                size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
+                                date: "Just now",
+                              }));
+                              setUploadedDocs((prev) => [...prev, ...newFiles]);
+                            }
+                          }}
+                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {uploadedDocs.map((doc, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-white border border-[#e3e8e5] text-[12px]"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="size-4 text-[var(--brand)] shrink-0" />
+                                <span className="font-semibold text-[var(--ink)] truncate">{doc.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-[10px] text-[var(--ink-muted)]">{doc.size}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
+                                  className="grid size-5 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-red-600 transition-colors cursor-pointer"
+                                  aria-label="Remove"
+                                >
+                                  <X className="size-3" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Continue action */}
+                    <div className="pt-2 flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setOpenSection("format")}
+                        className="text-[12px] font-bold gap-1 cursor-pointer"
+                      >
+                        <span>Save &amp; Continue</span>
+                        <ArrowRight className="size-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </CreativePlanSection>
+
+                {/* 2. Format & Page Shape */}
                 <CreativePlanSection
                   icon={LayoutGrid}
                   title="Format & Page shape"
@@ -1005,79 +1229,7 @@ export function InfographicDirectionsScreen() {
                   </div>
                 </CreativePlanSection>
 
-                {/* 6. Brand and Evidence */}
-                <CreativePlanSection
-                  icon={ShieldCheck}
-                  title="Brand and evidence"
-                  summary={`${docHandling === "alongside" ? "Alongside the dossier" : "Only this document"} · 54,077 chars`}
-                  status="From source"
-                  tone="done"
-                  open={openSection === "brand"}
-                  onToggle={() => setOpenSection(openSection === "brand" ? null : "brand")}
-                >
-                  <div className="space-y-3">
-                    <p className="text-[12px] text-[var(--ink-2)]">
-                      Every claim in the creative is planned from, written from and checked against these documents. Nothing else reaches the model.
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setDocHandling("alongside")}
-                        className={cn(
-                          "p-3.5 rounded-[14px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[85px]",
-                          docHandling === "alongside"
-                            ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs"
-                            : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
-                        )}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="font-bold text-[13px]">Alongside the dossier</div>
-                          <div
-                            className={cn(
-                              "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
-                              docHandling === "alongside"
-                                ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                                : "border-[#cbd6d0]"
-                            )}
-                          >
-                            {docHandling === "alongside" && <Check className="size-3 stroke-[3]" />}
-                          </div>
-                        </div>
-                        <div className="text-[11px] text-[var(--ink-muted)] mt-1 leading-snug">
-                          Both documents are read, and every claim is cited to the one it came from.
-                        </div>
-                      </button>
 
-                      <button
-                        type="button"
-                        onClick={() => setDocHandling("only-doc")}
-                        className={cn(
-                          "p-3.5 rounded-[14px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[85px]",
-                          docHandling === "only-doc"
-                            ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs"
-                            : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
-                        )}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="font-bold text-[13px]">Only this document</div>
-                          <div
-                            className={cn(
-                              "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
-                              docHandling === "only-doc"
-                                ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                                : "border-[#cbd6d0]"
-                            )}
-                          >
-                            {docHandling === "only-doc" && <Check className="size-3 stroke-[3]" />}
-                          </div>
-                        </div>
-                        <div className="text-[11px] text-[var(--ink-muted)] mt-1 leading-snug">
-                          The dossier is ignored as a source. The brand kit still comes from it.
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </CreativePlanSection>
               </div>
             </>
           )}

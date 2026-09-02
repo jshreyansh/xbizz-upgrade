@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Clock3,
   FileCheck2,
+  FileText,
   Film,
   Globe2,
   History,
@@ -48,12 +49,13 @@ import { displayIntendedUses, parseIntendedUses, serializeIntendedUses } from "@
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { InfographicDirectionsScreen } from "@/features/workspace/infographic-directions-screen";
+import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 
-type PlanSectionId = "treatment" | "message" | "delivery" | "voice" | "brand" | "story" | "product-assets";
+type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets";
 
-const audienceOptions: Audience[] = ["HCP", "Patient", "Payer", "Field team", "Consumer"];
+const audienceOptions: Audience[] = ["HCP", "Patient", "Field team", "Hospital", "Distributor", "Consumer"];
 const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
 const topics = ["Product introduction", "Mechanism", "Pivotal evidence", "Dosing & safety", "Patient impact"];
 const presenters = [
@@ -298,9 +300,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     brief.toLowerCase().includes("pen") ||
     brief.toLowerCase().includes("autoinjector");
 
-  const [openSection, setOpenSection] = useState<PlanSectionId | null>(
-    isMagicAvatar ? "voice" : isProductFocus && productMediaList.length === 0 ? "product-assets" : "treatment"
-  );
+  const [openSection, setOpenSection] = useState<PlanSectionId | null>("sources");
+  const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
+  const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>([
+    { name: `${brandName || "Brand"}_Clinical_Study_Report_Phase3.pdf`, size: "4.2 MB", date: "Today" },
+    { name: `${brandName || "Brand"}_Core_Visual_Aid_Brief.docx`, size: "840 KB", date: "Today" },
+  ]);
+  const docUploadRef = useRef<HTMLInputElement>(null);
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
   const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
   const [presenterLibraryOpen, setPresenterLibraryOpen] = useState(false);
@@ -602,7 +608,226 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
               {/* ─── Rich Accordion Sections with Dynamic Focus Enlargement & Dimming ─── */}
               <div className="space-y-3 min-w-0 w-full">
-                {/* 1. Creative Treatment (in regular mode) OR Presenter & Voice (in Magic Avatar mode) */}
+                {/* 1. Research & Sources (Unified Top Starting Tile) */}
+                <PlanSection
+                  icon={ShieldCheck}
+                  title="Research and Sources"
+                  summary={
+                    sourceGroundingMode === "both"
+                      ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
+                      : sourceGroundingMode === "my-sources"
+                      ? `${uploadedDocs.length} custom files active · Dossier ignored`
+                      : `${brandName} SmPC Approved Dossier · 214 claims`
+                  }
+                  status="From source"
+                  open={openSection === "sources"}
+                  onToggle={() => toggleSection("sources")}
+                  tone="done"
+                >
+                  <div className="space-y-4">
+                    <p className="text-[12.5px] text-[var(--ink-2)] leading-relaxed">
+                      Select how SwishX grounds every scene, script sentence, and citation against verified evidence and research materials.
+                    </p>
+
+                    {/* Pre-built dossiers matching the brand/disease */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                          Prebuilt Approved Dossiers ({brandName || "Brand"})
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          ✓ Verified SmPC / Label Data
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                        {[
+                          {
+                            name: `${brandName || "Velmora"} Core SmPC & Prescribing Info`,
+                            market: "🇺🇸 US · FDA",
+                            claims: "214 claims",
+                            doc: "Prescribing Info (Rev. 04/2026)",
+                            citations: "112 citations",
+                          },
+                          {
+                            name: `${brandName || "Velmora"} Phase III Pivotal Readout`,
+                            market: "🌐 Global · NEJM",
+                            claims: "64 claims",
+                            doc: "CLARITY-CV Phase III Trial",
+                            citations: "64 citations",
+                          },
+                          {
+                            name: `${brandName || "Velmora"} HEOR & Value Evidence`,
+                            market: "🇪🇺 EU · EMA",
+                            claims: "128 claims",
+                            doc: "QALY & Budget Impact Model",
+                            citations: "30 citations",
+                          },
+                        ].map((dossier, idx) => (
+                          <div
+                            key={idx}
+                            className={cn(
+                              "p-3 rounded-[14px] border text-left flex flex-col justify-between transition-all",
+                              sourceGroundingMode === "my-sources"
+                                ? "opacity-50 border-black/10 bg-[#f9faf9] grayscale"
+                                : "border-[#e3e8e5] bg-white shadow-2xs"
+                            )}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-[10px] font-extrabold uppercase tracking-wide text-[var(--ink-muted)]">
+                                  {dossier.market}
+                                </span>
+                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                                  {dossier.claims}
+                                </span>
+                              </div>
+                              <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug line-clamp-1">
+                                {dossier.name}
+                              </div>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-black/5 flex items-center justify-between text-[11px] text-[var(--ink-muted)]">
+                              <span className="truncate max-w-[130px]">📄 {dossier.doc}</span>
+                              <span className="font-semibold text-[var(--ink-2)] shrink-0">{dossier.citations}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 3 Grounding Options */}
+                    <div className="space-y-2 pt-2 border-t border-black/5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                        Select Grounding Source Mode
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        {[
+                          {
+                            id: "both" as const,
+                            title: "Both SwishX dossiers and My sources / attachments",
+                            desc: "Both documents are referenced, and every claim is cited to the one it came from.",
+                          },
+                          {
+                            id: "my-sources" as const,
+                            title: "Only My sources and attachments",
+                            desc: "The dossier is ignored as a source; claims are grounded strictly in your files.",
+                          },
+                          {
+                            id: "swishx-only" as const,
+                            title: "Only SwishX approved dossiers",
+                            desc: "Grounds strictly on verified SmPC, FDA prescribing info, and clinical packages.",
+                          },
+                        ].map((opt) => {
+                          const isSelected = sourceGroundingMode === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => setSourceGroundingMode(opt.id)}
+                              className={cn(
+                                "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[95px]",
+                                isSelected
+                                  ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs ring-2 ring-[var(--brand)]/15"
+                                  : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="font-bold text-[13px] leading-snug">{opt.title}</div>
+                                <div
+                                  className={cn(
+                                    "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
+                                    isSelected
+                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                      : "border-[#cbd6d0]"
+                                  )}
+                                >
+                                  {isSelected && <Check className="size-3 stroke-[3]" />}
+                                </div>
+                              </div>
+                              <div className="text-[11px] text-[var(--ink-muted)] mt-2 leading-snug">{opt.desc}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Uploaded Documents Context (Shown when Option 1 or 2 is selected) */}
+                    {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources") && (
+                      <div className="space-y-2 pt-2 border-t border-black/5 animate-in fade-in duration-150">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                            My Uploaded Documents & Briefs ({uploadedDocs.length})
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => docUploadRef.current?.click()}
+                            className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+                          >
+                            <Plus className="size-3.5" />
+                            <span>Add more files</span>
+                          </button>
+                        </div>
+
+                        <input
+                          ref={docUploadRef}
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const newFiles = Array.from(e.target.files).map((f) => ({
+                                name: f.name,
+                                size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
+                                date: "Just now",
+                              }));
+                              setUploadedDocs((prev) => [...prev, ...newFiles]);
+                            }
+                          }}
+                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {uploadedDocs.map((doc, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-white border border-[#e3e8e5] text-[12px]"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="size-4 text-[var(--brand)] shrink-0" />
+                                <span className="font-semibold text-[var(--ink)] truncate">{doc.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-[10px] text-[var(--ink-muted)]">{doc.size}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
+                                  className="grid size-5 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-red-600 transition-colors cursor-pointer"
+                                  aria-label="Remove"
+                                >
+                                  <X className="size-3" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Continue action */}
+                    <div className="pt-2 flex justify-end">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => toggleSection(isMagicAvatar ? "voice" : "treatment")}
+                        className="text-[12px] font-bold gap-1 cursor-pointer"
+                      >
+                        <span>Save &amp; Continue</span>
+                        <ArrowRight className="size-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </PlanSection>
+
+                {/* 2. Creative Treatment (in regular mode) OR Presenter & Voice (in Magic Avatar mode) */}
                 {isMagicAvatar ? (
                   <PlanSection
                     icon={Mic2}
@@ -1287,68 +1512,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   </PlanSection>
                 )}
 
-                {/* 6. Brand and Evidence */}
-                <PlanSection
-                  icon={ShieldCheck}
-                  title="Brand and evidence"
-                  summary={
-                    derivedPlan.sourceConflict && !sourceConflictResolved
-                      ? "Source authority needs confirmation"
-                      : approvedEvidenceCount > 0
-                      ? `${approvedEvidenceCount} approved sources · brand kit applied`
-                      : "Concept only · approved source needed"
-                  }
-                  status={
-                    derivedPlan.sourceConflict && !sourceConflictResolved
-                      ? "Needs you"
-                      : approvedEvidenceCount > 0
-                      ? "From source"
-                      : "Review"
-                  }
-                  open={openSection === "brand"}
-                  onToggle={() => toggleSection("brand")}
-                  tone={derivedPlan.sourceConflict && !sourceConflictResolved ? "attention" : "default"}
-                >
-                  {derivedPlan.sourceConflict && !sourceConflictResolved && (
-                    <div className="mb-3 rounded-[12px] border border-[#e4c17f] bg-[var(--warning-soft)] p-3.5">
-                      <div className="flex items-start gap-3">
-                        <Info className="mt-0.5 size-5 shrink-0 text-[var(--warning)]" />
-                        <div>
-                          <div className="text-[14px] font-bold text-[#704b13]">Confirm source authority</div>
-                          <p className="mt-1 text-[13px] leading-5 text-[#765b31]">{derivedPlan.sourceConflict}</p>
-                          <button
-                            onClick={() => setSourceConflictResolved(true)}
-                            className="focus-ring mt-2 min-h-10 rounded-[9px] bg-white px-3 text-[13px] font-bold text-[#704b13] shadow-sm"
-                          >
-                            Use current {market} source as authority
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <InfoCard
-                      icon={PackageCheck}
-                      title="Brand material"
-                      body={`Primary logo, packshot, typography and fair balance for ${brandName} will be applied automatically.`}
-                    />
-                    <InfoCard
-                      icon={BookOpenCheck}
-                      title="Evidence coverage"
-                      body={
-                        approvedEvidenceCount > 0
-                          ? `Mechanism, efficacy and required safety language are linked to current ${market} sources.`
-                          : "This can become a concept storyboard, but it will not be marked evidence-ready."
-                      }
-                    />
-                  </div>
-                  <button
-                    onClick={() => setSourceManagerOpen(true)}
-                    className="focus-ring mt-3 flex min-h-10 items-center gap-2 rounded-[10px] px-3 text-[14px] font-semibold text-[var(--brand)] hover:bg-[var(--brand-soft)] cursor-pointer"
-                  >
-                    <Plus className="size-4" /> Add or remove sources
-                  </button>
-                </PlanSection>
+
 
                 {/* 7. Story Structure */}
                 <PlanSection

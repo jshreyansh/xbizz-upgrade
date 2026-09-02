@@ -564,11 +564,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                 <span className="text-emerald-700 font-bold uppercase">{audience}</span>
                               </div>
                               {[
-                                { id: "HCP", label: "HCPs & Specialists", desc: "Doctors, Specialists, Hospitalists" },
-                                { id: "Patient", label: "Patients & Caregivers", desc: "Treatment understanding, adherence" },
-                                { id: "Field team", label: "Field Force & Reps", desc: "Detailing aids & objection handling" },
-                                { id: "Payer", label: "Payers & Formularies", desc: "HEOR, QALY & budget impact" },
-                                { id: "Consumer", label: "Consumers & OTC", desc: "General public & retail awareness" },
+                                { id: "HCP", label: "HCP", desc: "Doctors, Specialists, Key Opinion Leaders" },
+                                { id: "Patient", label: "Patients", desc: "Treatment understanding, adherence" },
+                                { id: "Field team", label: "Field Force", desc: "Detailing aids & objection handling" },
+                                { id: "Hospital", label: "Hospital Procurement", desc: "Formulary decisions, HEOR, budget impact" },
+                                { id: "Distributor", label: "Distributors", desc: "Trade, supply chain, market access" },
+                                { id: "Consumer", label: "Consumers", desc: "General public & symptom awareness" },
                               ].map((item) => {
                                 const isSelected = audience === item.id;
                                 return (

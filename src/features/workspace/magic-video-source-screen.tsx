@@ -286,7 +286,7 @@ const ALL_THERAPY_AREAS = [
   "Rare Diseases",
 ];
 
-const AUDIENCE_OPTIONS: Audience[] = ["HCP", "Patient", "Payer", "Field team", "Consumer"];
+const AUDIENCE_OPTIONS: Audience[] = ["HCP", "Patient", "Field team", "Hospital", "Distributor", "Consumer"];
 const TOPIC_OPTIONS = [
   "Product Introduction",
   "Mechanism of Action",
