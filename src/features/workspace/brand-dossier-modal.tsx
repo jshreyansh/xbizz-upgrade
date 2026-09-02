@@ -225,19 +225,37 @@ const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; de
   ],
 };
 
-// ── Clean Size Options with Icons and Simple Shape Names ──
-const VIDEO_SIZE_OPTIONS = [
-  { id: "16:9", label: "Landscape", icon: Monitor },
-  { id: "9:16", label: "Vertical / Reel", icon: Smartphone },
-  { id: "1:1", label: "Square", icon: Square },
-  { id: "4:5", label: "Portrait", icon: Layers },
-];
+// ── ONLY 3 Precise Geometric Aspect Ratio Options: Landscape, Portrait, Square ──
+export type OutputShape = "landscape" | "portrait" | "square";
 
-const INFOGRAPHIC_SIZE_OPTIONS = [
-  { id: "3:4", label: "Portrait Detailer", icon: Smartphone },
-  { id: "16:9", label: "Landscape Slide", icon: Monitor },
-  { id: "1:1", label: "Square", icon: Square },
-  { id: "A4", label: "Print Document", icon: FileText },
+const SHAPE_OPTIONS = [
+  {
+    id: "landscape" as OutputShape,
+    label: "Landscape",
+    renderIcon: (isSel: boolean) => (
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-[var(--brand)]" : "text-slate-500")} viewBox="0 0 20 14" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="1.5" y="1.5" width="17" height="11" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
+      </svg>
+    ),
+  },
+  {
+    id: "portrait" as OutputShape,
+    label: "Portrait",
+    renderIcon: (isSel: boolean) => (
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-[var(--brand)]" : "text-slate-500")} viewBox="0 0 14 20" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="1.5" y="1.5" width="11" height="17" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
+      </svg>
+    ),
+  },
+  {
+    id: "square" as OutputShape,
+    label: "Square",
+    renderIcon: (isSel: boolean) => (
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-[var(--brand)]" : "text-slate-500")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="1.5" y="1.5" width="13" height="13" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
+      </svg>
+    ),
+  },
 ];
 
 type RevealStage = "focus" | "audience" | "details";
@@ -276,8 +294,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
   const [specialityDropdownOpen, setSpecialityDropdownOpen] = useState(false);
 
-  // 3. Format Size
-  const [selectedSize, setSelectedSize] = useState<string>(assetType === "infographic" ? "3:4" : "16:9");
+  // 3. Format Shape (Landscape, Portrait, Square)
+  const [selectedShape, setSelectedShape] = useState<OutputShape>("landscape");
 
   // 4. Focus Topics
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
@@ -297,7 +315,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setDiseaseDropdownOpen(false);
       setAudience("HCP");
       setSelectedSpecialities([]);
-      setSelectedSize(assetType === "infographic" ? "3:4" : "16:9");
+      setSelectedShape("landscape");
       const def = TOPICS_BY_AUDIENCE["HCP"];
       setSelectedTopics([def[0].label, def[1].label]);
     }
@@ -324,7 +342,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   }, [diseaseSearch]);
 
   const currentTopics = TOPICS_BY_AUDIENCE[audience] || TOPICS_BY_AUDIENCE.HCP;
-  const sizeOptions = assetType === "infographic" ? INFOGRAPHIC_SIZE_OPTIONS : VIDEO_SIZE_OPTIONS;
 
   const canProceed = (sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) && selectedTopics.length > 0;
 
@@ -371,10 +388,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     }
     setAudienceStore(audience);
     setTopicsStore(selectedTopics);
+    
+    // Map the 3 shapes to the target store format
     if (assetType === "infographic") {
-      const s = selectedSize as "3:4" | "16:9" | "A4";
-      setPageShapeStore(s === "A4" ? "A4" : s === "16:9" ? "16:9" : "3:4");
-    } else setFormatStore(selectedSize);
+      const pageShape = selectedShape === "portrait" ? "3:4" : selectedShape === "square" ? "3:4" : "16:9";
+      setPageShapeStore(pageShape);
+    } else {
+      const format = selectedShape === "portrait" ? "9:16" : selectedShape === "square" ? "1:1" : "16:9";
+      setFormatStore(format);
+    }
+    
     setView("create");
     setVideoSubStage("intake");
     onClose();
@@ -790,7 +813,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           ) : (
             <div className="space-y-4 animate-in fade-in duration-200">
               
-              {/* 3. Output Size & Shape (Clean Icons & Simple Names) */}
+              {/* 3. Output Shape (ONLY 3: Landscape, Portrait, Square with Clean Geometric Icons) */}
               <div className="rounded-[18px] border border-[#e5ebe6] bg-white p-4 space-y-2.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -798,32 +821,31 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       3
                     </div>
                     <span className="text-[12.5px] font-extrabold text-[var(--ink)]">
-                      Output Shape &amp; Ratio
+                      Output Shape
                     </span>
                   </div>
                   <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    {sizeOptions.find((s) => s.id === selectedSize)?.label}
+                    {SHAPE_OPTIONS.find((s) => s.id === selectedShape)?.label}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {sizeOptions.map((opt) => {
-                    const isSel = selectedSize === opt.id;
-                    const IconComp = opt.icon;
+                <div className="grid grid-cols-3 gap-3">
+                  {SHAPE_OPTIONS.map((opt) => {
+                    const isSel = selectedShape === opt.id;
                     return (
                       <button
                         key={opt.id}
                         type="button"
-                        onClick={() => setSelectedSize(opt.id)}
+                        onClick={() => setSelectedShape(opt.id)}
                         className={cn(
-                          "flex items-center justify-center gap-2 py-2.5 px-3 rounded-[12px] border-2 transition-all cursor-pointer shadow-2xs",
+                          "flex items-center justify-center gap-2.5 py-3 px-4 rounded-[14px] border-2 transition-all cursor-pointer shadow-2xs",
                           isSel
                             ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-extrabold shadow-2xs ring-2 ring-[var(--brand)]/15"
                             : "border-black/8 bg-white hover:border-black/20 text-[var(--ink)]"
                         )}
                       >
-                        <IconComp className={cn("size-3.5", isSel ? "text-[var(--brand)]" : "text-[var(--ink-muted)]")} />
-                        <span className="text-[12px]">{opt.label}</span>
+                        {opt.renderIcon(isSel)}
+                        <span className="text-[13px] font-bold">{opt.label}</span>
                       </button>
                     );
                   })}
@@ -910,7 +932,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <span>({selectedSpecialities.join(", ")})</span>
                 )}
                 <span>·</span>
-                <span>{sizeOptions.find((s) => s.id === selectedSize)?.label}</span>
+                <span>{SHAPE_OPTIONS.find((s) => s.id === selectedShape)?.label}</span>
                 <span>·</span>
                 <span className="font-bold text-[var(--brand-deep)]">{selectedTopics.length} Topics</span>
               </>
