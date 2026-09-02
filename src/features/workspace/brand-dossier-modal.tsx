@@ -165,7 +165,7 @@ const HCP_SPECIALITIES = [
 const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: string; icon: any }> = [
   { id: "HCP", title: "HCP", subtitle: "Doctors & Specialists", icon: Stethoscope },
   { id: "Patient", title: "Patients", subtitle: "Clarity & Adherence", icon: HeartHandshake },
-  { id: "Field team", title: "Field Force", subtitle: "Detailing & Sales Decks", icon: Briefcase },
+  { id: "Field team", title: "Field Force", subtitle: "Detailing & Sales", icon: Briefcase },
   { id: "Hospital", title: "Hospital", subtitle: "Formulary & Value", icon: Building2 },
   { id: "Distributor", title: "Distributors", subtitle: "Trade & Logistics", icon: Truck },
   { id: "Consumer", title: "Consumers", subtitle: "Public Awareness", icon: ShoppingCart },
@@ -223,21 +223,22 @@ const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; de
   ],
 };
 
+// ── Clean Size Options with Icons and Simple Shape Names (No Noise) ──
 const VIDEO_SIZE_OPTIONS = [
-  { id: "16:9", ratio: "16:9", label: "16:9 Landscape", desc: "1920×1080 · Desktop & Congress" },
-  { id: "9:16", ratio: "9:16", label: "9:16 Vertical", desc: "1080×1920 · Mobile & WhatsApp" },
-  { id: "1:1", ratio: "1:1", label: "1:1 Square", desc: "1080×1080 · iPad & Feed" },
-  { id: "4:5", ratio: "4:5", label: "4:5 Portrait", desc: "1080×1350 · Social & Detailing" },
+  { id: "16:9", label: "Landscape", icon: Monitor },
+  { id: "9:16", label: "Vertical / Reel", icon: Smartphone },
+  { id: "1:1", label: "Square", icon: Square },
+  { id: "4:5", label: "Portrait", icon: Layers },
 ];
 
 const INFOGRAPHIC_SIZE_OPTIONS = [
-  { id: "3:4", ratio: "3:4", label: "3:4 Detailer", desc: "1536×2048 · iPad & Leave-Behind" },
-  { id: "16:9", ratio: "16:9", label: "16:9 Slide", desc: "1920×1080 · Decks & Congress Panels" },
-  { id: "A4", ratio: "A4", label: "A4 Document", desc: "Print-ready Journal Document" },
-  { id: "9:16", ratio: "9:16", label: "9:16 Mobile", desc: "1080×1920 · Digital Leave-Behind" },
+  { id: "3:4", label: "Portrait Detailer", icon: Smartphone },
+  { id: "16:9", label: "Landscape Slide", icon: Monitor },
+  { id: "1:1", label: "Square", icon: Square },
+  { id: "A4", label: "Print Document", icon: FileText },
 ];
 
-type QuestionStep = "focus" | "audience" | "ratio" | "topics";
+type RevealStage = "focus" | "audience" | "details";
 
 interface BrandDossierModalProps {
   open: boolean;
@@ -256,8 +257,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const setPageShapeStore = useWorkspaceStore((s) => s.setPageShape);
   const setTopicsStore = useWorkspaceStore((s) => s.setTopics);
 
-  // Progressive Disclosure Active Section
-  const [activeStep, setActiveStep] = useState<QuestionStep>("focus");
+  // Progressive Stage: "focus" -> "audience" -> "details" (reveals both size & topics together!)
+  const [stage, setStage] = useState<RevealStage>("focus");
 
   // 1. Focus: Brand vs Therapy Area
   const [sourceMode, setSourceMode] = useState<"brand" | "disease">("brand");
@@ -284,7 +285,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   useEffect(() => {
     if (open) {
-      setActiveStep("focus");
+      setStage("focus");
       setSourceMode("brand");
       setSelectedBrandId("velmora");
       setSelectedDiseaseIds([]);
@@ -347,7 +348,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedBrandId(brand.id);
     setBrandSearch(brand.name);
     setBrandDropdownOpen(false);
-    setActiveStep("audience");
+    setStage("audience");
+  };
+
+  const handleSelectAudience = (itemAudience: Audience) => {
+    setAudience(itemAudience);
+    if (itemAudience !== "HCP") {
+      setStage("details");
+    }
   };
 
   const handleStartProject = () => {
@@ -378,7 +386,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       role="dialog" aria-modal="true"
     >
-      <div className="relative flex max-h-[92vh] w-full max-w-[940px] flex-col rounded-[24px] border border-[#d8deda] bg-white shadow-2xl overflow-hidden text-left">
+      <div className="relative flex max-h-[92vh] w-full max-w-[880px] flex-col rounded-[24px] border border-[#d8deda] bg-white shadow-2xl overflow-hidden text-left">
 
         {/* ── Modal Header ── */}
         <div className="flex items-center justify-between border-b border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0">
@@ -409,38 +417,37 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         {/* ── Progressive Reveal Canvas ── */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-7 space-y-4">
 
-          {/* ══════════════ 1. CLINICAL FOCUS ══════════════ */}
+          {/* ══════════════ 1. CLINICAL GROUNDING ══════════════ */}
           <div className={cn(
             "rounded-[18px] border transition-all duration-200 overflow-hidden",
-            activeStep === "focus"
+            stage === "focus"
               ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
               : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
           )}>
-            {/* Header / Summary */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className={cn(
                   "grid size-6 place-items-center rounded-full text-[11px] font-extrabold transition-colors",
-                  selectedBrandId || selectedDiseaseIds.length > 0
+                  stage !== "focus" && (selectedBrandId || selectedDiseaseIds.length > 0)
                     ? "bg-emerald-100 text-emerald-800"
                     : "bg-black/8 text-[var(--ink-muted)]"
                 )}>
-                  {selectedBrandId || selectedDiseaseIds.length > 0 ? "✓" : "1"}
+                  {stage !== "focus" && (selectedBrandId || selectedDiseaseIds.length > 0) ? "✓" : "1"}
                 </div>
                 <span className="text-[13px] font-extrabold text-[var(--ink)]">
                   1. Clinical Grounding
                 </span>
-                {activeStep !== "focus" && (
-                  <span className="text-[12.5px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] ml-2">
+                {stage !== "focus" && (
+                  <span className="text-[12px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] ml-2">
                     {sourceMode === "brand" ? selectedBrand?.name || "Brand Selected" : `${selectedDiseaseIds.length} Therapy Areas`}
                   </span>
                 )}
               </div>
 
-              {activeStep !== "focus" ? (
+              {stage !== "focus" ? (
                 <button
                   type="button"
-                  onClick={() => setActiveStep("focus")}
+                  onClick={() => setStage("focus")}
                   className="flex items-center gap-1 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
                 >
                   <Edit3 className="size-3" />
@@ -466,8 +473,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               )}
             </div>
 
-            {/* Expanded Body */}
-            {activeStep === "focus" && (
+            {/* Expanded Body for Step 1 */}
+            {stage === "focus" && (
               <div className="pt-4 space-y-3 animate-in fade-in duration-150">
                 {sourceMode === "brand" ? (
                   <div className="space-y-2.5">
@@ -520,7 +527,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             <div className="text-[10.5px] text-[var(--ink-muted)] italic">{selectedBrand.genericName} · {selectedBrand.therapyAreas.join(", ")}</div>
                           </div>
                         </div>
-                        <Button size="sm" variant="primary" onClick={() => setActiveStep("audience")} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
+                        <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
                           <span>Confirm &amp; Next</span>
                           <ChevronRight className="size-3" />
                         </Button>
@@ -580,7 +587,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             );
                           })}
                         </div>
-                        <Button size="sm" variant="primary" onClick={() => setActiveStep("audience")} className="h-7 text-[11px] font-bold px-3 cursor-pointer shrink-0">
+                        <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7 text-[11px] font-bold px-3 cursor-pointer shrink-0">
                           <span>Confirm &amp; Next</span>
                           <ChevronRight className="size-3" />
                         </Button>
@@ -593,251 +600,224 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           </div>
 
           {/* ══════════════ 2. TARGET AUDIENCE ══════════════ */}
-          <div className={cn(
-            "rounded-[18px] border transition-all duration-200 overflow-hidden",
-            activeStep === "audience"
-              ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
-              : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
-          )}>
-            {/* Header / Summary */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className={cn(
-                  "grid size-6 place-items-center rounded-full text-[11px] font-extrabold transition-colors",
-                  audience ? "bg-emerald-100 text-emerald-800" : "bg-black/8 text-[var(--ink-muted)]"
-                )}>
-                  {audience ? "✓" : "2"}
-                </div>
-                <span className="text-[13px] font-extrabold text-[var(--ink)]">
-                  2. Target Audience
-                </span>
-                {activeStep !== "audience" && (
-                  <span className="text-[12.5px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] ml-2">
-                    {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}
-                    {audience === "HCP" && selectedSpecialities.length > 0 ? ` (${selectedSpecialities.join(", ")})` : ""}
-                  </span>
-                )}
-              </div>
-
-              {activeStep !== "audience" ? (
-                <button
-                  type="button"
-                  onClick={() => setActiveStep("audience")}
-                  className="flex items-center gap-1 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
-                >
-                  <Edit3 className="size-3" />
-                  <span>Change</span>
-                </button>
-              ) : null}
-            </div>
-
-            {/* Expanded Body */}
-            {activeStep === "audience" && (
-              <div className="pt-4 space-y-4 animate-in fade-in duration-150">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                  {AUDIENCE_OPTIONS.map((item) => {
-                    const isSel = audience === item.id;
-                    const IconComp = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          setAudience(item.id);
-                          if (item.id !== "HCP") setActiveStep("ratio");
-                        }}
-                        className={cn(
-                          "flex flex-col items-center justify-center p-3 rounded-[14px] border-2 text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
-                          isSel
-                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                            : "border-black/8 bg-white hover:border-black/20"
-                        )}
-                      >
-                        <div className={cn("grid size-7 place-items-center rounded-lg shrink-0 transition-colors", isSel ? "bg-[var(--brand)] text-white" : "bg-[var(--tint)] text-[var(--brand-deep)]")}>
-                          <IconComp className="size-3.5" />
-                        </div>
-                        <div className="text-[12px] font-[850] text-[var(--ink)] leading-none">{item.title}</div>
-                        <div className="text-[9.5px] text-[var(--ink-muted)] leading-none">{item.subtitle}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* If HCP, inline speciality selector + Next button */}
-                {audience === "HCP" && (
-                  <div className="flex items-center justify-between pt-2 border-t border-black/6">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-[var(--ink-2)]">Speciality:</span>
-                      <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setSpecialityDropdownOpen(false); }}>
-                        <button
-                          type="button"
-                          onClick={() => setSpecialityDropdownOpen(!specialityDropdownOpen)}
-                          className="flex items-center gap-1.5 rounded-lg border border-black/10 bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--brand-deep)] hover:border-[var(--brand)] transition-colors cursor-pointer shadow-2xs"
-                        >
-                          <span>{selectedSpecialities.length > 0 ? selectedSpecialities.join(", ") : "All Doctor Specialities"}</span>
-                          <ChevronDown className="size-3" />
-                        </button>
-                        {specialityDropdownOpen && (
-                          <div className="absolute z-50 left-0 mt-1 w-[200px] rounded-[14px] border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)] overflow-hidden max-h-[180px] overflow-y-auto">
-                            {HCP_SPECIALITIES.map((spec) => {
-                              const isSel = selectedSpecialities.includes(spec);
-                              return (
-                                <button
-                                  key={spec}
-                                  type="button"
-                                  onMouseDown={(e) => { e.preventDefault(); toggleSpeciality(spec); }}
-                                  className={cn("flex w-full items-center justify-between px-3 py-1.5 text-[11.5px] font-medium text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/[0.03] text-[var(--ink)]")}
-                                >
-                                  <span>{spec}</span>
-                                  {isSel && <Check className="size-2.5 text-[var(--brand)] stroke-[3]" />}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button size="sm" variant="primary" onClick={() => setActiveStep("ratio")} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
-                      <span>Next: Output Ratio</span>
-                      <ChevronRight className="size-3" />
-                    </Button>
+          {(stage === "audience" || stage === "details") && (
+            <div className={cn(
+              "rounded-[18px] border transition-all duration-200 overflow-hidden animate-in fade-in duration-150",
+              stage === "audience"
+                ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
+                : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
+            )}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className={cn(
+                    "grid size-6 place-items-center rounded-full text-[11px] font-extrabold transition-colors",
+                    stage === "details"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-black/8 text-[var(--ink-muted)]"
+                  )}>
+                    {stage === "details" ? "✓" : "2"}
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* ══════════════ 3. OUTPUT RATIO ══════════════ */}
-          <div className={cn(
-            "rounded-[18px] border transition-all duration-200 overflow-hidden",
-            activeStep === "ratio"
-              ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
-              : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
-          )}>
-            {/* Header / Summary */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className={cn(
-                  "grid size-6 place-items-center rounded-full text-[11px] font-extrabold transition-colors",
-                  selectedSize ? "bg-emerald-100 text-emerald-800" : "bg-black/8 text-[var(--ink-muted)]"
-                )}>
-                  {selectedSize ? "✓" : "3"}
-                </div>
-                <span className="text-[13px] font-extrabold text-[var(--ink)]">
-                  3. Output Size &amp; Aspect Ratio
-                </span>
-                {activeStep !== "ratio" && (
-                  <span className="text-[12.5px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] ml-2">
-                    {sizeOptions.find((s) => s.id === selectedSize)?.label || selectedSize}
+                  <span className="text-[13px] font-extrabold text-[var(--ink)]">
+                    2. Target Audience
                   </span>
-                )}
+                  {stage !== "audience" && (
+                    <span className="text-[12px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] ml-2">
+                      {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}
+                      {audience === "HCP" && selectedSpecialities.length > 0 ? ` (${selectedSpecialities.join(", ")})` : ""}
+                    </span>
+                  )}
+                </div>
+
+                {stage !== "audience" ? (
+                  <button
+                    type="button"
+                    onClick={() => setStage("audience")}
+                    className="flex items-center gap-1 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+                  >
+                    <Edit3 className="size-3" />
+                    <span>Change</span>
+                  </button>
+                ) : null}
               </div>
 
-              {activeStep !== "ratio" ? (
-                <button
-                  type="button"
-                  onClick={() => setActiveStep("ratio")}
-                  className="flex items-center gap-1 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
-                >
-                  <Edit3 className="size-3" />
-                  <span>Change</span>
-                </button>
-              ) : null}
-            </div>
+              {/* Expanded Body for Step 2 */}
+              {stage === "audience" && (
+                <div className="pt-4 space-y-4 animate-in fade-in duration-150">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                    {AUDIENCE_OPTIONS.map((item) => {
+                      const isSel = audience === item.id;
+                      const IconComp = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => handleSelectAudience(item.id)}
+                          className={cn(
+                            "flex flex-col items-center justify-center p-3 rounded-[14px] border-2 text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
+                            isSel
+                              ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
+                              : "border-black/8 bg-white hover:border-black/20"
+                          )}
+                        >
+                          <div className={cn("grid size-7 place-items-center rounded-lg shrink-0 transition-colors", isSel ? "bg-[var(--brand)] text-white" : "bg-[var(--tint)] text-[var(--brand-deep)]")}>
+                            <IconComp className="size-3.5" />
+                          </div>
+                          <div className="text-[12px] font-[850] text-[var(--ink)] leading-none">{item.title}</div>
+                          <div className="text-[9.5px] text-[var(--ink-muted)] leading-none">{item.subtitle}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-            {/* Expanded Body */}
-            {activeStep === "ratio" && (
-              <div className="pt-4 space-y-3 animate-in fade-in duration-150">
+                  {/* If HCP, inline speciality selector + Next button */}
+                  {audience === "HCP" && (
+                    <div className="flex items-center justify-between pt-2 border-t border-black/6">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-[var(--ink-2)]">Speciality:</span>
+                        <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setSpecialityDropdownOpen(false); }}>
+                          <button
+                            type="button"
+                            onClick={() => setSpecialityDropdownOpen(!specialityDropdownOpen)}
+                            className="flex items-center gap-1.5 rounded-lg border border-black/10 bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--brand-deep)] hover:border-[var(--brand)] transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <span>{selectedSpecialities.length > 0 ? selectedSpecialities.join(", ") : "All Doctor Specialities"}</span>
+                            <ChevronDown className="size-3" />
+                          </button>
+                          {specialityDropdownOpen && (
+                            <div className="absolute z-50 left-0 mt-1 w-[200px] rounded-[14px] border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)] overflow-hidden max-h-[180px] overflow-y-auto">
+                              {HCP_SPECIALITIES.map((spec) => {
+                                const isSel = selectedSpecialities.includes(spec);
+                                return (
+                                  <button
+                                    key={spec}
+                                    type="button"
+                                    onMouseDown={(e) => { e.preventDefault(); toggleSpeciality(spec); }}
+                                    className={cn("flex w-full items-center justify-between px-3 py-1.5 text-[11.5px] font-medium text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/[0.03] text-[var(--ink)]")}
+                                  >
+                                    <span>{spec}</span>
+                                    {isSel && <Check className="size-2.5 text-[var(--brand)] stroke-[3]" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
+                        <span>Continue</span>
+                        <ChevronRight className="size-3" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══════════════ 3 & 4: OUTPUT SIZE + CLINICAL FOCUS TOPICS (Revealed Together) ══════════════ */}
+          {stage === "details" && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              
+              {/* 3. Output Size & Shape (Clean Icons & Names, No Noise) */}
+              <div className="rounded-[18px] border border-[#e5ebe6] bg-white p-4 space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="grid size-5.5 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand-deep)] text-[10.5px] font-extrabold">
+                      3
+                    </div>
+                    <span className="text-[12.5px] font-extrabold text-[var(--ink)]">
+                      Output Shape &amp; Size
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    {sizeOptions.find((s) => s.id === selectedSize)?.label}
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {sizeOptions.map((opt) => {
                     const isSel = selectedSize === opt.id;
+                    const IconComp = opt.icon;
                     return (
                       <button
                         key={opt.id}
                         type="button"
-                        onClick={() => {
-                          setSelectedSize(opt.id);
-                          setActiveStep("topics");
-                        }}
+                        onClick={() => setSelectedSize(opt.id)}
                         className={cn(
-                          "py-3 px-2 rounded-[14px] border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 shadow-2xs",
+                          "flex items-center justify-center gap-2 py-2.5 px-3 rounded-[12px] border-2 transition-all cursor-pointer shadow-2xs",
                           isSel
-                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                            : "border-black/8 bg-white hover:border-black/20"
+                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-extrabold shadow-2xs ring-2 ring-[var(--brand)]/15"
+                            : "border-black/8 bg-white hover:border-black/20 text-[var(--ink)]"
                         )}
                       >
-                        <span className="text-[13px] font-[850] text-[var(--ink)]">{opt.label}</span>
-                        <span className="text-[10px] text-[var(--ink-muted)]">{opt.desc}</span>
+                        <IconComp className={cn("size-3.5", isSel ? "text-[var(--brand)]" : "text-[var(--ink-muted)]")} />
+                        <span className="text-[12px]">{opt.label}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* ══════════════ 4. FOCUS TOPICS (HERO) ══════════════ */}
-          <div className={cn(
-            "rounded-[18px] border transition-all duration-200 overflow-hidden p-5",
-            activeStep === "topics"
-              ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs"
-              : "border-[#e5ebe6] bg-white"
-          )}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="grid size-6 place-items-center rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold">
-                  4
+              {/* 4. Clinical Focus Topics (Audience-tailored Hero Cards) */}
+              <div className="rounded-[18px] border border-[#e5ebe6] bg-white p-5 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="grid size-5.5 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand-deep)] text-[10.5px] font-extrabold">
+                      4
+                    </div>
+                    <div>
+                      <h3 className="text-[13px] font-extrabold text-[var(--ink)]">
+                        Clinical Focus Topics
+                      </h3>
+                      <p className="text-[11px] text-[var(--ink-muted)]">
+                        Select 1 to 3 story pillars (tailored for {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}).
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] shrink-0">
+                    {selectedTopics.length} Selected
+                  </span>
                 </div>
-                <div>
-                  <h3 className="text-[13.5px] font-extrabold text-[var(--ink)]">
-                    4. Clinical Focus Topics
-                  </h3>
-                  <p className="text-[11px] text-[var(--ink-muted)]">
-                    Select 1 to 3 story pillars (tailored for {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}).
-                  </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+                  {currentTopics.map((top) => {
+                    const isSel = selectedTopics.includes(top.label);
+                    const IconComp = top.icon;
+                    return (
+                      <button
+                        key={top.id}
+                        type="button"
+                        onClick={() => toggleTopic(top.label)}
+                        className={cn(
+                          "group relative flex flex-col justify-between p-3.5 rounded-[14px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[92px]",
+                          isSel
+                            ? "border-[var(--brand)] bg-[#f3f9f5] ring-2 ring-[var(--brand)]/15 shadow-sm"
+                            : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbfa]"
+                        )}
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <div className={cn("grid size-6 place-items-center rounded-md transition-colors shrink-0", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-[var(--tint)] text-[var(--brand-deep)] group-hover:bg-[var(--brand)] group-hover:text-white")}>
+                              <IconComp className="size-3" />
+                            </div>
+                            <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white")}>
+                              {isSel && <Check className="size-2 stroke-[3]" />}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug">{top.label}</div>
+                            <div className="text-[10.5px] text-[var(--ink-muted)] mt-0.5 leading-snug line-clamp-2">{top.detail}</div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)]">
-                {selectedTopics.length} Selected
-              </span>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-4">
-              {currentTopics.map((top) => {
-                const isSel = selectedTopics.includes(top.label);
-                const IconComp = top.icon;
-                return (
-                  <button
-                    key={top.id}
-                    type="button"
-                    onClick={() => toggleTopic(top.label)}
-                    className={cn(
-                      "group relative flex flex-col justify-between p-3.5 rounded-[14px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[95px]",
-                      isSel
-                        ? "border-[var(--brand)] bg-[#f3f9f5] ring-2 ring-[var(--brand)]/15 shadow-sm"
-                        : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbfa]"
-                    )}
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <div className={cn("grid size-6 place-items-center rounded-md transition-colors shrink-0", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-[var(--tint)] text-[var(--brand-deep)] group-hover:bg-[var(--brand)] group-hover:text-white")}>
-                          <IconComp className="size-3" />
-                        </div>
-                        <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white")}>
-                          {isSel && <Check className="size-2 stroke-[3]" />}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug">{top.label}</div>
-                        <div className="text-[10.5px] text-[var(--ink-muted)] mt-0.5 leading-snug line-clamp-2">{top.detail}</div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
             </div>
-          </div>
+          )}
 
         </div>
 
@@ -851,17 +831,19 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 ? `${selectedDiseaseIds.map((id) => DISEASE_OPTIONS.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`
                 : "General evidence"}
             </span>
-            <span>·</span>
-            <span>{AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}</span>
-            {audience === "HCP" && selectedSpecialities.length > 0 && (
+            {stage === "details" && (
               <>
-                <span>({selectedSpecialities.join(", ")})</span>
+                <span>·</span>
+                <span>{AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}</span>
+                {audience === "HCP" && selectedSpecialities.length > 0 && (
+                  <span>({selectedSpecialities.join(", ")})</span>
+                )}
+                <span>·</span>
+                <span>{sizeOptions.find((s) => s.id === selectedSize)?.label}</span>
+                <span>·</span>
+                <span className="font-bold text-[var(--brand-deep)]">{selectedTopics.length} Topics</span>
               </>
             )}
-            <span>·</span>
-            <span>{selectedSize}</span>
-            <span>·</span>
-            <span className="font-bold text-[var(--brand-deep)]">{selectedTopics.length} Topics</span>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
