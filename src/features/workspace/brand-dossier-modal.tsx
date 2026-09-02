@@ -45,6 +45,7 @@ import {
   Users,
   Edit3,
   Lock,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -138,8 +139,8 @@ export const DOSSIERS: Record<string, DossierItem> = {
   },
 };
 
-// ── Disease / Therapy Area options ──
-export const DISEASE_OPTIONS = [
+// ── Initial Disease / Therapy Area options ──
+export const INITIAL_DISEASE_OPTIONS = [
   { id: "dermatology", label: "Dermatology", desc: "Psoriasis, Eczema, Acne, Atopic Dermatitis" },
   { id: "oncology", label: "Oncology", desc: "Lung Cancer, Breast Cancer, Melanoma, Lymphoma" },
   { id: "cardiology", label: "Cardiology", desc: "Heart Failure, Atrial Fibrillation, Hypertension" },
@@ -154,8 +155,8 @@ export const DISEASE_OPTIONS = [
   { id: "endocrinology", label: "Endocrinology", desc: "Thyroid Disorders, Adrenal, Pituitary Conditions" },
 ];
 
-// ── HCP Specialities (Displayed as direct 1-click selectable chips) ──
-const HCP_SPECIALITIES = [
+// ── Initial HCP Specialities ──
+const INITIAL_HCP_SPECIALITIES = [
   "Dermatologist", "Oncologist", "Cardiologist", "Rheumatologist", "Neurologist",
   "Pulmonologist", "Gastroenterologist", "Nephrologist", "Immunologist",
   "General Practitioner", "Endocrinologist", "Psychiatrist",
@@ -278,16 +279,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // Progressive Stage: "focus" -> "audience" -> "details"
   const [stage, setStage] = useState<RevealStage>("focus");
 
-  // 1. Focus: Brand vs Therapy Area (Start empty!)
+  // 1. Focus: Brand vs Therapy Area (Starts completely empty)
   const [sourceMode, setSourceMode] = useState<"brand" | "disease">("brand");
   const [brandSearch, setBrandSearch] = useState("");
   const [diseaseSearch, setDiseaseSearch] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<string[]>([]);
+  const [customDiseases, setCustomDiseases] = useState<Array<{ id: string; label: string; desc: string }>>([]);
+  const [customDiseaseInput, setCustomDiseaseInput] = useState("");
+  const [showCustomDiseaseBox, setShowCustomDiseaseBox] = useState(false);
 
   // 2. Audience & Speciality
   const [audience, setAudience] = useState<Audience>("HCP");
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
+  const [customSpecialities, setCustomSpecialities] = useState<string[]>([]);
+  const [customSpecialityInput, setCustomSpecialityInput] = useState("");
+  const [showCustomSpecialityBox, setShowCustomSpecialityBox] = useState(false);
 
   // 3. Format Shape (Landscape, Portrait, Square)
   const [selectedShape, setSelectedShape] = useState<OutputShape>("landscape");
@@ -304,10 +311,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setSourceMode("brand");
       setSelectedBrandId("");
       setSelectedDiseaseIds([]);
+      setCustomDiseases([]);
+      setCustomDiseaseInput("");
+      setShowCustomDiseaseBox(false);
       setBrandSearch("");
       setDiseaseSearch("");
       setAudience("HCP");
       setSelectedSpecialities([]);
+      setCustomSpecialities([]);
+      setCustomSpecialityInput("");
+      setShowCustomSpecialityBox(false);
       setSelectedShape("landscape");
       const def = TOPICS_BY_AUDIENCE["HCP"];
       setSelectedTopics([def[0].label, def[1].label]);
@@ -328,11 +341,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     return INITIAL_BRANDS.filter((b) => b.name.toLowerCase().includes(q) || b.genericName.toLowerCase().includes(q) || b.therapyAreas.some((t) => t.toLowerCase().includes(q)));
   }, [brandSearch]);
 
+  const allDiseases = useMemo(() => [...INITIAL_DISEASE_OPTIONS, ...customDiseases], [customDiseases]);
+
   const filteredDiseases = useMemo(() => {
     const q = diseaseSearch.toLowerCase().trim();
-    if (!q) return DISEASE_OPTIONS;
-    return DISEASE_OPTIONS.filter((d) => d.label.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q));
-  }, [diseaseSearch]);
+    if (!q) return allDiseases;
+    return allDiseases.filter((d) => d.label.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q));
+  }, [diseaseSearch, allDiseases]);
+
+  const allSpecialities = useMemo(() => [...INITIAL_HCP_SPECIALITIES, ...customSpecialities], [customSpecialities]);
 
   const currentTopics = TOPICS_BY_AUDIENCE[audience] || TOPICS_BY_AUDIENCE.HCP;
 
@@ -354,6 +371,26 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedDiseaseIds((prev) =>
       prev.includes(diseaseId) ? prev.filter((id) => id !== diseaseId) : [...prev, diseaseId]
     );
+  };
+
+  const handleAddCustomDisease = () => {
+    const trimmed = customDiseaseInput.trim();
+    if (!trimmed) return;
+    const newId = `custom-${Date.now()}`;
+    const newEntry = { id: newId, label: trimmed, desc: "Custom Specified Area" };
+    setCustomDiseases((prev) => [...prev, newEntry]);
+    setSelectedDiseaseIds((prev) => [...prev, newId]);
+    setCustomDiseaseInput("");
+    setShowCustomDiseaseBox(false);
+  };
+
+  const handleAddCustomSpeciality = () => {
+    const trimmed = customSpecialityInput.trim();
+    if (!trimmed) return;
+    setCustomSpecialities((prev) => [...prev, trimmed]);
+    setSelectedSpecialities((prev) => [...prev, trimmed]);
+    setCustomSpecialityInput("");
+    setShowCustomSpecialityBox(false);
   };
 
   const handleSelectBrand = (brand: BrandItem) => {
@@ -456,7 +493,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 </span>
                 {stage !== "focus" && (
                   <span className="text-[12px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] ml-2">
-                    {sourceMode === "brand" ? selectedBrand?.name || "Brand Selected" : `${selectedDiseaseIds.length} Therapy Areas`}
+                    {sourceMode === "brand"
+                      ? selectedBrand?.name || "Brand Selected"
+                      : `${selectedDiseaseIds.length} Therapy Areas: ${selectedDiseaseIds.map((id) => allDiseases.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`}
                   </span>
                 )}
               </div>
@@ -565,8 +604,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       />
                     </div>
 
-                    {/* Direct 1-Click Therapy Area Chips */}
-                    <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto p-1">
+                    {/* Direct 1-Click Therapy Area Chips + "Other" Option */}
+                    <div className="flex flex-wrap gap-2 max-h-[170px] overflow-y-auto p-1">
                       {filteredDiseases.map((disease) => {
                         const isSel = selectedDiseaseIds.includes(disease.id);
                         return (
@@ -586,12 +625,45 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           </button>
                         );
                       })}
+
+                      {/* + Other button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomDiseaseBox(!showCustomDiseaseBox)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-[12px] font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1.5",
+                          showCustomDiseaseBox
+                            ? "bg-slate-900 border-slate-900 text-white shadow-2xs font-bold"
+                            : "bg-white border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+                        )}
+                      >
+                        <Plus className="size-3" />
+                        <span>Other (Specify)</span>
+                      </button>
                     </div>
+
+                    {/* Inline Custom Area Input Box */}
+                    {showCustomDiseaseBox && (
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 animate-in fade-in duration-100">
+                        <input
+                          type="text"
+                          value={customDiseaseInput}
+                          onChange={(e) => setCustomDiseaseInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleAddCustomDisease(); }}
+                          placeholder="Type custom therapy or disease area (e.g. Rare Diseases, Ophthalmology)..."
+                          className="flex-1 bg-white rounded-lg border border-slate-200 px-3 py-1.5 text-[12.5px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)]"
+                          autoFocus
+                        />
+                        <Button size="sm" variant="primary" onClick={handleAddCustomDisease} disabled={!customDiseaseInput.trim()} className="h-7.5 text-[11.5px] font-bold px-3.5 cursor-pointer">
+                          <span>Add Area</span>
+                        </Button>
+                      </div>
+                    )}
 
                     {selectedDiseaseIds.length > 0 && (
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                         <span className="text-[11.5px] font-bold text-slate-600">
-                          {selectedDiseaseIds.length} therapy areas selected
+                          {selectedDiseaseIds.length} therapy area{selectedDiseaseIds.length > 1 ? "s" : ""} selected
                         </span>
                         <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7.5 text-[11.5px] font-bold px-4 cursor-pointer shadow-sm">
                           <span>Confirm &amp; Next</span>
@@ -689,7 +761,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     })}
                   </div>
 
-                  {/* ── Direct 1-Click Doctor Speciality Chips (NO DROPDOWNS!) ── */}
+                  {/* ── Direct 1-Click Doctor Speciality Chips + "Other" ── */}
                   {audience === "HCP" && (
                     <div className="pt-3 border-t border-slate-200/80 space-y-2.5">
                       <div className="flex items-center justify-between">
@@ -707,9 +779,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         )}
                       </div>
 
-                      {/* Direct Clickable Speciality Chips */}
+                      {/* Clickable Speciality Chips */}
                       <div className="flex flex-wrap gap-1.5">
-                        {HCP_SPECIALITIES.map((spec) => {
+                        {allSpecialities.map((spec) => {
                           const isSel = selectedSpecialities.includes(spec);
                           return (
                             <button
@@ -728,7 +800,40 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             </button>
                           );
                         })}
+
+                        {/* + Other Speciality */}
+                        <button
+                          type="button"
+                          onClick={() => setShowCustomSpecialityBox(!showCustomSpecialityBox)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-full text-[11.5px] font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1",
+                            showCustomSpecialityBox
+                              ? "bg-slate-900 border-slate-900 text-white font-bold"
+                              : "bg-white border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+                          )}
+                        >
+                          <Plus className="size-3" />
+                          <span>Other</span>
+                        </button>
                       </div>
+
+                      {/* Custom Speciality Input Box */}
+                      {showCustomSpecialityBox && (
+                        <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 animate-in fade-in duration-100">
+                          <input
+                            type="text"
+                            value={customSpecialityInput}
+                            onChange={(e) => setCustomSpecialityInput(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") handleAddCustomSpeciality(); }}
+                            placeholder="Type custom doctor speciality (e.g. Hematologist, Pathologist)..."
+                            className="flex-1 bg-white rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)]"
+                            autoFocus
+                          />
+                          <Button size="sm" variant="primary" onClick={handleAddCustomSpeciality} disabled={!customSpecialityInput.trim()} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
+                            <span>Add</span>
+                          </Button>
+                        </div>
+                      )}
 
                       {/* Continue to Shape */}
                       <div className="flex justify-end pt-1">
@@ -870,7 +975,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               {sourceMode === "brand"
                 ? selectedBrand ? `${selectedBrand.name}` : "No brand selected"
                 : selectedDiseaseIds.length > 0
-                ? `${selectedDiseaseIds.map((id) => DISEASE_OPTIONS.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`
+                ? `${selectedDiseaseIds.map((id) => allDiseases.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`
                 : "General evidence"}
             </span>
             {stage === "details" && (
