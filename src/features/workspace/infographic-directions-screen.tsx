@@ -42,6 +42,7 @@ import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
+import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 
 type InfographicSubStep = "brief" | "content";
@@ -558,219 +559,15 @@ export function InfographicDirectionsScreen() {
                   open={openSection === "sources"}
                   onToggle={() => setOpenSection(openSection === "sources" ? null : "sources")}
                 >
-                  <div className="space-y-4">
-                    {/* Pre-built dossiers matching the brand/disease - Distinct Informational Tray */}
-                    <div className="rounded-[18px] bg-[#f4f6f3] border border-[#e2e8e3] p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="size-4 text-emerald-700" />
-                          <span className="text-[12px] font-extrabold text-[var(--ink)]">
-                            Verified SwishX Regulatory Dossiers ({brandName})
-                          </span>
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/70 border border-emerald-300 px-2 py-0.2 rounded-full">
-                            ✓ SmPC / Label Data Active
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-[var(--ink-muted)]">Click View to inspect full claims &amp; sources</span>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        {[
-                          {
-                            name: `${brandName} Core SmPC & Prescribing Info`,
-                            molecule: brandName === "Onkavia" ? "onkatrelinib" : brandName === "PulmoVax" ? "albuterol / budesonide" : "tirzelamide",
-                            market: "🇺🇸 US · FDA",
-                            sections: 18,
-                            claims: 214,
-                            documents: [
-                              { name: "FDA Approved Prescribing Information (Rev. 04/2026)", citations: 112 },
-                              { name: "CLARITY-CV Phase III Pivotal Trial Readout", citations: 64 },
-                            ],
-                          },
-                          {
-                            name: `${brandName} Phase III Pivotal Readout`,
-                            molecule: brandName === "Onkavia" ? "onkatrelinib" : brandName === "PulmoVax" ? "albuterol / budesonide" : "tirzelamide",
-                            market: "🌐 Global · NEJM",
-                            sections: 12,
-                            claims: 64,
-                            documents: [
-                              { name: "CLARITY-CV Phase III Pivotal Trial Readout", citations: 64 },
-                              { name: "ClinicalTrials.gov Protocol NCT04892110", citations: 18 },
-                            ],
-                          },
-                          {
-                            name: `${brandName} HEOR & Value Evidence`,
-                            molecule: brandName === "Onkavia" ? "onkatrelinib" : brandName === "PulmoVax" ? "albuterol / budesonide" : "tirzelamide",
-                            market: "🇪🇺 EU · EMA",
-                            sections: 14,
-                            claims: 128,
-                            documents: [
-                              { name: "Global Health Economics & QALY Impact Dossier", citations: 76 },
-                              { name: "30-Day Hospital Readmission Reduction Model", citations: 52 },
-                            ],
-                          },
-                        ].map((dossier, idx) => (
-                          <div
-                            key={idx}
-                            className="p-3 rounded-[14px] bg-white border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
-                          >
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-extrabold uppercase tracking-wide text-[var(--ink-muted)]">
-                                  {dossier.market}
-                                </span>
-                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
-                                  {dossier.claims} claims
-                                </span>
-                              </div>
-                              <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug line-clamp-1">
-                                {dossier.name}
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => setPreviewDossier(dossier)}
-                              className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-[10px] bg-[#f0f4f1] hover:bg-[var(--tint)] text-[var(--brand-deep)] text-[11.5px] font-bold border border-[#d8e0da] transition-colors cursor-pointer"
-                            >
-                              <Eye className="size-3.5 text-[var(--brand)]" />
-                              <span>View Dossier</span>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* 3 Grounding Options - Concise & Clear */}
-                    <div className="space-y-2 pt-1">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
-                        Select Grounding Source Mode
-                      </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        {[
-                          {
-                            id: "both" as const,
-                            title: "Both SwishX dossiers and My attachments",
-                            desc: "Combines verified regulatory label data with your uploaded attachments.",
-                          },
-                          {
-                            id: "my-sources" as const,
-                            title: "Only My sources & attachments",
-                            desc: "Strictly uses your files; ignores the prebuilt regulatory dossier.",
-                          },
-                          {
-                            id: "swishx-only" as const,
-                            title: "Only SwishX approved dossiers",
-                            desc: "Strictly uses verified SmPC and FDA prescribing label packages.",
-                          },
-                        ].map((opt) => {
-                          const isSelected = sourceGroundingMode === opt.id;
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => setSourceGroundingMode(opt.id)}
-                              className={cn(
-                                "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
-                                isSelected
-                                  ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs ring-2 ring-[var(--brand)]/15"
-                                  : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
-                              )}
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="font-bold text-[13px] leading-snug">{opt.title}</div>
-                                <div
-                                  className={cn(
-                                    "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
-                                    isSelected
-                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
-                                      : "border-[#cbd6d0]"
-                                  )}
-                                >
-                                  {isSelected && <Check className="size-3 stroke-[3]" />}
-                                </div>
-                              </div>
-                              <div className="text-[11px] text-[var(--ink-muted)] mt-1.5 leading-snug">{opt.desc}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Uploaded Documents Context */}
-                    {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources") && (
-                      <div className="space-y-2 pt-2 border-t border-black/5 animate-in fade-in duration-150">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
-                            My Uploaded Documents &amp; Briefs ({uploadedDocs.length})
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => docUploadRef.current?.click()}
-                            className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
-                          >
-                            <Plus className="size-3.5" />
-                            <span>Add more files</span>
-                          </button>
-                        </div>
-
-                        <input
-                          ref={docUploadRef}
-                          type="file"
-                          multiple
-                          className="hidden"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files.length > 0) {
-                              const newFiles = Array.from(e.target.files).map((f) => ({
-                                name: f.name,
-                                size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
-                                date: "Just now",
-                              }));
-                              setUploadedDocs((prev) => [...prev, ...newFiles]);
-                            }
-                          }}
-                        />
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {uploadedDocs.map((doc, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-white border border-[#e3e8e5] text-[12px]"
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <FileText className="size-4 text-[var(--brand)] shrink-0" />
-                                <span className="font-semibold text-[var(--ink)] truncate">{doc.name}</span>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className="text-[10px] text-[var(--ink-muted)]">{doc.size}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => setUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
-                                  className="grid size-5 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-red-600 transition-colors cursor-pointer"
-                                  aria-label="Remove"
-                                >
-                                  <X className="size-3" />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Continue action */}
-                    <div className="pt-2 flex justify-end">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setOpenSection("format")}
-                        className="text-[12px] font-bold gap-1 cursor-pointer"
-                      >
-                        <span>Save &amp; Continue</span>
-                        <ArrowRight className="size-3" />
-                      </Button>
-                    </div>
-                  </div>
+                  <ResearchSourcesContent
+                    brandName={brandName || "Velmora"}
+                    sourceGroundingMode={sourceGroundingMode}
+                    onSetSourceGroundingMode={setSourceGroundingMode}
+                    uploadedDocs={uploadedDocs}
+                    onSetUploadedDocs={setUploadedDocs}
+                    onPreviewDossier={(d) => setPreviewDossier(d)}
+                    onContinue={() => setOpenSection("format")}
+                  />
                 </CreativePlanSection>
 
                 {/* 2. Format & Page Shape */}
