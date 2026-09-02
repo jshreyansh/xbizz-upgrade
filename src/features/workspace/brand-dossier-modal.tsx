@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import {
   Building2,
   Check,
-  ChevronDown,
   ChevronRight,
   FileText,
   Search,
@@ -46,7 +45,6 @@ import {
   Users,
   Edit3,
   Lock,
-  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -156,11 +154,11 @@ export const DISEASE_OPTIONS = [
   { id: "endocrinology", label: "Endocrinology", desc: "Thyroid Disorders, Adrenal, Pituitary Conditions" },
 ];
 
-// ── HCP Specialities ──
+// ── HCP Specialities (Displayed as direct 1-click selectable chips) ──
 const HCP_SPECIALITIES = [
   "Dermatologist", "Oncologist", "Cardiologist", "Rheumatologist", "Neurologist",
   "Pulmonologist", "Gastroenterologist", "Nephrologist", "Immunologist",
-  "General Practitioner", "Endocrinologist", "Psychiatrist", "Hospitalist", "Surgeon",
+  "General Practitioner", "Endocrinologist", "Psychiatrist",
 ];
 
 // ── Audience Options ──
@@ -280,19 +278,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // Progressive Stage: "focus" -> "audience" -> "details"
   const [stage, setStage] = useState<RevealStage>("focus");
 
-  // 1. Focus: Brand vs Therapy Area
+  // 1. Focus: Brand vs Therapy Area (Start empty!)
   const [sourceMode, setSourceMode] = useState<"brand" | "disease">("brand");
-  const [brandSearch, setBrandSearch] = useState("Velmora");
-  const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
+  const [brandSearch, setBrandSearch] = useState("");
   const [diseaseSearch, setDiseaseSearch] = useState("");
-  const [diseaseDropdownOpen, setDiseaseDropdownOpen] = useState(false);
-  const [selectedBrandId, setSelectedBrandId] = useState<string>("velmora");
+  const [selectedBrandId, setSelectedBrandId] = useState<string>("");
   const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<string[]>([]);
 
   // 2. Audience & Speciality
   const [audience, setAudience] = useState<Audience>("HCP");
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
-  const [specialityDropdownOpen, setSpecialityDropdownOpen] = useState(false);
 
   // 3. Format Shape (Landscape, Portrait, Square)
   const [selectedShape, setSelectedShape] = useState<OutputShape>("landscape");
@@ -307,12 +302,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     if (open) {
       setStage("focus");
       setSourceMode("brand");
-      setSelectedBrandId("velmora");
+      setSelectedBrandId("");
       setSelectedDiseaseIds([]);
-      setBrandSearch("Velmora");
+      setBrandSearch("");
       setDiseaseSearch("");
-      setBrandDropdownOpen(false);
-      setDiseaseDropdownOpen(false);
       setAudience("HCP");
       setSelectedSpecialities([]);
       setSelectedShape("landscape");
@@ -366,7 +359,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const handleSelectBrand = (brand: BrandItem) => {
     setSelectedBrandId(brand.id);
     setBrandSearch(brand.name);
-    setBrandDropdownOpen(false);
     setStage("audience");
   };
 
@@ -411,10 +403,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       role="dialog" aria-modal="true"
     >
-      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-[24px] border border-[#d8deda] bg-white shadow-2xl overflow-visible text-left">
+      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-[24px] border border-[#d8deda] bg-white shadow-2xl overflow-hidden text-left">
 
         {/* ── Modal Header ── */}
-        <div className="flex items-center justify-between border-b border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0 rounded-t-[24px]">
+        <div className="flex items-center justify-between border-b border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
               <Sparkles className="size-4.5 text-[var(--brand)]" />
@@ -444,10 +436,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           {/* ══════════════ 1. CLINICAL GROUNDING ══════════════ */}
           <div className={cn(
-            "rounded-[18px] border transition-all duration-200 relative",
+            "rounded-[18px] border transition-all duration-200",
             stage === "focus"
-              ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5 z-30"
-              : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5 z-10"
+              ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
+              : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
           )}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -502,124 +494,108 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             {stage === "focus" && (
               <div className="pt-4 space-y-3 animate-in fade-in duration-150">
                 {sourceMode === "brand" ? (
-                  <div className="space-y-2.5 relative">
+                  <div className="space-y-3">
                     <div className="relative flex items-center">
-                      <Search className="absolute left-3 size-3.5 text-slate-400" />
+                      <Search className="absolute left-3.5 size-4 text-slate-400" />
                       <input
                         type="text"
                         value={brandSearch}
-                        onChange={(e) => { setBrandSearch(e.target.value); setBrandDropdownOpen(true); if (!e.target.value) setSelectedBrandId(""); }}
-                        onFocus={() => setBrandDropdownOpen(true)}
-                        placeholder="Type brand name or molecule (e.g. Velmora, Onkavia)..."
-                        className="w-full rounded-[12px] border border-slate-200 bg-white pl-9 pr-24 py-2.5 text-[13px] font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        onChange={(e) => { setBrandSearch(e.target.value); }}
+                        placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
+                        className="w-full rounded-[14px] border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-[13px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        autoFocus
                       />
                     </div>
 
-                    {/* Brand Dropdown List */}
-                    {brandDropdownOpen && filteredBrands.length > 0 && (
-                      <div className="rounded-[16px] border border-slate-200 bg-white shadow-xl overflow-hidden max-h-[220px] overflow-y-auto mt-1 z-50 p-1">
-                        {filteredBrands.map((brand) => {
-                          const isSel = brand.id === selectedBrandId;
-                          return (
-                            <button
-                              key={brand.id}
-                              type="button"
-                              onMouseDown={(e) => { e.preventDefault(); handleSelectBrand(brand); }}
-                              className={cn(
-                                "flex w-full items-center gap-2.5 px-3 py-2 text-left rounded-xl transition-colors cursor-pointer",
-                                isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-slate-50 text-slate-800"
-                              )}
-                            >
-                              <div className={cn("grid size-6 place-items-center rounded text-[10px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-slate-100 text-slate-700 border-slate-200")}>
+                    {/* In-Flow Brand Selection List */}
+                    <div className="rounded-[16px] border border-slate-200/90 bg-white shadow-2xs divide-y divide-slate-100 max-h-[220px] overflow-y-auto">
+                      {filteredBrands.map((brand) => {
+                        const isSel = brand.id === selectedBrandId;
+                        return (
+                          <button
+                            key={brand.id}
+                            type="button"
+                            onClick={() => handleSelectBrand(brand)}
+                            className={cn(
+                              "flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors cursor-pointer",
+                              isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-slate-50 text-slate-800"
+                            )}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={cn("grid size-7 place-items-center rounded-lg text-[10px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-slate-100 text-slate-700 border-slate-200")}>
                                 {brand.name.slice(0, 2).toUpperCase()}
                               </div>
-                              <div className="flex-1 min-w-0">
+                              <div className="min-w-0">
                                 <div className="text-[12.5px] font-bold">{brand.name}</div>
-                                <div className="text-[10.5px] text-slate-500 italic truncate">{brand.genericName} · {brand.therapyAreas.join(", ")}</div>
+                                <div className="text-[11px] text-slate-500 italic truncate">{brand.genericName} · {brand.therapyAreas.join(", ")}</div>
                               </div>
-                              {isSel && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                            </div>
 
-                    {selectedBrand && !brandDropdownOpen && (
-                      <div className="flex items-center justify-between p-3 rounded-[12px] bg-white border border-emerald-200 bg-emerald-50/40 shadow-2xs">
-                        <div className="flex items-center gap-2.5">
-                          <div className="grid size-7 place-items-center rounded-lg bg-emerald-700 text-white font-bold text-[10.5px]">
-                            {selectedBrand.name.slice(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="text-[12.5px] font-bold text-slate-800">{selectedBrand.name}</div>
-                            <div className="text-[10.5px] text-slate-500 italic">{selectedBrand.genericName} · {selectedBrand.therapyAreas.join(", ")}</div>
-                          </div>
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                              {brand.hasDossier && (
+                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  SmPC Ready
+                                </span>
+                              )}
+                              <span className="text-[11px] font-bold text-[var(--brand)] flex items-center gap-0.5">
+                                Select <ChevronRight className="size-3" />
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                      {filteredBrands.length === 0 && (
+                        <div className="py-6 text-center text-[12px] text-slate-400">
+                          No brands matching &quot;{brandSearch}&quot;
                         </div>
-                        <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
-                          <span>Confirm &amp; Next</span>
-                          <ChevronRight className="size-3" />
-                        </Button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-2.5 relative">
+                  <div className="space-y-3">
                     <div className="relative flex items-center">
-                      <Search className="absolute left-3 size-3.5 text-slate-400" />
+                      <Search className="absolute left-3.5 size-4 text-slate-400" />
                       <input
                         type="text"
                         value={diseaseSearch}
-                        onChange={(e) => { setDiseaseSearch(e.target.value); setDiseaseDropdownOpen(true); }}
-                        onFocus={() => setDiseaseDropdownOpen(true)}
-                        placeholder="Search therapy areas (multi-select)..."
-                        className="w-full rounded-[12px] border border-slate-200 bg-white pl-9 pr-3 py-2 text-[12.5px] font-medium text-slate-800 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        onChange={(e) => setDiseaseSearch(e.target.value)}
+                        placeholder="Search therapy areas (e.g. Dermatology, Oncology, Cardiology)..."
+                        className="w-full rounded-[14px] border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-[13px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        autoFocus
                       />
                     </div>
 
-                    {diseaseDropdownOpen && filteredDiseases.length > 0 && (
-                      <div className="rounded-[16px] border border-slate-200 bg-white shadow-xl overflow-hidden max-h-[200px] overflow-y-auto mt-1 z-50 p-1">
-                        {filteredDiseases.map((disease) => {
-                          const isSel = selectedDiseaseIds.includes(disease.id);
-                          return (
-                            <button
-                              key={disease.id}
-                              type="button"
-                              onMouseDown={(e) => { e.preventDefault(); toggleDisease(disease.id); }}
-                              className={cn(
-                                "flex w-full items-center justify-between px-3 py-2 text-left rounded-xl transition-colors cursor-pointer",
-                                isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-slate-50 text-slate-800"
-                              )}
-                            >
-                              <div>
-                                <div className="text-[12.5px] font-bold">{disease.label}</div>
-                                <div className="text-[10.5px] text-slate-500">{disease.desc}</div>
-                              </div>
-                              <div className={cn("size-4 rounded border flex items-center justify-center shrink-0", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-slate-300 bg-white")}>
-                                {isSel && <Check className="size-2.5 stroke-[3]" />}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                    {/* Direct 1-Click Therapy Area Chips */}
+                    <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto p-1">
+                      {filteredDiseases.map((disease) => {
+                        const isSel = selectedDiseaseIds.includes(disease.id);
+                        return (
+                          <button
+                            key={disease.id}
+                            type="button"
+                            onClick={() => toggleDisease(disease.id)}
+                            className={cn(
+                              "px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
+                              isSel
+                                ? "bg-[var(--tint)] border-[var(--brand)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                                : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                            )}
+                          >
+                            {isSel && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                            <span>{disease.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
 
                     {selectedDiseaseIds.length > 0 && (
-                      <div className="flex items-center justify-between pt-1">
-                        <div className="flex flex-wrap gap-1.5">
-                          {selectedDiseaseIds.map((id) => {
-                            const d = DISEASE_OPTIONS.find((opt) => opt.id === id);
-                            if (!d) return null;
-                            return (
-                              <span key={id} className="inline-flex items-center gap-1 rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--brand-deep)]">
-                                {d.label}
-                                <button type="button" onClick={() => toggleDisease(id)} className="hover:text-red-600 cursor-pointer"><X className="size-2.5" /></button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                        <Button size="sm" variant="primary" onClick={() => { setDiseaseDropdownOpen(false); setStage("audience"); }} className="h-7 text-[11px] font-bold px-3 cursor-pointer shrink-0">
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <span className="text-[11.5px] font-bold text-slate-600">
+                          {selectedDiseaseIds.length} therapy areas selected
+                        </span>
+                        <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7.5 text-[11.5px] font-bold px-4 cursor-pointer shadow-sm">
                           <span>Confirm &amp; Next</span>
-                          <ChevronRight className="size-3" />
+                          <ChevronRight className="size-3.5" />
                         </Button>
                       </div>
                     )}
@@ -646,10 +622,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             </div>
           ) : (
             <div className={cn(
-              "rounded-[18px] border transition-all duration-200 relative",
+              "rounded-[18px] border transition-all duration-200",
               stage === "audience"
-                ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5 z-20"
-                : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5 z-10"
+                ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
+                : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
             )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -713,80 +689,53 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     })}
                   </div>
 
-                  {/* ── Doctor Speciality Selector (Clean Chip & Popover System) ── */}
+                  {/* ── Direct 1-Click Doctor Speciality Chips (NO DROPDOWNS!) ── */}
                   {audience === "HCP" && (
-                    <div className="pt-3 border-t border-slate-200/80 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[11.5px] font-bold text-slate-700 shrink-0">
-                          Doctor Speciality:
+                    <div className="pt-3 border-t border-slate-200/80 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11.5px] font-bold text-slate-700">
+                          Doctor Speciality (Optional):
                         </span>
-
-                        {/* Selected Speciality Chips */}
-                        {selectedSpecialities.map((spec) => (
-                          <span
-                            key={spec}
-                            className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-2xs"
-                          >
-                            <span>{spec}</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleSpeciality(spec)}
-                              className="text-slate-400 hover:text-slate-800 cursor-pointer ml-0.5"
-                            >
-                              <X className="size-3" />
-                            </button>
-                          </span>
-                        ))}
-
-                        {/* Add Speciality Dropdown Popover */}
-                        <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setSpecialityDropdownOpen(false); }}>
+                        {selectedSpecialities.length > 0 && (
                           <button
                             type="button"
-                            onClick={() => setSpecialityDropdownOpen(!specialityDropdownOpen)}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-300 bg-white px-3 py-1 text-[11px] font-bold text-slate-700 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
+                            onClick={() => setSelectedSpecialities([])}
+                            className="text-[10.5px] font-semibold text-slate-400 hover:text-slate-700 cursor-pointer"
                           >
-                            <Plus className="size-3 text-slate-500" />
-                            <span>{selectedSpecialities.length > 0 ? "Add more" : "Select specialities"}</span>
-                            <ChevronDown className={cn("size-3 text-slate-400 transition-transform", specialityDropdownOpen && "rotate-180")} />
+                            Clear all
                           </button>
+                        )}
+                      </div>
 
-                          {specialityDropdownOpen && (
-                            <div className="absolute z-50 left-0 mt-1.5 w-[220px] rounded-[16px] border border-slate-200 bg-white shadow-xl overflow-hidden max-h-[220px] overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
-                              <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
-                                Medical Speciality
-                              </div>
-                              {HCP_SPECIALITIES.map((spec) => {
-                                const isSel = selectedSpecialities.includes(spec);
-                                return (
-                                  <button
-                                    key={spec}
-                                    type="button"
-                                    onMouseDown={(e) => { e.preventDefault(); toggleSpeciality(spec); }}
-                                    className={cn(
-                                      "flex w-full items-center justify-between px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors cursor-pointer",
-                                      isSel
-                                        ? "bg-slate-100 text-slate-900 font-bold"
-                                        : "hover:bg-slate-50 text-slate-700"
-                                    )}
-                                  >
-                                    <span>{spec}</span>
-                                    <div className={cn("size-4 rounded border flex items-center justify-center shrink-0", isSel ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white")}>
-                                      {isSel && <Check className="size-2.5 stroke-[3]" />}
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
+                      {/* Direct Clickable Speciality Chips */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {HCP_SPECIALITIES.map((spec) => {
+                          const isSel = selectedSpecialities.includes(spec);
+                          return (
+                            <button
+                              key={spec}
+                              type="button"
+                              onClick={() => toggleSpeciality(spec)}
+                              className={cn(
+                                "px-2.5 py-1 rounded-full text-[11.5px] font-semibold border transition-all cursor-pointer flex items-center gap-1",
+                                isSel
+                                  ? "bg-[var(--tint)] border-[var(--brand)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                                  : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                              )}
+                            >
+                              {isSel && <Check className="size-2.5 text-[var(--brand)] stroke-[3]" />}
+                              <span>{spec}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                        {/* Continue Button aligned right */}
-                        <div className="ml-auto shrink-0">
-                          <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7.5 text-[11.5px] font-bold px-3.5 cursor-pointer shadow-sm">
-                            <span>Continue</span>
-                            <ChevronRight className="size-3.5" />
-                          </Button>
-                        </div>
+                      {/* Continue to Shape */}
+                      <div className="flex justify-end pt-1">
+                        <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7.5 text-[11.5px] font-bold px-4 cursor-pointer shadow-sm">
+                          <span>Continue to Output Shape</span>
+                          <ChevronRight className="size-3.5" />
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -915,11 +864,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between border-t border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0 rounded-b-[24px]">
+        <div className="flex items-center justify-between border-t border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0">
           <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-[var(--ink-muted)]">
             <span className="font-bold text-[var(--ink)]">
               {sourceMode === "brand"
-                ? selectedBrand ? `${selectedBrand.name}` : "No brand"
+                ? selectedBrand ? `${selectedBrand.name}` : "No brand selected"
                 : selectedDiseaseIds.length > 0
                 ? `${selectedDiseaseIds.map((id) => DISEASE_OPTIONS.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`
                 : "General evidence"}
