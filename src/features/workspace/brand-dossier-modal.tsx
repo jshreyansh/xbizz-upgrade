@@ -24,6 +24,25 @@ import {
   ShoppingCart,
   UserCheck,
   Sparkles,
+  TrendingUp,
+  Activity,
+  Pill,
+  Scale,
+  Clock,
+  AlertCircle,
+  Heart,
+  CheckCircle2,
+  Target,
+  MessageSquareQuote,
+  BookOpen,
+  ShieldAlert,
+  Coins,
+  BarChart3,
+  BookOpenCheck,
+  Package,
+  Box,
+  CreditCard,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -142,78 +161,78 @@ const HCP_SPECIALITIES = [
 
 // ── Audience Options ──
 const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: string; icon: any }> = [
-  { id: "HCP", title: "HCP", subtitle: "Doctors, Specialists, KOLs", icon: Stethoscope },
-  { id: "Patient", title: "Patients", subtitle: "Disease clarity & adherence", icon: HeartHandshake },
-  { id: "Field team", title: "Field Force", subtitle: "Detailing aids & rep decks", icon: Briefcase },
-  { id: "Hospital", title: "Hospital Procurement", subtitle: "Formulary & budget impact", icon: Building2 },
-  { id: "Distributor", title: "Distributors", subtitle: "Trade & market access", icon: Truck },
-  { id: "Consumer", title: "Consumers", subtitle: "Public & symptom awareness", icon: ShoppingCart },
+  { id: "HCP", title: "HCP", subtitle: "Doctors & Specialists", icon: Stethoscope },
+  { id: "Patient", title: "Patients", subtitle: "Clarity & Adherence", icon: HeartHandshake },
+  { id: "Field team", title: "Field Force", subtitle: "Detailing & Sales Decks", icon: Briefcase },
+  { id: "Hospital", title: "Hospital Procurement", subtitle: "Formulary & Value", icon: Building2 },
+  { id: "Distributor", title: "Distributors", subtitle: "Trade & Logistics", icon: Truck },
+  { id: "Consumer", title: "Consumers", subtitle: "Public Awareness", icon: ShoppingCart },
 ];
 
-// ── Audience-aware Clinical Topics ──
-const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; detail: string }>> = {
+// ── Audience-aware Clinical Topics with Semantic Icons ──
+const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; detail: string; icon: any }>> = {
   HCP: [
-    { id: "moa", label: "Mechanism of Action", detail: "Receptor binding, phosphorylation blockade, cellular cascade" },
-    { id: "efficacy", label: "Efficacy & Clinical Readout", detail: "Primary endpoints, PASI 90 / MACE reduction, responder rates" },
-    { id: "safety", label: "Safety & Tolerability", detail: "Adverse events, hepatic/renal cut-offs, black-box warnings" },
-    { id: "dosing", label: "Dosing & Administration", detail: "Once-daily oral regimen, titration schedule, missed dose guidance" },
-    { id: "patient-profile", label: "Patient Profile", detail: "Indication, contraindications, comorbidities, eGFR thresholds" },
-    { id: "head-to-head", label: "Comparative Head-to-Head", detail: "Non-inferiority and superiority metrics vs Standard of Care" },
+    { id: "moa", label: "Mechanism of Action", detail: "Receptor binding, phosphorylation blockade, cellular cascade", icon: Activity },
+    { id: "efficacy", label: "Efficacy & Clinical Readout", detail: "Primary endpoints, PASI 90 / MACE reduction, responder rates", icon: TrendingUp },
+    { id: "safety", label: "Safety & Tolerability", detail: "Adverse events, hepatic/renal cut-offs, black-box warnings", icon: ShieldCheck },
+    { id: "dosing", label: "Dosing & Administration", detail: "Once-daily oral regimen, titration schedule, missed dose guidance", icon: Pill },
+    { id: "patient-profile", label: "Patient Profile", detail: "Indication, contraindications, comorbidities, eGFR thresholds", icon: UserCheck },
+    { id: "head-to-head", label: "Comparative Head-to-Head", detail: "Non-inferiority and superiority metrics vs Standard of Care", icon: Scale },
   ],
   Patient: [
-    { id: "how-it-works", label: "How it Works", detail: "Simple explanation of mechanism in plain language" },
-    { id: "what-to-expect", label: "What to Expect", detail: "Onset of action, how quickly you may see results" },
-    { id: "side-effects", label: "Side Effects & Safety", detail: "Common side effects, when to contact your doctor" },
-    { id: "how-to-take", label: "How to Take It", detail: "Dosing schedule, missed dose instructions, storage" },
-    { id: "living-with", label: "Living with the Condition", detail: "Lifestyle tips, diet, support resources" },
-    { id: "real-outcomes", label: "Real Patient Outcomes", detail: "PRO scores, quality of life improvements, adherence data" },
+    { id: "how-it-works", label: "How it Works", detail: "Simple explanation of mechanism in plain language", icon: Sparkles },
+    { id: "what-to-expect", label: "What to Expect", detail: "Onset of action, how quickly you may see results", icon: Clock },
+    { id: "side-effects", label: "Side Effects & Safety", detail: "Common side effects, when to contact your doctor", icon: AlertCircle },
+    { id: "how-to-take", label: "How to Take It", detail: "Dosing schedule, missed dose instructions, storage", icon: Pill },
+    { id: "living-with", label: "Living with the Condition", detail: "Lifestyle tips, diet, support resources", icon: Heart },
+    { id: "real-outcomes", label: "Real Patient Outcomes", detail: "PRO scores, quality of life improvements, adherence data", icon: CheckCircle2 },
   ],
   "Field team": [
-    { id: "key-messages", label: "Key Selling Messages", detail: "Core brand claims, approved differentiation points" },
-    { id: "objection-handling", label: "Objection Handling", detail: "Common HCP objections and evidence-based responses" },
-    { id: "clinical-evidence", label: "Clinical Evidence Summary", detail: "Pivotal trial highlights condensed for field use" },
-    { id: "dosing-guide", label: "Dosing Guide", detail: "Quick-reference dosing, titration, administration reminders" },
-    { id: "competitive", label: "Competitive Positioning", detail: "Head-to-head data, market positioning vs competitors" },
-    { id: "fair-balance", label: "Fair Balance & ISI", detail: "Required safety statements and black-box warnings" },
+    { id: "key-messages", label: "Key Selling Messages", detail: "Core brand claims, approved differentiation points", icon: Target },
+    { id: "objection-handling", label: "Objection Handling", detail: "Common HCP objections and evidence-based responses", icon: MessageSquareQuote },
+    { id: "clinical-evidence", label: "Clinical Evidence Summary", detail: "Pivotal trial highlights condensed for field use", icon: BookOpen },
+    { id: "dosing-guide", label: "Dosing Guide", detail: "Quick-reference dosing, titration, administration reminders", icon: Pill },
+    { id: "competitive", label: "Competitive Positioning", detail: "Head-to-head data, market positioning vs competitors", icon: TrendingUp },
+    { id: "fair-balance", label: "Fair Balance & ISI", detail: "Required safety statements and black-box warnings", icon: ShieldAlert },
   ],
   Hospital: [
-    { id: "budget-impact", label: "Budget Impact", detail: "Cost-per-patient analysis, hospital formulary cost model" },
-    { id: "heor", label: "HEOR & QALY", detail: "Health economic outcomes, quality-adjusted life year data" },
-    { id: "formulary", label: "Formulary Positioning", detail: "Formulary placement rationale, tier status, step edits" },
-    { id: "cost-effectiveness", label: "Cost-Effectiveness", detail: "ICERs, NNT, comparative cost vs standard of care" },
-    { id: "contracting", label: "Contracting & GPO", detail: "GPO contracts, rebate structure, pull-through support" },
-    { id: "hta", label: "HTA Submissions", detail: "NICE, HAS, G-BA dossier highlights for procurement teams" },
+    { id: "budget-impact", label: "Budget Impact", detail: "Cost-per-patient analysis, hospital formulary cost model", icon: Coins },
+    { id: "heor", label: "HEOR & QALY", detail: "Health economic outcomes, quality-adjusted life year data", icon: BarChart3 },
+    { id: "formulary", label: "Formulary Positioning", detail: "Formulary placement rationale, tier status, step edits", icon: Building2 },
+    { id: "cost-effectiveness", label: "Cost-Effectiveness", detail: "ICERs, NNT, comparative cost vs standard of care", icon: Scale },
+    { id: "contracting", label: "Contracting & GPO", detail: "GPO contracts, rebate structure, pull-through support", icon: FileText },
+    { id: "hta", label: "HTA Submissions", detail: "NICE, HAS, G-BA dossier highlights for procurement teams", icon: BookOpenCheck },
   ],
   Distributor: [
-    { id: "product-overview", label: "Product Overview", detail: "Indication, mechanism summary, approved markets" },
-    { id: "market-opportunity", label: "Market Opportunity", detail: "Patient population size, market growth forecasts" },
-    { id: "supply-logistics", label: "Supply & Logistics", detail: "Cold-chain requirements, shelf life, supply timelines" },
-    { id: "sku-packaging", label: "SKU & Packaging", detail: "Available pack sizes, barcode, unit-of-use details" },
-    { id: "reimbursement", label: "Reimbursement Landscape", detail: "Payer coverage, co-pay programs, access support" },
-    { id: "distribution-terms", label: "Distribution Terms", detail: "Trade terms, margin, exclusivity, territory rights" },
+    { id: "product-overview", label: "Product Overview", detail: "Indication, mechanism summary, approved markets", icon: Package },
+    { id: "market-opportunity", label: "Market Opportunity", detail: "Patient population size, market growth forecasts", icon: TrendingUp },
+    { id: "supply-logistics", label: "Supply & Logistics", detail: "Cold-chain requirements, shelf life, supply timelines", icon: Truck },
+    { id: "sku-packaging", label: "SKU & Packaging", detail: "Available pack sizes, barcode, unit-of-use details", icon: Box },
+    { id: "reimbursement", label: "Reimbursement Landscape", detail: "Payer coverage, co-pay programs, access support", icon: CreditCard },
+    { id: "distribution-terms", label: "Distribution Terms", detail: "Trade terms, margin, exclusivity, territory rights", icon: FileSpreadsheet },
   ],
   Consumer: [
-    { id: "what-it-does", label: "What it Does", detail: "Plain-language description of the medicine's purpose" },
-    { id: "who-its-for", label: "Who it's For", detail: "Who is prescribed this medicine and why" },
-    { id: "how-to-take-consumer", label: "How to Take It", detail: "Simple dosing instructions and reminders" },
-    { id: "side-effects-consumer", label: "Possible Side Effects", detail: "Most common side effects in everyday language" },
-    { id: "talk-to-doctor", label: "Talking to Your Doctor", detail: "Questions to ask your healthcare provider" },
-    { id: "lifestyle", label: "Lifestyle Tips", detail: "Diet, exercise, and habit advice alongside treatment" },
+    { id: "what-it-does", label: "What it Does", detail: "Plain-language description of the medicine's purpose", icon: Sparkles },
+    { id: "who-its-for", label: "Who it's For", detail: "Who is prescribed this medicine and why", icon: Users },
+    { id: "how-to-take-consumer", label: "How to Take It", detail: "Simple dosing instructions and reminders", icon: Pill },
+    { id: "side-effects-consumer", label: "Possible Side Effects", detail: "Most common side effects in everyday language", icon: AlertCircle },
+    { id: "talk-to-doctor", label: "Talking to Your Doctor", detail: "Questions to ask your healthcare provider", icon: Stethoscope },
+    { id: "lifestyle", label: "Lifestyle Tips", detail: "Diet, exercise, and habit advice alongside treatment", icon: Heart },
   ],
 };
 
 const VIDEO_SIZE_OPTIONS = [
-  { id: "16:9", ratio: "16:9", label: "Landscape Master", desc: "1920×1080 · Desktop & Congress", icon: Monitor },
-  { id: "9:16", ratio: "9:16", label: "Vertical Reel", desc: "1080×1920 · Mobile & WhatsApp", icon: Smartphone },
-  { id: "1:1", ratio: "1:1", label: "Square Feed", desc: "1080×1080 · iPad & Multi-Panel", icon: Square },
-  { id: "4:5", ratio: "4:5", label: "Portrait Social", desc: "1080×1350 · Medical Networks", icon: Layers },
+  { id: "16:9", ratio: "16:9", label: "Landscape", desc: "1920×1080 · Desktop & Congress", previewRatio: "aspect-[16/9]" },
+  { id: "9:16", ratio: "9:16", label: "Vertical", desc: "1080×1920 · Mobile & WhatsApp", previewRatio: "aspect-[9/16]" },
+  { id: "1:1", ratio: "1:1", label: "Square", desc: "1080×1080 · iPad & Feed", previewRatio: "aspect-square" },
+  { id: "4:5", ratio: "4:5", label: "Portrait", desc: "1080×1350 · Social & Detailing", previewRatio: "aspect-[4/5]" },
 ];
 
 const INFOGRAPHIC_SIZE_OPTIONS = [
-  { id: "3:4", ratio: "3:4", label: "Tablet Detailer", desc: "1536×2048 · iPad Detailing & Leave-Behind", icon: Smartphone },
-  { id: "16:9", ratio: "16:9", label: "Landscape Slide", desc: "1920×1080 · Slide Decks & Congress Panels", icon: Monitor },
-  { id: "A4", ratio: "A4", label: "Print Document", desc: "2480×3508 · Print-Ready Journal Leave-Behind", icon: FileSpreadsheet },
-  { id: "9:16", ratio: "9:16", label: "Mobile Digest", desc: "1080×1920 · Digital Leave-Behind for Mobile", icon: Smartphone },
+  { id: "3:4", ratio: "3:4", label: "Tablet Detailer", desc: "1536×2048 · iPad & Leave-Behind", previewRatio: "aspect-[3/4]" },
+  { id: "16:9", ratio: "16:9", label: "Landscape Slide", desc: "1920×1080 · Decks & Congress Panels", previewRatio: "aspect-[16/9]" },
+  { id: "A4", ratio: "A4", label: "Print Document", desc: "2480×3508 · Print-Ready Journal", previewRatio: "aspect-[1/1.414]" },
+  { id: "9:16", ratio: "9:16", label: "Mobile Digest", desc: "1080×1920 · Digital Leave-Behind", previewRatio: "aspect-[9/16]" },
 ];
 
 interface BrandDossierModalProps {
@@ -233,9 +252,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const setPageShapeStore = useWorkspaceStore((s) => s.setPageShape);
   const setTopicsStore = useWorkspaceStore((s) => s.setTopics);
 
-  // 1. Focus: Brand (Single-select) vs Therapy Area (Multi-select)
+  // 1. Focus: Brand vs Therapy Area
   const [sourceMode, setSourceMode] = useState<"brand" | "disease">("brand");
-  const [brandSearch, setBrandSearch] = useState("");
+  const [brandSearch, setBrandSearch] = useState("Velmora");
   const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
   const [diseaseSearch, setDiseaseSearch] = useState("");
   const [diseaseDropdownOpen, setDiseaseDropdownOpen] = useState(false);
@@ -346,24 +365,24 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/65 backdrop-blur-md p-3 sm:p-6 lg:p-8 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/65 backdrop-blur-md p-3 sm:p-5 lg:p-7 animate-in fade-in duration-200"
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       role="dialog" aria-modal="true"
     >
-      <div className="relative flex h-[94vh] max-h-[960px] w-full max-w-[1280px] flex-col rounded-[28px] border border-black/10 bg-[#fafbfa] shadow-2xl overflow-hidden text-left">
+      <div className="relative flex h-[92vh] max-h-[900px] w-full max-w-[1240px] flex-col rounded-[26px] border border-black/10 bg-[#fafbfa] shadow-2xl overflow-hidden text-left">
 
-        {/* ── Modal Header (Clean Single-Step) ── */}
-        <div className="flex items-center justify-between border-b border-[var(--line)] bg-white px-8 py-4 shrink-0">
+        {/* ── Modal Header ── */}
+        <div className="flex items-center justify-between border-b border-[var(--line)] bg-white px-7 py-3.5 shrink-0">
           <div className="flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
               <Sparkles className="size-4.5 text-[var(--brand)]" />
             </div>
             <div>
-              <h2 className="text-[17px] font-[850] text-[var(--ink)] tracking-tight">
+              <h2 className="text-[16.5px] font-[850] text-[var(--ink)] tracking-tight">
                 Start New {assetType === "infographic" ? "Creative / Infographic" : "Video"} Project
               </h2>
-              <p className="text-[12px] text-[var(--ink-muted)]">
-                Configure clinical focus, target audience, format ratio, and focus topics in one step.
+              <p className="text-[11.5px] text-[var(--ink-muted)]">
+                Set clinical source, output ratio, target audience, and focus topics in one step.
               </p>
             </div>
           </div>
@@ -371,423 +390,405 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           <button
             type="button"
             onClick={onClose}
-            className="grid size-9 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors cursor-pointer"
+            className="grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors cursor-pointer"
             aria-label="Close"
           >
-            <X className="size-5" />
+            <X className="size-4.5" />
           </button>
         </div>
 
-        {/* ── Scrollable Body with Unified Sections ── */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+        {/* ── 2-Column Studio Configuration Body ── */}
+        <div className="flex-1 overflow-y-auto p-6 sm:p-7">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-          {/* ═══════ 1. Choose Focus (Brand or Therapy Area) ═══════ */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">1</span>
-                <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">Choose Focus</h3>
-                <span className="text-[11.5px] text-[var(--ink-muted)]">(Select brand or therapy areas)</span>
-              </div>
+            {/* ══════════════ LEFT COLUMN: Source & Format (5 Cols) ══════════════ */}
+            <div className="lg:col-span-5 space-y-6">
 
-              {/* Mode toggle */}
-              <div className="inline-flex rounded-[12px] border border-black/10 bg-white p-1 gap-1 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
-                  className={cn("flex items-center gap-1.5 rounded-[9px] px-3.5 py-1.5 text-[12px] font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-[var(--brand)] text-white shadow-xs" : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5")}
-                >
-                  <ShieldCheck className="size-3.5" /> Brand
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setSourceMode("disease"); setSelectedBrandId(""); setBrandSearch(""); }}
-                  className={cn("flex items-center gap-1.5 rounded-[9px] px-3.5 py-1.5 text-[12px] font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-[var(--brand)] text-white shadow-xs" : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5")}
-                >
-                  <FlaskConical className="size-3.5" /> Disease / Therapy Area
-                </button>
-              </div>
-            </div>
-
-            {/* Brand path (Single Select) */}
-            {sourceMode === "brand" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setBrandDropdownOpen(false); }}>
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-[13px] size-4 text-[var(--ink-muted)]" />
-                    <input
-                      type="text"
-                      value={brandSearch}
-                      onChange={(e) => { setBrandSearch(e.target.value); setBrandDropdownOpen(true); if (!e.target.value) setSelectedBrandId(""); }}
-                      onFocus={() => setBrandDropdownOpen(true)}
-                      placeholder="Search brand name, molecule, or therapy area..."
-                      className="w-full rounded-[14px] border border-black/12 bg-white pl-10 pr-4 py-2.5 text-[13.5px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
-                    />
-                    {selectedBrandId && (
-                      <span className="absolute right-3.5 top-[11px] flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                        <Check className="size-3 stroke-[3]" /> Selected
-                      </span>
-                    )}
+              {/* 1. Clinical Source & Focus */}
+              <div className="rounded-[20px] bg-white border border-[#e2e8e3] p-5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="size-4 text-[var(--brand)]" />
+                    <h3 className="text-[13.5px] font-[850] text-[var(--ink)]">Clinical Source</h3>
                   </div>
-                  {brandDropdownOpen && filteredBrands.length > 0 && (
-                    <div className="absolute z-50 left-0 right-0 mt-1.5 rounded-[18px] border border-black/10 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.14)] overflow-hidden max-h-[260px] overflow-y-auto">
-                      {filteredBrands.map((brand) => {
-                        const isSel = brand.id === selectedBrandId;
-                        return (
-                          <button
-                            key={brand.id}
-                            type="button"
-                            onMouseDown={(e) => { e.preventDefault(); handleSelectBrand(brand); }}
-                            className={cn("flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "hover:bg-black/[0.03] text-[var(--ink)]")}
-                          >
-                            <div className={cn("grid size-7 place-items-center rounded-lg text-[10.5px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)]")}>
-                              {brand.name.slice(0, 2).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[12.5px] font-[850]">{brand.name}</div>
-                              <div className="text-[10.5px] text-[var(--ink-muted)] italic">{brand.genericName} · {brand.therapyAreas[0]}</div>
-                            </div>
-                            <div className="shrink-0 flex items-center gap-2">
-                              {brand.hasDossier ? (
-                                <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 text-[9.5px] font-bold">
-                                  Approved SmPC
-                                </span>
-                              ) : (
-                                <span className="text-[9.5px] text-[var(--ink-muted)] italic">No dossier</span>
-                              )}
-                              {isSel && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
 
-                {/* Selected Brand Confirmation Card */}
-                {selectedBrand ? (
-                  <div className="rounded-[16px] border border-emerald-300 bg-emerald-50/50 p-3.5 flex items-center justify-between gap-3 shadow-2xs animate-in fade-in">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="grid size-9 place-items-center rounded-xl bg-emerald-700 text-white shrink-0 text-[12px] font-black">
-                        {selectedBrand.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[13.5px] font-[850] text-[var(--ink)] truncate">{selectedBrand.name}</div>
-                        <div className="text-[11.5px] text-[var(--ink-muted)] italic truncate">
-                          {selectedBrand.genericName} · {selectedBrand.therapyAreas.join(", ")}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[10.5px] font-bold text-emerald-800 bg-white border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
-                      ✓ Ready for Grounding
-                    </span>
-                  </div>
-                ) : (
-                  <div className="rounded-[16px] border border-dashed border-black/15 bg-white p-3.5 text-center text-[12px] text-[var(--ink-muted)]">
-                    Select a brand to ground scenes and claims.
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Disease path (Multi Select) */}
-            {sourceMode === "disease" && (
-              <div className="space-y-3">
-                <div className="relative max-w-[560px]" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDiseaseDropdownOpen(false); }}>
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-[13px] size-4 text-[var(--ink-muted)]" />
-                    <input
-                      type="text"
-                      value={diseaseSearch}
-                      onChange={(e) => { setDiseaseSearch(e.target.value); setDiseaseDropdownOpen(true); }}
-                      onFocus={() => setDiseaseDropdownOpen(true)}
-                      placeholder="Search and select therapy areas (multi-select)..."
-                      className="w-full rounded-[14px] border border-black/12 bg-white pl-10 pr-4 py-2.5 text-[13.5px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
-                    />
-                    {selectedDiseaseIds.length > 0 && (
-                      <span className="absolute right-3.5 top-[11px] flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                        {selectedDiseaseIds.length} Selected
-                      </span>
-                    )}
-                  </div>
-                  {diseaseDropdownOpen && filteredDiseases.length > 0 && (
-                    <div className="absolute z-50 left-0 right-0 mt-1.5 rounded-[18px] border border-black/10 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.14)] overflow-hidden max-h-[260px] overflow-y-auto">
-                      {filteredDiseases.map((disease) => {
-                        const isSel = selectedDiseaseIds.includes(disease.id);
-                        return (
-                          <button
-                            key={disease.id}
-                            type="button"
-                            onMouseDown={(e) => { e.preventDefault(); toggleDisease(disease.id); }}
-                            className={cn("flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "hover:bg-black/[0.03] text-[var(--ink)]")}
-                          >
-                            <div className={cn("grid size-7 place-items-center rounded-lg text-[10.5px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)]")}>
-                              {disease.label.slice(0, 2).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-[12.5px] font-[850]">{disease.label}</div>
-                              <div className="text-[10.5px] text-[var(--ink-muted)]">{disease.desc}</div>
-                            </div>
-                            <div className={cn("size-4 rounded-md border flex items-center justify-center shrink-0 transition-colors", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white")}>
-                              {isSel && <Check className="size-2.5 stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Selected Therapy Area Chips */}
-                {selectedDiseaseIds.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {selectedDiseaseIds.map((id) => {
-                      const disease = DISEASE_OPTIONS.find((d) => d.id === id);
-                      if (!disease) return null;
-                      return (
-                        <span
-                          key={id}
-                          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-3 py-1 text-[12px] font-bold text-[var(--brand-deep)] shadow-2xs animate-in fade-in"
-                        >
-                          <FlaskConical className="size-3.5 text-[var(--brand)]" />
-                          <span>{disease.label}</span>
-                          <button
-                            type="button"
-                            onClick={() => toggleDisease(id)}
-                            className="hover:text-red-600 transition-colors cursor-pointer"
-                            aria-label="Remove"
-                          >
-                            <X className="size-3" />
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-[12px] text-[var(--ink-muted)] italic">
-                    No therapy areas selected yet. Content will be grounded in general clinical evidence.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* ═══════ 2. Target Audience ═══════ */}
-          <div className="space-y-3 pt-6 border-t border-[var(--line)]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">2</span>
-                <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">Target Audience</h3>
-                <span className="text-[11.5px] text-[var(--ink-muted)]">(Tone and narrative focus)</span>
-              </div>
-              <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)]">
-                Active: {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {AUDIENCE_OPTIONS.map((item) => {
-                const isSel = audience === item.id;
-                const IconComp = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setAudience(item.id)}
-                    className={cn(
-                      "group relative flex flex-col justify-between p-3.5 rounded-[18px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[96px]",
-                      isSel
-                        ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                        : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20"
-                    )}
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <div className={cn("grid size-7 place-items-center rounded-lg transition-colors", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-[var(--tint)] text-[var(--brand-deep)] group-hover:bg-[var(--brand)] group-hover:text-white")}>
-                          <IconComp className="size-3.5" />
-                        </div>
-                        {isSel && (
-                          <span className="flex size-4.5 items-center justify-center rounded-full bg-[var(--brand)] text-white">
-                            <Check className="size-2.5 stroke-[3]" />
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <div className="text-[12.5px] font-[850] text-[var(--ink)]">{item.title}</div>
-                        <div className="text-[10px] text-[var(--ink-muted)] mt-0.5 leading-snug line-clamp-1">{item.subtitle}</div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* HCP Speciality */}
-            {audience === "HCP" && (
-              <div className="pt-2 space-y-2 pl-1">
-                <div className="flex items-center gap-2">
-                  <UserCheck className="size-3.5 text-[var(--brand)]" />
-                  <span className="text-[12px] font-bold text-[var(--ink-2)]">Doctor Speciality</span>
-                  <span className="text-[11px] text-[var(--ink-muted)]">(optional · multi-select)</span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  {selectedSpecialities.map((spec) => (
-                    <span key={spec} className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-2.5 py-1 text-[11.5px] font-bold text-[var(--brand-deep)]">
-                      {spec}
-                      <button type="button" onClick={() => toggleSpeciality(spec)} className="hover:text-[var(--brand)] cursor-pointer"><X className="size-3" /></button>
-                    </span>
-                  ))}
-
-                  <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setSpecialityDropdownOpen(false); }}>
+                  {/* Mode toggle */}
+                  <div className="inline-flex rounded-[10px] border border-black/10 bg-[#f4f6f4] p-0.5 gap-0.5 shadow-2xs">
                     <button
                       type="button"
-                      onClick={() => setSpecialityDropdownOpen(!specialityDropdownOpen)}
-                      className="flex items-center gap-1.5 rounded-[10px] border border-black/12 bg-white px-3 py-1.5 text-[11.5px] text-[var(--ink-2)] font-semibold hover:border-[var(--brand)] transition-colors cursor-pointer shadow-2xs"
+                      onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
+                      className={cn(
+                        "flex items-center gap-1 rounded-[8px] px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer",
+                        sourceMode === "brand" ? "bg-[var(--brand)] text-white shadow-xs" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                      )}
                     >
-                      <span>{selectedSpecialities.length > 0 ? "+ Add speciality" : "Select speciality..."}</span>
-                      <ChevronDown className={cn("size-3.5 transition-transform", specialityDropdownOpen && "rotate-180")} />
+                      Brand
                     </button>
-                    {specialityDropdownOpen && (
-                      <div className="absolute z-50 left-0 mt-1.5 w-[240px] rounded-[16px] border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)] overflow-hidden max-h-[220px] overflow-y-auto">
-                        {HCP_SPECIALITIES.map((spec) => {
-                          const isSel = selectedSpecialities.includes(spec);
+                    <button
+                      type="button"
+                      onClick={() => { setSourceMode("disease"); setSelectedBrandId(""); setBrandSearch(""); }}
+                      className={cn(
+                        "flex items-center gap-1 rounded-[8px] px-2.5 py-1 text-[11px] font-bold transition-all cursor-pointer",
+                        sourceMode === "disease" ? "bg-[var(--brand)] text-white shadow-xs" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                      )}
+                    >
+                      Therapy Area
+                    </button>
+                  </div>
+                </div>
+
+                {/* Brand Selector (Single-Select) */}
+                {sourceMode === "brand" && (
+                  <div className="space-y-2.5">
+                    <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setBrandDropdownOpen(false); }}>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-[11px] size-3.5 text-[var(--ink-muted)]" />
+                        <input
+                          type="text"
+                          value={brandSearch}
+                          onChange={(e) => { setBrandSearch(e.target.value); setBrandDropdownOpen(true); if (!e.target.value) setSelectedBrandId(""); }}
+                          onFocus={() => setBrandDropdownOpen(true)}
+                          placeholder="Search brand, molecule..."
+                          className="w-full rounded-[12px] border border-black/12 bg-[#fbfcfa] pl-9 pr-3 py-2 text-[12.5px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        />
+                      </div>
+                      {brandDropdownOpen && filteredBrands.length > 0 && (
+                        <div className="absolute z-50 left-0 right-0 mt-1 rounded-[16px] border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)] overflow-hidden max-h-[220px] overflow-y-auto">
+                          {filteredBrands.map((brand) => {
+                            const isSel = brand.id === selectedBrandId;
+                            return (
+                              <button
+                                key={brand.id}
+                                type="button"
+                                onMouseDown={(e) => { e.preventDefault(); handleSelectBrand(brand); }}
+                                className={cn("flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "hover:bg-black/[0.03] text-[var(--ink)]")}
+                              >
+                                <div className={cn("grid size-6 place-items-center rounded text-[9.5px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)]")}>
+                                  {brand.name.slice(0, 2).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[12px] font-[850]">{brand.name}</div>
+                                  <div className="text-[10px] text-[var(--ink-muted)] italic truncate">{brand.genericName} · {brand.therapyAreas[0]}</div>
+                                </div>
+                                {isSel && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selected Brand Pill */}
+                    {selectedBrand ? (
+                      <div className="rounded-[12px] border border-emerald-300 bg-emerald-50/60 p-2.5 flex items-center justify-between gap-2 shadow-2xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="grid size-7 place-items-center rounded-lg bg-emerald-700 text-white shrink-0 text-[10px] font-black">
+                            {selectedBrand.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-[12.5px] font-[850] text-[var(--ink)] truncate">{selectedBrand.name}</div>
+                            <div className="text-[10.5px] text-[var(--ink-muted)] italic truncate">
+                              {selectedBrand.genericName} · {selectedBrand.therapyAreas.join(", ")}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-[9.5px] font-bold text-emerald-800 bg-white border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                          SmPC Ready
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="rounded-[12px] border border-dashed border-black/15 bg-[#fafbfa] p-2.5 text-center text-[11px] text-[var(--ink-muted)]">
+                        Select a brand from the dropdown.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Disease Selector (Multi-Select) */}
+                {sourceMode === "disease" && (
+                  <div className="space-y-2.5">
+                    <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDiseaseDropdownOpen(false); }}>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-[11px] size-3.5 text-[var(--ink-muted)]" />
+                        <input
+                          type="text"
+                          value={diseaseSearch}
+                          onChange={(e) => { setDiseaseSearch(e.target.value); setDiseaseDropdownOpen(true); }}
+                          onFocus={() => setDiseaseDropdownOpen(true)}
+                          placeholder="Search therapy areas (multi-select)..."
+                          className="w-full rounded-[12px] border border-black/12 bg-[#fbfcfa] pl-9 pr-3 py-2 text-[12.5px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        />
+                      </div>
+                      {diseaseDropdownOpen && filteredDiseases.length > 0 && (
+                        <div className="absolute z-50 left-0 right-0 mt-1 rounded-[16px] border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)] overflow-hidden max-h-[220px] overflow-y-auto">
+                          {filteredDiseases.map((disease) => {
+                            const isSel = selectedDiseaseIds.includes(disease.id);
+                            return (
+                              <button
+                                key={disease.id}
+                                type="button"
+                                onMouseDown={(e) => { e.preventDefault(); toggleDisease(disease.id); }}
+                                className={cn("flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "hover:bg-black/[0.03] text-[var(--ink)]")}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[12px] font-[850]">{disease.label}</div>
+                                  <div className="text-[10px] text-[var(--ink-muted)] truncate">{disease.desc}</div>
+                                </div>
+                                <div className={cn("size-3.5 rounded border flex items-center justify-center shrink-0 transition-colors", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white")}>
+                                  {isSel && <Check className="size-2 stroke-[3]" />}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedDiseaseIds.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5 max-h-[75px] overflow-y-auto">
+                        {selectedDiseaseIds.map((id) => {
+                          const disease = DISEASE_OPTIONS.find((d) => d.id === id);
+                          if (!disease) return null;
                           return (
-                            <button
-                              key={spec}
-                              type="button"
-                              onMouseDown={(e) => { e.preventDefault(); toggleSpeciality(spec); }}
-                              className={cn("flex w-full items-center justify-between px-3.5 py-2 text-[12px] font-medium text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/[0.03] text-[var(--ink)]")}
+                            <span
+                              key={id}
+                              className="inline-flex items-center gap-1 rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--brand-deep)] shadow-2xs"
                             >
-                              <span>{spec}</span>
-                              {isSel && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
-                            </button>
+                              <span>{disease.label}</span>
+                              <button type="button" onClick={() => toggleDisease(id)} className="hover:text-red-600 cursor-pointer"><X className="size-2.5" /></button>
+                            </span>
                           );
                         })}
                       </div>
+                    ) : (
+                      <p className="text-[11px] text-[var(--ink-muted)] italic">
+                        Select one or more therapy areas.
+                      </p>
                     )}
                   </div>
+                )}
+              </div>
+
+              {/* 2. Canvas Size & Aspect Ratio */}
+              <div className="rounded-[20px] bg-white border border-[#e2e8e3] p-5 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Monitor className="size-4 text-[var(--brand)]" />
+                    <h3 className="text-[13.5px] font-[850] text-[var(--ink)]">Output Size &amp; Ratio</h3>
+                  </div>
+                  <span className="text-[10.5px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    {selectedSize}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  {sizeOptions.map((opt) => {
+                    const isSel = selectedSize === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setSelectedSize(opt.id)}
+                        className={cn(
+                          "group relative flex items-center gap-3 p-3 rounded-[14px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
+                          isSel
+                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
+                            : "border-black/[0.08] bg-[#fafbfa] hover:bg-white hover:border-black/20"
+                        )}
+                      >
+                        {/* Visual aspect ratio wireframe preview */}
+                        <div className="size-8 rounded-lg bg-black/[0.04] grid place-items-center shrink-0 border border-black/5 group-hover:bg-[var(--tint)] transition-colors">
+                          <div className={cn("rounded-[3px] border border-black/40 bg-white transition-all", opt.previewRatio, isSel && "border-[var(--brand)] bg-[var(--brand)]/10")} style={{ width: "18px" }} />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] font-[850] text-[var(--ink)]">{opt.label}</span>
+                            <span className="text-[10px] font-mono font-bold text-[var(--ink-muted)]">{opt.ratio}</span>
+                          </div>
+                          <div className="text-[10px] text-[var(--ink-muted)] truncate leading-snug">{opt.desc}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* ═══════ 3. Output Size & Format Ratio ═══════ */}
-          <div className="space-y-3 pt-6 border-t border-[var(--line)]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">3</span>
-                <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">Output Size &amp; Format Ratio</h3>
-                <span className="text-[11.5px] text-[var(--ink-muted)]">(Choose aspect ratio)</span>
-              </div>
-              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Active: {sizeOptions.find((s) => s.id === selectedSize)?.label} ({selectedSize})
-              </span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {sizeOptions.map((opt) => {
-                const isSel = selectedSize === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setSelectedSize(opt.id)}
-                    className={cn(
-                      "group relative flex flex-col justify-between p-3.5 rounded-[18px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[85px]",
-                      isSel
-                        ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                        : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20"
-                    )}
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className={cn("grid size-7 place-items-center rounded-lg font-mono text-[10.5px] font-extrabold transition-colors", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-black/5 text-[var(--ink)] group-hover:bg-[var(--tint)] group-hover:text-[var(--brand-deep)]")}>
-                            {opt.ratio}
-                          </div>
-                          <span className="text-[12.5px] font-[850] text-[var(--ink)]">{opt.label}</span>
+
+            {/* ══════════════ RIGHT COLUMN: Audience & Topics (7 Cols) ══════════════ */}
+            <div className="lg:col-span-7 space-y-6">
+
+              {/* 3. Target Audience & Speciality */}
+              <div className="rounded-[20px] bg-white border border-[#e2e8e3] p-5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="size-4 text-[var(--brand)]" />
+                    <h3 className="text-[13.5px] font-[850] text-[var(--ink)]">Target Audience</h3>
+                  </div>
+                  <span className="text-[10.5px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+                    {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {AUDIENCE_OPTIONS.map((item) => {
+                    const isSel = audience === item.id;
+                    const IconComp = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setAudience(item.id)}
+                        className={cn(
+                          "group relative flex items-center gap-2.5 p-2.5 rounded-[14px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
+                          isSel
+                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
+                            : "border-black/[0.08] bg-[#fafbfa] hover:bg-white hover:border-black/20"
+                        )}
+                      >
+                        <div className={cn("grid size-7 place-items-center rounded-lg transition-colors shrink-0", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-[var(--tint)] text-[var(--brand-deep)] group-hover:bg-[var(--brand)] group-hover:text-white")}>
+                          <IconComp className="size-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[12px] font-[850] text-[var(--ink)] truncate">{item.title}</div>
+                          <div className="text-[9.5px] text-[var(--ink-muted)] truncate">{item.subtitle}</div>
                         </div>
                         {isSel && (
-                          <span className="flex size-4.5 items-center justify-center rounded-full bg-[var(--brand)] text-white">
-                            <Check className="size-2.5 stroke-[3]" />
-                          </span>
+                          <div className="size-3.5 rounded-full bg-[var(--brand)] text-white grid place-items-center shrink-0">
+                            <Check className="size-2 stroke-[3]" />
+                          </div>
                         )}
-                      </div>
-                      <div className="text-[10.5px] text-[var(--ink-muted)] leading-snug">{opt.desc}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+                      </button>
+                    );
+                  })}
+                </div>
 
-          {/* ═══════ 4. Key Focus Topics ═══════ */}
-          <div className="space-y-3 pt-6 border-t border-[var(--line)]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">4</span>
-                <h3 className="text-[14.5px] font-[850] text-[var(--ink)]">Key Focus Topics</h3>
-                <span className="text-[11.5px] text-[var(--ink-muted)]">(Tailored for {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title})</span>
+                {/* Doctor Speciality (Inline when HCP is selected) */}
+                {audience === "HCP" && (
+                  <div className="pt-2 border-t border-black/6 flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--ink-2)] shrink-0">
+                      <UserCheck className="size-3 text-[var(--brand)]" />
+                      <span>Doctor Speciality:</span>
+                    </div>
+
+                    {selectedSpecialities.map((spec) => (
+                      <span key={spec} className="inline-flex items-center gap-1 rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--brand-deep)]">
+                        {spec}
+                        <button type="button" onClick={() => toggleSpeciality(spec)} className="hover:text-[var(--brand)] cursor-pointer"><X className="size-2.5" /></button>
+                      </span>
+                    ))}
+
+                    <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setSpecialityDropdownOpen(false); }}>
+                      <button
+                        type="button"
+                        onClick={() => setSpecialityDropdownOpen(!specialityDropdownOpen)}
+                        className="flex items-center gap-1 rounded-[8px] border border-black/12 bg-white px-2.5 py-1 text-[11px] text-[var(--ink-2)] font-semibold hover:border-[var(--brand)] transition-colors cursor-pointer shadow-2xs"
+                      >
+                        <span>{selectedSpecialities.length > 0 ? "+ Add speciality" : "Select speciality..."}</span>
+                        <ChevronDown className={cn("size-3 transition-transform", specialityDropdownOpen && "rotate-180")} />
+                      </button>
+                      {specialityDropdownOpen && (
+                        <div className="absolute z-50 left-0 mt-1 w-[200px] rounded-[14px] border border-black/10 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)] overflow-hidden max-h-[180px] overflow-y-auto">
+                          {HCP_SPECIALITIES.map((spec) => {
+                            const isSel = selectedSpecialities.includes(spec);
+                            return (
+                              <button
+                                key={spec}
+                                type="button"
+                                onMouseDown={(e) => { e.preventDefault(); toggleSpeciality(spec); }}
+                                className={cn("flex w-full items-center justify-between px-3 py-1.5 text-[11.5px] font-medium text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/[0.03] text-[var(--ink)]")}
+                              >
+                                <span>{spec}</span>
+                                {isSel && <Check className="size-2.5 text-[var(--brand)] stroke-[3]" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
-              <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)]">
-                {selectedTopics.length} Focus Areas
-              </span>
+
+              {/* 4. Core Focus Topics (Audience-tailored with rich semantic icons) */}
+              <div className="rounded-[20px] bg-white border border-[#e2e8e3] p-5 space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="size-4 text-[var(--brand)]" />
+                    <h3 className="text-[13.5px] font-[850] text-[var(--ink)]">Core Focus Topics</h3>
+                    <span className="text-[11px] text-[var(--ink-muted)]">({AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title} Pillars)</span>
+                  </div>
+                  <span className="text-[10.5px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2 py-0.5 rounded-full border border-[var(--tint-line)]">
+                    {selectedTopics.length} selected
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {currentTopics.map((top) => {
+                    const isSel = selectedTopics.includes(top.label);
+                    const IconComp = top.icon;
+                    return (
+                      <button
+                        key={top.id}
+                        type="button"
+                        onClick={() => toggleTopic(top.label)}
+                        className={cn(
+                          "group relative flex items-start gap-2.5 p-3 rounded-[14px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
+                          isSel
+                            ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
+                            : "border-black/[0.08] bg-[#fafbfa] hover:bg-white hover:border-black/20"
+                        )}
+                      >
+                        <div className={cn("grid size-7 place-items-center rounded-lg transition-colors shrink-0 mt-0.5", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-[var(--tint)] text-[var(--brand-deep)] group-hover:bg-[var(--brand)] group-hover:text-white")}>
+                          <IconComp className="size-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] font-bold text-[var(--ink)] leading-snug">{top.label}</span>
+                            {isSel && (
+                              <div className="size-3.5 rounded-full bg-[var(--brand)] text-white grid place-items-center shrink-0">
+                                <Check className="size-2 stroke-[3]" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-[10.5px] text-[var(--ink-muted)] mt-0.5 leading-snug line-clamp-2">{top.detail}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {currentTopics.map((top) => {
-                const isSel = selectedTopics.includes(top.label);
-                return (
-                  <button
-                    key={top.id}
-                    type="button"
-                    onClick={() => toggleTopic(top.label)}
-                    className={cn(
-                      "group relative flex items-start gap-3 p-3.5 rounded-[16px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs",
-                      isSel
-                        ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
-                        : "border-black/[0.08] bg-white/80 hover:bg-white hover:border-black/20"
-                    )}
-                  >
-                    <div className={cn("mt-0.5 size-4.5 rounded-md border flex items-center justify-center shrink-0 transition-colors", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white group-hover:border-black/40")}>
-                      {isSel && <Check className="size-2.5 stroke-[3]" />}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug">{top.label}</div>
-                      <div className="text-[11px] text-[var(--ink-muted)] mt-0.5 leading-snug">{top.detail || (top as any).description || ""}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+
           </div>
         </div>
 
-        {/* ── Footer ── */}
-        <div className="flex items-center justify-between border-t border-[var(--line)] bg-white px-8 py-4 shrink-0">
-          <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-[var(--ink-muted)]">
+        {/* ── Modal Footer with Live Preset Summary ── */}
+        <div className="flex items-center justify-between border-t border-[var(--line)] bg-white px-7 py-3.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-[var(--ink-muted)]">
             <span className="font-bold text-[var(--ink)]">
               {sourceMode === "brand"
-                ? selectedBrand ? `Brand: ${selectedBrand.name}` : "No brand selected"
+                ? selectedBrand ? `Brand: ${selectedBrand.name}` : "No brand"
                 : selectedDiseaseIds.length > 0
                 ? `Therapy: ${selectedDiseaseIds.map((id) => DISEASE_OPTIONS.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`
-                : "No therapy area selected"}
+                : "General evidence"}
             </span>
             <span>·</span>
             <span>{AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}</span>
             {audience === "HCP" && selectedSpecialities.length > 0 && (
               <>
                 <span>·</span>
-                <span className="truncate max-w-[180px] font-medium text-[var(--ink-2)]">{selectedSpecialities.join(", ")}</span>
+                <span className="truncate max-w-[150px] font-medium text-[var(--ink-2)]">{selectedSpecialities.join(", ")}</span>
               </>
             )}
             <span>·</span>
             <span>{selectedSize}</span>
             <span>·</span>
-            <span>{selectedTopics.length} Topics</span>
+            <span className="font-bold text-[var(--brand-deep)]">{selectedTopics.length} Focus Areas</span>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <Button variant="secondary" size="sm" onClick={onClose} className="px-4 cursor-pointer font-bold text-[12.5px]">
+            <Button variant="secondary" size="sm" onClick={onClose} className="px-4 cursor-pointer font-bold text-[12px]">
               Cancel
             </Button>
             <Button
@@ -795,7 +796,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               size="sm"
               disabled={!canProceed}
               onClick={handleStartProject}
-              className="gap-2 font-bold px-6 shadow-sm cursor-pointer disabled:opacity-40"
+              className="gap-2 font-bold px-5 shadow-sm cursor-pointer disabled:opacity-40 text-[12.5px]"
             >
               <span>Start Project</span>
               <ArrowRight className="size-3.5" />
