@@ -7,8 +7,6 @@ import {
   Check,
   ChevronDown,
   FileText,
-  FolderPlus,
-  Plus,
   Search,
   ShieldCheck,
   X,
@@ -17,22 +15,18 @@ import {
   Stethoscope,
   HeartHandshake,
   Briefcase,
-  Users,
   Layers,
   Monitor,
   Smartphone,
   Square,
   FileSpreadsheet,
-  Sparkles,
   FlaskConical,
   Truck,
   ShoppingCart,
   UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
 
@@ -124,7 +118,7 @@ export const DOSSIERS: Record<string, DossierItem> = {
 };
 
 // ── Disease / Therapy Area options ──
-const DISEASE_OPTIONS = [
+export const DISEASE_OPTIONS = [
   { id: "dermatology", label: "Dermatology", desc: "Psoriasis, Eczema, Acne, Atopic Dermatitis" },
   { id: "oncology", label: "Oncology", desc: "Lung Cancer, Breast Cancer, Melanoma, Lymphoma" },
   { id: "cardiology", label: "Cardiology", desc: "Heart Failure, Atrial Fibrillation, Hypertension" },
@@ -208,24 +202,6 @@ const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; de
   ],
 };
 
-const QUICK_DOSSIER_GRADIENTS = [
-  "linear-gradient(140deg,#ff7a3d,#c9310a)",
-  "linear-gradient(140deg,#4f83ff,#1d4ed8)",
-  "linear-gradient(140deg,#9b6bff,#5b21b6)",
-  "linear-gradient(140deg,#22c07a,#12784a)",
-];
-
-function createQuickDossier(brand: BrandItem, brief: string): DossierItem {
-  const id = `${brand.id}-quick-${Date.now().toString(36)}`;
-  const gradient = QUICK_DOSSIER_GRADIENTS[Math.floor(Math.random() * QUICK_DOSSIER_GRADIENTS.length)];
-  return {
-    id, brandId: brand.id, name: `${brand.name} Marketing & Branding Dossier`, molecule: brand.genericName,
-    market: "🌐 Global · Marketing", sections: 6, claims: 24, heldOut: 0, avatarBg: gradient,
-    skeletonWidths: [82, 68, 90, 60, 76, 70], isSample: false,
-    documents: brief.trim() ? [{ name: `Brief: ${brief.trim().slice(0, 70)}`, citations: 0 }] : undefined,
-  };
-}
-
 const VIDEO_SIZE_OPTIONS = [
   { id: "16:9", ratio: "16:9", label: "Landscape Master", desc: "1920×1080 · Desktop, Congress Displays, Web Portals", icon: Monitor },
   { id: "9:16", ratio: "9:16", label: "Vertical Reel", desc: "1080×1920 · Mobile Briefs, WhatsApp, Social Digest", icon: Smartphone },
@@ -259,22 +235,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const [step, setStep] = useState<1 | 2>(1);
 
-  // Step 1
+  // Step 1: Brand (Single-select) vs Therapy Area (Multi-select)
   const [sourceMode, setSourceMode] = useState<"brand" | "disease">("brand");
   const [brandSearch, setBrandSearch] = useState("");
   const [brandDropdownOpen, setBrandDropdownOpen] = useState(false);
   const [diseaseSearch, setDiseaseSearch] = useState("");
   const [diseaseDropdownOpen, setDiseaseDropdownOpen] = useState(false);
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
-  const [selectedDossierId, setSelectedDossierId] = useState<string>("");
-  const [selectedDiseaseId, setSelectedDiseaseId] = useState<string>("");
-
-  // Quick-create
-  const [extraDossiers, setExtraDossiers] = useState<Record<string, DossierItem>>({});
-  const [extraBrandDossierIds, setExtraBrandDossierIds] = useState<Record<string, string[]>>({});
-  const [quickCreateOpen, setQuickCreateOpen] = useState(false);
-  const [quickCreateBrief, setQuickCreateBrief] = useState("");
-  const [quickCreating, setQuickCreating] = useState(false);
+  const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<string[]>([]);
 
   // Step 2
   const [audience, setAudience] = useState<Audience>("HCP");
@@ -290,11 +258,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     if (open) {
       setStep(1);
       setSourceMode("brand");
-      setSelectedBrandId(""); setSelectedDossierId(""); setSelectedDiseaseId("");
-      setBrandSearch(""); setDiseaseSearch("");
-      setBrandDropdownOpen(false); setDiseaseDropdownOpen(false);
-      setQuickCreateOpen(false); setQuickCreateBrief(""); setQuickCreating(false);
-      setAudience("HCP"); setSelectedSpecialities([]);
+      setSelectedBrandId("");
+      setSelectedDiseaseIds([]);
+      setBrandSearch("");
+      setDiseaseSearch("");
+      setBrandDropdownOpen(false);
+      setDiseaseDropdownOpen(false);
+      setAudience("HCP");
+      setSelectedSpecialities([]);
       setSelectedSize(assetType === "infographic" ? "3:4" : "16:9");
       const def = TOPICS_BY_AUDIENCE["HCP"];
       setSelectedTopics([def[0].label, def[1].label]);
@@ -307,22 +278,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedSpecialities([]);
   }, [audience]);
 
-  const allBrands = useMemo(() => INITIAL_BRANDS.map((b) => {
-    const extraIds = extraBrandDossierIds[b.id];
-    if (!extraIds?.length) return b;
-    return { ...b, hasDossier: true, dossierIds: [...(b.dossierIds || []), ...extraIds] };
-  }), [extraBrandDossierIds]);
-
-  const allDossiers = useMemo(() => ({ ...DOSSIERS, ...extraDossiers }), [extraDossiers]);
-  const selectedBrand = useMemo(() => allBrands.find((b) => b.id === selectedBrandId) || null, [allBrands, selectedBrandId]);
-  const selectedDisease = useMemo(() => DISEASE_OPTIONS.find((d) => d.id === selectedDiseaseId) || null, [selectedDiseaseId]);
-  const availableDossiers = useMemo(() => selectedBrandId ? Object.values(allDossiers).filter((d) => d.brandId === selectedBrandId) : [], [allDossiers, selectedBrandId]);
+  const selectedBrand = useMemo(() => INITIAL_BRANDS.find((b) => b.id === selectedBrandId) || null, [selectedBrandId]);
 
   const filteredBrands = useMemo(() => {
     const q = brandSearch.toLowerCase().trim();
-    if (!q) return allBrands;
-    return allBrands.filter((b) => b.name.toLowerCase().includes(q) || b.genericName.toLowerCase().includes(q) || b.therapyAreas.some((t) => t.toLowerCase().includes(q)));
-  }, [allBrands, brandSearch]);
+    if (!q) return INITIAL_BRANDS;
+    return INITIAL_BRANDS.filter((b) => b.name.toLowerCase().includes(q) || b.genericName.toLowerCase().includes(q) || b.therapyAreas.some((t) => t.toLowerCase().includes(q)));
+  }, [brandSearch]);
 
   const filteredDiseases = useMemo(() => {
     const q = diseaseSearch.toLowerCase().trim();
@@ -332,52 +294,49 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const currentTopics = TOPICS_BY_AUDIENCE[audience] || TOPICS_BY_AUDIENCE.HCP;
   const sizeOptions = assetType === "infographic" ? INFOGRAPHIC_SIZE_OPTIONS : VIDEO_SIZE_OPTIONS;
-  const canProceedStep1 = sourceMode === "brand" ? !!(selectedBrandId && selectedDossierId) : !!selectedDiseaseId;
 
-  function handleQuickCreate() {
-    if (!selectedBrand) return;
-    setQuickCreating(true);
-    setTimeout(() => {
-      const newDossier = createQuickDossier(selectedBrand, quickCreateBrief);
-      setExtraDossiers((prev) => ({ ...prev, [newDossier.id]: newDossier }));
-      setExtraBrandDossierIds((prev) => ({ ...prev, [selectedBrand.id]: [...(prev[selectedBrand.id] || []), newDossier.id] }));
-      setSelectedDossierId(newDossier.id);
-      setQuickCreating(false); setQuickCreateOpen(false); setQuickCreateBrief("");
-    }, 1100);
-  }
+  // Single select for brand, multi select for disease/therapy area
+  const canProceedStep1 = sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0;
 
   const toggleTopic = (label: string) => {
-    if (selectedTopics.includes(label)) { if (selectedTopics.length > 1) setSelectedTopics(selectedTopics.filter((t) => t !== label)); }
-    else setSelectedTopics([...selectedTopics, label]);
+    if (selectedTopics.includes(label)) {
+      if (selectedTopics.length > 1) setSelectedTopics(selectedTopics.filter((t) => t !== label));
+    } else {
+      setSelectedTopics([...selectedTopics, label]);
+    }
   };
 
   const toggleSpeciality = (spec: string) => {
     setSelectedSpecialities((prev) => prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]);
   };
 
+  const toggleDisease = (diseaseId: string) => {
+    setSelectedDiseaseIds((prev) =>
+      prev.includes(diseaseId) ? prev.filter((id) => id !== diseaseId) : [...prev, diseaseId]
+    );
+  };
+
   const handleSelectBrand = (brand: BrandItem) => {
     setSelectedBrandId(brand.id);
     setBrandSearch(brand.name);
     setBrandDropdownOpen(false);
-    setSelectedDossierId(brand.hasDossier && brand.dossierIds?.length ? brand.dossierIds[0] : "");
-  };
-
-  const handleSelectDisease = (disease: typeof DISEASE_OPTIONS[0]) => {
-    setSelectedDiseaseId(disease.id);
-    setDiseaseSearch(disease.label);
-    setDiseaseDropdownOpen(false);
   };
 
   const handleStartProject = () => {
     setSourceType("dossier");
-    setSourcePayload({ dossierId: sourceMode === "brand" ? selectedDossierId : selectedDiseaseId });
+    if (sourceMode === "brand") {
+      const primaryDossier = selectedBrand?.dossierIds?.[0] || selectedBrandId;
+      setSourcePayload({ dossierId: primaryDossier });
+      if (onSelectDossier && selectedBrandId) onSelectDossier(selectedBrandId, primaryDossier);
+    } else {
+      setSourcePayload({ dossierId: selectedDiseaseIds.join(",") });
+    }
     setAudienceStore(audience);
     setTopicsStore(selectedTopics);
     if (assetType === "infographic") {
       const s = selectedSize as "3:4" | "16:9" | "A4";
       setPageShapeStore(s === "A4" ? "A4" : s === "16:9" ? "16:9" : "3:4");
     } else setFormatStore(selectedSize);
-    if (onSelectDossier && selectedBrandId && selectedDossierId) onSelectDossier(selectedBrandId, selectedDossierId);
     setView("create");
     setVideoSubStage("intake");
     onClose();
@@ -402,7 +361,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 {step === 2 ? <Check className="size-4 stroke-[3]" /> : "1"}
               </span>
               <span className={cn("text-[13px] font-bold", step === 1 ? "text-[var(--ink)]" : "text-[var(--ink-muted)]")}>
-                {sourceMode === "disease" ? "Disease & Context" : "Brand & Dossier"}
+                Brand or Therapy Area
               </span>
             </div>
             <div className="h-0.5 w-10 bg-black/15" />
@@ -424,26 +383,25 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             <div className="space-y-6 animate-in fade-in duration-200">
               <div className="flex items-center gap-2">
                 <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">1</span>
-                <span className="text-[14px] font-[850] text-[var(--ink)]">Select Source</span>
-                <span className="text-[11.5px] text-[var(--ink-muted)]">(Start from a brand or a disease area)</span>
+                <span className="text-[14px] font-[850] text-[var(--ink)]">Choose Focus</span>
+                <span className="text-[11.5px] text-[var(--ink-muted)]">(Select a single brand or choose one/more therapy areas)</span>
               </div>
 
               {/* Mode toggle */}
               <div className="inline-flex rounded-[14px] border border-black/10 bg-white p-1 gap-1 shadow-2xs">
-                <button type="button" onClick={() => { setSourceMode("brand"); setSelectedDiseaseId(""); setDiseaseSearch(""); }}
+                <button type="button" onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
                   className={cn("flex items-center gap-2 rounded-[10px] px-5 py-2 text-[12.5px] font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-[var(--brand)] text-white shadow-xs" : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5")}>
                   <ShieldCheck className="size-3.5" /> Brand
                 </button>
-                <button type="button" onClick={() => { setSourceMode("disease"); setSelectedBrandId(""); setSelectedDossierId(""); setBrandSearch(""); }}
+                <button type="button" onClick={() => { setSourceMode("disease"); setSelectedBrandId(""); setBrandSearch(""); }}
                   className={cn("flex items-center gap-2 rounded-[10px] px-5 py-2 text-[12.5px] font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-[var(--brand)] text-white shadow-xs" : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5")}>
                   <FlaskConical className="size-3.5" /> Disease / Therapy Area
                 </button>
               </div>
 
-              {/* ── Brand path ── */}
+              {/* ── Brand path (Single Select) ── */}
               {sourceMode === "brand" && (
                 <div className="space-y-5">
-                  {/* Search combobox */}
                   <div className="relative max-w-[520px]" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setBrandDropdownOpen(false); }}>
                     <div className="relative">
                       <Search className="absolute left-3.5 top-[13px] size-4 text-[var(--ink-muted)]" />
@@ -471,9 +429,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                 <div className="text-[11px] text-[var(--ink-muted)] italic">{brand.genericName} · {brand.therapyAreas[0]}</div>
                               </div>
                               <div className="shrink-0 flex items-center gap-2">
-                                {brand.hasDossier
-                                  ? <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 text-[9.5px] font-bold">{brand.dossierIds?.length} dossier{(brand.dossierIds?.length ?? 0) > 1 ? "s" : ""}</span>
-                                  : <span className="text-[9.5px] text-[var(--ink-muted)] italic">No dossier</span>}
+                                {brand.hasDossier ? (
+                                  <span className="rounded bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 text-[9.5px] font-bold">
+                                    Approved SmPC
+                                  </span>
+                                ) : (
+                                  <span className="text-[9.5px] text-[var(--ink-muted)] italic">No dossier</span>
+                                )}
                                 {isSel && <Check className="size-4 text-[var(--brand)] stroke-[3]" />}
                               </div>
                             </button>
@@ -483,128 +445,72 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     )}
                   </div>
 
-                  {/* Dossier section */}
-                  {!selectedBrandId ? (
-                    <div className="rounded-[22px] border-2 border-dashed border-black/12 bg-white/60 p-10 text-center space-y-2.5 max-w-[520px]">
-                      <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]"><FileText className="size-6 text-[var(--brand)]" /></div>
-                      <h4 className="text-[15px] font-[850] text-[var(--ink)]">Search and select a brand above</h4>
-                      <p className="text-[12px] text-[var(--ink-muted)] leading-relaxed">Type a brand name, molecule, or therapy area to load its approved dossier.</p>
+                  {/* Selected Brand Confirmation Card */}
+                  {selectedBrand ? (
+                    <div className="max-w-[520px] rounded-[18px] border-2 border-[var(--brand)] bg-[var(--tint)]/40 p-4 flex items-center justify-between gap-3 shadow-2xs animate-in fade-in">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="grid size-10 place-items-center rounded-xl bg-[var(--brand)] text-white shrink-0 text-[13px] font-black">
+                          {selectedBrand.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[14.5px] font-[850] text-[var(--ink)] truncate">{selectedBrand.name}</div>
+                          <div className="text-[12px] text-[var(--ink-muted)] italic truncate">
+                            {selectedBrand.genericName} · {selectedBrand.therapyAreas.join(", ")}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedBrandId(""); setBrandSearch(""); }}
+                        className="text-[11.5px] font-bold text-[var(--brand-deep)] hover:underline shrink-0 cursor-pointer"
+                      >
+                        Change
+                      </button>
                     </div>
                   ) : (
-                    <div className="space-y-3.5 pt-2 border-t border-[var(--line)]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="flex size-6 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[11px] font-bold text-[var(--brand-deep)]">2</span>
-                          <span className="text-[14px] font-[850] text-[var(--ink)]">{selectedBrand ? `Available Dossiers for ${selectedBrand.name}` : "Available Dossiers"}</span>
-                          {availableDossiers.length > 0 && <span className="text-[11px] text-[var(--ink-muted)]">({availableDossiers.length} on file)</span>}
-                        </div>
-                        {availableDossiers.length > 0 && <span className="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">✓ Verified SmPC / Label Data</span>}
+                    <div className="rounded-[22px] border-2 border-dashed border-black/12 bg-white/60 p-8 text-center space-y-2 max-w-[520px]">
+                      <div className="mx-auto grid size-11 place-items-center rounded-2xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]">
+                        <FileText className="size-5 text-[var(--brand)]" />
                       </div>
-
-                      {availableDossiers.length > 0 ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          {availableDossiers.map((dossier) => {
-                            const isSel = selectedDossierId === dossier.id;
-                            return (
-                              <div key={dossier.id} onClick={() => setSelectedDossierId(dossier.id)}
-                                className={cn("group relative rounded-[22px] border-2 p-5 transition-all duration-200 cursor-pointer shadow-2xs flex flex-col justify-between", isSel ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm" : "border-black/[0.08] bg-white/80 hover:border-black/20 hover:bg-white")}>
-                                <div>
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-start gap-3 min-w-0">
-                                      <div className={cn("mt-0.5 size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/25 group-hover:border-black/40")}>{isSel && <Check className="size-3 stroke-[3]" />}</div>
-                                      <div className="min-w-0">
-                                        <div className="text-[15px] font-[850] text-[var(--ink)] leading-snug">{dossier.name}</div>
-                                        <div className="text-[12px] text-[var(--ink-muted)] italic mt-0.5">{dossier.molecule}</div>
-                                      </div>
-                                    </div>
-                                    <span className="inline-flex items-center gap-1 rounded-md bg-black/5 px-2.5 py-1 text-[11px] font-extrabold text-[var(--ink-2)] shrink-0">{dossier.market}</span>
-                                  </div>
-                                  <div className="mt-3.5 pt-3 border-t border-black/[0.05]">
-                                    <div className="flex items-center justify-between text-[11px] text-[var(--ink-muted)] mb-1.5"><span className="font-semibold">Dossier Structure</span><span className="font-bold text-[var(--ink-2)]">{dossier.sections} sections · {dossier.claims} claims</span></div>
-                                    <div className="h-2 w-full bg-black/5 rounded-full overflow-hidden flex gap-0.5">{dossier.skeletonWidths.map((w, i) => <div key={i} style={{ width: `${w}%` }} className={cn("h-full rounded-full transition-all", isSel ? "bg-[var(--brand)]/70" : "bg-black/20")} />)}</div>
-                                  </div>
-                                </div>
-                                {dossier.documents && dossier.documents.length > 0 && (
-                                  <div className="mt-3.5 pt-2 space-y-1.5">
-                                    <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Attached Documents ({dossier.documents.length})</div>
-                                    <div className="space-y-1.5">{dossier.documents.slice(0, 3).map((doc, i) => (
-                                      <div key={i} className="flex items-center justify-between gap-2 rounded-lg bg-[#fafbf9] border border-black/5 px-2.5 py-1 text-[11.5px]">
-                                        <span className="truncate text-[var(--ink-2)] font-medium">📄 {doc.name}</span>
-                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded shrink-0">{doc.citations} citations</span>
-                                      </div>
-                                    ))}</div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : quickCreateOpen ? (
-                        <div className="rounded-[24px] border-2 border-black/10 bg-white p-7 space-y-4">
-                          <div className="flex items-center gap-2.5">
-                            <div className="grid size-9 place-items-center rounded-xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)]"><Sparkles className="size-4" /></div>
-                            <div><h4 className="text-[14.5px] font-[850] text-[var(--ink)]">Quick dossier for {selectedBrand?.name}</h4><p className="text-[11.5px] text-[var(--ink-muted)]">Generated instantly — build the full regulatory dossier later.</p></div>
-                          </div>
-                          <div>
-                            <label className="text-[11px] font-bold text-[var(--ink-2)] mb-1.5 block">Brief (optional)</label>
-                            <textarea value={quickCreateBrief} onChange={(e) => setQuickCreateBrief(e.target.value)} rows={3} disabled={quickCreating}
-                              placeholder={`What is ${selectedBrand?.name} for, and who's the audience?`}
-                              className="w-full rounded-xl border border-black/10 px-3 py-2.5 text-[13px] text-[var(--ink)] resize-none disabled:opacity-60" />
-                          </div>
-                          <div className="flex items-center gap-2.5">
-                            <Button variant="secondary" size="sm" disabled={quickCreating} onClick={() => setQuickCreateOpen(false)} className="px-4">Back</Button>
-                            <Button variant="primary" size="sm" disabled={quickCreating} onClick={handleQuickCreate} className="gap-2 font-bold px-5 flex-1 justify-center">
-                              {quickCreating ? (<><LogoMark size={14} className="animate-brand-spin" /><span>Building…</span></>) : (<><Sparkles className="size-3.5" /><span>Create dossier</span></>)}
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="rounded-[24px] border-2 border-dashed border-black/15 bg-white p-9 text-center space-y-3">
-                          <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200"><FolderPlus className="size-6" /></div>
-                          <div className="max-w-[420px] mx-auto">
-                            <h4 className="text-[15px] font-[850] text-[var(--ink)]">No dossier found for {selectedBrand?.name}</h4>
-                            <p className="text-[12px] text-[var(--ink-muted)] mt-1">Create a quick marketing & branding dossier to keep going.</p>
-                          </div>
-                          <Button variant="primary" size="sm" className="gap-2 text-[12px] font-bold" onClick={() => setQuickCreateOpen(true)}>
-                            <Plus className="size-3.5" /><span>Create for {selectedBrand?.name}</span>
-                          </Button>
-                        </div>
-                      )}
+                      <h4 className="text-[14.5px] font-[850] text-[var(--ink)]">Search and select a brand above</h4>
+                      <p className="text-[12px] text-[var(--ink-muted)]">Choose a pharmaceutical product to ground your marketing content.</p>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* ── Disease path ── */}
+              {/* ── Disease path (Multi Select) ── */}
               {sourceMode === "disease" && (
                 <div className="space-y-4">
                   <div className="relative max-w-[520px]" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDiseaseDropdownOpen(false); }}>
                     <div className="relative">
                       <Search className="absolute left-3.5 top-[13px] size-4 text-[var(--ink-muted)]" />
                       <input type="text" value={diseaseSearch}
-                        onChange={(e) => { setDiseaseSearch(e.target.value); setDiseaseDropdownOpen(true); if (!e.target.value) setSelectedDiseaseId(""); }}
+                        onChange={(e) => { setDiseaseSearch(e.target.value); setDiseaseDropdownOpen(true); }}
                         onFocus={() => setDiseaseDropdownOpen(true)}
-                        placeholder="Search disease, therapy area, condition..."
+                        placeholder="Search and select therapy areas (multi-select)..."
                         className="w-full rounded-[14px] border border-black/12 bg-white pl-10 pr-4 py-2.5 text-[13.5px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all" />
-                      {selectedDiseaseId && (
+                      {selectedDiseaseIds.length > 0 && (
                         <span className="absolute right-3.5 top-[11px] flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                          <Check className="size-3 stroke-[3]" /> Selected
+                          {selectedDiseaseIds.length} Selected
                         </span>
                       )}
                     </div>
                     {diseaseDropdownOpen && filteredDiseases.length > 0 && (
                       <div className="absolute z-50 left-0 right-0 mt-1.5 rounded-[18px] border border-black/10 bg-white shadow-[0_16px_48px_rgba(0,0,0,0.14)] overflow-hidden max-h-[320px] overflow-y-auto">
                         {filteredDiseases.map((disease) => {
-                          const isSel = disease.id === selectedDiseaseId;
+                          const isSel = selectedDiseaseIds.includes(disease.id);
                           return (
-                            <button key={disease.id} type="button" onMouseDown={(e) => { e.preventDefault(); handleSelectDisease(disease); }}
+                            <button key={disease.id} type="button" onMouseDown={(e) => { e.preventDefault(); toggleDisease(disease.id); }}
                               className={cn("flex w-full items-center gap-3 px-4 py-3 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)]" : "hover:bg-black/[0.03] text-[var(--ink)]")}>
                               <div className={cn("grid size-8 place-items-center rounded-lg text-[11px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)]")}>{disease.label.slice(0, 2).toUpperCase()}</div>
                               <div className="flex-1 min-w-0">
                                 <div className="text-[13px] font-[850]">{disease.label}</div>
                                 <div className="text-[11px] text-[var(--ink-muted)]">{disease.desc}</div>
                               </div>
-                              {isSel && <Check className="size-4 text-[var(--brand)] stroke-[3] shrink-0" />}
+                              <div className={cn("size-4.5 rounded-md border flex items-center justify-center shrink-0 transition-colors", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white")}>
+                                {isSel && <Check className="size-3 stroke-[3]" />}
+                              </div>
                             </button>
                           );
                         })}
@@ -612,19 +518,41 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     )}
                   </div>
 
-                  {selectedDisease ? (
-                    <div className="max-w-[520px] rounded-[18px] border-2 border-[var(--brand)] bg-[var(--tint)]/40 p-4 flex items-center gap-3">
-                      <div className="grid size-9 place-items-center rounded-xl bg-[var(--brand)] text-white shrink-0 text-[11.5px] font-black">{selectedDisease.label.slice(0, 2).toUpperCase()}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[14px] font-[850] text-[var(--ink)]">{selectedDisease.label}</div>
-                        <div className="text-[11.5px] text-[var(--ink-muted)]">{selectedDisease.desc}</div>
+                  {/* Multi-selected Disease Chips */}
+                  {selectedDiseaseIds.length > 0 ? (
+                    <div className="space-y-2 max-w-[520px]">
+                      <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+                        <span>Selected Therapy Areas ({selectedDiseaseIds.length})</span>
+                        <button type="button" onClick={() => setSelectedDiseaseIds([])} className="hover:underline text-[var(--ink-muted)]">Clear all</button>
                       </div>
-                      <span className="text-[10px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] border border-[var(--tint-line)] px-2 py-0.5 rounded-full shrink-0">No brand dossier</span>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedDiseaseIds.map((id) => {
+                          const disease = DISEASE_OPTIONS.find((d) => d.id === id);
+                          if (!disease) return null;
+                          return (
+                            <span
+                              key={id}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] border border-[var(--tint-line)] px-3 py-1 text-[12px] font-bold text-[var(--brand-deep)] shadow-2xs animate-in fade-in"
+                            >
+                              <FlaskConical className="size-3.5 text-[var(--brand)]" />
+                              <span>{disease.label}</span>
+                              <button
+                                type="button"
+                                onClick={() => toggleDisease(id)}
+                                className="hover:text-red-600 transition-colors cursor-pointer"
+                                aria-label="Remove"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
-                    <div className="max-w-[520px] rounded-[18px] border-2 border-dashed border-black/12 bg-white/60 p-7 text-center space-y-2">
-                      <FlaskConical className="size-7 mx-auto text-[var(--brand)]/50" />
-                      <p className="text-[12.5px] text-[var(--ink-muted)]">Select a therapy area to continue. Content will be grounded in general clinical evidence for that disease — no brand dossier required.</p>
+                    <div className="max-w-[520px] rounded-[18px] border-2 border-dashed border-black/12 bg-white/60 p-6 text-center space-y-2">
+                      <FlaskConical className="size-6 mx-auto text-[var(--brand)]/50" />
+                      <p className="text-[12.5px] text-[var(--ink-muted)]">Select one or more therapy areas. Content will be grounded in general clinical evidence without a brand dossier.</p>
                     </div>
                   )}
                 </div>
@@ -773,7 +701,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         </div>
                         <div className="min-w-0">
                           <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug">{top.label}</div>
-                          <div className="text-[11px] text-[var(--ink-muted)] mt-0.5 leading-snug">{top.detail}</div>
+                          <div className="text-[11px] text-[var(--ink-muted)] mt-0.5 leading-snug">{top.detail || (top as any).description || ""}</div>
                         </div>
                       </button>
                     );
@@ -790,16 +718,19 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             {step === 1 ? (
               <span className="text-[12.5px] text-[var(--ink-muted)]">
                 {sourceMode === "brand"
-                  ? !selectedBrandId ? "Search and select a brand to continue"
-                    : !selectedDossierId ? <span>Brand: <strong className="text-[var(--ink)]">{selectedBrand?.name}</strong> · Select a dossier above</span>
-                    : <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5"><ShieldCheck className="size-4 text-emerald-600" />{allDossiers[selectedDossierId]?.name} ({selectedBrand?.name})</span>
-                  : !selectedDiseaseId ? "Search and select a disease or therapy area to continue"
-                  : <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5"><FlaskConical className="size-4 text-[var(--brand)]" />{selectedDisease?.label}</span>
+                  ? !selectedBrandId
+                    ? "Search and select a brand to continue"
+                    : <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5"><ShieldCheck className="size-4 text-emerald-600" />Brand: {selectedBrand?.name} ({selectedBrand?.genericName})</span>
+                  : selectedDiseaseIds.length === 0
+                  ? "Select one or more therapy areas to continue"
+                  : <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5"><FlaskConical className="size-4 text-[var(--brand)]" />{selectedDiseaseIds.length} Therapy {selectedDiseaseIds.length === 1 ? "Area" : "Areas"} Selected</span>
                 }
               </span>
             ) : (
               <div className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-[var(--ink-muted)]">
-                <span className="font-bold text-[var(--ink)]">{sourceMode === "brand" ? selectedBrand?.name : selectedDisease?.label}</span>
+                <span className="font-bold text-[var(--ink)]">
+                  {sourceMode === "brand" ? selectedBrand?.name : selectedDiseaseIds.map((id) => DISEASE_OPTIONS.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}
+                </span>
                 <span>·</span><span>{AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}</span>
                 {audience === "HCP" && selectedSpecialities.length > 0 && <><span>·</span><span className="truncate max-w-[200px]">{selectedSpecialities.join(", ")}</span></>}
                 <span>·</span><span>{selectedSize}</span>
@@ -820,7 +751,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             ) : (
               <>
                 <Button variant="secondary" size="sm" onClick={onClose} className="px-4 cursor-pointer">Cancel</Button>
-                <Button variant="primary" size="sm" disabled={!canProceedStep1} onClick={() => setStep(2)} className="gap-2 font-bold px-5 shadow-sm cursor-pointer disabled:opacity-40">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={!canProceedStep1}
+                  onClick={() => setStep(2)}
+                  className="gap-2 font-bold px-5 shadow-sm cursor-pointer disabled:opacity-40"
+                >
                   <span>Continue to Setup</span><ArrowRight className="size-3.5" />
                 </Button>
               </>
