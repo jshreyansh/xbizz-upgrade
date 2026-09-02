@@ -46,6 +46,7 @@ import {
   Users,
   Edit3,
   Lock,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -387,7 +388,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       role="dialog" aria-modal="true"
     >
-      <div className="relative flex min-h-[560px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-[24px] border border-[#d8deda] bg-white shadow-2xl overflow-visible text-left">
+      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-[24px] border border-[#d8deda] bg-white shadow-2xl overflow-visible text-left">
 
         {/* ── Modal Header ── */}
         <div className="flex items-center justify-between border-b border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0 rounded-t-[24px]">
@@ -480,20 +481,20 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 {sourceMode === "brand" ? (
                   <div className="space-y-2.5 relative">
                     <div className="relative flex items-center">
-                      <Search className="absolute left-3 size-3.5 text-[var(--ink-muted)]" />
+                      <Search className="absolute left-3 size-3.5 text-slate-400" />
                       <input
                         type="text"
                         value={brandSearch}
                         onChange={(e) => { setBrandSearch(e.target.value); setBrandDropdownOpen(true); if (!e.target.value) setSelectedBrandId(""); }}
                         onFocus={() => setBrandDropdownOpen(true)}
                         placeholder="Type brand name or molecule (e.g. Velmora, Onkavia)..."
-                        className="w-full rounded-[12px] border border-black/12 bg-white pl-9 pr-24 py-2.5 text-[13px] font-medium text-[var(--ink)] focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        className="w-full rounded-[12px] border border-slate-200 bg-white pl-9 pr-24 py-2.5 text-[13px] font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
                       />
                     </div>
 
-                    {/* Clean Dropdown List */}
+                    {/* Brand Dropdown List */}
                     {brandDropdownOpen && filteredBrands.length > 0 && (
-                      <div className="rounded-[16px] border border-black/10 bg-white shadow-lg overflow-hidden max-h-[220px] overflow-y-auto mt-1 z-50">
+                      <div className="rounded-[16px] border border-slate-200 bg-white shadow-xl overflow-hidden max-h-[220px] overflow-y-auto mt-1 z-50 p-1">
                         {filteredBrands.map((brand) => {
                           const isSel = brand.id === selectedBrandId;
                           return (
@@ -501,14 +502,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               key={brand.id}
                               type="button"
                               onMouseDown={(e) => { e.preventDefault(); handleSelectBrand(brand); }}
-                              className={cn("flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/[0.03] text-[var(--ink)]")}
+                              className={cn(
+                                "flex w-full items-center gap-2.5 px-3 py-2 text-left rounded-xl transition-colors cursor-pointer",
+                                isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-slate-50 text-slate-800"
+                              )}
                             >
-                              <div className={cn("grid size-6 place-items-center rounded text-[10px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-[var(--tint)]/70 text-[var(--brand-deep)] border-[var(--tint-line)]")}>
+                              <div className={cn("grid size-6 place-items-center rounded text-[10px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-slate-100 text-slate-700 border-slate-200")}>
                                 {brand.name.slice(0, 2).toUpperCase()}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="text-[12.5px] font-[850]">{brand.name}</div>
-                                <div className="text-[10.5px] text-[var(--ink-muted)] italic truncate">{brand.genericName} · {brand.therapyAreas.join(", ")}</div>
+                                <div className="text-[12.5px] font-bold">{brand.name}</div>
+                                <div className="text-[10.5px] text-slate-500 italic truncate">{brand.genericName} · {brand.therapyAreas.join(", ")}</div>
                               </div>
                               {isSel && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
                             </button>
@@ -518,14 +522,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     )}
 
                     {selectedBrand && !brandDropdownOpen && (
-                      <div className="flex items-center justify-between p-3 rounded-[12px] bg-white border border-[#dce3de] shadow-2xs">
+                      <div className="flex items-center justify-between p-3 rounded-[12px] bg-white border border-emerald-200 bg-emerald-50/40 shadow-2xs">
                         <div className="flex items-center gap-2.5">
                           <div className="grid size-7 place-items-center rounded-lg bg-emerald-700 text-white font-bold text-[10.5px]">
                             {selectedBrand.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-[12.5px] font-bold text-[var(--ink)]">{selectedBrand.name}</div>
-                            <div className="text-[10.5px] text-[var(--ink-muted)] italic">{selectedBrand.genericName} · {selectedBrand.therapyAreas.join(", ")}</div>
+                            <div className="text-[12.5px] font-bold text-slate-800">{selectedBrand.name}</div>
+                            <div className="text-[10.5px] text-slate-500 italic">{selectedBrand.genericName} · {selectedBrand.therapyAreas.join(", ")}</div>
                           </div>
                         </div>
                         <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
@@ -538,19 +542,19 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 ) : (
                   <div className="space-y-2.5 relative">
                     <div className="relative flex items-center">
-                      <Search className="absolute left-3 size-3.5 text-[var(--ink-muted)]" />
+                      <Search className="absolute left-3 size-3.5 text-slate-400" />
                       <input
                         type="text"
                         value={diseaseSearch}
                         onChange={(e) => { setDiseaseSearch(e.target.value); setDiseaseDropdownOpen(true); }}
                         onFocus={() => setDiseaseDropdownOpen(true)}
                         placeholder="Search therapy areas (multi-select)..."
-                        className="w-full rounded-[12px] border border-black/12 bg-white pl-9 pr-3 py-2 text-[12.5px] font-medium focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        className="w-full rounded-[12px] border border-slate-200 bg-white pl-9 pr-3 py-2 text-[12.5px] font-medium text-slate-800 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
                       />
                     </div>
 
                     {diseaseDropdownOpen && filteredDiseases.length > 0 && (
-                      <div className="rounded-[16px] border border-black/10 bg-white shadow-lg overflow-hidden max-h-[200px] overflow-y-auto mt-1 z-50">
+                      <div className="rounded-[16px] border border-slate-200 bg-white shadow-xl overflow-hidden max-h-[200px] overflow-y-auto mt-1 z-50 p-1">
                         {filteredDiseases.map((disease) => {
                           const isSel = selectedDiseaseIds.includes(disease.id);
                           return (
@@ -558,14 +562,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               key={disease.id}
                               type="button"
                               onMouseDown={(e) => { e.preventDefault(); toggleDisease(disease.id); }}
-                              className={cn("flex w-full items-center justify-between px-3.5 py-2 text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/[0.03] text-[var(--ink)]")}
+                              className={cn(
+                                "flex w-full items-center justify-between px-3 py-2 text-left rounded-xl transition-colors cursor-pointer",
+                                isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-slate-50 text-slate-800"
+                              )}
                             >
                               <div>
                                 <div className="text-[12.5px] font-bold">{disease.label}</div>
-                                <div className="text-[10.5px] text-[var(--ink-muted)]">{disease.desc}</div>
+                                <div className="text-[10.5px] text-slate-500">{disease.desc}</div>
                               </div>
-                              <div className={cn("size-3.5 rounded border flex items-center justify-center shrink-0", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white")}>
-                                {isSel && <Check className="size-2 stroke-[3]" />}
+                              <div className={cn("size-4 rounded border flex items-center justify-center shrink-0", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-slate-300 bg-white")}>
+                                {isSel && <Check className="size-2.5 stroke-[3]" />}
                               </div>
                             </button>
                           );
@@ -616,10 +623,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             </div>
           ) : (
             <div className={cn(
-              "rounded-[18px] border transition-all duration-200",
+              "rounded-[18px] border transition-all duration-200 relative",
               stage === "audience"
-                ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
-                : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
+                ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5 z-20"
+                : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5 z-10"
             )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -683,22 +690,48 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     })}
                   </div>
 
-                  {/* If HCP, inline speciality selector + Next button */}
+                  {/* ── Doctor Speciality Selector (Clean Chip & Popover System) ── */}
                   {audience === "HCP" && (
-                    <div className="flex items-center justify-between pt-2 border-t border-black/6">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-[var(--ink-2)]">Speciality:</span>
+                    <div className="pt-3 border-t border-slate-200/80 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[11.5px] font-bold text-slate-700 shrink-0">
+                          Doctor Speciality:
+                        </span>
+
+                        {/* Selected Speciality Chips */}
+                        {selectedSpecialities.map((spec) => (
+                          <span
+                            key={spec}
+                            className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-800 shadow-2xs"
+                          >
+                            <span>{spec}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleSpeciality(spec)}
+                              className="text-slate-400 hover:text-slate-800 cursor-pointer ml-0.5"
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </span>
+                        ))}
+
+                        {/* Add Speciality Dropdown Popover */}
                         <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setSpecialityDropdownOpen(false); }}>
                           <button
                             type="button"
                             onClick={() => setSpecialityDropdownOpen(!specialityDropdownOpen)}
-                            className="flex items-center gap-1.5 rounded-lg border border-black/10 bg-white px-2.5 py-1 text-[11px] font-bold text-[var(--brand-deep)] hover:border-[var(--brand)] transition-colors cursor-pointer shadow-2xs"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-slate-300 bg-white px-3 py-1 text-[11px] font-bold text-slate-700 hover:border-slate-400 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
                           >
-                            <span>{selectedSpecialities.length > 0 ? selectedSpecialities.join(", ") : "All Doctor Specialities"}</span>
-                            <ChevronDown className="size-3" />
+                            <Plus className="size-3 text-slate-500" />
+                            <span>{selectedSpecialities.length > 0 ? "Add more" : "Select specialities"}</span>
+                            <ChevronDown className={cn("size-3 text-slate-400 transition-transform", specialityDropdownOpen && "rotate-180")} />
                           </button>
+
                           {specialityDropdownOpen && (
-                            <div className="absolute z-50 left-0 mt-1 w-[200px] rounded-[14px] border border-black/10 bg-white shadow-lg overflow-hidden max-h-[180px] overflow-y-auto">
+                            <div className="absolute z-50 left-0 mt-1.5 w-[220px] rounded-[16px] border border-slate-200 bg-white shadow-xl overflow-hidden max-h-[220px] overflow-y-auto p-1 animate-in fade-in zoom-in-95 duration-100">
+                              <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
+                                Medical Speciality
+                              </div>
                               {HCP_SPECIALITIES.map((spec) => {
                                 const isSel = selectedSpecialities.includes(spec);
                                 return (
@@ -706,22 +739,32 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                     key={spec}
                                     type="button"
                                     onMouseDown={(e) => { e.preventDefault(); toggleSpeciality(spec); }}
-                                    className={cn("flex w-full items-center justify-between px-3 py-1.5 text-[11.5px] font-medium text-left transition-colors cursor-pointer border-b border-black/[0.04] last:border-0", isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-black/[0.03] text-[var(--ink)]")}
+                                    className={cn(
+                                      "flex w-full items-center justify-between px-2.5 py-1.5 rounded-lg text-[12px] font-medium text-left transition-colors cursor-pointer",
+                                      isSel
+                                        ? "bg-slate-100 text-slate-900 font-bold"
+                                        : "hover:bg-slate-50 text-slate-700"
+                                    )}
                                   >
                                     <span>{spec}</span>
-                                    {isSel && <Check className="size-2.5 text-[var(--brand)] stroke-[3]" />}
+                                    <div className={cn("size-4 rounded border flex items-center justify-center shrink-0", isSel ? "border-emerald-600 bg-emerald-600 text-white" : "border-slate-300 bg-white")}>
+                                      {isSel && <Check className="size-2.5 stroke-[3]" />}
+                                    </div>
                                   </button>
                                 );
                               })}
                             </div>
                           )}
                         </div>
-                      </div>
 
-                      <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
-                        <span>Continue</span>
-                        <ChevronRight className="size-3" />
-                      </Button>
+                        {/* Continue Button aligned right */}
+                        <div className="ml-auto shrink-0">
+                          <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7.5 text-[11.5px] font-bold px-3.5 cursor-pointer shadow-sm">
+                            <span>Continue</span>
+                            <ChevronRight className="size-3.5" />
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
