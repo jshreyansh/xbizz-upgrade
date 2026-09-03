@@ -1,5 +1,12 @@
 # Layout architecture and responsive plan
 
+**Decisions taken (2026-09-03):** right panel closed by default below desktop ·
+portrait is review-only · slot-based layouts · **desktop and tablet first,
+mobile deferred until those are finalised.**
+
+**Landed:** 8a `<Panel>` (`af2aa4d`) · 8b slot-based layouts + the tablet
+height fix (`03ce91b`).
+
 Companion to `DESIGN_SYSTEM_PLAN.md`. That one covered tokens and primitives.
 This covers the structural layer — shells, panels, sidebars, headers, action
 bars — and how the app becomes usable below desktop width.
@@ -29,7 +36,31 @@ be stated rather than dressed up as reuse.
 
 ---
 
-## 2. The four layout archetypes
+## 2. The regions, corrected
+
+The first pass under-modelled this. The canvas editor is **five regions plus
+two overlays**, not a three-pane:
+
+| Region | Measured | Notes |
+|---|---|---|
+| Screen header | **60px** fixed | back, title, view switcher, undo/redo, Versions, panel toggle |
+| Left rail (scenes) | ~305px | canvas editor only |
+| Main / canvas | fills remainder | canvas is `max-w-[840px] aspect-video` |
+| Right panel | **410px hard-coded**, animates to 0 | driven by `copilotPanelOpen` in the store |
+| Bottom bar | ~48px | the "Production Layers" strip |
+| *overlay* | floating action bar | centred pill |
+| *overlay* | modals and sheets | |
+
+Two corrections worth recording:
+
+1. **The dark icon rail on the far left of the screenshots is not SwishX.**
+   Verified — the app root measures the full viewport width and no `w-[58px]`
+   rail renders. It is the desktop app's own chrome.
+2. **The right panel is already collapsible.** `copilotPanelOpen` exists in the
+   store with a toggle and an animated width. Whether a visible control is
+   wired to it is unconfirmed and belongs to 8e.
+
+## 2b. The four layout archetypes
 
 Everything in the app is one of these:
 
@@ -88,6 +119,18 @@ Authoring a video canvas on a phone is not. Treating those the same would
 waste most of the effort.
 
 ### Tier 1 — ≥1024px · tablet landscape and small laptops · **do this**
+
+The arithmetic, measured at 1024:
+
+| Case | Chrome | Canvas left | Verdict |
+|---|---|---|---|
+| 3-pane, panel open | 305 + 410 = **715** | **309px** | 16:9 canvas would be 174px tall — unusable |
+| 3-pane, panel closed | 305 | **719px** | 719×404 canvas — works |
+| 2-pane (script view) | 410 | **614px** | workable, tight |
+
+That is why the panel closes by default below desktop: it is the difference
+between a usable and an unusable canvas.
+
 The two- and three-pane screens work at 1024 instead of assuming ~1500.
 - rail and inspector get `min-w`/`max-w` instead of fixed widths
 - canvas takes the remaining space
