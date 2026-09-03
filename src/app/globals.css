@@ -1,67 +1,168 @@
 @import "tailwindcss";
 
-/* ── Core brand tokens (HTML mockup palette) ─────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — single source of truth.
+
+   Values live in @theme so Tailwind v4 generates real utilities
+   (bg-brand, text-ink-3, border-hair, rounded-card, shadow-float,
+   ease-entrance) instead of forcing arbitrary bg-[var(--brand)] strings.
+
+   Naming rule: these are deliberately NOT sm/md/lg/xl. Those names are
+   Tailwind's own radius and shadow scales, which this codebase already
+   uses in ~380 places — reusing them would silently restyle all of them.
+   Radii are named for the thing they wrap; shadows for their elevation.
+
+   The short aliases in :root below (--brand, --ink, --r, --sh-2 …) are
+   kept so every already-shipped [var(--x)] usage keeps working. Prefer
+   the utilities in new and edited code.
+   ───────────────────────────────────────────────────────────────── */
+@theme {
+  /* Brand */
+  --color-brand:      #fd4816;
+  --color-brand-2:    #ff8a4c;
+  --color-brand-deep: #b82f0c;
+  --color-brand-ink:  #7a1f06;
+  --color-brand-light: #ff9e80;
+
+  /* Surfaces */
+  --color-canvas: #fbfaf9;
+  --color-card:   #ffffff;
+  --color-subtle: #f7f8f6;
+
+  /* Ink ramp — ink is strongest, ink-4 is faintest */
+  --color-ink:   #0a0d14;
+  --color-ink-2: #3c414d;
+  --color-ink-3: #6b7280;
+  --color-ink-4: #9aa0ac;
+
+  /* Hairlines / borders */
+  --color-hair:   rgba(10,13,20,.08);
+  --color-hair-2: rgba(10,13,20,.14);
+  --color-hair-3: rgba(10,13,20,.22);
+
+  /* Brand tints */
+  --color-tint:      #fff5f1;
+  --color-tint-2:    #fff9f6;
+  --color-tint-strong: #ffece5;
+  --color-tint-line:   #ffe3d8;
+
+  /* Status */
+  --color-ok:        #12784a;
+  --color-ok-bg:     #e9f8f0;
+  --color-ok-line:   #c3ebd7;
+  --color-warn:      #a15c07;
+  --color-warn-bg:   #fff5e6;
+  --color-warn-line: #f5dfb8;
+  --color-danger:    #9f3a38;
+  --color-danger-bg: #fceae8;
+
+  /* Accents — prefixed so they never read as Tailwind's blue-500 scale */
+  --color-accent-blue:   #1d4ed8;
+  --color-accent-violet: #5b21b6;
+  --color-accent-amber:  #b45309;
+
+  --color-lime: #d8f05d;
+
+  /* Radii — named for what they wrap, not by t-shirt size */
+  --radius-chip:    10px;
+  --radius-control: 14px;
+  --radius-panel:   18px;
+  --radius-card:    24px;
+
+  /* Elevation */
+  --shadow-hair:  0 1px 2px rgba(10,13,20,.05);
+  --shadow-soft:  0 1px 2px rgba(10,13,20,.05), 0 10px 26px -14px rgba(10,13,20,.22);
+  --shadow-float: 0 2px 6px rgba(10,13,20,.05), 0 26px 60px -26px rgba(10,13,20,.34);
+  --shadow-modal: 0 40px 110px -40px rgba(10,13,20,.5), 0 12px 34px -18px rgba(10,13,20,.28);
+
+  /* Easings. --ease-entrance/--ease-exit were already the de-facto pair
+     used inline across ~14 animations in this file; now they have names. */
+  --ease-swish:    cubic-bezier(.22,.61,.36,1);
+  --ease-spring:   cubic-bezier(.34,1.4,.64,1);
+  --ease-entrance: cubic-bezier(.2,.8,.2,1);
+  --ease-exit:     cubic-bezier(.4,0,1,1);
+}
+
+/* ── Aliases: keep every already-shipped var(--x) reference working ── */
 :root {
-  --brand:      #fd4816;
-  --brand-2:    #ff8a4c;
-  --brand-deep: #b82f0c;
-  --brand-ink:  #7a1f06;
-  --canvas:     #fbfaf9;
-  --card:       #ffffff;
-  --ink:        #0a0d14;
-  --ink-2:      #3c414d;
-  --ink-3:      #6b7280;
-  --ink-4:      #9aa0ac;
-  --hair:       rgba(10,13,20,.08);
-  --hair-2:     rgba(10,13,20,.14);
-  --hair-3:     rgba(10,13,20,.22);
-  --tint:       #fff5f1;
-  --tint-2:     #fff9f6;
-  --tint-line:  #ffe3d8;
-  --ok:         #12784a;
-  --ok-bg:      #e9f8f0;
-  --ok-line:    #c3ebd7;
-  --warn:       #a15c07;
-  --warn-bg:    #fff5e6;
-  --blue:       #1d4ed8;
-  --violet:     #5b21b6;
-  --amber:      #b45309;
+  --brand:      var(--color-brand);
+  --brand-2:    var(--color-brand-2);
+  --brand-deep: var(--color-brand-deep);
+  --brand-ink:  var(--color-brand-ink);
+  --canvas:     var(--color-canvas);
+  --card:       var(--color-card);
+  --ink:        var(--color-ink);
+  --ink-2:      var(--color-ink-2);
+  --ink-3:      var(--color-ink-3);
+  --ink-4:      var(--color-ink-4);
+  --hair:       var(--color-hair);
+  --hair-2:     var(--color-hair-2);
+  --hair-3:     var(--color-hair-3);
+  --tint:       var(--color-tint);
+  --tint-2:     var(--color-tint-2);
+  --tint-line:  var(--color-tint-line);
+  --ok:         var(--color-ok);
+  --ok-bg:      var(--color-ok-bg);
+  --ok-line:    var(--color-ok-line);
+  --warn:       var(--color-warn);
+  --warn-bg:    var(--color-warn-bg);
+  --warn-line:  var(--color-warn-line);
+  --blue:       var(--color-accent-blue);
+  --violet:     var(--color-accent-violet);
+  --amber:      var(--color-accent-amber);
 
-  /* Corner radius */
-  --r-s:  10px;
-  --r:    14px;
-  --r-l:  18px;
-  --r-xl: 24px;
+  --r-s:  var(--radius-chip);
+  --r:    var(--radius-control);
+  --r-l:  var(--radius-panel);
+  --r-xl: var(--radius-card);
 
-  /* Shadows */
-  --sh-1: 0 1px 2px rgba(10,13,20,.05);
-  --sh-2: 0 1px 2px rgba(10,13,20,.05), 0 10px 26px -14px rgba(10,13,20,.22);
-  --sh-3: 0 2px 6px rgba(10,13,20,.05), 0 26px 60px -26px rgba(10,13,20,.34);
-  --sh-4: 0 40px 110px -40px rgba(10,13,20,.5), 0 12px 34px -18px rgba(10,13,20,.28);
+  --sh-1: var(--shadow-hair);
+  --sh-2: var(--shadow-soft);
+  --sh-3: var(--shadow-float);
+  --sh-4: var(--shadow-modal);
 
-  /* Easings */
-  --e:      cubic-bezier(.22,.61,.36,1);
-  --spring: cubic-bezier(.34,1.4,.64,1);
+  --e:      var(--ease-swish);
+  --spring: var(--ease-spring);
 
-  /* Legacy tokens kept for existing screens */
-  --background:       var(--canvas);
-  --surface:          var(--card);
-  --surface-subtle:   #f7f8f6;
-  --ink-muted:        var(--ink-3);
-  --line:             var(--hair);
-  --line-strong:      var(--hair-2);
-  --brand-strong:     var(--brand-deep);
-  --brand-soft:       var(--tint);
-  --lime:             #d8f05d;
-  --warning:          var(--warn);
-  --warning-soft:     var(--warn-bg);
-  --danger:           #9f3a38;
-  --danger-soft:      #fceae8;
-  --shadow-sm:        var(--sh-1);
-  --shadow-lg:        var(--sh-3);
-  --squircle-control: var(--r);
-  --squircle-panel:   var(--r-l);
-  --squircle-card:    var(--r-xl);
+  /* Older screen aliases */
+  --background:     var(--color-canvas);
+  --surface:        var(--color-card);
+  --surface-subtle: var(--color-subtle);
+  --ink-muted:      var(--color-ink-3);
+  --line:           var(--color-hair);
+  --line-strong:    var(--color-hair-2);
+  --brand-strong:   var(--color-brand-deep);
+  --brand-soft:     var(--color-tint);
+  --lime:           var(--color-lime);
+  --warning:        var(--color-warn);
+  --warning-soft:   var(--color-warn-bg);
+  --danger:         var(--color-danger);
+  --danger-soft:    var(--color-danger-bg);
+
+  /* NOTE: these two are not aliases — they are deliberate overrides of
+     Tailwind's own scale. v4 compiles shadow-sm to var(--shadow-sm), so
+     these already reskin every shadow-sm (28 uses) and shadow-lg (7 uses)
+     in the app to brand elevation. Preserved as-is; changing them is a
+     visual change across all 35 call sites. */
+  --shadow-sm: var(--shadow-hair);
+  --shadow-lg: var(--shadow-float);
+
+  /* Referenced across the app but never defined until now — every one of
+     these was resolving to nothing: the amber trio left the warning
+     callouts in step1-format / step4-script-review with no background,
+     border or text colour, and --tint-strong left several studio-screen
+     hover states inert. Mapped onto the existing warn/brand/tint families
+     rather than introducing a parallel palette. --brand-light adopts the
+     #ff9e80 literal that was already inline as its fallback. */
+  --amber-bg:    var(--color-warn-bg);
+  --amber-line:  var(--color-warn-line);
+  --amber-text:  var(--color-warn);
+  --brand-light: var(--color-brand-light);
+  --tint-strong: var(--color-tint-strong);
+
+  --squircle-control: var(--radius-control);
+  --squircle-panel:   var(--radius-panel);
+  --squircle-card:    var(--radius-card);
 }
 
 /* ── Base resets ─────────────────────────────────────────────────── */
@@ -102,7 +203,7 @@ button.rounded-full {
 }
 
 [role="dialog"] {
-  animation: modal-backdrop-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: modal-backdrop-in 220ms var(--ease-entrance) both;
 }
 
 ::selection {
@@ -182,7 +283,7 @@ button.rounded-full {
 }
 
 .rise-in {
-  animation: rise-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: rise-in 360ms var(--ease-entrance) both;
 }
 
 @keyframes drawer-in {
@@ -219,7 +320,7 @@ button.rounded-full {
 }
 
 .scenario-drawer {
-  animation: drawer-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: drawer-in 280ms var(--ease-entrance) both;
 }
 
 .demo-orbit {
@@ -239,12 +340,12 @@ button.rounded-full {
 
 .select-pop {
   transform-origin: top center;
-  animation: select-pop 170ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: select-pop 170ms var(--ease-entrance) both;
 }
 
 .select-pop-above {
   transform-origin: bottom center;
-  animation: select-pop-above 170ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: select-pop-above 170ms var(--ease-entrance) both;
 }
 
 @keyframes select-pop-above {
@@ -270,11 +371,11 @@ button.rounded-full {
 }
 
 .select-pop-out {
-  animation: select-pop-out 150ms cubic-bezier(0.4, 0, 1, 1) both;
+  animation: select-pop-out 150ms var(--ease-exit) both;
 }
 
 .select-pop-out-above {
-  animation: select-pop-out-above 150ms cubic-bezier(0.4, 0, 1, 1) both;
+  animation: select-pop-out-above 150ms var(--ease-exit) both;
 }
 
 @keyframes select-pop-out-above {
@@ -300,7 +401,7 @@ button.rounded-full {
 }
 
 .page-enter {
-  animation: page-enter 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: page-enter 360ms var(--ease-entrance) both;
 }
 
 @keyframes rise-in-stagger {
@@ -315,7 +416,7 @@ button.rounded-full {
 }
 
 .rise-in-stagger {
-  animation: rise-in-stagger 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: rise-in-stagger 420ms var(--ease-entrance) both;
 }
 
 @keyframes step-fade-in {
@@ -330,7 +431,7 @@ button.rounded-full {
 }
 
 .step-transition {
-  animation: step-fade-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: step-fade-in 240ms var(--ease-entrance) both;
 }
 
 @keyframes modal-backdrop-in {
@@ -392,11 +493,11 @@ button.rounded-full {
 }
 
 ::view-transition-old(root) {
-  animation: 170ms cubic-bezier(0.4, 0, 1, 1) both page-exit;
+  animation: 170ms var(--ease-exit) both page-exit;
 }
 
 ::view-transition-new(root) {
-  animation: 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both page-enter;
+  animation: 320ms var(--ease-entrance) both page-enter;
 }
 
 @media (prefers-reduced-motion: reduce) {
