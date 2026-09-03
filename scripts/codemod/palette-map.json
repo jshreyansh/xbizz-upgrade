@@ -1,0 +1,86 @@
+{
+  "$comment": [
+    "Palette migration rules for the Phase 2 codemod. Generated from a measured",
+    "inventory of every colour literal in src/ (1,107 uses, 336 distinct values).",
+    "See DESIGN_SYSTEM_PLAN.md and the palette decision sheet.",
+    "",
+    "SCOPE IS DELIBERATELY NARROW. Only literals used as UI chrome are mapped.",
+    "The codemod MUST skip: any literal inside a linear-gradient()/radial-gradient()",
+    "string (309 uses, illustration not chrome), anything in mock-*/demo-scenarios/",
+    "persona fixture files (82 uses), and any colour absent from `map` below",
+    "(239 tail one-offs). Standardising those would be wrong, not merely unprofitable."
+  ],
+  "skip": {
+    "when_inside": [
+      "linear-gradient(",
+      "radial-gradient(",
+      "conic-gradient("
+    ],
+    "file_patterns": [
+      "mock-",
+      "demo-scenarios",
+      "personas"
+    ],
+    "unmapped_colours": "leave untouched \u2014 do not snap to nearest token"
+  },
+  "map": {
+    "#ffffff": "card",
+    "#fff": "card",
+    "#fafbf9": "canvas",
+    "#fafbfa": "canvas",
+    "#fafbf8": "canvas",
+    "#f9faf8": "canvas",
+    "#f7f8f6": "subtle",
+    "#f4f6f4": "subtle",
+    "#f2f7f4": "subtle",
+    "#f8faf8": "subtle",
+    "#f5f8f6": "subtle",
+    "#f8f9f8": "subtle",
+    "#e3e8e5": "hair-2",
+    "#e9ece9": "hair-2",
+    "#e5e8e4": "hair-2",
+    "#dfe5e1": "hair-2",
+    "#cbd6d0": "hair-3",
+    "#b8ccc2": "hair-3",
+    "#ccd7d1": "hair-3",
+    "#d8e0db": "hair-3",
+    "#edf1ee": "ok-bg",
+    "#eef2ef": "ok-bg",
+    "#edf5f0": "ok-bg",
+    "#eaf2ed": "ok-bg",
+    "#eef5f1": "ok-bg",
+    "#e9f4ee": "ok-bg",
+    "#f0f6f2": "ok-bg",
+    "#dc2626": "danger",
+    "#ef4444": "danger",
+    "#b91c1c": "danger",
+    "#fecaca": "danger-bg",
+    "#fca5a5": "danger-bg",
+    "#fde68a": "warn-line",
+    "#fef3c7": "warn-bg",
+    "#10231c": "ink",
+    "#111614": "ink",
+    "#0f1512": "ink",
+    "#5f6b65": "ink-3",
+    "#69736e": "ink-3",
+    "#66736c": "ink-3",
+    "#738079": "ink-3",
+    "#52616a": "ink-3",
+    "#22c07a": "live",
+    "#12784a": "ok",
+    "#d8f05d": "lime",
+    "#1d4ed8": "accent-blue",
+    "#5b21b6": "accent-violet",
+    "#fd4816": "brand",
+    "#b45309": "accent-amber"
+  },
+  "needs_new_token": {
+    "#ff5b2d": {
+      "uses": 30,
+      "note": "Always the top stop of linear-gradient(180deg,#ff5b2d,var(--brand)). A real brand gradient partner, not a stray. Give it its own token (e.g. --color-brand-lift) rather than snapping it to brand."
+    }
+  },
+  "review_before_running": {
+    "hair-2/hair-3 group": "72 uses lose a green tint and become neutral rules. The only group with a visible change; everything else shifts under delta 15."
+  }
+}
