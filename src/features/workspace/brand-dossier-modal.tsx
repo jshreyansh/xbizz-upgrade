@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Edit3,
   Lock,
-  Plus,
   Search,
   Sparkles,
   Square,
@@ -18,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
 export {
@@ -392,61 +392,21 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       />
                     </div>
 
-                    {/* Direct 1-Click Therapy Area Chips + "Other" Option */}
-                    <div className="flex flex-wrap gap-2 max-h-[170px] overflow-y-auto p-1">
-                      {filteredDiseases.map((disease) => {
-                        const isSel = selectedDiseaseIds.includes(disease.id);
-                        return (
-                          <button
-                            key={disease.id}
-                            type="button"
-                            onClick={() => toggleDisease(disease.id)}
-                            className={cn(
-                              "px-3 py-1.5 rounded-full text-body font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
-                              isSel
-                                ? "bg-tint border-brand text-brand-deep font-bold shadow-2xs"
-                                : "bg-card border-hair-2 text-ink-2 hover:border-hair-3 hover:bg-subtle"
-                            )}
-                          >
-                            {isSel && <Check className="size-3 text-brand stroke-[3]" />}
-                            <span>{disease.label}</span>
-                          </button>
-                        );
-                      })}
-
-                      {/* + Other button */}
-                      <button
-                        type="button"
-                        onClick={() => setShowCustomDiseaseBox(!showCustomDiseaseBox)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-full text-body font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1.5",
-                          showCustomDiseaseBox
-                            ? "bg-ink border-ink text-white shadow-2xs font-bold"
-                            : "bg-card border-hair-3 text-ink-2 hover:border-hair-3 hover:bg-subtle"
-                        )}
-                      >
-                        <Plus className="size-3" />
-                        <span>Other (Specify)</span>
-                      </button>
-                    </div>
-
-                    {/* Inline Custom Area Input Box */}
-                    {showCustomDiseaseBox && (
-                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-subtle border border-hair-2 animate-in fade-in duration-100">
-                        <input
-                          type="text"
-                          value={customDiseaseInput}
-                          onChange={(e) => setCustomDiseaseInput(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter") handleAddCustomDisease(); }}
-                          placeholder="Type custom therapy or disease area (e.g. Rare Diseases, Ophthalmology)..."
-                          className="flex-1 bg-card rounded-lg border border-hair-2 px-3 py-1.5 text-body font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand"
-                          autoFocus
-                        />
-                        <Button size="sm" variant="primary" onClick={handleAddCustomDisease} disabled={!customDiseaseInput.trim()} className="h-7.5 text-label font-bold px-3.5 cursor-pointer">
-                          <span>Add Area</span>
-                        </Button>
-                      </div>
-                    )}
+                    <ChipMultiSelect
+                      size="md"
+                      rowClassName="max-h-[170px] overflow-y-auto p-1"
+                      options={filteredDiseases}
+                      selected={selectedDiseaseIds}
+                      onToggle={toggleDisease}
+                      otherLabel="Other (Specify)"
+                      otherOpen={showCustomDiseaseBox}
+                      onToggleOther={() => setShowCustomDiseaseBox(!showCustomDiseaseBox)}
+                      customValue={customDiseaseInput}
+                      onCustomChange={setCustomDiseaseInput}
+                      onCustomSubmit={handleAddCustomDisease}
+                      customPlaceholder="Type custom therapy or disease area (e.g. Rare Diseases, Ophthalmology)..."
+                      addLabel="Add Area"
+                    />
 
                     {selectedDiseaseIds.length > 0 && (
                       <div className="flex items-center justify-between pt-2 border-t border-hair">
@@ -567,61 +527,20 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         )}
                       </div>
 
-                      {/* Clickable Speciality Chips */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {allSpecialities.map((spec) => {
-                          const isSel = selectedSpecialities.includes(spec);
-                          return (
-                            <button
-                              key={spec}
-                              type="button"
-                              onClick={() => toggleSpeciality(spec)}
-                              className={cn(
-                                "px-2.5 py-1 rounded-full text-label font-semibold border transition-all cursor-pointer flex items-center gap-1",
-                                isSel
-                                  ? "bg-tint border-brand text-brand-deep font-bold shadow-2xs"
-                                  : "bg-card border-hair-2 text-ink-2 hover:border-hair-3 hover:bg-subtle"
-                              )}
-                            >
-                              {isSel && <Check className="size-2.5 text-brand stroke-[3]" />}
-                              <span>{spec}</span>
-                            </button>
-                          );
-                        })}
-
-                        {/* + Other Speciality */}
-                        <button
-                          type="button"
-                          onClick={() => setShowCustomSpecialityBox(!showCustomSpecialityBox)}
-                          className={cn(
-                            "px-2.5 py-1 rounded-full text-label font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1",
-                            showCustomSpecialityBox
-                              ? "bg-ink border-ink text-white font-bold"
-                              : "bg-card border-hair-3 text-ink-2 hover:border-hair-3 hover:bg-subtle"
-                          )}
-                        >
-                          <Plus className="size-3" />
-                          <span>Other</span>
-                        </button>
-                      </div>
-
-                      {/* Custom Speciality Input Box */}
-                      {showCustomSpecialityBox && (
-                        <div className="flex items-center gap-2 p-2 rounded-xl bg-subtle border border-hair-2 animate-in fade-in duration-100">
-                          <input
-                            type="text"
-                            value={customSpecialityInput}
-                            onChange={(e) => setCustomSpecialityInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") handleAddCustomSpeciality(); }}
-                            placeholder="Type custom doctor speciality (e.g. Hematologist, Pathologist)..."
-                            className="flex-1 bg-card rounded-lg border border-hair-2 px-3 py-1.5 text-body font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand"
-                            autoFocus
-                          />
-                          <Button size="sm" variant="primary" onClick={handleAddCustomSpeciality} disabled={!customSpecialityInput.trim()} className="h-7 text-label font-bold px-3 cursor-pointer">
-                            <span>Add</span>
-                          </Button>
-                        </div>
-                      )}
+                      <ChipMultiSelect
+                        size="sm"
+                        options={allSpecialities.map((spec) => ({ id: spec, label: spec }))}
+                        selected={selectedSpecialities}
+                        onToggle={toggleSpeciality}
+                        otherLabel="Other"
+                        otherOpen={showCustomSpecialityBox}
+                        onToggleOther={() => setShowCustomSpecialityBox(!showCustomSpecialityBox)}
+                        customValue={customSpecialityInput}
+                        onCustomChange={setCustomSpecialityInput}
+                        onCustomSubmit={handleAddCustomSpeciality}
+                        customPlaceholder="Type custom doctor speciality (e.g. Hematologist, Pathologist)..."
+                        addLabel="Add"
+                      />
 
                       {/* Continue to Shape */}
                       <div className="flex justify-end pt-1">
