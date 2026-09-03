@@ -64,6 +64,20 @@
   --color-warn-on-dark: #fbbf24;
   --color-info-on-dark: #7dd3fc;
 
+  /* Info (blue) as a full role set. The first pass only had a base colour
+     here, so a pale bg-blue-50 badge collapsed onto the solid accent and its
+     text became the same colour — invisible. Values are the Tailwind shades
+     that were in use, so this restores the original appearance. */
+  --color-info:        #1d4ed8;   /* was blue-700 */
+  --color-info-strong: #2563eb;   /* was blue-600, solid fills */
+  --color-info-bg:     #eff6ff;   /* was blue-50  */
+  --color-info-line:   #bfdbfe;   /* was blue-200 */
+
+  /* Lime, likewise — it is an accent on dark, not a surface. */
+  --color-lime-bg:   #f7fee7;
+  --color-lime-line: #d9f99d;
+  --color-lime-ink:  #3f6212;
+
   /* Accents — prefixed so they never read as Tailwind's blue-500 scale */
   --color-accent-blue:   #1d4ed8;
   --color-accent-violet: #5b21b6;

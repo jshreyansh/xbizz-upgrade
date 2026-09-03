@@ -645,7 +645,7 @@ export function InfographicStudioScreen() {
                       {isActive && <span className="size-2 rounded-full bg-brand" />}
                     </div>
                     <div className="aspect-[3/4] w-full rounded-lg bg-card border border-hair-2 p-2 flex flex-col justify-between overflow-hidden shadow-inner-xs">
-                      <div className={cn("h-2 w-14 rounded", pg.id === 1 ? "bg-[#14233c]" : "bg-accent-blue")} />
+                      <div className={cn("h-2 w-14 rounded", pg.id === 1 ? "bg-[#14233c]" : "bg-info-strong")} />
                       <div className="h-4 w-full bg-brand/20 rounded" />
                       <div className="h-6 w-full bg-black/5 rounded" />
                       <div className="h-2 w-full bg-black/10 rounded" />

@@ -1350,8 +1350,8 @@ export function StudioScreen() {
                     )}
                   >
                     <div className="size-full rounded-full border border-white/15 animate-spin duration-15000 flex items-center justify-center">
-                      <div className="size-3/4 rounded-full border border-lime/30 flex items-center justify-center">
-                        <div className="size-6 rounded-full bg-lime shadow-soft" />
+                      <div className="size-3/4 rounded-full border border-lime-line/30 flex items-center justify-center">
+                        <div className="size-6 rounded-full bg-lime-bg shadow-soft" />
                       </div>
                     </div>
                   </div>
@@ -1375,7 +1375,7 @@ export function StudioScreen() {
                           : ""
                       )}
                     >
-                      <span className="size-2 rounded-full bg-lime" />
+                      <span className="size-2 rounded-full bg-lime-bg" />
                       <span>{selectedScene.narrativeTag || "PIVOTAL EVIDENCE"}</span>
                       <span className="text-micro font-bold text-white/50 lowercase ml-1">(0:00–0:{selectedScene.duration})</span>
                     </div>
@@ -1414,7 +1414,7 @@ export function StudioScreen() {
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5 mb-1">
-                                <span className="font-extrabold text-lime text-micro uppercase tracking-wider bg-lime/15 px-1.5 py-0.5 rounded border border-lime/30">
+                                <span className="font-extrabold text-lime-ink text-micro uppercase tracking-wider bg-lime-bg/15 px-1.5 py-0.5 rounded border border-lime-line/30">
                                   🫀 Image Asset
                                 </span>
                                 <span className="text-white/60 text-micro font-semibold flex items-center gap-0.5">
@@ -1863,11 +1863,11 @@ export function StudioScreen() {
                         )}
                       >
                         <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <ImageIcon className="size-3.5 text-lime" />
+                          <ImageIcon className="size-3.5 text-lime-ink" />
                           <span className="truncate">3. Chart Image</span>
                         </div>
                         <div className="flex-1 h-full p-1">
-                          <div className="h-full w-[85%] rounded bg-lime border border-lime flex items-center px-2 text-micro font-bold text-lime truncate">
+                          <div className="h-full w-[85%] rounded bg-lime-bg border border-lime-line flex items-center px-2 text-micro font-bold text-lime-ink truncate">
                             CLEARSKIN_Phase_III_ForestPlot.png [0:02 – 0:12]
                           </div>
                         </div>
@@ -1882,11 +1882,11 @@ export function StudioScreen() {
                         )}
                       >
                         <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <Film className="size-3.5 text-accent-blue" />
+                          <Film className="size-3.5 text-info-on-dark" />
                           <span className="truncate">4. B-Roll Video</span>
                         </div>
                         <div className="flex-1 h-full p-1">
-                          <div className="h-full w-[75%] rounded bg-accent-blue border border-accent-blue flex items-center px-2 text-micro font-bold text-accent-blue truncate">
+                          <div className="h-full w-[75%] rounded bg-info-bg border border-info-line flex items-center px-2 text-micro font-bold text-info-on-dark truncate">
                             Cellular_Receptor_Binding_4K.mp4 [0:04 – 0:{selectedScene.duration}]
                           </div>
                         </div>
@@ -1901,11 +1901,11 @@ export function StudioScreen() {
                         )}
                       >
                         <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <Type className="size-3.5 text-accent-blue" />
+                          <Type className="size-3.5 text-info-on-dark" />
                           <span className="truncate">5. Text Headline</span>
                         </div>
                         <div className="flex-1 h-full p-1">
-                          <div className="h-full w-3/4 rounded bg-accent-blue border border-accent-blue flex items-center px-2 text-micro font-bold text-accent-blue truncate">
+                          <div className="h-full w-3/4 rounded bg-info-bg border border-info-line flex items-center px-2 text-micro font-bold text-info-on-dark truncate">
                             &quot;{selectedScene.title}&quot; [0:01 – 0:09]
                           </div>
                         </div>
@@ -2680,7 +2680,7 @@ export function StudioScreen() {
                     {(selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
                       <div className="rounded-lg border border-hair bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="size-8 rounded-md bg-lime border border-lime flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                          <div className="size-8 rounded-md bg-lime-bg border border-lime-line flex items-center justify-center p-1 shrink-0 overflow-hidden">
                             <img
                               src={selectedScene.mediaImageSrc || "/anatomical-heart.png"}
                               alt="Heart"
@@ -2716,7 +2716,7 @@ export function StudioScreen() {
                     {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
                       <div className="rounded-lg border border-hair bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="size-8 rounded-md bg-accent-blue border border-accent-blue flex items-center justify-center text-accent-blue shrink-0 overflow-hidden">
+                          <div className="size-8 rounded-md bg-info-bg border border-info-line flex items-center justify-center text-info-on-dark shrink-0 overflow-hidden">
                             <video
                               src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
                               autoPlay
@@ -2733,7 +2733,7 @@ export function StudioScreen() {
                             <div className="text-micro text-ink-3 flex items-center gap-1.5">
                               <span>Video Clip</span>
                               <span>·</span>
-                              <span className="text-accent-blue font-semibold">0:04 – 0:{selectedScene.duration}s (60fps)</span>
+                              <span className="text-info-on-dark font-semibold">0:04 – 0:{selectedScene.duration}s (60fps)</span>
                             </div>
                           </div>
                         </div>

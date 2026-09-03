@@ -303,7 +303,7 @@ export function CreativesModeScreen() {
           <div className="flex flex-col p-5 pb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-accent-blue text-accent-blue border border-accent-blue">
+                <div className="grid size-10 place-items-center rounded-xl bg-info-bg text-info border border-info-line">
                   <Layers className="size-5" />
                 </div>
                 <div>
@@ -313,14 +313,14 @@ export function CreativesModeScreen() {
                   <p className="text-xs text-ink-2 font-medium">Visual Detail Aid &amp; Slide Panels</p>
                 </div>
               </div>
-              <span className="rounded-full bg-accent-blue px-2.5 py-0.5 text-caption font-bold text-accent-blue border border-accent-blue">
+              <span className="rounded-full bg-info-bg px-2.5 py-0.5 text-caption font-bold text-info border border-info-line">
                 Field Force
               </span>
             </div>
 
             {/* Animated Rotating Feature ticker */}
             <div className="rounded-xl bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
-              <div className="grid size-4 place-items-center rounded-full bg-accent-blue text-accent-blue shrink-0">
+              <div className="grid size-4 place-items-center rounded-full bg-info-bg text-info shrink-0">
                 <Check className="size-2.5" />
               </div>
               <span className="font-semibold text-ink animate-fade-in transition-all duration-300">
@@ -393,7 +393,7 @@ export function CreativesModeScreen() {
                 <span
                   key={i}
                   className={`size-1.5 rounded-full transition-all duration-300 ${
-                    i === deckIndex ? "bg-accent-blue w-4" : "bg-white/40"
+                    i === deckIndex ? "bg-info-bg w-4" : "bg-white/40"
                   }`}
                 />
               ))}
