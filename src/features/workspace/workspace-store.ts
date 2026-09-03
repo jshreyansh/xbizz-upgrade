@@ -193,3 +193,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setInfographicActivePage: (infographicActivePage) => set({ infographicActivePage }),
   reset: () => set(initialState),
 }));
+
+/**
+ * Dev-only escape hatch for driving the app straight to a screen.
+ *
+ * Several screens — the studio in particular — sit behind gates that need a
+ * real file upload, which makes them unreachable for automated visual checks
+ * and slow to reach by hand. Exposing the store in development lets you jump
+ * to any state from the console:
+ *
+ *   __swishxStore.setState({ view: "studio", videoSubStage: "studio" })
+ *   __swishxStore.getState().reset()
+ *
+ * Stripped from production builds by the NODE_ENV check.
+ */
+if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+  (window as unknown as { __swishxStore?: typeof useWorkspaceStore }).__swishxStore =
+    useWorkspaceStore;
+}
