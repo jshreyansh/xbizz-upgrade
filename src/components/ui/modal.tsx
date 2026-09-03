@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { Panel } from "@/components/ui/panel";
 import { Surface } from "@/components/ui/surface";
-import { Text } from "@/components/ui/text";
 import { IconButton } from "@/components/ui/button";
 
 /**
@@ -13,11 +13,9 @@ import { IconButton } from "@/components/ui/button";
  * close, a click-outside target, body scroll lock, initial focus, a focus
  * trap, and aria-modal wiring.
  *
- * It also owns the scroll boundary. The popover-clipping bugs that took
- * several passes to fix came from absolutely-positioned menus inside a
- * scrollable dialog body — here the body is the only scroll container and
- * the header and footer stay put, so content can grow without the dialog
- * itself scrolling.
+ * The scroll boundary itself lives in <Panel>, which this composes — the
+ * same contract the inspectors and (later) the mobile sheet use, so the
+ * popover-clipping class of bug is solved in one place rather than three.
  */
 
 type ModalSize = "sm" | "md" | "lg" | "xl";
@@ -106,33 +104,21 @@ export function Modal({
         elevation="modal"
         className={cn("flex max-h-[88vh] w-full flex-col overflow-hidden", sizes[size], className)}
       >
-        {(title || !hideClose) && (
-          <div className="flex shrink-0 items-start gap-3 border-b border-hair px-5 py-4">
-            <div className="flex-1 min-w-0">
-              {title && <Text as="h2" size="subhead" weight="bold">{title}</Text>}
-              {description && (
-                <Text as="p" size="body" tone="subtle" className="mt-0.5">
-                  {description}
-                </Text>
-              )}
-            </div>
-            {!hideClose && (
-              <IconButton aria-label="Close" onClick={onClose} className="-mr-1 -mt-1">
-                <svg viewBox="0 0 14 14" className="size-3.5" aria-hidden="true">
-                  <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
-                </svg>
-              </IconButton>
-            )}
-          </div>
-        )}
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
-
-        {footer && (
-          <div className="flex shrink-0 items-center justify-end gap-2 border-t border-hair px-5 py-3.5">
-            {footer}
-          </div>
-        )}
+        <Panel
+          title={title}
+          description={description}
+          footer={footer}
+          actions={!hideClose && (
+            <IconButton aria-label="Close" onClick={onClose} className="-mr-1 -mt-1">
+              <svg viewBox="0 0 14 14" className="size-3.5" aria-hidden="true">
+                <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" />
+              </svg>
+            </IconButton>
+          )}
+          className="min-h-0 flex-1"
+        >
+          {children}
+        </Panel>
       </Surface>
     </div>
   );
