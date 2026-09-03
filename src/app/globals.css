@@ -16,7 +16,7 @@
    kept so every already-shipped [var(--x)] usage keeps working. Prefer
    the utilities in new and edited code.
    ───────────────────────────────────────────────────────────────── */
-@theme {
+@theme static {
   /* Brand */
   --color-brand:      #fd4816;
   --color-brand-2:    #ff8a4c;
