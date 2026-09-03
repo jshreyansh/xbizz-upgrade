@@ -30,7 +30,7 @@ export function VideoWizardHeader({
       <div className="flex items-center gap-3 min-w-[140px]">
         <button
           onClick={onBack}
-          className="focus-ring inline-flex items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-[13px] font-semibold text-[var(--ink-2)] transition-all duration-200 hover:bg-black/5 hover:text-[var(--ink)]"
+          className="focus-ring inline-flex items-center gap-1.5 rounded-chip px-2.5 py-1.5 text-body-lg font-semibold text-ink-2 transition-all duration-200 hover:bg-black/5 hover:text-ink"
           aria-label="Go back"
         >
           <ArrowLeft className="size-4" />
@@ -41,10 +41,10 @@ export function VideoWizardHeader({
       {/* Center: Animated Title & Onboarding-style Step Dots */}
       <div className="flex flex-col items-center justify-center gap-1 flex-1 min-w-0">
         <div className="flex items-center gap-2 max-w-full">
-          <h1 className="text-[15.5px] font-[800] tracking-tight text-[var(--ink)] sm:text-[16.5px] truncate transition-all duration-300">
+          <h1 className="text-subhead font-[800] tracking-tight text-ink sm:text-title truncate transition-all duration-300">
             {currentStepConfig.title}
           </h1>
-          <span className="shrink-0 rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[11px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+          <span className="shrink-0 rounded-full bg-tint px-2.5 py-0.5 text-label font-bold text-brand-deep border border-tint-line">
             Step {currentStep} of 3
           </span>
         </div>
@@ -72,7 +72,7 @@ export function VideoWizardHeader({
           onClick={onClose}
           variant="ghost"
           size="icon"
-          className="size-8 rounded-[9px] text-[var(--ink-3)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors"
+          className="size-8 rounded-[9px] text-ink-3 hover:bg-black/5 hover:text-ink transition-colors"
           aria-label="Exit creation"
         >
           <X className="size-4" />
@@ -82,7 +82,7 @@ export function VideoWizardHeader({
       {/* Persistent Full-Width Header Bottom Progress Bar (identical smooth easing to Onboarding) */}
       <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#eef0eb]" />
       <div
-        className="absolute bottom-0 left-0 h-[2.5px] bg-gradient-to-r from-[var(--brand)] to-[#ff8f4d] shadow-[0_0_10px_rgba(253,72,22,0.45)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="absolute bottom-0 left-0 h-[2.5px] bg-gradient-to-r from-brand to-[#ff8f4d] shadow-[0_0_10px_rgba(253,72,22,0.45)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{ width: `${progressPercent}%` }}
       />
     </header>

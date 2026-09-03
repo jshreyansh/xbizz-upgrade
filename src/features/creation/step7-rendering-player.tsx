@@ -69,7 +69,7 @@ export function Step7RenderingPlayer() {
                   gap: 4,
                 }}
               >
-                <LogoMark size={26} className="animate-brand-spin text-[var(--brand)]" />
+                <LogoMark size={26} className="animate-brand-spin text-brand" />
                 <span style={{ fontSize: 15, fontWeight: 800, color: "var(--brand-deep)" }}>{progress}%</span>
               </div>
             </div>

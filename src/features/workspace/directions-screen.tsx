@@ -479,32 +479,32 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#edf0ed] h-screen overflow-hidden">
       {/* ─── Top Studio-Matched Header Bar (Same as Scenes & Editor) ─── */}
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-[var(--line)] bg-white px-3 sm:px-5">
+      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-white px-3 sm:px-5">
         <button
           onClick={handleBackToBrief}
-          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-[var(--ink-muted)] hover:bg-black/5 cursor-pointer"
+          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
           aria-label="Back to brief"
         >
           <ArrowLeft className="size-4" />
         </button>
         <SwishXMark compact />
-        <div className="mx-3 h-5 w-px bg-[var(--line)]" />
+        <div className="mx-3 h-5 w-px bg-hair" />
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate text-[12.5px] font-[800] text-[var(--ink)]">{projectName}</span>
-            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-[9px] font-bold text-[#69736e] sm:inline">
+            <span className="truncate text-body font-[800] text-ink">{projectName}</span>
+            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-micro font-bold text-[#69736e] sm:inline">
               Draft v1
             </span>
           </div>
-          <div className="mt-0.5 hidden text-[9.5px] text-[var(--ink-muted)] sm:block">
+          <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
             Saved just now · {presenter || "Maya Kapoor"}
           </div>
         </div>
 
         {/* State Switcher in Header */}
         <div className="ml-6 hidden items-center gap-1 sm:flex">
-          <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-extrabold tracking-wide text-[var(--brand-deep)] border border-[var(--tint-line)]">
+          <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
             Plan View
           </span>
         </div>
@@ -516,7 +516,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           <Button variant="ghost" size="icon" aria-label="Redo" disabled>
             <Redo2 className="size-4" />
           </Button>
-          <div className="mx-1 h-5 w-px bg-[var(--line)]" />
+          <div className="mx-1 h-5 w-px bg-hair" />
           <Button variant="ghost" size="sm">
             <History className="size-3.5" /> Versions
           </Button>
@@ -530,8 +530,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             className={cn(
               "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
               copilotPanelOpen
-                ? "border-black/15 bg-black/5 text-[var(--ink)] hover:bg-black/10"
-                : "border-black/10 bg-white text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--brand)] shadow-2xs"
+                ? "border-black/15 bg-black/5 text-ink hover:bg-black/10"
+                : "border-black/10 bg-white text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
             )}
             title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
             aria-label="Toggle sidebar"
@@ -555,31 +555,31 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             maxWidth: copilotPanelOpen ? "calc(100% - 410px)" : "100%",
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
-          className="flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
+          className="flex flex-col shrink-0 min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
         >
           {isGenerating ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
-              <div className="size-20 rounded-3xl bg-[var(--tint)] border border-[var(--tint-line)] flex items-center justify-center mb-6 shadow-sm">
-                <Sparkles className="size-10 text-[var(--brand)] animate-pulse" />
+              <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
+                <Sparkles className="size-10 text-brand animate-pulse" />
               </div>
-              <h3 className="text-[22px] font-extrabold text-[var(--ink)] tracking-tight">
+              <h3 className="text-display font-extrabold text-ink tracking-tight">
                 Generating Clinical Script &amp; Storyboard...
               </h3>
-              <p className="text-[13.5px] text-[var(--ink-muted)] mt-1.5 max-w-[440px]">
+              <p className="text-body-lg text-ink-3 mt-1.5 max-w-[440px]">
                 Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims.
               </p>
 
-              <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-[12.5px]">
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+              <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-white border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-white border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Synthesized 5-scene clinical narrative &amp; script</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-white border-black/10 text-[var(--ink)] shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-[var(--ok)]" : "text-black/30")} strokeWidth={2.5} />
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-white border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Linking citations to FDA label §5.1</span>
                 </div>
               </div>
@@ -590,22 +590,22 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               <div className="flex items-center justify-between pb-2 shrink-0">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">
+                    <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
                       Available Context
                     </span>
-                    <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)] border border-emerald-200">
+                    <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-emerald-200">
                       Grounding active
                     </span>
                   </div>
-                  <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight mt-0.5">
+                  <h2 className="text-display font-[850] text-ink tracking-tight mt-0.5">
                     {brandName} Dossier Plan &amp; Storyboard Parameters
                   </h2>
-                  <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
+                  <p className="text-body text-ink-3 mt-0.5">
                     Refine the creative treatment, audience focus, and evidence cues before confirming scenes.
                   </p>
                 </div>
                 <div className="hidden sm:flex items-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[var(--ok)] border border-[var(--line)] shadow-2xs">
+                  <span className="rounded-full bg-white px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
                     ✓ 214 approved claims cited
                   </span>
                 </div>
@@ -652,7 +652,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     tone={presenter ? "done" : "attention"}
                   >
                     <div className="mb-4">
-                      <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
+                      <div className="text-body-lg font-semibold text-[#5f6b65] mb-2.5">
                         Select AI Presenter Avatar
                       </div>
                       <div className="grid gap-2.5 sm:grid-cols-3">
@@ -661,31 +661,31 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             key={person.name}
                             onClick={() => setPresenter(person.name)}
                             className={cn(
-                              "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                              "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
                               presenter === person.name
-                                ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
+                                ? "border-brand bg-tint ring-2 ring-brand text-brand-deep shadow-xs"
                                 : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                             )}
                           >
                             <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
                             <div className="min-w-0 flex-1">
-                              <span className="block truncate font-bold text-[14px]">{person.name}</span>
-                              <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
+                              <span className="block truncate font-bold text-body-lg">{person.name}</span>
+                              <span className="block text-label text-ink-3 font-normal">{person.role}</span>
                             </div>
-                            {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
+                            {presenter === person.name && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />}
                           </button>
                         ))}
                         <button
                           onClick={() => setPresenterLibraryOpen(true)}
-                          className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
+                          className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-[#e3e8e5] bg-white p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
                         >
                           <span className="flex -space-x-2.5">
                             {presenters.slice(2).map((person) => (
                               <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
                             ))}
                           </span>
-                          <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
-                          <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
+                          <span className="ml-1 text-body-lg text-ink-2">Avatar Library</span>
+                          <ArrowRight className="ml-auto size-4 text-ink-3" />
                         </button>
                       </div>
                     </div>
@@ -755,13 +755,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       </DecisionRow>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-[var(--line)] flex justify-end">
+                    <div className="mt-4 pt-3 border-t border-hair flex justify-end">
                       <Button
                         onClick={() => {
                           setConfirmedTreatment(true);
                           setOpenSection(isProductFocus ? "product-assets" : "message");
                         }}
-                        className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
+                        className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
                       >
                         {isProductFocus ? "Confirm Avatar & Proceed to Product Assets" : "Confirm Avatar & Continue"} <ArrowRight className="size-4 ml-1" />
                       </Button>
@@ -777,9 +777,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     onToggle={() => toggleSection("treatment")}
                     tone={confirmedTreatment ? "done" : "attention"}
                   >
-                    <div className="squircle rounded-[18px] bg-[#f5f8f6] px-4 py-3.5">
-                      <div className="text-[13px] font-semibold text-[var(--brand)]">Why this fits</div>
-                      <p className="mt-1 text-[14px] leading-5 text-[#5f6b65]">{profile.rationale}</p>
+                    <div className="squircle rounded-panel bg-[#f5f8f6] px-4 py-3.5">
+                      <div className="text-body-lg font-semibold text-brand">Why this fits</div>
+                      <p className="mt-1 text-body-lg leading-5 text-[#5f6b65]">{profile.rationale}</p>
                     </div>
                     <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
                       {profile.treatments.map((item, index) => {
@@ -791,20 +791,20 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             className={cn(
                               "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
                               selected
-                                ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
+                                ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
                                 : "border-[#e4e9e6] bg-white opacity-85 hover:opacity-100 hover:border-[#ccd7d1]"
                             )}
                           >
                             <div>
                               <div className="flex items-start justify-between gap-2 mb-2">
-                                <span className="font-bold text-[14.5px] text-[var(--ink)] flex items-center gap-1.5 leading-tight">
+                                <span className="font-bold text-subhead text-ink flex items-center gap-1.5 leading-tight">
                                   {item.label}
                                 </span>
                                 <span
                                   className={cn(
                                     "grid size-5 shrink-0 place-items-center rounded-full border transition",
                                     selected
-                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                      ? "border-brand bg-brand text-white"
                                       : "border-[#d6ddd9] bg-white"
                                   )}
                                 >
@@ -812,11 +812,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 </span>
                               </div>
                               {index === 0 && (
-                                <span className="inline-block mb-2 rounded-full bg-white px-2 py-0.5 text-[10.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
+                                <span className="inline-block mb-2 rounded-full bg-white px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line shadow-2xs">
                                   Recommended
                                 </span>
                               )}
-                              <p className="text-[12.5px] leading-relaxed text-[var(--ink-muted)]">
+                              <p className="text-body leading-relaxed text-ink-3">
                                 {item.description}
                               </p>
                             </div>
@@ -830,7 +830,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           setConfirmedTreatment(true);
                           setOpenSection(isProductFocus ? "product-assets" : null);
                         }}
-                        className="mt-3 bg-[var(--brand)] text-white"
+                        className="mt-3 bg-brand text-white"
                       >
                         Use recommendation <ArrowRight className="size-4" />
                       </Button>
@@ -861,11 +861,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   tone={productMediaList.length > 0 ? "done" : isProductFocus ? "attention" : "default"}
                 >
                   <div className="space-y-3.5">
-                    <div className="rounded-[14px] bg-[#fafbf9] border border-[var(--line)] p-3.5 text-[12.5px] text-[var(--ink-2)] leading-relaxed">
-                      <p className="font-bold text-[var(--ink)] mb-1">
+                    <div className="rounded-control bg-[#fafbf9] border border-hair p-3.5 text-body text-ink-2 leading-relaxed">
+                      <p className="font-bold text-ink mb-1">
                         📸 Product Packshots &amp; Device Reference Media
                       </p>
-                      <p className="text-[var(--ink-muted)] text-[12px]">
+                      <p className="text-ink-3 text-body">
                         Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.
                       </p>
                     </div>
@@ -882,7 +882,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               alt={media.name}
                               className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
-                            <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[8.5px] font-bold text-white uppercase backdrop-blur-xs">
+                            <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-micro font-bold text-white uppercase backdrop-blur-xs">
                               {media.type}
                             </span>
                             <button
@@ -896,10 +896,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           </div>
 
                           <div className="p-2.5">
-                            <span className="block truncate text-[12px] font-bold text-[var(--ink)]">
+                            <span className="block truncate text-body font-bold text-ink">
                               {media.name}
                             </span>
-                            <span className="text-[10px] text-[var(--ink-muted)] block mt-0.5 font-medium">
+                            <span className="text-caption text-ink-3 block mt-0.5 font-medium">
                               {media.size} · Uploaded
                             </span>
                           </div>
@@ -918,16 +918,16 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           };
                           setProductMediaList((prev) => [...prev, sampleItem]);
                         }}
-                        className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[var(--brand)]/40 bg-white p-4 text-center hover:bg-[var(--tint)] hover:border-[var(--brand)] transition cursor-pointer"
+                        className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand/40 bg-white p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
                       >
-                        <div className="grid size-8 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand)]">
+                        <div className="grid size-8 place-items-center rounded-full bg-tint text-brand">
                           <Plus className="size-4" />
                         </div>
                         <div>
-                          <span className="block text-[12px] font-bold text-[var(--brand)]">
+                          <span className="block text-body font-bold text-brand">
                             {productMediaList.length === 0 ? "Upload Product Photos / Videos" : "Add More Product Media"}
                           </span>
-                          <span className="text-[10px] text-[var(--ink-muted)] mt-0.5 block">
+                          <span className="text-caption text-ink-3 mt-0.5 block">
                             PNG, JPG, MP4 · Click to attach asset
                           </span>
                         </div>
@@ -951,7 +951,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           }
                           setOpenSection("message");
                         }}
-                        className="bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white font-bold cursor-pointer"
+                        className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
                       >
                         Save Product Assets &amp; Next <ArrowRight className="size-3.5 ml-1" />
                       </Button>
@@ -1013,7 +1013,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       editing={editingDecision === "topics"}
                       onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}
                     >
-                      <div className="text-[13px] font-semibold text-[#5f6b65]">Include only what matters</div>
+                      <div className="text-body-lg font-semibold text-[#5f6b65]">Include only what matters</div>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {topics.map((topic) => (
                           <button
@@ -1021,9 +1021,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             onClick={() => toggleTopic(topic)}
                             aria-pressed={selectedTopics.includes(topic)}
                             className={cn(
-                              "focus-ring min-h-10 rounded-[12px] border px-3 text-[13px] font-medium transition cursor-pointer",
+                              "focus-ring min-h-10 rounded-[12px] border px-3 text-body-lg font-medium transition cursor-pointer",
                               selectedTopics.includes(topic)
-                                ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)]"
+                                ? "border-[#b8ccc2] bg-[#f2f7f4] text-brand"
                                 : "border-[#e3e8e5] hover:border-[#cbd6d0]"
                             )}
                           >
@@ -1107,7 +1107,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
                     {/* Output Quality & Generation Engine Selector */}
                     <div className="pt-2 border-t border-black/[0.06]">
-                      <label className="text-[12.5px] font-bold text-[var(--ink)] block mb-2">
+                      <label className="text-body font-bold text-ink block mb-2">
                         Generation Output Quality
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1118,25 +1118,25 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           className={cn(
                             "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
                             selectedQuality === "hd"
-                              ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
+                              ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
                               : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                           )}
                         >
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <span className="font-extrabold text-[15px] text-[var(--ink)]">HD Motion</span>
-                              <span className="rounded-full bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-[10px] font-extrabold text-amber-800">
+                              <span className="font-extrabold text-subhead text-ink">HD Motion</span>
+                              <span className="rounded-full bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-caption font-extrabold text-amber-800">
                                 ⚡ {Math.round((durationSeconds / 60) * 2500).toLocaleString()} credits
                               </span>
                             </div>
-                            <p className="text-[12px] leading-relaxed text-[var(--ink-muted)]">
+                            <p className="text-body leading-relaxed text-ink-3">
                               Lifelike motion that stops the scroll — ideal for launches &amp; HCP presentations.
                             </p>
                           </div>
-                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/[0.05] text-[11px] text-[var(--ink-muted)]">
+                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/[0.05] text-label text-ink-3">
                             <span className="flex items-center gap-1 font-medium">⏱ 7–9 min render</span>
                             {selectedQuality === "hd" && (
-                              <span className="font-bold text-[var(--brand)] flex items-center gap-1">
+                              <span className="font-bold text-brand flex items-center gap-1">
                                 <Check className="size-3.5" strokeWidth={3} /> Selected
                               </span>
                             )}
@@ -1150,25 +1150,25 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           className={cn(
                             "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
                             selectedQuality === "cinematic"
-                              ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] shadow-xs"
+                              ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
                               : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                           )}
                         >
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <span className="font-extrabold text-[15px] text-[var(--ink)]">Cinematic 4K</span>
-                              <span className="rounded-full bg-orange-50 border border-orange-200 px-2 py-0.5 text-[10px] font-extrabold text-orange-800">
+                              <span className="font-extrabold text-subhead text-ink">Cinematic 4K</span>
+                              <span className="rounded-full bg-orange-50 border border-orange-200 px-2 py-0.5 text-caption font-extrabold text-orange-800">
                                 ⚡ {Math.round((durationSeconds / 60) * 7500).toLocaleString()} credits
                               </span>
                             </div>
-                            <p className="text-[12px] leading-relaxed text-[var(--ink-muted)]">
+                            <p className="text-body leading-relaxed text-ink-3">
                               Ultra-realistic, fully generated 3D anatomical scenes — for flagship congresses.
                             </p>
                           </div>
-                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/[0.05] text-[11px] text-[var(--ink-muted)]">
+                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/[0.05] text-label text-ink-3">
                             <span className="flex items-center gap-1 font-medium">⏱ 12–14 min render</span>
                             {selectedQuality === "cinematic" && (
-                              <span className="font-bold text-[var(--brand)] flex items-center gap-1">
+                              <span className="font-bold text-brand flex items-center gap-1">
                                 <Check className="size-3.5" strokeWidth={3} /> Selected
                               </span>
                             )}
@@ -1181,20 +1181,20 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     <div className="rounded-[16px] bg-[#121614] border border-white/10 p-4 text-white shadow-md">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
                         <div className="flex items-center gap-2">
-                          <div className="size-7 rounded-lg bg-[var(--brand)]/20 border border-[var(--brand)]/40 flex items-center justify-center">
-                            <Sparkles className="size-3.5 text-[var(--brand)]" />
+                          <div className="size-7 rounded-lg bg-brand/20 border border-brand/40 flex items-center justify-center">
+                            <Sparkles className="size-3.5 text-brand" />
                           </div>
                           <div>
-                            <div className="text-[11px] font-extrabold uppercase tracking-wider text-white/60">Estimated Project Cost</div>
-                            <div className="text-[16px] font-[850] text-white">⚡ {estimatedCredits.toLocaleString()} Credits</div>
+                            <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Estimated Project Cost</div>
+                            <div className="text-subhead font-[850] text-white">⚡ {estimatedCredits.toLocaleString()} Credits</div>
                           </div>
                         </div>
-                        <div className="text-right sm:text-right text-[11.5px] text-white/70">
+                        <div className="text-right sm:text-right text-label text-white/70">
                           <span>Team Balance: </span>
                           <strong className="text-emerald-400 font-bold">50,000 credits</strong>
                         </div>
                       </div>
-                      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/75">
+                      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-label text-white/75">
                         <span>Format: <strong className="text-white font-semibold">{effectiveFormat}</strong> ({duration})</span>
                         <span>Quality: <strong className="text-white font-semibold">{selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}</strong></span>
                         <span>Estimated Render: <strong className="text-white font-semibold">~{estimatedRenderTime}</strong></span>
@@ -1220,7 +1220,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   >
                     {needsPresenter && (
                       <div className="mb-4">
-                        <div className="text-[13px] font-semibold text-[#5f6b65] mb-2.5">
+                        <div className="text-body-lg font-semibold text-[#5f6b65] mb-2.5">
                           Who appears on screen?
                         </div>
                         <div className="grid gap-2.5 sm:grid-cols-3">
@@ -1229,31 +1229,31 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               key={person.name}
                               onClick={() => setPresenter(person.name)}
                               className={cn(
-                                "focus-ring flex min-h-[64px] items-center gap-3 rounded-[14px] border p-3 text-left text-[13.5px] font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                                "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
                                 presenter === person.name
-                                  ? "border-[var(--brand)] bg-[var(--tint)] ring-2 ring-[var(--brand)] text-[var(--brand-deep)] shadow-xs"
+                                  ? "border-brand bg-tint ring-2 ring-brand text-brand-deep shadow-xs"
                                   : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                               )}
                             >
                               <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
                               <div className="min-w-0 flex-1">
-                                <span className="block truncate font-bold text-[14px]">{person.name}</span>
-                                <span className="block text-[11.5px] text-[var(--ink-muted)] font-normal">{person.role}</span>
+                                <span className="block truncate font-bold text-body-lg">{person.name}</span>
+                                <span className="block text-label text-ink-3 font-normal">{person.role}</span>
                               </div>
-                              {presenter === person.name && <Check className="size-4 shrink-0 text-[var(--brand)]" strokeWidth={3} />}
+                              {presenter === person.name && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />}
                             </button>
                           ))}
                           <button
                             onClick={() => setPresenterLibraryOpen(true)}
-                            className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-[14px] border border-[#e3e8e5] bg-white p-3 text-left text-[13px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
+                            className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-[#e3e8e5] bg-white p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-[#fafbf9] cursor-pointer"
                           >
                             <span className="flex -space-x-2.5">
                               {presenters.slice(2).map((person) => (
                                 <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
                               ))}
                             </span>
-                            <span className="ml-1 text-[13px] text-[var(--ink-2)]">Avatar Library</span>
-                            <ArrowRight className="ml-auto size-4 text-[var(--ink-muted)]" />
+                            <span className="ml-1 text-body-lg text-ink-2">Avatar Library</span>
+                            <ArrowRight className="ml-auto size-4 text-ink-3" />
                           </button>
                         </div>
                       </div>
@@ -1358,10 +1358,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       <AlertCircle className="size-4.5 text-amber-400 shrink-0" />
                     )}
                     <div className="min-w-0">
-                      <div className="text-[12.5px] font-bold text-white tracking-tight truncate">
+                      <div className="text-body font-bold text-white tracking-tight truncate">
                         {isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
                       </div>
-                      <p className="text-[11px] text-white/70 truncate">
+                      <p className="text-label text-white/70 truncate">
                         {isPlanReady
                           ? "Grounded against 214 approved claims"
                           : needsProductAssets
@@ -1378,9 +1378,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     disabled={!isPlanReady || isGenerating}
                     size="sm"
                     className={cn(
-                      "h-9.5 px-5 rounded-full text-[13px] font-bold shadow-sm transition-all duration-200 shrink-0",
+                      "h-9.5 px-5 rounded-full text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
                       isPlanReady && !isGenerating
-                        ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:-translate-y-0.5 cursor-pointer"
+                        ? "bg-brand hover:bg-brand-deep text-white hover:-translate-y-0.5 cursor-pointer"
                         : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
                     )}
                   >
@@ -1402,17 +1402,17 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
-            "flex flex-col shrink-0 min-h-0 bg-white border-l border-[var(--line)] shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
+            "flex flex-col shrink-0 min-h-0 bg-white border-l border-hair shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
             !copilotPanelOpen && "border-none pointer-events-none"
           )}
         >
           {/* Chat Top Online Banner */}
-          <div className="p-3.5 border-b border-[var(--line)] bg-white shrink-0">
-            <div className="rounded-xl border border-[var(--brand)]/15 bg-[var(--tint)] p-2.5">
-              <div className="flex items-center gap-2 text-[11.5px] font-bold text-[var(--brand-deep)]">
-                <Sparkles className="size-3.5 text-[var(--brand)]" />
+          <div className="p-3.5 border-b border-hair bg-white shrink-0">
+            <div className="rounded-xl border border-brand/15 bg-tint p-2.5">
+              <div className="flex items-center gap-2 text-label font-bold text-brand-deep">
+                <Sparkles className="size-3.5 text-brand" />
                 <span>Direct with SwishX</span>
-                <span className="ml-auto rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-[9px] font-bold">
+                <span className="ml-auto rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-micro font-bold">
                   {isGenerating ? "Synthesizing..." : "Online"}
                 </span>
               </div>
@@ -1430,16 +1430,16 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 )}
               >
                 {msg.role === "swishx" && (
-                  <div className="size-7 rounded-full bg-[var(--brand)] text-white grid place-items-center font-bold text-[10px] shrink-0 mt-0.5 shadow-2xs">
+                  <div className="size-7 rounded-full bg-brand text-white grid place-items-center font-bold text-caption shrink-0 mt-0.5 shadow-2xs">
                     SX
                   </div>
                 )}
                 <div
                   className={cn(
-                    "rounded-[15px] px-3.5 py-2.5 text-[13px] leading-relaxed shadow-2xs max-w-[85%]",
+                    "rounded-[15px] px-3.5 py-2.5 text-body-lg leading-relaxed shadow-2xs max-w-[85%]",
                     msg.role === "user"
-                      ? "bg-[var(--brand)] text-white font-medium"
-                      : "bg-white border border-[var(--line)] text-[var(--ink)]"
+                      ? "bg-brand text-white font-medium"
+                      : "bg-white border border-hair text-ink"
                   )}
                 >
                   <FormattedMessageText text={msg.text} />
@@ -1455,7 +1455,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           key={chip}
                           type="button"
                           onClick={() => handleSendChatMessage(chip)}
-                          className="text-[11px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] hover:bg-[#ffe5dd] border border-[var(--tint-line)] px-2 py-0.5 rounded-full transition cursor-pointer"
+                          className="text-label font-semibold text-brand-deep bg-tint hover:bg-[#ffe5dd] border border-tint-line px-2 py-0.5 rounded-full transition cursor-pointer"
                         >
                           {chip}
                         </button>
@@ -1471,16 +1471,16 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           {/* Bottom Chat Input Bar with Attached Primary Confirmation Bar */}
           <div className="p-3 border-t border-black/[0.06] bg-white shrink-0 space-y-2">
             {/* Attached Primary Action Bar above chat input */}
-            <div className="rounded-xl border border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)] via-white to-[var(--tint)] p-2.5 shadow-2xs flex items-center justify-between gap-2">
+            <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <div className={cn("size-6 rounded-full grid place-items-center shrink-0", isPlanReady ? "bg-emerald-600 text-white" : "bg-black/10 text-[var(--ink-muted)]")}>
-                  {isPlanReady ? <Check className="size-3.5 stroke-[3]" /> : <Sparkles className="size-3 text-[var(--brand)]" />}
+                <div className={cn("size-6 rounded-full grid place-items-center shrink-0", isPlanReady ? "bg-emerald-600 text-white" : "bg-black/10 text-ink-3")}>
+                  {isPlanReady ? <Check className="size-3.5 stroke-[3]" /> : <Sparkles className="size-3 text-brand" />}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">
+                  <div className="text-label font-bold text-ink truncate">
                     {isPlanReady ? "Ready to generate script" : "Review plan parameters"}
                   </div>
-                  <div className="text-[9.5px] text-[var(--ink-muted)] truncate">
+                  <div className="text-micro text-ink-3 truncate">
                     {isPlanReady ? "Grounded against 214 approved claims" : "Confirm creative & assets"}
                   </div>
                 </div>
@@ -1491,9 +1491,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 disabled={!isPlanReady || isGenerating}
                 size="sm"
                 className={cn(
-                  "h-7.5 px-3 rounded-lg text-[11.5px] font-bold shadow-xs transition-all shrink-0 cursor-pointer",
+                  "h-7.5 px-3 rounded-lg text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer",
                   isPlanReady && !isGenerating
-                    ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:scale-[1.02]"
+                    ? "bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                     : "bg-black/10 text-black/40 cursor-not-allowed"
                 )}
               >
@@ -1503,12 +1503,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
 
             <div className="relative">
-              <div className="flex items-center gap-1.5 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-2.5 py-1.5 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-xs transition">
+              <div className="flex items-center gap-1.5 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-2.5 py-1.5 focus-within:border-brand focus-within:bg-white focus-within:shadow-xs transition">
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setChatContextOpen(!chatContextOpen)}
-                    className="grid size-6 place-items-center rounded-lg text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-black/5 transition cursor-pointer"
+                    className="grid size-6 place-items-center rounded-lg text-ink-3 hover:text-ink hover:bg-black/5 transition cursor-pointer"
                     title="Add context"
                   >
                     <Plus className="size-3.5" />
@@ -1522,9 +1522,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           setChatContextOpen(false);
                           handleSendChatMessage("Attach trial citations from CLARITY-CV study.");
                         }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left cursor-pointer"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-label font-medium text-ink-2 hover:bg-[#f4f5f3] rounded-lg transition text-left cursor-pointer"
                       >
-                        <FileCheck2 className="size-3 text-[var(--brand)]" />
+                        <FileCheck2 className="size-3 text-brand" />
                         Attach trial citations
                       </button>
                       <button
@@ -1533,9 +1533,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           setChatContextOpen(false);
                           handleSendChatMessage("Adjust narrative tone to be more clinical and objective.");
                         }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 text-[11.5px] font-medium text-[var(--ink-2)] hover:bg-[#f4f5f3] rounded-lg transition text-left cursor-pointer"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-label font-medium text-ink-2 hover:bg-[#f4f5f3] rounded-lg transition text-left cursor-pointer"
                       >
-                        <Target className="size-3 text-[var(--brand)]" />
+                        <Target className="size-3 text-brand" />
                         Specify clinical tone
                       </button>
                     </div>
@@ -1551,14 +1551,14 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   }}
                   disabled={isGenerating}
                   placeholder={isGenerating ? "Generating scenes..." : "Ask or request changes..."}
-                  className="flex-1 bg-transparent text-[12.5px] outline-none text-[var(--ink)] placeholder:text-[var(--ink-4)] disabled:opacity-50"
+                  className="flex-1 bg-transparent text-body outline-none text-ink placeholder:text-ink-4 disabled:opacity-50"
                 />
 
                 <button
                   type="button"
                   onClick={() => handleSendChatMessage()}
                   disabled={!chatInput.trim() || isGenerating}
-                  className="grid size-6 place-items-center rounded-lg bg-[var(--brand)] text-white disabled:opacity-30 hover:bg-[var(--brand-deep)] transition cursor-pointer disabled:cursor-not-allowed"
+                  className="grid size-6 place-items-center rounded-lg bg-brand text-white disabled:opacity-30 hover:bg-brand-deep transition cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Send className="size-3" />
                 </button>
@@ -1631,10 +1631,10 @@ function PlanSection({
   return (
     <section
       className={cn(
-        "squircle-card relative transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+        "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-white border border-[var(--brand)] shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
-          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-white hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-[14px] my-1"
+          ? "z-20 w-full scale-100 bg-white border border-brand shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
+          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-white hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-control my-1"
       )}
     >
       <button
@@ -1650,10 +1650,10 @@ function PlanSection({
             "squircle-control grid shrink-0 place-items-center transition-transform group-hover:scale-105",
             open ? "size-10 rounded-[12px]" : "size-7 rounded-[8px]",
             tone === "attention"
-              ? "bg-[var(--warning-soft)] text-[var(--warning)]"
+              ? "bg-warn-bg text-warn"
               : tone === "done"
-              ? "bg-[var(--brand)] text-white shadow-xs"
-              : "bg-[#edf3ef] text-[var(--brand)]"
+              ? "bg-brand text-white shadow-xs"
+              : "bg-[#edf3ef] text-brand"
           )}
         >
           {tone === "done" ? (
@@ -1667,15 +1667,15 @@ function PlanSection({
           <span
             className={cn(
               "block font-bold tracking-tight transition-colors leading-snug",
-              open ? "text-[16px] text-[var(--ink)]" : "text-[13px] text-[var(--ink-2)]"
+              open ? "text-subhead text-ink" : "text-body-lg text-ink-2"
             )}
           >
             {title}
           </span>
           <span
             className={cn(
-              "block truncate text-[var(--ink-muted)]",
-              open ? "mt-0.5 text-[12.5px]" : "text-[11px] max-w-[380px]"
+              "block truncate text-ink-3",
+              open ? "mt-0.5 text-body" : "text-label max-w-[380px]"
             )}
           >
             {summary}
@@ -1685,11 +1685,11 @@ function PlanSection({
         <span
           className={cn(
             "hidden rounded-full font-bold sm:inline border",
-            open ? "px-2.5 py-1 text-[11px]" : "px-2 py-0.5 text-[9.5px]",
+            open ? "px-2.5 py-1 text-label" : "px-2 py-0.5 text-micro",
             tone === "attention"
-              ? "bg-[var(--warning-soft)] text-[var(--warning)] border-[#fde68a]"
+              ? "bg-warn-bg text-warn border-[#fde68a]"
               : tone === "done"
-              ? "bg-[var(--tint)] text-[var(--brand-deep)] border-[var(--tint-line)]"
+              ? "bg-tint text-brand-deep border-tint-line"
               : "bg-[#eef2ef] text-[#66736c] border-[#e2e8e4]"
           )}
         >
@@ -1700,8 +1700,8 @@ function PlanSection({
           className={cn(
             "grid place-items-center rounded-full transition-all duration-300",
             open
-              ? "size-7 rotate-180 bg-[var(--brand-soft)] text-[var(--brand)]"
-              : "size-5.5 text-[var(--ink-muted)] group-hover:bg-black/5"
+              ? "size-7 rotate-180 bg-tint text-brand"
+              : "size-5.5 text-ink-3 group-hover:bg-black/5"
           )}
         >
           <ChevronDown className={cn(open ? "size-4" : "size-3")} />
@@ -1711,12 +1711,12 @@ function PlanSection({
       <div
         aria-hidden={!open}
         className={cn(
-          "grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+          "grid transition-[grid-template-rows,opacity] duration-300 ease-entrance",
           open ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
         )}
       >
         <div className="overflow-hidden">
-          <div className="border-t border-[var(--line)] px-4 pb-5 pt-3.5 sm:px-5 sm:pb-6">{children}</div>
+          <div className="border-t border-hair px-4 pb-5 pt-3.5 sm:px-5 sm:pb-6">{children}</div>
         </div>
       </div>
     </section>
@@ -1745,19 +1745,19 @@ function DecisionRow({
   return (
     <div
       className={cn(
-        "squircle-panel overflow-hidden border transition-[opacity,border-color,box-shadow,background-color] duration-300 ease-[cubic-bezier(.2,.8,.2,1)] rounded-[14px]",
+        "squircle-panel overflow-hidden border transition-[opacity,border-color,box-shadow,background-color] duration-300 ease-entrance rounded-control",
         editing
           ? "border-[#b7c9c0] bg-[#fbfdfc] opacity-100 shadow-[0_3px_14px_rgb(19_31_26/4%)]"
           : "border-[#e5e9e6] bg-white opacity-75 hover:opacity-100"
       )}
     >
       <div className="flex min-h-[58px] items-center gap-3 px-3.5">
-        <span className="squircle-control grid size-8 shrink-0 place-items-center rounded-[9px] bg-[#edf3ef] text-[var(--brand)]">
+        <span className="squircle-control grid size-8 shrink-0 place-items-center rounded-[9px] bg-[#edf3ef] text-brand">
           {icon}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[11.5px] font-medium text-[var(--ink-muted)]">{label}</span>
-          <span className="mt-0.5 block truncate text-[13.5px] font-medium">{value}</span>
+          <span className="block text-label font-medium text-ink-3">{label}</span>
+          <span className="mt-0.5 block truncate text-body-lg font-medium">{value}</span>
         </span>
         <div className="flex items-center gap-1.5">
           {onPreview && (
@@ -1765,7 +1765,7 @@ function DecisionRow({
               variant="ghost"
               size="sm"
               onClick={onPreview}
-              className={cn("size-8 p-0 rounded-full", playing && "text-[var(--brand)]")}
+              className={cn("size-8 p-0 rounded-full", playing && "text-brand")}
               aria-label="Preview sound"
             >
               {playing ? <Pause className="size-4" /> : <Volume2 className="size-4" />}
@@ -1775,13 +1775,13 @@ function DecisionRow({
             variant="ghost"
             size="sm"
             onClick={onEdit}
-            className="text-[12.5px] font-semibold text-[var(--brand)]"
+            className="text-body font-semibold text-brand"
           >
             {editing ? "Close" : "Change"}
           </Button>
         </div>
       </div>
-      {editing && <div className="border-t border-[var(--line)] bg-white p-3.5">{children}</div>}
+      {editing && <div className="border-t border-hair bg-white p-3.5">{children}</div>}
     </div>
   );
 }
@@ -1803,7 +1803,7 @@ function ChoiceGroup({
 }) {
   return (
     <div className={className}>
-      <div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div>
+      <div className="text-body-lg font-semibold text-[#5f6b65]">{label}</div>
       <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
         {options.map((option) => {
           const active = value === option;
@@ -1813,13 +1813,13 @@ function ChoiceGroup({
               type="button"
               onClick={() => onChange(option)}
               className={cn(
-                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-[13px] font-medium transition cursor-pointer",
-                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-brand font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
               )}
             >
               <span className="grid size-6 place-items-center text-current">{icon(option)}</span>
               <span className="flex-1">{option}</span>
-              {active && <Check className="size-3.5 text-[var(--brand)] shrink-0" strokeWidth={3} />}
+              {active && <Check className="size-3.5 text-brand shrink-0" strokeWidth={3} />}
             </button>
           );
         })}
@@ -1845,7 +1845,7 @@ function MultiChoiceGroup({
 }) {
   return (
     <div>
-      <div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div>
+      <div className="text-body-lg font-semibold text-[#5f6b65]">{label}</div>
       <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
         {options.map((option) => {
           const active = values.includes(option);
@@ -1858,13 +1858,13 @@ function MultiChoiceGroup({
                 onChange(next);
               }}
               className={cn(
-                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-[13px] font-medium transition cursor-pointer",
-                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-brand font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
               )}
             >
               <span className="grid size-6 place-items-center text-current">{icon(option)}</span>
               <span className="flex-1">{option}</span>
-              {active && <Check className="size-3.5 text-[var(--brand)] shrink-0" strokeWidth={3} />}
+              {active && <Check className="size-3.5 text-brand shrink-0" strokeWidth={3} />}
             </button>
           );
         })}
@@ -1889,7 +1889,7 @@ function FormatChoices({
 }) {
   return (
     <div>
-      <div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div>
+      <div className="text-body-lg font-semibold text-[#5f6b65]">{label}</div>
       <div className="mt-2.5 grid gap-2 sm:grid-cols-3">
         {options.map((option) => {
           const active = value === option;
@@ -1899,8 +1899,8 @@ function FormatChoices({
               type="button"
               onClick={() => onChange(option)}
               className={cn(
-                "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-[12px] border py-3 px-2 text-center text-[13px] font-medium transition cursor-pointer",
-                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-bold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-[12px] border py-3 px-2 text-center text-body-lg font-medium transition cursor-pointer",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-brand font-bold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
               )}
             >
               <FrameGlyph value={option} />
@@ -1932,7 +1932,7 @@ function SteppedControl({
 }) {
   return (
     <div>
-      <div className="text-[13px] font-semibold text-[#5f6b65]">{label}</div>
+      <div className="text-body-lg font-semibold text-[#5f6b65]">{label}</div>
       <div className="mt-2.5 grid gap-2 sm:grid-cols-4">
         {options.map((option) => {
           const active = value === option;
@@ -1942,8 +1942,8 @@ function SteppedControl({
               type="button"
               onClick={() => onChange(option)}
               className={cn(
-                "focus-ring min-h-10 rounded-[10px] border px-2 text-[12.5px] font-medium transition cursor-pointer",
-                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-bold" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                "focus-ring min-h-10 rounded-chip border px-2 text-body font-medium transition cursor-pointer",
+                active ? "border-[#b8ccc2] bg-[#f2f7f4] text-brand font-bold" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
               )}
             >
               {option}
@@ -1977,12 +1977,12 @@ function AudioChoices({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <span className="text-[13px] font-semibold text-[#5f6b65]">{label}</span>
+        <span className="text-body-lg font-semibold text-[#5f6b65]">{label}</span>
         {onOpenLibrary && (
           <button
             type="button"
             onClick={onOpenLibrary}
-            className="text-[12.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+            className="text-body font-bold text-brand hover:underline cursor-pointer"
           >
             Voice Library →
           </button>
@@ -2004,7 +2004,7 @@ function AudioChoices({
               <button
                 type="button"
                 onClick={() => onChange(base)}
-                className="flex-1 text-left text-[13px] font-medium text-[var(--ink)] cursor-pointer"
+                className="flex-1 text-left text-body-lg font-medium text-ink cursor-pointer"
               >
                 {option}
               </button>
@@ -2013,7 +2013,7 @@ function AudioChoices({
                   variant="ghost"
                   size="sm"
                   onClick={() => onPreview(base)}
-                  className={cn("size-8 p-0 rounded-full", isPlaying && "text-[var(--brand)]")}
+                  className={cn("size-8 p-0 rounded-full", isPlaying && "text-brand")}
                   aria-label="Preview"
                 >
                   {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
@@ -2046,15 +2046,15 @@ function StructureChoices({
             type="button"
             onClick={() => onChange(option)}
             className={cn(
-              "focus-ring flex flex-col justify-between rounded-[14px] border p-3.5 text-left transition cursor-pointer",
-              active ? "border-[#b8ccc2] bg-[#f2f7f4] text-[var(--brand)] font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+              "focus-ring flex flex-col justify-between rounded-control border p-3.5 text-left transition cursor-pointer",
+              active ? "border-[#b8ccc2] bg-[#f2f7f4] text-brand font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
             )}
           >
             <div>
-              <span className="block text-[14px] font-bold text-[var(--ink)]">{option}</span>
-              <span className="mt-1 block text-[12px] text-[var(--ink-muted)]">{structureDescription(option)}</span>
+              <span className="block text-body-lg font-bold text-ink">{option}</span>
+              <span className="mt-1 block text-body text-ink-3">{structureDescription(option)}</span>
             </div>
-            {active && <Check className="mt-3 size-4 text-[var(--brand)] self-end" strokeWidth={3} />}
+            {active && <Check className="mt-3 size-4 text-brand self-end" strokeWidth={3} />}
           </button>
         );
       })}
@@ -2064,12 +2064,12 @@ function StructureChoices({
 
 function InfoCard({ icon: Icon, title, body }: { icon: typeof Film; title: string; body: string }) {
   return (
-    <div className="rounded-[14px] border border-[#e3e8e5] bg-white p-3.5">
-      <div className="flex items-center gap-2 font-bold text-[13.5px] text-[var(--ink)]">
-        <Icon className="size-4 text-[var(--brand)]" />
+    <div className="rounded-control border border-[#e3e8e5] bg-white p-3.5">
+      <div className="flex items-center gap-2 font-bold text-body-lg text-ink">
+        <Icon className="size-4 text-brand" />
         {title}
       </div>
-      <p className="mt-1 text-[12.5px] leading-5 text-[var(--ink-muted)]">{body}</p>
+      <p className="mt-1 text-body leading-5 text-ink-3">{body}</p>
     </div>
   );
 }
@@ -2096,11 +2096,11 @@ function PresenterLibrary({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-[680px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6">
+      <div className="w-full max-w-[680px] overflow-hidden rounded-card border border-white/60 bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Presenter Library</div>
-            <h2 className="mt-1 text-[21px] font-bold tracking-tight">Choose clinical avatar presenter</h2>
+            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Presenter Library</div>
+            <h2 className="mt-1 text-display font-bold tracking-tight">Choose clinical avatar presenter</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="size-4" />
@@ -2116,15 +2116,15 @@ function PresenterLibrary({
                 onClick={() => onSelect(person.name)}
                 className={cn(
                   "flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
-                  active ? "border-[var(--brand)] bg-[var(--tint)] ring-1 ring-[var(--brand)]" : "border-[#e3e8e5] hover:border-[#c8d4ce]"
+                  active ? "border-brand bg-tint ring-1 ring-brand" : "border-[#e3e8e5] hover:border-[#c8d4ce]"
                 )}
               >
-                <FacePhoto person={person} className="size-14 rounded-[14px]" />
+                <FacePhoto person={person} className="size-14 rounded-control" />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-bold text-[var(--ink)]">{person.name}</span>
-                  <span className="mt-0.5 block text-[12px] leading-4 text-[var(--ink-muted)]">{person.role}</span>
+                  <span className="block text-body-lg font-bold text-ink">{person.name}</span>
+                  <span className="mt-0.5 block text-body leading-4 text-ink-3">{person.role}</span>
                 </span>
-                {active && <Check className="size-4 text-[var(--brand)] shrink-0" strokeWidth={3} />}
+                {active && <Check className="size-4 text-brand shrink-0" strokeWidth={3} />}
               </button>
             );
           })}
@@ -2149,11 +2149,11 @@ function VoiceLibrary({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-[620px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6">
+      <div className="w-full max-w-[620px] overflow-hidden rounded-card border border-white/60 bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Voice Library</div>
-            <h2 className="mt-1 text-[21px] font-bold tracking-tight">Select narrator voice</h2>
+            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Voice Library</div>
+            <h2 className="mt-1 text-display font-bold tracking-tight">Select narrator voice</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="size-4" />
@@ -2167,22 +2167,22 @@ function VoiceLibrary({
               <div
                 key={v.name}
                 className={cn(
-                  "flex items-center justify-between rounded-[14px] border p-3 transition",
-                  active ? "border-[var(--brand)] bg-[var(--tint)]" : "border-[#e3e8e5]"
+                  "flex items-center justify-between rounded-control border p-3 transition",
+                  active ? "border-brand bg-tint" : "border-[#e3e8e5]"
                 )}
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-[14px] text-[var(--ink)]">{v.name}</span>
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)]">
+                    <span className="font-bold text-body-lg text-ink">{v.name}</span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line">
                       {v.tag}
                     </span>
                   </div>
-                  <span className="text-[12px] text-[var(--ink-muted)] block mt-0.5">{v.accent} · {v.role}</span>
+                  <span className="text-body text-ink-3 block mt-0.5">{v.accent} · {v.role}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" onClick={() => onPreview(v.name)}>
-                    {isPlaying ? <Pause className="size-4 text-[var(--brand)]" /> : <Play className="size-4" />}
+                    {isPlaying ? <Pause className="size-4 text-brand" /> : <Play className="size-4" />}
                   </Button>
                   <Button size="sm" variant={active ? "primary" : "secondary"} onClick={() => onSelect(v.name)}>
                     {active ? "Selected" : "Select"}
@@ -2208,11 +2208,11 @@ function SourceManager({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-[700px] overflow-hidden rounded-[24px] border border-white/60 bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-[var(--line)] p-5 sm:px-6">
+      <div className="w-full max-w-[700px] overflow-hidden rounded-card border border-white/60 bg-white shadow-2xl">
+        <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Regulatory Sources</div>
-            <h2 className="mt-1 text-[21px] font-bold tracking-tight">Verified evidence citations</h2>
+            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Regulatory Sources</div>
+            <h2 className="mt-1 text-display font-bold tracking-tight">Verified evidence citations</h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="size-4" />
@@ -2225,21 +2225,21 @@ function SourceManager({
               <div
                 key={source.id}
                 className={cn(
-                  "flex items-center gap-3 rounded-[14px] border p-3 transition",
-                  active ? "border-[var(--brand)] bg-[var(--tint)]" : "border-[#e3e8e5]"
+                  "flex items-center gap-3 rounded-control border p-3 transition",
+                  active ? "border-brand bg-tint" : "border-[#e3e8e5]"
                 )}
               >
-                <FileCheck2 className="size-5 text-[var(--brand)] shrink-0" />
+                <FileCheck2 className="size-5 text-brand shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <span className="block truncate text-[14px] font-bold text-[var(--ink)]">{source.name}</span>
-                  <span className="block truncate text-[12px] text-[var(--ink-muted)]">{source.detail}</span>
+                  <span className="block truncate text-body-lg font-bold text-ink">{source.name}</span>
+                  <span className="block truncate text-body text-ink-3">{source.detail}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => onToggle(source.id)}
                   className={cn(
-                    "px-3 py-1.5 rounded-[9px] text-[12px] font-bold transition cursor-pointer",
-                    active ? "bg-white text-[var(--ink)] border border-black/10" : "bg-[var(--brand)] text-white"
+                    "px-3 py-1.5 rounded-[9px] text-body font-bold transition cursor-pointer",
+                    active ? "bg-white text-ink border border-black/10" : "bg-brand text-white"
                   )}
                 >
                   {active ? "Attached" : "Attach"}

@@ -980,7 +980,7 @@ export function HomeScreen() {
         >
           What do you want to create today?
         </h1>
-        <p className="mt-2.5 text-[14.5px] text-[var(--ink-3)] font-medium">
+        <p className="mt-2.5 text-subhead text-ink-3 font-medium">
           Pick a studio. Every asset is written from your Brand Dossier, with a source behind each claim.
         </p>
       </div>
@@ -1114,7 +1114,7 @@ export function HomeScreen() {
         >
           <div
             className={cn(
-              "w-full overflow-hidden rounded-[24px] border border-white/20 bg-[#0d1017] shadow-2xl text-white select-none transition-all flex flex-col max-h-[90vh]",
+              "w-full overflow-hidden rounded-card border border-white/20 bg-[#0d1017] shadow-2xl text-white select-none transition-all flex flex-col max-h-[90vh]",
               playingVideoItem.aspect === "9/16" ? "max-w-[380px]" : "max-w-[820px]"
             )}
             onClick={(e) => e.stopPropagation()}
@@ -1122,10 +1122,10 @@ export function HomeScreen() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/40 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="rounded-md bg-[var(--brand)] px-2 py-0.5 text-[10px] font-extrabold uppercase text-white shrink-0">
+                <span className="rounded-md bg-brand px-2 py-0.5 text-caption font-extrabold uppercase text-white shrink-0">
                   {playingVideoItem.tag}
                 </span>
-                <span className="text-[13.5px] font-bold text-white truncate">
+                <span className="text-body-lg font-bold text-white truncate">
                   {playingVideoItem.title}
                 </span>
               </div>
@@ -1157,17 +1157,17 @@ export function HomeScreen() {
                 />
               ) : (
                 <div className="text-center p-8 space-y-2">
-                  <p className="text-[14px] font-semibold text-white/70">Sample Showreel Preview</p>
-                  <p className="text-[12px] text-white/40">Grounded in verified regulatory trial anchors.</p>
+                  <p className="text-body-lg font-semibold text-white/70">Sample Showreel Preview</p>
+                  <p className="text-body text-white/40">Grounded in verified regulatory trial anchors.</p>
                 </div>
               )}
             </div>
 
             {/* Footer Controls / Details */}
-            <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-t border-white/10 text-[12px] shrink-0">
+            <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-t border-white/10 text-body shrink-0">
               <div className="min-w-0 pr-3">
                 <p className="font-semibold text-white/90 truncate">{playingVideoItem.subtitle}</p>
-                <p className="text-[11px] text-white/50">{playingVideoItem.meta} · Verified Prescribing Info</p>
+                <p className="text-label text-white/50">{playingVideoItem.meta} · Verified Prescribing Info</p>
               </div>
               <button
                 type="button"
@@ -1175,7 +1175,7 @@ export function HomeScreen() {
                   setPlayingVideoItem(null);
                   router.push("/create");
                 }}
-                className="rounded-xl bg-[var(--brand)] px-4 py-2 text-[12px] font-bold text-white shadow-lg hover:bg-[var(--brand-deep)] transition cursor-pointer shrink-0"
+                className="rounded-xl bg-brand px-4 py-2 text-body font-bold text-white shadow-lg hover:bg-brand-deep transition cursor-pointer shrink-0"
               >
                 Create with this style →
               </button>

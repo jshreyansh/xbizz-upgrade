@@ -206,7 +206,7 @@ export function Sidebar() {
           width: sbw,
           transition: "width 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
-        className="relative flex h-full flex-col rounded-[24px] border border-black/[0.08] bg-white/95 shadow-[0_8px_32px_-8px_rgba(10,13,20,0.08),0_1px_3px_rgba(0,0,0,0.03)] backdrop-blur-xl transition-all overflow-hidden"
+        className="relative flex h-full flex-col rounded-card border border-black/[0.08] bg-white/95 shadow-[0_8px_32px_-8px_rgba(10,13,20,0.08),0_1px_3px_rgba(0,0,0,0.03)] backdrop-blur-xl transition-all overflow-hidden"
       >
         {/* Top Header: Logo (Click to expand if collapsed) + Minimize Button in Open State */}
         <div
@@ -218,14 +218,14 @@ export function Sidebar() {
           <button
             onClick={() => collapsed && setCollapsed(false)}
             title={collapsed ? "Click to expand sidebar" : undefined}
-            className={`flex items-center gap-2.5 font-[800] text-[18px] tracking-tight text-[var(--ink)] ${
+            className={`flex items-center gap-2.5 font-[800] text-title tracking-tight text-ink ${
               collapsed ? "cursor-pointer hover:scale-105 transition-transform" : "cursor-default"
             }`}
           >
-            <LogoMark size={24} className="text-[var(--brand)]" />
+            <LogoMark size={24} className="text-brand" />
             {!collapsed && (
               <span>
-                swish<span className="text-[var(--brand)]">X</span>
+                swish<span className="text-brand">X</span>
               </span>
             )}
           </button>
@@ -235,7 +235,7 @@ export function Sidebar() {
             <button
               onClick={() => setCollapsed(true)}
               title="Collapse sidebar"
-              className="flex size-7 items-center justify-center rounded-lg text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors"
+              className="flex size-7 items-center justify-center rounded-lg text-ink-3 hover:bg-black/5 hover:text-ink transition-colors"
             >
               <svg
                 width={16}
@@ -263,29 +263,29 @@ export function Sidebar() {
                 router.push("/");
               }}
               title={collapsed ? "Home" : undefined}
-              className={`group relative flex items-center rounded-[14px] transition-all duration-200 ${
+              className={`group relative flex items-center rounded-control transition-all duration-200 ${
                 collapsed
                   ? "w-[58px] flex-col justify-center py-2 px-1 gap-1"
                   : "w-full h-[42px] gap-3 px-3"
               } ${
                 isHomeActive
-                  ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
-                  : "text-[var(--ink-2)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
+                  ? "bg-brand text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                  : "text-ink-2 hover:bg-tint hover:text-brand-deep"
               }`}
             >
               <div
                 className={`grid size-7 place-items-center rounded-[9px] transition-all shrink-0 ${
                   isHomeActive
                     ? "text-white"
-                    : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"
+                    : "text-ink-3 group-hover:text-brand"
                 }`}
               >
                 <NavIcon name="home" active={isHomeActive} />
               </div>
               <span
                 className={`tracking-tight ${
-                  collapsed ? "text-[10.5px] leading-none" : "text-[14px]"
-                } ${isHomeActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-[var(--ink)]"}`}
+                  collapsed ? "text-caption leading-none" : "text-body-lg"
+                } ${isHomeActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-ink"}`}
               >
                 Home
               </span>
@@ -300,7 +300,7 @@ export function Sidebar() {
           >
             {!collapsed ? (
               <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5 px-2 pt-1 text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                <div className="flex items-center gap-1.5 px-2 pt-1 text-caption font-extrabold uppercase tracking-[0.14em] text-ink-3">
                   <span>Magic Studio</span>
                 </div>
 
@@ -316,14 +316,14 @@ export function Sidebar() {
                       onClick={() => handleCreateNav(tile.targetAsset)}
                       className={`group flex w-full h-[40px] items-center gap-3 rounded-[12px] px-3 text-left transition-all duration-150 cursor-pointer ${
                         isTileActive
-                          ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
-                          : "text-[var(--ink-2)] font-normal hover:font-bold hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
+                          ? "bg-tint text-brand-deep font-bold"
+                          : "text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
                       }`}
                     >
-                      <span className={`shrink-0 transition-colors ${isTileActive ? "text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
+                      <span className={`shrink-0 transition-colors ${isTileActive ? "text-brand" : "text-ink-3 group-hover:text-brand"}`}>
                         <NavIcon name={tile.icon} active={false} />
                       </span>
-                      <span className="truncate text-[14px] tracking-tight">{tile.label}</span>
+                      <span className="truncate text-body-lg tracking-tight">{tile.label}</span>
                     </button>
                   );
                 })}
@@ -334,10 +334,10 @@ export function Sidebar() {
                 <div className="my-1 h-px w-6 bg-black/10" />
                 <button
                   onClick={() => handleCreateNav("video")}
-                  className={`group relative flex w-[58px] flex-col items-center justify-center rounded-[14px] py-2 px-1 gap-1 transition-all duration-200 cursor-pointer ${
+                  className={`group relative flex w-[58px] flex-col items-center justify-center rounded-control py-2 px-1 gap-1 transition-all duration-200 cursor-pointer ${
                     isCreateActive
-                      ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
-                      : "text-[var(--ink-2)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
+                      ? "bg-brand text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                      : "text-ink-2 hover:bg-tint hover:text-brand-deep"
                   }`}
                   title="Studio"
                 >
@@ -348,7 +348,7 @@ export function Sidebar() {
                   >
                     <NavIcon name="studioFilled" active={isCreateActive} />
                   </div>
-                  <span className={`text-[10.5px] tracking-tight leading-none text-center ${isCreateActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-[var(--ink)]"}`}>
+                  <span className={`text-caption tracking-tight leading-none text-center ${isCreateActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-ink"}`}>
                     Studio
                   </span>
                 </button>
@@ -360,7 +360,7 @@ export function Sidebar() {
           {ASSET_GROUPS.map((group) => (
             <div key={group.label} className="space-y-1.5">
               {!collapsed ? (
-                <div className="px-2 pt-2 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                <div className="px-2 pt-2 text-caption font-extrabold uppercase tracking-[0.14em] text-ink-3">
                   {group.label}
                 </div>
               ) : (
@@ -378,28 +378,28 @@ export function Sidebar() {
                         if (item.href !== "#") router.push(item.href);
                       }}
                       title={collapsed ? item.label : undefined}
-                      className={`group flex items-center rounded-[14px] transition-all duration-150 ${
+                      className={`group flex items-center rounded-control transition-all duration-150 ${
                         collapsed
                           ? "w-[58px] flex-col justify-center py-2 px-1 gap-1"
                           : "w-full h-[42px] gap-3 px-3"
                       } ${
                         isActive
-                          ? "bg-[var(--brand)] text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
-                          : "text-[var(--ink-2)] hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
+                          ? "bg-brand text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                          : "text-ink-2 hover:bg-tint hover:text-brand-deep"
                       }`}
                     >
-                      <span className={`shrink-0 ${isActive ? "text-white" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
+                      <span className={`shrink-0 ${isActive ? "text-white" : "text-ink-3 group-hover:text-brand"}`}>
                         <NavIcon name={item.icon} active={isActive} />
                       </span>
                       <span
                         className={`tracking-tight truncate ${
-                          collapsed ? "text-[10.5px] leading-none" : "flex-1 text-left text-[14px]"
-                        } ${isActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-[var(--ink)]"}`}
+                          collapsed ? "text-caption leading-none" : "flex-1 text-left text-body-lg"
+                        } ${isActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-ink"}`}
                       >
                         {collapsed ? item.shortLabel : item.label}
                       </span>
                       {!collapsed && item.badge !== undefined && (
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isActive ? "bg-white/25 text-white" : "bg-[var(--brand)] text-white"}`}>
+                        <span className={`rounded-full px-2 py-0.5 text-caption font-bold ${isActive ? "bg-white/25 text-white" : "bg-brand text-white"}`}>
                           {item.badge}
                         </span>
                       )}
@@ -415,14 +415,14 @@ export function Sidebar() {
         <div className="relative border-t border-black/[0.06] p-2 space-y-1.5">
           {/* Token chip */}
           {!collapsed && (
-            <div className="flex items-center gap-2 rounded-[13px] border border-[var(--tint-line)] bg-gradient-to-r from-[var(--tint)] to-white px-2.5 py-2">
+            <div className="flex items-center gap-2 rounded-[13px] border border-tint-line bg-gradient-to-r from-tint to-white px-2.5 py-2">
               <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth={2.2}>
                 <circle cx={12} cy={12} r={9} />
                 <path d="M12 7v10M9 10h6" />
               </svg>
               <div className="min-w-0 flex-1">
-                <span className="block text-[11px] font-extrabold text-[var(--ink)] leading-none">2.45M Tokens</span>
-                <span className="block text-[9.5px] uppercase font-bold text-[var(--ink-muted)] mt-0.5">Growth Plan</span>
+                <span className="block text-label font-extrabold text-ink leading-none">2.45M Tokens</span>
+                <span className="block text-micro uppercase font-bold text-ink-3 mt-0.5">Growth Plan</span>
               </div>
             </div>
           )}
@@ -431,21 +431,21 @@ export function Sidebar() {
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className={`flex w-full items-center rounded-[14px] border border-black/[0.06] bg-black/[0.02] p-1.5 text-left transition-all hover:bg-black/[0.05] ${
+              className={`flex w-full items-center rounded-control border border-black/[0.06] bg-black/[0.02] p-1.5 text-left transition-all hover:bg-black/[0.05] ${
                 collapsed ? "justify-center" : "gap-2.5"
               }`}
             >
               <span
                 style={{ background: PERSONA.avatarGradient }}
-                className="grid size-7 shrink-0 place-items-center rounded-full text-[11.5px] font-[800] text-white shadow-xs"
+                className="grid size-7 shrink-0 place-items-center rounded-full text-label font-[800] text-white shadow-xs"
               >
                 {PERSONA.initials}
               </span>
 
               {!collapsed && (
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[12.5px] font-bold text-[var(--ink)] leading-tight">{PERSONA.name}</div>
-                  <div className="flex items-center gap-1 text-[10.5px] font-bold text-[var(--brand)] truncate mt-0.5">
+                  <div className="truncate text-body font-bold text-ink leading-tight">{PERSONA.name}</div>
+                  <div className="flex items-center gap-1 text-caption font-bold text-brand truncate mt-0.5">
                     <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                       <rect x={2} y={7} width={20} height={15} rx={2} />
                       <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
@@ -460,32 +460,32 @@ export function Sidebar() {
             {menuOpen && (
               <div
                 style={{ animation: "spring-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both" }}
-                className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-[18px] border border-black/[0.08] bg-white/95 p-2 shadow-[0_16px_36px_-8px_rgba(10,13,20,0.18)] backdrop-blur-2xl"
+                className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-panel border border-black/[0.08] bg-white/95 p-2 shadow-[0_16px_36px_-8px_rgba(10,13,20,0.18)] backdrop-blur-2xl"
               >
                 <div className="flex items-center gap-2.5 p-2 border-b border-black/[0.05]">
                   <span
                     style={{ background: PERSONA.avatarGradient }}
-                    className="grid size-8 shrink-0 place-items-center rounded-full text-[12px] font-bold text-white"
+                    className="grid size-8 shrink-0 place-items-center rounded-full text-body font-bold text-white"
                   >
                     {PERSONA.initials}
                   </span>
                   <div className="min-w-0">
-                    <b className="block text-[13px] font-bold leading-tight">{PERSONA.name}</b>
-                    <span className="block text-[11px] text-[var(--ink-muted)] truncate">{PERSONA.email}</span>
+                    <b className="block text-body-lg font-bold leading-tight">{PERSONA.name}</b>
+                    <span className="block text-label text-ink-3 truncate">{PERSONA.email}</span>
                   </div>
                 </div>
 
                 <div className="py-1 space-y-0.5">
-                  <button className="flex w-full items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--ink-2)] hover:bg-black/[0.04] text-left">
+                  <button className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left">
                     Profile &amp; Settings
                   </button>
-                  <button className="flex w-full items-center justify-between rounded-[10px] px-2.5 py-1.5 text-[12.5px] font-medium text-[var(--ink-2)] hover:bg-black/[0.04] text-left">
+                  <button className="flex w-full items-center justify-between rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left">
                     <span>Switch Workspace</span>
-                    <span className="rounded bg-black/[0.06] px-1.5 py-0.2 text-[10px] font-bold text-[var(--ink-3)]">3</span>
+                    <span className="rounded bg-black/[0.06] px-1.5 py-0.2 text-caption font-bold text-ink-3">3</span>
                   </button>
                   <button
                     onClick={handleSignOut}
-                    className="flex w-full items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-[12.5px] font-semibold text-rose-600 hover:bg-rose-50 text-left"
+                    className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-semibold text-rose-600 hover:bg-rose-50 text-left"
                   >
                     Sign out
                   </button>
@@ -511,10 +511,10 @@ export function Sidebar() {
           className="w-[250px] rounded-[22px] border border-black/[0.08] bg-white p-3.5 shadow-[0_20px_50px_-10px_rgba(10,13,20,0.22),0_4px_12px_rgba(0,0,0,0.05)] backdrop-blur-2xl"
         >
           <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-black/[0.06]">
-            <span className="grid size-6 place-items-center rounded-lg bg-[var(--tint)] text-[var(--brand)]">
+            <span className="grid size-6 place-items-center rounded-lg bg-tint text-brand">
               <NavIcon name="studioFilled" active={false} />
             </span>
-            <span className="text-[13.5px] font-[800] tracking-tight text-[var(--ink)]">Studio</span>
+            <span className="text-body-lg font-[800] tracking-tight text-ink">Studio</span>
           </div>
 
           <div className="space-y-1">
@@ -529,14 +529,14 @@ export function Sidebar() {
                   onClick={() => handleCreateNav(tile.targetAsset)}
                   className={`group flex w-full items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-left transition-all duration-150 cursor-pointer ${
                     isTileActive
-                      ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold"
-                      : "text-[var(--ink-2)] font-normal hover:font-bold hover:bg-[var(--tint)] hover:text-[var(--brand-deep)]"
+                      ? "bg-tint text-brand-deep font-bold"
+                      : "text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
                   }`}
                 >
-                  <span className={`transition-colors ${isTileActive ? "text-[var(--brand)]" : "text-[var(--ink-muted)] group-hover:text-[var(--brand)]"}`}>
+                  <span className={`transition-colors ${isTileActive ? "text-brand" : "text-ink-3 group-hover:text-brand"}`}>
                     <NavIcon name={tile.icon} active={false} />
                   </span>
-                  <span className="truncate text-[13px] tracking-tight">{tile.label}</span>
+                  <span className="truncate text-body-lg tracking-tight">{tile.label}</span>
                 </button>
               );
             })}

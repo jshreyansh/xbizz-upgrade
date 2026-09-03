@@ -249,7 +249,7 @@ export function TeamDock() {
                 color: "var(--ink-2)",
                 cursor: "pointer",
               }}
-              className="hover:border-[var(--brand)] hover:text-[var(--brand)]"
+              className="hover:border-brand hover:text-brand"
             >
               {s}
             </button>

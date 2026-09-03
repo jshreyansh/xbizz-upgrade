@@ -69,11 +69,11 @@ export function Topbar({ pageTitle = "Home" }: TopbarProps) {
           aria-modal="true"
         >
           <div
-            className="w-full max-w-[820px] overflow-hidden rounded-[24px] border border-white/20 bg-[#0d1017] shadow-2xl text-white select-none flex flex-col max-h-[90vh]"
+            className="w-full max-w-[820px] overflow-hidden rounded-card border border-white/20 bg-[#0d1017] shadow-2xl text-white select-none flex flex-col max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/40 shrink-0">
-              <span className="text-[13.5px] font-bold text-white">SwishX — 90 second tour</span>
+              <span className="text-body-lg font-bold text-white">SwishX — 90 second tour</span>
               <button
                 type="button"
                 onClick={() => setDemoOpen(false)}

@@ -32,7 +32,7 @@ export function BrandLoader({
         <LogoMark size={size * 0.5} className="animate-brand-spin text-white" />
       </div>
       {label && (
-        <span className="text-[13px] font-semibold text-[var(--ink-3)]">{label}</span>
+        <span className="text-body-lg font-semibold text-ink-3">{label}</span>
       )}
     </div>
   );

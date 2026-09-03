@@ -428,7 +428,7 @@ export function InfographicDirectionsScreen() {
   return (
     <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#eef1ed] text-left">
       {/* ─── Clean Header Bar (Identical to Video Screen) ─── */}
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-[var(--line)] bg-white px-3 sm:px-5">
+      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-white px-3 sm:px-5">
         <button
           type="button"
           onClick={() => {
@@ -438,32 +438,32 @@ export function InfographicDirectionsScreen() {
               setView("create");
             }
           }}
-          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-[var(--ink-muted)] hover:bg-black/5 cursor-pointer"
+          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
           aria-label="Back"
         >
           <ArrowLeft className="size-4" />
         </button>
 
         <SwishXMark compact />
-        <div className="mx-3 h-5 w-px bg-[var(--line)]" />
+        <div className="mx-3 h-5 w-px bg-hair" />
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate text-[12.5px] font-[800] text-[var(--ink)]">
+            <span className="truncate text-body font-[800] text-ink">
               {brandName} HCP launch
             </span>
-            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-[9px] font-bold text-[#69736e] sm:inline">
+            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-micro font-bold text-[#69736e] sm:inline">
               Draft v1
             </span>
           </div>
-          <div className="mt-0.5 hidden text-[9.5px] text-[var(--ink-muted)] sm:block">
+          <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
             Saved just now · Canvas Studio · MLR Ready
           </div>
         </div>
 
         {/* State Switcher in Header */}
         <div className="ml-6 hidden items-center gap-1 sm:flex">
-          <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-extrabold tracking-wide text-[var(--brand-deep)] border border-[var(--tint-line)]">
+          <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
             {currentStep === "brief" ? "Plan View" : "Blueprint View"}
           </span>
         </div>
@@ -475,7 +475,7 @@ export function InfographicDirectionsScreen() {
           <Button variant="ghost" size="icon" aria-label="Redo" disabled>
             <Redo2 className="size-4" />
           </Button>
-          <div className="mx-1 h-5 w-px bg-[var(--line)]" />
+          <div className="mx-1 h-5 w-px bg-hair" />
           <Button variant="ghost" size="sm">
             <History className="size-3.5" /> Versions
           </Button>
@@ -489,8 +489,8 @@ export function InfographicDirectionsScreen() {
             className={cn(
               "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
               copilotPanelOpen
-                ? "border-black/15 bg-black/5 text-[var(--ink)] hover:bg-black/10"
-                : "border-black/10 bg-white text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--brand)] shadow-2xs"
+                ? "border-black/15 bg-black/5 text-ink hover:bg-black/10"
+                : "border-black/10 bg-white text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
             )}
             title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
           >
@@ -509,7 +509,7 @@ export function InfographicDirectionsScreen() {
             maxWidth: copilotPanelOpen ? "calc(100% - 410px)" : "100%",
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
-          className="flex flex-col shrink-0 min-h-0 border-r border-[var(--line)] bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4 relative"
+          className="flex flex-col shrink-0 min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4 relative"
         >
           {/* ══════════════════════════════════════════════════════════════════
               STAGE 1: BRIEF & CREATIVE PARAMETERS (Exact Layout as Video Screen)
@@ -520,22 +520,22 @@ export function InfographicDirectionsScreen() {
               <div className="flex items-center justify-between pb-1 shrink-0">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">
+                    <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
                       Available Context
                     </span>
-                    <span className="rounded-full bg-[var(--ok-bg)] px-2 py-0.5 text-[10px] font-bold text-[var(--ok)] border border-emerald-200">
+                    <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-emerald-200">
                       Grounding active
                     </span>
                   </div>
-                  <h2 className="text-[20px] font-[850] text-[var(--ink)] tracking-tight mt-0.5">
+                  <h2 className="text-display font-[850] text-ink tracking-tight mt-0.5">
                     {brandName} Dossier Plan &amp; Creative Parameters
                   </h2>
-                  <p className="text-[12.5px] text-[var(--ink-muted)] mt-0.5">
+                  <p className="text-body text-ink-3 mt-0.5">
                     Refine audience target, page format, layout archetype, and clinical angles before confirming the creative.
                   </p>
                 </div>
                 <div className="hidden sm:flex items-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-[11.5px] font-bold text-[var(--ok)] border border-[var(--line)] shadow-2xs">
+                  <span className="rounded-full bg-white px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
                     ✓ 214 approved claims cited
                   </span>
                 </div>
@@ -582,10 +582,10 @@ export function InfographicDirectionsScreen() {
                 >
                   <div className="space-y-4">
                     <div className="rounded-xl bg-[#f5f8f6] p-3 border border-[#e1e9e4]">
-                      <div className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--brand-deep)] mb-0.5">
+                      <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                         Why this fits
                       </div>
-                      <p className="text-[12.5px] text-[var(--ink-2)]">
+                      <p className="text-body text-ink-2">
                         {FORMAT_OPTIONS.find((f) => f.id === pageShape)?.whyFits || "Ideal for iPad clinical discussions and vertical digital reading."}
                       </p>
                     </div>
@@ -599,26 +599,26 @@ export function InfographicDirectionsScreen() {
                             type="button"
                             onClick={() => setPageShape(fmt.id as any)}
                             className={cn(
-                              "relative p-3.5 rounded-[14px] border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[85px]",
+                              "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[85px]",
                               isSelected
-                                ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-xs"
+                                ? "border-2 border-brand bg-white text-ink shadow-xs"
                                 : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                             )}
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <div className="font-bold text-[13.5px]">{fmt.label}</div>
+                              <div className="font-bold text-body-lg">{fmt.label}</div>
                               <div
                                 className={cn(
                                   "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
                                   isSelected
-                                    ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                    ? "border-brand bg-brand text-white"
                                     : "border-[#cbd6d0]"
                                 )}
                               >
                                 {isSelected && <Check className="size-2.5 stroke-[3]" />}
                               </div>
                             </div>
-                            <div className="text-[11.5px] text-[var(--ink-muted)] mt-1">{fmt.sub}</div>
+                            <div className="text-label text-ink-3 mt-1">{fmt.sub}</div>
                           </button>
                         );
                       })}
@@ -638,16 +638,16 @@ export function InfographicDirectionsScreen() {
                 >
                   <div className="space-y-4">
                     <div className="rounded-xl bg-[#f5f8f6] p-3 border border-[#e1e9e4]">
-                      <div className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--brand-deep)] mb-0.5">
+                      <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                         Why this fits
                       </div>
-                      <p className="text-[12.5px] text-[var(--ink-2)]">
+                      <p className="text-body text-ink-2">
                         {AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.whyFits || "Deep mechanistic clarity with primary clinical endpoints & prescribing limits."}
                       </p>
                     </div>
 
                     <div>
-                      <div className="text-[13px] font-bold text-[var(--ink)] mb-2.5">Who is this for?</div>
+                      <div className="text-body-lg font-bold text-ink mb-2.5">Who is this for?</div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                         {AUDIENCE_OPTIONS.map((opt) => {
                           const isSelected = selectedAudienceId === opt.id;
@@ -660,26 +660,26 @@ export function InfographicDirectionsScreen() {
                                 setAudience(opt.title.split("/")[0].trim() as any);
                               }}
                               className={cn(
-                                "relative p-3.5 rounded-[14px] border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]",
+                                "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]",
                                 isSelected
-                                  ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-xs"
+                                  ? "border-2 border-brand bg-white text-ink shadow-xs"
                                   : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                               )}
                             >
                               <div className="flex items-start justify-between gap-2">
-                                <div className="font-bold text-[13.5px] text-[var(--ink)]">{opt.title}</div>
+                                <div className="font-bold text-body-lg text-ink">{opt.title}</div>
                                 <div
                                   className={cn(
                                     "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
                                     isSelected
-                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                      ? "border-brand bg-brand text-white"
                                       : "border-[#cbd6d0]"
                                   )}
                                 >
                                   {isSelected && <Check className="size-2.5 stroke-[3]" />}
                                 </div>
                               </div>
-                              <div className="text-[11.5px] text-[var(--ink-muted)] mt-1.5 leading-snug">{opt.desc}</div>
+                              <div className="text-label text-ink-3 mt-1.5 leading-snug">{opt.desc}</div>
                             </button>
                           );
                         })}
@@ -688,13 +688,13 @@ export function InfographicDirectionsScreen() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                       <div>
-                        <label className="block text-[12px] font-bold text-[var(--ink)] mb-1">
+                        <label className="block text-body font-bold text-ink mb-1">
                           Specialty (optional)
                         </label>
                         <select
                           value={specialty}
                           onChange={(e) => setSpecialty(e.target.value)}
-                          className="w-full h-10 rounded-xl border border-black/15 bg-[#f7f8f6] px-3 text-[13px] font-semibold text-[var(--ink)] outline-none focus:border-[var(--brand)]"
+                          className="w-full h-10 rounded-xl border border-black/15 bg-[#f7f8f6] px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
                         >
                           {SPECIALTIES.map((sp) => (
                             <option key={sp} value={sp}>
@@ -702,17 +702,17 @@ export function InfographicDirectionsScreen() {
                             </option>
                           ))}
                         </select>
-                        <p className="text-[10.5px] text-[var(--ink-muted)] mt-1">
+                        <p className="text-caption text-ink-3 mt-1">
                           Decides which endpoints and terminology count as key messages.
                         </p>
                       </div>
 
                       <div>
-                        <label className="block text-[12px] font-bold text-[var(--ink)] mb-1">Language</label>
+                        <label className="block text-body font-bold text-ink mb-1">Language</label>
                         <select
                           value={language}
                           onChange={(e) => setLanguage(e.target.value)}
-                          className="w-full h-10 rounded-xl border border-black/15 bg-[#f7f8f6] px-3 text-[13px] font-semibold text-[var(--ink)] outline-none focus:border-[var(--brand)]"
+                          className="w-full h-10 rounded-xl border border-black/15 bg-[#f7f8f6] px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
                         >
                           <option value="English">English</option>
                           <option value="Hindi">Hindi</option>
@@ -736,10 +736,10 @@ export function InfographicDirectionsScreen() {
                 >
                   <div className="space-y-4">
                     <div className="rounded-xl bg-[#f5f8f6] p-3 border border-[#e1e9e4]">
-                      <div className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--brand-deep)] mb-0.5">
+                      <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                         Visual layout structure
                       </div>
-                      <p className="text-[12.5px] text-[var(--ink-2)]">
+                      <p className="text-body text-ink-2">
                         The deck is built from one of these archetypes. Each sample carries the typography, charts, and layout elements the creative will use.
                       </p>
                     </div>
@@ -752,42 +752,42 @@ export function InfographicDirectionsScreen() {
                             key={tpl.id}
                             onClick={() => setInfographicTemplate(tpl.id)}
                             className={cn(
-                              "rounded-[14px] border bg-white p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
+                              "rounded-control border bg-white p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
                               isSelected
-                                ? "border-2 border-[var(--brand)] bg-white shadow-xs"
+                                ? "border-2 border-brand bg-white shadow-xs"
                                 : "border-[#e3e8e5] hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                             )}
                           >
                             <div>
                               <div className="flex items-center justify-between mb-1">
-                                <h3 className="text-[14.5px] font-bold text-[var(--ink)]">{tpl.name}</h3>
+                                <h3 className="text-subhead font-bold text-ink">{tpl.name}</h3>
                                 {isSelected ? (
-                                  <span className="size-4.5 rounded-full bg-[var(--brand)] text-white grid place-items-center text-[10px] font-black">
+                                  <span className="size-4.5 rounded-full bg-brand text-white grid place-items-center text-caption font-black">
                                     ✓
                                   </span>
                                 ) : (
                                   <span className="size-4.5 rounded-full border-2 border-[#cbd6d0] shrink-0" />
                                 )}
                               </div>
-                              <p className="text-[11px] text-[var(--ink-muted)] leading-snug mb-2.5 line-clamp-2">{tpl.tagline}</p>
+                              <p className="text-label text-ink-3 leading-snug mb-2.5 line-clamp-2">{tpl.tagline}</p>
 
                               <div
                                 style={{ background: tpl.previewBg }}
                                 className="rounded-xl p-3 text-white mb-2.5 shadow-inner min-h-[115px] flex flex-col justify-between"
                               >
                                 <div>
-                                  <span className="inline-block px-1.5 py-0.5 rounded bg-white/20 text-[8.5px] font-extrabold uppercase tracking-wide">
+                                  <span className="inline-block px-1.5 py-0.5 rounded bg-white/20 text-micro font-extrabold uppercase tracking-wide">
                                     {tpl.badge}
                                   </span>
-                                  <div className="text-[17px] font-black tracking-tight mt-1 leading-none">
+                                  <div className="text-title font-black tracking-tight mt-1 leading-none">
                                     {tpl.metric}
                                   </div>
-                                  <div className="text-[9.5px] text-white/70 mt-0.5">{tpl.metricSub}</div>
+                                  <div className="text-micro text-white/70 mt-0.5">{tpl.metricSub}</div>
                                 </div>
 
                                 <div className="space-y-0.5 pt-1.5 border-t border-white/15">
                                   {tpl.points.slice(0, 2).map((pt, i) => (
-                                    <div key={i} className="text-[9px] text-white/85 flex items-center gap-1 truncate">
+                                    <div key={i} className="text-micro text-white/85 flex items-center gap-1 truncate">
                                       <span className="size-1 rounded-full bg-white/60 shrink-0" />
                                       <span>{pt}</span>
                                     </div>
@@ -805,10 +805,10 @@ export function InfographicDirectionsScreen() {
                               variant={isSelected ? "primary" : "secondary"}
                               size="sm"
                               className={cn(
-                                "w-full h-8 rounded-xl text-[11.5px] font-bold transition cursor-pointer",
+                                "w-full h-8 rounded-xl text-label font-bold transition cursor-pointer",
                                 isSelected
-                                  ? "bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white"
-                                  : "border-black/15 hover:border-[var(--brand)] text-[var(--ink)]"
+                                  ? "bg-brand hover:bg-brand-deep text-white"
+                                  : "border-black/15 hover:border-brand text-ink"
                               )}
                             >
                               {isSelected ? `Using ${tpl.name}` : `Use ${tpl.name}`}
@@ -832,16 +832,16 @@ export function InfographicDirectionsScreen() {
                 >
                   <div className="space-y-4">
                     <div className="rounded-xl bg-[#f5f8f6] p-3 border border-[#e1e9e4]">
-                      <div className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--brand-deep)] mb-0.5">
+                      <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                         Why this fits
                       </div>
-                      <p className="text-[12.5px] text-[var(--ink-2)]">
+                      <p className="text-body text-ink-2">
                         {OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.whyFits || "Focuses on dosing titration, eGFR cut-offs, and first-line prescription protocols."}
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--ink)] mb-1.5">
+                      <label className="block text-body font-bold text-ink mb-1.5">
                         Campaign Objective
                       </label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
@@ -853,26 +853,26 @@ export function InfographicDirectionsScreen() {
                               type="button"
                               onClick={() => setObjective(obj.id)}
                               className={cn(
-                                "relative p-3 rounded-[14px] border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[80px]",
+                                "relative p-3 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[80px]",
                                 isSelected
-                                  ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-xs"
+                                  ? "border-2 border-brand bg-white text-ink shadow-xs"
                                   : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                               )}
                             >
                               <div className="flex items-start justify-between">
-                                <div className="font-bold text-[13px]">{obj.label}</div>
+                                <div className="font-bold text-body-lg">{obj.label}</div>
                                 <div
                                   className={cn(
                                     "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
                                     isSelected
-                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                      ? "border-brand bg-brand text-white"
                                       : "border-[#cbd6d0]"
                                   )}
                                 >
                                   {isSelected && <Check className="size-2.5 stroke-[3]" />}
                                 </div>
                               </div>
-                              <div className="text-[10.5px] text-[var(--ink-muted)] mt-1 leading-tight">{obj.desc}</div>
+                              <div className="text-caption text-ink-3 mt-1 leading-tight">{obj.desc}</div>
                             </button>
                           );
                         })}
@@ -880,7 +880,7 @@ export function InfographicDirectionsScreen() {
                     </div>
 
                     <div>
-                      <label className="block text-[12px] font-bold text-[var(--ink)] mb-1.5">
+                      <label className="block text-body font-bold text-ink mb-1.5">
                         Content Angles (Select topics to prioritize)
                       </label>
                       <div className="flex flex-wrap gap-2">
@@ -892,10 +892,10 @@ export function InfographicDirectionsScreen() {
                               type="button"
                               onClick={() => toggleAngle(ang)}
                               className={cn(
-                                "px-3.5 py-1.5 rounded-xl border text-[12px] font-bold transition cursor-pointer flex items-center gap-1.5",
+                                "px-3.5 py-1.5 rounded-xl border text-body font-bold transition cursor-pointer flex items-center gap-1.5",
                                 isSelected
-                                  ? "bg-[var(--brand)] text-white border-[var(--brand)] shadow-2xs hover:bg-[var(--brand-deep)]"
-                                  : "bg-white text-[var(--ink-2)] border-black/10 hover:border-black/25 hover:bg-[#fafbf9]"
+                                  ? "bg-brand text-white border-brand shadow-2xs hover:bg-brand-deep"
+                                  : "bg-white text-ink-2 border-black/10 hover:border-black/25 hover:bg-[#fafbf9]"
                               )}
                             >
                               {isSelected && <Check className="size-3 stroke-[3]" />}
@@ -920,8 +920,8 @@ export function InfographicDirectionsScreen() {
                 >
                   <div className="space-y-4">
                     <div>
-                      <div className="text-[12.5px] font-bold text-[var(--ink)] mb-1">Logo placement</div>
-                      <p className="text-[11px] text-[var(--ink-muted)] mb-2">
+                      <div className="text-body font-bold text-ink mb-1">Logo placement</div>
+                      <p className="text-label text-ink-3 mb-2">
                         Every page keeps this corner clear, and your approved logo is placed into it after the page is drawn.
                       </p>
                       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -935,24 +935,24 @@ export function InfographicDirectionsScreen() {
                               className={cn(
                                 "p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                                 isSelected
-                                  ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs"
+                                  ? "border-2 border-brand bg-white text-ink shadow-2xs"
                                   : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                               )}
                             >
                               <div className="flex items-start justify-between">
-                                <div className="font-bold text-[12px]">{lp.label}</div>
+                                <div className="font-bold text-body">{lp.label}</div>
                                 <div
                                   className={cn(
                                     "size-4 rounded-full border-2 grid place-items-center shrink-0",
                                     isSelected
-                                      ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                      ? "border-brand bg-brand text-white"
                                       : "border-[#cbd6d0]"
                                   )}
                                 >
                                   {isSelected && <Check className="size-2.5 stroke-[3]" />}
                                 </div>
                               </div>
-                              <div className="text-[9.5px] text-[var(--ink-muted)] mt-0.5 leading-tight">{lp.desc}</div>
+                              <div className="text-micro text-ink-3 mt-0.5 leading-tight">{lp.desc}</div>
                             </button>
                           );
                         })}
@@ -960,12 +960,12 @@ export function InfographicDirectionsScreen() {
                     </div>
 
                     <div>
-                      <div className="text-[12.5px] font-bold text-[var(--ink)] mb-1">Product packshots (Optional)</div>
+                      <div className="text-body font-bold text-ink mb-1">Product packshots (Optional)</div>
                       <div className="flex flex-wrap items-center gap-3">
                         {packshots.map((ps) => (
                           <div key={ps.id} className="relative group rounded-xl border border-black/10 overflow-hidden bg-white p-1 shadow-2xs">
                             <img src={ps.url} alt={ps.name} className="size-16 object-cover rounded-lg" />
-                            <span className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-[8.5px] font-bold px-1 rounded truncate">
+                            <span className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-micro font-bold px-1 rounded truncate">
                               {ps.name}
                             </span>
                           </div>
@@ -974,7 +974,7 @@ export function InfographicDirectionsScreen() {
                         <button
                           type="button"
                           onClick={() => fileUploadRef.current?.click()}
-                          className="h-16 px-4 rounded-xl border-2 border-dashed border-black/20 hover:border-[var(--brand)] flex flex-col items-center justify-center gap-1 text-[11px] font-bold text-[var(--ink-2)] hover:text-[var(--brand)] bg-white cursor-pointer transition"
+                          className="h-16 px-4 rounded-xl border-2 border-dashed border-black/20 hover:border-brand flex flex-col items-center justify-center gap-1 text-label font-bold text-ink-2 hover:text-brand bg-white cursor-pointer transition"
                         >
                           <Upload className="size-4" />
                           <span>Add product image</span>
@@ -983,58 +983,58 @@ export function InfographicDirectionsScreen() {
                     </div>
 
                     <div>
-                      <div className="text-[12.5px] font-bold text-[var(--ink)] mb-1.5">How many pages?</div>
+                      <div className="text-body font-bold text-ink mb-1.5">How many pages?</div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[460px]">
                         <button
                           type="button"
                           onClick={() => setInfographicPages("1")}
                           className={cn(
-                            "p-3 rounded-[14px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
+                            "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                             infographicPages === "1"
-                              ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs"
+                              ? "border-2 border-brand bg-white text-ink shadow-2xs"
                               : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                           )}
                         >
                           <div className="flex items-start justify-between">
-                            <div className="font-bold text-[13.5px]">One page</div>
+                            <div className="font-bold text-body-lg">One page</div>
                             <div
                               className={cn(
                                 "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
                                 infographicPages === "1"
-                                  ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                  ? "border-brand bg-brand text-white"
                                   : "border-[#cbd6d0]"
                               )}
                             >
                               {infographicPages === "1" && <Check className="size-3 stroke-[3]" />}
                             </div>
                           </div>
-                          <div className="text-[11px] text-[var(--ink-muted)] mt-0.5">A single concise surface</div>
+                          <div className="text-label text-ink-3 mt-0.5">A single concise surface</div>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setInfographicPages("2")}
                           className={cn(
-                            "p-3 rounded-[14px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
+                            "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                             infographicPages === "2"
-                              ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs"
+                              ? "border-2 border-brand bg-white text-ink shadow-2xs"
                               : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                           )}
                         >
                           <div className="flex items-start justify-between">
-                            <div className="font-bold text-[13.5px]">Two pages</div>
+                            <div className="font-bold text-body-lg">Two pages</div>
                             <div
                               className={cn(
                                 "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
                                 infographicPages === "2"
-                                  ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                                  ? "border-brand bg-brand text-white"
                                   : "border-[#cbd6d0]"
                               )}
                             >
                               {infographicPages === "2" && <Check className="size-3 stroke-[3]" />}
                             </div>
                           </div>
-                          <div className="text-[11px] text-[var(--ink-muted)] mt-0.5">A front summary and back evidence spread</div>
+                          <div className="text-label text-ink-3 mt-0.5">A front summary and back evidence spread</div>
                         </button>
                       </div>
                     </div>
@@ -1053,24 +1053,24 @@ export function InfographicDirectionsScreen() {
             <div className="space-y-4 max-w-[880px] mx-auto w-full">
               {/* Header Box */}
               <div className="bg-white p-5 rounded-2xl border border-black/10 shadow-2xs">
-                <div className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--brand)] mb-1">
+                <div className="text-label font-extrabold uppercase tracking-wider text-brand mb-1">
                   Content Blueprint &amp; Claim Partition
                 </div>
-                <h2 className="text-[20px] font-black tracking-tight text-[var(--ink)]">
+                <h2 className="text-display font-black tracking-tight text-ink">
                   One tablet, three approved jobs: {brandName} (tirzelamide) in moderate-to-severe plaque psoriasis
                 </h2>
-                <p className="text-[12px] text-[var(--ink-muted)] mt-1">
+                <p className="text-body text-ink-3 mt-1">
                   8 sections on {infographicPages === "2" ? "2 pages" : "1 page"} · 13 verified claims grounded in CDSCO / FDA dossier
                 </p>
               </div>
 
               {/* Transparent "Left Out" Box (MLR Discipline) */}
               <div className="rounded-2xl border border-amber-300/80 bg-amber-50/70 p-4 shadow-2xs">
-                <div className="flex items-center gap-2 text-amber-900 font-bold text-[12.5px] mb-1.5">
+                <div className="flex items-center gap-2 text-amber-900 font-bold text-body mb-1.5">
                   <ShieldCheck className="size-4 text-amber-700 shrink-0" />
                   <span>Left out deliberately for MLR Compliance</span>
                 </div>
-                <p className="text-[11.5px] text-amber-900/90 leading-relaxed">
+                <p className="text-label text-amber-900/90 leading-relaxed">
                   The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved CDSCO primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1.
                 </p>
               </div>
@@ -1085,17 +1085,17 @@ export function InfographicDirectionsScreen() {
                       className="bg-white p-4.5 rounded-2xl border border-black/10 shadow-2xs hover:border-black/20 transition-all duration-200"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="size-6.5 rounded-full bg-[var(--tint)] text-[var(--brand-deep)] font-black text-[12px] grid place-items-center shrink-0 mt-0.5">
+                        <span className="size-6.5 rounded-full bg-tint text-brand-deep font-black text-body grid place-items-center shrink-0 mt-0.5">
                           {sec.num}
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-bold text-[14.5px] text-[var(--ink)]">{sec.title}</h4>
-                            <span className="text-[10.5px] text-[var(--ink-muted)] font-normal italic">
+                            <h4 className="font-bold text-subhead text-ink">{sec.title}</h4>
+                            <span className="text-caption text-ink-3 font-normal italic">
                               ({sec.role})
                             </span>
                           </div>
-                          <p className="text-[12.5px] text-[var(--ink-2)] mt-1.5 leading-relaxed">{sec.body}</p>
+                          <p className="text-body text-ink-2 mt-1.5 leading-relaxed">{sec.body}</p>
 
                           {/* Expandable Citation Button */}
                           <div className="mt-2.5">
@@ -1103,7 +1103,7 @@ export function InfographicDirectionsScreen() {
                               type="button"
                               onClick={() => toggleCitation(sec.num)}
                               className={cn(
-                                "text-[11px] font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 border transition cursor-pointer",
+                                "text-label font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 border transition cursor-pointer",
                                 isExpanded
                                   ? "bg-emerald-100/80 text-emerald-900 border-emerald-300 ring-2 ring-emerald-400/20"
                                   : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100/60"
@@ -1116,8 +1116,8 @@ export function InfographicDirectionsScreen() {
 
                             {/* Rich Expanded Citations Drawer */}
                             {isExpanded && (
-                              <div className="mt-2.5 space-y-2 rounded-xl bg-[#f7faf8] p-3 border border-emerald-200/80 text-[11.5px] animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1">
+                              <div className="mt-2.5 space-y-2 rounded-xl bg-[#f7faf8] p-3 border border-emerald-200/80 text-label animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="text-caption font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1">
                                   <FileCheck2 className="size-3 text-emerald-600" />
                                   <span>Verified Dossier Citations &amp; Label Grounding</span>
                                 </div>
@@ -1128,20 +1128,20 @@ export function InfographicDirectionsScreen() {
                                     className="p-2.5 rounded-lg bg-white border border-emerald-100 shadow-2xs space-y-1"
                                   >
                                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                                      <div className="font-bold text-[12px] text-[var(--ink)] flex items-center gap-1.5">
+                                      <div className="font-bold text-body text-ink flex items-center gap-1.5">
                                         <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
                                         <span>{cit.doc}</span>
                                       </div>
                                       <div className="flex items-center gap-1.5">
-                                        <span className="text-[9.5px] font-extrabold text-[var(--brand-deep)] bg-[var(--tint)] px-1.5 py-0.5 rounded border border-[var(--tint-line)]">
+                                        <span className="text-micro font-extrabold text-brand-deep bg-tint px-1.5 py-0.5 rounded border border-tint-line">
                                           {cit.claimId}
                                         </span>
-                                        <span className="text-[9.5px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                        <span className="text-micro text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                                           {cit.mlrRef}
                                         </span>
                                       </div>
                                     </div>
-                                    <p className="text-[11px] text-[var(--ink-muted)] italic leading-relaxed pl-3 border-l-2 border-emerald-300">
+                                    <p className="text-label text-ink-3 italic leading-relaxed pl-3 border-l-2 border-emerald-300">
                                       &ldquo;{cit.quote}&rdquo;
                                     </p>
                                   </div>
@@ -1168,12 +1168,12 @@ export function InfographicDirectionsScreen() {
                   <Check className="size-3.5 stroke-[3]" />
                 </span>
                 <div className="min-w-0">
-                  <div className="text-[12px] font-bold text-white tracking-tight truncate">
+                  <div className="text-body font-bold text-white tracking-tight truncate">
                     {currentStep === "brief"
                       ? "Ready to create creative"
                       : "Ready to generate canvas"}
                   </div>
-                  <div className="text-[10px] text-white/70 truncate">
+                  <div className="text-caption text-white/70 truncate">
                     Grounded against 214 approved claims
                   </div>
                 </div>
@@ -1187,7 +1187,7 @@ export function InfographicDirectionsScreen() {
                     setVideoSubStage("studio");
                   }
                 }}
-                className="h-9 px-5 rounded-full text-[12.5px] font-bold shadow-sm transition-all duration-200 shrink-0 bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white cursor-pointer hover:scale-105"
+                className="h-9 px-5 rounded-full text-body font-bold shadow-sm transition-all duration-200 shrink-0 bg-brand hover:bg-brand-deep text-white cursor-pointer hover:scale-105"
               >
                 <span>
                   {currentStep === "brief"
@@ -1209,18 +1209,18 @@ export function InfographicDirectionsScreen() {
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
-            "flex flex-col shrink-0 min-h-0 bg-white border-l border-[var(--line)] shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
+            "flex flex-col shrink-0 min-h-0 bg-white border-l border-hair shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
             !copilotPanelOpen && "border-none pointer-events-none"
           )}
         >
           {/* Chat Top Banner */}
-          <div className="p-3.5 border-b border-[var(--line)] bg-white shrink-0">
+          <div className="p-3.5 border-b border-hair bg-white shrink-0">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[12px] font-bold text-[var(--brand)]">
+              <div className="flex items-center gap-2 text-body font-bold text-brand">
                 <Sparkles className="size-3.5" />
                 <span>Direct with SwishX</span>
               </div>
-              <span className="rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-[9.5px] font-bold">
+              <span className="rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-micro font-bold">
                 Online
               </span>
             </div>
@@ -1237,17 +1237,17 @@ export function InfographicDirectionsScreen() {
                 )}
               >
                 {msg.role === "swishx" && (
-                  <div className="size-7 rounded-full bg-[var(--brand)] text-white grid place-items-center font-bold text-[10px] shrink-0 mt-0.5 shadow-2xs">
+                  <div className="size-7 rounded-full bg-brand text-white grid place-items-center font-bold text-caption shrink-0 mt-0.5 shadow-2xs">
                     SX
                   </div>
                 )}
                 <div className="space-y-2 max-w-[88%]">
                   <div
                     className={cn(
-                      "rounded-2xl p-3 text-[12.5px] leading-relaxed",
+                      "rounded-2xl p-3 text-body leading-relaxed",
                       msg.role === "user"
-                        ? "bg-[var(--brand)] text-white rounded-tr-xs"
-                        : "bg-[#f4f6f4] text-[var(--ink)] border border-black/5 rounded-tl-xs"
+                        ? "bg-brand text-white rounded-tr-xs"
+                        : "bg-[#f4f6f4] text-ink border border-black/5 rounded-tl-xs"
                     )}
                   >
                     <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -1266,7 +1266,7 @@ export function InfographicDirectionsScreen() {
                           key={chip}
                           type="button"
                           onClick={() => handleSendChat(chip)}
-                          className="text-[11px] font-semibold text-[var(--ink-2)] bg-white hover:bg-[var(--tint)] hover:text-[var(--brand)] border border-black/10 rounded-full px-2.5 py-1 transition cursor-pointer shadow-2xs"
+                          className="text-label font-semibold text-ink-2 bg-white hover:bg-tint hover:text-brand border border-black/10 rounded-full px-2.5 py-1 transition cursor-pointer shadow-2xs"
                         >
                           {chip}
                         </button>
@@ -1283,16 +1283,16 @@ export function InfographicDirectionsScreen() {
           <div className="p-3 border-t border-black/[0.06] bg-white shrink-0 space-y-2">
             {/* ── Sub-step 1 Action Bar ── */}
             {currentStep === "brief" && (
-              <div className="rounded-xl border border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)] via-white to-[var(--tint)] p-2.5 shadow-2xs flex items-center justify-between gap-2">
+              <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="size-6 rounded-full bg-emerald-600 text-white grid place-items-center shrink-0">
                     <Check className="size-3.5 stroke-[3]" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">
+                    <div className="text-label font-bold text-ink truncate">
                       Ready to generate blueprint
                     </div>
-                    <div className="text-[9.5px] text-[var(--ink-muted)] truncate">
+                    <div className="text-micro text-ink-3 truncate">
                       Grounded against 214 approved claims
                     </div>
                   </div>
@@ -1301,7 +1301,7 @@ export function InfographicDirectionsScreen() {
                   type="button"
                   onClick={() => setCurrentStep("content")}
                   size="sm"
-                  className="h-7.5 px-3 rounded-lg text-[11.5px] font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:scale-[1.02]"
+                  className="h-7.5 px-3 rounded-lg text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                 >
                   <span>Review Blueprint</span>
                   <ArrowRight className="size-3 ml-1" />
@@ -1311,16 +1311,16 @@ export function InfographicDirectionsScreen() {
 
             {/* ── Sub-step 2 Action Bar ── */}
             {currentStep === "content" && (
-              <div className="rounded-xl border border-[var(--brand)]/20 bg-gradient-to-r from-[var(--tint)] via-white to-[var(--tint)] p-2.5 shadow-2xs flex items-center justify-between gap-2">
+              <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="size-6 rounded-full bg-emerald-600 text-white grid place-items-center shrink-0">
                     <Sparkles className="size-3.5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[11.5px] font-bold text-[var(--ink)] truncate">
+                    <div className="text-label font-bold text-ink truncate">
                       Content plan approved
                     </div>
-                    <div className="text-[9.5px] text-[var(--ink-muted)] truncate">
+                    <div className="text-micro text-ink-3 truncate">
                       8 sections · 13 citations
                     </div>
                   </div>
@@ -1332,7 +1332,7 @@ export function InfographicDirectionsScreen() {
                     setVideoSubStage("studio");
                   }}
                   size="sm"
-                  className="h-7.5 px-3 rounded-lg text-[11.5px] font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white hover:scale-[1.02]"
+                  className="h-7.5 px-3 rounded-lg text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                 >
                   <span>Open Studio</span>
                   <ArrowRight className="size-3 ml-1" />
@@ -1342,8 +1342,8 @@ export function InfographicDirectionsScreen() {
 
             {/* Input Bar */}
             <div className="relative">
-              <div className="flex items-center gap-2 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-3 py-2 focus-within:border-[var(--brand)] focus-within:bg-white focus-within:shadow-xs transition">
-                <Plus className="size-3.5 text-[var(--ink-muted)] shrink-0" />
+              <div className="flex items-center gap-2 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-3 py-2 focus-within:border-brand focus-within:bg-white focus-within:shadow-xs transition">
+                <Plus className="size-3.5 text-ink-3 shrink-0" />
                 <input
                   type="text"
                   value={chatInput}
@@ -1352,13 +1352,13 @@ export function InfographicDirectionsScreen() {
                     if (e.key === "Enter") handleSendChat();
                   }}
                   placeholder="Ask or request changes..."
-                  className="flex-1 bg-transparent text-[12.5px] outline-none text-[var(--ink)] placeholder:text-[var(--ink-muted)]"
+                  className="flex-1 bg-transparent text-body outline-none text-ink placeholder:text-ink-3"
                 />
                 <button
                   type="button"
                   onClick={() => handleSendChat()}
                   disabled={!chatInput.trim()}
-                  className="grid size-6 place-items-center rounded-lg bg-[var(--brand)] text-white disabled:opacity-30 hover:bg-[var(--brand-deep)] transition cursor-pointer disabled:cursor-not-allowed shrink-0"
+                  className="grid size-6 place-items-center rounded-lg bg-brand text-white disabled:opacity-30 hover:bg-brand-deep transition cursor-pointer disabled:cursor-not-allowed shrink-0"
                 >
                   <Send className="size-3" />
                 </button>
@@ -1401,10 +1401,10 @@ function CreativePlanSection({
   return (
     <section
       className={cn(
-        "squircle-card relative transition-all duration-300 ease-[cubic-bezier(.2,.8,.2,1)]",
+        "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-white border border-[var(--brand)] shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
-          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-white hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-[14px] my-1"
+          ? "z-20 w-full scale-100 bg-white border border-brand shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
+          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-white hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-control my-1"
       )}
     >
       <button
@@ -1420,10 +1420,10 @@ function CreativePlanSection({
             "squircle-control grid shrink-0 place-items-center transition-transform group-hover:scale-105",
             open ? "size-10 rounded-[12px]" : "size-7 rounded-[8px]",
             open
-              ? "bg-[var(--brand)] text-white shadow-xs"
+              ? "bg-brand text-white shadow-xs"
               : tone === "done"
-              ? "bg-[var(--brand)]/15 text-[var(--brand)]"
-              : "bg-[#edf3ef] text-[var(--brand)]"
+              ? "bg-brand/15 text-brand"
+              : "bg-[#edf3ef] text-brand"
           )}
         >
           {open ? (
@@ -1437,15 +1437,15 @@ function CreativePlanSection({
           <span
             className={cn(
               "block font-bold tracking-tight transition-colors leading-snug",
-              open ? "text-[16px] text-[var(--ink)]" : "text-[13px] text-[var(--ink-2)]"
+              open ? "text-subhead text-ink" : "text-body-lg text-ink-2"
             )}
           >
             {title}
           </span>
           <span
             className={cn(
-              "block truncate text-[var(--ink-muted)]",
-              open ? "mt-0.5 text-[12.5px]" : "text-[11px] max-w-[380px]"
+              "block truncate text-ink-3",
+              open ? "mt-0.5 text-body" : "text-label max-w-[380px]"
             )}
           >
             {summary}
@@ -1455,9 +1455,9 @@ function CreativePlanSection({
         <span
           className={cn(
             "hidden rounded-full font-bold sm:inline border",
-            open ? "px-2.5 py-1 text-[11px]" : "px-2 py-0.5 text-[9.5px]",
+            open ? "px-2.5 py-1 text-label" : "px-2 py-0.5 text-micro",
             status === "Confirmed"
-              ? "bg-[var(--tint)] text-[var(--brand-deep)] border-[var(--tint-line)]"
+              ? "bg-tint text-brand-deep border-tint-line"
               : status === "Optional"
               ? "bg-[#f5f5f5] text-[#737373] border-[#e5e5e5]"
               : "bg-[#eef2ef] text-[#66736c] border-[#e2e8e4]"
@@ -1469,7 +1469,7 @@ function CreativePlanSection({
         <ChevronDown
           className={cn(
             "size-4 shrink-0 text-[#6f7c75] transition-transform duration-200",
-            open && "rotate-180 text-[var(--brand)]"
+            open && "rotate-180 text-brand"
           )}
         />
       </button>

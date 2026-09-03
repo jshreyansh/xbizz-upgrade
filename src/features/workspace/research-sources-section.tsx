@@ -138,36 +138,36 @@ export function ResearchSourcesContent({
   return (
     <div className="space-y-4">
       {/* Pre-built dossiers tray */}
-      <div className="rounded-[18px] bg-[#f4f6f3] border border-[#e2e8e3] p-4 space-y-3">
+      <div className="rounded-panel bg-[#f4f6f3] border border-[#e2e8e3] p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck className="size-4 text-emerald-700" />
-            <span className="text-[12px] font-extrabold text-[var(--ink)]">
+            <span className="text-body font-extrabold text-ink">
               Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
             </span>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/70 border border-emerald-300 px-2 py-0.2 rounded-full">
+            <span className="text-caption font-bold text-emerald-700 bg-emerald-100/70 border border-emerald-300 px-2 py-0.2 rounded-full">
               SmPC &amp; Label Active
             </span>
           </div>
-          <span className="text-[11px] text-[var(--ink-muted)]">Click View to inspect full claims &amp; sources</span>
+          <span className="text-label text-ink-3">Click View to inspect full claims &amp; sources</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           {prebuiltDossiers.map((dossier, idx) => (
             <div
               key={idx}
-              className="p-3 rounded-[14px] bg-white border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
+              className="p-3 rounded-control bg-white border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
             >
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wide text-[var(--brand-deep)] bg-[var(--tint)] px-1.5 py-0.2 rounded border border-[var(--tint-line)]">
+                  <span className="text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded border border-tint-line">
                     {dossier.market}
                   </span>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                  <span className="text-caption font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
                     {dossier.claims} claims
                   </span>
                 </div>
-                <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug line-clamp-1">
+                <div className="text-body font-bold text-ink leading-snug line-clamp-1">
                   {dossier.name}
                 </div>
               </div>
@@ -175,9 +175,9 @@ export function ResearchSourcesContent({
               <button
                 type="button"
                 onClick={() => onPreviewDossier(dossier)}
-                className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-[10px] bg-[#f0f4f1] hover:bg-[var(--tint)] text-[var(--brand-deep)] text-[11.5px] font-bold border border-[#d8e0da] transition-colors cursor-pointer"
+                className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-chip bg-[#f0f4f1] hover:bg-tint text-brand-deep text-label font-bold border border-[#d8e0da] transition-colors cursor-pointer"
               >
-                <Eye className="size-3.5 text-[var(--brand)]" />
+                <Eye className="size-3.5 text-brand" />
                 <span>View</span>
               </button>
             </div>
@@ -187,7 +187,7 @@ export function ResearchSourcesContent({
 
       {/* 3 Grounding Options */}
       <div className="space-y-2 pt-1">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+        <span className="text-label font-bold uppercase tracking-wider text-ink-3">
           Select Grounding Source Mode
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -217,24 +217,24 @@ export function ResearchSourcesContent({
                 className={cn(
                   "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
                   isSelected
-                    ? "border-2 border-[var(--brand)] bg-white text-[var(--ink)] shadow-2xs ring-2 ring-[var(--brand)]/15"
+                    ? "border-2 border-brand bg-white text-ink shadow-2xs ring-2 ring-brand/15"
                     : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="font-bold text-[13px] leading-snug">{opt.title}</div>
+                  <div className="font-bold text-body-lg leading-snug">{opt.title}</div>
                   <div
                     className={cn(
                       "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
                       isSelected
-                        ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                        ? "border-brand bg-brand text-white"
                         : "border-[#cbd6d0]"
                     )}
                   >
                     {isSelected && <Check className="size-3 stroke-[3]" />}
                   </div>
                 </div>
-                <div className="text-[11px] text-[var(--ink-muted)] mt-1.5 leading-snug">{opt.desc}</div>
+                <div className="text-label text-ink-3 mt-1.5 leading-snug">{opt.desc}</div>
               </button>
             );
           })}
@@ -245,13 +245,13 @@ export function ResearchSourcesContent({
       {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources") && (
         <div className="space-y-2 pt-2 border-t border-black/5 animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
+            <span className="text-label font-bold uppercase tracking-wider text-ink-3">
               My Uploaded Documents &amp; Briefs ({uploadedDocs.length})
             </span>
             <button
               type="button"
               onClick={() => docUploadRef.current?.click()}
-              className="inline-flex items-center gap-1.5 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-label font-bold text-brand hover:underline cursor-pointer"
             >
               <Plus className="size-3.5" />
               <span>Add more files</span>
@@ -279,18 +279,18 @@ export function ResearchSourcesContent({
             {uploadedDocs.map((doc, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-white border border-[#e3e8e5] text-[12px]"
+                className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-white border border-[#e3e8e5] text-body"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="size-4 text-[var(--brand)] shrink-0" />
-                  <span className="font-semibold text-[var(--ink)] truncate">{doc.name}</span>
+                  <FileText className="size-4 text-brand shrink-0" />
+                  <span className="font-semibold text-ink truncate">{doc.name}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-[10px] text-[var(--ink-muted)]">{doc.size}</span>
+                  <span className="text-caption text-ink-3">{doc.size}</span>
                   <button
                     type="button"
                     onClick={() => onSetUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
-                    className="grid size-5 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-red-600 transition-colors cursor-pointer"
+                    className="grid size-5 place-items-center rounded-full text-ink-3 hover:bg-black/5 hover:text-red-600 transition-colors cursor-pointer"
                     aria-label="Remove"
                   >
                     <X className="size-3" />
@@ -308,7 +308,7 @@ export function ResearchSourcesContent({
           size="sm"
           variant="secondary"
           onClick={onContinue}
-          className="text-[12px] font-bold gap-1 cursor-pointer"
+          className="text-body font-bold gap-1 cursor-pointer"
         >
           <span>Save &amp; Continue</span>
           <ArrowRight className="size-3" />

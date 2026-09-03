@@ -190,33 +190,33 @@ export function CreativesModeScreen() {
         {/* ════ CARD 1: Infographic/Chart (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-[24px] border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-[var(--brand)] hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-[var(--tint)] text-[var(--brand)] border border-[var(--tint-line)]">
+                <div className="grid size-10 place-items-center rounded-xl bg-tint text-brand border border-tint-line">
                   <ImageIcon className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-[800] text-[var(--ink)] flex items-center gap-1.5">
+                  <h3 className="text-lg font-[800] text-ink flex items-center gap-1.5">
                     Infographic/Chart
                   </h3>
-                  <p className="text-xs text-[var(--ink-2)] font-medium">Start from scratch · HCP &amp; Patient Infographic</p>
+                  <p className="text-xs text-ink-2 font-medium">Start from scratch · HCP &amp; Patient Infographic</p>
                 </div>
               </div>
-              <span className="rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-bold text-[var(--brand)] border border-[var(--tint-line)]">
+              <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-bold text-brand border border-tint-line">
                 Start from Scratch
               </span>
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.04] p-3 text-xs text-[var(--ink-2)] min-h-[44px] flex items-center gap-2">
+            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
               <div className="grid size-4 place-items-center rounded-full bg-emerald-100 text-emerald-700 shrink-0">
                 <Check className="size-2.5" />
               </div>
-              <span className="font-semibold text-[var(--ink)] animate-fade-in transition-all duration-300">
+              <span className="font-semibold text-ink animate-fade-in transition-all duration-300">
                 {CHART_FEATURES[chartFeature]}
               </span>
             </div>
@@ -229,21 +229,21 @@ export function CreativesModeScreen() {
           >
             {/* Top meta bar */}
             <div className="flex items-center justify-between pointer-events-none z-10">
-              <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md border border-white/10">
-                <ImageIcon className="size-3 text-[var(--brand)]" />
+              <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
+                <ImageIcon className="size-3 text-brand" />
                 <span>{curChart.badge}</span>
               </div>
-              <div className="rounded-full bg-white/90 px-2.5 py-0.5 text-[10.5px] font-bold text-[var(--ink)] shadow-xs">
+              <div className="rounded-full bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
                 {curChart.aspect}
               </div>
             </div>
 
             {/* Middle Stat Hero Figure */}
             <div className="my-auto py-2 z-10 pointer-events-none">
-              <div className="text-[11px] font-bold text-white/70 uppercase tracking-wider">{curChart.title}</div>
-              <div className="text-[28px] font-black text-white leading-tight tracking-tight flex items-baseline gap-2 mt-0.5">
+              <div className="text-label font-bold text-white/70 uppercase tracking-wider">{curChart.title}</div>
+              <div className="text-hero font-black text-white leading-tight tracking-tight flex items-baseline gap-2 mt-0.5">
                 <span>{curChart.metric}</span>
-                <span className="text-[13px] font-semibold text-emerald-400">{curChart.metricLabel}</span>
+                <span className="text-body-lg font-semibold text-emerald-400">{curChart.metricLabel}</span>
               </div>
             </div>
 
@@ -273,8 +273,8 @@ export function CreativesModeScreen() {
 
             {/* Caption + citation */}
             <div className="z-10 pointer-events-none">
-              <p className="text-[12.5px] font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curChart.caption}</p>
-              <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/85 backdrop-blur-sm border border-white/10">
+              <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curChart.caption}</p>
+              <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
                 <Check className="size-2.5 text-emerald-400" />
                 <span>{curChart.citation}</span>
               </div>
@@ -286,7 +286,7 @@ export function CreativesModeScreen() {
                 <span
                   key={i}
                   className={`size-1.5 rounded-full transition-all duration-300 ${
-                    i === chartIndex ? "bg-[var(--brand)] w-4" : "bg-white/40"
+                    i === chartIndex ? "bg-brand w-4" : "bg-white/40"
                   }`}
                 />
               ))}
@@ -297,7 +297,7 @@ export function CreativesModeScreen() {
         {/* ════ CARD 2: Presentation/Deck (Visual Detail Aid & Slides) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-[24px] border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
@@ -307,23 +307,23 @@ export function CreativesModeScreen() {
                   <Layers className="size-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-[800] text-[var(--ink)] flex items-center gap-1.5">
+                  <h3 className="text-lg font-[800] text-ink flex items-center gap-1.5">
                     Presentation/Deck
                   </h3>
-                  <p className="text-xs text-[var(--ink-2)] font-medium">Visual Detail Aid &amp; Slide Panels</p>
+                  <p className="text-xs text-ink-2 font-medium">Visual Detail Aid &amp; Slide Panels</p>
                 </div>
               </div>
-              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10.5px] font-bold text-blue-700 border border-blue-200">
+              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-caption font-bold text-blue-700 border border-blue-200">
                 Field Force
               </span>
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.04] p-3 text-xs text-[var(--ink-2)] min-h-[44px] flex items-center gap-2">
+            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
               <div className="grid size-4 place-items-center rounded-full bg-blue-100 text-blue-700 shrink-0">
                 <Check className="size-2.5" />
               </div>
-              <span className="font-semibold text-[var(--ink)] animate-fade-in transition-all duration-300">
+              <span className="font-semibold text-ink animate-fade-in transition-all duration-300">
                 {DECK_FEATURES[deckFeature]}
               </span>
             </div>
@@ -336,21 +336,21 @@ export function CreativesModeScreen() {
           >
             {/* Top meta bar */}
             <div className="flex items-center justify-between pointer-events-none z-10">
-              <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-md border border-white/10">
+              <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
                 <Layers className="size-3 text-blue-400" />
                 <span>{curDeck.badge}</span>
               </div>
-              <div className="rounded-full bg-white/90 px-2.5 py-0.5 text-[10.5px] font-bold text-[var(--ink)] shadow-xs">
+              <div className="rounded-full bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
                 {curDeck.aspect}
               </div>
             </div>
 
             {/* Middle Figure */}
             <div className="my-auto py-2 z-10 pointer-events-none">
-              <div className="text-[11px] font-bold text-white/70 uppercase tracking-wider">{curDeck.title}</div>
-              <div className="text-[26px] font-black text-white leading-tight tracking-tight flex items-baseline gap-2 mt-0.5">
+              <div className="text-label font-bold text-white/70 uppercase tracking-wider">{curDeck.title}</div>
+              <div className="text-display-lg font-black text-white leading-tight tracking-tight flex items-baseline gap-2 mt-0.5">
                 <span>{curDeck.metric}</span>
-                <span className="text-[13px] font-semibold text-sky-300">{curDeck.metricLabel}</span>
+                <span className="text-body-lg font-semibold text-sky-300">{curDeck.metricLabel}</span>
               </div>
             </div>
 
@@ -380,8 +380,8 @@ export function CreativesModeScreen() {
 
             {/* Caption + citation */}
             <div className="z-10 pointer-events-none">
-              <p className="text-[12.5px] font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curDeck.caption}</p>
-              <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white/85 backdrop-blur-sm border border-white/10">
+              <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curDeck.caption}</p>
+              <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
                 <Check className="size-2.5 text-blue-400" />
                 <span>{curDeck.citation}</span>
               </div>

@@ -232,7 +232,7 @@ const SHAPE_OPTIONS = [
     id: "landscape" as OutputShape,
     label: "Landscape",
     renderIcon: (isSel: boolean) => (
-      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-[var(--brand)]" : "text-slate-500")} viewBox="0 0 20 14" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-slate-500")} viewBox="0 0 20 14" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="1.5" y="1.5" width="17" height="11" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
       </svg>
     ),
@@ -241,7 +241,7 @@ const SHAPE_OPTIONS = [
     id: "portrait" as OutputShape,
     label: "Portrait",
     renderIcon: (isSel: boolean) => (
-      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-[var(--brand)]" : "text-slate-500")} viewBox="0 0 14 20" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-slate-500")} viewBox="0 0 14 20" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="1.5" y="1.5" width="11" height="17" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
       </svg>
     ),
@@ -250,7 +250,7 @@ const SHAPE_OPTIONS = [
     id: "square" as OutputShape,
     label: "Square",
     renderIcon: (isSel: boolean) => (
-      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-[var(--brand)]" : "text-slate-500")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-slate-500")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="1.5" y="1.5" width="13" height="13" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
       </svg>
     ),
@@ -440,19 +440,19 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       role="dialog" aria-modal="true"
     >
-      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-[24px] border border-[#d8deda] bg-white shadow-2xl overflow-hidden text-left">
+      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-card border border-[#d8deda] bg-white shadow-2xl overflow-hidden text-left">
 
         {/* ── Modal Header ── */}
         <div className="flex items-center justify-between border-b border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-xl bg-[var(--tint)] text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs">
-              <Sparkles className="size-4.5 text-[var(--brand)]" />
+            <div className="grid size-9 place-items-center rounded-xl bg-tint text-brand-deep border border-tint-line shadow-2xs">
+              <Sparkles className="size-4.5 text-brand" />
             </div>
             <div>
-              <h2 className="text-[17px] font-[850] text-[var(--ink)] tracking-tight">
+              <h2 className="text-title font-[850] text-ink tracking-tight">
                 New {assetType === "infographic" ? "Creative / Infographic" : "Video"} Project
               </h2>
-              <p className="text-[12px] text-[var(--ink-muted)]">
+              <p className="text-body text-ink-3">
                 Answer each focus decision to configure your project.
               </p>
             </div>
@@ -461,7 +461,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           <button
             type="button"
             onClick={onClose}
-            className="grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-black/5 hover:text-[var(--ink)] transition-colors cursor-pointer"
+            className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-black/5 hover:text-ink transition-colors cursor-pointer"
             aria-label="Close"
           >
             <X className="size-4.5" />
@@ -473,26 +473,26 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           {/* ══════════════ 1. CLINICAL GROUNDING ══════════════ */}
           <div className={cn(
-            "rounded-[18px] border transition-all duration-200",
+            "rounded-panel border transition-all duration-200",
             stage === "focus"
-              ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
+              ? "border-brand/40 bg-[#f9faf9] shadow-xs p-5"
               : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
           )}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className={cn(
-                  "grid size-6 place-items-center rounded-full text-[11px] font-extrabold transition-colors",
+                  "grid size-6 place-items-center rounded-full text-label font-extrabold transition-colors",
                   stage !== "focus" && (selectedBrandId || selectedDiseaseIds.length > 0)
                     ? "bg-emerald-100 text-emerald-800"
-                    : "bg-black/8 text-[var(--ink-muted)]"
+                    : "bg-black/8 text-ink-3"
                 )}>
                   {stage !== "focus" && (selectedBrandId || selectedDiseaseIds.length > 0) ? "✓" : "1"}
                 </div>
-                <span className="text-[13px] font-extrabold text-[var(--ink)]">
+                <span className="text-body-lg font-extrabold text-ink">
                   1. Clinical Grounding
                 </span>
                 {stage !== "focus" && (
-                  <span className="text-[12px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] ml-2">
+                  <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-full border border-tint-line ml-2">
                     {sourceMode === "brand"
                       ? selectedBrand?.name || "Brand Selected"
                       : `${selectedDiseaseIds.length} Therapy Areas: ${selectedDiseaseIds.map((id) => allDiseases.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`}
@@ -504,7 +504,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 <button
                   type="button"
                   onClick={() => setStage("focus")}
-                  className="flex items-center gap-1 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+                  className="flex items-center gap-1 text-label font-bold text-brand hover:underline cursor-pointer"
                 >
                   <Edit3 className="size-3" />
                   <span>Change</span>
@@ -514,14 +514,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <button
                     type="button"
                     onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
-                    className={cn("px-2.5 py-0.5 rounded-[6px] text-[11px] font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-[var(--brand)] text-white" : "text-[var(--ink-muted)] hover:text-[var(--ink)]")}
+                    className={cn("px-2.5 py-0.5 rounded-[6px] text-label font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
                   >
                     Brand
                   </button>
                   <button
                     type="button"
                     onClick={() => { setSourceMode("disease"); setSelectedBrandId(""); setBrandSearch(""); }}
-                    className={cn("px-2.5 py-0.5 rounded-[6px] text-[11px] font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-[var(--brand)] text-white" : "text-[var(--ink-muted)] hover:text-[var(--ink)]")}
+                    className={cn("px-2.5 py-0.5 rounded-[6px] text-label font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
                   >
                     Therapy Area
                   </button>
@@ -541,7 +541,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         value={brandSearch}
                         onChange={(e) => { setBrandSearch(e.target.value); }}
                         placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
-                        className="w-full rounded-[14px] border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-[13px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        className="w-full rounded-control border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-body-lg font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
                         autoFocus
                       />
                     </div>
@@ -557,26 +557,26 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             onClick={() => handleSelectBrand(brand)}
                             className={cn(
                               "flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors cursor-pointer",
-                              isSel ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold" : "hover:bg-slate-50 text-slate-800"
+                              isSel ? "bg-tint text-brand-deep font-bold" : "hover:bg-slate-50 text-slate-800"
                             )}
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className={cn("grid size-7 place-items-center rounded-lg text-[10px] font-black border shrink-0", isSel ? "bg-[var(--brand)] text-white border-[var(--brand)]" : "bg-slate-100 text-slate-700 border-slate-200")}>
+                              <div className={cn("grid size-7 place-items-center rounded-lg text-caption font-black border shrink-0", isSel ? "bg-brand text-white border-brand" : "bg-slate-100 text-slate-700 border-slate-200")}>
                                 {brand.name.slice(0, 2).toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                <div className="text-[12.5px] font-bold">{brand.name}</div>
-                                <div className="text-[11px] text-slate-500 italic truncate">{brand.genericName} · {brand.therapyAreas.join(", ")}</div>
+                                <div className="text-body font-bold">{brand.name}</div>
+                                <div className="text-label text-slate-500 italic truncate">{brand.genericName} · {brand.therapyAreas.join(", ")}</div>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0 ml-2">
                               {brand.hasDossier && (
-                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                <span className="text-caption font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                   SmPC Ready
                                 </span>
                               )}
-                              <span className="text-[11px] font-bold text-[var(--brand)] flex items-center gap-0.5">
+                              <span className="text-label font-bold text-brand flex items-center gap-0.5">
                                 Select <ChevronRight className="size-3" />
                               </span>
                             </div>
@@ -584,7 +584,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         );
                       })}
                       {filteredBrands.length === 0 && (
-                        <div className="py-6 text-center text-[12px] text-slate-400">
+                        <div className="py-6 text-center text-body text-slate-400">
                           No brands matching &quot;{brandSearch}&quot;
                         </div>
                       )}
@@ -599,7 +599,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         value={diseaseSearch}
                         onChange={(e) => setDiseaseSearch(e.target.value)}
                         placeholder="Search therapy areas (e.g. Dermatology, Oncology, Cardiology)..."
-                        className="w-full rounded-[14px] border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-[13px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand)]/15 shadow-2xs transition-all"
+                        className="w-full rounded-control border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-body-lg font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
                         autoFocus
                       />
                     </div>
@@ -614,13 +614,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             type="button"
                             onClick={() => toggleDisease(disease.id)}
                             className={cn(
-                              "px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
+                              "px-3 py-1.5 rounded-full text-body font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
                               isSel
-                                ? "bg-[var(--tint)] border-[var(--brand)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                                ? "bg-tint border-brand text-brand-deep font-bold shadow-2xs"
                                 : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                             )}
                           >
-                            {isSel && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                            {isSel && <Check className="size-3 text-brand stroke-[3]" />}
                             <span>{disease.label}</span>
                           </button>
                         );
@@ -631,7 +631,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         type="button"
                         onClick={() => setShowCustomDiseaseBox(!showCustomDiseaseBox)}
                         className={cn(
-                          "px-3 py-1.5 rounded-full text-[12px] font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1.5",
+                          "px-3 py-1.5 rounded-full text-body font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1.5",
                           showCustomDiseaseBox
                             ? "bg-slate-900 border-slate-900 text-white shadow-2xs font-bold"
                             : "bg-white border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
@@ -651,10 +651,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           onChange={(e) => setCustomDiseaseInput(e.target.value)}
                           onKeyDown={(e) => { if (e.key === "Enter") handleAddCustomDisease(); }}
                           placeholder="Type custom therapy or disease area (e.g. Rare Diseases, Ophthalmology)..."
-                          className="flex-1 bg-white rounded-lg border border-slate-200 px-3 py-1.5 text-[12.5px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)]"
+                          className="flex-1 bg-white rounded-lg border border-slate-200 px-3 py-1.5 text-body font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand"
                           autoFocus
                         />
-                        <Button size="sm" variant="primary" onClick={handleAddCustomDisease} disabled={!customDiseaseInput.trim()} className="h-7.5 text-[11.5px] font-bold px-3.5 cursor-pointer">
+                        <Button size="sm" variant="primary" onClick={handleAddCustomDisease} disabled={!customDiseaseInput.trim()} className="h-7.5 text-label font-bold px-3.5 cursor-pointer">
                           <span>Add Area</span>
                         </Button>
                       </div>
@@ -662,10 +662,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                     {selectedDiseaseIds.length > 0 && (
                       <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                        <span className="text-[11.5px] font-bold text-slate-600">
+                        <span className="text-label font-bold text-slate-600">
                           {selectedDiseaseIds.length} therapy area{selectedDiseaseIds.length > 1 ? "s" : ""} selected
                         </span>
-                        <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7.5 text-[11.5px] font-bold px-4 cursor-pointer shadow-sm">
+                        <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm">
                           <span>Confirm &amp; Next</span>
                           <ChevronRight className="size-3.5" />
                         </Button>
@@ -679,41 +679,41 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           {/* ══════════════ 2. TARGET AUDIENCE ══════════════ */}
           {stage === "focus" ? (
-            <div className="rounded-[18px] border border-dashed border-black/10 bg-[#fafbfa] p-3.5 flex items-center justify-between opacity-60">
+            <div className="rounded-panel border border-dashed border-black/10 bg-[#fafbfa] p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
-                <div className="grid size-6 place-items-center rounded-full bg-black/5 text-[11px] font-bold text-[var(--ink-muted)]">
+                <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">
                   2
                 </div>
-                <span className="text-[12.5px] font-bold text-[var(--ink-muted)]">
+                <span className="text-body font-bold text-ink-3">
                   2. Target Audience
                 </span>
               </div>
-              <span className="text-[11px] text-[var(--ink-muted)] flex items-center gap-1">
+              <span className="text-label text-ink-3 flex items-center gap-1">
                 <Lock className="size-3" /> Select grounding first
               </span>
             </div>
           ) : (
             <div className={cn(
-              "rounded-[18px] border transition-all duration-200",
+              "rounded-panel border transition-all duration-200",
               stage === "audience"
-                ? "border-[var(--brand)]/40 bg-[#f9faf9] shadow-xs p-5"
+                ? "border-brand/40 bg-[#f9faf9] shadow-xs p-5"
                 : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
             )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className={cn(
-                    "grid size-6 place-items-center rounded-full text-[11px] font-extrabold transition-colors",
+                    "grid size-6 place-items-center rounded-full text-label font-extrabold transition-colors",
                     stage === "details"
                       ? "bg-emerald-100 text-emerald-800"
-                      : "bg-black/8 text-[var(--ink-muted)]"
+                      : "bg-black/8 text-ink-3"
                   )}>
                     {stage === "details" ? "✓" : "2"}
                   </div>
-                  <span className="text-[13px] font-extrabold text-[var(--ink)]">
+                  <span className="text-body-lg font-extrabold text-ink">
                     2. Target Audience
                   </span>
                   {stage !== "audience" && (
-                    <span className="text-[12px] font-semibold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] ml-2">
+                    <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-full border border-tint-line ml-2">
                       {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}
                       {audience === "HCP" && selectedSpecialities.length > 0 ? ` (${selectedSpecialities.join(", ")})` : ""}
                     </span>
@@ -724,7 +724,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <button
                     type="button"
                     onClick={() => setStage("audience")}
-                    className="flex items-center gap-1 text-[11.5px] font-bold text-[var(--brand)] hover:underline cursor-pointer"
+                    className="flex items-center gap-1 text-label font-bold text-brand hover:underline cursor-pointer"
                   >
                     <Edit3 className="size-3" />
                     <span>Change</span>
@@ -745,17 +745,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           type="button"
                           onClick={() => handleSelectAudience(item.id)}
                           className={cn(
-                            "flex flex-col items-center justify-center p-3 rounded-[14px] border-2 text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
+                            "flex flex-col items-center justify-center p-3 rounded-control border-2 text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
                             isSel
-                              ? "border-[var(--brand)] bg-white ring-2 ring-[var(--brand)]/15 shadow-sm"
+                              ? "border-brand bg-white ring-2 ring-brand/15 shadow-sm"
                               : "border-black/8 bg-white hover:border-black/20"
                           )}
                         >
-                          <div className={cn("grid size-7 place-items-center rounded-lg shrink-0 transition-colors", isSel ? "bg-[var(--brand)] text-white" : "bg-[var(--tint)] text-[var(--brand-deep)]")}>
+                          <div className={cn("grid size-7 place-items-center rounded-lg shrink-0 transition-colors", isSel ? "bg-brand text-white" : "bg-tint text-brand-deep")}>
                             <IconComp className="size-3.5" />
                           </div>
-                          <div className="text-[12px] font-[850] text-[var(--ink)] leading-none">{item.title}</div>
-                          <div className="text-[9.5px] text-[var(--ink-muted)] leading-none">{item.subtitle}</div>
+                          <div className="text-body font-[850] text-ink leading-none">{item.title}</div>
+                          <div className="text-micro text-ink-3 leading-none">{item.subtitle}</div>
                         </button>
                       );
                     })}
@@ -765,14 +765,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   {audience === "HCP" && (
                     <div className="pt-3 border-t border-slate-200/80 space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11.5px] font-bold text-slate-700">
+                        <span className="text-label font-bold text-slate-700">
                           Doctor Speciality (Optional):
                         </span>
                         {selectedSpecialities.length > 0 && (
                           <button
                             type="button"
                             onClick={() => setSelectedSpecialities([])}
-                            className="text-[10.5px] font-semibold text-slate-400 hover:text-slate-700 cursor-pointer"
+                            className="text-caption font-semibold text-slate-400 hover:text-slate-700 cursor-pointer"
                           >
                             Clear all
                           </button>
@@ -789,13 +789,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               type="button"
                               onClick={() => toggleSpeciality(spec)}
                               className={cn(
-                                "px-2.5 py-1 rounded-full text-[11.5px] font-semibold border transition-all cursor-pointer flex items-center gap-1",
+                                "px-2.5 py-1 rounded-full text-label font-semibold border transition-all cursor-pointer flex items-center gap-1",
                                 isSel
-                                  ? "bg-[var(--tint)] border-[var(--brand)] text-[var(--brand-deep)] font-bold shadow-2xs"
+                                  ? "bg-tint border-brand text-brand-deep font-bold shadow-2xs"
                                   : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                               )}
                             >
-                              {isSel && <Check className="size-2.5 text-[var(--brand)] stroke-[3]" />}
+                              {isSel && <Check className="size-2.5 text-brand stroke-[3]" />}
                               <span>{spec}</span>
                             </button>
                           );
@@ -806,7 +806,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           type="button"
                           onClick={() => setShowCustomSpecialityBox(!showCustomSpecialityBox)}
                           className={cn(
-                            "px-2.5 py-1 rounded-full text-[11.5px] font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1",
+                            "px-2.5 py-1 rounded-full text-label font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1",
                             showCustomSpecialityBox
                               ? "bg-slate-900 border-slate-900 text-white font-bold"
                               : "bg-white border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
@@ -826,10 +826,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             onChange={(e) => setCustomSpecialityInput(e.target.value)}
                             onKeyDown={(e) => { if (e.key === "Enter") handleAddCustomSpeciality(); }}
                             placeholder="Type custom doctor speciality (e.g. Hematologist, Pathologist)..."
-                            className="flex-1 bg-white rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[var(--brand)]"
+                            className="flex-1 bg-white rounded-lg border border-slate-200 px-3 py-1.5 text-body font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand"
                             autoFocus
                           />
-                          <Button size="sm" variant="primary" onClick={handleAddCustomSpeciality} disabled={!customSpecialityInput.trim()} className="h-7 text-[11px] font-bold px-3 cursor-pointer">
+                          <Button size="sm" variant="primary" onClick={handleAddCustomSpeciality} disabled={!customSpecialityInput.trim()} className="h-7 text-label font-bold px-3 cursor-pointer">
                             <span>Add</span>
                           </Button>
                         </div>
@@ -837,7 +837,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                       {/* Continue to Shape */}
                       <div className="flex justify-end pt-1">
-                        <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7.5 text-[11.5px] font-bold px-4 cursor-pointer shadow-sm">
+                        <Button size="sm" variant="primary" onClick={() => setStage("details")} className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm">
                           <span>Continue to Output Shape</span>
                           <ChevronRight className="size-3.5" />
                         </Button>
@@ -851,16 +851,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           {/* ══════════════ 3 & 4: OUTPUT SIZE + CLINICAL FOCUS TOPICS ══════════════ */}
           {stage !== "details" ? (
-            <div className="rounded-[18px] border border-dashed border-black/10 bg-[#fafbfa] p-3.5 flex items-center justify-between opacity-60">
+            <div className="rounded-panel border border-dashed border-black/10 bg-[#fafbfa] p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
-                <div className="grid size-6 place-items-center rounded-full bg-black/5 text-[11px] font-bold text-[var(--ink-muted)]">
+                <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">
                   3
                 </div>
-                <span className="text-[12.5px] font-bold text-[var(--ink-muted)]">
+                <span className="text-body font-bold text-ink-3">
                   3. Output Shape &amp; Clinical Focus Topics
                 </span>
               </div>
-              <span className="text-[11px] text-[var(--ink-muted)] flex items-center gap-1">
+              <span className="text-label text-ink-3 flex items-center gap-1">
                 <Lock className="size-3" /> Select audience first
               </span>
             </div>
@@ -868,17 +868,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             <div className="space-y-4 animate-in fade-in duration-200">
               
               {/* 3. Output Shape (ONLY 3: Landscape, Portrait, Square with Clean Geometric Icons) */}
-              <div className="rounded-[18px] border border-[#e5ebe6] bg-white p-4 space-y-2.5 shadow-2xs">
+              <div className="rounded-panel border border-[#e5ebe6] bg-white p-4 space-y-2.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="grid size-5.5 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand-deep)] text-[10.5px] font-extrabold">
+                    <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
                       3
                     </div>
-                    <span className="text-[12.5px] font-extrabold text-[var(--ink)]">
+                    <span className="text-body font-extrabold text-ink">
                       Output Shape
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  <span className="text-label font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                     {SHAPE_OPTIONS.find((s) => s.id === selectedShape)?.label}
                   </span>
                 </div>
@@ -892,14 +892,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         type="button"
                         onClick={() => setSelectedShape(opt.id)}
                         className={cn(
-                          "flex items-center justify-center gap-2.5 py-3 px-4 rounded-[14px] border-2 transition-all cursor-pointer shadow-2xs",
+                          "flex items-center justify-center gap-2.5 py-3 px-4 rounded-control border-2 transition-all cursor-pointer shadow-2xs",
                           isSel
-                            ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)] font-extrabold shadow-2xs ring-2 ring-[var(--brand)]/15"
-                            : "border-black/8 bg-white hover:border-black/20 text-[var(--ink)]"
+                            ? "border-brand bg-tint text-brand-deep font-extrabold shadow-2xs ring-2 ring-brand/15"
+                            : "border-black/8 bg-white hover:border-black/20 text-ink"
                         )}
                       >
                         {opt.renderIcon(isSel)}
-                        <span className="text-[13px] font-bold">{opt.label}</span>
+                        <span className="text-body-lg font-bold">{opt.label}</span>
                       </button>
                     );
                   })}
@@ -907,22 +907,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               </div>
 
               {/* 4. Clinical Focus Topics (Audience-tailored Hero Cards) */}
-              <div className="rounded-[18px] border border-[#e5ebe6] bg-white p-5 space-y-3 shadow-2xs">
+              <div className="rounded-panel border border-[#e5ebe6] bg-white p-5 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="grid size-5.5 place-items-center rounded-full bg-[var(--tint)] text-[var(--brand-deep)] text-[10.5px] font-extrabold">
+                    <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
                       4
                     </div>
                     <div>
-                      <h3 className="text-[13px] font-extrabold text-[var(--ink)]">
+                      <h3 className="text-body-lg font-extrabold text-ink">
                         Clinical Focus Topics
                       </h3>
-                      <p className="text-[11px] text-[var(--ink-muted)]">
+                      <p className="text-label text-ink-3">
                         Select 1 to 3 story pillars (tailored for {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}).
                       </p>
                     </div>
                   </div>
-                  <span className="text-[11px] font-bold text-[var(--brand-deep)] bg-[var(--tint)] px-2.5 py-0.5 rounded-full border border-[var(--tint-line)] shrink-0">
+                  <span className="text-label font-bold text-brand-deep bg-tint px-2.5 py-0.5 rounded-full border border-tint-line shrink-0">
                     {selectedTopics.length} Selected
                   </span>
                 </div>
@@ -937,24 +937,24 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         type="button"
                         onClick={() => toggleTopic(top.label)}
                         className={cn(
-                          "group relative flex flex-col justify-between p-3.5 rounded-[14px] border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[92px]",
+                          "group relative flex flex-col justify-between p-3.5 rounded-control border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[92px]",
                           isSel
-                            ? "border-[var(--brand)] bg-[#f3f9f5] ring-2 ring-[var(--brand)]/15 shadow-sm"
+                            ? "border-brand bg-[#f3f9f5] ring-2 ring-brand/15 shadow-sm"
                             : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbfa]"
                         )}
                       >
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
-                            <div className={cn("grid size-6 place-items-center rounded-md transition-colors shrink-0", isSel ? "bg-[var(--brand)] text-white shadow-2xs" : "bg-[var(--tint)] text-[var(--brand-deep)] group-hover:bg-[var(--brand)] group-hover:text-white")}>
+                            <div className={cn("grid size-6 place-items-center rounded-md transition-colors shrink-0", isSel ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
                               <IconComp className="size-3" />
                             </div>
-                            <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-black/20 bg-white")}>
+                            <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-black/20 bg-white")}>
                               {isSel && <Check className="size-2 stroke-[3]" />}
                             </div>
                           </div>
                           <div>
-                            <div className="text-[12.5px] font-bold text-[var(--ink)] leading-snug">{top.label}</div>
-                            <div className="text-[10.5px] text-[var(--ink-muted)] mt-0.5 leading-snug line-clamp-2">{top.detail}</div>
+                            <div className="text-body font-bold text-ink leading-snug">{top.label}</div>
+                            <div className="text-caption text-ink-3 mt-0.5 leading-snug line-clamp-2">{top.detail}</div>
                           </div>
                         </div>
                       </button>
@@ -970,8 +970,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
         {/* ── Footer ── */}
         <div className="flex items-center justify-between border-t border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0">
-          <div className="flex flex-wrap items-center gap-1.5 text-[12px] text-[var(--ink-muted)]">
-            <span className="font-bold text-[var(--ink)]">
+          <div className="flex flex-wrap items-center gap-1.5 text-body text-ink-3">
+            <span className="font-bold text-ink">
               {sourceMode === "brand"
                 ? selectedBrand ? `${selectedBrand.name}` : "No brand selected"
                 : selectedDiseaseIds.length > 0
@@ -988,13 +988,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 <span>·</span>
                 <span>{SHAPE_OPTIONS.find((s) => s.id === selectedShape)?.label}</span>
                 <span>·</span>
-                <span className="font-bold text-[var(--brand-deep)]">{selectedTopics.length} Topics</span>
+                <span className="font-bold text-brand-deep">{selectedTopics.length} Topics</span>
               </>
             )}
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <Button variant="secondary" size="sm" onClick={onClose} className="px-4 cursor-pointer font-bold text-[12px]">
+            <Button variant="secondary" size="sm" onClick={onClose} className="px-4 cursor-pointer font-bold text-body">
               Cancel
             </Button>
             <Button
@@ -1002,7 +1002,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               size="sm"
               disabled={!canProceed}
               onClick={handleStartProject}
-              className="gap-2 font-bold px-6 shadow-sm cursor-pointer disabled:opacity-40 text-[12.5px]"
+              className="gap-2 font-bold px-6 shadow-sm cursor-pointer disabled:opacity-40 text-body"
             >
               <span>Start Project</span>
               <ArrowRight className="size-3.5" />

@@ -110,7 +110,7 @@ export function Step1Format() {
                 onClick={() => setFormatType(f.key)}
                 className={`group text-left transition-all duration-200 ${
                   isSelected
-                    ? "opacity-100 shadow-md ring-2 ring-[var(--brand)] ring-offset-2"
+                    ? "opacity-100 shadow-md ring-2 ring-brand ring-offset-2"
                     : "opacity-75 hover:opacity-100 hover:-translate-y-1 hover:shadow-lg"
                 }`}
                 style={{

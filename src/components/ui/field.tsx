@@ -7,7 +7,7 @@ import { Text } from "@/components/ui/text";
  * elements, but only two real shapes between them: a bordered field and a
  * borderless inline one. That is the whole variant set — the rest of the
  * variation was drift (border-slate-200 vs border-black/10 vs
- * border-[var(--line)] for the same rule, and five different font sizes).
+ * border-hair for the same rule, and five different font sizes).
  *
  * Label, hint and error are props rather than sibling markup so the
  * association and the aria wiring cannot be forgotten at the call site.
