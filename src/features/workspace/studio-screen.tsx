@@ -70,6 +70,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { SidePanel } from "@/components/patterns/side-panel";
 
 const evidenceConfig: Record<EvidenceState, { label: string; className: string }> = {
   approved: { label: "Approved", className: "bg-[#e5f1e9] text-[#2d6749]" },
@@ -125,6 +126,10 @@ export function StudioScreen() {
     creationMode,
     sourcePayload,
     copilotPanelOpen,
+    copilotPanelWidth,
+    copilotPanelResizing,
+    setCopilotPanelWidth,
+    setCopilotPanelResizing,
     setCopilotPanelOpen,
     toggleCopilotPanel,
   } = useWorkspaceStore();
@@ -932,10 +937,10 @@ export function StudioScreen() {
       <div className="flex-1 min-h-0 flex overflow-hidden relative">
         <aside
           style={{
-            width: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? "calc(100% - 410px)" : "100%",
-            minWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? "calc(100% - 410px)" : "100%",
-            maxWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? "calc(100% - 410px)" : "100%",
-            transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            width: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+            minWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+            maxWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+            transition: copilotPanelResizing ? "none" : "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
             "flex flex-col shrink-0 min-h-0 border-r border-hair overflow-hidden transition-colors duration-300",
@@ -2080,17 +2085,16 @@ export function StudioScreen() {
           )}
         </main>
 
-        <aside
-          style={{
-            width: copilotPanelOpen ? 410 : 0,
-            minWidth: copilotPanelOpen ? 410 : 0,
-            maxWidth: copilotPanelOpen ? 410 : 0,
-            transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          className={cn(
-            "shrink-0 border-l border-hair bg-card flex flex-col min-h-0 shadow-panel-left z-10 overflow-hidden",
-            !copilotPanelOpen && "border-none pointer-events-none"
-          )}
+        <SidePanel
+          open={copilotPanelOpen}
+          width={copilotPanelWidth}
+          onWidthChange={setCopilotPanelWidth}
+          onResizingChange={setCopilotPanelResizing}
+          storageKey="swishx.copilotPanelWidth"
+          /* The editor and review modes put a fixed rail left of the canvas,
+             so the canvas floor has to account for it or a full-width drag at
+             tablet size leaves ~140px of canvas. */
+          minCanvas={isReview ? 240 + 360 : isEditor ? 220 + 360 : 360}
         >
           <div className="p-2.5 border-b border-hair bg-subtle">
             {studioMode === "scenes" ? (
@@ -2847,7 +2851,7 @@ export function StudioScreen() {
               </div>
             )}
           </div>
-        </aside>
+        </SidePanel>
       </div>
 
       {toastMessage && (

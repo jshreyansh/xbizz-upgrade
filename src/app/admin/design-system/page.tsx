@@ -12,6 +12,7 @@ import { Surface } from "@/components/ui/surface";
 import { Label, Text } from "@/components/ui/text";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
+import { SidePanel, SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { ScaleRow, SwatchRow } from "./token-table";
 
 /**
@@ -75,6 +76,7 @@ export default function DesignSystemPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [chips, setChips] = useState<string[]>(["derm"]);
   const [otherOpen, setOtherOpen] = useState(false);
+  const [demoPanelWidth, setDemoPanelWidth] = useState(SIDE_PANEL_DEFAULT_WIDTH);
   const [custom, setCustom] = useState("");
 
   return (
@@ -269,6 +271,28 @@ export default function DesignSystemPage() {
                 customPlaceholder="Type a custom therapy area…"
                 addLabel="Add Area"
               />
+            </Stack>
+
+            <Stack gap={2} className="mt-6">
+              <Label size="micro">SidePanel — the right inspector, drag-resizable from its left edge</Label>
+              <Text size="caption" tone="muted">
+                Four screens had this aside byte-identical. Drag the edge, double-click it to reset
+                to 410px, or focus it and use ←/→ (shift for 64px steps). The width persists per
+                browser and is capped so the canvas beside it keeps at least 360px.
+              </Text>
+              <div className="flex h-40 overflow-hidden rounded-panel border border-hair">
+                <div className="grid flex-1 place-items-center bg-canvas">
+                  <Text size="caption" tone="muted">canvas</Text>
+                </div>
+                {/* maxWidth is capped for the demo box: the canvas floor is measured
+                    against the viewport, which is right for the real screens (the
+                    panel row IS viewport-wide) but too generous inside a card. */}
+                <SidePanel width={demoPanelWidth} onWidthChange={setDemoPanelWidth} maxWidth={520}>
+                  <div className="grid flex-1 place-items-center">
+                    <Text size="caption" tone="muted">{demoPanelWidth}px</Text>
+                  </div>
+                </SidePanel>
+              </div>
             </Stack>
           </Section>
 

@@ -45,6 +45,7 @@ import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspa
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { SidePanel } from "@/components/patterns/side-panel";
 
 type InfographicSubStep = "brief" | "content";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
@@ -326,6 +327,10 @@ export function InfographicDirectionsScreen() {
     setView,
     setVideoSubStage,
     copilotPanelOpen,
+    copilotPanelWidth,
+    copilotPanelResizing,
+    setCopilotPanelWidth,
+    setCopilotPanelResizing,
     toggleCopilotPanel,
   } = useWorkspaceStore();
 
@@ -505,10 +510,10 @@ export function InfographicDirectionsScreen() {
         {/* ── LEFT CANVAS ── */}
         <section
           style={{
-            width: copilotPanelOpen ? "calc(100% - 410px)" : "100%",
-            minWidth: copilotPanelOpen ? "calc(100% - 410px)" : "100%",
-            maxWidth: copilotPanelOpen ? "calc(100% - 410px)" : "100%",
-            transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            width: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+            minWidth: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+            maxWidth: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+            transition: copilotPanelResizing ? "none" : "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className="flex flex-col shrink-0 min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4 relative"
         >
@@ -1202,17 +1207,12 @@ export function InfographicDirectionsScreen() {
         </section>
 
         {/* ── RIGHT PANEL (Chat Assistant with Docked Action Cards) ── */}
-        <aside
-          style={{
-            width: copilotPanelOpen ? 410 : 0,
-            minWidth: copilotPanelOpen ? 410 : 0,
-            maxWidth: copilotPanelOpen ? 410 : 0,
-            transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          className={cn(
-            "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-panel-left z-10 overflow-hidden",
-            !copilotPanelOpen && "border-none pointer-events-none"
-          )}
+        <SidePanel
+          open={copilotPanelOpen}
+          width={copilotPanelWidth}
+          onWidthChange={setCopilotPanelWidth}
+          onResizingChange={setCopilotPanelResizing}
+          storageKey="swishx.copilotPanelWidth"
         >
           {/* Chat Top Banner */}
           <div className="p-3.5 border-b border-hair bg-card shrink-0">
@@ -1366,7 +1366,7 @@ export function InfographicDirectionsScreen() {
               </div>
             </div>
           </div>
-        </aside>
+        </SidePanel>
       </div>
 
       {previewDossier && (

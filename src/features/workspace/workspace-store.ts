@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { creativeDirections } from "@/features/workspace/mock-data";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, OnboardingBeat, PresentationMode } from "@/types/content";
 
@@ -40,6 +41,10 @@ interface WorkspaceState {
   navCollapsed: boolean;
   teamDockOpen: boolean;
   copilotPanelOpen: boolean;
+  /** Right inspector width in px. Drag-resizable; persisted by <SidePanel>. */
+  copilotPanelWidth: number;
+  /** True only mid-drag, so width transitions can be suspended. */
+  copilotPanelResizing: boolean;
   // Infographic / Creative specific states
   pageShape: "3:4" | "16:9" | "A4";
   infographicPages: "1" | "2" | "3" | string;
@@ -83,6 +88,8 @@ interface WorkspaceState {
   toggleTeamDock: () => void;
   setCopilotPanelOpen: (open: boolean) => void;
   toggleCopilotPanel: () => void;
+  setCopilotPanelWidth: (width: number) => void;
+  setCopilotPanelResizing: (resizing: boolean) => void;
   setPageShape: (shape: "3:4" | "16:9" | "A4") => void;
   setInfographicPages: (pages: "1" | "2" | "3" | string) => void;
   setInfographicTemplate: (template: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease") => void;
@@ -123,6 +130,8 @@ const initialState = {
   navCollapsed: false,
   teamDockOpen: false,
   copilotPanelOpen: true,
+  copilotPanelWidth: SIDE_PANEL_DEFAULT_WIDTH,
+  copilotPanelResizing: false,
   pageShape: "3:4" as "3:4" | "16:9" | "A4",
   infographicPages: "1" as "1" | "2",
   infographicTemplate: "stat-hero" as "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease",
@@ -186,6 +195,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   toggleTeamDock: () => set((state) => ({ teamDockOpen: !state.teamDockOpen })),
   setCopilotPanelOpen: (copilotPanelOpen) => set({ copilotPanelOpen }),
   toggleCopilotPanel: () => set((state) => ({ copilotPanelOpen: !state.copilotPanelOpen })),
+  setCopilotPanelWidth: (copilotPanelWidth) => set({ copilotPanelWidth }),
+  setCopilotPanelResizing: (copilotPanelResizing) => set({ copilotPanelResizing }),
   setPageShape: (pageShape) => set({ pageShape }),
   setInfographicPages: (infographicPages) => set({ infographicPages }),
   setInfographicTemplate: (infographicTemplate) => set({ infographicTemplate }),

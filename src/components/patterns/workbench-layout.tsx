@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { SidePanel, SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { atLeast, useLayout, type Layout } from "@/lib/use-breakpoint";
 
 /**
@@ -33,6 +34,10 @@ export interface WorkbenchLayoutProps {
 
   railWidth?: number;
   panelWidth?: number;
+  /** Supply this to make the panel drag-resizable. */
+  onPanelWidthChange?: (width: number) => void;
+  onPanelResizingChange?: (resizing: boolean) => void;
+  panelStorageKey?: string;
 
   /** Controlled: whether the right panel is showing. */
   panelOpen?: boolean;
@@ -50,7 +55,8 @@ export interface WorkbenchLayoutProps {
 
 export function WorkbenchLayout({
   header, rail, main, panel, bottomBar, overlay,
-  railWidth = 305, panelWidth = 410,
+  railWidth = 305, panelWidth = SIDE_PANEL_DEFAULT_WIDTH,
+  onPanelWidthChange, onPanelResizingChange, panelStorageKey,
   panelOpen = true, onPanelOpenChange,
   autoCollapsePanelBelow,
   className,
@@ -90,20 +96,16 @@ export function WorkbenchLayout({
         </main>
 
         {panel && (
-          <aside
-            className={cn(
-              "z-10 flex min-h-0 shrink-0 flex-col overflow-hidden border-l border-hair bg-card shadow-panel-left",
-              !panelOpen && "pointer-events-none border-none",
-            )}
-            style={{
-              width: panelOpen ? panelWidth : 0,
-              minWidth: panelOpen ? panelWidth : 0,
-              maxWidth: panelOpen ? panelWidth : 0,
-              transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
+          <SidePanel
+            open={panelOpen}
+            width={panelWidth}
+            onWidthChange={onPanelWidthChange}
+            onResizingChange={onPanelResizingChange}
+            resizable={Boolean(onPanelWidthChange)}
+            storageKey={panelStorageKey}
           >
             {panel}
-          </aside>
+          </SidePanel>
         )}
 
         {overlay}

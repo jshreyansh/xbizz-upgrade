@@ -44,6 +44,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { SidePanel } from "@/components/patterns/side-panel";
 
 export type CreativeStudioMode = "editor" | "generating" | "review";
 
@@ -183,6 +184,9 @@ export function InfographicStudioScreen() {
     chatMessages,
     addChatMessage,
     copilotPanelOpen,
+    copilotPanelWidth,
+    setCopilotPanelWidth,
+    setCopilotPanelResizing,
     toggleCopilotPanel,
     setView,
     setVideoSubStage,
@@ -882,17 +886,12 @@ export function InfographicStudioScreen() {
 
         {/* ── RIGHT PANEL (Chat Assistant, Editable Properties, Comments & Claims) ── */}
         {studioMode !== "generating" && (
-          <aside
-            style={{
-              width: copilotPanelOpen ? 410 : 0,
-              minWidth: copilotPanelOpen ? 410 : 0,
-              maxWidth: copilotPanelOpen ? 410 : 0,
-              transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-            }}
-            className={cn(
-              "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-panel-left z-10 overflow-hidden",
-              !copilotPanelOpen && "border-none pointer-events-none"
-            )}
+          <SidePanel
+            open={copilotPanelOpen}
+            width={copilotPanelWidth}
+            onWidthChange={setCopilotPanelWidth}
+            onResizingChange={setCopilotPanelResizing}
+            storageKey="swishx.copilotPanelWidth"
           >
             {/* Top Tabs Switcher */}
             <div className="p-3 border-b border-hair bg-canvas shrink-0">
@@ -1332,7 +1331,7 @@ export function InfographicStudioScreen() {
                 </div>
               </div>
             )}
-          </aside>
+          </SidePanel>
         )}
       </div>
 
