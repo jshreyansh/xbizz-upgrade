@@ -4,7 +4,7 @@ Companion to `DESIGN.md` (principles) and `AGENTS.md` (product guardrails).
 This document is the *mechanical* plan: how styling stops being distributed
 across 69 files and becomes a set of components with properties.
 
-Status: Phase 0 partially landed (`0aa0e0d`). Everything below is pending.
+Status: Phase 0 and Phase 1 landed (`0aa0e0d`, `e71670d`). Phases 2-6 pending.
 
 ---
 
@@ -28,6 +28,10 @@ each call site**, so there is no single place to change anything.
 | `role="dialog"` | 13 | No modal shell; 13 hand-built modals. |
 | Pill/chip markup | 80 | No chip primitive — and chips are now a core interaction (post-popover redesign). |
 | Uppercase tracking labels | 62 | No label primitive. |
+| `border-black/N` | **211** | A *third* hairline family, found during the pilot. Of ~289 hairlines in the app only 78 use a token — the token is the minority at 27%. |
+| `bg-black/N` | 119 | Ad-hoc scrims and hover fills, no token. |
+| Arbitrary `shadow-[…]` | 46 uses, **29 distinct** | Elevation has 4 tokens and 29 ad-hoc shadows competing with them. |
+| Default `rounded-*` | 269 | Plus 103 arbitrary px radii. Three radius systems running at once. |
 | `components/ui/` | 6 files, 4 of them logos/icons | The library is ~1 real primitive. |
 | `features/workspace/` | 27 files, **17,197 lines** (69% of all code) | One directory holds most of the product. |
 
@@ -145,21 +149,44 @@ Each phase is independently shippable and revertible.
 
 ### Phase 0 — finish the foundation *(partially landed in `0aa0e0d`)*
 - [x] `@theme` wiring, real utilities, 5 undefined tokens fixed, easings deduped
-- [ ] Add the **type scale** to `@theme` (Step A tier — all 30 values)
-- [ ] Add an explicit **spacing scale**
-- [ ] Retire duplicate token names: `--line` → `--hair`, `--surface`/`--card` →
-      one name, kill `--squircle-*` in favour of `--radius-*`
-- [ ] Resolve the leftover **green palette** in `globals.css`
-      (`.focus-ring` `rgb(37 79 63)`, `.canvas-grid` `#e7ebe8`, `chat-pulse`
-      `rgba(34,192,122)`) — these predate the orange brand
-- [ ] Document the `--shadow-sm` / `--shadow-lg` cascade override in-file *(done)*
+- [x] `@theme` wiring, real utilities, 5 undefined tokens fixed, easings deduped
+- [x] **Type scale** — ten steps, nearest-snap, size-only
+- [x] **Stale greens** resolved: focus ring and demo orbit now follow the brand;
+      `--color-live` and `--color-canvas-grid` tokenised but keep their values
+- [x] `--shadow-sm` / `--shadow-lg` cascade override documented in-file
+- [ ] Retire duplicate token names: `--line` → `--hair`, one name for the card
+      surface, drop `--squircle-*` for `--radius-*`. Deferred to Phase 2 — the
+      aliases cannot be removed until their 77 call sites are migrated.
 
-### Phase 1 — build `<Text>` and `<Surface>`
-The two primitives covering 1,090 sites. Build, unit-check against the token
-values, then adopt them in **one** medium screen by hand (`create-screen.tsx`,
-1,061 lines, 121 arbitrary vars) to prove the API before any codemod.
+**Two planned items turned out to be non-problems, and were dropped:**
+- *A spacing scale.* `gap-*` already sits on Tailwind's scale
+  (`gap-2` ×143, `gap-1.5` ×117, `gap-3` ×61) with only **4** arbitrary px
+  gaps in the entire app. Spacing is already consistent.
+- *Line-height in the type scale.* Tailwind v4 can pair a leading with each
+  size step, but the app already uses named `leading-*` consistently across
+  **73** sites. Bundling it into the scale would have silently restyled all
+  of them, so the scale is size-only.
 
-**Gate: you review that one screen and confirm it is visually identical.**
+### Phase 1 — build `<Text>` and `<Surface>` *(landed in `e71670d`)*
+- [x] `<Text>` (ten scale steps, tone, weight, leading, tracking, clamp,
+      tabular) and `<Label>` for the 62-site uppercase eyebrow
+- [x] `<Surface>` (tone, elevation, radius, padding, border, squircle)
+- [x] Pilot on `create-screen.tsx`: 55 font sizes, 121 token vars, 5 radii and
+      14 opaque `bg-white` migrated. The file now has **zero** arbitrary font
+      sizes and **zero** `[var(--x)]` strings.
+
+Left deliberately unmigrated in the pilot, because each needs a decision
+rather than a rule:
+- **3 rogue radii** (12px, 22px, 26px) — equidistant between tokens, so
+  snapping either way is a guess
+- **33 raw hexes across 27 distinct values** — mostly green-tinted near-whites
+  from the same pre-orange family. These are a palette decision, not a codemod.
+- **3 `bg-white/N` alpha overlays** — these lighten a tinted ground rather
+  than paint a card surface, so they should not follow the card token
+
+Verified in the running app: focus ring resolves to `#fd4816` at 34%, scale
+tokens resolve, no stale green in any stylesheet, and the before/after on the
+pilot screen shows sub-pixel type shifts with no layout reflow.
 
 ### Phase 2 — codemod the mechanical migration
 818 font sizes and 272 surfaces cannot be hand-edited reliably. Write a
@@ -169,6 +196,14 @@ values, then adopt them in **one** medium screen by hand (`create-screen.tsx`,
 - arbitrary radii `[14px]`/`[18px]`/`[24px]`/`[10px]` → token utilities
 - rogue radii `[12px]`/`[16px]`/`[9px]`/`[6px]` → nearest token, **listed for review**
 - `ease-[cubic-bezier(...)]` → `ease-entrance` / `ease-exit` (6 sites)
+- `border-black/N` → `border-hair` / `border-hair-2` (211 sites), and retire
+  the `--line` alias once its 77 sites are migrated
+- the 29 distinct arbitrary shadows → the four elevation tokens, with any
+  that do not map **listed for review** rather than snapped
+
+The pilot showed the deterministic ratio is high: 195 of the 198 patterns in
+`create-screen.tsx` migrated by rule, and the 3 that did not were genuine
+decisions. Expect roughly that split across the rest.
 
 Anything ambiguous is reported, not auto-changed. Run per-directory, commit
 per-directory, so any regression is bisectable to one folder.
