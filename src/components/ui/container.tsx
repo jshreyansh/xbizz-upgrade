@@ -9,13 +9,13 @@ import { cn } from "@/lib/cn";
  * mostly deliberate per context rather than drift, and snapping them would
  * move layout by 40-100px.
  */
-type Width = "narrow" | "measure" | "wide" | "full";
+type Width = "narrow" | "measure" | "wide" | "page";
 
 const widths: Record<Width, string> = {
   narrow: "max-w-(--container-narrow)",
   measure: "max-w-(--container-measure)",
   wide: "max-w-(--container-wide)",
-  full: "max-w-(--container-full)",
+  page: "max-w-(--container-page)",
 };
 
 export interface ContainerProps extends HTMLAttributes<HTMLElement> {

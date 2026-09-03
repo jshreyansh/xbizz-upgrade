@@ -120,11 +120,17 @@
      47 times across 25 values, but unlike the type scale those are largely
      bespoke per context (a 380px rail is not a coarse 440px dialog), so
      existing widths are deliberately NOT force-migrated. Use these for
-     anything new; see AGENTS.md. */
+     anything new; see AGENTS.md.
+
+     NOTE: never name one of these `full`, `auto`, `screen`, `min`, `max`,
+     `fit` or `px`. Tailwind v4 resolves the width utilities against the
+     --container- namespace, so a --container-full token silently overrides
+     the built-in w-full utility with a fixed width — which broke 163 call
+     sites before this was caught. */
   --container-narrow:  440px;
   --container-measure: 620px;
   --container-wide:    880px;
-  --container-full:   1140px;
+  --container-page:   1140px;
 
   /* Chrome */
   --screen-header-h: 60px;
