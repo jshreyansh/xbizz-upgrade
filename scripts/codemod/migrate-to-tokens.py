@@ -123,10 +123,14 @@ def apply_vars(s, hits):
 def apply_palette(s, hits, fname):
     n = len(re.findall(r"\bbg-white(?!/)", s))
     if n: hits["bg-white"] += n; s = re.sub(r"\bbg-white(?!/)", "bg-card", s)
+    # Match bare and variant-prefixed forms (hover:, focus:, group-hover:, …)
+    # while still refusing to match inside a longer class name.
     for cls in sorted(PALETTE, key=len, reverse=True):
-        pat = rf"(?<![-\w:]){re.escape(cls)}(?![-\w])"
-        c = len(re.findall(pat, s))
-        if c: hits[cls] += c; s = re.sub(pat, PALETTE[cls], s)
+        pat = rf"(?<![-\w])((?:[a-z-]+:)*){re.escape(cls)}(?![-\w])"
+        def rep(m, _c=cls):
+            hits[_c] += 1
+            return m.group(1) + PALETTE[_c]
+        s, n = re.subn(pat, rep, s)
     if not MOCK.search(fname):
         for hx, tok in HEX.items():
             if hx in GREEN_BORDER_HEX: continue           # phase: hair owns these

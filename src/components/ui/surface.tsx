@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
  * Any panel, card, tile or well.
  *
  * Owns the four decisions that were previously re-made at every call site:
- * fill, border, radius and elevation. `bg-white` should not appear in
+ * fill, border, radius and elevation. `bg-card` should not appear in
  * feature code — pass `tone` instead, so the surface colour is changeable
  * from one place.
  *

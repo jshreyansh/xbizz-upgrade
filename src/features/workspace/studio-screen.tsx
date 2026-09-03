@@ -858,7 +858,7 @@ export function StudioScreen() {
 
   return (
     <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#edf0ed]">
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-white px-3 sm:px-5">
+      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-card px-3 sm:px-5">
         <button onClick={() => setView("home")} className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5" aria-label="Back home">
           <ArrowLeft className="size-4" />
         </button>
@@ -867,7 +867,7 @@ export function StudioScreen() {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="truncate text-body font-[800] text-ink">{sourcePayload?.dossierId ? `${dossierNames[sourcePayload.dossierId] || "Velmora"} HCP launch` : "DERMORA HCP launch"}</span>
-            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-micro font-bold text-[#69736e] sm:inline">Draft v1</span>
+            <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">Draft v1</span>
           </div>
           <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
         </div>
@@ -876,19 +876,19 @@ export function StudioScreen() {
           {studioMode === "scenes" && <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">Script View</span>}
           {studioMode === "editor" && (
             <div className="flex items-center gap-1.5">
-              <button onClick={handleReturnToScript} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-[#fafbf9] px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer">
+              <button onClick={handleReturnToScript} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer">
                 <FileText className="size-3.5 text-brand" /> <span>Script View</span>
               </button>
               <span className="text-ink-3">/</span>
               <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">Canvas Editor</span>
             </div>
           )}
-          {studioMode === "generating" && <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 border border-orange-200 px-3 py-1 text-caption font-extrabold text-orange-800 animate-pulse"><Sparkles className="size-3 text-orange-600 animate-spin" /><span>Generating High-Res Video...</span></span>}
+          {studioMode === "generating" && <span className="inline-flex items-center gap-1.5 rounded-full bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse"><Sparkles className="size-3 text-brand-deep animate-spin" /><span>Generating High-Res Video...</span></span>}
           {studioMode === "review" && (
             <div className="flex items-center gap-1.5">
-              <button onClick={handleReturnToEditor} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-[#fafbf9] px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"><Pencil className="size-3 text-brand" /> <span>Editor</span></button>
+              <button onClick={handleReturnToEditor} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"><Pencil className="size-3 text-brand" /> <span>Editor</span></button>
               <span className="text-ink-3">/</span>
-              <span className="rounded-full bg-emerald-50 px-3 py-0.5 text-caption font-extrabold text-emerald-800 border border-emerald-200">Shared Review View · Final Master ({totalDurationSeconds}s)</span>
+              <span className="rounded-full bg-ok-bg px-3 py-0.5 text-caption font-extrabold text-ok border border-ok-line">Shared Review View · Final Master ({totalDurationSeconds}s)</span>
             </div>
           )}
         </div>
@@ -902,7 +902,7 @@ export function StudioScreen() {
               "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
               copilotPanelOpen
                 ? "border-black/15 bg-black/5 text-ink hover:bg-black/10"
-                : "border-black/10 bg-white text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+                : "border-black/10 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
             )}
             title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
             aria-label="Toggle sidebar"
@@ -938,7 +938,7 @@ export function StudioScreen() {
           }}
           className={cn(
             "flex flex-col shrink-0 min-h-0 border-r border-hair overflow-hidden transition-colors duration-300",
-            isGenerating ? "bg-[#eef1ed] p-4 sm:p-6 lg:p-7" : isReview ? "bg-[#fafbf9]" : isEditor ? "bg-[#f8f9f7]" : "bg-[#eef1ed] p-4 sm:p-6 lg:p-7"
+            isGenerating ? "bg-[#eef1ed] p-4 sm:p-6 lg:p-7" : isReview ? "bg-canvas" : isEditor ? "bg-[#f8f9f7]" : "bg-[#eef1ed] p-4 sm:p-6 lg:p-7"
           )}
         >
           {isGenerating ? (
@@ -955,23 +955,23 @@ export function StudioScreen() {
               </p>
 
               <div className="mt-8 w-full max-w-[380px] space-y-2.5 text-left text-body">
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 1 ? "bg-white border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 1 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
                   <Check className={cn("size-4.5 shrink-0", videoGenStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Parsed {sceneList.length} storyboard scenes &amp; timing</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 2 ? "bg-white border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 2 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
                   <Check className={cn("size-4.5 shrink-0", videoGenStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Synthesized 3D visual kinematics &amp; lighting</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 3 ? "bg-white border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 3 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
                   <Check className={cn("size-4.5 shrink-0", videoGenStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Synced clinical voiceover narration</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 4 ? "bg-white border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 4 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
                   <Check className={cn("size-4.5 shrink-0", videoGenStep >= 4 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Linking citations to FDA label §5.1</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 5 ? "bg-white border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 5 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
                   {videoGenStep >= 5 ? (
                     <Check className="size-4.5 shrink-0 text-ok" strokeWidth={2.5} />
                   ) : (
@@ -999,12 +999,12 @@ export function StudioScreen() {
           ) : (
             <>
               {isReview ? (
-                <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3.5 bg-white">
+                <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3.5 bg-card">
                   <span className="text-caption font-extrabold uppercase tracking-[0.12em] text-[#596660] flex items-center gap-1.5"><Film className="size-3.5 text-brand" /> <span>Video Chapters · {chapters.length}</span></span>
                   <span className="text-caption font-bold text-ink-3">{totalDurationSeconds}s</span>
                 </div>
               ) : isEditor ? (
-                <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3 bg-white">
+                <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3 bg-card">
                   <span className="text-micro font-bold uppercase tracking-[0.12em] text-[#77817c]">Scenes · {totalDurationSeconds} sec</span>
                 </div>
               ) : (
@@ -1021,7 +1021,7 @@ export function StudioScreen() {
                     type="button"
                     onClick={handleAddDirectScriptScene}
                     size="sm"
-                    className="bg-white border border-hair text-ink hover:border-brand hover:bg-tint hover:text-brand-deep font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
+                    className="bg-card border border-hair text-ink hover:border-brand hover:bg-tint hover:text-brand-deep font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
                   >
                     <Plus className="size-3.5 text-brand" />
                     <span>Add Script Scene</span>
@@ -1045,7 +1045,7 @@ export function StudioScreen() {
                             "group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer",
                             isCurrent
                               ? "border-brand bg-tint shadow-xs ring-1 ring-brand"
-                              : "border-black/[0.06] bg-white hover:border-black/20 hover:bg-[#fafbf9]"
+                              : "border-black/[0.06] bg-card hover:border-black/20 hover:bg-canvas"
                           )}
                         >
                           <div className="flex items-center justify-between gap-1 mb-1">
@@ -1083,8 +1083,8 @@ export function StudioScreen() {
                           className={cn(
                             "group relative flex w-full flex-col rounded-xl border p-2 text-left transition-all cursor-pointer",
                             isSelected
-                              ? "border-brand bg-white shadow-xs ring-1 ring-brand"
-                              : "border-black/[0.06] bg-white hover:border-black/20"
+                              ? "border-brand bg-card shadow-xs ring-1 ring-brand"
+                              : "border-black/[0.06] bg-card hover:border-black/20"
                           )}
                         >
                           <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -1093,7 +1093,7 @@ export function StudioScreen() {
                             </span>
                             <div className="flex items-center gap-1">
                               {isGenerated ? (
-                                <span className="size-1.5 rounded-full bg-emerald-500" />
+                                <span className="size-1.5 rounded-full bg-ok" />
                               ) : (
                                 <Sparkles className="size-2.5 text-brand animate-spin" />
                               )}
@@ -1124,16 +1124,16 @@ export function StudioScreen() {
                             onDrop={(e) => e.preventDefault()}
                             onDragEnd={handleDragEnd}
                             className={cn(
-                              "relative flex flex-col rounded-2xl border bg-white p-4 transition-all duration-200 shadow-2xs hover:shadow-xs",
+                              "relative flex flex-col rounded-2xl border bg-card p-4 transition-all duration-200 shadow-2xs hover:shadow-xs",
                               isDragging ? "opacity-40 border-dashed border-brand" : "border-black/[0.08]"
                             )}
                           >
                             <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-black/[0.04]">
                               <div className="flex items-center gap-2">
-                                <div className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-ink p-0.5 rounded transition-colors" title="Drag to reorder">
+                                <div className="cursor-grab active:cursor-grabbing text-ink-4 hover:text-ink p-0.5 rounded transition-colors" title="Drag to reorder">
                                   <GripVertical className="size-4" />
                                 </div>
-                                <span className="flex size-6 items-center justify-center rounded-lg bg-[#111614] text-label font-bold text-white shadow-2xs">
+                                <span className="flex size-6 items-center justify-center rounded-lg bg-ink text-label font-bold text-white shadow-2xs">
                                   {sc.number}
                                 </span>
                                 <input
@@ -1161,7 +1161,7 @@ export function StudioScreen() {
                                   <ChevronDown className="size-2.5 text-brand-deep absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-70" />
                                 </div>
 
-                                <span className="flex items-center gap-1 rounded-md bg-[#f4f6f4] px-2 py-0.5 text-caption font-bold text-ink-3 border border-black/5">
+                                <span className="flex items-center gap-1 rounded-md bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3 border border-black/5">
                                   <Clock className="size-2.5" />
                                   {sc.duration || 10}s
                                 </span>
@@ -1172,7 +1172,7 @@ export function StudioScreen() {
                                     onClick={() => handleMoveScene(idx, "up")}
                                     disabled={idx === 0}
                                     title="Move Up"
-                                    className="p-1 rounded text-gray-400 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+                                    className="p-1 rounded text-ink-4 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
                                   >
                                     <ArrowUp className="size-3" />
                                   </button>
@@ -1181,7 +1181,7 @@ export function StudioScreen() {
                                     onClick={() => handleMoveScene(idx, "down")}
                                     disabled={idx === sceneList.length - 1}
                                     title="Move Down"
-                                    className="p-1 rounded text-gray-400 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+                                    className="p-1 rounded text-ink-4 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
                                   >
                                     <ArrowDown className="size-3" />
                                   </button>
@@ -1189,7 +1189,7 @@ export function StudioScreen() {
                                     type="button"
                                     onClick={() => handleDeleteScene(sc.id)}
                                     title="Delete Scene"
-                                    className="p-1 rounded text-gray-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer ml-0.5"
+                                    className="p-1 rounded text-ink-4 hover:text-danger hover:bg-danger-bg cursor-pointer ml-0.5"
                                   >
                                     <Trash2 className="size-3" />
                                   </button>
@@ -1209,16 +1209,16 @@ export function StudioScreen() {
                                 onChange={(e) => handleUpdateSceneNarration(sc.id, e.target.value)}
                                 placeholder="Enter clinical voiceover script for this scene..."
                                 rows={2}
-                                className="w-full rounded-xl border border-black/10 bg-[#fafbf9] p-2.5 text-body leading-relaxed text-ink focus:bg-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all resize-none shadow-2xs"
+                                className="w-full rounded-xl border border-black/10 bg-canvas p-2.5 text-body leading-relaxed text-ink focus:bg-card focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all resize-none shadow-2xs"
                               />
                             </div>
 
                             <div className="flex items-center justify-between pt-2 mt-2 border-t border-black/[0.04] text-caption">
-                              <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                                <ShieldCheck className="size-3 text-emerald-600" />
+                              <span className="inline-flex items-center gap-1.5 text-ok font-semibold bg-ok-bg px-2 py-0.5 rounded-md border border-ok-line/60">
+                                <ShieldCheck className="size-3 text-ok" />
                                 <span>{sc.claim}</span>
                               </span>
-                              <span className="text-caption text-gray-400">
+                              <span className="text-caption text-ink-4">
                                 Tag: <strong>({sc.narrativeTag || "Evidence"})</strong>
                               </span>
                             </div>
@@ -1245,7 +1245,7 @@ export function StudioScreen() {
                       {isScriptComplete ? (
                         <Sparkles className="size-4.5 text-brand shrink-0" />
                       ) : (
-                        <AlertCircle className="size-4.5 text-amber-400 shrink-0" />
+                        <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />
                       )}
                       <div className="min-w-0">
                         <div className="text-body font-bold text-white tracking-tight truncate">
@@ -1294,13 +1294,13 @@ export function StudioScreen() {
               {/* Sub-header */}
               <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#cad1cd]/70 bg-white/60 px-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2.5 text-label font-bold text-ink">
-                  <span className="rounded-md bg-white border border-black/10 px-2 py-0.5 shadow-2xs font-extrabold">
+                  <span className="rounded-md bg-card border border-black/10 px-2 py-0.5 shadow-2xs font-extrabold">
                     Scene {selectedScene.number} of {sceneList.length}
                   </span>
                   <span>{selectedScene.title}</span>
                 </div>
                 <div className="flex items-center gap-2 text-label">
-                  <span className="rounded-md bg-white border border-black/10 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
+                  <span className="rounded-md bg-card border border-black/10 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
                     Fit 16:9
                   </span>
                   <Button variant="ghost" size="icon" className="size-7" aria-label="Full screen">
@@ -1325,7 +1325,7 @@ export function StudioScreen() {
                     onMouseLeave={() => setHoveredCanvasElementId(null)}
                     className={cn(
                       "absolute inset-0 transition-all",
-                      selectedCanvasElementId === "background" && "ring-2 ring-emerald-400"
+                      selectedCanvasElementId === "background" && "ring-2 ring-ok"
                     )}
                   >
                     <div className="absolute inset-0 bg-radial from-[#1e4d3f] via-[#173d31] to-[#0f2820]" />
@@ -1349,8 +1349,8 @@ export function StudioScreen() {
                     )}
                   >
                     <div className="size-full rounded-full border border-white/15 animate-spin duration-15000 flex items-center justify-center">
-                      <div className="size-3/4 rounded-full border border-lime-300/30 flex items-center justify-center">
-                        <div className="size-6 rounded-full bg-[#d8f05d] shadow-[0_0_30px_#d8f05d]" />
+                      <div className="size-3/4 rounded-full border border-lime/30 flex items-center justify-center">
+                        <div className="size-6 rounded-full bg-lime shadow-[0_0_30px_#d8f05d]" />
                       </div>
                     </div>
                   </div>
@@ -1374,7 +1374,7 @@ export function StudioScreen() {
                           : ""
                       )}
                     >
-                      <span className="size-2 rounded-full bg-[#d8f05d]" />
+                      <span className="size-2 rounded-full bg-lime" />
                       <span>{selectedScene.narrativeTag || "PIVOTAL EVIDENCE"}</span>
                       <span className="text-micro font-bold text-white/50 lowercase ml-1">(0:00–0:{selectedScene.duration})</span>
                     </div>
@@ -1413,7 +1413,7 @@ export function StudioScreen() {
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5 mb-1">
-                                <span className="font-extrabold text-[#d8f05d] text-micro uppercase tracking-wider bg-[#d8f05d]/15 px-1.5 py-0.5 rounded border border-[#d8f05d]/30">
+                                <span className="font-extrabold text-lime text-micro uppercase tracking-wider bg-lime/15 px-1.5 py-0.5 rounded border border-lime/30">
                                   🫀 Image Asset
                                 </span>
                                 <span className="text-white/60 text-micro font-semibold flex items-center gap-0.5">
@@ -1430,13 +1430,13 @@ export function StudioScreen() {
 
                             {/* Floating Formatting Pill when selected */}
                             {selectedCanvasElementId === "image" && (
-                              <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-[#111614] border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
+                              <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
                                 <ImageIcon className="size-3 text-brand" />
                                 <span>Image Layer</span>
                                 <span className="text-white/40">|</span>
                                 {elementOffsets["image"] && (
                                   <>
-                                    <span className="text-amber-400 font-mono text-micro">
+                                    <span className="text-warn-on-dark font-mono text-micro">
                                       X:{elementOffsets["image"].x > 0 ? `+${elementOffsets["image"].x}` : elementOffsets["image"].x} Y:{elementOffsets["image"].y > 0 ? `+${elementOffsets["image"].y}` : elementOffsets["image"].y}
                                     </span>
                                     <button
@@ -1452,7 +1452,7 @@ export function StudioScreen() {
                                     <span className="text-white/40">|</span>
                                   </>
                                 )}
-                                <span className="text-emerald-400">⏱ 0:02 – 0:12</span>
+                                <span className="text-ok-on-dark">⏱ 0:02 – 0:12</span>
                                 <span className="text-white/40">|</span>
                                 <button
                                   type="button"
@@ -1501,7 +1501,7 @@ export function StudioScreen() {
                             />
 
                             <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
-                              <span className="text-micro font-extrabold text-sky-300 uppercase tracking-wide bg-black/70 px-1.5 py-0.5 rounded border border-sky-400/40">
+                              <span className="text-micro font-extrabold text-info-on-dark uppercase tracking-wide bg-black/70 px-1.5 py-0.5 rounded border border-sky-400/40">
                                 🎬 Video Clip
                               </span>
                               <span className="text-micro text-white/80 bg-black/60 px-1 py-0.5 rounded flex items-center gap-0.5">
@@ -1517,13 +1517,13 @@ export function StudioScreen() {
 
                             {/* Floating Formatting Pill when selected */}
                             {selectedCanvasElementId === "video-clip" && (
-                              <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-[#111614] border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
+                              <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
                                 <Film className="size-3 text-brand" />
                                 <span>Video Clip</span>
                                 <span className="text-white/40">|</span>
                                 {elementOffsets["video-clip"] && (
                                   <>
-                                    <span className="text-amber-400 font-mono text-micro">
+                                    <span className="text-warn-on-dark font-mono text-micro">
                                       X:{elementOffsets["video-clip"].x > 0 ? `+${elementOffsets["video-clip"].x}` : elementOffsets["video-clip"].x} Y:{elementOffsets["video-clip"].y > 0 ? `+${elementOffsets["video-clip"].y}` : elementOffsets["video-clip"].y}
                                     </span>
                                     <button
@@ -1539,7 +1539,7 @@ export function StudioScreen() {
                                     <span className="text-white/40">|</span>
                                   </>
                                 )}
-                                <span className="text-emerald-400">⏱ 0:04 – 0:14</span>
+                                <span className="text-ok-on-dark">⏱ 0:04 – 0:14</span>
                                 <span className="text-white/40">|</span>
                                 <button
                                   type="button"
@@ -1585,13 +1585,13 @@ export function StudioScreen() {
 
                       {/* Floating Inline Formatting Pill */}
                       {selectedCanvasElementId === "headline" && (
-                        <div className="absolute -top-9 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-[#111614] border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
+                        <div className="absolute -top-9 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
                           <Type className="size-3 text-brand" />
                           <span>Title Layer</span>
                           <span className="text-white/40">|</span>
                           {elementOffsets["headline"] && (
                             <>
-                              <span className="text-amber-400 font-mono text-micro">
+                              <span className="text-warn-on-dark font-mono text-micro">
                                 X:{elementOffsets["headline"].x > 0 ? `+${elementOffsets["headline"].x}` : elementOffsets["headline"].x} Y:{elementOffsets["headline"].y > 0 ? `+${elementOffsets["headline"].y}` : elementOffsets["headline"].y}
                               </span>
                               <button
@@ -1607,7 +1607,7 @@ export function StudioScreen() {
                               <span className="text-white/40">|</span>
                             </>
                           )}
-                          <span className="text-emerald-400">⏱ 0:01 – 0:09</span>
+                          <span className="text-ok-on-dark">⏱ 0:01 – 0:09</span>
                           <span className="text-white/40">|</span>
                           <button
                             type="button"
@@ -1649,7 +1649,7 @@ export function StudioScreen() {
                           <Mic2 className="size-2.5" /> Subtitle · Voiceover Sync
                         </span>
                         {scenePlaying && (
-                          <span className="flex items-center gap-1 text-micro font-mono text-emerald-400">
+                          <span className="flex items-center gap-1 text-micro font-mono text-ok-on-dark">
                             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                             Live Track
                           </span>
@@ -1693,13 +1693,13 @@ export function StudioScreen() {
                       </p>
 
                       {selectedCanvasElementId === "narration" && (
-                        <div className="absolute -top-8 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-[#111614] border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
+                        <div className="absolute -top-8 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
                           <Mic2 className="size-3 text-brand" />
                           <span>Voiceover Sync</span>
                           <span className="text-white/40">|</span>
                           {elementOffsets["narration"] && (
                             <>
-                              <span className="text-amber-400 font-mono text-micro">
+                              <span className="text-warn-on-dark font-mono text-micro">
                                 X:{elementOffsets["narration"].x > 0 ? `+${elementOffsets["narration"].x}` : elementOffsets["narration"].x} Y:{elementOffsets["narration"].y > 0 ? `+${elementOffsets["narration"].y}` : elementOffsets["narration"].y}
                               </span>
                               <button
@@ -1715,7 +1715,7 @@ export function StudioScreen() {
                               <span className="text-white/40">|</span>
                             </>
                           )}
-                          <span className="text-emerald-400">⏱ 0:01 – 0:13</span>
+                          <span className="text-ok-on-dark">⏱ 0:01 – 0:13</span>
                         </div>
                       )}
                     </div>
@@ -1728,11 +1728,11 @@ export function StudioScreen() {
                       }}
                       className={cn(
                         "pointer-events-auto flex items-center justify-between pt-2 border-t border-white/10 text-caption text-white/60 cursor-pointer p-1 rounded transition-colors",
-                        selectedCanvasElementId === "claim" && "ring-1 ring-emerald-400 bg-black/20"
+                        selectedCanvasElementId === "claim" && "ring-1 ring-ok bg-black/20"
                       )}
                     >
                       <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}® · HCP Prescribing Brief</span>
-                      <span className="rounded bg-emerald-950/80 border border-emerald-400/40 text-emerald-300 px-2 py-0.5 font-bold">
+                      <span className="rounded bg-emerald-950/80 border border-emerald-400/40 text-ok-on-dark px-2 py-0.5 font-bold">
                         🛡 {selectedScene.claim}
                       </span>
                     </div>
@@ -1781,12 +1781,12 @@ export function StudioScreen() {
               </div>
 
               {/* ── Multi-Layer Production Timeline Bar (Collapsible) ── */}
-              <div className="border-t border-hair bg-[#fafbf9] text-ink shrink-0">
-                <div className="flex h-9 items-center justify-between px-4 border-b border-hair bg-white">
+              <div className="border-t border-hair bg-canvas text-ink shrink-0">
+                <div className="flex h-9 items-center justify-between px-4 border-b border-hair bg-card">
                   <div className="flex items-center gap-2.5 text-label font-bold text-ink">
                     <Layers className="size-3.5 text-brand" />
                     <span>Production Layers</span>
-                    <span className="rounded-md bg-[#edf1ee] px-2 py-0.5 text-micro font-semibold text-[#5a6660]">
+                    <span className="rounded-md bg-ok-bg px-2 py-0.5 text-micro font-semibold text-[#5a6660]">
                       Scene {selectedScene.number} · {selectedScene.duration}s
                     </span>
                   </div>
@@ -1801,8 +1801,8 @@ export function StudioScreen() {
                 </div>
 
                 {timelineOpen && (
-                  <div className="max-h-[200px] overflow-y-auto bg-white select-none flex flex-col text-label border-b border-hair">
-                    <div className="h-6 shrink-0 flex items-center border-b border-hair bg-[#f4f6f4] text-micro text-ink-3 font-bold sticky top-0 z-10 px-3">
+                  <div className="max-h-[200px] overflow-y-auto bg-card select-none flex flex-col text-label border-b border-hair">
+                    <div className="h-6 shrink-0 flex items-center border-b border-hair bg-subtle text-micro text-ink-3 font-bold sticky top-0 z-10 px-3">
                       <div className="w-[160px] shrink-0 border-r border-hair pr-2 uppercase">Scene {selectedScene.number} Tracks</div>
                       <div className="flex-1 flex justify-between px-3">
                         <span>0:00</span>
@@ -1820,15 +1820,15 @@ export function StudioScreen() {
                         onClick={() => handleSelectCanvasElement("moa")}
                         className={cn(
                           "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "moa" ? "bg-tint/40" : "bg-[#fafbf9] hover:bg-white"
+                          selectedCanvasElementId === "moa" ? "bg-tint/40" : "bg-canvas hover:bg-card"
                         )}
                       >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-white text-caption font-bold">
-                          <ImageIcon className="size-3.5 text-emerald-600" />
+                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                          <ImageIcon className="size-3.5 text-ok" />
                           <span className="truncate">1. Bg Canvas</span>
                         </div>
                         <div className="flex-1 h-full p-1">
-                          <div className="h-full rounded bg-emerald-100 border border-emerald-300 flex items-center px-2 text-micro font-bold text-emerald-950">
+                          <div className="h-full rounded bg-ok-bg border border-ok-line flex items-center px-2 text-micro font-bold text-ok">
                             Bg_Emerald_Gradient.png [0:00 – 0:{selectedScene.duration}]
                           </div>
                         </div>
@@ -1839,10 +1839,10 @@ export function StudioScreen() {
                         onClick={() => handleSelectCanvasElement("moa")}
                         className={cn(
                           "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "moa" ? "bg-tint/40" : "bg-[#fafbf9] hover:bg-white"
+                          selectedCanvasElementId === "moa" ? "bg-tint/40" : "bg-canvas hover:bg-card"
                         )}
                       >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-white text-caption font-bold">
+                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
                           <Film className="size-3.5 text-brand" />
                           <span className="truncate">2. 3D MoA Target</span>
                         </div>
@@ -1858,15 +1858,15 @@ export function StudioScreen() {
                         onClick={() => handleSelectCanvasElement("image")}
                         className={cn(
                           "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "image" ? "bg-tint/40" : "bg-[#fafbf9] hover:bg-white"
+                          selectedCanvasElementId === "image" ? "bg-tint/40" : "bg-canvas hover:bg-card"
                         )}
                       >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-white text-caption font-bold">
-                          <ImageIcon className="size-3.5 text-lime-600" />
+                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                          <ImageIcon className="size-3.5 text-lime" />
                           <span className="truncate">3. Chart Image</span>
                         </div>
                         <div className="flex-1 h-full p-1">
-                          <div className="h-full w-[85%] rounded bg-lime-100 border border-lime-300 flex items-center px-2 text-micro font-bold text-lime-950 truncate">
+                          <div className="h-full w-[85%] rounded bg-lime border border-lime flex items-center px-2 text-micro font-bold text-lime truncate">
                             CLEARSKIN_Phase_III_ForestPlot.png [0:02 – 0:12]
                           </div>
                         </div>
@@ -1877,15 +1877,15 @@ export function StudioScreen() {
                         onClick={() => handleSelectCanvasElement("video-clip")}
                         className={cn(
                           "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "video-clip" ? "bg-tint/40" : "bg-[#fafbf9] hover:bg-white"
+                          selectedCanvasElementId === "video-clip" ? "bg-tint/40" : "bg-canvas hover:bg-card"
                         )}
                       >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-white text-caption font-bold">
-                          <Film className="size-3.5 text-sky-600" />
+                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                          <Film className="size-3.5 text-accent-blue" />
                           <span className="truncate">4. B-Roll Video</span>
                         </div>
                         <div className="flex-1 h-full p-1">
-                          <div className="h-full w-[75%] rounded bg-sky-100 border border-sky-300 flex items-center px-2 text-micro font-bold text-sky-950 truncate">
+                          <div className="h-full w-[75%] rounded bg-accent-blue border border-accent-blue flex items-center px-2 text-micro font-bold text-accent-blue truncate">
                             Cellular_Receptor_Binding_4K.mp4 [0:04 – 0:{selectedScene.duration}]
                           </div>
                         </div>
@@ -1896,15 +1896,15 @@ export function StudioScreen() {
                         onClick={() => handleSelectCanvasElement("headline")}
                         className={cn(
                           "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "headline" ? "bg-tint/40" : "bg-[#fafbf9] hover:bg-white"
+                          selectedCanvasElementId === "headline" ? "bg-tint/40" : "bg-canvas hover:bg-card"
                         )}
                       >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-white text-caption font-bold">
-                          <Type className="size-3.5 text-blue-600" />
+                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                          <Type className="size-3.5 text-accent-blue" />
                           <span className="truncate">5. Text Headline</span>
                         </div>
                         <div className="flex-1 h-full p-1">
-                          <div className="h-full w-3/4 rounded bg-blue-50 border border-blue-200 flex items-center px-2 text-micro font-bold text-blue-900 truncate">
+                          <div className="h-full w-3/4 rounded bg-accent-blue border border-accent-blue flex items-center px-2 text-micro font-bold text-accent-blue truncate">
                             &quot;{selectedScene.title}&quot; [0:01 – 0:09]
                           </div>
                         </div>
@@ -1915,15 +1915,15 @@ export function StudioScreen() {
                         onClick={() => handleSelectCanvasElement("narration")}
                         className={cn(
                           "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "narration" ? "bg-tint/40" : "bg-[#fafbf9] hover:bg-white"
+                          selectedCanvasElementId === "narration" ? "bg-tint/40" : "bg-canvas hover:bg-card"
                         )}
                       >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-white text-caption font-bold">
-                          <Mic2 className="size-3.5 text-amber-600" />
+                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                          <Mic2 className="size-3.5 text-warn" />
                           <span className="truncate">6. Voiceover</span>
                         </div>
                         <div className="flex-1 h-full p-1">
-                          <div className="h-full w-4/5 rounded bg-amber-50 border border-amber-200 flex items-center px-2 text-micro font-bold text-amber-900 truncate">
+                          <div className="h-full w-4/5 rounded bg-warn-bg border border-warn-line flex items-center px-2 text-micro font-bold text-warn truncate">
                             Eleanor VO · Clinical narration [0:01 – 0:13]
                           </div>
                         </div>
@@ -1956,7 +1956,7 @@ export function StudioScreen() {
                   {/* Top Bar Pill in Player */}
                   <div className="relative z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent text-white text-label">
                     <div className="flex items-center gap-2 font-extrabold">
-                      <span className="rounded-full bg-emerald-500/20 border border-emerald-400/30 px-2.5 py-0.5 text-emerald-300">
+                      <span className="rounded-full bg-ok/20 border border-emerald-400/30 px-2.5 py-0.5 text-ok-on-dark">
                         HD Master Render
                       </span>
                       <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora"} HCP Master Video</span>
@@ -1980,7 +1980,7 @@ export function StudioScreen() {
                         >
                           <span>{hoveredScrubTime ? `0:${Math.floor(hoveredScrubTime).toString().padStart(2, "0")}` : ""}</span>
                           <span className="text-white/40 mx-1">·</span>
-                          <span className="text-emerald-300">{hoveredChapter.title}</span>
+                          <span className="text-ok-on-dark">{hoveredChapter.title}</span>
                         </div>
                       )}
 
@@ -2087,11 +2087,11 @@ export function StudioScreen() {
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
-            "shrink-0 border-l border-hair bg-white flex flex-col min-h-0 shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
+            "shrink-0 border-l border-hair bg-card flex flex-col min-h-0 shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
             !copilotPanelOpen && "border-none pointer-events-none"
           )}
         >
-          <div className="p-2.5 border-b border-hair bg-[#f4f6f4]">
+          <div className="p-2.5 border-b border-hair bg-subtle">
             {studioMode === "scenes" ? (
               /* ── SCRIPT STAGE: Only Chat & Claims Tabs (No Edit Tab) ── */
               <div className="grid grid-cols-2 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
@@ -2099,7 +2099,7 @@ export function StudioScreen() {
                   tab="assistant"
                   current={activeTab}
                   onClick={setActiveTab}
-                  badge={<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mr-1" />}
+                  badge={<span className="size-1.5 rounded-full bg-ok animate-pulse shrink-0 mr-1" />}
                 >
                   Chat
                 </InspectorTabButton>
@@ -2119,7 +2119,7 @@ export function StudioScreen() {
                   tab="assistant"
                   current={activeTab}
                   onClick={setActiveTab}
-                  badge={<span className="size-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0 mr-1" />}
+                  badge={<span className="size-1.5 rounded-full bg-ok animate-pulse shrink-0 mr-1" />}
                 >
                   Chat
                 </InspectorTabButton>
@@ -2157,9 +2157,9 @@ export function StudioScreen() {
             {/* ── TAB 1: PERSISTENT SWISHX CHAT ── */}
             {activeTab === "assistant" && (
               <div className="flex-1 flex flex-col min-h-0">
-                <div className="px-4 py-2 border-b border-black/[0.06] bg-[#fafbf9] flex items-center justify-between">
+                <div className="px-4 py-2 border-b border-black/[0.06] bg-canvas flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="size-2 rounded-full bg-ok animate-pulse" />
                     <span className="text-label font-extrabold text-ink">Direct with SwishX · Online</span>
                   </div>
                   <span className="text-caption text-ink-3 font-semibold">Pharma-Compliant Copilot</span>
@@ -2187,7 +2187,7 @@ export function StudioScreen() {
                           "rounded-[16px] px-3.5 py-2.5 text-body shadow-xs",
                           msg.role === "user"
                             ? "bg-brand text-white font-medium rounded-br-xs"
-                            : "bg-white text-ink border border-black/[0.08] rounded-bl-xs font-normal"
+                            : "bg-card text-ink border border-black/[0.08] rounded-bl-xs font-normal"
                         )}
                       >
                         <FormattedMessageText text={msg.text} />
@@ -2212,7 +2212,7 @@ export function StudioScreen() {
                 </div>
 
                 {/* Chat Input Box with Attached Primary Action Bar */}
-                <div className="p-3 border-t border-hair bg-[#fafbf9] space-y-2">
+                <div className="p-3 border-t border-hair bg-canvas space-y-2">
                   {/* Attached Primary Action Bar in Script Mode */}
                   {isScenes && (
                     <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
@@ -2280,15 +2280,15 @@ export function StudioScreen() {
                       e.preventDefault();
                       handleSendChatMessage();
                     }}
-                    className="flex flex-col gap-2 rounded-2xl border border-black/[0.08] bg-white p-2.5 shadow-xs focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15"
+                    className="flex flex-col gap-2 rounded-2xl border border-black/[0.08] bg-card p-2.5 shadow-xs focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15"
                   >
                     {/* Attached Context Chips */}
                     {attachedContexts.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 p-1.5 bg-[#f4f6f4] rounded-xl border border-black/[0.06]">
+                      <div className="flex flex-wrap gap-1.5 p-1.5 bg-subtle rounded-xl border border-black/[0.06]">
                         {attachedContexts.map((ctx) => (
                           <span
                             key={ctx.id}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-brand/30 px-2 py-0.5 text-label font-bold text-brand-deep shadow-2xs"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-card border border-brand/30 px-2 py-0.5 text-label font-bold text-brand-deep shadow-2xs"
                           >
                             {ctx.type === "element" ? (
                               <Sparkles className="size-3 text-brand shrink-0" />
@@ -2305,7 +2305,7 @@ export function StudioScreen() {
                             <button
                               type="button"
                               onClick={() => setAttachedContexts((prev) => prev.filter((c) => c.id !== ctx.id))}
-                              className="size-3.5 rounded-full hover:bg-black/10 flex items-center justify-center text-gray-400 hover:text-black cursor-pointer"
+                              className="size-3.5 rounded-full hover:bg-black/10 flex items-center justify-center text-ink-4 hover:text-black cursor-pointer"
                             >
                               <X className="size-2.5" />
                             </button>
@@ -2361,15 +2361,15 @@ export function StudioScreen() {
                           <button
                             type="button"
                             onClick={() => setChatContextMenuOpen(!chatContextMenuOpen)}
-                            className="size-7 rounded-lg text-gray-600 hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors cursor-pointer border border-black/10 bg-white shadow-2xs"
+                            className="size-7 rounded-lg text-ink-3 hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors cursor-pointer border border-black/10 bg-card shadow-2xs"
                             title="Add context (Scenes, Files, Citations)"
                           >
                             <Plus className="size-3.5 text-brand" />
                           </button>
 
                           {chatContextMenuOpen && (
-                            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-2xl border border-black/10 bg-white p-1.5 shadow-xl z-50 space-y-1">
-                              <div className="px-2 py-1 text-micro font-extrabold uppercase tracking-wider text-gray-400">
+                            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-2xl border border-black/10 bg-card p-1.5 shadow-xl z-50 space-y-1">
+                              <div className="px-2 py-1 text-micro font-extrabold uppercase tracking-wider text-ink-4">
                                 Attach Context to Chat
                               </div>
                               <button
@@ -2385,7 +2385,7 @@ export function StudioScreen() {
                               </button>
 
                               <div className="border-t border-black/[0.06] my-1" />
-                              <div className="px-2 py-0.5 text-micro font-extrabold uppercase tracking-wider text-gray-400">
+                              <div className="px-2 py-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4">
                                 Attach Scene Scope
                               </div>
                               <div className="max-h-40 overflow-y-auto space-y-0.5">
@@ -2408,10 +2408,10 @@ export function StudioScreen() {
                                       });
                                       setChatContextMenuOpen(false);
                                     }}
-                                    className="w-full flex items-center justify-between px-2.5 py-1 text-label font-medium text-ink-2 hover:bg-[#f4f6f4] rounded-lg transition text-left cursor-pointer"
+                                    className="w-full flex items-center justify-between px-2.5 py-1 text-label font-medium text-ink-2 hover:bg-subtle rounded-lg transition text-left cursor-pointer"
                                   >
                                     <span className="truncate">Scene {sc.number}: {sc.title}</span>
-                                    <span className="text-micro text-gray-400 font-bold shrink-0 ml-1">({sc.narrativeTag || "Evidence"})</span>
+                                    <span className="text-micro text-ink-4 font-bold shrink-0 ml-1">({sc.narrativeTag || "Evidence"})</span>
                                   </button>
                                 ))}
                               </div>
@@ -2462,7 +2462,7 @@ export function StudioScreen() {
             {activeTab === "comments" && (
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Add New Comment Box */}
-                <div className="p-3.5 border-b border-hair bg-[#fafbf9] space-y-2.5">
+                <div className="p-3.5 border-b border-hair bg-canvas space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-label font-extrabold text-ink">Add Reviewer Comment</span>
                     <span className="rounded-md bg-tint border border-brand/30 px-2 py-0.5 text-caption font-extrabold text-brand-deep">
@@ -2474,7 +2474,7 @@ export function StudioScreen() {
                     onChange={(e) => setNewCommentText(e.target.value)}
                     placeholder="Provide compliance or marketing feedback at current timestamp..."
                     rows={2}
-                    className="w-full rounded-xl border border-black/10 bg-white p-2.5 text-body text-ink resize-none focus:outline-none focus:border-brand shadow-2xs"
+                    className="w-full rounded-xl border border-black/10 bg-card p-2.5 text-body text-ink resize-none focus:outline-none focus:border-brand shadow-2xs"
                   />
                   <div className="flex justify-end">
                     <Button
@@ -2496,8 +2496,8 @@ export function StudioScreen() {
                       className={cn(
                         "rounded-xl border p-3 transition-all space-y-2",
                         comment.isResolved
-                          ? "bg-[#fafbf9] border-black/[0.05] opacity-60"
-                          : "bg-white border-black/[0.08] shadow-2xs hover:border-brand/40"
+                          ? "bg-canvas border-black/[0.05] opacity-60"
+                          : "bg-card border-black/[0.08] shadow-2xs hover:border-brand/40"
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -2517,7 +2517,7 @@ export function StudioScreen() {
                             setMasterCurrentTime(comment.timestampSec);
                             setMasterPlaying(true);
                           }}
-                          className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-caption font-extrabold text-emerald-800 hover:bg-emerald-100 transition-colors cursor-pointer"
+                          className="rounded-md bg-ok-bg border border-ok-line px-2 py-0.5 text-caption font-extrabold text-ok hover:bg-ok-bg transition-colors cursor-pointer"
                         >
                           ⏱ {comment.timeFormatted}
                         </button>
@@ -2547,7 +2547,7 @@ export function StudioScreen() {
                         <button
                           type="button"
                           onClick={() => handleToggleResolveComment(comment.id)}
-                          className="text-ink-3 hover:text-emerald-700 font-semibold cursor-pointer"
+                          className="text-ink-3 hover:text-ok font-semibold cursor-pointer"
                         >
                           {comment.isResolved ? "✓ Resolved" : "Mark as resolved"}
                         </button>
@@ -2599,14 +2599,14 @@ export function StudioScreen() {
                   <div>
                     <label className="text-label font-bold text-ink-2 flex items-center justify-between mb-1">
                       <span>Headline Text (Chapter Title)</span>
-                      <span className="text-caption text-gray-400 font-normal">On-screen header</span>
+                      <span className="text-caption text-ink-4 font-normal">On-screen header</span>
                     </label>
                     <input
                       type="text"
                       value={editDraftHeadline}
                       onChange={(e) => setEditDraftHeadline(e.target.value)}
                       placeholder="Scene headline..."
-                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-white p-2.5 text-body font-medium focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
+                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
 
@@ -2614,7 +2614,7 @@ export function StudioScreen() {
                   <div>
                     <label className="text-label font-bold text-ink-2 flex items-center justify-between mb-1">
                       <span>Narration Script</span>
-                      <span className="text-caption text-gray-400 font-normal">
+                      <span className="text-caption text-ink-4 font-normal">
                         {editDraftNarration ? `${editDraftNarration.split(" ").filter(Boolean).length} words` : "Empty"}
                       </span>
                     </label>
@@ -2623,7 +2623,7 @@ export function StudioScreen() {
                       onChange={(e) => setEditDraftNarration(e.target.value)}
                       rows={3}
                       placeholder="Voiceover narration script..."
-                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-white p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
+                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
 
@@ -2631,14 +2631,14 @@ export function StudioScreen() {
                   <div>
                     <label className="text-label font-bold text-ink-2 flex items-center justify-between mb-1">
                       <span>Visual Prompt</span>
-                      <span className="text-caption text-gray-400 font-normal">Kinematic direction</span>
+                      <span className="text-caption text-ink-4 font-normal">Kinematic direction</span>
                     </label>
                     <textarea
                       value={editDraftVisual}
                       onChange={(e) => setEditDraftVisual(e.target.value)}
                       rows={3}
                       placeholder="Visual rendering prompt for scene..."
-                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-white p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
+                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
 
@@ -2646,19 +2646,19 @@ export function StudioScreen() {
                   <div>
                     <label className="text-label font-bold text-ink-2 flex items-center justify-between mb-1">
                       <span>Negative Visual Prompt</span>
-                      <span className="text-caption text-gray-400 font-normal">What to avoid</span>
+                      <span className="text-caption text-ink-4 font-normal">What to avoid</span>
                     </label>
                     <textarea
                       value={editDraftNegativeVisual}
                       onChange={(e) => setEditDraftNegativeVisual(e.target.value)}
                       rows={2}
                       placeholder="Elements to exclude (e.g. cartoons, blurry edges, harsh text)..."
-                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-white p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
+                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
 
                   {/* 5. Attached Scene Media (Images & Video Clips) */}
-                  <div className="rounded-xl border border-hair bg-[#fafbf9] p-3 space-y-2.5">
+                  <div className="rounded-xl border border-hair bg-canvas p-3 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-label font-extrabold text-ink flex items-center gap-1.5">
                         <Layers className="size-3.5 text-brand" />
@@ -2677,9 +2677,9 @@ export function StudioScreen() {
 
                     {/* If scene has an image or both (e.g. Scene 3 Anatomical Heart) */}
                     {(selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
-                      <div className="rounded-lg border border-black/8 bg-white p-2 flex items-center justify-between gap-2 shadow-2xs">
+                      <div className="rounded-lg border border-black/8 bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="size-8 rounded-md bg-lime-50 border border-lime-200 flex items-center justify-center p-1 shrink-0 overflow-hidden">
+                          <div className="size-8 rounded-md bg-lime border border-lime flex items-center justify-center p-1 shrink-0 overflow-hidden">
                             <img
                               src={selectedScene.mediaImageSrc || "/anatomical-heart.png"}
                               alt="Heart"
@@ -2693,7 +2693,7 @@ export function StudioScreen() {
                             <div className="text-micro text-ink-3 flex items-center gap-1.5">
                               <span>Image Asset</span>
                               <span>·</span>
-                              <span className="text-emerald-700 font-semibold">0:02 – 0:12s</span>
+                              <span className="text-ok font-semibold">0:02 – 0:12s</span>
                             </div>
                           </div>
                         </div>
@@ -2704,7 +2704,7 @@ export function StudioScreen() {
                             setToMessage("Directing SwishX to replace chart image asset");
                             setTimeout(() => setToMessage(null), 2500);
                           }}
-                          className="rounded-lg bg-[#edf1ee] hover:bg-[#e0e5e1] text-caption font-bold text-ink-2 px-2 py-1 transition-colors cursor-pointer shrink-0"
+                          className="rounded-lg bg-ok-bg hover:bg-[#e0e5e1] text-caption font-bold text-ink-2 px-2 py-1 transition-colors cursor-pointer shrink-0"
                         >
                           Replace
                         </button>
@@ -2713,9 +2713,9 @@ export function StudioScreen() {
 
                     {/* If scene has a video or both (e.g. Scene 2, 3, 4) */}
                     {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
-                      <div className="rounded-lg border border-black/8 bg-white p-2 flex items-center justify-between gap-2 shadow-2xs">
+                      <div className="rounded-lg border border-black/8 bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
                         <div className="flex items-center gap-2 min-w-0">
-                          <div className="size-8 rounded-md bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-700 shrink-0 overflow-hidden">
+                          <div className="size-8 rounded-md bg-accent-blue border border-accent-blue flex items-center justify-center text-accent-blue shrink-0 overflow-hidden">
                             <video
                               src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
                               autoPlay
@@ -2732,7 +2732,7 @@ export function StudioScreen() {
                             <div className="text-micro text-ink-3 flex items-center gap-1.5">
                               <span>Video Clip</span>
                               <span>·</span>
-                              <span className="text-sky-700 font-semibold">0:04 – 0:{selectedScene.duration}s (60fps)</span>
+                              <span className="text-accent-blue font-semibold">0:04 – 0:{selectedScene.duration}s (60fps)</span>
                             </div>
                           </div>
                         </div>
@@ -2743,7 +2743,7 @@ export function StudioScreen() {
                             setToMessage("Directing SwishX to swap kinematic video clip");
                             setTimeout(() => setToMessage(null), 2500);
                           }}
-                          className="rounded-lg bg-[#edf1ee] hover:bg-[#e0e5e1] text-caption font-bold text-ink-2 px-2 py-1 transition-colors cursor-pointer shrink-0"
+                          className="rounded-lg bg-ok-bg hover:bg-[#e0e5e1] text-caption font-bold text-ink-2 px-2 py-1 transition-colors cursor-pointer shrink-0"
                         >
                           Swap
                         </button>
@@ -2751,7 +2751,7 @@ export function StudioScreen() {
                     )}
 
                     {(!selectedScene.mediaType || selectedScene.mediaType === "none") && (
-                      <div className="text-caption text-ink-3 py-1.5 px-2 bg-white rounded-lg border border-dashed border-black/10 flex items-center justify-between">
+                      <div className="text-caption text-ink-3 py-1.5 px-2 bg-card rounded-lg border border-dashed border-black/10 flex items-center justify-between">
                         <span>Clean text &amp; narrative intro layout</span>
                         <button
                           type="button"
@@ -2782,7 +2782,7 @@ export function StudioScreen() {
                             "flex-1 rounded-xl border py-1.5 text-label font-bold transition-all cursor-pointer",
                             editDraftDuration === dur
                               ? "bg-brand text-white border-brand shadow-xs"
-                              : "bg-white border-black/10 text-ink-2 hover:bg-[#fafbf9]"
+                              : "bg-card border-black/10 text-ink-2 hover:bg-canvas"
                           )}
                         >
                           {dur}s
@@ -2819,7 +2819,7 @@ export function StudioScreen() {
                     </div>
                     <h2 className="mt-0.5 text-body-lg font-[800] text-ink">24 Approved Claims</h2>
                   </div>
-                  <span className="rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 text-micro font-bold">
+                  <span className="rounded-full bg-ok-bg text-ok border border-ok-line px-2.5 py-0.5 text-micro font-bold">
                     ✓ PromoMats Verified
                   </span>
                 </div>
@@ -2831,12 +2831,12 @@ export function StudioScreen() {
                     { id: "c3", title: "Safety and Adverse Profiles", status: "Supported", tag: "PI §6.2", detail: "Low incidence of treatment-emergent adverse reactions." },
                     { id: "c4", title: "Renal Perfusion Preservation", status: "Approved", tag: "Lancet 2024", detail: "Maintained glomerular filtration rate during maintenance dosing." },
                   ].map((c) => (
-                    <div key={c.id} className="rounded-xl border border-black/[0.06] bg-[#fafbf9] p-3 text-left hover:border-brand/40 transition-colors">
+                    <div key={c.id} className="rounded-xl border border-black/[0.06] bg-canvas p-3 text-left hover:border-brand/40 transition-colors">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-micro font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-md">
                           {c.tag}
                         </span>
-                        <span className="text-caption font-bold text-emerald-700">✓ {c.status}</span>
+                        <span className="text-caption font-bold text-ok">✓ {c.status}</span>
                       </div>
                       <h4 className="text-body font-bold text-ink">{c.title}</h4>
                       <p className="text-caption text-ink-3 leading-relaxed mt-1">{c.detail}</p>
@@ -2855,13 +2855,13 @@ export function StudioScreen() {
 
       {generateVideoModalOpen && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label="Confirm Video Generation"
         >
-          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
-            <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-[#fafbf9]">
+          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
+            <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
               <div>
                 <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
                   <Sparkles className="size-3.5" /> Generation Engine
@@ -2908,7 +2908,7 @@ export function StudioScreen() {
                   </div>
                   <div>
                     <span className="text-white/50 block text-caption uppercase font-bold">Team Balance</span>
-                    <strong className="text-emerald-400">50,000 Credits</strong>
+                    <strong className="text-ok-on-dark">50,000 Credits</strong>
                   </div>
                   <div>
                     <span className="text-white/50 block text-caption uppercase font-bold">Balance Remaining</span>
@@ -2924,16 +2924,16 @@ export function StudioScreen() {
                 className={cn(
                   "rounded-2xl border p-4 space-y-2.5 text-body transition",
                   hasBlockers
-                    ? "border-amber-200 bg-amber-50/60 text-amber-950"
-                    : "border-emerald-200 bg-emerald-50/70 text-emerald-900"
+                    ? "border-warn-line bg-warn-bg/60 text-warn"
+                    : "border-ok-line bg-ok-bg/70 text-ok"
                 )}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 font-bold">
                     {hasBlockers ? (
-                      <AlertTriangle className="size-4 text-amber-700 shrink-0" />
+                      <AlertTriangle className="size-4 text-warn shrink-0" />
                     ) : (
-                      <ShieldCheck className="size-4 text-emerald-700 shrink-0" />
+                      <ShieldCheck className="size-4 text-ok shrink-0" />
                     )}
                     <span>Quality &amp; MLR Pre-Flight Verification</span>
                   </div>
@@ -2941,8 +2941,8 @@ export function StudioScreen() {
                     className={cn(
                       "rounded-full border px-2.5 py-0.5 text-caption font-extrabold",
                       hasBlockers
-                        ? "bg-rose-100 text-rose-800 border-rose-300"
-                        : "bg-emerald-100 text-emerald-800 border-emerald-300"
+                        ? "bg-danger-bg text-danger border-danger"
+                        : "bg-ok-bg text-ok border-ok-line"
                     )}
                   >
                     {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
@@ -2952,12 +2952,12 @@ export function StudioScreen() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-label pt-1">
                   {/* 1. MLR Check Card (With Blocker & Fix Action) */}
                   {!mlrCheckResolved ? (
-                    <div className="flex flex-col justify-between bg-rose-50/90 rounded-lg p-2.5 border border-rose-200 text-rose-950">
+                    <div className="flex flex-col justify-between bg-danger-bg/90 rounded-lg p-2.5 border border-danger text-danger">
                       <div className="flex items-start gap-1.5">
-                        <AlertTriangle className="size-3.5 text-rose-600 shrink-0 mt-0.5" />
+                        <AlertTriangle className="size-3.5 text-danger shrink-0 mt-0.5" />
                         <div>
-                          <span className="font-bold block text-rose-900">MLR: Unverified Comparative Claim</span>
-                          <span className="text-caption text-rose-800/80 leading-tight block mt-0.5">
+                          <span className="font-bold block text-danger">MLR: Unverified Comparative Claim</span>
+                          <span className="text-caption text-danger/80 leading-tight block mt-0.5">
                             Scene 3 claims superiority without citing head-to-head trial comparator.
                           </span>
                         </div>
@@ -2965,15 +2965,15 @@ export function StudioScreen() {
                       <button
                         type="button"
                         onClick={handleFixMlrBlocker}
-                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-rose-600 hover:bg-rose-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-danger hover:bg-rose-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
                       >
                         <Sparkles className="size-2.5" />
                         <span>Fix with SwishX →</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
-                      <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
                       <div>
                         <span className="font-bold block text-ink">24 Verified Claims Cited</span>
                         <span className="text-caption text-ink-3">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
@@ -2983,12 +2983,12 @@ export function StudioScreen() {
 
                   {/* 2. Quality Check Card (With Blocker & Fix Action) */}
                   {!qaCheckResolved ? (
-                    <div className="flex flex-col justify-between bg-amber-50/90 rounded-lg p-2.5 border border-amber-200 text-amber-950">
+                    <div className="flex flex-col justify-between bg-warn-bg/90 rounded-lg p-2.5 border border-warn-line text-warn">
                       <div className="flex items-start gap-1.5">
-                        <AlertTriangle className="size-3.5 text-amber-600 shrink-0 mt-0.5" />
+                        <AlertTriangle className="size-3.5 text-warn shrink-0 mt-0.5" />
                         <div>
-                          <span className="font-bold block text-amber-900">Quality: Narration Density &gt;150 wpm</span>
-                          <span className="text-caption text-amber-800/80 leading-tight block mt-0.5">
+                          <span className="font-bold block text-warn">Quality: Narration Density &gt;150 wpm</span>
+                          <span className="text-caption text-warn/80 leading-tight block mt-0.5">
                             Scene 3 voiceover exceeds speech pacing limits with redundant words.
                           </span>
                         </div>
@@ -2996,15 +2996,15 @@ export function StudioScreen() {
                       <button
                         type="button"
                         onClick={handleFixQaBlocker}
-                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-amber-600 hover:bg-amber-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-warn hover:bg-amber-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
                       >
                         <Sparkles className="size-2.5" />
                         <span>Fix with SwishX →</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
-                      <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
                       <div>
                         <span className="font-bold block text-ink">Script Pacing &amp; Audio Sync</span>
                         <span className="text-caption text-ink-3">Optimal 135 wpm speech cadence</span>
@@ -3013,8 +3013,8 @@ export function StudioScreen() {
                   )}
 
                   {/* 3. Fair Balance & ISI Present */}
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
-                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                    <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold block text-ink">Fair Balance &amp; ISI Present</span>
                       <span className="text-caption text-ink-3">Contraindication footnotes verified</span>
@@ -3022,8 +3022,8 @@ export function StudioScreen() {
                   </div>
 
                   {/* 4. Medical Terminology */}
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-emerald-100 text-emerald-900">
-                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                    <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold block text-ink">Medical Terminology Clear</span>
                       <span className="text-caption text-ink-3">Generic name &amp; dosing accurate</span>
@@ -3056,13 +3056,13 @@ export function StudioScreen() {
 
               <div className="flex items-center justify-between pt-2 border-t border-hair">
                 {hasBlockers ? (
-                  <span className="text-label text-rose-600 font-semibold flex items-center gap-1">
+                  <span className="text-label text-danger font-semibold flex items-center gap-1">
                     <AlertTriangle className="size-3 shrink-0" />
                     Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
                   </span>
                 ) : (
-                  <span className="text-label text-emerald-700 font-bold flex items-center gap-1">
-                    <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+                  <span className="text-label text-ok font-bold flex items-center gap-1">
+                    <CheckCircle2 className="size-3.5 text-ok shrink-0" />
                     All Quality &amp; MLR checks verified
                   </span>
                 )}
@@ -3141,7 +3141,7 @@ function InspectorTabButton({
       className={cn(
         "group relative flex items-center justify-center gap-1 h-8.5 px-2 rounded-xl text-body transition-all duration-150 cursor-pointer font-[800] select-none whitespace-nowrap",
         active
-          ? "bg-white text-ink shadow-xs border border-black/[0.08]"
+          ? "bg-card text-ink shadow-xs border border-black/[0.08]"
           : "text-ink-3 hover:text-ink hover:bg-white/50 border border-transparent"
       )}
     >
@@ -3153,7 +3153,7 @@ function InspectorTabButton({
             "text-caption font-extrabold px-1.5 py-0.2 rounded-full transition-colors ml-0.5",
             active
               ? "bg-tint-strong text-brand-deep border border-brand/20"
-              : "bg-black/5 text-gray-500"
+              : "bg-black/5 text-ink-3"
           )}
         >
           {count}
@@ -3168,7 +3168,7 @@ function AddSceneModal({ sceneCount, onClose, onAdd }: any) {
   const [title, setTitle] = useState("");
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-      <div className="w-full max-w-[500px] bg-white rounded-card p-6 space-y-4">
+      <div className="w-full max-w-[500px] bg-card rounded-card p-6 space-y-4">
         <h2 className="text-title font-extrabold">Add New Scene</h2>
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Scene Title" className="w-full rounded-xl border p-2 text-body-lg" />
         <div className="flex justify-end gap-2"><Button variant="secondary" onClick={onClose}>Cancel</Button><Button onClick={() => onAdd({ title, category })} className="bg-brand text-white">Add</Button></div>

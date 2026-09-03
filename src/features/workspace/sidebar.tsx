@@ -485,7 +485,7 @@ export function Sidebar() {
                   </button>
                   <button
                     onClick={handleSignOut}
-                    className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-semibold text-rose-600 hover:bg-rose-50 text-left"
+                    className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-semibold text-danger hover:bg-danger-bg text-left"
                   >
                     Sign out
                   </button>
@@ -508,7 +508,7 @@ export function Sidebar() {
             zIndex: 9999,
             animation: "spring-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
           }}
-          className="w-[250px] rounded-[22px] border border-black/[0.08] bg-white p-3.5 shadow-[0_20px_50px_-10px_rgba(10,13,20,0.22),0_4px_12px_rgba(0,0,0,0.05)] backdrop-blur-2xl"
+          className="w-[250px] rounded-[22px] border border-black/[0.08] bg-card p-3.5 shadow-[0_20px_50px_-10px_rgba(10,13,20,0.22),0_4px_12px_rgba(0,0,0,0.05)] backdrop-blur-2xl"
         >
           <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-black/[0.06]">
             <span className="grid size-6 place-items-center rounded-lg bg-tint text-brand">

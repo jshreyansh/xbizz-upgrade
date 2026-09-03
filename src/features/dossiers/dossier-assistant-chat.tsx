@@ -235,7 +235,7 @@ export function DossierAssistantPanel({
                 title="Attach a supporting document"
                 onClick={() => fileRef.current?.click()}
                 disabled={disabled}
-                className="hover:bg-white transition-colors"
+                className="hover:bg-card transition-colors"
                 style={{ width: 30, height: 30, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", color: "var(--ink-3)", background: "transparent", border: "none" }}
               >
                 <Paperclip size={14} />

@@ -232,7 +232,7 @@ const SHAPE_OPTIONS = [
     id: "landscape" as OutputShape,
     label: "Landscape",
     renderIcon: (isSel: boolean) => (
-      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-slate-500")} viewBox="0 0 20 14" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-ink-3")} viewBox="0 0 20 14" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="1.5" y="1.5" width="17" height="11" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
       </svg>
     ),
@@ -241,7 +241,7 @@ const SHAPE_OPTIONS = [
     id: "portrait" as OutputShape,
     label: "Portrait",
     renderIcon: (isSel: boolean) => (
-      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-slate-500")} viewBox="0 0 14 20" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-ink-3")} viewBox="0 0 14 20" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="1.5" y="1.5" width="11" height="17" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
       </svg>
     ),
@@ -250,7 +250,7 @@ const SHAPE_OPTIONS = [
     id: "square" as OutputShape,
     label: "Square",
     renderIcon: (isSel: boolean) => (
-      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-slate-500")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-ink-3")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="1.5" y="1.5" width="13" height="13" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
       </svg>
     ),
@@ -440,10 +440,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       role="dialog" aria-modal="true"
     >
-      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-card border border-[#d8deda] bg-white shadow-2xl overflow-hidden text-left">
+      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-card border border-[#d8deda] bg-card shadow-2xl overflow-hidden text-left">
 
         {/* ── Modal Header ── */}
-        <div className="flex items-center justify-between border-b border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-[#e9ece9] bg-canvas px-7 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-xl bg-tint text-brand-deep border border-tint-line shadow-2xs">
               <Sparkles className="size-4.5 text-brand" />
@@ -476,14 +476,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             "rounded-panel border transition-all duration-200",
             stage === "focus"
               ? "border-brand/40 bg-[#f9faf9] shadow-xs p-5"
-              : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
+              : "border-[#e5ebe6] bg-card hover:border-[#ccd6ce] p-3.5"
           )}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className={cn(
                   "grid size-6 place-items-center rounded-full text-label font-extrabold transition-colors",
                   stage !== "focus" && (selectedBrandId || selectedDiseaseIds.length > 0)
-                    ? "bg-emerald-100 text-emerald-800"
+                    ? "bg-ok-bg text-ok"
                     : "bg-black/8 text-ink-3"
                 )}>
                   {stage !== "focus" && (selectedBrandId || selectedDiseaseIds.length > 0) ? "✓" : "1"}
@@ -510,7 +510,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <span>Change</span>
                 </button>
               ) : (
-                <div className="inline-flex rounded-lg border border-black/8 bg-white p-0.5 gap-0.5 shadow-2xs">
+                <div className="inline-flex rounded-lg border border-black/8 bg-card p-0.5 gap-0.5 shadow-2xs">
                   <button
                     type="button"
                     onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
@@ -535,19 +535,19 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 {sourceMode === "brand" ? (
                   <div className="space-y-3">
                     <div className="relative flex items-center">
-                      <Search className="absolute left-3.5 size-4 text-slate-400" />
+                      <Search className="absolute left-3.5 size-4 text-ink-4" />
                       <input
                         type="text"
                         value={brandSearch}
                         onChange={(e) => { setBrandSearch(e.target.value); }}
                         placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
-                        className="w-full rounded-control border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-body-lg font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
+                        className="w-full rounded-control border border-hair-2 bg-card pl-10 pr-4 py-2.5 text-body-lg font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
                         autoFocus
                       />
                     </div>
 
                     {/* In-Flow Brand Selection List */}
-                    <div className="rounded-[16px] border border-slate-200/90 bg-white shadow-2xs divide-y divide-slate-100 max-h-[220px] overflow-y-auto">
+                    <div className="rounded-[16px] border border-hair-2/90 bg-card shadow-2xs divide-y divide-hair max-h-[220px] overflow-y-auto">
                       {filteredBrands.map((brand) => {
                         const isSel = brand.id === selectedBrandId;
                         return (
@@ -557,22 +557,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             onClick={() => handleSelectBrand(brand)}
                             className={cn(
                               "flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors cursor-pointer",
-                              isSel ? "bg-tint text-brand-deep font-bold" : "hover:bg-slate-50 text-slate-800"
+                              isSel ? "bg-tint text-brand-deep font-bold" : "hover:bg-subtle text-ink-2"
                             )}
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className={cn("grid size-7 place-items-center rounded-lg text-caption font-black border shrink-0", isSel ? "bg-brand text-white border-brand" : "bg-slate-100 text-slate-700 border-slate-200")}>
+                              <div className={cn("grid size-7 place-items-center rounded-lg text-caption font-black border shrink-0", isSel ? "bg-brand text-white border-brand" : "bg-subtle text-ink-2 border-hair-2")}>
                                 {brand.name.slice(0, 2).toUpperCase()}
                               </div>
                               <div className="min-w-0">
                                 <div className="text-body font-bold">{brand.name}</div>
-                                <div className="text-label text-slate-500 italic truncate">{brand.genericName} · {brand.therapyAreas.join(", ")}</div>
+                                <div className="text-label text-ink-3 italic truncate">{brand.genericName} · {brand.therapyAreas.join(", ")}</div>
                               </div>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0 ml-2">
                               {brand.hasDossier && (
-                                <span className="text-caption font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-full border border-ok-line">
                                   SmPC Ready
                                 </span>
                               )}
@@ -584,7 +584,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         );
                       })}
                       {filteredBrands.length === 0 && (
-                        <div className="py-6 text-center text-body text-slate-400">
+                        <div className="py-6 text-center text-body text-ink-4">
                           No brands matching &quot;{brandSearch}&quot;
                         </div>
                       )}
@@ -593,13 +593,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 ) : (
                   <div className="space-y-3">
                     <div className="relative flex items-center">
-                      <Search className="absolute left-3.5 size-4 text-slate-400" />
+                      <Search className="absolute left-3.5 size-4 text-ink-4" />
                       <input
                         type="text"
                         value={diseaseSearch}
                         onChange={(e) => setDiseaseSearch(e.target.value)}
                         placeholder="Search therapy areas (e.g. Dermatology, Oncology, Cardiology)..."
-                        className="w-full rounded-control border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-body-lg font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
+                        className="w-full rounded-control border border-hair-2 bg-card pl-10 pr-4 py-2.5 text-body-lg font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
                         autoFocus
                       />
                     </div>
@@ -617,7 +617,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               "px-3 py-1.5 rounded-full text-body font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
                               isSel
                                 ? "bg-tint border-brand text-brand-deep font-bold shadow-2xs"
-                                : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                                : "bg-card border-hair-2 text-ink-2 hover:border-hair-3 hover:bg-subtle"
                             )}
                           >
                             {isSel && <Check className="size-3 text-brand stroke-[3]" />}
@@ -633,8 +633,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         className={cn(
                           "px-3 py-1.5 rounded-full text-body font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1.5",
                           showCustomDiseaseBox
-                            ? "bg-slate-900 border-slate-900 text-white shadow-2xs font-bold"
-                            : "bg-white border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+                            ? "bg-ink border-ink text-white shadow-2xs font-bold"
+                            : "bg-card border-hair-3 text-ink-2 hover:border-hair-3 hover:bg-subtle"
                         )}
                       >
                         <Plus className="size-3" />
@@ -644,14 +644,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                     {/* Inline Custom Area Input Box */}
                     {showCustomDiseaseBox && (
-                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 animate-in fade-in duration-100">
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-subtle border border-hair-2 animate-in fade-in duration-100">
                         <input
                           type="text"
                           value={customDiseaseInput}
                           onChange={(e) => setCustomDiseaseInput(e.target.value)}
                           onKeyDown={(e) => { if (e.key === "Enter") handleAddCustomDisease(); }}
                           placeholder="Type custom therapy or disease area (e.g. Rare Diseases, Ophthalmology)..."
-                          className="flex-1 bg-white rounded-lg border border-slate-200 px-3 py-1.5 text-body font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand"
+                          className="flex-1 bg-card rounded-lg border border-hair-2 px-3 py-1.5 text-body font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand"
                           autoFocus
                         />
                         <Button size="sm" variant="primary" onClick={handleAddCustomDisease} disabled={!customDiseaseInput.trim()} className="h-7.5 text-label font-bold px-3.5 cursor-pointer">
@@ -661,8 +661,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     )}
 
                     {selectedDiseaseIds.length > 0 && (
-                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                        <span className="text-label font-bold text-slate-600">
+                      <div className="flex items-center justify-between pt-2 border-t border-hair">
+                        <span className="text-label font-bold text-ink-3">
                           {selectedDiseaseIds.length} therapy area{selectedDiseaseIds.length > 1 ? "s" : ""} selected
                         </span>
                         <Button size="sm" variant="primary" onClick={() => setStage("audience")} className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm">
@@ -679,7 +679,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           {/* ══════════════ 2. TARGET AUDIENCE ══════════════ */}
           {stage === "focus" ? (
-            <div className="rounded-panel border border-dashed border-black/10 bg-[#fafbfa] p-3.5 flex items-center justify-between opacity-60">
+            <div className="rounded-panel border border-dashed border-black/10 bg-canvas p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
                 <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">
                   2
@@ -697,14 +697,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               "rounded-panel border transition-all duration-200",
               stage === "audience"
                 ? "border-brand/40 bg-[#f9faf9] shadow-xs p-5"
-                : "border-[#e5ebe6] bg-white hover:border-[#ccd6ce] p-3.5"
+                : "border-[#e5ebe6] bg-card hover:border-[#ccd6ce] p-3.5"
             )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className={cn(
                     "grid size-6 place-items-center rounded-full text-label font-extrabold transition-colors",
                     stage === "details"
-                      ? "bg-emerald-100 text-emerald-800"
+                      ? "bg-ok-bg text-ok"
                       : "bg-black/8 text-ink-3"
                   )}>
                     {stage === "details" ? "✓" : "2"}
@@ -747,8 +747,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           className={cn(
                             "flex flex-col items-center justify-center p-3 rounded-control border-2 text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
                             isSel
-                              ? "border-brand bg-white ring-2 ring-brand/15 shadow-sm"
-                              : "border-black/8 bg-white hover:border-black/20"
+                              ? "border-brand bg-card ring-2 ring-brand/15 shadow-sm"
+                              : "border-black/8 bg-card hover:border-black/20"
                           )}
                         >
                           <div className={cn("grid size-7 place-items-center rounded-lg shrink-0 transition-colors", isSel ? "bg-brand text-white" : "bg-tint text-brand-deep")}>
@@ -763,16 +763,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                   {/* ── Direct 1-Click Doctor Speciality Chips + "Other" ── */}
                   {audience === "HCP" && (
-                    <div className="pt-3 border-t border-slate-200/80 space-y-2.5">
+                    <div className="pt-3 border-t border-hair-2/80 space-y-2.5">
                       <div className="flex items-center justify-between">
-                        <span className="text-label font-bold text-slate-700">
+                        <span className="text-label font-bold text-ink-2">
                           Doctor Speciality (Optional):
                         </span>
                         {selectedSpecialities.length > 0 && (
                           <button
                             type="button"
                             onClick={() => setSelectedSpecialities([])}
-                            className="text-caption font-semibold text-slate-400 hover:text-slate-700 cursor-pointer"
+                            className="text-caption font-semibold text-ink-4 hover:text-ink-2 cursor-pointer"
                           >
                             Clear all
                           </button>
@@ -792,7 +792,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                 "px-2.5 py-1 rounded-full text-label font-semibold border transition-all cursor-pointer flex items-center gap-1",
                                 isSel
                                   ? "bg-tint border-brand text-brand-deep font-bold shadow-2xs"
-                                  : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                                  : "bg-card border-hair-2 text-ink-2 hover:border-hair-3 hover:bg-subtle"
                               )}
                             >
                               {isSel && <Check className="size-2.5 text-brand stroke-[3]" />}
@@ -808,8 +808,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           className={cn(
                             "px-2.5 py-1 rounded-full text-label font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1",
                             showCustomSpecialityBox
-                              ? "bg-slate-900 border-slate-900 text-white font-bold"
-                              : "bg-white border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+                              ? "bg-ink border-ink text-white font-bold"
+                              : "bg-card border-hair-3 text-ink-2 hover:border-hair-3 hover:bg-subtle"
                           )}
                         >
                           <Plus className="size-3" />
@@ -819,14 +819,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                       {/* Custom Speciality Input Box */}
                       {showCustomSpecialityBox && (
-                        <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 animate-in fade-in duration-100">
+                        <div className="flex items-center gap-2 p-2 rounded-xl bg-subtle border border-hair-2 animate-in fade-in duration-100">
                           <input
                             type="text"
                             value={customSpecialityInput}
                             onChange={(e) => setCustomSpecialityInput(e.target.value)}
                             onKeyDown={(e) => { if (e.key === "Enter") handleAddCustomSpeciality(); }}
                             placeholder="Type custom doctor speciality (e.g. Hematologist, Pathologist)..."
-                            className="flex-1 bg-white rounded-lg border border-slate-200 px-3 py-1.5 text-body font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-brand"
+                            className="flex-1 bg-card rounded-lg border border-hair-2 px-3 py-1.5 text-body font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand"
                             autoFocus
                           />
                           <Button size="sm" variant="primary" onClick={handleAddCustomSpeciality} disabled={!customSpecialityInput.trim()} className="h-7 text-label font-bold px-3 cursor-pointer">
@@ -851,7 +851,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           {/* ══════════════ 3 & 4: OUTPUT SIZE + CLINICAL FOCUS TOPICS ══════════════ */}
           {stage !== "details" ? (
-            <div className="rounded-panel border border-dashed border-black/10 bg-[#fafbfa] p-3.5 flex items-center justify-between opacity-60">
+            <div className="rounded-panel border border-dashed border-black/10 bg-canvas p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
                 <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">
                   3
@@ -868,7 +868,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             <div className="space-y-4 animate-in fade-in duration-200">
               
               {/* 3. Output Shape (ONLY 3: Landscape, Portrait, Square with Clean Geometric Icons) */}
-              <div className="rounded-panel border border-[#e5ebe6] bg-white p-4 space-y-2.5 shadow-2xs">
+              <div className="rounded-panel border border-[#e5ebe6] bg-card p-4 space-y-2.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
@@ -878,7 +878,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       Output Shape
                     </span>
                   </div>
-                  <span className="text-label font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  <span className="text-label font-bold text-ok bg-ok-bg px-2.5 py-0.5 rounded-full border border-ok-line">
                     {SHAPE_OPTIONS.find((s) => s.id === selectedShape)?.label}
                   </span>
                 </div>
@@ -895,7 +895,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           "flex items-center justify-center gap-2.5 py-3 px-4 rounded-control border-2 transition-all cursor-pointer shadow-2xs",
                           isSel
                             ? "border-brand bg-tint text-brand-deep font-extrabold shadow-2xs ring-2 ring-brand/15"
-                            : "border-black/8 bg-white hover:border-black/20 text-ink"
+                            : "border-black/8 bg-card hover:border-black/20 text-ink"
                         )}
                       >
                         {opt.renderIcon(isSel)}
@@ -907,7 +907,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               </div>
 
               {/* 4. Clinical Focus Topics (Audience-tailored Hero Cards) */}
-              <div className="rounded-panel border border-[#e5ebe6] bg-white p-5 space-y-3 shadow-2xs">
+              <div className="rounded-panel border border-[#e5ebe6] bg-card p-5 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
@@ -940,7 +940,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           "group relative flex flex-col justify-between p-3.5 rounded-control border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[92px]",
                           isSel
                             ? "border-brand bg-[#f3f9f5] ring-2 ring-brand/15 shadow-sm"
-                            : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbfa]"
+                            : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
                         )}
                       >
                         <div className="space-y-1">
@@ -948,7 +948,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             <div className={cn("grid size-6 place-items-center rounded-md transition-colors shrink-0", isSel ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
                               <IconComp className="size-3" />
                             </div>
-                            <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-black/20 bg-white")}>
+                            <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-black/20 bg-card")}>
                               {isSel && <Check className="size-2 stroke-[3]" />}
                             </div>
                           </div>
@@ -969,7 +969,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between border-t border-[#e9ece9] bg-[#fafbfa] px-7 py-4 shrink-0">
+        <div className="flex items-center justify-between border-t border-[#e9ece9] bg-canvas px-7 py-4 shrink-0">
           <div className="flex flex-wrap items-center gap-1.5 text-body text-ink-3">
             <span className="font-bold text-ink">
               {sourceMode === "brand"

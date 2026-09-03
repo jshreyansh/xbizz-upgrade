@@ -141,11 +141,11 @@ export function ResearchSourcesContent({
       <div className="rounded-panel bg-[#f4f6f3] border border-[#e2e8e3] p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="size-4 text-emerald-700" />
+            <ShieldCheck className="size-4 text-ok" />
             <span className="text-body font-extrabold text-ink">
               Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
             </span>
-            <span className="text-caption font-bold text-emerald-700 bg-emerald-100/70 border border-emerald-300 px-2 py-0.2 rounded-full">
+            <span className="text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-full">
               SmPC &amp; Label Active
             </span>
           </div>
@@ -156,14 +156,14 @@ export function ResearchSourcesContent({
           {prebuiltDossiers.map((dossier, idx) => (
             <div
               key={idx}
-              className="p-3 rounded-control bg-white border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
+              className="p-3 rounded-control bg-card border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
             >
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded border border-tint-line">
                     {dossier.market}
                   </span>
-                  <span className="text-caption font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                  <span className="text-caption font-bold text-ok bg-ok-bg px-1.5 py-0.2 rounded">
                     {dossier.claims} claims
                   </span>
                 </div>
@@ -217,8 +217,8 @@ export function ResearchSourcesContent({
                 className={cn(
                   "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
                   isSelected
-                    ? "border-2 border-brand bg-white text-ink shadow-2xs ring-2 ring-brand/15"
-                    : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                    ? "border-2 border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
+                    : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -279,7 +279,7 @@ export function ResearchSourcesContent({
             {uploadedDocs.map((doc, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-white border border-[#e3e8e5] text-body"
+                className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-card border border-[#e3e8e5] text-body"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className="size-4 text-brand shrink-0" />
@@ -290,7 +290,7 @@ export function ResearchSourcesContent({
                   <button
                     type="button"
                     onClick={() => onSetUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
-                    className="grid size-5 place-items-center rounded-full text-ink-3 hover:bg-black/5 hover:text-red-600 transition-colors cursor-pointer"
+                    className="grid size-5 place-items-center rounded-full text-ink-3 hover:bg-black/5 hover:text-danger transition-colors cursor-pointer"
                     aria-label="Remove"
                   >
                     <X className="size-3" />

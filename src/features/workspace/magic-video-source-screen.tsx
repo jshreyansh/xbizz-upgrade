@@ -451,7 +451,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
       {/* Standardized 2-Column Layout */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] items-start w-full">
         {/* Left Column: Brand & Dossier Directory */}
-        <section className="squircle-card min-w-0 w-full border border-hair bg-white p-5 shadow-hair sm:p-6 space-y-5">
+        <section className="squircle-card min-w-0 w-full border border-hair bg-card p-5 shadow-hair sm:p-6 space-y-5">
           {/* Section Step 1 Header */}
           <div className="flex items-center justify-between pb-3 border-b border-hair">
             <div className="flex items-center gap-2.5">
@@ -478,7 +478,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             <div className="rounded-2xl border border-brand bg-tint/50 p-4 shadow-2xs transition-all">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="size-11 rounded-xl bg-white border border-brand/30 text-brand-deep font-[850] text-body-lg grid place-items-center shadow-2xs shrink-0">
+                  <div className="size-11 rounded-xl bg-card border border-brand/30 text-brand-deep font-[850] text-body-lg grid place-items-center shadow-2xs shrink-0">
                     {selectedBrand.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -487,11 +487,11 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                         Selected Brand
                       </span>
                       {selectedBrand.hasDossier ? (
-                        <span className="rounded-md bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-micro font-extrabold text-emerald-800">
+                        <span className="rounded-md bg-ok-bg border border-ok-line/80 px-2 py-0.5 text-micro font-extrabold text-ok">
                           ✓ {availableDossiers.length} Dossier{availableDossiers.length > 1 ? "s" : ""} on file
                         </span>
                       ) : (
-                        <span className="rounded-md bg-amber-50 border border-amber-200/80 px-2 py-0.5 text-micro font-extrabold text-amber-800">
+                        <span className="rounded-md bg-warn-bg border border-warn-line/80 px-2 py-0.5 text-micro font-extrabold text-warn">
                           No dossier yet
                         </span>
                       )}
@@ -508,7 +508,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                       {selectedBrand.therapyAreas.map((ta) => (
                         <span
                           key={ta}
-                          className="inline-block rounded-md bg-white border border-black/10 px-2 py-0.5 text-micro font-semibold text-ink-2"
+                          className="inline-block rounded-md bg-card border border-black/10 px-2 py-0.5 text-micro font-semibold text-ink-2"
                         >
                           {ta}
                         </span>
@@ -522,7 +522,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   variant="secondary"
                   size="sm"
                   onClick={() => setIsChangingBrand(true)}
-                  className="rounded-xl border-black/15 bg-white hover:bg-gray-50 text-body font-bold text-ink shadow-2xs hover:border-brand cursor-pointer shrink-0 gap-1.5 h-8.5 px-3"
+                  className="rounded-xl border-black/15 bg-card hover:bg-subtle text-body font-bold text-ink shadow-2xs hover:border-brand cursor-pointer shrink-0 gap-1.5 h-8.5 px-3"
                 >
                   <Building2 className="size-3.5 text-brand" />
                   <span>Change brand</span>
@@ -531,7 +531,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             </div>
           ) : (
             /* Expanded Brand Search & Selection Box */
-            <div className="rounded-2xl border border-hair bg-[#fafbf9] p-4 space-y-3.5 animate-in fade-in duration-150">
+            <div className="rounded-2xl border border-hair bg-canvas p-4 space-y-3.5 animate-in fade-in duration-150">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="grid size-5.5 place-items-center rounded-full bg-brand text-white text-caption font-bold">1</span>
@@ -540,7 +540,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                 <button
                   type="button"
                   onClick={() => setIsChangingBrand(false)}
-                  className="text-label font-bold text-gray-500 hover:text-black cursor-pointer"
+                  className="text-label font-bold text-ink-3 hover:text-black cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -548,20 +548,20 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
               {/* Search input */}
               <div className="relative">
-                <Search className="size-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="size-3.5 text-ink-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={brandSearchQuery}
                   onChange={(e) => setBrandSearchQuery(e.target.value)}
                   placeholder="Search brands (e.g. Velmora, Onkavia, 3D)..."
-                  className="w-full pl-8.5 pr-4 py-2 rounded-xl border border-black/10 bg-white text-body text-ink placeholder:text-gray-400 focus:outline-none focus:border-brand transition-all shadow-2xs"
+                  className="w-full pl-8.5 pr-4 py-2 rounded-xl border border-black/10 bg-card text-body text-ink placeholder:text-ink-4 focus:outline-none focus:border-brand transition-all shadow-2xs"
                   autoFocus
                 />
                 {brandSearchQuery && (
                   <button
                     type="button"
                     onClick={() => setBrandSearchQuery("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-4 hover:text-ink-3"
                   >
                     <X className="size-3.5" />
                   </button>
@@ -580,7 +580,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                         "flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer",
                         isSelected
                           ? "border-brand bg-tint font-semibold shadow-2xs"
-                          : "border-black/[0.06] bg-white hover:border-black/20"
+                          : "border-black/[0.06] bg-card hover:border-black/20"
                       )}
                     >
                       <div className="min-w-0 flex-1 pr-2">
@@ -589,11 +589,11 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                             {brand.name}
                           </span>
                           {brand.hasDossier ? (
-                            <span className="rounded bg-emerald-50 px-1.5 py-0.2 text-micro font-bold text-emerald-800 border border-emerald-200">
+                            <span className="rounded bg-ok-bg px-1.5 py-0.2 text-micro font-bold text-ok border border-ok-line">
                               {brand.dossierIds?.length || 1} Dossier{brand.dossierIds && brand.dossierIds.length > 1 ? "s" : ""}
                             </span>
                           ) : (
-                            <span className="rounded bg-amber-50 px-1.5 py-0.2 text-micro font-bold text-amber-800 border border-amber-200">
+                            <span className="rounded bg-warn-bg px-1.5 py-0.2 text-micro font-bold text-warn border border-warn-line">
                               No dossier
                             </span>
                           )}
@@ -607,7 +607,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                           "grid size-4.5 place-items-center rounded-full border shrink-0",
                           isSelected
                             ? "border-brand bg-brand text-white"
-                            : "border-black/20 bg-white"
+                            : "border-black/20 bg-card"
                         )}
                       >
                         {isSelected && <Check className="size-2.5" strokeWidth={3.5} />}
@@ -621,7 +621,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               <button
                 type="button"
                 onClick={() => setIsAddBrandModalOpen(true)}
-                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-hair-2 hover:border-brand bg-white text-body font-bold text-brand transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-hair-2 hover:border-brand bg-card text-body font-bold text-brand transition-all cursor-pointer"
               >
                 <Plus className="size-3.5" />
                 <span>Add a new brand</span>
@@ -639,7 +639,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                 </h3>
               </div>
               {selectedBrand.hasDossier && (
-                <span className="text-label font-bold text-ok bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span className="text-label font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-full border border-ok-line">
                   ✓ {availableDossiers.length} Options Available · Pick One
                 </span>
               )}
@@ -658,7 +658,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                         "rounded-[20px] border p-4.5 transition-all duration-200 cursor-pointer",
                         isSelected
                           ? "border-brand bg-tint/60 ring-2 ring-brand/20 shadow-xs"
-                          : "border-black/[0.08] bg-[#fafbf9] hover:border-black/20 hover:bg-white hover:shadow-2xs"
+                          : "border-black/[0.08] bg-canvas hover:border-black/20 hover:bg-card hover:shadow-2xs"
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -669,7 +669,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                               "grid size-5.5 place-items-center rounded-full border transition-all shrink-0 mt-0.5",
                               isSelected
                                 ? "border-brand bg-brand text-white shadow-2xs"
-                                : "border-black/20 bg-white"
+                                : "border-black/20 bg-card"
                             )}
                           >
                             {isSelected && <Check className="size-3" strokeWidth={3.5} />}
@@ -681,7 +681,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                                 {dossier.name}
                               </h4>
                               {dossier.isSample && (
-                                <span className="rounded-full bg-[#fef3c7] text-[#92400e] px-2 py-0.5 text-micro font-bold border border-[#fde68a]">
+                                <span className="rounded-full bg-warn-bg text-[#92400e] px-2 py-0.5 text-micro font-bold border border-warn-line">
                                   Sample
                                 </span>
                               )}
@@ -692,7 +692,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                           </div>
                         </div>
 
-                        <span className="rounded-full bg-white px-2.5 py-0.5 font-bold text-label text-ink-2 border border-hair-2 shrink-0">
+                        <span className="rounded-full bg-card px-2.5 py-0.5 font-bold text-label text-ink-2 border border-hair-2 shrink-0">
                           {dossier.market}
                         </span>
                       </div>
@@ -727,7 +727,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                               <span className="font-medium text-ink truncate max-w-[78%]">
                                 📄 {doc.name}
                               </span>
-                              <span className="text-caption font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                              <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded border border-ok-line shrink-0">
                                 {doc.citations} citations
                               </span>
                             </div>
@@ -740,9 +740,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               </div>
             ) : (
               /* Case B: Brand has NO Dossier Yet */
-              <div className="rounded-[22px] border border-dashed border-amber-300 bg-amber-50/50 p-6 text-center space-y-3.5">
-                <div className="size-12 rounded-2xl bg-amber-100 border border-amber-300 text-amber-700 grid place-items-center mx-auto shadow-2xs">
-                  <Sparkles className="size-6 text-amber-600" />
+              <div className="rounded-[22px] border border-dashed border-warn-line bg-warn-bg/50 p-6 text-center space-y-3.5">
+                <div className="size-12 rounded-2xl bg-warn-bg border border-warn-line text-warn grid place-items-center mx-auto shadow-2xs">
+                  <Sparkles className="size-6 text-warn" />
                 </div>
                 <div>
                   <h4 className="text-subhead font-[850] text-ink">
@@ -768,9 +768,9 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
         {/* Right Column: Sticky Mandatory Dropdowns Form */}
         <aside className="w-full lg:w-[390px] shrink-0 lg:sticky lg:top-[76px] self-start">
-          <div className="squircle-card overflow-hidden border border-hair bg-white shadow-hair">
+          <div className="squircle-card overflow-hidden border border-hair bg-card shadow-hair">
             {/* Header */}
-            <div className="border-b border-hair bg-[#fafbf9] px-4 py-3">
+            <div className="border-b border-hair bg-canvas px-4 py-3">
               <div className="flex items-center justify-between">
                 <span className="text-label font-bold uppercase tracking-wider text-ink-3">
                   Step 2 · Video Configuration
@@ -809,7 +809,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                           "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-[13px] border py-2.5 px-2 text-center transition-all duration-200 cursor-pointer",
                           isSelected
                             ? "border-brand bg-tint text-brand-deep font-semibold shadow-xs ring-1 ring-brand"
-                            : "border-hair bg-[#fafbf9] text-ink-2 hover:border-[#cbd5d0] hover:bg-white"
+                            : "border-hair bg-canvas text-ink-2 hover:border-[#cbd5d0] hover:bg-card"
                         )}
                       >
                         <span
@@ -919,15 +919,15 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[490px] max-h-[90vh] flex flex-col rounded-3xl bg-white shadow-2xl border border-black/10 animate-in zoom-in-95 duration-150 overflow-hidden"
+            className="w-full max-w-[490px] max-h-[90vh] flex flex-col rounded-3xl bg-card shadow-2xl border border-black/10 animate-in zoom-in-95 duration-150 overflow-hidden"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-black/[0.06] px-6 py-4 shrink-0 bg-white">
+            <div className="flex items-center justify-between border-b border-black/[0.06] px-6 py-4 shrink-0 bg-card">
               <h3 className="text-title font-[850] text-ink tracking-tight">Add brand</h3>
               <button
                 type="button"
                 onClick={() => setIsAddBrandModalOpen(false)}
-                className="size-7 rounded-full hover:bg-black/5 flex items-center justify-center text-gray-400 hover:text-black transition-colors cursor-pointer"
+                className="size-7 rounded-full hover:bg-black/5 flex items-center justify-center text-ink-4 hover:text-black transition-colors cursor-pointer"
               >
                 <X className="size-4" />
               </button>
@@ -938,7 +938,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               <div className="p-6 space-y-4 overflow-y-auto flex-1">
                 {/* Brand Name */}
                 <div>
-                  <label className="block text-label font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">
+                  <label className="block text-label font-extrabold uppercase tracking-wider text-ink-3 mb-1.5">
                     Brand / Product Name <span className="text-brand">*</span>
                   </label>
                   <input
@@ -954,7 +954,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
                 {/* Molecule(s) */}
                 <div>
-                  <label className="block text-label font-extrabold uppercase tracking-wider text-gray-500 mb-1.5">
+                  <label className="block text-label font-extrabold uppercase tracking-wider text-ink-3 mb-1.5">
                     Molecule(s) (Optional)
                   </label>
                   <input
@@ -964,7 +964,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                     placeholder="e.g. Diclofenac + Serratiopeptidase"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-black/15 text-body-lg font-medium text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
                   />
-                  <p className="text-caption text-gray-400 mt-1">
+                  <p className="text-caption text-ink-4 mt-1">
                     For combination products, separate each molecule with + (e.g. Cetirizine + Ambroxol).
                   </p>
                 </div>
@@ -972,7 +972,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                 {/* Therapy Areas */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-label font-extrabold uppercase tracking-wider text-gray-500">
+                    <label className="block text-label font-extrabold uppercase tracking-wider text-ink-3">
                       Therapy Area(s)
                     </label>
                     <button
@@ -985,7 +985,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                         : `Select all (${ALL_THERAPY_AREAS.length})`}
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-[#f8f9f8] rounded-xl border border-black/[0.06]">
+                  <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-subtle rounded-xl border border-black/[0.06]">
                     {ALL_THERAPY_AREAS.map((area) => {
                       const isSelected = newBrandTherapyAreas.includes(area);
                       return (
@@ -997,7 +997,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                             "px-2.5 py-0.8 rounded-full text-caption font-medium transition-colors cursor-pointer border",
                             isSelected
                               ? "bg-brand text-white border-brand font-bold shadow-2xs"
-                              : "bg-white text-ink-2 border-black/10 hover:border-black/20"
+                              : "bg-card text-ink-2 border-black/10 hover:border-black/20"
                           )}
                         >
                           {area}
@@ -1009,7 +1009,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               </div>
 
               {/* Sticky Modal Footer */}
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-black/[0.06] bg-[#fafbf9] shrink-0">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-black/[0.06] bg-canvas shrink-0">
                 <Button
                   type="button"
                   variant="ghost"
@@ -1038,7 +1038,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
   }
 
   return (
-    <div className="page-enter min-h-screen bg-[#f7f8f6] pb-10">
+    <div className="page-enter min-h-screen bg-subtle pb-10">
       {/* Minimal Back Button */}
       <div className="px-6 pt-5 pb-1">
         <button

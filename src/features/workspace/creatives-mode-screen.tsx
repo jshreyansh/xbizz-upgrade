@@ -190,7 +190,7 @@ export function CreativesModeScreen() {
         {/* ════ CARD 1: Infographic/Chart (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
@@ -212,8 +212,8 @@ export function CreativesModeScreen() {
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
-              <div className="grid size-4 place-items-center rounded-full bg-emerald-100 text-emerald-700 shrink-0">
+            <div className="rounded-xl bg-subtle border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+              <div className="grid size-4 place-items-center rounded-full bg-ok-bg text-ok shrink-0">
                 <Check className="size-2.5" />
               </div>
               <span className="font-semibold text-ink animate-fade-in transition-all duration-300">
@@ -243,7 +243,7 @@ export function CreativesModeScreen() {
               <div className="text-label font-bold text-white/70 uppercase tracking-wider">{curChart.title}</div>
               <div className="text-hero font-black text-white leading-tight tracking-tight flex items-baseline gap-2 mt-0.5">
                 <span>{curChart.metric}</span>
-                <span className="text-body-lg font-semibold text-emerald-400">{curChart.metricLabel}</span>
+                <span className="text-body-lg font-semibold text-ok-on-dark">{curChart.metricLabel}</span>
               </div>
             </div>
 
@@ -275,7 +275,7 @@ export function CreativesModeScreen() {
             <div className="z-10 pointer-events-none">
               <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curChart.caption}</p>
               <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
-                <Check className="size-2.5 text-emerald-400" />
+                <Check className="size-2.5 text-ok-on-dark" />
                 <span>{curChart.citation}</span>
               </div>
             </div>
@@ -297,13 +297,13 @@ export function CreativesModeScreen() {
         {/* ════ CARD 2: Presentation/Deck (Visual Detail Aid & Slides) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                <div className="grid size-10 place-items-center rounded-xl bg-accent-blue text-accent-blue border border-accent-blue">
                   <Layers className="size-5" />
                 </div>
                 <div>
@@ -313,14 +313,14 @@ export function CreativesModeScreen() {
                   <p className="text-xs text-ink-2 font-medium">Visual Detail Aid &amp; Slide Panels</p>
                 </div>
               </div>
-              <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-caption font-bold text-blue-700 border border-blue-200">
+              <span className="rounded-full bg-accent-blue px-2.5 py-0.5 text-caption font-bold text-accent-blue border border-accent-blue">
                 Field Force
               </span>
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
-              <div className="grid size-4 place-items-center rounded-full bg-blue-100 text-blue-700 shrink-0">
+            <div className="rounded-xl bg-subtle border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+              <div className="grid size-4 place-items-center rounded-full bg-accent-blue text-accent-blue shrink-0">
                 <Check className="size-2.5" />
               </div>
               <span className="font-semibold text-ink animate-fade-in transition-all duration-300">
@@ -350,7 +350,7 @@ export function CreativesModeScreen() {
               <div className="text-label font-bold text-white/70 uppercase tracking-wider">{curDeck.title}</div>
               <div className="text-display-lg font-black text-white leading-tight tracking-tight flex items-baseline gap-2 mt-0.5">
                 <span>{curDeck.metric}</span>
-                <span className="text-body-lg font-semibold text-sky-300">{curDeck.metricLabel}</span>
+                <span className="text-body-lg font-semibold text-info-on-dark">{curDeck.metricLabel}</span>
               </div>
             </div>
 
@@ -393,7 +393,7 @@ export function CreativesModeScreen() {
                 <span
                   key={i}
                   className={`size-1.5 rounded-full transition-all duration-300 ${
-                    i === deckIndex ? "bg-blue-500 w-4" : "bg-white/40"
+                    i === deckIndex ? "bg-accent-blue w-4" : "bg-white/40"
                   }`}
                 />
               ))}

@@ -188,7 +188,7 @@ export function MagicVideoModeScreen() {
         {/* ════ CARD 1: Video (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-reel")}
-          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
@@ -210,8 +210,8 @@ export function MagicVideoModeScreen() {
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
-              <div className="grid size-4 place-items-center rounded-full bg-emerald-100 text-emerald-700 shrink-0">
+            <div className="rounded-xl bg-subtle border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+              <div className="grid size-4 place-items-center rounded-full bg-ok-bg text-ok shrink-0">
                 <Check className="size-2.5" />
               </div>
               <span className="font-semibold text-ink animate-fade-in transition-all duration-300">
@@ -283,7 +283,7 @@ export function MagicVideoModeScreen() {
             <div className="absolute bottom-8 left-4 right-4 z-10 pointer-events-none">
               <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curReel.caption}</p>
               <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
-                <Check className="size-2.5 text-emerald-400" />
+                <Check className="size-2.5 text-ok-on-dark" />
                 <span>{curReel.citation}</span>
               </div>
             </div>
@@ -303,7 +303,7 @@ export function MagicVideoModeScreen() {
         {/* ════ CARD 2: MagicAvatar™ ════ */}
         <div
           onClick={() => handleSelectMode("magic-avatar")}
-          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
@@ -325,8 +325,8 @@ export function MagicVideoModeScreen() {
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-[#f8faf8] border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
-              <div className="grid size-4 place-items-center rounded-full bg-emerald-100 text-emerald-700 shrink-0">
+            <div className="rounded-xl bg-subtle border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+              <div className="grid size-4 place-items-center rounded-full bg-ok-bg text-ok shrink-0">
                 <Check className="size-2.5" />
               </div>
               <span className="font-semibold text-ink animate-fade-in transition-all duration-300">
@@ -398,7 +398,7 @@ export function MagicVideoModeScreen() {
             <div className="absolute bottom-8 left-4 right-4 z-10 pointer-events-none">
               <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curAvatar.caption}</p>
               <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
-                <Check className="size-2.5 text-emerald-400" />
+                <Check className="size-2.5 text-ok-on-dark" />
                 <span>{curAvatar.citation}</span>
               </div>
             </div>

@@ -90,7 +90,7 @@ export function SelectMenu({
       ref={menuRef}
       style={placement.style}
       className={cn(
-        "squircle-panel z-[100] overflow-y-auto border border-[#e3e8e5] bg-white p-1.5 shadow-[0_20px_60px_rgb(23_34_29/16%),0_3px_12px_rgb(23_34_29/6%)]",
+        "squircle-panel z-[100] overflow-y-auto border border-[#e3e8e5] bg-card p-1.5 shadow-[0_20px_60px_rgb(23_34_29/16%),0_3px_12px_rgb(23_34_29/6%)]",
         open
           ? placement.above
             ? "select-pop-above"
@@ -124,7 +124,7 @@ export function SelectMenu({
             <span
               className={cn(
                 "grid size-5 shrink-0 place-items-center rounded-full border transition",
-                selected ? "border-brand" : "border-[#d6ddd9] bg-white"
+                selected ? "border-brand" : "border-[#d6ddd9] bg-card"
               )}
             >
               <span
@@ -154,7 +154,7 @@ export function SelectMenu({
           }
         }}
         className={cn(
-          "squircle-control focus-ring group flex h-12 w-full items-center justify-between border bg-white px-3.5 text-left text-body-lg font-medium shadow-[0_1px_2px_rgb(19_31_26/2%)] transition",
+          "squircle-control focus-ring group flex h-12 w-full items-center justify-between border bg-card px-3.5 text-left text-body-lg font-medium shadow-[0_1px_2px_rgb(19_31_26/2%)] transition",
           hasValue ? "text-ink" : "text-ink-4",
           open
             ? "border-[#9fb4aa] shadow-[0_0_0_3px_rgb(37_79_63/8%)]"
@@ -176,7 +176,7 @@ export function SelectMenu({
         </span>
         <span
           className={cn(
-            "ml-3 grid size-7 shrink-0 place-items-center rounded-full text-[#738079] transition",
+            "ml-3 grid size-7 shrink-0 place-items-center rounded-full text-ink-3 transition",
             open ? "rotate-180 bg-tint text-brand" : "group-hover:bg-[#f2f5f3]"
           )}
         >
@@ -274,12 +274,12 @@ export function MultiSelectMenu({
   };
 
   const menu = menuMounted && placement && (
-    <div ref={menuRef} style={placement.style} className={cn("squircle-panel z-[100] overflow-y-auto border border-[#e3e8e5] bg-white p-1.5 shadow-[0_20px_60px_rgb(23_34_29/16%),0_3px_12px_rgb(23_34_29/6%)]", open ? placement.above ? "select-pop-above" : "select-pop" : placement.above ? "select-pop-out-above pointer-events-none" : "select-pop-out pointer-events-none")} role="listbox" aria-multiselectable="true" aria-label={ariaLabel}>
+    <div ref={menuRef} style={placement.style} className={cn("squircle-panel z-[100] overflow-y-auto border border-[#e3e8e5] bg-card p-1.5 shadow-[0_20px_60px_rgb(23_34_29/16%),0_3px_12px_rgb(23_34_29/6%)]", open ? placement.above ? "select-pop-above" : "select-pop" : placement.above ? "select-pop-out-above pointer-events-none" : "select-pop-out pointer-events-none")} role="listbox" aria-multiselectable="true" aria-label={ariaLabel}>
       {options.map((option) => {
         const selected = selectedValues.includes(option);
         return <button key={option} type="button" role="option" aria-selected={selected} onClick={() => toggleValue(option)} className={cn("squircle-control focus-ring flex min-h-11 w-full items-center gap-3 px-3 text-left text-body-lg transition-[opacity,background-color] duration-200 hover:opacity-100", selected ? "bg-[#eff6f2] font-medium text-brand opacity-100" : "opacity-68 hover:bg-[#f6f8f7]")}><span className={cn("grid size-5 shrink-0 place-items-center rounded-[6px] transition", selected ? "bg-brand text-white" : "bg-[#eef1ef] text-transparent")}><Check className="size-3.5" strokeWidth={3} /></span>{renderIcon?.(option)}<span className="min-w-0 flex-1 truncate">{option}</span></button>;
       })}
-      <div className="sticky bottom-0 mt-1 border-t border-hair bg-white p-1.5"><button type="button" onClick={() => setOpen(false)} className="squircle-control focus-ring min-h-10 w-full bg-brand px-3 text-body-lg font-medium text-white">Done · {selectedValues.length} selected</button></div>
+      <div className="sticky bottom-0 mt-1 border-t border-hair bg-card p-1.5"><button type="button" onClick={() => setOpen(false)} className="squircle-control focus-ring min-h-10 w-full bg-brand px-3 text-body-lg font-medium text-white">Done · {selectedValues.length} selected</button></div>
     </div>
   );
 
@@ -289,7 +289,7 @@ export function MultiSelectMenu({
         type="button"
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          "squircle-control focus-ring group flex h-11 w-full items-center justify-between rounded-[13px] border bg-white px-3.5 text-left text-body-lg font-medium text-ink shadow-[0_1px_2px_rgb(19_31_26/2%)] transition",
+          "squircle-control focus-ring group flex h-11 w-full items-center justify-between rounded-[13px] border bg-card px-3.5 text-left text-body-lg font-medium text-ink shadow-[0_1px_2px_rgb(19_31_26/2%)] transition",
           open
             ? "border-brand shadow-[0_0_0_3px_rgba(253,72,22,0.12)]"
             : "border-[#e3e8e5] hover:border-[#cbd5d0] hover:bg-[#fcfdfc]"
@@ -307,7 +307,7 @@ export function MultiSelectMenu({
         </span>
         <span
           className={cn(
-            "ml-3 grid size-6 shrink-0 place-items-center rounded-full text-[#738079] transition",
+            "ml-3 grid size-6 shrink-0 place-items-center rounded-full text-ink-3 transition",
             open ? "rotate-180 text-brand" : "group-hover:bg-[#f2f5f3]"
           )}
         >

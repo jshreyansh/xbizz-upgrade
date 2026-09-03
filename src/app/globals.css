@@ -57,6 +57,13 @@
   --color-danger-deep: #842e2d;   /* was inline in button.tsx's danger hover */
   --color-danger-bg: #fceae8;
 
+  /* Status colours for dark grounds. The video canvas and its overlays are
+     dark, where --color-ok (#12784a) is unreadable. Values are the Tailwind
+     shades already in use there, so adopting these changes nothing. */
+  --color-ok-on-dark:   #34d399;
+  --color-warn-on-dark: #fbbf24;
+  --color-info-on-dark: #7dd3fc;
+
   /* Accents — prefixed so they never read as Tailwind's blue-500 scale */
   --color-accent-blue:   #1d4ed8;
   --color-accent-violet: #5b21b6;

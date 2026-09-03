@@ -119,7 +119,7 @@ export function Step4ScriptReview() {
                     className={`transition-all duration-200 ${
                       isSelected
                         ? "opacity-100 ring-2 ring-brand shadow-sm bg-tint"
-                        : "opacity-70 hover:opacity-100 hover:-translate-y-0.5 bg-white"
+                        : "opacity-70 hover:opacity-100 hover:-translate-y-0.5 bg-card"
                     }`}
                     style={{
                       display: "block",

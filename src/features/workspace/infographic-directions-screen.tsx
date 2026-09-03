@@ -428,7 +428,7 @@ export function InfographicDirectionsScreen() {
   return (
     <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#eef1ed] text-left">
       {/* ─── Clean Header Bar (Identical to Video Screen) ─── */}
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-white px-3 sm:px-5">
+      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-card px-3 sm:px-5">
         <button
           type="button"
           onClick={() => {
@@ -452,7 +452,7 @@ export function InfographicDirectionsScreen() {
             <span className="truncate text-body font-[800] text-ink">
               {brandName} HCP launch
             </span>
-            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-micro font-bold text-[#69736e] sm:inline">
+            <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
               Draft v1
             </span>
           </div>
@@ -490,7 +490,7 @@ export function InfographicDirectionsScreen() {
               "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
               copilotPanelOpen
                 ? "border-black/15 bg-black/5 text-ink hover:bg-black/10"
-                : "border-black/10 bg-white text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+                : "border-black/10 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
             )}
             title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
           >
@@ -523,7 +523,7 @@ export function InfographicDirectionsScreen() {
                     <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
                       Available Context
                     </span>
-                    <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-emerald-200">
+                    <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-ok-line">
                       Grounding active
                     </span>
                   </div>
@@ -535,7 +535,7 @@ export function InfographicDirectionsScreen() {
                   </p>
                 </div>
                 <div className="hidden sm:flex items-center gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
+                  <span className="rounded-full bg-card px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
                     ✓ 214 approved claims cited
                   </span>
                 </div>
@@ -581,7 +581,7 @@ export function InfographicDirectionsScreen() {
                   onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
                 >
                   <div className="space-y-4">
-                    <div className="rounded-xl bg-[#f5f8f6] p-3 border border-[#e1e9e4]">
+                    <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
                       <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                         Why this fits
                       </div>
@@ -601,8 +601,8 @@ export function InfographicDirectionsScreen() {
                             className={cn(
                               "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[85px]",
                               isSelected
-                                ? "border-2 border-brand bg-white text-ink shadow-xs"
-                                : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                                ? "border-2 border-brand bg-card text-ink shadow-xs"
+                                : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
                             )}
                           >
                             <div className="flex items-start justify-between gap-2">
@@ -637,7 +637,7 @@ export function InfographicDirectionsScreen() {
                   onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
                 >
                   <div className="space-y-4">
-                    <div className="rounded-xl bg-[#f5f8f6] p-3 border border-[#e1e9e4]">
+                    <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
                       <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                         Why this fits
                       </div>
@@ -662,8 +662,8 @@ export function InfographicDirectionsScreen() {
                               className={cn(
                                 "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]",
                                 isSelected
-                                  ? "border-2 border-brand bg-white text-ink shadow-xs"
-                                  : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                                  ? "border-2 border-brand bg-card text-ink shadow-xs"
+                                  : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
                               )}
                             >
                               <div className="flex items-start justify-between gap-2">
@@ -694,7 +694,7 @@ export function InfographicDirectionsScreen() {
                         <select
                           value={specialty}
                           onChange={(e) => setSpecialty(e.target.value)}
-                          className="w-full h-10 rounded-xl border border-black/15 bg-[#f7f8f6] px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
+                          className="w-full h-10 rounded-xl border border-black/15 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
                         >
                           {SPECIALTIES.map((sp) => (
                             <option key={sp} value={sp}>
@@ -712,7 +712,7 @@ export function InfographicDirectionsScreen() {
                         <select
                           value={language}
                           onChange={(e) => setLanguage(e.target.value)}
-                          className="w-full h-10 rounded-xl border border-black/15 bg-[#f7f8f6] px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
+                          className="w-full h-10 rounded-xl border border-black/15 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
                         >
                           <option value="English">English</option>
                           <option value="Hindi">Hindi</option>
@@ -735,7 +735,7 @@ export function InfographicDirectionsScreen() {
                   onToggle={() => setOpenSection(openSection === "design" ? null : "design")}
                 >
                   <div className="space-y-4">
-                    <div className="rounded-xl bg-[#f5f8f6] p-3 border border-[#e1e9e4]">
+                    <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
                       <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                         Visual layout structure
                       </div>
@@ -752,10 +752,10 @@ export function InfographicDirectionsScreen() {
                             key={tpl.id}
                             onClick={() => setInfographicTemplate(tpl.id)}
                             className={cn(
-                              "rounded-control border bg-white p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
+                              "rounded-control border bg-card p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
                               isSelected
-                                ? "border-2 border-brand bg-white shadow-xs"
-                                : "border-[#e3e8e5] hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                                ? "border-2 border-brand bg-card shadow-xs"
+                                : "border-[#e3e8e5] hover:border-[#cbd6d0] hover:bg-canvas"
                             )}
                           >
                             <div>
@@ -831,7 +831,7 @@ export function InfographicDirectionsScreen() {
                   onToggle={() => setOpenSection(openSection === "objective" ? null : "objective")}
                 >
                   <div className="space-y-4">
-                    <div className="rounded-xl bg-[#f5f8f6] p-3 border border-[#e1e9e4]">
+                    <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
                       <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                         Why this fits
                       </div>
@@ -855,8 +855,8 @@ export function InfographicDirectionsScreen() {
                               className={cn(
                                 "relative p-3 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[80px]",
                                 isSelected
-                                  ? "border-2 border-brand bg-white text-ink shadow-xs"
-                                  : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                                  ? "border-2 border-brand bg-card text-ink shadow-xs"
+                                  : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
                               )}
                             >
                               <div className="flex items-start justify-between">
@@ -895,7 +895,7 @@ export function InfographicDirectionsScreen() {
                                 "px-3.5 py-1.5 rounded-xl border text-body font-bold transition cursor-pointer flex items-center gap-1.5",
                                 isSelected
                                   ? "bg-brand text-white border-brand shadow-2xs hover:bg-brand-deep"
-                                  : "bg-white text-ink-2 border-black/10 hover:border-black/25 hover:bg-[#fafbf9]"
+                                  : "bg-card text-ink-2 border-black/10 hover:border-black/25 hover:bg-canvas"
                               )}
                             >
                               {isSelected && <Check className="size-3 stroke-[3]" />}
@@ -935,8 +935,8 @@ export function InfographicDirectionsScreen() {
                               className={cn(
                                 "p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                                 isSelected
-                                  ? "border-2 border-brand bg-white text-ink shadow-2xs"
-                                  : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                                  ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                                  : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
                               )}
                             >
                               <div className="flex items-start justify-between">
@@ -963,7 +963,7 @@ export function InfographicDirectionsScreen() {
                       <div className="text-body font-bold text-ink mb-1">Product packshots (Optional)</div>
                       <div className="flex flex-wrap items-center gap-3">
                         {packshots.map((ps) => (
-                          <div key={ps.id} className="relative group rounded-xl border border-black/10 overflow-hidden bg-white p-1 shadow-2xs">
+                          <div key={ps.id} className="relative group rounded-xl border border-black/10 overflow-hidden bg-card p-1 shadow-2xs">
                             <img src={ps.url} alt={ps.name} className="size-16 object-cover rounded-lg" />
                             <span className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-micro font-bold px-1 rounded truncate">
                               {ps.name}
@@ -974,7 +974,7 @@ export function InfographicDirectionsScreen() {
                         <button
                           type="button"
                           onClick={() => fileUploadRef.current?.click()}
-                          className="h-16 px-4 rounded-xl border-2 border-dashed border-black/20 hover:border-brand flex flex-col items-center justify-center gap-1 text-label font-bold text-ink-2 hover:text-brand bg-white cursor-pointer transition"
+                          className="h-16 px-4 rounded-xl border-2 border-dashed border-black/20 hover:border-brand flex flex-col items-center justify-center gap-1 text-label font-bold text-ink-2 hover:text-brand bg-card cursor-pointer transition"
                         >
                           <Upload className="size-4" />
                           <span>Add product image</span>
@@ -991,8 +991,8 @@ export function InfographicDirectionsScreen() {
                           className={cn(
                             "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                             infographicPages === "1"
-                              ? "border-2 border-brand bg-white text-ink shadow-2xs"
-                              : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                              ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                              : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
                           )}
                         >
                           <div className="flex items-start justify-between">
@@ -1017,8 +1017,8 @@ export function InfographicDirectionsScreen() {
                           className={cn(
                             "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                             infographicPages === "2"
-                              ? "border-2 border-brand bg-white text-ink shadow-2xs"
-                              : "border-[#e3e8e5] bg-white hover:border-[#cbd6d0] hover:bg-[#fafbf9]"
+                              ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                              : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
                           )}
                         >
                           <div className="flex items-start justify-between">
@@ -1052,7 +1052,7 @@ export function InfographicDirectionsScreen() {
           {currentStep === "content" && (
             <div className="space-y-4 max-w-[880px] mx-auto w-full">
               {/* Header Box */}
-              <div className="bg-white p-5 rounded-2xl border border-black/10 shadow-2xs">
+              <div className="bg-card p-5 rounded-2xl border border-black/10 shadow-2xs">
                 <div className="text-label font-extrabold uppercase tracking-wider text-brand mb-1">
                   Content Blueprint &amp; Claim Partition
                 </div>
@@ -1065,12 +1065,12 @@ export function InfographicDirectionsScreen() {
               </div>
 
               {/* Transparent "Left Out" Box (MLR Discipline) */}
-              <div className="rounded-2xl border border-amber-300/80 bg-amber-50/70 p-4 shadow-2xs">
-                <div className="flex items-center gap-2 text-amber-900 font-bold text-body mb-1.5">
-                  <ShieldCheck className="size-4 text-amber-700 shrink-0" />
+              <div className="rounded-2xl border border-warn-line/80 bg-warn-bg/70 p-4 shadow-2xs">
+                <div className="flex items-center gap-2 text-warn font-bold text-body mb-1.5">
+                  <ShieldCheck className="size-4 text-warn shrink-0" />
                   <span>Left out deliberately for MLR Compliance</span>
                 </div>
-                <p className="text-label text-amber-900/90 leading-relaxed">
+                <p className="text-label text-warn/90 leading-relaxed">
                   The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved CDSCO primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1.
                 </p>
               </div>
@@ -1082,7 +1082,7 @@ export function InfographicDirectionsScreen() {
                   return (
                     <div
                       key={sec.num}
-                      className="bg-white p-4.5 rounded-2xl border border-black/10 shadow-2xs hover:border-black/20 transition-all duration-200"
+                      className="bg-card p-4.5 rounded-2xl border border-black/10 shadow-2xs hover:border-black/20 transition-all duration-200"
                     >
                       <div className="flex items-start gap-3">
                         <span className="size-6.5 rounded-full bg-tint text-brand-deep font-black text-body grid place-items-center shrink-0 mt-0.5">
@@ -1105,43 +1105,43 @@ export function InfographicDirectionsScreen() {
                               className={cn(
                                 "text-label font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 border transition cursor-pointer",
                                 isExpanded
-                                  ? "bg-emerald-100/80 text-emerald-900 border-emerald-300 ring-2 ring-emerald-400/20"
-                                  : "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100/60"
+                                  ? "bg-ok-bg/80 text-ok border-ok-line ring-2 ring-ok/20"
+                                  : "bg-ok-bg text-ok border-ok-line hover:bg-ok-bg/60"
                               )}
                             >
-                              <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+                              <CheckCircle2 className="size-3.5 text-ok shrink-0" />
                               <span>{sec.citations.length} {sec.citations.length === 1 ? "citation" : "citations"} · Grounded in label</span>
                               <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
                             </button>
 
                             {/* Rich Expanded Citations Drawer */}
                             {isExpanded && (
-                              <div className="mt-2.5 space-y-2 rounded-xl bg-[#f7faf8] p-3 border border-emerald-200/80 text-label animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="text-caption font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1">
-                                  <FileCheck2 className="size-3 text-emerald-600" />
+                              <div className="mt-2.5 space-y-2 rounded-xl bg-[#f7faf8] p-3 border border-ok-line/80 text-label animate-in fade-in slide-in-from-top-1 duration-200">
+                                <div className="text-caption font-extrabold uppercase tracking-wider text-ok flex items-center gap-1">
+                                  <FileCheck2 className="size-3 text-ok" />
                                   <span>Verified Dossier Citations &amp; Label Grounding</span>
                                 </div>
 
                                 {sec.citations.map((cit, cIdx) => (
                                   <div
                                     key={cIdx}
-                                    className="p-2.5 rounded-lg bg-white border border-emerald-100 shadow-2xs space-y-1"
+                                    className="p-2.5 rounded-lg bg-card border border-ok-line shadow-2xs space-y-1"
                                   >
                                     <div className="flex items-center justify-between gap-2 flex-wrap">
                                       <div className="font-bold text-body text-ink flex items-center gap-1.5">
-                                        <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                        <span className="size-1.5 rounded-full bg-ok shrink-0" />
                                         <span>{cit.doc}</span>
                                       </div>
                                       <div className="flex items-center gap-1.5">
                                         <span className="text-micro font-extrabold text-brand-deep bg-tint px-1.5 py-0.5 rounded border border-tint-line">
                                           {cit.claimId}
                                         </span>
-                                        <span className="text-micro text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                        <span className="text-micro text-ok bg-ok-bg px-1.5 py-0.5 rounded border border-ok-line">
                                           {cit.mlrRef}
                                         </span>
                                       </div>
                                     </div>
-                                    <p className="text-label text-ink-3 italic leading-relaxed pl-3 border-l-2 border-emerald-300">
+                                    <p className="text-label text-ink-3 italic leading-relaxed pl-3 border-l-2 border-ok-line">
                                       &ldquo;{cit.quote}&rdquo;
                                     </p>
                                   </div>
@@ -1162,9 +1162,9 @@ export function InfographicDirectionsScreen() {
               UNIFIED FLOATING ACTION PILL AT MIDDLE BOTTOM (Exact Video Twin)
              ══════════════════════════════════════════════════════════════════ */}
           <div className="sticky bottom-4 z-30 flex justify-center pointer-events-none mt-auto pt-6 pb-2">
-            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#111614] text-white p-1.5 pl-4 pr-1.5 shadow-[0_14px_40px_rgba(0,0,0,0.4)] border border-white/12 backdrop-blur-md transition-all duration-200 hover:scale-[1.01]">
+            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-ink text-white p-1.5 pl-4 pr-1.5 shadow-[0_14px_40px_rgba(0,0,0,0.4)] border border-white/12 backdrop-blur-md transition-all duration-200 hover:scale-[1.01]">
               <div className="flex items-center gap-2 text-left min-w-0 pr-2">
-                <span className="size-6 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 grid place-items-center shrink-0">
+                <span className="size-6 rounded-full bg-ok/20 border border-emerald-400/40 text-ok-on-dark grid place-items-center shrink-0">
                   <Check className="size-3.5 stroke-[3]" />
                 </span>
                 <div className="min-w-0">
@@ -1209,18 +1209,18 @@ export function InfographicDirectionsScreen() {
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
-            "flex flex-col shrink-0 min-h-0 bg-white border-l border-hair shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
+            "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
             !copilotPanelOpen && "border-none pointer-events-none"
           )}
         >
           {/* Chat Top Banner */}
-          <div className="p-3.5 border-b border-hair bg-white shrink-0">
+          <div className="p-3.5 border-b border-hair bg-card shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-body font-bold text-brand">
                 <Sparkles className="size-3.5" />
                 <span>Direct with SwishX</span>
               </div>
-              <span className="rounded-full bg-emerald-500/15 text-emerald-700 px-2 py-0.5 text-micro font-bold">
+              <span className="rounded-full bg-ok/15 text-ok px-2 py-0.5 text-micro font-bold">
                 Online
               </span>
             </div>
@@ -1247,7 +1247,7 @@ export function InfographicDirectionsScreen() {
                       "rounded-2xl p-3 text-body leading-relaxed",
                       msg.role === "user"
                         ? "bg-brand text-white rounded-tr-xs"
-                        : "bg-[#f4f6f4] text-ink border border-black/5 rounded-tl-xs"
+                        : "bg-subtle text-ink border border-black/5 rounded-tl-xs"
                     )}
                   >
                     <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -1266,7 +1266,7 @@ export function InfographicDirectionsScreen() {
                           key={chip}
                           type="button"
                           onClick={() => handleSendChat(chip)}
-                          className="text-label font-semibold text-ink-2 bg-white hover:bg-tint hover:text-brand border border-black/10 rounded-full px-2.5 py-1 transition cursor-pointer shadow-2xs"
+                          className="text-label font-semibold text-ink-2 bg-card hover:bg-tint hover:text-brand border border-black/10 rounded-full px-2.5 py-1 transition cursor-pointer shadow-2xs"
                         >
                           {chip}
                         </button>
@@ -1280,12 +1280,12 @@ export function InfographicDirectionsScreen() {
           </div>
 
           {/* Chat Input Area with Synchronized Docked Action Bar */}
-          <div className="p-3 border-t border-black/[0.06] bg-white shrink-0 space-y-2">
+          <div className="p-3 border-t border-black/[0.06] bg-card shrink-0 space-y-2">
             {/* ── Sub-step 1 Action Bar ── */}
             {currentStep === "brief" && (
               <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="size-6 rounded-full bg-emerald-600 text-white grid place-items-center shrink-0">
+                  <div className="size-6 rounded-full bg-ok text-white grid place-items-center shrink-0">
                     <Check className="size-3.5 stroke-[3]" />
                   </div>
                   <div className="min-w-0">
@@ -1313,7 +1313,7 @@ export function InfographicDirectionsScreen() {
             {currentStep === "content" && (
               <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="size-6 rounded-full bg-emerald-600 text-white grid place-items-center shrink-0">
+                  <div className="size-6 rounded-full bg-ok text-white grid place-items-center shrink-0">
                     <Sparkles className="size-3.5" />
                   </div>
                   <div className="min-w-0">
@@ -1342,7 +1342,7 @@ export function InfographicDirectionsScreen() {
 
             {/* Input Bar */}
             <div className="relative">
-              <div className="flex items-center gap-2 rounded-[12px] border border-black/15 bg-[#f7f8f6] px-3 py-2 focus-within:border-brand focus-within:bg-white focus-within:shadow-xs transition">
+              <div className="flex items-center gap-2 rounded-[12px] border border-black/15 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                 <Plus className="size-3.5 text-ink-3 shrink-0" />
                 <input
                   type="text"
@@ -1403,8 +1403,8 @@ function CreativePlanSection({
       className={cn(
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-white border border-brand shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
-          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-white hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-control my-1"
+          ? "z-20 w-full scale-100 bg-card border border-brand shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
+          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-control my-1"
       )}
     >
       <button
@@ -1460,7 +1460,7 @@ function CreativePlanSection({
               ? "bg-tint text-brand-deep border-tint-line"
               : status === "Optional"
               ? "bg-[#f5f5f5] text-[#737373] border-[#e5e5e5]"
-              : "bg-[#eef2ef] text-[#66736c] border-[#e2e8e4]"
+              : "bg-ok-bg text-ink-3 border-[#e2e8e4]"
           )}
         >
           {status}

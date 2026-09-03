@@ -322,7 +322,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       : "New Video Project";
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f7f8f6]" onClick={() => setActivePopover(null)}>
+    <div className="min-h-screen flex flex-col bg-subtle" onClick={() => setActivePopover(null)}>
       {/* ─── Top Studio-Matched Header Bar ─── */}
       <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-card px-3 sm:px-5">
         <button
@@ -338,7 +338,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="truncate text-body font-[800] text-ink">{projectName}</span>
-            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-micro font-bold text-[#69736e] sm:inline">
+            <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
               Draft v1
             </span>
           </div>
@@ -424,7 +424,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             {localFiles.length > 0 && (
               <div className="px-6 pb-2.5 flex flex-wrap gap-1.5">
                 {localFiles.map((file) => (
-                  <span key={file} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf1f4] px-2.5 py-1 text-label font-medium text-[#52616a] border border-black/[0.06]">
+                  <span key={file} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf1f4] px-2.5 py-1 text-label font-medium text-ink-3 border border-black/[0.06]">
                     <Paperclip className="size-3" />
                     <span className="max-w-[160px] truncate">{file}</span>
                     <button onClick={() => removeAttachment(file)} className="hover:text-black cursor-pointer"><X className="size-3" /></button>
@@ -435,7 +435,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
             {/* Bottom Toolbar */}
             <div
-              className="relative flex items-center justify-between gap-2 border-t border-black/[0.06] bg-[#fafbf9]/95 px-3.5 py-2.5 rounded-b-[26px]"
+              className="relative flex items-center justify-between gap-2 border-t border-black/[0.06] bg-canvas/95 px-3.5 py-2.5 rounded-b-[26px]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-2">
@@ -561,7 +561,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                             <div className="space-y-1">
                               <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
                                 <span>Target Audience</span>
-                                <span className="text-emerald-700 font-bold uppercase">{audience}</span>
+                                <span className="text-ok font-bold uppercase">{audience}</span>
                               </div>
                               {[
                                 { id: "HCP", label: "HCP", desc: "Doctors, Specialists, Key Opinion Leaders" },
@@ -601,7 +601,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                             <div className="space-y-1">
                               <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
                                 <span>{isInfographic ? "Infographic Shape" : "Video Aspect Ratio"}</span>
-                                <span className="text-emerald-700 font-bold uppercase">
+                                <span className="text-ok font-bold uppercase">
                                   {isInfographic ? pageShape : format || "16:9"}
                                 </span>
                               </div>
@@ -648,7 +648,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                             <div className="space-y-1">
                               <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
                                 <span>Clinical Topics</span>
-                                <span className="text-emerald-700 font-bold">{topics.length} selected</span>
+                                <span className="text-ok font-bold">{topics.length} selected</span>
                               </div>
                               {[
                                 "Mechanism of Action",
@@ -831,8 +831,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 onRemove={() => setLocalFiles((prev) => prev.filter((f) => f !== file))}
               />
             ))}
-            <span className="inline-flex items-center gap-1 text-label font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full ml-1">
-              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="inline-flex items-center gap-1 text-label font-bold text-ok bg-ok-bg border border-ok-line px-2.5 py-1 rounded-full ml-1">
+              <span className="size-1.5 rounded-full bg-ok animate-pulse" />
               Grounding Locked
             </span>
           </div>
@@ -918,7 +918,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: () => void }) {
   const approved = source.status === "current" && source.kind !== "reference";
   const color =
-    source.kind === "brand" ? "bg-[#eaf2ed] text-[#355f4e]"
+    source.kind === "brand" ? "bg-ok-bg text-[#355f4e]"
     : source.kind === "claims" ? "bg-[#eef1f7] text-[#4f5f78]"
     : source.kind === "reference" ? "bg-[#f3eee8] text-[#705f4d]"
     : "bg-[#f5ece8] text-[#775548]";
@@ -936,7 +936,7 @@ function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: ()
 
 function AttachmentChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="flex min-h-9 items-center gap-2 rounded-chip bg-[#edf1f4] px-2.5 text-body font-medium text-[#52616a] border border-black/[0.06]">
+    <span className="flex min-h-9 items-center gap-2 rounded-chip bg-[#edf1f4] px-2.5 text-body font-medium text-ink-3 border border-black/[0.06]">
       <Paperclip className="size-3.5 opacity-75" />
       <span className="max-w-[180px] truncate">{label}</span>
       <button onClick={onRemove} className="grid size-5 place-items-center rounded-full opacity-60 hover:bg-white/70 hover:opacity-100 transition" aria-label={`Remove ${label}`}>
@@ -957,14 +957,14 @@ const scenarioCategoryIcons: Record<DemoScenarioCategory, typeof CircleCheck> = 
 function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: { currentScenarioId: string; onSelect: (scenario: DemoScenario) => void; onReset: () => void; onClose: () => void }) {
   const categories = [...new Set(demoScenarios.map((s) => s.category))];
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-[#10231c]/38 backdrop-blur-[2px]" role="dialog" aria-modal="true">
-      <div className="slide-left flex h-full w-full max-w-[440px] flex-col border-l border-white/50 bg-[#fafbfa] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex justify-end bg-ink/38 backdrop-blur-[2px]" role="dialog" aria-modal="true">
+      <div className="slide-left flex h-full w-full max-w-[440px] flex-col border-l border-white/50 bg-canvas shadow-2xl">
         <div className="flex items-center justify-between border-b border-hair px-5 py-4">
           <div>
             <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Demo Library</div>
             <h3 className="text-title font-semibold">Sample briefs</h3>
           </div>
-          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-[#eef2ef]" aria-label="Close"><X className="size-4" /></button>
+          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-ok-bg" aria-label="Close"><X className="size-4" /></button>
         </div>
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {categories.map((category) => {
@@ -979,7 +979,7 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
                 {list.map((scenario) => {
                   const active = scenario.id === currentScenarioId;
                   return (
-                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-[#eef5f1]" : "border-hair bg-card hover:border-[#ccd7d1]")}>
+                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-ok-bg" : "border-hair bg-card hover:border-[#ccd7d1]")}>
                       <div className="flex items-center justify-between">
                         <b className="text-body-lg font-semibold">{scenario.label}</b>
                         {active && <span className="rounded-full bg-brand px-2 py-0.5 text-caption font-bold text-white">Active</span>}
@@ -1020,17 +1020,17 @@ function SourceLibraryModal({
   brandName?: string;
 }) {
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/38 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/38 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
       <div className="flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-[22px] border border-white/60 bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b border-hair p-5">
           <div>
             <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Regulatory Sources</div>
             <h3 className="text-title font-semibold">Attach verified evidence</h3>
           </div>
-          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-[#eef2ef]" aria-label="Close"><X className="size-4" /></button>
+          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-ok-bg" aria-label="Close"><X className="size-4" /></button>
         </div>
         <div className="p-4 border-b border-hair">
-          <div className="flex items-center gap-2 rounded-[12px] border border-hair bg-[#fafbf9] px-3 py-2">
+          <div className="flex items-center gap-2 rounded-[12px] border border-hair bg-canvas px-3 py-2">
             <Search className="size-4 text-ink-3" />
             <input value={query} onChange={(e) => onQueryChange(e.target.value)} placeholder="Search FDA labels, trial protocols, brand assets..." className="w-full bg-transparent text-body-lg outline-none" />
           </div>
@@ -1039,7 +1039,7 @@ function SourceLibraryModal({
           {sources.map((source) => {
             const active = selectedIds.includes(source.id);
             return (
-              <div key={source.id} className={cn("flex items-center justify-between rounded-control border p-3 transition", active ? "border-[#adc4b8] bg-[#edf5f0]" : "border-hair bg-card")}>
+              <div key={source.id} className={cn("flex items-center justify-between rounded-control border p-3 transition", active ? "border-[#adc4b8] bg-ok-bg" : "border-hair bg-card")}>
                 <div className="min-w-0 flex-1 pr-3">
                   <b className="block truncate text-body-lg font-semibold">{source.name.replace(/DERMORA/g, brandName)}</b>
                   <span className="block truncate text-body text-ink-3">{source.detail.replace(/DERMORA/g, brandName)}</span>

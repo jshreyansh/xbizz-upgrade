@@ -75,11 +75,11 @@ export function DossierPreviewModal({
       aria-modal="true"
     >
       <div
-        className="relative flex h-[88vh] max-h-[840px] w-full max-w-[920px] flex-col rounded-card border border-black/10 bg-white shadow-2xl overflow-hidden text-left"
+        className="relative flex h-[88vh] max-h-[840px] w-full max-w-[920px] flex-col rounded-card border border-black/10 bg-card shadow-2xl overflow-hidden text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-black/10 bg-[#fafbfa] px-7 py-5 shrink-0">
+        <div className="flex items-start justify-between border-b border-black/10 bg-canvas px-7 py-5 shrink-0">
           <div className="flex items-start gap-3.5">
             <div className="grid size-11 place-items-center rounded-2xl bg-tint text-brand-deep border border-tint-line shrink-0 shadow-2xs">
               <ShieldCheck className="size-6 text-brand" />
@@ -89,7 +89,7 @@ export function DossierPreviewModal({
                 <span className="text-label font-extrabold uppercase tracking-wider text-brand-deep bg-tint px-2 py-0.5 rounded-md border border-tint-line">
                   {dossier.market}
                 </span>
-                <span className="text-label font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
+                <span className="text-label font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-md border border-ok-line flex items-center gap-1">
                   <CheckCircle2 className="size-3" /> Verified SmPC & Label
                 </span>
               </div>
@@ -141,7 +141,7 @@ export function DossierPreviewModal({
                       </div>
                     </div>
                   </div>
-                  <span className="text-caption font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                  <span className="text-caption font-bold text-ok bg-ok-bg border border-ok-line px-2 py-0.5 rounded-full shrink-0">
                     {doc.citations} citations
                   </span>
                 </div>
@@ -165,13 +165,13 @@ export function DossierPreviewModal({
               {claimsList.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-[16px] border border-black/8 bg-white space-y-1.5 shadow-2xs"
+                  className="p-3.5 rounded-[16px] border border-black/8 bg-card space-y-1.5 shadow-2xs"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-label font-extrabold uppercase tracking-wide text-brand-deep">
                       {item.category}
                     </span>
-                    <span className="text-caption font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                    <span className="text-caption font-semibold text-ok bg-ok-bg px-1.5 py-0.2 rounded">
                       ✓ MLR Approved
                     </span>
                   </div>
@@ -189,7 +189,7 @@ export function DossierPreviewModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-black/10 bg-[#fafbfa] px-7 py-4 shrink-0">
+        <div className="flex items-center justify-between border-t border-black/10 bg-canvas px-7 py-4 shrink-0">
           <span className="text-body text-ink-3">
             This dossier is ready to ground scenes, copy, and citations for your campaign.
           </span>
