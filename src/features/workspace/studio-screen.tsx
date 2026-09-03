@@ -1646,7 +1646,7 @@ export function StudioScreen() {
                     >
                       {/* Subtitle Sync Indicator Header */}
                       <div className="flex items-center gap-1.5 mb-1.5">
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand/25 border border-brand/40 text-micro font-extrabold uppercase tracking-wider text-[var(--brand-light,#ff9e80)]">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand/25 border border-brand/40 text-micro font-extrabold uppercase tracking-wider text-brand-light">
                           <Mic2 className="size-2.5" /> Subtitle · Voiceover Sync
                         </span>
                         {scenePlaying && (
@@ -1680,7 +1680,7 @@ export function StudioScreen() {
                                 className={cn(
                                   "inline-block mr-1 transition-all duration-150 rounded px-0.5",
                                   isCurrent
-                                    ? "text-[var(--brand-light,#ff9e80)] font-bold scale-105 bg-brand/20 shadow-xs ring-1 ring-brand/35 -translate-y-0.5"
+                                    ? "text-brand-light font-bold scale-105 bg-brand/20 shadow-xs ring-1 ring-brand/35 -translate-y-0.5"
                                     : isPast
                                     ? "text-white font-medium opacity-100"
                                     : "text-white/35 font-normal"

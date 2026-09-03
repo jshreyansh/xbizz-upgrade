@@ -12,7 +12,8 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "verify:scenarios": "bun scripts/verify-demo-scenarios.ts"
+    "verify:scenarios": "bun scripts/verify-demo-scenarios.ts",
+    "lint:tokens": "node scripts/lint-tokens.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
