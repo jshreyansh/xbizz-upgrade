@@ -57,24 +57,20 @@ export function useResizablePanel(options: ResizablePanelOptions) {
   } = options;
 
   const [resizing, setResizing] = useState(false);
-  // Read from a ref inside the pointer handlers so the listeners never go
-  // stale mid-drag and never need re-binding on every width change. Synced in
-  // an effect rather than during render — every reader is an event handler, so
-  // it always sees a post-commit value.
-  const latest = useRef({ width, onWidthChange, minWidth, maxWidth, minCanvas, side });
-  useEffect(() => {
-    latest.current = { width, onWidthChange, minWidth, maxWidth, minCanvas, side };
-  }, [width, onWidthChange, minWidth, maxWidth, minCanvas, side]);
 
   const restoreWidth = useRef(defaultWidth ?? width);
 
+  // No ref caching the current width. An earlier version kept one, synced in
+  // an effect to satisfy the refs-during-render rule — which meant a gesture
+  // starting before that effect ran captured a stale start width and applied
+  // the previous drag's target. These handlers are only ever read at gesture
+  // start, so closing over the props directly is both simpler and correct.
   const clamp = useCallback((next: number) => {
-    const c = latest.current;
     const viewportMax = typeof window === "undefined"
-      ? c.maxWidth
-      : Math.max(c.minWidth, window.innerWidth - c.minCanvas);
-    return Math.round(Math.min(Math.min(c.maxWidth, viewportMax), Math.max(c.minWidth, next)));
-  }, []);
+      ? maxWidth
+      : Math.max(minWidth, window.innerWidth - minCanvas);
+    return Math.round(Math.min(Math.min(maxWidth, viewportMax), Math.max(minWidth, next)));
+  }, [minWidth, maxWidth, minCanvas]);
 
   // Restore a persisted width once, after mount — never during render, or the
   // server and client markup disagree.
@@ -94,19 +90,19 @@ export function useResizablePanel(options: ResizablePanelOptions) {
 
   const commit = useCallback((next: number) => {
     const value = clamp(next);
-    latest.current.onWidthChange(value);
+    onWidthChange(value);
     if (storageKey) {
       try { window.localStorage.setItem(storageKey, String(value)); } catch { /* ignore */ }
     }
     return value;
-  }, [clamp, storageKey]);
+  }, [clamp, onWidthChange, storageKey]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLElement>) => {
     if (disabled || e.button !== 0) return;
     e.preventDefault();
     const el = e.currentTarget;
     const startX = e.clientX;
-    const startWidth = latest.current.width;
+    const startWidth = width;
     // Capture can throw if the pointer is already gone; the drag still works
     // from the element's own listeners, so a failure here is not fatal.
     try { el.setPointerCapture(e.pointerId); } catch { /* ignore */ }
@@ -123,7 +119,7 @@ export function useResizablePanel(options: ResizablePanelOptions) {
     const onMove = (ev: PointerEvent) => {
       const delta = ev.clientX - startX;
       // A handle on the panel's left edge grows the panel when dragged left.
-      commit(latest.current.side === "left" ? startWidth - delta : startWidth + delta);
+      commit(side === "left" ? startWidth - delta : startWidth + delta);
     };
     const onUp = (ev: PointerEvent) => {
       el.releasePointerCapture?.(ev.pointerId);
@@ -138,17 +134,17 @@ export function useResizablePanel(options: ResizablePanelOptions) {
     el.addEventListener("pointermove", onMove);
     el.addEventListener("pointerup", onUp);
     el.addEventListener("pointercancel", onUp);
-  }, [commit, disabled, onResizingChange]);
+  }, [commit, disabled, onResizingChange, side, width]);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLElement>) => {
     if (disabled) return;
-    const grow = latest.current.side === "left" ? "ArrowLeft" : "ArrowRight";
-    const shrink = latest.current.side === "left" ? "ArrowRight" : "ArrowLeft";
+    const grow = side === "left" ? "ArrowLeft" : "ArrowRight";
+    const shrink = side === "left" ? "ArrowRight" : "ArrowLeft";
     const step = e.shiftKey ? KEY_STEP_COARSE : KEY_STEP;
-    if (e.key === grow) { e.preventDefault(); commit(latest.current.width + step); }
-    else if (e.key === shrink) { e.preventDefault(); commit(latest.current.width - step); }
+    if (e.key === grow) { e.preventDefault(); commit(width + step); }
+    else if (e.key === shrink) { e.preventDefault(); commit(width - step); }
     else if (e.key === "Home") { e.preventDefault(); commit(restoreWidth.current); }
-  }, [commit, disabled]);
+  }, [commit, disabled, side, width]);
 
   const handleProps: ResizableHandleProps = {
     role: "separator",
