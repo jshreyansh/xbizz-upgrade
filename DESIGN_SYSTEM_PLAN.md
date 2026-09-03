@@ -215,9 +215,30 @@ hex and arbitrary sizes), `<Chip>`, `<Field>`, `<Label>`, `<Modal>`, `<Stack>`.
 of bug from the recent commits is a modal-scroll problem that a single shell
 would solve permanently.
 
-### Phase 4 — patterns layer
-Extract the Layer 2 composites. `<ChipMultiSelect>` first — it is the pattern
-the last five commits kept re-solving.
+### Phase 4 — patterns layer — MOSTLY CANCELLED after measuring
+
+Only one of the six planned patterns turned out to exist. `<ChipMultiSelect>`
+was real and shipped (`dd11a6f`): written twice at two sizes, and the
+interaction the popover removal converged on.
+
+The other five were measured and rejected, with the counts:
+
+| Planned | Measured | Verdict |
+|---|---|---|
+| `EmptyState` | 0 uses | does not exist |
+| `StatusBadge` | 45 hits, but they are pill badges, icon wells, hover states and callout panels lumped together | redundant — `<Chip tone="ok">` already emits `border-ok-line bg-ok-bg text-ok` |
+| `SectionHeader` | 20 hits, all differing in margin, leading and max-width | redundant — that is `<Text size="body" tone="subtle">` |
+| `OptionTileGroup` | 97 hits, but the selected states are all different (`bg-brand text-white`, `bg-tint text-brand-deep font-bold`, `text-brand`, `currentColor`) | no shared shape |
+| `AccordionStep` | 36 uses across **27 distinct shapes**, the commonest appearing 3 times | 27 one-offs, not a pattern |
+
+The lesson is worth keeping: the earlier estimates for this phase came from
+reading the screens, not counting them. Once counted, most of Layer 2 was
+already covered by Layer 1, and the remaining work is **adoption of the
+existing primitives, not new components**. Manufacturing the five would have
+produced exactly the wrong abstractions this plan warns about elsewhere.
+
+Rule going forward: no component ships without a count showing one shape
+repeating at least ~8 times across at least 2 files.
 
 ### Phase 5 — screen decomposition
 Largest first, but each screen only after its primitives exist. Pilot on
