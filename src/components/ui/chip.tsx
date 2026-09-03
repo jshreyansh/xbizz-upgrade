@@ -12,15 +12,19 @@ import { IconButton } from "@/components/ui/button";
  * so a non-interactive chip does not land in the tab order.
  */
 
-type ChipTone = "default" | "brand" | "ok" | "warn" | "danger";
-type ChipSize = "sm" | "md";
+type ChipTone = "default" | "brand" | "ok" | "warn" | "danger" | "dark" | "overlay";
+type ChipSize = "xs" | "sm" | "md" | "lg";
 
+// Each tone's classes are the dominant string already used at the call sites
+// it replaces, so adopting a tone does not restyle anything.
 const unselected: Record<ChipTone, string> = {
-  default: "border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand",
-  brand: "border-tint-line bg-tint text-brand-deep hover:border-brand",
+  default: "border-hair-2 bg-card text-ink-2",
+  brand: "border-tint-line bg-tint text-brand-deep",
   ok: "border-ok-line bg-ok-bg text-ok",
   warn: "border-warn-line bg-warn-bg text-warn",
   danger: "border-danger bg-danger-bg text-danger",
+  dark: "border-white/15 bg-white/10 text-white/85",
+  overlay: "border-transparent bg-white/90 text-ink shadow-xs",
 };
 
 const selectedTone: Record<ChipTone, string> = {
@@ -29,11 +33,18 @@ const selectedTone: Record<ChipTone, string> = {
   ok: "border-ok bg-ok text-white",
   warn: "border-warn bg-warn text-white",
   danger: "border-danger bg-danger text-white",
+  dark: "border-white/40 bg-white/25 text-white",
+  overlay: "border-transparent bg-ink text-white shadow-xs",
 };
 
+// Padding per step is the dominant pairing measured at the call sites:
+// micro and caption sit at px-2 py-0.5, label at px-2.5, body at px-3 py-1.
+// Height is left to the content so nothing is forced taller than it was.
 const sizes: Record<ChipSize, string> = {
-  sm: "h-6 px-2 text-micro gap-1",
-  md: "h-7 px-2.5 text-label gap-1.5",
+  xs: "px-2 py-0.5 text-micro gap-1",
+  sm: "px-2 py-0.5 text-caption gap-1",
+  md: "px-2.5 py-0.5 text-label gap-1.5",
+  lg: "px-3 py-1 text-body gap-1.5",
 };
 
 export interface ChipProps extends Omit<ButtonHTMLAttributes<HTMLElement>, "onSelect"> {
@@ -48,7 +59,7 @@ export interface ChipProps extends Omit<ButtonHTMLAttributes<HTMLElement>, "onSe
 }
 
 export const Chip = forwardRef<HTMLElement, ChipProps>(function Chip(
-  { selected, tone = "default", size = "md", iconLeft, removable, onRemove,
+  { selected, tone = "default", size = "sm", iconLeft, removable, onRemove,
     removeLabel = "Remove", className, children, onClick, ...props },
   ref,
 ) {
