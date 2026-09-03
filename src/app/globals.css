@@ -53,7 +53,8 @@
   --color-warn:      #a15c07;
   --color-warn-bg:   #fff5e6;
   --color-warn-line: #f5dfb8;
-  --color-danger:    #9f3a38;
+  --color-danger:      #9f3a38;
+  --color-danger-deep: #842e2d;   /* was inline in button.tsx's danger hover */
   --color-danger-bg: #fceae8;
 
   /* Accents — prefixed so they never read as Tailwind's blue-500 scale */
@@ -91,7 +92,8 @@
   --text-title:     17px;   /* absorbs 16.5, 17, 18          */
   --text-display:   20px;   /* absorbs 19, 20, 21, 22        */
   --text-display-lg:24px;   /* absorbs 23, 24, 26            */
-  --text-hero:      30px;   /* absorbs 28, 30, 32, 34        */
+  --text-hero:      30px;   /* absorbs 28, 30, 32           */
+  --text-hero-lg:   34px;   /* the h1 responsive ramp's top step */
 
   /* Radii — named for what they wrap, not by t-shirt size */
   --radius-chip:    10px;

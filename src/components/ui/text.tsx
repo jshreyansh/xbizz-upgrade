@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 
 export type TextSize =
   | "micro" | "caption" | "label" | "body" | "body-lg"
-  | "subhead" | "title" | "display" | "display-lg" | "hero";
+  | "subhead" | "title" | "display" | "display-lg" | "hero" | "hero-lg";
 
 export type TextTone =
   | "default" | "muted" | "subtle" | "faint"
@@ -32,6 +32,7 @@ const sizes: Record<TextSize, string> = {
   display: "text-display",
   "display-lg": "text-display-lg",
   hero: "text-hero",
+  "hero-lg": "text-hero-lg",
 };
 
 const tones: Record<TextTone, string> = {
@@ -96,6 +97,8 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
   clamp?: 1 | 2 | 3 | 4;
   /** Escape hatch for a one-off size the scale genuinely cannot express. */
   px?: number;
+  /** Valid when `as="label"`. */
+  htmlFor?: string;
 }
 
 export const Text = forwardRef<HTMLElement, TextProps>(function Text(

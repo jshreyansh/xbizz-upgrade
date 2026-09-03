@@ -396,7 +396,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         <div className="w-full flex flex-col items-center space-y-5">
           {/* ── Hero Heading ── */}
           <div className="text-center max-w-[840px] min-h-[44px] sm:min-h-[50px] flex items-center justify-center">
-            <h1 className="text-display-lg sm:text-hero md:text-hero font-[850] text-ink tracking-tight inline-flex items-center justify-center flex-wrap">
+            <h1 className="text-display-lg sm:text-hero md:text-hero-lg font-[850] text-ink tracking-tight inline-flex items-center justify-center flex-wrap">
               <span>{displayedHeadline || "\u00A0"}</span>
               <span
                 className="inline-block w-[3px] h-[0.85em] bg-brand ml-2 rounded-full animate-cursor-blink align-middle shrink-0"
