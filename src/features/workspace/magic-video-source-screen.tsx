@@ -508,7 +508,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                       {selectedBrand.therapyAreas.map((ta) => (
                         <span
                           key={ta}
-                          className="inline-block rounded-md bg-card border border-black/10 px-2 py-0.5 text-micro font-semibold text-ink-2"
+                          className="inline-block rounded-md bg-card border border-hair-2 px-2 py-0.5 text-micro font-semibold text-ink-2"
                         >
                           {ta}
                         </span>
@@ -522,7 +522,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   variant="secondary"
                   size="sm"
                   onClick={() => setIsChangingBrand(true)}
-                  className="rounded-xl border-black/15 bg-card hover:bg-subtle text-body font-bold text-ink shadow-2xs hover:border-brand cursor-pointer shrink-0 gap-1.5 h-8.5 px-3"
+                  className="rounded-xl border-hair-2 bg-card hover:bg-subtle text-body font-bold text-ink shadow-2xs hover:border-brand cursor-pointer shrink-0 gap-1.5 h-8.5 px-3"
                 >
                   <Building2 className="size-3.5 text-brand" />
                   <span>Change brand</span>
@@ -554,7 +554,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   value={brandSearchQuery}
                   onChange={(e) => setBrandSearchQuery(e.target.value)}
                   placeholder="Search brands (e.g. Velmora, Onkavia, 3D)..."
-                  className="w-full pl-8.5 pr-4 py-2 rounded-xl border border-black/10 bg-card text-body text-ink placeholder:text-ink-4 focus:outline-none focus:border-brand transition-all shadow-2xs"
+                  className="w-full pl-8.5 pr-4 py-2 rounded-xl border border-hair-2 bg-card text-body text-ink placeholder:text-ink-4 focus:outline-none focus:border-brand transition-all shadow-2xs"
                   autoFocus
                 />
                 {brandSearchQuery && (
@@ -580,7 +580,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                         "flex items-center justify-between p-2.5 rounded-xl border transition-all cursor-pointer",
                         isSelected
                           ? "border-brand bg-tint font-semibold shadow-2xs"
-                          : "border-black/[0.06] bg-card hover:border-black/20"
+                          : "border-hair bg-card hover:border-hair-3"
                       )}
                     >
                       <div className="min-w-0 flex-1 pr-2">
@@ -607,7 +607,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                           "grid size-4.5 place-items-center rounded-full border shrink-0",
                           isSelected
                             ? "border-brand bg-brand text-white"
-                            : "border-black/20 bg-card"
+                            : "border-hair-3 bg-card"
                         )}
                       >
                         {isSelected && <Check className="size-2.5" strokeWidth={3.5} />}
@@ -658,7 +658,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                         "rounded-[20px] border p-4.5 transition-all duration-200 cursor-pointer",
                         isSelected
                           ? "border-brand bg-tint/60 ring-2 ring-brand/20 shadow-xs"
-                          : "border-black/[0.08] bg-canvas hover:border-black/20 hover:bg-card hover:shadow-2xs"
+                          : "border-hair bg-canvas hover:border-hair-3 hover:bg-card hover:shadow-2xs"
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -669,7 +669,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                               "grid size-5.5 place-items-center rounded-full border transition-all shrink-0 mt-0.5",
                               isSelected
                                 ? "border-brand bg-brand text-white shadow-2xs"
-                                : "border-black/20 bg-card"
+                                : "border-hair-3 bg-card"
                             )}
                           >
                             {isSelected && <Check className="size-3" strokeWidth={3.5} />}
@@ -698,7 +698,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                       </div>
 
                       {/* Visual Skeleton Bars */}
-                      <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-2.5 border border-black/[0.04]">
+                      <div className="mt-3.5 rounded-[12px] bg-black/[0.03] p-2.5 border border-hair">
                         <div className="flex items-center justify-between text-label font-bold text-ink-3 mb-1.5">
                           <span>Dossier Structure</span>
                           <span>{dossier.sections} sections · {dossier.claims} approved claims</span>
@@ -722,7 +722,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                           {dossier.documents.map((doc, dIdx) => (
                             <div
                               key={dIdx}
-                              className="flex items-center justify-between text-label bg-white/90 border border-black/[0.06] rounded-lg px-2.5 py-1.5 shadow-2xs"
+                              className="flex items-center justify-between text-label bg-white/90 border border-hair rounded-lg px-2.5 py-1.5 shadow-2xs"
                             >
                               <span className="font-medium text-ink truncate max-w-[78%]">
                                 📄 {doc.name}
@@ -919,10 +919,10 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-[490px] max-h-[90vh] flex flex-col rounded-3xl bg-card shadow-2xl border border-black/10 animate-in zoom-in-95 duration-150 overflow-hidden"
+            className="w-full max-w-[490px] max-h-[90vh] flex flex-col rounded-3xl bg-card shadow-2xl border border-hair-2 animate-in zoom-in-95 duration-150 overflow-hidden"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-black/[0.06] px-6 py-4 shrink-0 bg-card">
+            <div className="flex items-center justify-between border-b border-hair px-6 py-4 shrink-0 bg-card">
               <h3 className="text-title font-[850] text-ink tracking-tight">Add brand</h3>
               <button
                 type="button"
@@ -947,7 +947,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                     value={newBrandName}
                     onChange={(e) => setNewBrandName(e.target.value)}
                     placeholder="e.g. Bisberry"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-black/15 text-body-lg font-medium text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-hair-2 text-body-lg font-medium text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
                     autoFocus
                   />
                 </div>
@@ -962,7 +962,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                     value={newBrandMolecule}
                     onChange={(e) => setNewBrandMolecule(e.target.value)}
                     placeholder="e.g. Diclofenac + Serratiopeptidase"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-black/15 text-body-lg font-medium text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-hair-2 text-body-lg font-medium text-ink focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20"
                   />
                   <p className="text-caption text-ink-4 mt-1">
                     For combination products, separate each molecule with + (e.g. Cetirizine + Ambroxol).
@@ -985,7 +985,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                         : `Select all (${ALL_THERAPY_AREAS.length})`}
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-subtle rounded-xl border border-black/[0.06]">
+                  <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-subtle rounded-xl border border-hair">
                     {ALL_THERAPY_AREAS.map((area) => {
                       const isSelected = newBrandTherapyAreas.includes(area);
                       return (
@@ -997,7 +997,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                             "px-2.5 py-0.8 rounded-full text-caption font-medium transition-colors cursor-pointer border",
                             isSelected
                               ? "bg-brand text-white border-brand font-bold shadow-2xs"
-                              : "bg-card text-ink-2 border-black/10 hover:border-black/20"
+                              : "bg-card text-ink-2 border-hair-2 hover:border-hair-3"
                           )}
                         >
                           {area}
@@ -1009,7 +1009,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               </div>
 
               {/* Sticky Modal Footer */}
-              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-black/[0.06] bg-canvas shrink-0">
+              <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-hair bg-canvas shrink-0">
                 <Button
                   type="button"
                   variant="ghost"

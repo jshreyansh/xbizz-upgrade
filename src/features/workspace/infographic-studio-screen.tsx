@@ -500,7 +500,7 @@ export function InfographicStudioScreen() {
 
         {/* Center Canvas Zoom Controls */}
         {studioMode !== "generating" && (
-          <div className="hidden sm:flex items-center gap-1 rounded-xl border border-black/10 bg-subtle p-1 shadow-2xs">
+          <div className="hidden sm:flex items-center gap-1 rounded-xl border border-hair-2 bg-subtle p-1 shadow-2xs">
             <button
               type="button"
               onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
@@ -560,8 +560,8 @@ export function InfographicStudioScreen() {
             className={cn(
               "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
               copilotPanelOpen
-                ? "border-black/15 bg-black/5 text-ink hover:bg-black/10"
-                : "border-black/10 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+                ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
+                : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
             )}
             title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
             aria-label="Toggle sidebar"
@@ -587,15 +587,15 @@ export function InfographicStudioScreen() {
             </p>
 
             <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
-              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                 <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                 <span className="font-semibold">Validated 214 CDSCO / FDA dossier claims</span>
               </div>
-              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                 <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                 <span className="font-semibold">Synthesized high-res vectors &amp; layout</span>
               </div>
-              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                 <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                 <span className="font-semibold">Grounded ISI fair balance tables &amp; leave-behind</span>
               </div>
@@ -636,14 +636,14 @@ export function InfographicStudioScreen() {
                       "w-full flex flex-col gap-1.5 p-2.5 rounded-xl border text-left transition cursor-pointer relative shadow-2xs",
                       isActive
                         ? "border-brand bg-tint/50 ring-2 ring-brand/15"
-                        : "border-black/10 bg-card hover:border-black/20"
+                        : "border-hair-2 bg-card hover:border-hair-3"
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-label font-bold text-ink truncate">{pg.name}</span>
                       {isActive && <span className="size-2 rounded-full bg-brand" />}
                     </div>
-                    <div className="aspect-[3/4] w-full rounded-lg bg-card border border-black/10 p-2 flex flex-col justify-between overflow-hidden shadow-inner-xs">
+                    <div className="aspect-[3/4] w-full rounded-lg bg-card border border-hair-2 p-2 flex flex-col justify-between overflow-hidden shadow-inner-xs">
                       <div className={cn("h-2 w-14 rounded", pg.id === 1 ? "bg-[#14233c]" : "bg-accent-blue")} />
                       <div className="h-4 w-full bg-brand/20 rounded" />
                       <div className="h-6 w-full bg-black/5 rounded" />
@@ -714,7 +714,7 @@ export function InfographicStudioScreen() {
               <div
                 style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "center top" }}
                 className={cn(
-                  "w-full max-w-[700px] rounded-card bg-card shadow-2xl border border-black/10 overflow-hidden text-left transition-transform duration-150 flex flex-col select-none",
+                  "w-full max-w-[700px] rounded-card bg-card shadow-2xl border border-hair-2 overflow-hidden text-left transition-transform duration-150 flex flex-col select-none",
                   pageShape === "16:9" ? "aspect-video" : "min-h-[880px]"
                 )}
               >
@@ -782,11 +782,11 @@ export function InfographicStudioScreen() {
                   <div
                     onClick={() => studioMode === "editor" && handleSelectBlock("moa")}
                     className={cn(
-                      "p-4 rounded-2xl bg-subtle border border-black/[0.08] shadow-2xs transition relative group",
+                      "p-4 rounded-2xl bg-subtle border border-hair shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
                       selectedBlockId === "moa" && studioMode === "editor"
                         ? "ring-2 ring-brand shadow-sm bg-card"
-                        : "hover:border-black/20"
+                        : "hover:border-hair-3"
                     )}
                   >
                     <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-1">
@@ -799,7 +799,7 @@ export function InfographicStudioScreen() {
                       {currentPage.moa.steps.map((step, idx) => (
                         <div
                           key={idx}
-                          className="p-2 rounded-xl bg-card border border-black/8 shadow-2xs text-center"
+                          className="p-2 rounded-xl bg-card border border-hair shadow-2xs text-center"
                         >
                           <span className="block text-label font-extrabold text-ink">{step}</span>
                           <span className="block text-micro text-ink-3">Cellular Target</span>
@@ -812,11 +812,11 @@ export function InfographicStudioScreen() {
                   <div
                     onClick={() => studioMode === "editor" && handleSelectBlock("chart")}
                     className={cn(
-                      "p-4 rounded-2xl bg-card border border-black/[0.08] shadow-2xs transition relative group",
+                      "p-4 rounded-2xl bg-card border border-hair shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
                       selectedBlockId === "chart" && studioMode === "editor"
                         ? "ring-2 ring-brand shadow-sm"
-                        : "hover:border-black/20"
+                        : "hover:border-hair-3"
                     )}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -859,11 +859,11 @@ export function InfographicStudioScreen() {
                   <div
                     onClick={() => studioMode === "editor" && handleSelectBlock("isi")}
                     className={cn(
-                      "p-3.5 rounded-2xl bg-[#fafafa] border border-black/[0.06] mt-auto transition relative group",
+                      "p-3.5 rounded-2xl bg-[#fafafa] border border-hair mt-auto transition relative group",
                       studioMode === "editor" && "cursor-pointer",
                       selectedBlockId === "isi" && studioMode === "editor"
                         ? "ring-2 ring-brand shadow-sm bg-card"
-                        : "hover:border-black/20"
+                        : "hover:border-hair-3"
                     )}
                   >
                     <div className="text-micro font-bold text-ink-3 mb-1">
@@ -979,7 +979,7 @@ export function InfographicStudioScreen() {
                           "rounded-2xl p-3 text-body leading-relaxed max-w-[85%]",
                           msg.role === "user"
                             ? "bg-brand text-white rounded-tr-xs"
-                            : "bg-subtle text-ink border border-black/5 rounded-tl-xs"
+                            : "bg-subtle text-ink border border-hair rounded-tl-xs"
                         )}
                       >
                         <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -989,7 +989,7 @@ export function InfographicStudioScreen() {
                   <div ref={chatBottomRef} />
                 </div>
 
-                <div className="p-3 border-t border-black/[0.06] bg-card shrink-0 space-y-2">
+                <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
                   {/* Attached Primary Action Bar in Creative Editor Mode */}
                   {studioMode === "editor" && (
                     <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
@@ -1018,7 +1018,7 @@ export function InfographicStudioScreen() {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 rounded-[12px] border border-black/15 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
+                  <div className="flex items-center gap-2 rounded-[12px] border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                     <Plus className="size-3.5 text-ink-3 shrink-0" />
                     <input
                       type="text"
@@ -1073,7 +1073,7 @@ export function InfographicStudioScreen() {
                             header: { ...prev.header, title: e.target.value },
                           }))
                         }
-                        className="w-full rounded-xl border border-black/15 p-2 text-body font-semibold text-ink"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body font-semibold text-ink"
                       />
                     </div>
                     <div>
@@ -1087,7 +1087,7 @@ export function InfographicStudioScreen() {
                           }))
                         }
                         rows={2}
-                        className="w-full rounded-xl border border-black/15 p-2 text-body text-ink resize-none"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body text-ink resize-none"
                       />
                     </div>
                   </div>
@@ -1106,7 +1106,7 @@ export function InfographicStudioScreen() {
                             heroStat: { ...prev.heroStat, metric: e.target.value },
                           }))
                         }
-                        className="w-full rounded-xl border border-black/15 p-2 text-body-lg font-bold text-ink"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body-lg font-bold text-ink"
                       />
                     </div>
                     <div>
@@ -1120,7 +1120,7 @@ export function InfographicStudioScreen() {
                             heroStat: { ...prev.heroStat, comparison: e.target.value },
                           }))
                         }
-                        className="w-full rounded-xl border border-black/15 p-2 text-body text-ink"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body text-ink"
                       />
                     </div>
                     <div>
@@ -1134,7 +1134,7 @@ export function InfographicStudioScreen() {
                           }))
                         }
                         rows={3}
-                        className="w-full rounded-xl border border-black/15 p-2 text-body text-ink resize-none"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body text-ink resize-none"
                       />
                     </div>
                   </div>
@@ -1153,7 +1153,7 @@ export function InfographicStudioScreen() {
                             moa: { ...prev.moa, title: e.target.value },
                           }))
                         }
-                        className="w-full rounded-xl border border-black/15 p-2 text-body font-semibold text-ink"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body font-semibold text-ink"
                       />
                     </div>
                     <div>
@@ -1167,7 +1167,7 @@ export function InfographicStudioScreen() {
                           }))
                         }
                         rows={3}
-                        className="w-full rounded-xl border border-black/15 p-2 text-body text-ink resize-none"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body text-ink resize-none"
                       />
                     </div>
                   </div>
@@ -1186,7 +1186,7 @@ export function InfographicStudioScreen() {
                             chart: { ...prev.chart, arm1Val: Number(e.target.value) },
                           }))
                         }
-                        className="w-full rounded-xl border border-black/15 p-2 text-body-lg font-bold text-ink"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body-lg font-bold text-ink"
                       />
                     </div>
                     <div>
@@ -1200,7 +1200,7 @@ export function InfographicStudioScreen() {
                             chart: { ...prev.chart, arm2Val: Number(e.target.value) },
                           }))
                         }
-                        className="w-full rounded-xl border border-black/15 p-2 text-body-lg font-bold text-ink"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-body-lg font-bold text-ink"
                       />
                     </div>
                   </div>
@@ -1219,7 +1219,7 @@ export function InfographicStudioScreen() {
                           }))
                         }
                         rows={5}
-                        className="w-full rounded-xl border border-black/15 p-2 text-label text-ink resize-none"
+                        className="w-full rounded-xl border border-hair-2 p-2 text-label text-ink resize-none"
                       />
                     </div>
                   </div>
@@ -1242,7 +1242,7 @@ export function InfographicStudioScreen() {
                     onChange={(e) => setNewCommentText(e.target.value)}
                     rows={2}
                     placeholder="Provide compliance or marketing feedback on this page..."
-                    className="w-full rounded-xl border border-black/15 p-2.5 text-body text-ink resize-none outline-none focus:border-brand"
+                    className="w-full rounded-xl border border-hair-2 p-2.5 text-body text-ink resize-none outline-none focus:border-brand"
                   />
                   <Button
                     size="sm"
@@ -1258,7 +1258,7 @@ export function InfographicStudioScreen() {
                   {commentsList.map((c) => (
                     <div
                       key={c.id}
-                      className="p-3 rounded-xl border border-black/8 bg-card shadow-2xs space-y-1.5 text-left"
+                      className="p-3 rounded-xl border border-hair bg-card shadow-2xs space-y-1.5 text-left"
                     >
                       <div className="flex items-center justify-between gap-1">
                         <div className="flex items-center gap-1.5">
@@ -1314,7 +1314,7 @@ export function InfographicStudioScreen() {
                   {CLAIMS_LIST.map((c) => (
                     <div
                       key={c.id}
-                      className="rounded-xl border border-black/[0.06] bg-canvas p-3 text-left hover:border-brand/40 transition-colors"
+                      className="rounded-xl border border-hair bg-canvas p-3 text-left hover:border-brand/40 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-micro font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-md">
@@ -1323,7 +1323,7 @@ export function InfographicStudioScreen() {
                         <span className="text-caption font-bold text-ok">✓ Approved</span>
                       </div>
                       <p className="text-label text-ink-2 leading-relaxed mt-1">{c.desc}</p>
-                      <div className="text-caption text-ink-3 mt-1.5 pt-1 border-t border-black/5 flex items-center justify-between">
+                      <div className="text-caption text-ink-3 mt-1.5 pt-1 border-t border-hair flex items-center justify-between">
                         <span>Source: {c.source}</span>
                       </div>
                     </div>
@@ -1351,7 +1351,7 @@ export function InfographicStudioScreen() {
       {/* ── EXPORT MODAL ── */}
       {exportModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-[460px] rounded-2xl bg-card p-6 shadow-2xl border border-black/10 text-left space-y-4">
+          <div className="w-full max-w-[460px] rounded-2xl bg-card p-6 shadow-2xl border border-hair-2 text-left space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="size-8 rounded-full bg-tint text-brand grid place-items-center font-bold">
@@ -1377,7 +1377,7 @@ export function InfographicStudioScreen() {
                   showToast("Generated CMYK Print-Ready PDF with 3mm Bleed");
                   setExportModalOpen(false);
                 }}
-                className="w-full p-3 rounded-xl border border-black/10 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
+                className="w-full p-3 rounded-xl border border-hair-2 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
               >
                 <div>
                   <div className="font-bold text-body-lg text-ink">Print-Ready PDF (CMYK · 300 DPI)</div>
@@ -1391,7 +1391,7 @@ export function InfographicStudioScreen() {
                   showToast("Downloaded Digital RGB Tablet PDF");
                   setExportModalOpen(false);
                 }}
-                className="w-full p-3 rounded-xl border border-black/10 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
+                className="w-full p-3 rounded-xl border border-hair-2 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
               >
                 <div>
                   <div className="font-bold text-body-lg text-ink">Digital Screen PDF (RGB · 150 DPI)</div>
@@ -1587,7 +1587,7 @@ export function InfographicStudioScreen() {
 
                 {/* Optional Auto-Fix helper */}
                 {hasBlockers && (
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-black/5 mt-1">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-hair mt-1">
                     <span className="flex items-center gap-1.5">
                       <Sparkles className="size-3 text-brand" />
                       Want SwishX to auto-fix both blockers instantly?

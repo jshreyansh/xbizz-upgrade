@@ -530,8 +530,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             className={cn(
               "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
               copilotPanelOpen
-                ? "border-black/15 bg-black/5 text-ink hover:bg-black/10"
-                : "border-black/10 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+                ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
+                : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
             )}
             title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
             aria-label="Toggle sidebar"
@@ -570,15 +570,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               </p>
 
               <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                   <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                   <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Synthesized 5-scene clinical narrative &amp; script</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                   <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Linking citations to FDA label §5.1</span>
                 </div>
@@ -664,7 +664,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
                               presenter === person.name
                                 ? "border-brand bg-tint ring-2 ring-brand text-brand-deep shadow-xs"
-                                : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
                             <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
@@ -677,7 +677,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         ))}
                         <button
                           onClick={() => setPresenterLibraryOpen(true)}
-                          className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-[#e3e8e5] bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-canvas cursor-pointer"
+                          className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-hair-2 bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-3 hover:bg-canvas cursor-pointer"
                         >
                           <span className="flex -space-x-2.5">
                             {presenters.slice(2).map((person) => (
@@ -792,7 +792,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
                               selected
                                 ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
-                                : "border-[#e4e9e6] bg-card opacity-85 hover:opacity-100 hover:border-[#ccd7d1]"
+                                : "border-[#e4e9e6] bg-card opacity-85 hover:opacity-100 hover:border-hair-3"
                             )}
                           >
                             <div>
@@ -874,7 +874,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       {productMediaList.map((media) => (
                         <div
                           key={media.id}
-                          className="group relative rounded-xl border border-black/[0.08] bg-card overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
+                          className="group relative rounded-xl border border-hair bg-card overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
                         >
                           <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
                             <img
@@ -1023,8 +1023,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             className={cn(
                               "focus-ring min-h-10 rounded-[12px] border px-3 text-body-lg font-medium transition cursor-pointer",
                               selectedTopics.includes(topic)
-                                ? "border-[#b8ccc2] bg-subtle text-brand"
-                                : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                                ? "border-hair-3 bg-subtle text-brand"
+                                : "border-hair-2 hover:border-hair-3"
                             )}
                           >
                             {selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}
@@ -1106,7 +1106,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     </DecisionRow>
 
                     {/* Output Quality & Generation Engine Selector */}
-                    <div className="pt-2 border-t border-black/[0.06]">
+                    <div className="pt-2 border-t border-hair">
                       <label className="text-body font-bold text-ink block mb-2">
                         Generation Output Quality
                       </label>
@@ -1119,7 +1119,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
                             selectedQuality === "hd"
                               ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
-                              : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                              : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                           )}
                         >
                           <div>
@@ -1133,7 +1133,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               Lifelike motion that stops the scroll — ideal for launches &amp; HCP presentations.
                             </p>
                           </div>
-                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/[0.05] text-label text-ink-3">
+                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-hair text-label text-ink-3">
                             <span className="flex items-center gap-1 font-medium">⏱ 7–9 min render</span>
                             {selectedQuality === "hd" && (
                               <span className="font-bold text-brand flex items-center gap-1">
@@ -1151,7 +1151,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
                             selectedQuality === "cinematic"
                               ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
-                              : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                              : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                           )}
                         >
                           <div>
@@ -1165,7 +1165,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               Ultra-realistic, fully generated 3D anatomical scenes — for flagship congresses.
                             </p>
                           </div>
-                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-black/[0.05] text-label text-ink-3">
+                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-hair text-label text-ink-3">
                             <span className="flex items-center gap-1 font-medium">⏱ 12–14 min render</span>
                             {selectedQuality === "cinematic" && (
                               <span className="font-bold text-brand flex items-center gap-1">
@@ -1232,7 +1232,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
                                 presenter === person.name
                                   ? "border-brand bg-tint ring-2 ring-brand text-brand-deep shadow-xs"
-                                  : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
                               <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
@@ -1245,7 +1245,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           ))}
                           <button
                             onClick={() => setPresenterLibraryOpen(true)}
-                            className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-[#e3e8e5] bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-[#cbd6d0] hover:bg-canvas cursor-pointer"
+                            className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-hair-2 bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-3 hover:bg-canvas cursor-pointer"
                           >
                             <span className="flex -space-x-2.5">
                               {presenters.slice(2).map((person) => (
@@ -1444,7 +1444,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 >
                   <FormattedMessageText text={msg.text} />
                   {msg.role === "swishx" && index === 1 && !isGenerating && (
-                    <div className="mt-2.5 pt-2 border-t border-black/[0.06] flex flex-wrap gap-1.5">
+                    <div className="mt-2.5 pt-2 border-t border-hair flex flex-wrap gap-1.5">
                       {[
                         "Switch to 9:16 Portrait",
                         "Elevate MoA in Scene 2",
@@ -1469,7 +1469,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           {/* Bottom Chat Input Bar with Attached Primary Confirmation Bar */}
-          <div className="p-3 border-t border-black/[0.06] bg-card shrink-0 space-y-2">
+          <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
             {/* Attached Primary Action Bar above chat input */}
             <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
@@ -1503,7 +1503,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
 
             <div className="relative">
-              <div className="flex items-center gap-1.5 rounded-[12px] border border-black/15 bg-subtle px-2.5 py-1.5 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
+              <div className="flex items-center gap-1.5 rounded-[12px] border border-hair-2 bg-subtle px-2.5 py-1.5 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                 <div className="relative">
                   <button
                     type="button"
@@ -1515,7 +1515,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   </button>
 
                   {chatContextOpen && (
-                    <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-black/10 bg-card p-1 shadow-lg z-20 space-y-0.5">
+                    <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-hair-2 bg-card p-1 shadow-lg z-20 space-y-0.5">
                       <button
                         type="button"
                         onClick={() => {
@@ -1634,7 +1634,7 @@ function PlanSection({
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
           ? "z-20 w-full scale-100 bg-card border border-brand shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
-          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-control my-1"
+          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-hair hover:border-hair-3 rounded-control my-1"
       )}
     >
       <button
@@ -1814,7 +1814,7 @@ function ChoiceGroup({
               onClick={() => onChange(option)}
               className={cn(
                 "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
-                active ? "border-[#b8ccc2] bg-subtle text-brand font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                active ? "border-hair-3 bg-subtle text-brand font-semibold shadow-2xs" : "border-hair-2 hover:border-hair-3"
               )}
             >
               <span className="grid size-6 place-items-center text-current">{icon(option)}</span>
@@ -1859,7 +1859,7 @@ function MultiChoiceGroup({
               }}
               className={cn(
                 "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
-                active ? "border-[#b8ccc2] bg-subtle text-brand font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                active ? "border-hair-3 bg-subtle text-brand font-semibold shadow-2xs" : "border-hair-2 hover:border-hair-3"
               )}
             >
               <span className="grid size-6 place-items-center text-current">{icon(option)}</span>
@@ -1900,7 +1900,7 @@ function FormatChoices({
               onClick={() => onChange(option)}
               className={cn(
                 "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-[12px] border py-3 px-2 text-center text-body-lg font-medium transition cursor-pointer",
-                active ? "border-[#b8ccc2] bg-subtle text-brand font-bold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                active ? "border-hair-3 bg-subtle text-brand font-bold shadow-2xs" : "border-hair-2 hover:border-hair-3"
               )}
             >
               <FrameGlyph value={option} />
@@ -1943,7 +1943,7 @@ function SteppedControl({
               onClick={() => onChange(option)}
               className={cn(
                 "focus-ring min-h-10 rounded-chip border px-2 text-body font-medium transition cursor-pointer",
-                active ? "border-[#b8ccc2] bg-subtle text-brand font-bold" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+                active ? "border-hair-3 bg-subtle text-brand font-bold" : "border-hair-2 hover:border-hair-3"
               )}
             >
               {option}
@@ -1998,7 +1998,7 @@ function AudioChoices({
               key={option}
               className={cn(
                 "flex items-center justify-between rounded-[12px] border p-2.5 transition",
-                active ? "border-[#b8ccc2] bg-subtle" : "border-[#e3e8e5]"
+                active ? "border-hair-3 bg-subtle" : "border-hair-2"
               )}
             >
               <button
@@ -2047,7 +2047,7 @@ function StructureChoices({
             onClick={() => onChange(option)}
             className={cn(
               "focus-ring flex flex-col justify-between rounded-control border p-3.5 text-left transition cursor-pointer",
-              active ? "border-[#b8ccc2] bg-subtle text-brand font-semibold shadow-2xs" : "border-[#e3e8e5] hover:border-[#cbd6d0]"
+              active ? "border-hair-3 bg-subtle text-brand font-semibold shadow-2xs" : "border-hair-2 hover:border-hair-3"
             )}
           >
             <div>
@@ -2064,7 +2064,7 @@ function StructureChoices({
 
 function InfoCard({ icon: Icon, title, body }: { icon: typeof Film; title: string; body: string }) {
   return (
-    <div className="rounded-control border border-[#e3e8e5] bg-card p-3.5">
+    <div className="rounded-control border border-hair-2 bg-card p-3.5">
       <div className="flex items-center gap-2 font-bold text-body-lg text-ink">
         <Icon className="size-4 text-brand" />
         {title}
@@ -2116,7 +2116,7 @@ function PresenterLibrary({
                 onClick={() => onSelect(person.name)}
                 className={cn(
                   "flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
-                  active ? "border-brand bg-tint ring-1 ring-brand" : "border-[#e3e8e5] hover:border-[#c8d4ce]"
+                  active ? "border-brand bg-tint ring-1 ring-brand" : "border-hair-2 hover:border-[#c8d4ce]"
                 )}
               >
                 <FacePhoto person={person} className="size-14 rounded-control" />
@@ -2168,7 +2168,7 @@ function VoiceLibrary({
                 key={v.name}
                 className={cn(
                   "flex items-center justify-between rounded-control border p-3 transition",
-                  active ? "border-brand bg-tint" : "border-[#e3e8e5]"
+                  active ? "border-brand bg-tint" : "border-hair-2"
                 )}
               >
                 <div className="min-w-0 flex-1">
@@ -2226,7 +2226,7 @@ function SourceManager({
                 key={source.id}
                 className={cn(
                   "flex items-center gap-3 rounded-control border p-3 transition",
-                  active ? "border-brand bg-tint" : "border-[#e3e8e5]"
+                  active ? "border-brand bg-tint" : "border-hair-2"
                 )}
               >
                 <FileCheck2 className="size-5 text-brand shrink-0" />
@@ -2239,7 +2239,7 @@ function SourceManager({
                   onClick={() => onToggle(source.id)}
                   className={cn(
                     "px-3 py-1.5 rounded-[9px] text-body font-bold transition cursor-pointer",
-                    active ? "bg-card text-ink border border-black/10" : "bg-brand text-white"
+                    active ? "bg-card text-ink border border-hair-2" : "bg-brand text-white"
                   )}
                 >
                   {active ? "Attached" : "Attach"}

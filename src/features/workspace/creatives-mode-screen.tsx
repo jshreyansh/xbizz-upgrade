@@ -190,7 +190,7 @@ export function CreativesModeScreen() {
         {/* ════ CARD 1: Infographic/Chart (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
@@ -212,7 +212,7 @@ export function CreativesModeScreen() {
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-subtle border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+            <div className="rounded-xl bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
               <div className="grid size-4 place-items-center rounded-full bg-ok-bg text-ok shrink-0">
                 <Check className="size-2.5" />
               </div>
@@ -224,7 +224,7 @@ export function CreativesModeScreen() {
 
           {/* Bottom 16:10 Canvas */}
           <div
-            className="relative w-full aspect-16/10 overflow-hidden mt-auto border-t border-black/[0.06] p-5 flex flex-col justify-between"
+            className="relative w-full aspect-16/10 overflow-hidden mt-auto border-t border-hair p-5 flex flex-col justify-between"
             style={{ background: curChart.bgGradient }}
           >
             {/* Top meta bar */}
@@ -297,7 +297,7 @@ export function CreativesModeScreen() {
         {/* ════ CARD 2: Presentation/Deck (Visual Detail Aid & Slides) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-card border-2 border-black/[0.08] bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
@@ -319,7 +319,7 @@ export function CreativesModeScreen() {
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-subtle border border-black/[0.04] p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+            <div className="rounded-xl bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
               <div className="grid size-4 place-items-center rounded-full bg-accent-blue text-accent-blue shrink-0">
                 <Check className="size-2.5" />
               </div>
@@ -331,7 +331,7 @@ export function CreativesModeScreen() {
 
           {/* Bottom 16:10 Canvas */}
           <div
-            className="relative w-full aspect-16/10 overflow-hidden mt-auto border-t border-black/[0.06] p-5 flex flex-col justify-between"
+            className="relative w-full aspect-16/10 overflow-hidden mt-auto border-t border-hair p-5 flex flex-col justify-between"
             style={{ background: curDeck.bgGradient }}
           >
             {/* Top meta bar */}

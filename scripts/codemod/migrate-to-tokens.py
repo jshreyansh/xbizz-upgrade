@@ -82,8 +82,12 @@ HEX = {k: v for k, v in json.load(open("scripts/codemod/palette-map.json"))["map
 HEX_PREFIX = {"bg":"bg","text":"text","border":"border","ring":"ring"}
 
 # ── phase: hair ───────────────────────────────────────────────────────
-BLACK_BORDER = {"5":"hair","8":"hair","09":"hair","10":"hair-2","12":"hair-2",
-                "15":"hair-2","20":"hair-3","25":"hair-3","30":"hair-3"}
+# Alpha -> nearest hairline token. --hair is .08, --hair-2 .14, --hair-3 .22.
+BLACK_BORDER = {"3":"hair","4":"hair","5":"hair","6":"hair","8":"hair","09":"hair",
+                "0.03":"hair","0.04":"hair","0.05":"hair","0.06":"hair",
+                "0.08":"hair","0.09":"hair",
+                "10":"hair-2","12":"hair-2","15":"hair-2","0.12":"hair-2","0.15":"hair-2",
+                "20":"hair-3","25":"hair-3","30":"hair-3","0.2":"hair-3","0.22":"hair-3"}
 GREEN_BORDER_HEX = {"#e3e8e5":"hair-2","#e9ece9":"hair-2","#e5e8e4":"hair-2",
                     "#dfe5e1":"hair-2","#cbd6d0":"hair-3","#b8ccc2":"hair-3",
                     "#ccd7d1":"hair-3","#d8e0db":"hair-3"}

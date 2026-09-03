@@ -443,7 +443,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-card border border-[#d8deda] bg-card shadow-2xl overflow-hidden text-left">
 
         {/* ── Modal Header ── */}
-        <div className="flex items-center justify-between border-b border-[#e9ece9] bg-canvas px-7 py-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-hair-2 bg-canvas px-7 py-4 shrink-0">
           <div className="flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-xl bg-tint text-brand-deep border border-tint-line shadow-2xs">
               <Sparkles className="size-4.5 text-brand" />
@@ -510,7 +510,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <span>Change</span>
                 </button>
               ) : (
-                <div className="inline-flex rounded-lg border border-black/8 bg-card p-0.5 gap-0.5 shadow-2xs">
+                <div className="inline-flex rounded-lg border border-hair bg-card p-0.5 gap-0.5 shadow-2xs">
                   <button
                     type="button"
                     onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
@@ -679,7 +679,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           {/* ══════════════ 2. TARGET AUDIENCE ══════════════ */}
           {stage === "focus" ? (
-            <div className="rounded-panel border border-dashed border-black/10 bg-canvas p-3.5 flex items-center justify-between opacity-60">
+            <div className="rounded-panel border border-dashed border-hair-2 bg-canvas p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
                 <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">
                   2
@@ -748,7 +748,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             "flex flex-col items-center justify-center p-3 rounded-control border-2 text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
                             isSel
                               ? "border-brand bg-card ring-2 ring-brand/15 shadow-sm"
-                              : "border-black/8 bg-card hover:border-black/20"
+                              : "border-hair bg-card hover:border-hair-3"
                           )}
                         >
                           <div className={cn("grid size-7 place-items-center rounded-lg shrink-0 transition-colors", isSel ? "bg-brand text-white" : "bg-tint text-brand-deep")}>
@@ -851,7 +851,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           {/* ══════════════ 3 & 4: OUTPUT SIZE + CLINICAL FOCUS TOPICS ══════════════ */}
           {stage !== "details" ? (
-            <div className="rounded-panel border border-dashed border-black/10 bg-canvas p-3.5 flex items-center justify-between opacity-60">
+            <div className="rounded-panel border border-dashed border-hair-2 bg-canvas p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
                 <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">
                   3
@@ -895,7 +895,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           "flex items-center justify-center gap-2.5 py-3 px-4 rounded-control border-2 transition-all cursor-pointer shadow-2xs",
                           isSel
                             ? "border-brand bg-tint text-brand-deep font-extrabold shadow-2xs ring-2 ring-brand/15"
-                            : "border-black/8 bg-card hover:border-black/20 text-ink"
+                            : "border-hair bg-card hover:border-hair-3 text-ink"
                         )}
                       >
                         {opt.renderIcon(isSel)}
@@ -940,7 +940,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           "group relative flex flex-col justify-between p-3.5 rounded-control border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[92px]",
                           isSel
                             ? "border-brand bg-[#f3f9f5] ring-2 ring-brand/15 shadow-sm"
-                            : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                            : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                         )}
                       >
                         <div className="space-y-1">
@@ -948,7 +948,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             <div className={cn("grid size-6 place-items-center rounded-md transition-colors shrink-0", isSel ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
                               <IconComp className="size-3" />
                             </div>
-                            <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-black/20 bg-card")}>
+                            <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
                               {isSel && <Check className="size-2 stroke-[3]" />}
                             </div>
                           </div>
@@ -969,7 +969,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between border-t border-[#e9ece9] bg-canvas px-7 py-4 shrink-0">
+        <div className="flex items-center justify-between border-t border-hair-2 bg-canvas px-7 py-4 shrink-0">
           <div className="flex flex-wrap items-center gap-1.5 text-body text-ink-3">
             <span className="font-bold text-ink">
               {sourceMode === "brand"

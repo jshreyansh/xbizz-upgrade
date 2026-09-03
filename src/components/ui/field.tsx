@@ -6,7 +6,7 @@ import { Text } from "@/components/ui/text";
  * Text input and textarea. The app had 44 raw <input> and 19 <textarea>
  * elements, but only two real shapes between them: a bordered field and a
  * borderless inline one. That is the whole variant set — the rest of the
- * variation was drift (border-hair-2 vs border-black/10 vs
+ * variation was drift (border-hair-2 vs border-hair-2 vs
  * border-hair for the same rule, and five different font sizes).
  *
  * Label, hint and error are props rather than sibling markup so the

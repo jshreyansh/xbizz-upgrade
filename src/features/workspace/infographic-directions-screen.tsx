@@ -489,8 +489,8 @@ export function InfographicDirectionsScreen() {
             className={cn(
               "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
               copilotPanelOpen
-                ? "border-black/15 bg-black/5 text-ink hover:bg-black/10"
-                : "border-black/10 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+                ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
+                : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
             )}
             title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
           >
@@ -602,7 +602,7 @@ export function InfographicDirectionsScreen() {
                               "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[85px]",
                               isSelected
                                 ? "border-2 border-brand bg-card text-ink shadow-xs"
-                                : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
                             <div className="flex items-start justify-between gap-2">
@@ -612,7 +612,7 @@ export function InfographicDirectionsScreen() {
                                   "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
                                   isSelected
                                     ? "border-brand bg-brand text-white"
-                                    : "border-[#cbd6d0]"
+                                    : "border-hair-3"
                                 )}
                               >
                                 {isSelected && <Check className="size-2.5 stroke-[3]" />}
@@ -663,7 +663,7 @@ export function InfographicDirectionsScreen() {
                                 "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]",
                                 isSelected
                                   ? "border-2 border-brand bg-card text-ink shadow-xs"
-                                  : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
                               <div className="flex items-start justify-between gap-2">
@@ -673,7 +673,7 @@ export function InfographicDirectionsScreen() {
                                     "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
                                     isSelected
                                       ? "border-brand bg-brand text-white"
-                                      : "border-[#cbd6d0]"
+                                      : "border-hair-3"
                                   )}
                                 >
                                   {isSelected && <Check className="size-2.5 stroke-[3]" />}
@@ -694,7 +694,7 @@ export function InfographicDirectionsScreen() {
                         <select
                           value={specialty}
                           onChange={(e) => setSpecialty(e.target.value)}
-                          className="w-full h-10 rounded-xl border border-black/15 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
+                          className="w-full h-10 rounded-xl border border-hair-2 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
                         >
                           {SPECIALTIES.map((sp) => (
                             <option key={sp} value={sp}>
@@ -712,7 +712,7 @@ export function InfographicDirectionsScreen() {
                         <select
                           value={language}
                           onChange={(e) => setLanguage(e.target.value)}
-                          className="w-full h-10 rounded-xl border border-black/15 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
+                          className="w-full h-10 rounded-xl border border-hair-2 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
                         >
                           <option value="English">English</option>
                           <option value="Hindi">Hindi</option>
@@ -755,7 +755,7 @@ export function InfographicDirectionsScreen() {
                               "rounded-control border bg-card p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
                               isSelected
                                 ? "border-2 border-brand bg-card shadow-xs"
-                                : "border-[#e3e8e5] hover:border-[#cbd6d0] hover:bg-canvas"
+                                : "border-hair-2 hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
                             <div>
@@ -766,7 +766,7 @@ export function InfographicDirectionsScreen() {
                                     ✓
                                   </span>
                                 ) : (
-                                  <span className="size-4.5 rounded-full border-2 border-[#cbd6d0] shrink-0" />
+                                  <span className="size-4.5 rounded-full border-2 border-hair-3 shrink-0" />
                                 )}
                               </div>
                               <p className="text-label text-ink-3 leading-snug mb-2.5 line-clamp-2">{tpl.tagline}</p>
@@ -808,7 +808,7 @@ export function InfographicDirectionsScreen() {
                                 "w-full h-8 rounded-xl text-label font-bold transition cursor-pointer",
                                 isSelected
                                   ? "bg-brand hover:bg-brand-deep text-white"
-                                  : "border-black/15 hover:border-brand text-ink"
+                                  : "border-hair-2 hover:border-brand text-ink"
                               )}
                             >
                               {isSelected ? `Using ${tpl.name}` : `Use ${tpl.name}`}
@@ -856,7 +856,7 @@ export function InfographicDirectionsScreen() {
                                 "relative p-3 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[80px]",
                                 isSelected
                                   ? "border-2 border-brand bg-card text-ink shadow-xs"
-                                  : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
                               <div className="flex items-start justify-between">
@@ -866,7 +866,7 @@ export function InfographicDirectionsScreen() {
                                     "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
                                     isSelected
                                       ? "border-brand bg-brand text-white"
-                                      : "border-[#cbd6d0]"
+                                      : "border-hair-3"
                                   )}
                                 >
                                   {isSelected && <Check className="size-2.5 stroke-[3]" />}
@@ -895,7 +895,7 @@ export function InfographicDirectionsScreen() {
                                 "px-3.5 py-1.5 rounded-xl border text-body font-bold transition cursor-pointer flex items-center gap-1.5",
                                 isSelected
                                   ? "bg-brand text-white border-brand shadow-2xs hover:bg-brand-deep"
-                                  : "bg-card text-ink-2 border-black/10 hover:border-black/25 hover:bg-canvas"
+                                  : "bg-card text-ink-2 border-hair-2 hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
                               {isSelected && <Check className="size-3 stroke-[3]" />}
@@ -936,7 +936,7 @@ export function InfographicDirectionsScreen() {
                                 "p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                                 isSelected
                                   ? "border-2 border-brand bg-card text-ink shadow-2xs"
-                                  : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
                               <div className="flex items-start justify-between">
@@ -946,7 +946,7 @@ export function InfographicDirectionsScreen() {
                                     "size-4 rounded-full border-2 grid place-items-center shrink-0",
                                     isSelected
                                       ? "border-brand bg-brand text-white"
-                                      : "border-[#cbd6d0]"
+                                      : "border-hair-3"
                                   )}
                                 >
                                   {isSelected && <Check className="size-2.5 stroke-[3]" />}
@@ -963,7 +963,7 @@ export function InfographicDirectionsScreen() {
                       <div className="text-body font-bold text-ink mb-1">Product packshots (Optional)</div>
                       <div className="flex flex-wrap items-center gap-3">
                         {packshots.map((ps) => (
-                          <div key={ps.id} className="relative group rounded-xl border border-black/10 overflow-hidden bg-card p-1 shadow-2xs">
+                          <div key={ps.id} className="relative group rounded-xl border border-hair-2 overflow-hidden bg-card p-1 shadow-2xs">
                             <img src={ps.url} alt={ps.name} className="size-16 object-cover rounded-lg" />
                             <span className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-micro font-bold px-1 rounded truncate">
                               {ps.name}
@@ -974,7 +974,7 @@ export function InfographicDirectionsScreen() {
                         <button
                           type="button"
                           onClick={() => fileUploadRef.current?.click()}
-                          className="h-16 px-4 rounded-xl border-2 border-dashed border-black/20 hover:border-brand flex flex-col items-center justify-center gap-1 text-label font-bold text-ink-2 hover:text-brand bg-card cursor-pointer transition"
+                          className="h-16 px-4 rounded-xl border-2 border-dashed border-hair-3 hover:border-brand flex flex-col items-center justify-center gap-1 text-label font-bold text-ink-2 hover:text-brand bg-card cursor-pointer transition"
                         >
                           <Upload className="size-4" />
                           <span>Add product image</span>
@@ -992,7 +992,7 @@ export function InfographicDirectionsScreen() {
                             "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                             infographicPages === "1"
                               ? "border-2 border-brand bg-card text-ink shadow-2xs"
-                              : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                              : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                           )}
                         >
                           <div className="flex items-start justify-between">
@@ -1002,7 +1002,7 @@ export function InfographicDirectionsScreen() {
                                 "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
                                 infographicPages === "1"
                                   ? "border-brand bg-brand text-white"
-                                  : "border-[#cbd6d0]"
+                                  : "border-hair-3"
                               )}
                             >
                               {infographicPages === "1" && <Check className="size-3 stroke-[3]" />}
@@ -1018,7 +1018,7 @@ export function InfographicDirectionsScreen() {
                             "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                             infographicPages === "2"
                               ? "border-2 border-brand bg-card text-ink shadow-2xs"
-                              : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                              : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                           )}
                         >
                           <div className="flex items-start justify-between">
@@ -1028,7 +1028,7 @@ export function InfographicDirectionsScreen() {
                                 "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
                                 infographicPages === "2"
                                   ? "border-brand bg-brand text-white"
-                                  : "border-[#cbd6d0]"
+                                  : "border-hair-3"
                               )}
                             >
                               {infographicPages === "2" && <Check className="size-3 stroke-[3]" />}
@@ -1052,7 +1052,7 @@ export function InfographicDirectionsScreen() {
           {currentStep === "content" && (
             <div className="space-y-4 max-w-[880px] mx-auto w-full">
               {/* Header Box */}
-              <div className="bg-card p-5 rounded-2xl border border-black/10 shadow-2xs">
+              <div className="bg-card p-5 rounded-2xl border border-hair-2 shadow-2xs">
                 <div className="text-label font-extrabold uppercase tracking-wider text-brand mb-1">
                   Content Blueprint &amp; Claim Partition
                 </div>
@@ -1082,7 +1082,7 @@ export function InfographicDirectionsScreen() {
                   return (
                     <div
                       key={sec.num}
-                      className="bg-card p-4.5 rounded-2xl border border-black/10 shadow-2xs hover:border-black/20 transition-all duration-200"
+                      className="bg-card p-4.5 rounded-2xl border border-hair-2 shadow-2xs hover:border-hair-3 transition-all duration-200"
                     >
                       <div className="flex items-start gap-3">
                         <span className="size-6.5 rounded-full bg-tint text-brand-deep font-black text-body grid place-items-center shrink-0 mt-0.5">
@@ -1247,7 +1247,7 @@ export function InfographicDirectionsScreen() {
                       "rounded-2xl p-3 text-body leading-relaxed",
                       msg.role === "user"
                         ? "bg-brand text-white rounded-tr-xs"
-                        : "bg-subtle text-ink border border-black/5 rounded-tl-xs"
+                        : "bg-subtle text-ink border border-hair rounded-tl-xs"
                     )}
                   >
                     <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -1266,7 +1266,7 @@ export function InfographicDirectionsScreen() {
                           key={chip}
                           type="button"
                           onClick={() => handleSendChat(chip)}
-                          className="text-label font-semibold text-ink-2 bg-card hover:bg-tint hover:text-brand border border-black/10 rounded-full px-2.5 py-1 transition cursor-pointer shadow-2xs"
+                          className="text-label font-semibold text-ink-2 bg-card hover:bg-tint hover:text-brand border border-hair-2 rounded-full px-2.5 py-1 transition cursor-pointer shadow-2xs"
                         >
                           {chip}
                         </button>
@@ -1280,7 +1280,7 @@ export function InfographicDirectionsScreen() {
           </div>
 
           {/* Chat Input Area with Synchronized Docked Action Bar */}
-          <div className="p-3 border-t border-black/[0.06] bg-card shrink-0 space-y-2">
+          <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
             {/* ── Sub-step 1 Action Bar ── */}
             {currentStep === "brief" && (
               <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
@@ -1342,7 +1342,7 @@ export function InfographicDirectionsScreen() {
 
             {/* Input Bar */}
             <div className="relative">
-              <div className="flex items-center gap-2 rounded-[12px] border border-black/15 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
+              <div className="flex items-center gap-2 rounded-[12px] border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                 <Plus className="size-3.5 text-ink-3 shrink-0" />
                 <input
                   type="text"
@@ -1404,7 +1404,7 @@ function CreativePlanSection({
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
           ? "z-20 w-full scale-100 bg-card border border-brand shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
-          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-black/[0.08] hover:border-black/20 rounded-control my-1"
+          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-hair hover:border-hair-3 rounded-control my-1"
       )}
     >
       <button

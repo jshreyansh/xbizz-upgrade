@@ -206,7 +206,7 @@ export function Sidebar() {
           width: sbw,
           transition: "width 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
-        className="relative flex h-full flex-col rounded-card border border-black/[0.08] bg-white/95 shadow-[0_8px_32px_-8px_rgba(10,13,20,0.08),0_1px_3px_rgba(0,0,0,0.03)] backdrop-blur-xl transition-all overflow-hidden"
+        className="relative flex h-full flex-col rounded-card border border-hair bg-white/95 shadow-[0_8px_32px_-8px_rgba(10,13,20,0.08),0_1px_3px_rgba(0,0,0,0.03)] backdrop-blur-xl transition-all overflow-hidden"
       >
         {/* Top Header: Logo (Click to expand if collapsed) + Minimize Button in Open State */}
         <div
@@ -412,7 +412,7 @@ export function Sidebar() {
         </div>
 
         {/* ── Floating Bottom: Tokens & Profile ── */}
-        <div className="relative border-t border-black/[0.06] p-2 space-y-1.5">
+        <div className="relative border-t border-hair p-2 space-y-1.5">
           {/* Token chip */}
           {!collapsed && (
             <div className="flex items-center gap-2 rounded-[13px] border border-tint-line bg-gradient-to-r from-tint to-white px-2.5 py-2">
@@ -431,7 +431,7 @@ export function Sidebar() {
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className={`flex w-full items-center rounded-control border border-black/[0.06] bg-black/[0.02] p-1.5 text-left transition-all hover:bg-black/[0.05] ${
+              className={`flex w-full items-center rounded-control border border-hair bg-black/[0.02] p-1.5 text-left transition-all hover:bg-black/[0.05] ${
                 collapsed ? "justify-center" : "gap-2.5"
               }`}
             >
@@ -460,9 +460,9 @@ export function Sidebar() {
             {menuOpen && (
               <div
                 style={{ animation: "spring-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both" }}
-                className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-panel border border-black/[0.08] bg-white/95 p-2 shadow-[0_16px_36px_-8px_rgba(10,13,20,0.18)] backdrop-blur-2xl"
+                className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-panel border border-hair bg-white/95 p-2 shadow-[0_16px_36px_-8px_rgba(10,13,20,0.18)] backdrop-blur-2xl"
               >
-                <div className="flex items-center gap-2.5 p-2 border-b border-black/[0.05]">
+                <div className="flex items-center gap-2.5 p-2 border-b border-hair">
                   <span
                     style={{ background: PERSONA.avatarGradient }}
                     className="grid size-8 shrink-0 place-items-center rounded-full text-body font-bold text-white"
@@ -508,9 +508,9 @@ export function Sidebar() {
             zIndex: 9999,
             animation: "spring-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
           }}
-          className="w-[250px] rounded-[22px] border border-black/[0.08] bg-card p-3.5 shadow-[0_20px_50px_-10px_rgba(10,13,20,0.22),0_4px_12px_rgba(0,0,0,0.05)] backdrop-blur-2xl"
+          className="w-[250px] rounded-[22px] border border-hair bg-card p-3.5 shadow-[0_20px_50px_-10px_rgba(10,13,20,0.22),0_4px_12px_rgba(0,0,0,0.05)] backdrop-blur-2xl"
         >
-          <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-black/[0.06]">
+          <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-hair">
             <span className="grid size-6 place-items-center rounded-lg bg-tint text-brand">
               <NavIcon name="studioFilled" active={false} />
             </span>

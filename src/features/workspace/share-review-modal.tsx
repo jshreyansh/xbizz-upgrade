@@ -108,7 +108,7 @@ export function ShareReviewModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[560px] rounded-card bg-card shadow-2xl border border-black/10 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+        className="w-full max-w-[560px] rounded-card bg-card shadow-2xl border border-hair-2 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -154,7 +154,7 @@ export function ShareReviewModal({
               Anyone with this link can inspect clinical claims, leave pinned reviewer comments, and export proofs.
             </p>
 
-            <div className="flex items-center gap-2 p-1.5 pl-3 rounded-xl bg-subtle border border-black/10 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/10 transition-all">
+            <div className="flex items-center gap-2 p-1.5 pl-3 rounded-xl bg-subtle border border-hair-2 focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/10 transition-all">
               <input
                 type="text"
                 readOnly
@@ -198,7 +198,7 @@ export function ShareReviewModal({
                 type="button"
                 onClick={handleOneDrive}
                 disabled={activeAction === "onedrive"}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-black/10 bg-card hover:border-[#0078d4] hover:bg-[#f3f9fd] transition-all text-left shadow-2xs group cursor-pointer"
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-hair-2 bg-card hover:border-[#0078d4] hover:bg-[#f3f9fd] transition-all text-left shadow-2xs group cursor-pointer"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="size-9 rounded-xl bg-[#0078d4]/10 text-[#0078d4] grid place-items-center shrink-0 border border-[#0078d4]/20">
@@ -227,7 +227,7 @@ export function ShareReviewModal({
                 type="button"
                 onClick={handleVeeva}
                 disabled={activeAction === "veeva"}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-black/10 bg-card hover:border-amber-600 hover:bg-[#fffcf5] transition-all text-left shadow-2xs group cursor-pointer"
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-hair-2 bg-card hover:border-amber-600 hover:bg-[#fffcf5] transition-all text-left shadow-2xs group cursor-pointer"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="size-9 rounded-xl bg-warn/10 text-warn grid place-items-center shrink-0 border border-amber-500/20">
@@ -256,7 +256,7 @@ export function ShareReviewModal({
                 <button
                   type="button"
                   onClick={handleExport}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl border border-black/10 bg-card hover:border-brand hover:bg-[#fff9f6] transition-all text-left shadow-2xs group cursor-pointer"
+                  className="w-full flex items-center justify-between p-3 rounded-2xl border border-hair-2 bg-card hover:border-brand hover:bg-[#fff9f6] transition-all text-left shadow-2xs group cursor-pointer"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="size-9 rounded-xl bg-tint text-brand grid place-items-center shrink-0 border border-tint-line">
@@ -280,7 +280,7 @@ export function ShareReviewModal({
                   </div>
                 </button>
               ) : (
-                <div className="w-full flex flex-col p-3.5 rounded-2xl border border-black/10 bg-card shadow-2xs space-y-3">
+                <div className="w-full flex flex-col p-3.5 rounded-2xl border border-hair-2 bg-card shadow-2xs space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="size-8 rounded-xl bg-tint text-brand grid place-items-center shrink-0 border border-tint-line">
@@ -297,7 +297,7 @@ export function ShareReviewModal({
                     </div>
 
                     {/* Format Selector Pills (PDF / PNG / JPG) */}
-                    <div className="flex items-center gap-1 p-0.5 bg-[#f0f2ef] rounded-xl border border-black/5 shrink-0">
+                    <div className="flex items-center gap-1 p-0.5 bg-[#f0f2ef] rounded-xl border border-hair shrink-0">
                       {(
                         [
                           { id: "pdf", label: "PDF" },
@@ -312,7 +312,7 @@ export function ShareReviewModal({
                           className={cn(
                             "px-2.5 py-1 rounded-lg text-label font-bold transition-all cursor-pointer",
                             creativeFormat === fmt.id
-                              ? "bg-card text-brand shadow-2xs border border-black/10"
+                              ? "bg-card text-brand shadow-2xs border border-hair-2"
                               : "text-ink-3 hover:text-ink"
                           )}
                         >
@@ -322,7 +322,7 @@ export function ShareReviewModal({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-black/5">
+                  <div className="flex items-center justify-between pt-2 border-t border-hair">
                     <p className="text-label text-ink-3 pr-3 leading-snug">
                       {creativeFormat === "pdf" &&
                         "Print-ready vector PDF proof with complete ISI fair balance tables & 3mm bleed."}
@@ -360,7 +360,7 @@ export function ShareReviewModal({
               <button
                 type="button"
                 onClick={() => handleSocialComingSoon("Instagram")}
-                className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-black/[0.08] bg-canvas hover:bg-card hover:border-black/20 transition-all text-left group cursor-pointer"
+                className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-hair bg-canvas hover:bg-card hover:border-hair-3 transition-all text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="size-7 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#e6683c] via-[#dc2743] via-[#cc2366] to-[#bc1888] text-white grid place-items-center shrink-0">
@@ -379,7 +379,7 @@ export function ShareReviewModal({
               <button
                 type="button"
                 onClick={() => handleSocialComingSoon("LinkedIn")}
-                className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-black/[0.08] bg-canvas hover:bg-card hover:border-black/20 transition-all text-left group cursor-pointer"
+                className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-hair bg-canvas hover:bg-card hover:border-hair-3 transition-all text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="size-7 rounded-lg bg-[#0a66c2] text-white grid place-items-center shrink-0">
@@ -398,7 +398,7 @@ export function ShareReviewModal({
               <button
                 type="button"
                 onClick={() => handleSocialComingSoon("YouTube")}
-                className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-black/[0.08] bg-canvas hover:bg-card hover:border-black/20 transition-all text-left group cursor-pointer"
+                className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-hair bg-canvas hover:bg-card hover:border-hair-3 transition-all text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="size-7 rounded-lg bg-[#ff0000] text-white grid place-items-center shrink-0">
@@ -417,7 +417,7 @@ export function ShareReviewModal({
               <button
                 type="button"
                 onClick={() => handleSocialComingSoon("Twitter / X")}
-                className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-black/[0.08] bg-canvas hover:bg-card hover:border-black/20 transition-all text-left group cursor-pointer"
+                className="flex items-center justify-between p-2.5 px-3 rounded-xl border border-hair bg-canvas hover:bg-card hover:border-hair-3 transition-all text-left group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="size-7 rounded-lg bg-black text-white grid place-items-center shrink-0">

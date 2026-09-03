@@ -218,7 +218,7 @@ export function ResearchSourcesContent({
                   "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
                   isSelected
                     ? "border-2 border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
-                    : "border-[#e3e8e5] bg-card hover:border-[#cbd6d0] hover:bg-canvas"
+                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -228,7 +228,7 @@ export function ResearchSourcesContent({
                       "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
                       isSelected
                         ? "border-brand bg-brand text-white"
-                        : "border-[#cbd6d0]"
+                        : "border-hair-3"
                     )}
                   >
                     {isSelected && <Check className="size-3 stroke-[3]" />}
@@ -243,7 +243,7 @@ export function ResearchSourcesContent({
 
       {/* Uploaded Documents Context (Shown when Option 1 or 2 is selected) */}
       {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources") && (
-        <div className="space-y-2 pt-2 border-t border-black/5 animate-in fade-in duration-150">
+        <div className="space-y-2 pt-2 border-t border-hair animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
             <span className="text-label font-bold uppercase tracking-wider text-ink-3">
               My Uploaded Documents &amp; Briefs ({uploadedDocs.length})
@@ -279,7 +279,7 @@ export function ResearchSourcesContent({
             {uploadedDocs.map((doc, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-card border border-[#e3e8e5] text-body"
+                className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-card border border-hair-2 text-body"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className="size-4 text-brand shrink-0" />

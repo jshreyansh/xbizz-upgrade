@@ -406,7 +406,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           {/* ── Prominently Wide AI Chat Input Box ── */}
-          <div className="w-full max-w-[940px] rounded-[26px] border border-black/[0.09] bg-card shadow-[0_12px_40px_rgba(0,0,0,0.07)] focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
+          <div className="w-full max-w-[940px] rounded-[26px] border border-hair bg-card shadow-[0_12px_40px_rgba(0,0,0,0.07)] focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
             <div className="p-6 pb-3">
               <textarea
                 value={brief}
@@ -424,7 +424,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             {localFiles.length > 0 && (
               <div className="px-6 pb-2.5 flex flex-wrap gap-1.5">
                 {localFiles.map((file) => (
-                  <span key={file} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf1f4] px-2.5 py-1 text-label font-medium text-ink-3 border border-black/[0.06]">
+                  <span key={file} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf1f4] px-2.5 py-1 text-label font-medium text-ink-3 border border-hair">
                     <Paperclip className="size-3" />
                     <span className="max-w-[160px] truncate">{file}</span>
                     <button onClick={() => removeAttachment(file)} className="hover:text-black cursor-pointer"><X className="size-3" /></button>
@@ -435,7 +435,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
             {/* Bottom Toolbar */}
             <div
-              className="relative flex items-center justify-between gap-2 border-t border-black/[0.06] bg-canvas/95 px-3.5 py-2.5 rounded-b-[26px]"
+              className="relative flex items-center justify-between gap-2 border-t border-hair bg-canvas/95 px-3.5 py-2.5 rounded-b-[26px]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-2">
@@ -453,14 +453,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                       "grid size-8 place-items-center rounded-xl border transition-all cursor-pointer shadow-2xs shrink-0",
                       plusMenuOpen
                         ? "border-brand bg-brand text-white ring-2 ring-brand/20 shadow-xs"
-                        : "border-black/10 bg-card text-ink-3 hover:text-brand hover:border-brand hover:bg-card"
+                        : "border-hair-2 bg-card text-ink-3 hover:text-brand hover:border-brand hover:bg-card"
                     )}
                   >
                     <Plus className={cn("size-4 transition-transform duration-200", plusMenuOpen && "rotate-45")} />
                   </button>
 
                   {plusMenuOpen && (
-                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-2xl border border-black/10 bg-card p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] space-y-0.5">
+                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-2xl border border-hair-2 bg-card p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] space-y-0.5">
                       {/* 1. Attach Files */}
                       <button
                         type="button"
@@ -556,7 +556,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
                       {/* Tier 2 submenu */}
                       {activeTier2 && (
-                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-2xl border border-black/10 bg-card p-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
+                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-2xl border border-hair-2 bg-card p-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
                           {activeTier2 === "audience" && (
                             <div className="space-y-1">
                               <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
@@ -698,7 +698,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                         "p-2 rounded-xl text-center text-label font-bold border transition-colors cursor-pointer",
                                         infographicPages === item.id
                                           ? "border-brand bg-tint text-brand-deep"
-                                          : "border-black/10 bg-card hover:bg-black/5 text-ink"
+                                          : "border-hair-2 bg-card hover:bg-black/5 text-ink"
                                       )}
                                     >
                                       {item.label}
@@ -707,7 +707,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                 </div>
                               </div>
 
-                              <div className="space-y-1 pt-1 border-t border-black/5">
+                              <div className="space-y-1 pt-1 border-t border-hair">
                                 <div className="px-2 py-0.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">
                                   Design Template
                                 </div>
@@ -799,19 +799,19 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               <ChevronDown className="size-2.5 opacity-60" />
             </button>
             {audience && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-black/[0.08] shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
                 <Users className="size-3.5 text-brand" />
                 {audience}
               </span>
             )}
             {topics.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-black/[0.08] shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
                 <Layers className="size-3.5 text-brand" />
                 {topics.length} {topics.length === 1 ? "topic" : "topics"}
               </span>
             )}
             {/* Engine context chip */}
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-black/[0.08] shadow-2xs">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
               <Film className="size-3.5 text-brand" />
               {modeDisplayName}
             </span>
@@ -860,7 +860,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                     "group flex items-center justify-between gap-3.5 rounded-2xl border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",
                     isSelected
                       ? "border-brand bg-tint/70 ring-2 ring-brand/20 shadow-xs"
-                      : "border-black/[0.08] bg-card hover:border-brand/80 hover:bg-[#fffcfb]"
+                      : "border-hair bg-card hover:border-brand/80 hover:bg-[#fffcfb]"
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -923,7 +923,7 @@ function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: ()
     : source.kind === "reference" ? "bg-[#f3eee8] text-[#705f4d]"
     : "bg-[#f5ece8] text-[#775548]";
   return (
-    <span className={cn("flex min-h-9 max-w-full items-center gap-2 rounded-chip px-2.5 text-body font-medium border border-black/[0.06]", color)}>
+    <span className={cn("flex min-h-9 max-w-full items-center gap-2 rounded-chip px-2.5 text-body font-medium border border-hair", color)}>
       <FileText className="size-3.5 shrink-0 opacity-75" />
       <span className="max-w-[210px] truncate">{source.name}</span>
       {approved && <span className="rounded-full bg-white/65 px-1.5 py-0.5 text-caption font-semibold opacity-80">Current</span>}
@@ -936,7 +936,7 @@ function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: ()
 
 function AttachmentChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="flex min-h-9 items-center gap-2 rounded-chip bg-[#edf1f4] px-2.5 text-body font-medium text-ink-3 border border-black/[0.06]">
+    <span className="flex min-h-9 items-center gap-2 rounded-chip bg-[#edf1f4] px-2.5 text-body font-medium text-ink-3 border border-hair">
       <Paperclip className="size-3.5 opacity-75" />
       <span className="max-w-[180px] truncate">{label}</span>
       <button onClick={onRemove} className="grid size-5 place-items-center rounded-full opacity-60 hover:bg-white/70 hover:opacity-100 transition" aria-label={`Remove ${label}`}>
@@ -979,7 +979,7 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
                 {list.map((scenario) => {
                   const active = scenario.id === currentScenarioId;
                   return (
-                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-ok-bg" : "border-hair bg-card hover:border-[#ccd7d1]")}>
+                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-ok-bg" : "border-hair bg-card hover:border-hair-3")}>
                       <div className="flex items-center justify-between">
                         <b className="text-body-lg font-semibold">{scenario.label}</b>
                         {active && <span className="rounded-full bg-brand px-2 py-0.5 text-caption font-bold text-white">Active</span>}

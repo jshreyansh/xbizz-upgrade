@@ -901,8 +901,8 @@ export function StudioScreen() {
             className={cn(
               "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
               copilotPanelOpen
-                ? "border-black/15 bg-black/5 text-ink hover:bg-black/10"
-                : "border-black/10 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+                ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
+                : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
             )}
             title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
             aria-label="Toggle sidebar"
@@ -955,23 +955,23 @@ export function StudioScreen() {
               </p>
 
               <div className="mt-8 w-full max-w-[380px] space-y-2.5 text-left text-body">
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 1 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
                   <Check className={cn("size-4.5 shrink-0", videoGenStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Parsed {sceneList.length} storyboard scenes &amp; timing</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 2 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
                   <Check className={cn("size-4.5 shrink-0", videoGenStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Synthesized 3D visual kinematics &amp; lighting</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 3 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
                   <Check className={cn("size-4.5 shrink-0", videoGenStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Synced clinical voiceover narration</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 4 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 4 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
                   <Check className={cn("size-4.5 shrink-0", videoGenStep >= 4 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                   <span className="font-semibold">Linking citations to FDA label §5.1</span>
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 5 ? "bg-card border-black/10 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-black/5")}>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 5 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
                   {videoGenStep >= 5 ? (
                     <Check className="size-4.5 shrink-0 text-ok" strokeWidth={2.5} />
                   ) : (
@@ -1045,7 +1045,7 @@ export function StudioScreen() {
                             "group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer",
                             isCurrent
                               ? "border-brand bg-tint shadow-xs ring-1 ring-brand"
-                              : "border-black/[0.06] bg-card hover:border-black/20 hover:bg-canvas"
+                              : "border-hair bg-card hover:border-hair-3 hover:bg-canvas"
                           )}
                         >
                           <div className="flex items-center justify-between gap-1 mb-1">
@@ -1084,7 +1084,7 @@ export function StudioScreen() {
                             "group relative flex w-full flex-col rounded-xl border p-2 text-left transition-all cursor-pointer",
                             isSelected
                               ? "border-brand bg-card shadow-xs ring-1 ring-brand"
-                              : "border-black/[0.06] bg-card hover:border-black/20"
+                              : "border-hair bg-card hover:border-hair-3"
                           )}
                         >
                           <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -1101,7 +1101,7 @@ export function StudioScreen() {
                             </div>
                           </div>
 
-                          <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-black/10 bg-[#173d31]">
+                          <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-hair-2 bg-[#173d31]">
                             <DynamicSceneComposition scene={sc} compact />
                           </div>
 
@@ -1125,10 +1125,10 @@ export function StudioScreen() {
                             onDragEnd={handleDragEnd}
                             className={cn(
                               "relative flex flex-col rounded-2xl border bg-card p-4 transition-all duration-200 shadow-2xs hover:shadow-xs",
-                              isDragging ? "opacity-40 border-dashed border-brand" : "border-black/[0.08]"
+                              isDragging ? "opacity-40 border-dashed border-brand" : "border-hair"
                             )}
                           >
-                            <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-black/[0.04]">
+                            <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-hair">
                               <div className="flex items-center gap-2">
                                 <div className="cursor-grab active:cursor-grabbing text-ink-4 hover:text-ink p-0.5 rounded transition-colors" title="Drag to reorder">
                                   <GripVertical className="size-4" />
@@ -1140,7 +1140,7 @@ export function StudioScreen() {
                                   type="text"
                                   value={sc.title}
                                   onChange={(e) => handleUpdateSceneTitle(sc.id, e.target.value)}
-                                  className="text-body-lg font-[850] text-ink bg-transparent border-b border-transparent hover:border-black/20 focus:border-brand focus:outline-none px-1 py-0.5 rounded transition-all"
+                                  className="text-body-lg font-[850] text-ink bg-transparent border-b border-transparent hover:border-hair-3 focus:border-brand focus:outline-none px-1 py-0.5 rounded transition-all"
                                   placeholder="Scene Title"
                                 />
                               </div>
@@ -1161,12 +1161,12 @@ export function StudioScreen() {
                                   <ChevronDown className="size-2.5 text-brand-deep absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-70" />
                                 </div>
 
-                                <span className="flex items-center gap-1 rounded-md bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3 border border-black/5">
+                                <span className="flex items-center gap-1 rounded-md bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3 border border-hair">
                                   <Clock className="size-2.5" />
                                   {sc.duration || 10}s
                                 </span>
 
-                                <div className="flex items-center gap-0.5 ml-1 border-l border-black/10 pl-1">
+                                <div className="flex items-center gap-0.5 ml-1 border-l border-hair-2 pl-1">
                                   <button
                                     type="button"
                                     onClick={() => handleMoveScene(idx, "up")}
@@ -1209,11 +1209,11 @@ export function StudioScreen() {
                                 onChange={(e) => handleUpdateSceneNarration(sc.id, e.target.value)}
                                 placeholder="Enter clinical voiceover script for this scene..."
                                 rows={2}
-                                className="w-full rounded-xl border border-black/10 bg-canvas p-2.5 text-body leading-relaxed text-ink focus:bg-card focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all resize-none shadow-2xs"
+                                className="w-full rounded-xl border border-hair-2 bg-canvas p-2.5 text-body leading-relaxed text-ink focus:bg-card focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all resize-none shadow-2xs"
                               />
                             </div>
 
-                            <div className="flex items-center justify-between pt-2 mt-2 border-t border-black/[0.04] text-caption">
+                            <div className="flex items-center justify-between pt-2 mt-2 border-t border-hair text-caption">
                               <span className="inline-flex items-center gap-1.5 text-ok font-semibold bg-ok-bg px-2 py-0.5 rounded-md border border-ok-line/60">
                                 <ShieldCheck className="size-3 text-ok" />
                                 <span>{sc.claim}</span>
@@ -1229,7 +1229,7 @@ export function StudioScreen() {
                       <button
                         type="button"
                         onClick={handleAddDirectScriptScene}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black/15 p-4 text-body font-bold text-ink-2 hover:border-brand hover:bg-tint/50 hover:text-brand-deep transition-all cursor-pointer shadow-2xs"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-hair-2 p-4 text-body font-bold text-ink-2 hover:border-brand hover:bg-tint/50 hover:text-brand-deep transition-all cursor-pointer shadow-2xs"
                       >
                         <Plus className="size-4 text-brand" />
                         <span>Add Script Scene</span>
@@ -1294,13 +1294,13 @@ export function StudioScreen() {
               {/* Sub-header */}
               <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#cad1cd]/70 bg-white/60 px-4 backdrop-blur-sm">
                 <div className="flex items-center gap-2.5 text-label font-bold text-ink">
-                  <span className="rounded-md bg-card border border-black/10 px-2 py-0.5 shadow-2xs font-extrabold">
+                  <span className="rounded-md bg-card border border-hair-2 px-2 py-0.5 shadow-2xs font-extrabold">
                     Scene {selectedScene.number} of {sceneList.length}
                   </span>
                   <span>{selectedScene.title}</span>
                 </div>
                 <div className="flex items-center gap-2 text-label">
-                  <span className="rounded-md bg-card border border-black/10 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
+                  <span className="rounded-md bg-card border border-hair-2 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
                     Fit 16:9
                   </span>
                   <Button variant="ghost" size="icon" className="size-7" aria-label="Full screen">
@@ -2094,7 +2094,7 @@ export function StudioScreen() {
           <div className="p-2.5 border-b border-hair bg-subtle">
             {studioMode === "scenes" ? (
               /* ── SCRIPT STAGE: Only Chat & Claims Tabs (No Edit Tab) ── */
-              <div className="grid grid-cols-2 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
+              <div className="grid grid-cols-2 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-hair shadow-inner-xs">
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}
@@ -2114,7 +2114,7 @@ export function StudioScreen() {
               </div>
             ) : (
               /* ── CANVAS EDITOR / REVIEW STAGES: Chat, Edit / Comments, Claims ── */
-              <div className="grid grid-cols-3 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-black/[0.04] shadow-inner-xs">
+              <div className="grid grid-cols-3 gap-1 p-1 bg-[#e6ebe6] rounded-2xl border border-hair shadow-inner-xs">
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}
@@ -2157,7 +2157,7 @@ export function StudioScreen() {
             {/* ── TAB 1: PERSISTENT SWISHX CHAT ── */}
             {activeTab === "assistant" && (
               <div className="flex-1 flex flex-col min-h-0">
-                <div className="px-4 py-2 border-b border-black/[0.06] bg-canvas flex items-center justify-between">
+                <div className="px-4 py-2 border-b border-hair bg-canvas flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full bg-ok animate-pulse" />
                     <span className="text-label font-extrabold text-ink">Direct with SwishX · Online</span>
@@ -2187,12 +2187,12 @@ export function StudioScreen() {
                           "rounded-[16px] px-3.5 py-2.5 text-body shadow-xs",
                           msg.role === "user"
                             ? "bg-brand text-white font-medium rounded-br-xs"
-                            : "bg-card text-ink border border-black/[0.08] rounded-bl-xs font-normal"
+                            : "bg-card text-ink border border-hair rounded-bl-xs font-normal"
                         )}
                       >
                         <FormattedMessageText text={msg.text} />
                         {msg.chips && msg.chips.length > 0 && (
-                          <div className="mt-2.5 pt-2 border-t border-black/[0.06] flex flex-wrap gap-1.5">
+                          <div className="mt-2.5 pt-2 border-t border-hair flex flex-wrap gap-1.5">
                             {msg.chips.map((chip, chipIdx) => (
                               <button
                                 key={chipIdx}
@@ -2280,11 +2280,11 @@ export function StudioScreen() {
                       e.preventDefault();
                       handleSendChatMessage();
                     }}
-                    className="flex flex-col gap-2 rounded-2xl border border-black/[0.08] bg-card p-2.5 shadow-xs focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15"
+                    className="flex flex-col gap-2 rounded-2xl border border-hair bg-card p-2.5 shadow-xs focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15"
                   >
                     {/* Attached Context Chips */}
                     {attachedContexts.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 p-1.5 bg-subtle rounded-xl border border-black/[0.06]">
+                      <div className="flex flex-wrap gap-1.5 p-1.5 bg-subtle rounded-xl border border-hair">
                         {attachedContexts.map((ctx) => (
                           <span
                             key={ctx.id}
@@ -2332,7 +2332,7 @@ export function StudioScreen() {
                       className="w-full resize-none text-body text-ink placeholder:text-ink-3 focus:outline-none"
                     />
 
-                    <div className="flex items-center justify-between pt-1 border-t border-black/[0.04]">
+                    <div className="flex items-center justify-between pt-1 border-t border-hair">
                       <div className="flex items-center gap-2">
                         {/* Plus Context Menu Button */}
                         <div className="relative">
@@ -2361,14 +2361,14 @@ export function StudioScreen() {
                           <button
                             type="button"
                             onClick={() => setChatContextMenuOpen(!chatContextMenuOpen)}
-                            className="size-7 rounded-lg text-ink-3 hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors cursor-pointer border border-black/10 bg-card shadow-2xs"
+                            className="size-7 rounded-lg text-ink-3 hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors cursor-pointer border border-hair-2 bg-card shadow-2xs"
                             title="Add context (Scenes, Files, Citations)"
                           >
                             <Plus className="size-3.5 text-brand" />
                           </button>
 
                           {chatContextMenuOpen && (
-                            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-2xl border border-black/10 bg-card p-1.5 shadow-xl z-50 space-y-1">
+                            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-2xl border border-hair-2 bg-card p-1.5 shadow-xl z-50 space-y-1">
                               <div className="px-2 py-1 text-micro font-extrabold uppercase tracking-wider text-ink-4">
                                 Attach Context to Chat
                               </div>
@@ -2384,7 +2384,7 @@ export function StudioScreen() {
                                 <span>Upload file from computer</span>
                               </button>
 
-                              <div className="border-t border-black/[0.06] my-1" />
+                              <div className="border-t border-hair my-1" />
                               <div className="px-2 py-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4">
                                 Attach Scene Scope
                               </div>
@@ -2474,7 +2474,7 @@ export function StudioScreen() {
                     onChange={(e) => setNewCommentText(e.target.value)}
                     placeholder="Provide compliance or marketing feedback at current timestamp..."
                     rows={2}
-                    className="w-full rounded-xl border border-black/10 bg-card p-2.5 text-body text-ink resize-none focus:outline-none focus:border-brand shadow-2xs"
+                    className="w-full rounded-xl border border-hair-2 bg-card p-2.5 text-body text-ink resize-none focus:outline-none focus:border-brand shadow-2xs"
                   />
                   <div className="flex justify-end">
                     <Button
@@ -2496,8 +2496,8 @@ export function StudioScreen() {
                       className={cn(
                         "rounded-xl border p-3 transition-all space-y-2",
                         comment.isResolved
-                          ? "bg-canvas border-black/[0.05] opacity-60"
-                          : "bg-card border-black/[0.08] shadow-2xs hover:border-brand/40"
+                          ? "bg-canvas border-hair opacity-60"
+                          : "bg-card border-hair shadow-2xs hover:border-brand/40"
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -2526,7 +2526,7 @@ export function StudioScreen() {
                       <p className="text-body text-ink leading-relaxed">{comment.text}</p>
 
                       {comment.replies.length > 0 && (
-                        <div className="space-y-1.5 pl-3 border-l-2 border-black/10 mt-2">
+                        <div className="space-y-1.5 pl-3 border-l-2 border-hair-2 mt-2">
                           {comment.replies.map((rep) => (
                             <div key={rep.id} className="text-label">
                               <span className="font-bold text-ink">{rep.author}: </span>
@@ -2536,7 +2536,7 @@ export function StudioScreen() {
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between pt-1 border-t border-black/[0.04] text-caption">
+                      <div className="flex items-center justify-between pt-1 border-t border-hair text-caption">
                         <button
                           type="button"
                           onClick={() => setReplyingToCommentId(replyingToCommentId === comment.id ? null : comment.id)}
@@ -2560,7 +2560,7 @@ export function StudioScreen() {
                             value={replyDraftText}
                             onChange={(e) => setReplyDraftText(e.target.value)}
                             placeholder="Write a reply..."
-                            className="flex-1 rounded-lg border border-black/10 px-2.5 py-1 text-label focus:outline-none focus:border-brand"
+                            className="flex-1 rounded-lg border border-hair-2 px-2.5 py-1 text-label focus:outline-none focus:border-brand"
                           />
                           <Button
                             size="sm"
@@ -2606,7 +2606,7 @@ export function StudioScreen() {
                       value={editDraftHeadline}
                       onChange={(e) => setEditDraftHeadline(e.target.value)}
                       placeholder="Scene headline..."
-                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
+                      className="w-full rounded-xl border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
 
@@ -2623,7 +2623,7 @@ export function StudioScreen() {
                       onChange={(e) => setEditDraftNarration(e.target.value)}
                       rows={3}
                       placeholder="Voiceover narration script..."
-                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
+                      className="w-full rounded-xl border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
 
@@ -2638,7 +2638,7 @@ export function StudioScreen() {
                       onChange={(e) => setEditDraftVisual(e.target.value)}
                       rows={3}
                       placeholder="Visual rendering prompt for scene..."
-                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
+                      className="w-full rounded-xl border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
 
@@ -2653,7 +2653,7 @@ export function StudioScreen() {
                       onChange={(e) => setEditDraftNegativeVisual(e.target.value)}
                       rows={2}
                       placeholder="Elements to exclude (e.g. cartoons, blurry edges, harsh text)..."
-                      className="w-full rounded-xl border border-black/10 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
+                      className="w-full rounded-xl border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
 
@@ -2677,7 +2677,7 @@ export function StudioScreen() {
 
                     {/* If scene has an image or both (e.g. Scene 3 Anatomical Heart) */}
                     {(selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
-                      <div className="rounded-lg border border-black/8 bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
+                      <div className="rounded-lg border border-hair bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="size-8 rounded-md bg-lime border border-lime flex items-center justify-center p-1 shrink-0 overflow-hidden">
                             <img
@@ -2713,7 +2713,7 @@ export function StudioScreen() {
 
                     {/* If scene has a video or both (e.g. Scene 2, 3, 4) */}
                     {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
-                      <div className="rounded-lg border border-black/8 bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
+                      <div className="rounded-lg border border-hair bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="size-8 rounded-md bg-accent-blue border border-accent-blue flex items-center justify-center text-accent-blue shrink-0 overflow-hidden">
                             <video
@@ -2751,7 +2751,7 @@ export function StudioScreen() {
                     )}
 
                     {(!selectedScene.mediaType || selectedScene.mediaType === "none") && (
-                      <div className="text-caption text-ink-3 py-1.5 px-2 bg-card rounded-lg border border-dashed border-black/10 flex items-center justify-between">
+                      <div className="text-caption text-ink-3 py-1.5 px-2 bg-card rounded-lg border border-dashed border-hair-2 flex items-center justify-between">
                         <span>Clean text &amp; narrative intro layout</span>
                         <button
                           type="button"
@@ -2782,7 +2782,7 @@ export function StudioScreen() {
                             "flex-1 rounded-xl border py-1.5 text-label font-bold transition-all cursor-pointer",
                             editDraftDuration === dur
                               ? "bg-brand text-white border-brand shadow-xs"
-                              : "bg-card border-black/10 text-ink-2 hover:bg-canvas"
+                              : "bg-card border-hair-2 text-ink-2 hover:bg-canvas"
                           )}
                         >
                           {dur}s
@@ -2831,7 +2831,7 @@ export function StudioScreen() {
                     { id: "c3", title: "Safety and Adverse Profiles", status: "Supported", tag: "PI §6.2", detail: "Low incidence of treatment-emergent adverse reactions." },
                     { id: "c4", title: "Renal Perfusion Preservation", status: "Approved", tag: "Lancet 2024", detail: "Maintained glomerular filtration rate during maintenance dosing." },
                   ].map((c) => (
-                    <div key={c.id} className="rounded-xl border border-black/[0.06] bg-canvas p-3 text-left hover:border-brand/40 transition-colors">
+                    <div key={c.id} className="rounded-xl border border-hair bg-canvas p-3 text-left hover:border-brand/40 transition-colors">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-micro font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-md">
                           {c.tag}
@@ -3033,7 +3033,7 @@ export function StudioScreen() {
 
                 {/* Optional Auto-Fix helper */}
                 {hasBlockers && (
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-black/5 mt-1">
+                  <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-hair mt-1">
                     <span className="flex items-center gap-1.5">
                       <Sparkles className="size-3 text-brand" />
                       Want SwishX to auto-fix both blockers instantly?
@@ -3141,7 +3141,7 @@ function InspectorTabButton({
       className={cn(
         "group relative flex items-center justify-center gap-1 h-8.5 px-2 rounded-xl text-body transition-all duration-150 cursor-pointer font-[800] select-none whitespace-nowrap",
         active
-          ? "bg-card text-ink shadow-xs border border-black/[0.08]"
+          ? "bg-card text-ink shadow-xs border border-hair"
           : "text-ink-3 hover:text-ink hover:bg-white/50 border border-transparent"
       )}
     >
