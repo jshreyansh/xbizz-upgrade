@@ -406,7 +406,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           {/* ── Prominently Wide AI Chat Input Box ── */}
-          <div className="w-full max-w-[940px] rounded-[26px] border border-hair bg-card shadow-[0_12px_40px_rgba(0,0,0,0.07)] focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
+          <div className="w-full max-w-[940px] rounded-[26px] border border-hair bg-card shadow-float focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
             <div className="p-6 pb-3">
               <textarea
                 value={brief}
@@ -460,7 +460,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   </button>
 
                   {plusMenuOpen && (
-                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-2xl border border-hair-2 bg-card p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] space-y-0.5">
+                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-2xl border border-hair-2 bg-card p-1.5 shadow-float space-y-0.5">
                       {/* 1. Attach Files */}
                       <button
                         type="button"
@@ -556,7 +556,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
                       {/* Tier 2 submenu */}
                       {activeTier2 && (
-                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-2xl border border-hair-2 bg-card p-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
+                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-2xl border border-hair-2 bg-card p-2.5 shadow-float flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
                           {activeTier2 === "audience" && (
                             <div className="space-y-1">
                               <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">

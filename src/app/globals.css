@@ -114,6 +114,18 @@
   --shadow-float: 0 2px 6px rgba(10,13,20,.05), 0 26px 60px -26px rgba(10,13,20,.34);
   --shadow-modal: 0 40px 110px -40px rgba(10,13,20,.5), 0 12px 34px -18px rgba(10,13,20,.28);
 
+  /* Purposeful elevations that the four neutral steps cannot express, each
+     derived from shadows already in the app rather than invented:
+       brand-soft  an ambient brand halo under primary surfaces   (5 uses)
+       brand-lift  a tight brand shadow under primary controls    (4 uses)
+       panel-left  the left-edge shadow on right-hand rail panels (4 uses)
+       on-dark     elevation over the dark video canvas, where the
+                   neutral steps are invisible                    (5 uses) */
+  --shadow-brand-soft: 0 16px 40px rgba(253, 72, 22, .14);
+  --shadow-brand-lift: 0 4px 14px rgba(253, 72, 22, .35);
+  --shadow-panel-left: -4px 0 20px rgba(10, 13, 20, .04);
+  --shadow-on-dark:    0 16px 40px rgba(0, 0, 0, .32);
+
   /* Easings. --ease-entrance/--ease-exit were already the de-facto pair
      used inline across ~14 animations in this file; now they have names. */
   --ease-swish:    cubic-bezier(.22,.61,.36,1);

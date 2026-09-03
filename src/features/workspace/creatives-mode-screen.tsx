@@ -190,7 +190,7 @@ export function CreativesModeScreen() {
         {/* ════ CARD 1: Infographic/Chart (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-soft transition-all duration-300 hover:border-brand hover:shadow-brand-soft hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
@@ -297,7 +297,7 @@ export function CreativesModeScreen() {
         {/* ════ CARD 2: Presentation/Deck (Visual Detail Aid & Slides) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-soft transition-all duration-300 hover:border-blue-500 hover:shadow-[0_16px_40px_rgba(59,130,246,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">

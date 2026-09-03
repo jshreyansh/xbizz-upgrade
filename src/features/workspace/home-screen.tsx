@@ -366,7 +366,7 @@ function RecentProjectCard({ project }: { project: RecentProject }) {
         gap: 10,
         transition: "all .2s var(--e)",
       }}
-      className="hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-16px_rgba(16,24,40,.2)]"
+      className="hover:-translate-y-0.5 hover:shadow-soft"
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-4)" }}>
@@ -426,7 +426,7 @@ function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: Sho
         cursor: "pointer",
         transition: "transform .2s var(--e), box-shadow .2s var(--e)",
       }}
-      className="hover:-translate-y-1 hover:shadow-[0_16px_32px_-12px_rgba(10,13,20,.42)]"
+      className="hover:-translate-y-1 hover:shadow-float"
     >
       {/* Real Video Element (Plays smoothly on hover) */}
       {item.videoSrc && (

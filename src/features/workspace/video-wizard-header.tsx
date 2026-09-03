@@ -25,7 +25,7 @@ export function VideoWizardHeader({
   const progressPercent = (currentStep / 3) * 100;
 
   return (
-    <header className="sticky top-0 z-40 relative flex h-[62px] w-full shrink-0 items-center justify-between bg-card px-6 sm:px-8 border-b border-[#eef0eb] shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-colors duration-300">
+    <header className="sticky top-0 z-40 relative flex h-[62px] w-full shrink-0 items-center justify-between bg-card px-6 sm:px-8 border-b border-[#eef0eb] shadow-hair transition-colors duration-300">
       {/* Left: Back button with step indicator */}
       <div className="flex items-center gap-3 min-w-[140px]">
         <button
@@ -82,7 +82,7 @@ export function VideoWizardHeader({
       {/* Persistent Full-Width Header Bottom Progress Bar (identical smooth easing to Onboarding) */}
       <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-[#eef0eb]" />
       <div
-        className="absolute bottom-0 left-0 h-[2.5px] bg-gradient-to-r from-brand to-[#ff8f4d] shadow-[0_0_10px_rgba(253,72,22,0.45)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="absolute bottom-0 left-0 h-[2.5px] bg-gradient-to-r from-brand to-[#ff8f4d] shadow-brand-lift transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{ width: `${progressPercent}%` }}
       />
     </header>

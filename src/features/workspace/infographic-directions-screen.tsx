@@ -1162,7 +1162,7 @@ export function InfographicDirectionsScreen() {
               UNIFIED FLOATING ACTION PILL AT MIDDLE BOTTOM (Exact Video Twin)
              ══════════════════════════════════════════════════════════════════ */}
           <div className="sticky bottom-4 z-30 flex justify-center pointer-events-none mt-auto pt-6 pb-2">
-            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-ink text-white p-1.5 pl-4 pr-1.5 shadow-[0_14px_40px_rgba(0,0,0,0.4)] border border-white/12 backdrop-blur-md transition-all duration-200 hover:scale-[1.01]">
+            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-ink text-white p-1.5 pl-4 pr-1.5 shadow-on-dark border border-white/12 backdrop-blur-md transition-all duration-200 hover:scale-[1.01]">
               <div className="flex items-center gap-2 text-left min-w-0 pr-2">
                 <span className="size-6 rounded-full bg-ok/20 border border-emerald-400/40 text-ok-on-dark grid place-items-center shrink-0">
                   <Check className="size-3.5 stroke-[3]" />
@@ -1209,7 +1209,7 @@ export function InfographicDirectionsScreen() {
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
-            "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
+            "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-panel-left z-10 overflow-hidden",
             !copilotPanelOpen && "border-none pointer-events-none"
           )}
         >
@@ -1403,7 +1403,7 @@ function CreativePlanSection({
       className={cn(
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-card border border-brand shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
+          ? "z-20 w-full scale-100 bg-card border border-brand shadow-brand-soft rounded-[20px] my-3.5"
           : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-hair hover:border-hair-3 rounded-control my-1"
       )}
     >

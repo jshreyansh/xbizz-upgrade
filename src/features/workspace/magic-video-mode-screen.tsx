@@ -188,7 +188,7 @@ export function MagicVideoModeScreen() {
         {/* ════ CARD 1: Video (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-reel")}
-          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-soft transition-all duration-300 hover:border-brand hover:shadow-brand-soft hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">
@@ -303,7 +303,7 @@ export function MagicVideoModeScreen() {
         {/* ════ CARD 2: MagicAvatar™ ════ */}
         <div
           onClick={() => handleSelectMode("magic-avatar")}
-          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-all duration-300 hover:border-brand hover:shadow-[0_16px_40px_rgba(253,72,22,0.14)] hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border-2 border-hair bg-card shadow-soft transition-all duration-300 hover:border-brand hover:shadow-brand-soft hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">

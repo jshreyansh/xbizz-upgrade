@@ -1350,7 +1350,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
               {/* Centered Floating Confirmation CTA at the bottom of the Left Stage */}
               <div className="sticky bottom-4 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full pt-6 pb-2">
-                <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-[0_16px_40px_rgba(0,0,0,0.32)] backdrop-blur-md max-w-[580px] w-auto">
+                <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-on-dark backdrop-blur-md max-w-[580px] w-auto">
                   <div className="flex items-center gap-2.5 min-w-0 pr-1">
                     {isPlanReady ? (
                       <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
@@ -1402,7 +1402,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
-            "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
+            "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-panel-left z-10 overflow-hidden",
             !copilotPanelOpen && "border-none pointer-events-none"
           )}
         >
@@ -1633,7 +1633,7 @@ function PlanSection({
       className={cn(
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-card border border-brand shadow-[0_12px_36px_rgba(235,94,40,0.14),0_2px_10px_rgba(0,0,0,0.06)] rounded-[20px] my-3.5"
+          ? "z-20 w-full scale-100 bg-card border border-brand shadow-brand-soft rounded-[20px] my-3.5"
           : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-hair hover:border-hair-3 rounded-control my-1"
       )}
     >
@@ -1747,7 +1747,7 @@ function DecisionRow({
       className={cn(
         "squircle-panel overflow-hidden border transition-[opacity,border-color,box-shadow,background-color] duration-300 ease-entrance rounded-control",
         editing
-          ? "border-[#b7c9c0] bg-[#fbfdfc] opacity-100 shadow-[0_3px_14px_rgb(19_31_26/4%)]"
+          ? "border-[#b7c9c0] bg-[#fbfdfc] opacity-100 shadow-soft"
           : "border-[#e5e9e6] bg-card opacity-75 hover:opacity-100"
       )}
     >

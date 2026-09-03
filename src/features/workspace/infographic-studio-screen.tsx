@@ -889,7 +889,7 @@ export function InfographicStudioScreen() {
               transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
             }}
             className={cn(
-              "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
+              "flex flex-col shrink-0 min-h-0 bg-card border-l border-hair shadow-panel-left z-10 overflow-hidden",
               !copilotPanelOpen && "border-none pointer-events-none"
             )}
           >
@@ -1412,7 +1412,7 @@ export function InfographicStudioScreen() {
           aria-modal="true"
           aria-label="Confirm Creative Generation"
         >
-          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-[0_24px_70px_rgba(0,0,0,0.18)] text-left">
+          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-float text-left">
             <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
               <div>
                 <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">

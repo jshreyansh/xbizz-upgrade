@@ -206,7 +206,7 @@ export function Sidebar() {
           width: sbw,
           transition: "width 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
-        className="relative flex h-full flex-col rounded-card border border-hair bg-white/95 shadow-[0_8px_32px_-8px_rgba(10,13,20,0.08),0_1px_3px_rgba(0,0,0,0.03)] backdrop-blur-xl transition-all overflow-hidden"
+        className="relative flex h-full flex-col rounded-card border border-hair bg-white/95 shadow-float backdrop-blur-xl transition-all overflow-hidden"
       >
         {/* Top Header: Logo (Click to expand if collapsed) + Minimize Button in Open State */}
         <div
@@ -269,7 +269,7 @@ export function Sidebar() {
                   : "w-full h-[42px] gap-3 px-3"
               } ${
                 isHomeActive
-                  ? "bg-brand text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                  ? "bg-brand text-white shadow-brand-lift"
                   : "text-ink-2 hover:bg-tint hover:text-brand-deep"
               }`}
             >
@@ -336,14 +336,14 @@ export function Sidebar() {
                   onClick={() => handleCreateNav("video")}
                   className={`group relative flex w-[58px] flex-col items-center justify-center rounded-control py-2 px-1 gap-1 transition-all duration-200 cursor-pointer ${
                     isCreateActive
-                      ? "bg-brand text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                      ? "bg-brand text-white shadow-brand-lift"
                       : "text-ink-2 hover:bg-tint hover:text-brand-deep"
                   }`}
                   title="Studio"
                 >
                   <div
                     className={`grid size-7 place-items-center rounded-[9px] transition-transform group-hover:scale-105 shrink-0 ${
-                      !isCreateActive ? "filter drop-shadow-[0_1px_4px_rgba(253,72,22,0.35)]" : ""
+                      !isCreateActive ? "filter drop-shadow-brand-lift" : ""
                     }`}
                   >
                     <NavIcon name="studioFilled" active={isCreateActive} />
@@ -384,7 +384,7 @@ export function Sidebar() {
                           : "w-full h-[42px] gap-3 px-3"
                       } ${
                         isActive
-                          ? "bg-brand text-white shadow-[0_4px_14px_rgba(253,72,22,0.35)]"
+                          ? "bg-brand text-white shadow-brand-lift"
                           : "text-ink-2 hover:bg-tint hover:text-brand-deep"
                       }`}
                     >
@@ -460,7 +460,7 @@ export function Sidebar() {
             {menuOpen && (
               <div
                 style={{ animation: "spring-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) both" }}
-                className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-panel border border-hair bg-white/95 p-2 shadow-[0_16px_36px_-8px_rgba(10,13,20,0.18)] backdrop-blur-2xl"
+                className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-panel border border-hair bg-white/95 p-2 shadow-float backdrop-blur-2xl"
               >
                 <div className="flex items-center gap-2.5 p-2 border-b border-hair">
                   <span
@@ -508,7 +508,7 @@ export function Sidebar() {
             zIndex: 9999,
             animation: "spring-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
           }}
-          className="w-[250px] rounded-[22px] border border-hair bg-card p-3.5 shadow-[0_20px_50px_-10px_rgba(10,13,20,0.22),0_4px_12px_rgba(0,0,0,0.05)] backdrop-blur-2xl"
+          className="w-[250px] rounded-[22px] border border-hair bg-card p-3.5 shadow-float backdrop-blur-2xl"
         >
           <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-hair">
             <span className="grid size-6 place-items-center rounded-lg bg-tint text-brand">

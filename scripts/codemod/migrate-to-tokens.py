@@ -159,7 +159,36 @@ def apply_hair(s, hits):
     return s
 
 
-PHASES = {"vars": apply_vars, "palette": apply_palette, "hair": apply_hair}
+# ── phase: shadow ─────────────────────────────────────────────────────
+BRAND_RE = re.compile(r"(253[,_]\s?72[,_]\s?22|235[,_]\s?94[,_]\s?40)")
+
+def apply_shadow(s, hits):
+    def sub(m):
+        v = m.group(1)
+        # A spread ring (0 0 0 Npx) is a focus affordance, not elevation.
+        # A glow in some other hue is deliberate colour, not a neutral step.
+        if re.match(r"^0_0_0_", v) or re.search(r"rgba?\((59[,_]|147[,_]|34[,_])", v):
+            hits[f"LEFT ALONE  {v[:48]}"] += 1
+            return m.group(0)
+        if BRAND_RE.search(v):
+            # tight and small = a control lift; wide = an ambient halo
+            blur = max((int(x) for x in re.findall(r"(\d+)px", v)), default=0)
+            tok = "shadow-brand-lift" if blur <= 14 else "shadow-brand-soft"
+        elif v.lstrip().startswith("-"):
+            tok = "shadow-panel-left"
+        elif re.search(r"rgba\(0,0,0,0?\.(3[2-9]|[4-9]\d?)\)", v):
+            tok = "shadow-on-dark"
+        else:
+            blur = max((int(x) for x in re.findall(r"(\d+)px", v)), default=0)
+            tok = ("shadow-hair" if blur <= 3 else
+                   "shadow-soft" if blur <= 30 else
+                   "shadow-float" if blur <= 70 else "shadow-modal")
+        hits[f"{tok}  <- {v[:52]}"] += 1
+        return tok
+    return re.sub(r"shadow-\[([^\]]+)\]", sub, s)
+
+PHASES = {"vars": apply_vars, "palette": apply_palette, "hair": apply_hair,
+          "shadow": apply_shadow}
 
 def main():
     phase = sys.argv[1]

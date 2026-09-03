@@ -1240,7 +1240,7 @@ export function StudioScreen() {
 
               {!isEditor && !isReview && !isGenerating && (
                 <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
-                  <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-[0_16px_40px_rgba(0,0,0,0.32)] backdrop-blur-md max-w-[580px] w-auto">
+                  <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-on-dark backdrop-blur-md max-w-[580px] w-auto">
                     <div className="flex items-center gap-2.5 min-w-0 pr-1">
                       {isScriptComplete ? (
                         <Sparkles className="size-4.5 text-brand shrink-0" />
@@ -1313,7 +1313,7 @@ export function StudioScreen() {
               <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden">
                 <div
                   onClick={() => setSelectedCanvasElementId(null)}
-                  className="relative aspect-video w-full max-w-[840px] rounded-panel bg-[#173d31] shadow-[0_20px_60px_rgba(0,0,0,0.25)] ring-1 ring-black/20 overflow-hidden select-none"
+                  className="relative aspect-video w-full max-w-[840px] rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
                 >
                   {/* Layer 1: Background Gradient Graphic */}
                   <div
@@ -1350,7 +1350,7 @@ export function StudioScreen() {
                   >
                     <div className="size-full rounded-full border border-white/15 animate-spin duration-15000 flex items-center justify-center">
                       <div className="size-3/4 rounded-full border border-lime/30 flex items-center justify-center">
-                        <div className="size-6 rounded-full bg-lime shadow-[0_0_30px_#d8f05d]" />
+                        <div className="size-6 rounded-full bg-lime shadow-soft" />
                       </div>
                     </div>
                   </div>
@@ -1407,7 +1407,7 @@ export function StudioScreen() {
                               <img
                                 src={selectedScene.mediaImageSrc || "/anatomical-heart.png"}
                                 alt="Cardiac Anatomy"
-                                className="max-h-full max-w-full object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.6)] pointer-events-none"
+                                className="max-h-full max-w-full object-contain drop-shadow-on-dark pointer-events-none"
                               />
                             </div>
 
@@ -1942,7 +1942,7 @@ export function StudioScreen() {
             <div className="relative flex min-h-0 flex-1 flex-col bg-[#0d1411]">
               {/* Master Video Container */}
               <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-8">
-                <div className="relative aspect-video w-full max-w-[920px] rounded-[20px] bg-black shadow-[0_24px_70px_rgba(0,0,0,0.5)] ring-1 ring-white/10 overflow-hidden flex flex-col justify-between">
+                <div className="relative aspect-video w-full max-w-[920px] rounded-[20px] bg-black shadow-on-dark ring-1 ring-white/10 overflow-hidden flex flex-col justify-between">
                   {/* Master Video Canvas */}
                   <div className="absolute inset-0">
                     <MasterVideoSequenceComposition
@@ -2087,7 +2087,7 @@ export function StudioScreen() {
             transition: "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
           className={cn(
-            "shrink-0 border-l border-hair bg-card flex flex-col min-h-0 shadow-[-4px_0_20px_rgba(0,0,0,0.04)] z-10 overflow-hidden",
+            "shrink-0 border-l border-hair bg-card flex flex-col min-h-0 shadow-panel-left z-10 overflow-hidden",
             !copilotPanelOpen && "border-none pointer-events-none"
           )}
         >
@@ -2860,7 +2860,7 @@ export function StudioScreen() {
           aria-modal="true"
           aria-label="Confirm Video Generation"
         >
-          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
+          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-float">
             <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
               <div>
                 <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
