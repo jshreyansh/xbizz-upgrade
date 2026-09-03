@@ -56,6 +56,7 @@ import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspa
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
+import { ScreenHeader } from "@/components/patterns/screen-header";
 
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets";
 
@@ -479,7 +480,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#edf0ed] h-screen overflow-hidden">
       {/* ─── Top Studio-Matched Header Bar (Same as Scenes & Editor) ─── */}
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-card px-3 sm:px-5">
+      <ScreenHeader>
         <button
           onClick={handleBackToBrief}
           className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
@@ -543,7 +544,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             <MoreHorizontal className="size-4" />
           </Button>
         </div>
-      </header>
+      </ScreenHeader>
 
       {/* ── Main Split View: Left (Plan Canvas), Right (Chat Assistant) ── */}
       <div className="flex-1 flex overflow-hidden min-h-0 relative">

@@ -44,6 +44,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
+import { ScreenHeader } from "@/components/patterns/screen-header";
 
 type InfographicSubStep = "brief" | "content";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
@@ -428,7 +429,7 @@ export function InfographicDirectionsScreen() {
   return (
     <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#eef1ed] text-left">
       {/* ─── Clean Header Bar (Identical to Video Screen) ─── */}
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-card px-3 sm:px-5">
+      <ScreenHeader>
         <button
           type="button"
           onClick={() => {
@@ -497,7 +498,7 @@ export function InfographicDirectionsScreen() {
             <PanelRight className="size-4" />
           </button>
         </div>
-      </header>
+      </ScreenHeader>
 
       {/* ─── Main Body: Left Planning Canvas / Right SwishX Assistant ─── */}
       <div className="flex flex-1 min-h-0 overflow-hidden relative">

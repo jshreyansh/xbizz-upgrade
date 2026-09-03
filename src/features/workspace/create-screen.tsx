@@ -45,6 +45,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import type { PlanningSource, Audience } from "@/types/content";
+import { ScreenHeader } from "@/components/patterns/screen-header";
 
 const VIDEO_HEADLINES = [
   "What video would you like to create today?",
@@ -324,7 +325,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="min-h-screen flex flex-col bg-subtle" onClick={() => setActivePopover(null)}>
       {/* ─── Top Studio-Matched Header Bar ─── */}
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-card px-3 sm:px-5">
+      <ScreenHeader>
         <button
           onClick={handleBackToSource}
           className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
@@ -389,7 +390,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <MoreHorizontal className="size-4" />
           </Button>
         </div>
-      </header>
+      </ScreenHeader>
 
       {/* Center stage */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-14">

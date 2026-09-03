@@ -102,6 +102,19 @@
   --text-hero:      30px;   /* absorbs 28, 30, 32           */
   --text-hero-lg:   34px;   /* the h1 responsive ramp's top step */
 
+  /* Content widths. Four steps for new work — max-w-[Npx] currently appears
+     47 times across 25 values, but unlike the type scale those are largely
+     bespoke per context (a 380px rail is not a coarse 440px dialog), so
+     existing widths are deliberately NOT force-migrated. Use these for
+     anything new; see AGENTS.md. */
+  --container-narrow:  440px;
+  --container-measure: 620px;
+  --container-wide:    880px;
+  --container-full:   1140px;
+
+  /* Chrome */
+  --screen-header-h: 60px;
+
   /* Radii — named for what they wrap, not by t-shirt size */
   --radius-chip:    10px;
   --radius-control: 14px;

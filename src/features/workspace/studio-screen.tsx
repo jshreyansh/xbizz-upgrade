@@ -69,6 +69,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab } from "@/types/content";
+import { ScreenHeader } from "@/components/patterns/screen-header";
 
 const evidenceConfig: Record<EvidenceState, { label: string; className: string }> = {
   approved: { label: "Approved", className: "bg-[#e5f1e9] text-[#2d6749]" },
@@ -858,7 +859,7 @@ export function StudioScreen() {
 
   return (
     <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#edf0ed]">
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-card px-3 sm:px-5">
+      <ScreenHeader>
         <button onClick={() => setView("home")} className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5" aria-label="Back home">
           <ArrowLeft className="size-4" />
         </button>
@@ -926,7 +927,7 @@ export function StudioScreen() {
             </Button>
           )}
         </div>
-      </header>
+      </ScreenHeader>
 
       <div className="flex-1 min-h-0 flex overflow-hidden relative">
         <aside

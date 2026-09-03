@@ -43,6 +43,7 @@ import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
+import { ScreenHeader } from "@/components/patterns/screen-header";
 
 export type CreativeStudioMode = "editor" | "generating" | "review";
 
@@ -431,7 +432,7 @@ export function InfographicStudioScreen() {
   return (
     <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#edf0ed] text-left">
       {/* ─── Top Header Bar ─── */}
-      <header className="z-30 flex h-[60px] shrink-0 items-center justify-between border-b border-hair bg-card px-3 sm:px-5">
+      <ScreenHeader spread>
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
@@ -569,7 +570,7 @@ export function InfographicStudioScreen() {
             <PanelRight className="size-4" />
           </button>
         </div>
-      </header>
+      </ScreenHeader>
 
       {/* ─── Main Studio Body ─── */}
       <div className="flex flex-1 min-h-0 overflow-hidden relative">

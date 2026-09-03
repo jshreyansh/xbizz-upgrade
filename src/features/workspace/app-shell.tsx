@@ -26,13 +26,11 @@ export function AppShell({ children, pageTitle }: AppShellProps) {
   }, [toggleTeamDock]);
 
   return (
-    <div style={{ position: "fixed", inset: 0, display: "flex", background: "var(--canvas)", overflow: "hidden" }}>
+    <div className="fixed inset-0 flex overflow-hidden bg-canvas">
       <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, height: "100%" }}>
+      <div className="flex h-full min-w-0 flex-1 flex-col">
         <Topbar pageTitle={pageTitle} />
-        <main style={{ flex: 1, overflowY: "auto", padding: "28px 32px 80px" }}>
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto px-8 pt-7 pb-20">{children}</main>
       </div>
       <TeamDock />
     </div>
