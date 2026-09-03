@@ -324,25 +324,25 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="min-h-screen flex flex-col bg-[#f7f8f6]" onClick={() => setActivePopover(null)}>
       {/* ─── Top Studio-Matched Header Bar ─── */}
-      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-[var(--line)] bg-white px-3 sm:px-5">
+      <header className="z-30 flex h-[60px] shrink-0 items-center border-b border-hair bg-card px-3 sm:px-5">
         <button
           onClick={handleBackToSource}
-          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-[var(--ink-muted)] hover:bg-black/5 cursor-pointer"
+          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
           aria-label="Back to modes"
         >
           <ArrowLeft className="size-4" />
         </button>
         <SwishXMark compact />
-        <div className="mx-3 h-5 w-px bg-[var(--line)]" />
+        <div className="mx-3 h-5 w-px bg-hair" />
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate text-[12.5px] font-[800] text-[var(--ink)]">{projectName}</span>
-            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-[9px] font-bold text-[#69736e] sm:inline">
+            <span className="truncate text-body font-[800] text-ink">{projectName}</span>
+            <span className="hidden rounded-full bg-[#edf1ee] px-2 py-0.5 text-micro font-bold text-[#69736e] sm:inline">
               Draft v1
             </span>
           </div>
-          <div className="mt-0.5 hidden text-[9.5px] text-[var(--ink-muted)] sm:block">
+          <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
             Saved just now · Maya Kapoor
           </div>
         </div>
@@ -352,9 +352,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           <button
             type="button"
             onClick={() => setDossierModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-2.5 py-0.5 text-[10.5px] font-extrabold tracking-wide text-[var(--brand-deep)] border border-[var(--tint-line)] hover:bg-[var(--tint)]/80 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line hover:bg-tint/80 transition-colors cursor-pointer"
           >
-            <ShieldCheck className="size-3 text-[var(--brand)]" />
+            <ShieldCheck className="size-3 text-brand" />
             <span>{currentBrandName}</span>
             <ChevronDown className="size-2.5" />
           </button>
@@ -367,7 +367,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           <Button variant="ghost" size="icon" aria-label="Redo" disabled>
             <Redo2 className="size-4" />
           </Button>
-          <div className="mx-1 h-5 w-px bg-[var(--line)]" />
+          <div className="mx-1 h-5 w-px bg-hair" />
           <Button variant="ghost" size="sm">
             <History className="size-3.5" /> Versions
           </Button>
@@ -379,9 +379,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             variant="ghost"
             size="sm"
             onClick={() => setScenarioLibraryOpen(true)}
-            className="gap-1.5 text-[12px] font-bold text-[var(--ink-2)] hover:text-[var(--brand)] hover:bg-[var(--tint)] transition cursor-pointer"
+            className="gap-1.5 text-body font-bold text-ink-2 hover:text-brand hover:bg-tint transition cursor-pointer"
           >
-            <FlaskConical className="size-3.5 text-[var(--brand)]" />
+            <FlaskConical className="size-3.5 text-brand" />
             <span>Sample Briefs</span>
           </Button>
 
@@ -396,17 +396,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         <div className="w-full flex flex-col items-center space-y-5">
           {/* ── Hero Heading ── */}
           <div className="text-center max-w-[840px] min-h-[44px] sm:min-h-[50px] flex items-center justify-center">
-            <h1 className="text-[26px] sm:text-[32px] md:text-[34px] font-[850] text-[var(--ink)] tracking-tight inline-flex items-center justify-center flex-wrap">
+            <h1 className="text-display-lg sm:text-hero md:text-hero font-[850] text-ink tracking-tight inline-flex items-center justify-center flex-wrap">
               <span>{displayedHeadline || "\u00A0"}</span>
               <span
-                className="inline-block w-[3px] h-[0.85em] bg-[var(--brand)] ml-2 rounded-full animate-cursor-blink align-middle shrink-0"
+                className="inline-block w-[3px] h-[0.85em] bg-brand ml-2 rounded-full animate-cursor-blink align-middle shrink-0"
                 aria-hidden="true"
               />
             </h1>
           </div>
 
           {/* ── Prominently Wide AI Chat Input Box ── */}
-          <div className="w-full max-w-[940px] rounded-[26px] border border-black/[0.09] bg-white shadow-[0_12px_40px_rgba(0,0,0,0.07)] focus-within:border-[var(--brand)] focus-within:ring-4 focus-within:ring-[var(--brand)]/10 transition-all duration-200">
+          <div className="w-full max-w-[940px] rounded-[26px] border border-black/[0.09] bg-card shadow-[0_12px_40px_rgba(0,0,0,0.07)] focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
             <div className="p-6 pb-3">
               <textarea
                 value={brief}
@@ -416,7 +416,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 }}
                 rows={4}
                 placeholder={`Ask SwishX or describe what you want to create (e.g. "Create a concise ${currentBrandName} HCP launch video for dermatologists explaining clinical need, mechanism, and pivotal PASI 90 evidence")...`}
-                className="w-full resize-none bg-transparent text-[15.5px] leading-relaxed outline-none placeholder:text-[var(--ink-4)] text-[var(--ink)] font-normal"
+                className="w-full resize-none bg-transparent text-subhead leading-relaxed outline-none placeholder:text-ink-4 text-ink font-normal"
               />
             </div>
 
@@ -424,7 +424,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             {localFiles.length > 0 && (
               <div className="px-6 pb-2.5 flex flex-wrap gap-1.5">
                 {localFiles.map((file) => (
-                  <span key={file} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf1f4] px-2.5 py-1 text-[11.5px] font-medium text-[#52616a] border border-black/[0.06]">
+                  <span key={file} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf1f4] px-2.5 py-1 text-label font-medium text-[#52616a] border border-black/[0.06]">
                     <Paperclip className="size-3" />
                     <span className="max-w-[160px] truncate">{file}</span>
                     <button onClick={() => removeAttachment(file)} className="hover:text-black cursor-pointer"><X className="size-3" /></button>
@@ -452,15 +452,15 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                     className={cn(
                       "grid size-8 place-items-center rounded-xl border transition-all cursor-pointer shadow-2xs shrink-0",
                       plusMenuOpen
-                        ? "border-[var(--brand)] bg-[var(--brand)] text-white ring-2 ring-[var(--brand)]/20 shadow-xs"
-                        : "border-black/10 bg-white text-[var(--ink-muted)] hover:text-[var(--brand)] hover:border-[var(--brand)] hover:bg-white"
+                        ? "border-brand bg-brand text-white ring-2 ring-brand/20 shadow-xs"
+                        : "border-black/10 bg-card text-ink-3 hover:text-brand hover:border-brand hover:bg-card"
                     )}
                   >
                     <Plus className={cn("size-4 transition-transform duration-200", plusMenuOpen && "rotate-45")} />
                   </button>
 
                   {plusMenuOpen && (
-                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-2xl border border-black/10 bg-white p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] space-y-0.5">
+                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-2xl border border-black/10 bg-card p-1.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] space-y-0.5">
                       {/* 1. Attach Files */}
                       <button
                         type="button"
@@ -468,9 +468,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                           setPlusMenuOpen(false);
                           fileInputRef.current?.click();
                         }}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-[12px] font-medium text-[var(--ink)] hover:bg-black/5 text-left cursor-pointer transition-colors"
+                        className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-body font-medium text-ink hover:bg-black/5 text-left cursor-pointer transition-colors"
                       >
-                        <Paperclip className="size-4 text-[var(--brand)] shrink-0" />
+                        <Paperclip className="size-4 text-brand shrink-0" />
                         <span className="flex-1">Add files or briefs</span>
                       </button>
 
@@ -482,14 +482,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                         onMouseEnter={() => setActiveTier2("audience")}
                         onClick={() => setActiveTier2(activeTier2 === "audience" ? null : "audience")}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
                           activeTier2 === "audience"
-                            ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
-                            : "text-[var(--ink)] hover:bg-black/5"
+                            ? "bg-tint text-brand-deep font-bold shadow-2xs"
+                            : "text-ink hover:bg-black/5"
                         )}
                       >
                         <div className="flex items-center gap-2.5">
-                          <Users className="size-4 text-[var(--brand)] shrink-0" />
+                          <Users className="size-4 text-brand shrink-0" />
                           <span>Target Audience</span>
                         </div>
                         <ChevronRight className="size-3.5 opacity-60" />
@@ -501,14 +501,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                         onMouseEnter={() => setActiveTier2("aspect")}
                         onClick={() => setActiveTier2(activeTier2 === "aspect" ? null : "aspect")}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
                           activeTier2 === "aspect"
-                            ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
-                            : "text-[var(--ink)] hover:bg-black/5"
+                            ? "bg-tint text-brand-deep font-bold shadow-2xs"
+                            : "text-ink hover:bg-black/5"
                         )}
                       >
                         <div className="flex items-center gap-2.5">
-                          <Monitor className="size-4 text-[var(--brand)] shrink-0" />
+                          <Monitor className="size-4 text-brand shrink-0" />
                           <span>Size &amp; Aspect Ratio</span>
                         </div>
                         <ChevronRight className="size-3.5 opacity-60" />
@@ -520,14 +520,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                         onMouseEnter={() => setActiveTier2("topics")}
                         onClick={() => setActiveTier2(activeTier2 === "topics" ? null : "topics")}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
                           activeTier2 === "topics"
-                            ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
-                            : "text-[var(--ink)] hover:bg-black/5"
+                            ? "bg-tint text-brand-deep font-bold shadow-2xs"
+                            : "text-ink hover:bg-black/5"
                         )}
                       >
                         <div className="flex items-center gap-2.5">
-                          <Layers className="size-4 text-[var(--brand)] shrink-0" />
+                          <Layers className="size-4 text-brand shrink-0" />
                           <span>Clinical Topics</span>
                         </div>
                         <ChevronRight className="size-3.5 opacity-60" />
@@ -540,14 +540,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                           onMouseEnter={() => setActiveTier2("template")}
                           onClick={() => setActiveTier2(activeTier2 === "template" ? null : "template")}
                           className={cn(
-                            "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors text-left cursor-pointer",
+                            "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
                             activeTier2 === "template"
-                              ? "bg-[var(--tint)] text-[var(--brand-deep)] font-bold shadow-2xs"
-                              : "text-[var(--ink)] hover:bg-black/5"
+                              ? "bg-tint text-brand-deep font-bold shadow-2xs"
+                              : "text-ink hover:bg-black/5"
                           )}
                         >
                           <div className="flex items-center gap-2.5">
-                            <Palette className="size-4 text-[var(--brand)] shrink-0" />
+                            <Palette className="size-4 text-brand shrink-0" />
                             <span>Design &amp; Layout</span>
                           </div>
                           <ChevronRight className="size-3.5 opacity-60" />
@@ -556,10 +556,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
                       {/* Tier 2 submenu */}
                       {activeTier2 && (
-                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-2xl border border-black/10 bg-white p-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
+                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-2xl border border-black/10 bg-card p-2.5 shadow-[0_16px_48px_rgba(0,0,0,0.18)] flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
                           {activeTier2 === "audience" && (
                             <div className="space-y-1">
-                              <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
+                              <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
                                 <span>Target Audience</span>
                                 <span className="text-emerald-700 font-bold uppercase">{audience}</span>
                               </div>
@@ -582,15 +582,15 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                     className={cn(
                                       "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
                                       isSelected
-                                        ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
-                                        : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                        ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
+                                        : "hover:bg-black/5 text-ink border border-transparent"
                                     )}
                                   >
                                     <div>
-                                      <div className="text-[12px] font-bold">{item.label}</div>
-                                      <div className="text-[10px] text-[var(--ink-muted)] font-normal">{item.desc}</div>
+                                      <div className="text-body font-bold">{item.label}</div>
+                                      <div className="text-caption text-ink-3 font-normal">{item.desc}</div>
                                     </div>
-                                    {isSelected && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                                    {isSelected && <Check className="size-3.5 text-brand stroke-[3]" />}
                                   </button>
                                 );
                               })}
@@ -599,7 +599,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
                           {activeTier2 === "aspect" && (
                             <div className="space-y-1">
-                              <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
+                              <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
                                 <span>{isInfographic ? "Infographic Shape" : "Video Aspect Ratio"}</span>
                                 <span className="text-emerald-700 font-bold uppercase">
                                   {isInfographic ? pageShape : format || "16:9"}
@@ -629,15 +629,15 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                     className={cn(
                                       "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
                                       isSelected
-                                        ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
-                                        : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                        ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
+                                        : "hover:bg-black/5 text-ink border border-transparent"
                                     )}
                                   >
                                     <div>
-                                      <div className="text-[12px] font-bold">{item.label}</div>
-                                      <div className="text-[10px] text-[var(--ink-muted)] font-normal">{item.desc}</div>
+                                      <div className="text-body font-bold">{item.label}</div>
+                                      <div className="text-caption text-ink-3 font-normal">{item.desc}</div>
                                     </div>
-                                    {isSelected && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                                    {isSelected && <Check className="size-3.5 text-brand stroke-[3]" />}
                                   </button>
                                 );
                               })}
@@ -646,7 +646,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
                           {activeTier2 === "topics" && (
                             <div className="space-y-1">
-                              <div className="px-2 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)] flex items-center justify-between">
+                              <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
                                 <span>Clinical Topics</span>
                                 <span className="text-emerald-700 font-bold">{topics.length} selected</span>
                               </div>
@@ -667,12 +667,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                     className={cn(
                                       "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
                                       isSelected
-                                        ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs"
-                                        : "hover:bg-black/5 text-[var(--ink)] border border-transparent"
+                                        ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
+                                        : "hover:bg-black/5 text-ink border border-transparent"
                                     )}
                                   >
-                                    <span className="text-[12px]">{topic}</span>
-                                    {isSelected && <Check className="size-3.5 text-[var(--brand)] stroke-[3]" />}
+                                    <span className="text-body">{topic}</span>
+                                    {isSelected && <Check className="size-3.5 text-brand stroke-[3]" />}
                                   </button>
                                 );
                               })}
@@ -682,7 +682,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                           {activeTier2 === "template" && isInfographic && (
                             <div className="space-y-2">
                               <div className="space-y-1">
-                                <div className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                                <div className="px-2 py-0.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">
                                   Pages Count
                                 </div>
                                 <div className="grid grid-cols-2 gap-1.5">
@@ -695,10 +695,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                       type="button"
                                       onClick={() => setInfographicPages(item.id as "1" | "2")}
                                       className={cn(
-                                        "p-2 rounded-xl text-center text-[11px] font-bold border transition-colors cursor-pointer",
+                                        "p-2 rounded-xl text-center text-label font-bold border transition-colors cursor-pointer",
                                         infographicPages === item.id
-                                          ? "border-[var(--brand)] bg-[var(--tint)] text-[var(--brand-deep)]"
-                                          : "border-black/10 bg-white hover:bg-black/5 text-[var(--ink)]"
+                                          ? "border-brand bg-tint text-brand-deep"
+                                          : "border-black/10 bg-card hover:bg-black/5 text-ink"
                                       )}
                                     >
                                       {item.label}
@@ -708,7 +708,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                               </div>
 
                               <div className="space-y-1 pt-1 border-t border-black/5">
-                                <div className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+                                <div className="px-2 py-0.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">
                                   Design Template
                                 </div>
                                 {[
@@ -722,14 +722,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                     type="button"
                                     onClick={() => setInfographicTemplate(item.id as any)}
                                     className={cn(
-                                      "flex w-full items-center justify-between p-1.5 px-2.5 rounded-lg text-left text-[11.5px] transition-colors cursor-pointer",
+                                      "flex w-full items-center justify-between p-1.5 px-2.5 rounded-lg text-left text-label transition-colors cursor-pointer",
                                       infographicTemplate === item.id
-                                        ? "bg-[var(--tint)] font-bold text-[var(--brand-deep)]"
-                                        : "hover:bg-black/5 text-[var(--ink)]"
+                                        ? "bg-tint font-bold text-brand-deep"
+                                        : "hover:bg-black/5 text-ink"
                                     )}
                                   >
                                     <span>{item.label}</span>
-                                    {infographicTemplate === item.id && <Check className="size-3 text-[var(--brand)] stroke-[3]" />}
+                                    {infographicTemplate === item.id && <Check className="size-3 text-brand stroke-[3]" />}
                                   </button>
                                 ))}
                               </div>
@@ -745,7 +745,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11.5px] font-medium text-[var(--ink-muted)] hover:text-[var(--brand)] hover:bg-[var(--tint)] transition-colors cursor-pointer"
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-label font-medium text-ink-3 hover:text-brand hover:bg-tint transition-colors cursor-pointer"
                 >
                   <Paperclip className="size-3.5" />
                   <span>Attach</span>
@@ -754,7 +754,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
               {/* Far Right Bottom Action: Send Arrow CTA */}
               <div className="flex items-center gap-2.5 ml-auto shrink-0 pl-2">
-                <span className="hidden sm:inline text-[10px] font-mono text-[var(--ink-muted)]">
+                <span className="hidden sm:inline text-caption font-mono text-ink-3">
                   {brief.length > 0 ? `${brief.length} chars · ⌘↵` : "⌘↵ to send"}
                 </span>
 
@@ -764,7 +764,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   disabled={!brief.trim()}
                   title="Generate Plan (⌘↵)"
                   aria-label="Generate Plan"
-                  className="grid size-8 place-items-center rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-deep)] text-white shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:shadow-md hover:scale-105"
+                  className="grid size-8 place-items-center rounded-xl bg-brand hover:bg-brand-deep text-white shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:shadow-md hover:scale-105"
                 >
                   <ArrowUp className="size-4 stroke-[2.8]" />
                 </button>
@@ -774,7 +774,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
           {/* Clarification warning */}
           {clarificationOpen && (
-            <div className="w-full max-w-[940px] rounded-[18px] border border-[#f0cfa0] bg-[#fffbf2] p-4 text-[13px] text-[#78531d] shadow-2xs">
+            <div className="w-full max-w-[940px] rounded-panel border border-[#f0cfa0] bg-[#fffbf2] p-4 text-body-lg text-[#78531d] shadow-2xs">
               <div className="flex items-start gap-2.5">
                 <Info className="mt-0.5 size-4 shrink-0 text-[#b57314]" />
                 <div>
@@ -792,27 +792,27 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <button
               type="button"
               onClick={() => setDossierModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tint)] px-3 py-1 text-[11.5px] font-bold text-[var(--brand-deep)] border border-[var(--tint-line)] shadow-2xs hover:bg-[var(--tint)]/80 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-tint px-3 py-1 text-label font-bold text-brand-deep border border-tint-line shadow-2xs hover:bg-tint/80 transition-colors cursor-pointer"
             >
-              <ShieldCheck className="size-3.5 text-[var(--brand)]" />
+              <ShieldCheck className="size-3.5 text-brand" />
               <span>{sourceDisplayName}</span>
               <ChevronDown className="size-2.5 opacity-60" />
             </button>
             {audience && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11.5px] font-semibold text-[var(--ink-2)] border border-black/[0.08] shadow-2xs">
-                <Users className="size-3.5 text-[var(--brand)]" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-black/[0.08] shadow-2xs">
+                <Users className="size-3.5 text-brand" />
                 {audience}
               </span>
             )}
             {topics.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11.5px] font-semibold text-[var(--ink-2)] border border-black/[0.08] shadow-2xs">
-                <Layers className="size-3.5 text-[var(--brand)]" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-black/[0.08] shadow-2xs">
+                <Layers className="size-3.5 text-brand" />
                 {topics.length} {topics.length === 1 ? "topic" : "topics"}
               </span>
             )}
             {/* Engine context chip */}
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-[11.5px] font-semibold text-[var(--ink-2)] border border-black/[0.08] shadow-2xs">
-              <Film className="size-3.5 text-[var(--brand)]" />
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-black/[0.08] shadow-2xs">
+              <Film className="size-3.5 text-brand" />
               {modeDisplayName}
             </span>
             {selectedSources.map((source) => {
@@ -831,7 +831,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 onRemove={() => setLocalFiles((prev) => prev.filter((f) => f !== file))}
               />
             ))}
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full ml-1">
+            <span className="inline-flex items-center gap-1 text-label font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full ml-1">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Grounding Locked
             </span>
@@ -840,10 +840,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           {/* ── Example Prompts — BELOW the input ── */}
           <div className="w-full max-w-[940px] flex flex-col gap-3 pt-2">
             <div className="flex items-center justify-between px-1">
-              <span className="text-[10.5px] font-extrabold uppercase tracking-wider text-[var(--ink-muted)]">
+              <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3">
                 Example Prompts
               </span>
-              <span className="text-[10.5px] text-[var(--ink-muted)]">Click any prompt to load into brief</span>
+              <span className="text-caption text-ink-3">Click any prompt to load into brief</span>
             </div>
 
             {samplePrompts.map((sample) => {
@@ -859,20 +859,20 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   className={cn(
                     "group flex items-center justify-between gap-3.5 rounded-2xl border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",
                     isSelected
-                      ? "border-[var(--brand)] bg-[var(--tint)]/70 ring-2 ring-[var(--brand)]/20 shadow-xs"
-                      : "border-black/[0.08] bg-white hover:border-[var(--brand)]/80 hover:bg-[#fffcfb]"
+                      ? "border-brand bg-tint/70 ring-2 ring-brand/20 shadow-xs"
+                      : "border-black/[0.08] bg-card hover:border-brand/80 hover:bg-[#fffcfb]"
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <span className="inline-flex items-center rounded-lg bg-[var(--tint)] px-2 py-0.5 text-[11px] font-extrabold text-[var(--brand-deep)] border border-[var(--tint-line)] shrink-0">
+                    <span className="inline-flex items-center rounded-lg bg-tint px-2 py-0.5 text-label font-extrabold text-brand-deep border border-tint-line shrink-0">
                       {sample.tag}
                     </span>
-                    <span className="text-[12.5px] text-[var(--ink)] font-medium leading-normal line-clamp-1 flex-1">
+                    <span className="text-body text-ink font-medium leading-normal line-clamp-1 flex-1">
                       "{sample.prompt}"
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-[var(--brand)] opacity-80 group-hover:opacity-100 shrink-0 ml-2">
+                  <div className="flex items-center gap-1 text-label font-bold text-brand opacity-80 group-hover:opacity-100 shrink-0 ml-2">
                     <span className="hidden sm:inline">Use prompt</span>
                     <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
                   </div>
@@ -923,10 +923,10 @@ function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: ()
     : source.kind === "reference" ? "bg-[#f3eee8] text-[#705f4d]"
     : "bg-[#f5ece8] text-[#775548]";
   return (
-    <span className={cn("flex min-h-9 max-w-full items-center gap-2 rounded-[10px] px-2.5 text-[12.5px] font-medium border border-black/[0.06]", color)}>
+    <span className={cn("flex min-h-9 max-w-full items-center gap-2 rounded-chip px-2.5 text-body font-medium border border-black/[0.06]", color)}>
       <FileText className="size-3.5 shrink-0 opacity-75" />
       <span className="max-w-[210px] truncate">{source.name}</span>
-      {approved && <span className="rounded-full bg-white/65 px-1.5 py-0.5 text-[10.5px] font-semibold opacity-80">Current</span>}
+      {approved && <span className="rounded-full bg-white/65 px-1.5 py-0.5 text-caption font-semibold opacity-80">Current</span>}
       <button onClick={onRemove} className="grid size-5 shrink-0 place-items-center rounded-full opacity-60 hover:bg-white/70 hover:opacity-100 transition" aria-label={`Remove ${source.name}`}>
         <X className="size-3" />
       </button>
@@ -936,7 +936,7 @@ function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: ()
 
 function AttachmentChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <span className="flex min-h-9 items-center gap-2 rounded-[10px] bg-[#edf1f4] px-2.5 text-[12.5px] font-medium text-[#52616a] border border-black/[0.06]">
+    <span className="flex min-h-9 items-center gap-2 rounded-chip bg-[#edf1f4] px-2.5 text-body font-medium text-[#52616a] border border-black/[0.06]">
       <Paperclip className="size-3.5 opacity-75" />
       <span className="max-w-[180px] truncate">{label}</span>
       <button onClick={onRemove} className="grid size-5 place-items-center rounded-full opacity-60 hover:bg-white/70 hover:opacity-100 transition" aria-label={`Remove ${label}`}>
@@ -959,12 +959,12 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-[#10231c]/38 backdrop-blur-[2px]" role="dialog" aria-modal="true">
       <div className="slide-left flex h-full w-full max-w-[440px] flex-col border-l border-white/50 bg-[#fafbfa] shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
+        <div className="flex items-center justify-between border-b border-hair px-5 py-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Demo Library</div>
-            <h3 className="text-[17px] font-semibold">Sample briefs</h3>
+            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Demo Library</div>
+            <h3 className="text-title font-semibold">Sample briefs</h3>
           </div>
-          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-[#eef2ef]" aria-label="Close"><X className="size-4" /></button>
+          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-[#eef2ef]" aria-label="Close"><X className="size-4" /></button>
         </div>
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {categories.map((category) => {
@@ -972,19 +972,19 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
             const list = demoScenarios.filter((item) => item.category === category);
             return (
               <div key={category} className="space-y-2">
-                <div className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">
-                  <CategoryIcon className="size-3.5 text-[var(--brand)]" />
+                <div className="flex items-center gap-1.5 text-body font-bold uppercase tracking-wider text-ink-3">
+                  <CategoryIcon className="size-3.5 text-brand" />
                   <span>{category}</span>
                 </div>
                 {list.map((scenario) => {
                   const active = scenario.id === currentScenarioId;
                   return (
-                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-[14px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-[#eef5f1]" : "border-[var(--line)] bg-white hover:border-[#ccd7d1]")}>
+                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-[#eef5f1]" : "border-hair bg-card hover:border-[#ccd7d1]")}>
                       <div className="flex items-center justify-between">
-                        <b className="text-[13.5px] font-semibold">{scenario.label}</b>
-                        {active && <span className="rounded-full bg-[var(--brand)] px-2 py-0.5 text-[10px] font-bold text-white">Active</span>}
+                        <b className="text-body-lg font-semibold">{scenario.label}</b>
+                        {active && <span className="rounded-full bg-brand px-2 py-0.5 text-caption font-bold text-white">Active</span>}
                       </div>
-                      <p className="mt-1 text-[12.5px] leading-5 text-[var(--ink-muted)]">{scenario.description}</p>
+                      <p className="mt-1 text-body leading-5 text-ink-3">{scenario.description}</p>
                     </button>
                   );
                 })}
@@ -992,7 +992,7 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
             );
           })}
         </div>
-        <div className="border-t border-[var(--line)] p-4">
+        <div className="border-t border-hair p-4">
           <Button variant="secondary" size="sm" onClick={onReset} className="w-full">Reset to default demo case</Button>
         </div>
       </div>
@@ -1021,37 +1021,37 @@ function SourceLibraryModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#10231c]/38 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
-      <div className="flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-[22px] border border-white/60 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[var(--line)] p-5">
+      <div className="flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-[22px] border border-white/60 bg-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-hair p-5">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--brand)]">Regulatory Sources</div>
-            <h3 className="text-[18px] font-semibold">Attach verified evidence</h3>
+            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Regulatory Sources</div>
+            <h3 className="text-title font-semibold">Attach verified evidence</h3>
           </div>
-          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-[var(--ink-muted)] hover:bg-[#eef2ef]" aria-label="Close"><X className="size-4" /></button>
+          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-[#eef2ef]" aria-label="Close"><X className="size-4" /></button>
         </div>
-        <div className="p-4 border-b border-[var(--line)]">
-          <div className="flex items-center gap-2 rounded-[12px] border border-[var(--line)] bg-[#fafbf9] px-3 py-2">
-            <Search className="size-4 text-[var(--ink-muted)]" />
-            <input value={query} onChange={(e) => onQueryChange(e.target.value)} placeholder="Search FDA labels, trial protocols, brand assets..." className="w-full bg-transparent text-[13.5px] outline-none" />
+        <div className="p-4 border-b border-hair">
+          <div className="flex items-center gap-2 rounded-[12px] border border-hair bg-[#fafbf9] px-3 py-2">
+            <Search className="size-4 text-ink-3" />
+            <input value={query} onChange={(e) => onQueryChange(e.target.value)} placeholder="Search FDA labels, trial protocols, brand assets..." className="w-full bg-transparent text-body-lg outline-none" />
           </div>
         </div>
         <div className="flex-1 space-y-2 overflow-y-auto p-4">
           {sources.map((source) => {
             const active = selectedIds.includes(source.id);
             return (
-              <div key={source.id} className={cn("flex items-center justify-between rounded-[14px] border p-3 transition", active ? "border-[#adc4b8] bg-[#edf5f0]" : "border-[var(--line)] bg-white")}>
+              <div key={source.id} className={cn("flex items-center justify-between rounded-control border p-3 transition", active ? "border-[#adc4b8] bg-[#edf5f0]" : "border-hair bg-card")}>
                 <div className="min-w-0 flex-1 pr-3">
-                  <b className="block truncate text-[13.5px] font-semibold">{source.name.replace(/DERMORA/g, brandName)}</b>
-                  <span className="block truncate text-[12px] text-[var(--ink-muted)]">{source.detail.replace(/DERMORA/g, brandName)}</span>
+                  <b className="block truncate text-body-lg font-semibold">{source.name.replace(/DERMORA/g, brandName)}</b>
+                  <span className="block truncate text-body text-ink-3">{source.detail.replace(/DERMORA/g, brandName)}</span>
                 </div>
-                <Button size="sm" variant={active ? "secondary" : "primary"} onClick={() => onToggle(source.id)} className="shrink-0 text-[12px]">
+                <Button size="sm" variant={active ? "secondary" : "primary"} onClick={() => onToggle(source.id)} className="shrink-0 text-body">
                   {active ? "Remove" : "Attach"}
                 </Button>
               </div>
             );
           })}
         </div>
-        <div className="flex items-center justify-between border-t border-[var(--line)] p-4">
+        <div className="flex items-center justify-between border-t border-hair p-4">
           <Button variant="secondary" size="sm" onClick={onUpload} className="gap-1.5"><Upload className="size-3.5" /> Upload document</Button>
           <Button size="sm" onClick={onClose}>Done</Button>
         </div>
