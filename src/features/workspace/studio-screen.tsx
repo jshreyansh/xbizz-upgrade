@@ -858,7 +858,7 @@ export function StudioScreen() {
   };
 
   return (
-    <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#edf0ed]">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#edf0ed]">
       <ScreenHeader>
         <button onClick={() => setView("home")} className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5" aria-label="Back home">
           <ArrowLeft className="size-4" />
