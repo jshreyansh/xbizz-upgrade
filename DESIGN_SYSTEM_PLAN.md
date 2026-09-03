@@ -4,7 +4,9 @@ Companion to `DESIGN.md` (principles) and `AGENTS.md` (product guardrails).
 This document is the *mechanical* plan: how styling stops being distributed
 across 69 files and becomes a set of components with properties.
 
-Status: Phase 0 and Phase 1 landed (`0aa0e0d`, `e71670d`). Phases 2-6 pending.
+Status: Phases 0, 1, 2, 3, 4 and 7 landed. Phase 5 was cancelled after
+measuring (see below); Phase 6 screen decomposition is the only substantial
+work left, and is deliberately deprioritised — see the note at the end.
 
 ---
 
@@ -307,3 +309,36 @@ Phase 6  lint + gallery  — low risk,  prevents regression
 Total surface: ~2,300 mechanical call-site migrations and ~25 new components.
 Phases 0–2 deliver most of the consistency win; 3–5 deliver maintainability;
 6 delivers the experimentation loop.
+
+
+---
+
+## 8. Where this ended up
+
+Landed: the token foundation and type scale; `Text`, `Label`, `Surface`,
+`Button`, `IconButton`, `Field`, `Chip`, `Modal`, `Stack`/`Row`, `Container`;
+the layout layer; `ChipMultiSelect`; elevation tokens; the bulk codemod across
+all 69 files; the ESLint guard; and `/admin/design-system`.
+
+Eliminated entirely: arbitrary font sizes (818 -> 0), `[var(--x)]` strings
+(1,311 -> 0), opaque `bg-white` (481 -> 0), `border-black/N` (283 -> 0), and
+96% of the raw Tailwind palette classes.
+
+**Phase 6 (screen decomposition) is deliberately left.** The two fixture
+extractions were pure moves and shipped. Splitting the remaining JSX means
+threading heavy shared state through new component boundaries — not a pure
+move, and the same class of change that produced this session's three
+regressions. It buys readability, not consistency, and consistency was the
+goal. Worth doing, but as its own focused piece of work with the snapshot
+harness in place, not as a tail-end task.
+
+**What the session taught, worth keeping:**
+
+1. Count before building. Five of six planned patterns did not survive being
+   counted, and the Chip variants I guessed were wrong in two ways.
+2. Never name a token after a framework keyword. `--container-full` silently
+   hijacked `w-full` across 163 call sites.
+3. Register custom scale names with tailwind-merge, or it misclassifies them
+   and silently deletes the class you wanted.
+4. Assert positively. Two verification passes in this session "passed" against
+   a collapsed browser pane and a 500 page.

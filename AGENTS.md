@@ -35,6 +35,10 @@ All interface work must also satisfy the principles, typography thresholds, view
 
 ## Design system: start here, not from scratch
 
+**Open `/admin/design-system` first.** It renders every token, type step,
+component variant, radius, elevation and layout width from the live code, so
+it is always accurate. `npm run lint:tokens` shows what still needs migrating.
+
 The point of this section is the 80/20 split. Roughly 80% of any new screen
 should be assembled from the primitives below. The remaining 20% will be
 genuinely new, and that is fine and expected — the goal is not to force
@@ -79,6 +83,13 @@ One-offs are allowed. Make them visible rather than hidden:
   wins, so you never need to fork a component to adjust it
 - something genuinely novel to one screen: build it in that feature folder,
   composed from the primitives
+
+### Enforced by lint
+
+The first four bans above are ESLint errors in `src/features/**` and
+`src/app/**`, because each is at zero violations and can now only be a
+regression. The rest are tracked as a burn-down by `npm run lint:tokens`;
+when a row reaches zero, promote it into `BANNED` in `eslint.config.mjs`.
 
 ### Promotion rule
 
