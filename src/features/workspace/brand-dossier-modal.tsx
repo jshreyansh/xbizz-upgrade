@@ -141,7 +141,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const currentTopics = TOPICS_BY_AUDIENCE[audience] || TOPICS_BY_AUDIENCE.HCP;
 
-  const canProceed = (sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) && selectedTopics.length > 0;
+  // Section 3 is REVEALED, not just answered. Two effects seed a default pair of
+  // topics, and toggleTopic refuses to drop below one, so selectedTopics is
+  // never empty — which meant this used to reduce to "a brand exists" and left
+  // Start Project live while section 3 had never been opened.
+  const hasReachedOutputShape = stage === "details";
+  const canProceed =
+    (sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
+    hasReachedOutputShape &&
+    selectedTopics.length > 0;
 
   const toggleTopic = (label: string) => {
     if (selectedTopics.includes(label)) {
@@ -568,7 +576,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
-                <Lock className="size-3" /> Select audience first
+                <Lock className="size-3" />{" "}
+                {stage === "focus" ? "Select a brand first" : "Confirm audience first"}
               </span>
             </div>
           ) : (

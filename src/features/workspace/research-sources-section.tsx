@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   ShieldCheck,
   Eye,
   Check,
+  ChevronDown,
   Plus,
   X,
   FileText,
@@ -34,6 +35,7 @@ export function ResearchSourcesContent({
   onContinue,
 }: ResearchSourcesSectionProps) {
   const docUploadRef = useRef<HTMLInputElement>(null);
+  const [dossiersOpen, setDossiersOpen] = useState(false);
 
   const molecule =
     brandName === "Onkavia"
@@ -137,56 +139,8 @@ export function ResearchSourcesContent({
 
   return (
     <div className="space-y-4">
-      {/* Pre-built dossiers tray */}
-      <div className="rounded-panel bg-[#f4f6f3] border border-[#e2e8e3] p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="size-4 text-ok" />
-            <span className="text-body font-extrabold text-ink">
-              Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
-            </span>
-            <span className="text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-full">
-              SmPC &amp; Label Active
-            </span>
-          </div>
-          <span className="text-label text-ink-3">Click View to inspect full claims &amp; sources</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          {prebuiltDossiers.map((dossier, idx) => (
-            <div
-              key={idx}
-              className="p-3 rounded-control bg-card border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded border border-tint-line">
-                    {dossier.market}
-                  </span>
-                  <span className="text-caption font-bold text-ok bg-ok-bg px-1.5 py-0.2 rounded">
-                    {dossier.claims} claims
-                  </span>
-                </div>
-                <div className="text-body font-bold text-ink leading-snug line-clamp-1">
-                  {dossier.name}
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onPreviewDossier(dossier)}
-                className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-chip bg-[#f0f4f1] hover:bg-tint text-brand-deep text-label font-bold border border-[#d8e0da] transition-colors cursor-pointer"
-              >
-                <Eye className="size-3.5 text-brand" />
-                <span>View</span>
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* 3 Grounding Options */}
-      <div className="space-y-2 pt-1">
+      <div className="space-y-2">
         <span className="text-label font-bold uppercase tracking-wider text-ink-3">
           Select Grounding Source Mode
         </span>
@@ -239,6 +193,71 @@ export function ResearchSourcesContent({
             );
           })}
         </div>
+      </div>
+
+      {/* Verified dossiers. Reference material, not a decision, so it sits
+          BELOW the choice and starts collapsed. */}
+      <div className="rounded-panel bg-[#f4f6f3] border border-[#e2e8e3]">
+        <button
+          type="button"
+          onClick={() => setDossiersOpen((v) => !v)}
+          aria-expanded={dossiersOpen}
+          className="flex w-full cursor-pointer items-center justify-between gap-2 p-4 text-left"
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <ShieldCheck className="size-4 shrink-0 text-ok" />
+            <span className="text-body font-extrabold text-ink truncate">
+              Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
+            </span>
+            <span className="shrink-0 text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-full">
+              SmPC &amp; Label Active
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden text-label text-ink-3 sm:inline">
+              {dossiersOpen
+                ? "Click View to inspect full claims & sources"
+                : `${prebuiltDossiers.length} verified dossiers`}
+            </span>
+            <ChevronDown className={cn("size-4 text-ink-3 transition-transform duration-200", dossiersOpen && "rotate-180")} />
+          </div>
+        </button>
+
+        {dossiersOpen && (
+          <div className="px-4 pb-4 animate-in fade-in duration-150">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {prebuiltDossiers.map((dossier, idx) => (
+              <div
+                key={idx}
+                className="p-3 rounded-control bg-card border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded border border-tint-line">
+                      {dossier.market}
+                    </span>
+                    <span className="text-caption font-bold text-ok bg-ok-bg px-1.5 py-0.2 rounded">
+                      {dossier.claims} claims
+                    </span>
+                  </div>
+                  <div className="text-body font-bold text-ink leading-snug line-clamp-1">
+                    {dossier.name}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onPreviewDossier(dossier)}
+                  className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-chip bg-[#f0f4f1] hover:bg-tint text-brand-deep text-label font-bold border border-[#d8e0da] transition-colors cursor-pointer"
+                >
+                  <Eye className="size-3.5 text-brand" />
+                  <span>View</span>
+                </button>
+              </div>
+            ))}
+          </div>
+          </div>
+        )}
       </div>
 
       {/* Uploaded Documents Context (Shown when Option 1 or 2 is selected) */}
