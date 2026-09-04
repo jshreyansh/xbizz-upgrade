@@ -32,12 +32,13 @@ export interface WorkbenchLayoutProps {
   /** Overlays, positioned by themselves. */
   overlay?: ReactNode;
 
-  mainClassName?: string;
   panelWidth?: number;
   /** Supply this to make the panel drag-resizable. */
   onPanelWidthChange?: (width: number) => void;
   onPanelResizingChange?: (resizing: boolean) => void;
   panelStorageKey?: string;
+  /** Floor for the region beside the panel; caps how wide a drag can go. */
+  panelMinCanvas?: number;
 
   /** Controlled: whether the right panel is showing. */
   panelOpen?: boolean;
@@ -55,9 +56,8 @@ export interface WorkbenchLayoutProps {
 
 export function WorkbenchLayout({
   header, rail, main, panel, bottomBar, overlay,
-  mainClassName,
   panelWidth = SIDE_PANEL_DEFAULT_WIDTH,
-  onPanelWidthChange, onPanelResizingChange, panelStorageKey,
+  onPanelWidthChange, onPanelResizingChange, panelStorageKey, panelMinCanvas,
   panelOpen = true, onPanelOpenChange,
   autoCollapsePanelBelow,
   className,
@@ -87,14 +87,20 @@ export function WorkbenchLayout({
             brings its own scroll, so a wrapper here could only fight it. */}
         {rail}
 
-        {/* No wrapper div around {main}. The adopting screens each bring their
-            own scrolling region, and an extra overflow-hidden ancestor between
-            it and this flex column is exactly what breaks the scroll contract
-            <Panel> exists to protect. The slot child owns flex-1 + min-h-0. */}
-        <main className={cn("flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden", mainClassName)}>
-          {main}
-          {bottomBar && <div className="shrink-0 border-t border-hair">{bottomBar}</div>}
-        </main>
+        {/* Every slot renders as given. The layout owns the root column and
+            the row; each region owns its own element, width and scrolling.
+            This is not fussiness — studio-screen cross-fades its rail and
+            canvas (flex 0 <-> 1 with opacity), so a flex-1 wrapper here would
+            pin the canvas open and break the collapse; and an extra
+            overflow-hidden ancestor is what breaks the scroll contract that
+            <Panel> exists to protect. The one exception is a bottom bar,
+            which by definition needs a column to sit under. */}
+        {bottomBar ? (
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            {main}
+            <div className="shrink-0 border-t border-hair">{bottomBar}</div>
+          </div>
+        ) : main}
 
         {panel && (
           <SidePanel
@@ -104,6 +110,7 @@ export function WorkbenchLayout({
             onResizingChange={onPanelResizingChange}
             resizable={Boolean(onPanelWidthChange)}
             storageKey={panelStorageKey}
+            {...(panelMinCanvas !== undefined && { minCanvas: panelMinCanvas })}
           >
             {panel}
           </SidePanel>

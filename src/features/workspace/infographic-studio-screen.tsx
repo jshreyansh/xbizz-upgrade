@@ -715,7 +715,7 @@ export function InfographicStudioScreen() {
               </div>
             </div>
         ) : (
-          <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 bg-[#e5e8e4] flex justify-center items-start">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 bg-[#e5e8e4] flex justify-center items-start">
             <div className="w-full max-w-[720px] flex justify-center py-4 my-auto">
               <div
                 style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "center top" }}
@@ -882,7 +882,7 @@ export function InfographicStudioScreen() {
                 </div>
               </div>
             </div>
-          </div>
+          </main>
         )
       }
       panel={

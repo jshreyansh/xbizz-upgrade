@@ -70,7 +70,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
-import { SidePanel } from "@/components/patterns/side-panel";
+import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 
 const evidenceConfig: Record<EvidenceState, { label: string; className: string }> = {
   approved: { label: "Approved", className: "bg-[#e5f1e9] text-[#2d6749]" },
@@ -863,1239 +863,1243 @@ export function StudioScreen() {
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#edf0ed]">
-      <ScreenHeader>
-        <button onClick={() => setView("home")} className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5" aria-label="Back home">
-          <ArrowLeft className="size-4" />
-        </button>
-        <SwishXMark compact />
-        <div className="mx-3 h-5 w-px bg-hair" />
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-body font-[800] text-ink">{sourcePayload?.dossierId ? `${dossierNames[sourcePayload.dossierId] || "Velmora"} HCP launch` : "DERMORA HCP launch"}</span>
-            <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">Draft v1</span>
-          </div>
-          <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
-        </div>
-
-        <div className="ml-6 hidden items-center gap-1 sm:flex">
-          {studioMode === "scenes" && <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">Script View</span>}
-          {studioMode === "editor" && (
-            <div className="flex items-center gap-1.5">
-              <button onClick={handleReturnToScript} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer">
-                <FileText className="size-3.5 text-brand" /> <span>Script View</span>
-              </button>
-              <span className="text-ink-3">/</span>
-              <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">Canvas Editor</span>
-            </div>
-          )}
-          {studioMode === "generating" && <span className="inline-flex items-center gap-1.5 rounded-full bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse"><Sparkles className="size-3 text-brand-deep animate-spin" /><span>Generating High-Res Video...</span></span>}
-          {studioMode === "review" && (
-            <div className="flex items-center gap-1.5">
-              <button onClick={handleReturnToEditor} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"><Pencil className="size-3 text-brand" /> <span>Editor</span></button>
-              <span className="text-ink-3">/</span>
-              <span className="rounded-full bg-ok-bg px-3 py-0.5 text-caption font-extrabold text-ok border border-ok-line">Shared Review View · Final Master ({totalDurationSeconds}s)</span>
-            </div>
-          )}
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          {/* Toggle Right Sidebar Panel Button (Icon Only) */}
-          <button
-            type="button"
-            onClick={toggleCopilotPanel}
-            className={cn(
-              "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
-              copilotPanelOpen
-                ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
-                : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
-            )}
-            title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
-            aria-label="Toggle sidebar"
-          >
-            <PanelRight className="size-4" />
+    <WorkbenchLayout
+      className="bg-[#edf0ed]"
+      panelOpen={copilotPanelOpen}
+      onPanelOpenChange={setCopilotPanelOpen}
+      panelWidth={copilotPanelWidth}
+      onPanelWidthChange={setCopilotPanelWidth}
+      onPanelResizingChange={setCopilotPanelResizing}
+      panelStorageKey="swishx.copilotPanelWidth"
+      /* The editor and review modes put a fixed rail left of the canvas, so
+         the canvas floor has to account for it or a full-width drag at tablet
+         size leaves ~140px of canvas. */
+      panelMinCanvas={isReview ? 240 + 360 : isEditor ? 220 + 360 : 360}
+      header={
+        <ScreenHeader>
+          <button onClick={() => setView("home")} className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5" aria-label="Back home">
+            <ArrowLeft className="size-4" />
           </button>
-
-          {isEditor && (
-            <>
-              <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><Sparkles className="size-3.5" /> <span>Generate and Publish</span></Button>
-            </>
-          )}
-          {isReview && (
-            <Button
-              size="sm"
-              onClick={() => setShareModalOpen(true)}
-              className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"
-            >
-              <Share2 className="size-3.5" />
-              <span>Share Link</span>
-            </Button>
-          )}
-        </div>
-      </ScreenHeader>
-
-      <div className="flex-1 min-h-0 flex overflow-hidden relative">
-        <aside
-          style={{
-            width: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            minWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            maxWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            transition: copilotPanelResizing ? "none" : "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          className={cn(
-            "flex flex-col shrink-0 min-h-0 border-r border-hair overflow-hidden transition-colors duration-300",
-            isGenerating ? "bg-[#eef1ed] p-4 sm:p-6 lg:p-7" : isReview ? "bg-canvas" : isEditor ? "bg-[#f8f9f7]" : "bg-[#eef1ed] p-4 sm:p-6 lg:p-7"
-          )}
-        >
-          {isGenerating ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
-              <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-                <Sparkles className="size-10 text-brand animate-pulse" />
-              </div>
-
-              <h3 className="text-display font-extrabold text-ink tracking-tight">
-                Generating High-Resolution Video Master...
-              </h3>
-              <p className="text-body-lg text-ink-3 mt-1.5 max-w-[460px]">
-                Synthesizing kinematic 3D scene models, rendering voiceover audio sync, and verifying fair balance across all {sceneList.length} scenes.
-              </p>
-
-              <div className="mt-8 w-full max-w-[380px] space-y-2.5 text-left text-body">
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                  <Check className={cn("size-4.5 shrink-0", videoGenStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Parsed {sceneList.length} storyboard scenes &amp; timing</span>
-                </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                  <Check className={cn("size-4.5 shrink-0", videoGenStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Synthesized 3D visual kinematics &amp; lighting</span>
-                </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                  <Check className={cn("size-4.5 shrink-0", videoGenStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Synced clinical voiceover narration</span>
-                </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 4 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                  <Check className={cn("size-4.5 shrink-0", videoGenStep >= 4 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Linking citations to FDA label §5.1</span>
-                </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 5 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                  {videoGenStep >= 5 ? (
-                    <Check className="size-4.5 shrink-0 text-ok" strokeWidth={2.5} />
-                  ) : (
-                    <Sparkles className="size-4.5 shrink-0 text-brand animate-spin" />
-                  )}
-                  <span className="font-semibold">Final cloud master render ({selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"})</span>
-                </div>
-              </div>
-
-              <div className="mt-8 flex items-center gap-4 text-body text-ink-3">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <span>✉ Email notification queued</span>
-                </span>
-                <span>•</span>
-                <button
-                  type="button"
-                  onClick={handleEnterReviewView}
-                  className="font-bold text-brand hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <span>Preview Master Video</span>
-                  <ArrowRight className="size-3.5" />
-                </button>
-              </div>
+          <SwishXMark compact />
+          <div className="mx-3 h-5 w-px bg-hair" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-body font-[800] text-ink">{sourcePayload?.dossierId ? `${dossierNames[sourcePayload.dossierId] || "Velmora"} HCP launch` : "DERMORA HCP launch"}</span>
+              <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">Draft v1</span>
             </div>
-          ) : (
-            <>
-              {isReview ? (
-                <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3.5 bg-card">
-                  <span className="text-caption font-extrabold uppercase tracking-[0.12em] text-[#596660] flex items-center gap-1.5"><Film className="size-3.5 text-brand" /> <span>Video Chapters · {chapters.length}</span></span>
-                  <span className="text-caption font-bold text-ink-3">{totalDurationSeconds}s</span>
-                </div>
-              ) : isEditor ? (
-                <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3 bg-card">
-                  <span className="text-micro font-bold uppercase tracking-[0.12em] text-[#77817c]">Scenes · {totalDurationSeconds} sec</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between pb-4 shrink-0">
-                  <div>
-                    <h2 className="text-display font-[850] text-ink tracking-tight">
-                      Script
-                    </h2>
-                    <p className="text-body text-ink-3 mt-0.5">
-                      Review and shape the clinical narrative before generating the full visual canvas.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={handleAddDirectScriptScene}
-                    size="sm"
-                    className="bg-card border border-hair text-ink hover:border-brand hover:bg-tint hover:text-brand-deep font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
-                  >
-                    <Plus className="size-3.5 text-brand" />
-                    <span>Add Script Scene</span>
-                  </Button>
-                </div>
+            <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
+          </div>
+
+          <div className="ml-6 hidden items-center gap-1 sm:flex">
+            {studioMode === "scenes" && <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">Script View</span>}
+            {studioMode === "editor" && (
+              <div className="flex items-center gap-1.5">
+                <button onClick={handleReturnToScript} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer">
+                  <FileText className="size-3.5 text-brand" /> <span>Script View</span>
+                </button>
+                <span className="text-ink-3">/</span>
+                <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">Canvas Editor</span>
+              </div>
+            )}
+            {studioMode === "generating" && <span className="inline-flex items-center gap-1.5 rounded-full bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse"><Sparkles className="size-3 text-brand-deep animate-spin" /><span>Generating High-Res Video...</span></span>}
+            {studioMode === "review" && (
+              <div className="flex items-center gap-1.5">
+                <button onClick={handleReturnToEditor} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"><Pencil className="size-3 text-brand" /> <span>Editor</span></button>
+                <span className="text-ink-3">/</span>
+                <span className="rounded-full bg-ok-bg px-3 py-0.5 text-caption font-extrabold text-ok border border-ok-line">Shared Review View · Final Master ({totalDurationSeconds}s)</span>
+              </div>
+            )}
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            {/* Toggle Right Sidebar Panel Button (Icon Only) */}
+            <button
+              type="button"
+              onClick={toggleCopilotPanel}
+              className={cn(
+                "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
+                copilotPanelOpen
+                  ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
+                  : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
               )}
+              title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
+              aria-label="Toggle sidebar"
+            >
+              <PanelRight className="size-4" />
+            </button>
 
-              <div className={cn("flex-1 min-h-0 overflow-y-auto space-y-2.5", isReview ? "p-2.5 space-y-2" : isEditor ? "p-2.5" : "p-1 pr-2 space-y-3")}>
-                {isReview
-                  ? chapters.map((ch) => {
-                      const isCurrent = activeMasterChapter?.id === ch.id;
-                      return (
-                        <button
-                          key={ch.id}
-                          type="button"
-                          onClick={() => {
-                            setMasterCurrentTime(ch.start);
-                            setMasterPlaying(true);
-                          }}
-                          className={cn(
-                            "group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer",
-                            isCurrent
-                              ? "border-brand bg-tint shadow-xs ring-1 ring-brand"
-                              : "border-hair bg-card hover:border-hair-3 hover:bg-canvas"
-                          )}
-                        >
-                          <div className="flex items-center justify-between gap-1 mb-1">
-                            <span
-                              className={cn(
-                                "rounded-md px-1.5 py-0.5 text-micro font-extrabold",
-                                isCurrent ? "bg-brand text-white" : "bg-black/5 text-ink-3"
-                              )}
-                            >
-                              0:{ch.start.toString().padStart(2, "0")} – 0:{ch.end.toString().padStart(2, "0")}
-                            </span>
-                            <span className="text-micro text-ink-3 font-bold">{ch.duration}s</span>
-                          </div>
-                          <div className="text-label font-bold text-ink line-clamp-1 group-hover:text-brand-deep">
-                            {ch.number}. {ch.title}
-                          </div>
-                          <div className="text-caption text-ink-3 line-clamp-1 mt-0.5">{ch.narration}</div>
-                        </button>
-                      );
-                    })
-                  : isEditor
-                  ? sceneList.map((sc) => {
-                      const isSelected = selectedScene.id === sc.id;
-                      const isGenerated = generatedSceneIds.includes(sc.id);
-                      return (
-                        <button
-                          key={sc.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedSceneId(sc.id);
-                            setSelectedCanvasElementId("headline");
-                            setSceneCurrentTime(0);
-                            setScenePlaying(true);
-                          }}
-                          className={cn(
-                            "group relative flex w-full flex-col rounded-xl border p-2 text-left transition-all cursor-pointer",
-                            isSelected
-                              ? "border-brand bg-card shadow-xs ring-1 ring-brand"
-                              : "border-hair bg-card hover:border-hair-3"
-                          )}
-                        >
-                          <div className="flex items-center justify-between gap-1 mb-1.5">
-                            <span className="text-caption font-bold text-ink">
-                              Scene {sc.number}
-                            </span>
-                            <div className="flex items-center gap-1">
-                              {isGenerated ? (
-                                <span className="size-1.5 rounded-full bg-ok" />
-                              ) : (
-                                <Sparkles className="size-2.5 text-brand animate-spin" />
-                              )}
-                              <span className="text-micro text-ink-3 font-medium">{sc.duration}s</span>
-                            </div>
-                          </div>
+            {isEditor && (
+              <>
+                <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><Sparkles className="size-3.5" /> <span>Generate and Publish</span></Button>
+              </>
+            )}
+            {isReview && (
+              <Button
+                size="sm"
+                onClick={() => setShareModalOpen(true)}
+                className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"
+              >
+                <Share2 className="size-3.5" />
+                <span>Share Link</span>
+              </Button>
+            )}
+          </div>
+        </ScreenHeader>
+      }
+      rail={
+          <aside
+            style={{
+              width: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+              minWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+              maxWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+              transition: copilotPanelResizing ? "none" : "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className={cn(
+              "flex flex-col shrink-0 min-h-0 border-r border-hair overflow-hidden transition-colors duration-300",
+              isGenerating ? "bg-[#eef1ed] p-4 sm:p-6 lg:p-7" : isReview ? "bg-canvas" : isEditor ? "bg-[#f8f9f7]" : "bg-[#eef1ed] p-4 sm:p-6 lg:p-7"
+            )}
+          >
+            {isGenerating ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
+                <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
+                  <Sparkles className="size-10 text-brand animate-pulse" />
+                </div>
 
-                          <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-hair-2 bg-[#173d31]">
-                            <DynamicSceneComposition scene={sc} compact />
-                          </div>
+                <h3 className="text-display font-extrabold text-ink tracking-tight">
+                  Generating High-Resolution Video Master...
+                </h3>
+                <p className="text-body-lg text-ink-3 mt-1.5 max-w-[460px]">
+                  Synthesizing kinematic 3D scene models, rendering voiceover audio sync, and verifying fair balance across all {sceneList.length} scenes.
+                </p>
 
-                          <div className="mt-1.5 text-label font-semibold text-ink-2 line-clamp-1">
-                            {sc.title}
-                          </div>
-                        </button>
-                      );
-                    })
-                  : (
-                    <>
-                      {sceneList.map((sc, idx) => {
-                        const isDragging = draggedSceneId === sc.id;
+                <div className="mt-8 w-full max-w-[380px] space-y-2.5 text-left text-body">
+                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
+                    <Check className={cn("size-4.5 shrink-0", videoGenStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                    <span className="font-semibold">Parsed {sceneList.length} storyboard scenes &amp; timing</span>
+                  </div>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
+                    <Check className={cn("size-4.5 shrink-0", videoGenStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                    <span className="font-semibold">Synthesized 3D visual kinematics &amp; lighting</span>
+                  </div>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
+                    <Check className={cn("size-4.5 shrink-0", videoGenStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                    <span className="font-semibold">Synced clinical voiceover narration</span>
+                  </div>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 4 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
+                    <Check className={cn("size-4.5 shrink-0", videoGenStep >= 4 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                    <span className="font-semibold">Linking citations to FDA label §5.1</span>
+                  </div>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", videoGenStep >= 5 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
+                    {videoGenStep >= 5 ? (
+                      <Check className="size-4.5 shrink-0 text-ok" strokeWidth={2.5} />
+                    ) : (
+                      <Sparkles className="size-4.5 shrink-0 text-brand animate-spin" />
+                    )}
+                    <span className="font-semibold">Final cloud master render ({selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"})</span>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex items-center gap-4 text-body text-ink-3">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <span>✉ Email notification queued</span>
+                  </span>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={handleEnterReviewView}
+                    className="font-bold text-brand hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Preview Master Video</span>
+                    <ArrowRight className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {isReview ? (
+                  <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3.5 bg-card">
+                    <span className="text-caption font-extrabold uppercase tracking-[0.12em] text-[#596660] flex items-center gap-1.5"><Film className="size-3.5 text-brand" /> <span>Video Chapters · {chapters.length}</span></span>
+                    <span className="text-caption font-bold text-ink-3">{totalDurationSeconds}s</span>
+                  </div>
+                ) : isEditor ? (
+                  <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3 bg-card">
+                    <span className="text-micro font-bold uppercase tracking-[0.12em] text-[#77817c]">Scenes · {totalDurationSeconds} sec</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between pb-4 shrink-0">
+                    <div>
+                      <h2 className="text-display font-[850] text-ink tracking-tight">
+                        Script
+                      </h2>
+                      <p className="text-body text-ink-3 mt-0.5">
+                        Review and shape the clinical narrative before generating the full visual canvas.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={handleAddDirectScriptScene}
+                      size="sm"
+                      className="bg-card border border-hair text-ink hover:border-brand hover:bg-tint hover:text-brand-deep font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
+                    >
+                      <Plus className="size-3.5 text-brand" />
+                      <span>Add Script Scene</span>
+                    </Button>
+                  </div>
+                )}
+
+                <div className={cn("flex-1 min-h-0 overflow-y-auto space-y-2.5", isReview ? "p-2.5 space-y-2" : isEditor ? "p-2.5" : "p-1 pr-2 space-y-3")}>
+                  {isReview
+                    ? chapters.map((ch) => {
+                        const isCurrent = activeMasterChapter?.id === ch.id;
                         return (
-                          <div
-                            key={sc.id}
-                            draggable
-                            onDragStart={() => handleDragStart(sc.id)}
-                            onDragOver={(e) => handleDragOver(e, sc.id)}
-                            onDrop={(e) => e.preventDefault()}
-                            onDragEnd={handleDragEnd}
+                          <button
+                            key={ch.id}
+                            type="button"
+                            onClick={() => {
+                              setMasterCurrentTime(ch.start);
+                              setMasterPlaying(true);
+                            }}
                             className={cn(
-                              "relative flex flex-col rounded-2xl border bg-card p-4 transition-all duration-200 shadow-2xs hover:shadow-xs",
-                              isDragging ? "opacity-40 border-dashed border-brand" : "border-hair"
+                              "group relative flex w-full flex-col rounded-xl border p-2.5 text-left transition-all cursor-pointer",
+                              isCurrent
+                                ? "border-brand bg-tint shadow-xs ring-1 ring-brand"
+                                : "border-hair bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
-                            <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-hair">
-                              <div className="flex items-center gap-2">
-                                <div className="cursor-grab active:cursor-grabbing text-ink-4 hover:text-ink p-0.5 rounded transition-colors" title="Drag to reorder">
-                                  <GripVertical className="size-4" />
+                            <div className="flex items-center justify-between gap-1 mb-1">
+                              <span
+                                className={cn(
+                                  "rounded-md px-1.5 py-0.5 text-micro font-extrabold",
+                                  isCurrent ? "bg-brand text-white" : "bg-black/5 text-ink-3"
+                                )}
+                              >
+                                0:{ch.start.toString().padStart(2, "0")} – 0:{ch.end.toString().padStart(2, "0")}
+                              </span>
+                              <span className="text-micro text-ink-3 font-bold">{ch.duration}s</span>
+                            </div>
+                            <div className="text-label font-bold text-ink line-clamp-1 group-hover:text-brand-deep">
+                              {ch.number}. {ch.title}
+                            </div>
+                            <div className="text-caption text-ink-3 line-clamp-1 mt-0.5">{ch.narration}</div>
+                          </button>
+                        );
+                      })
+                    : isEditor
+                    ? sceneList.map((sc) => {
+                        const isSelected = selectedScene.id === sc.id;
+                        const isGenerated = generatedSceneIds.includes(sc.id);
+                        return (
+                          <button
+                            key={sc.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSceneId(sc.id);
+                              setSelectedCanvasElementId("headline");
+                              setSceneCurrentTime(0);
+                              setScenePlaying(true);
+                            }}
+                            className={cn(
+                              "group relative flex w-full flex-col rounded-xl border p-2 text-left transition-all cursor-pointer",
+                              isSelected
+                                ? "border-brand bg-card shadow-xs ring-1 ring-brand"
+                                : "border-hair bg-card hover:border-hair-3"
+                            )}
+                          >
+                            <div className="flex items-center justify-between gap-1 mb-1.5">
+                              <span className="text-caption font-bold text-ink">
+                                Scene {sc.number}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                {isGenerated ? (
+                                  <span className="size-1.5 rounded-full bg-ok" />
+                                ) : (
+                                  <Sparkles className="size-2.5 text-brand animate-spin" />
+                                )}
+                                <span className="text-micro text-ink-3 font-medium">{sc.duration}s</span>
+                              </div>
+                            </div>
+
+                            <div className="relative aspect-video w-full rounded-lg overflow-hidden border border-hair-2 bg-[#173d31]">
+                              <DynamicSceneComposition scene={sc} compact />
+                            </div>
+
+                            <div className="mt-1.5 text-label font-semibold text-ink-2 line-clamp-1">
+                              {sc.title}
+                            </div>
+                          </button>
+                        );
+                      })
+                    : (
+                      <>
+                        {sceneList.map((sc, idx) => {
+                          const isDragging = draggedSceneId === sc.id;
+                          return (
+                            <div
+                              key={sc.id}
+                              draggable
+                              onDragStart={() => handleDragStart(sc.id)}
+                              onDragOver={(e) => handleDragOver(e, sc.id)}
+                              onDrop={(e) => e.preventDefault()}
+                              onDragEnd={handleDragEnd}
+                              className={cn(
+                                "relative flex flex-col rounded-2xl border bg-card p-4 transition-all duration-200 shadow-2xs hover:shadow-xs",
+                                isDragging ? "opacity-40 border-dashed border-brand" : "border-hair"
+                              )}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-hair">
+                                <div className="flex items-center gap-2">
+                                  <div className="cursor-grab active:cursor-grabbing text-ink-4 hover:text-ink p-0.5 rounded transition-colors" title="Drag to reorder">
+                                    <GripVertical className="size-4" />
+                                  </div>
+                                  <span className="flex size-6 items-center justify-center rounded-lg bg-ink text-label font-bold text-white shadow-2xs">
+                                    {sc.number}
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={sc.title}
+                                    onChange={(e) => handleUpdateSceneTitle(sc.id, e.target.value)}
+                                    className="text-body-lg font-[850] text-ink bg-transparent border-b border-transparent hover:border-hair-3 focus:border-brand focus:outline-none px-1 py-0.5 rounded transition-all"
+                                    placeholder="Scene Title"
+                                  />
                                 </div>
-                                <span className="flex size-6 items-center justify-center rounded-lg bg-ink text-label font-bold text-white shadow-2xs">
-                                  {sc.number}
-                                </span>
-                                <input
-                                  type="text"
-                                  value={sc.title}
-                                  onChange={(e) => handleUpdateSceneTitle(sc.id, e.target.value)}
-                                  className="text-body-lg font-[850] text-ink bg-transparent border-b border-transparent hover:border-hair-3 focus:border-brand focus:outline-none px-1 py-0.5 rounded transition-all"
-                                  placeholder="Scene Title"
+
+                                <div className="flex items-center gap-1.5">
+                                  <div className="relative">
+                                    <select
+                                      value={sc.narrativeTag || "Evidence"}
+                                      onChange={(e) => handleUpdateSceneTag(sc.id, e.target.value)}
+                                      className="appearance-none bg-tint border border-brand/25 text-brand-deep text-caption font-bold rounded-lg px-2 py-0.5 pr-5 cursor-pointer hover:bg-tint-strong transition-colors focus:outline-none"
+                                    >
+                                      {NARRATIVE_TAG_OPTIONS.map((tagOpt) => (
+                                        <option key={tagOpt.id} value={tagOpt.id}>
+                                          ({tagOpt.label})
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <ChevronDown className="size-2.5 text-brand-deep absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-70" />
+                                  </div>
+
+                                  <span className="flex items-center gap-1 rounded-md bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3 border border-hair">
+                                    <Clock className="size-2.5" />
+                                    {sc.duration || 10}s
+                                  </span>
+
+                                  <div className="flex items-center gap-0.5 ml-1 border-l border-hair-2 pl-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMoveScene(idx, "up")}
+                                      disabled={idx === 0}
+                                      title="Move Up"
+                                      className="p-1 rounded text-ink-4 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+                                    >
+                                      <ArrowUp className="size-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMoveScene(idx, "down")}
+                                      disabled={idx === sceneList.length - 1}
+                                      title="Move Down"
+                                      className="p-1 rounded text-ink-4 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+                                    >
+                                      <ArrowDown className="size-3" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteScene(sc.id)}
+                                      title="Delete Scene"
+                                      className="p-1 rounded text-ink-4 hover:text-danger hover:bg-danger-bg cursor-pointer ml-0.5"
+                                    >
+                                      <Trash2 className="size-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <div className="flex items-center justify-between text-caption font-extrabold uppercase tracking-wider text-ink-3">
+                                  <span>Narration Script</span>
+                                  <span className="font-semibold lowercase">
+                                    {sc.narration ? `${sc.narration.split(" ").filter(Boolean).length} words` : "0 words"}
+                                  </span>
+                                </div>
+                                <textarea
+                                  value={sc.narration}
+                                  onChange={(e) => handleUpdateSceneNarration(sc.id, e.target.value)}
+                                  placeholder="Enter clinical voiceover script for this scene..."
+                                  rows={2}
+                                  className="w-full rounded-xl border border-hair-2 bg-canvas p-2.5 text-body leading-relaxed text-ink focus:bg-card focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all resize-none shadow-2xs"
                                 />
                               </div>
 
-                              <div className="flex items-center gap-1.5">
-                                <div className="relative">
-                                  <select
-                                    value={sc.narrativeTag || "Evidence"}
-                                    onChange={(e) => handleUpdateSceneTag(sc.id, e.target.value)}
-                                    className="appearance-none bg-tint border border-brand/25 text-brand-deep text-caption font-bold rounded-lg px-2 py-0.5 pr-5 cursor-pointer hover:bg-tint-strong transition-colors focus:outline-none"
-                                  >
-                                    {NARRATIVE_TAG_OPTIONS.map((tagOpt) => (
-                                      <option key={tagOpt.id} value={tagOpt.id}>
-                                        ({tagOpt.label})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <ChevronDown className="size-2.5 text-brand-deep absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-70" />
-                                </div>
-
-                                <span className="flex items-center gap-1 rounded-md bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3 border border-hair">
-                                  <Clock className="size-2.5" />
-                                  {sc.duration || 10}s
+                              <div className="flex items-center justify-between pt-2 mt-2 border-t border-hair text-caption">
+                                <span className="inline-flex items-center gap-1.5 text-ok font-semibold bg-ok-bg px-2 py-0.5 rounded-md border border-ok-line/60">
+                                  <ShieldCheck className="size-3 text-ok" />
+                                  <span>{sc.claim}</span>
                                 </span>
-
-                                <div className="flex items-center gap-0.5 ml-1 border-l border-hair-2 pl-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMoveScene(idx, "up")}
-                                    disabled={idx === 0}
-                                    title="Move Up"
-                                    className="p-1 rounded text-ink-4 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
-                                  >
-                                    <ArrowUp className="size-3" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMoveScene(idx, "down")}
-                                    disabled={idx === sceneList.length - 1}
-                                    title="Move Down"
-                                    className="p-1 rounded text-ink-4 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
-                                  >
-                                    <ArrowDown className="size-3" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteScene(sc.id)}
-                                    title="Delete Scene"
-                                    className="p-1 rounded text-ink-4 hover:text-danger hover:bg-danger-bg cursor-pointer ml-0.5"
-                                  >
-                                    <Trash2 className="size-3" />
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-caption font-extrabold uppercase tracking-wider text-ink-3">
-                                <span>Narration Script</span>
-                                <span className="font-semibold lowercase">
-                                  {sc.narration ? `${sc.narration.split(" ").filter(Boolean).length} words` : "0 words"}
+                                <span className="text-caption text-ink-4">
+                                  Tag: <strong>({sc.narrativeTag || "Evidence"})</strong>
                                 </span>
                               </div>
-                              <textarea
-                                value={sc.narration}
-                                onChange={(e) => handleUpdateSceneNarration(sc.id, e.target.value)}
-                                placeholder="Enter clinical voiceover script for this scene..."
-                                rows={2}
-                                className="w-full rounded-xl border border-hair-2 bg-canvas p-2.5 text-body leading-relaxed text-ink focus:bg-card focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all resize-none shadow-2xs"
-                              />
-                            </div>
-
-                            <div className="flex items-center justify-between pt-2 mt-2 border-t border-hair text-caption">
-                              <span className="inline-flex items-center gap-1.5 text-ok font-semibold bg-ok-bg px-2 py-0.5 rounded-md border border-ok-line/60">
-                                <ShieldCheck className="size-3 text-ok" />
-                                <span>{sc.claim}</span>
-                              </span>
-                              <span className="text-caption text-ink-4">
-                                Tag: <strong>({sc.narrativeTag || "Evidence"})</strong>
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      <button
-                        type="button"
-                        onClick={handleAddDirectScriptScene}
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-hair-2 p-4 text-body font-bold text-ink-2 hover:border-brand hover:bg-tint/50 hover:text-brand-deep transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Plus className="size-4 text-brand" />
-                        <span>Add Script Scene</span>
-                      </button>
-                    </>
-                  )}
-              </div>
-
-              {!isEditor && !isReview && !isGenerating && (
-                <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
-                  <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-on-dark backdrop-blur-md max-w-[580px] w-auto">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                      {isScriptComplete ? (
-                        <Sparkles className="size-4.5 text-brand shrink-0" />
-                      ) : (
-                        <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />
-                      )}
-                      <div className="min-w-0">
-                        <div className="text-body font-bold text-white tracking-tight truncate">
-                          {isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={handleStartSceneEditor}
-                      disabled={!isScriptComplete}
-                      size="sm"
-                      className={cn(
-                        "h-9.5 px-5 rounded-full text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
-                        isScriptComplete
-                          ? "bg-brand hover:bg-brand-deep text-white hover:-translate-y-0.5 cursor-pointer"
-                          : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                      )}
-                    >
-                      <Sparkles className="size-3.5 mr-1.5" /> <span>Generate Scenes</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </aside>
-
-        <main
-          style={{
-            flex: isEditor || isReview ? 1 : "0 0 0px",
-            width: isEditor || isReview ? "auto" : "0px",
-            minWidth: 0,
-            opacity: isEditor || isReview ? 1 : 0,
-            transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          className={cn(
-            "flex flex-col min-h-0 overflow-hidden",
-            !isEditor && !isReview && "pointer-events-none"
-          )}
-        >
-          {/* ══════════════════════════════════════════════════════════════════
-              MODE 2: CANVA-STYLE SCENE CANVAS EDITOR (studioMode === "editor")
-             ══════════════════════════════════════════════════════════════════ */}
-          {isEditor && (
-            <div className="relative flex min-h-0 flex-1 flex-col bg-[#e6e9e6]">
-              {/* Sub-header */}
-              <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#cad1cd]/70 bg-white/60 px-4 backdrop-blur-sm">
-                <div className="flex items-center gap-2.5 text-label font-bold text-ink">
-                  <span className="rounded-md bg-card border border-hair-2 px-2 py-0.5 shadow-2xs font-extrabold">
-                    Scene {selectedScene.number} of {sceneList.length}
-                  </span>
-                  <span>{selectedScene.title}</span>
-                </div>
-                <div className="flex items-center gap-2 text-label">
-                  <span className="rounded-md bg-card border border-hair-2 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
-                    Fit 16:9
-                  </span>
-                  <Button variant="ghost" size="icon" className="size-7" aria-label="Full screen">
-                    <Expand className="size-3.5" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* ── Canva-style Interactive Scene Workspace ── */}
-              <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden">
-                <div
-                  onClick={() => setSelectedCanvasElementId(null)}
-                  className="relative aspect-video w-full max-w-[840px] rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
-                >
-                  {/* Layer 1: Background Gradient Graphic */}
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectCanvasElement("background");
-                    }}
-                    onMouseEnter={() => setHoveredCanvasElementId("bg")}
-                    onMouseLeave={() => setHoveredCanvasElementId(null)}
-                    className={cn(
-                      "absolute inset-0 transition-all",
-                      selectedCanvasElementId === "background" && "ring-2 ring-ok"
-                    )}
-                  >
-                    <div className="absolute inset-0 bg-radial from-[#1e4d3f] via-[#173d31] to-[#0f2820]" />
-                  </div>
-
-                  {/* Layer 2: 3D Kinetic Anatomy / MoA Model */}
-                  <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectCanvasElement("moa");
-                    }}
-                    onMouseEnter={() => setHoveredCanvasElementId("visual-3d")}
-                    onMouseLeave={() => setHoveredCanvasElementId(null)}
-                    className={cn(
-                      "absolute right-4 top-4 size-56 sm:size-72 rounded-full transition-all cursor-pointer",
-                      selectedCanvasElementId === "moa"
-                        ? "border-2 border-dashed border-brand ring-4 ring-brand/20"
-                        : hoveredCanvasElementId === "visual-3d"
-                        ? "border border-dashed border-white/50"
-                        : ""
-                    )}
-                  >
-                    <div className="size-full rounded-full border border-white/15 animate-spin duration-15000 flex items-center justify-center">
-                      <div className="size-3/4 rounded-full border border-lime-line/30 flex items-center justify-center">
-                        <div className="size-6 rounded-full bg-lime-bg shadow-soft" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Structured Canvas Content Overlay */}
-                  <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 text-white pointer-events-none">
-                    {/* Top Narrative Pillar Tag */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectCanvasElement("tag");
-                      }}
-                      onMouseEnter={() => setHoveredCanvasElementId("tag")}
-                      onMouseLeave={() => setHoveredCanvasElementId(null)}
-                      className={cn(
-                        "pointer-events-auto inline-flex items-center gap-2 text-label font-extrabold uppercase tracking-[0.16em] text-white/80 p-1.5 rounded-lg transition-all cursor-pointer w-fit",
-                        selectedCanvasElementId === "tag"
-                          ? "border-2 border-dashed border-brand bg-black/40 ring-2 ring-brand/30"
-                          : hoveredCanvasElementId === "tag"
-                          ? "border border-dashed border-white/60 bg-black/20"
-                          : ""
-                      )}
-                    >
-                      <span className="size-2 rounded-full bg-lime-bg" />
-                      <span>{selectedScene.narrativeTag || "PIVOTAL EVIDENCE"}</span>
-                      <span className="text-micro font-bold text-white/50 lowercase ml-1">(0:00–0:{selectedScene.duration})</span>
-                    </div>
-
-                    {/* Right-Side Media Showcase (Draggable real Image and Video Clip Elements for ~60% of scenes) */}
-                    {selectedScene.mediaType && selectedScene.mediaType !== "none" && (
-                      <div className="absolute right-5 top-11 bottom-14 w-[40%] flex flex-col gap-3 z-20 pointer-events-none">
-                        {/* Draggable Element 1: Real Anatomical Heart Image */}
-                        {(selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
-                          <div
-                            onPointerDown={(e) => handlePointerDownElement(e, "image")}
-                            onPointerMove={(e) => handlePointerMoveElement(e, "image")}
-                            onPointerUp={(e) => handlePointerUpElement(e, "image")}
-                            onMouseEnter={() => setHoveredCanvasElementId("image")}
-                            onMouseLeave={() => setHoveredCanvasElementId(null)}
-                            style={{
-                              transform: `translate(${elementOffsets["image"]?.x || 0}px, ${elementOffsets["image"]?.y || 0}px)`,
-                            }}
-                            className={cn(
-                              "pointer-events-auto relative flex-1 rounded-2xl p-3 bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none flex items-center gap-3",
-                              selectedCanvasElementId === "image"
-                                ? "border-2 border-dashed border-brand ring-4 ring-brand/25 bg-black/85 shadow-2xl"
-                                : hoveredCanvasElementId === "image"
-                                ? "border border-dashed border-white/60 bg-black/75"
-                                : "border-white/20 hover:border-white/40"
-                            )}
-                          >
-                            {/* Real Anatomical Heart Graphic */}
-                            <div className="w-[72px] h-[82px] flex items-center justify-center shrink-0">
-                              <img
-                                src={selectedScene.mediaImageSrc || "/anatomical-heart.png"}
-                                alt="Cardiac Anatomy"
-                                className="max-h-full max-w-full object-contain drop-shadow-on-dark pointer-events-none"
-                              />
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <span className="font-extrabold text-lime-ink text-micro uppercase tracking-wider bg-lime-bg/15 px-1.5 py-0.5 rounded border border-lime-line/30">
-                                  🫀 Image Asset
-                                </span>
-                                <span className="text-white/60 text-micro font-semibold flex items-center gap-0.5">
-                                  <Move className="size-2.5" /> Draggable
-                                </span>
-                              </div>
-                              <div className="text-label font-bold text-white leading-tight">
-                                {selectedScene.mediaLabel || "Cardiac & Vascular Structure"}
-                              </div>
-                              <div className="text-micro text-white/50 mt-1">
-                                FDA Prescribing Brief §4.2
-                              </div>
-                            </div>
-
-                            {/* Floating Formatting Pill when selected */}
-                            {selectedCanvasElementId === "image" && (
-                              <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
-                                <ImageIcon className="size-3 text-brand" />
-                                <span>Image Layer</span>
-                                <span className="text-white/40">|</span>
-                                {elementOffsets["image"] && (
-                                  <>
-                                    <span className="text-warn-on-dark font-mono text-micro">
-                                      X:{elementOffsets["image"].x > 0 ? `+${elementOffsets["image"].x}` : elementOffsets["image"].x} Y:{elementOffsets["image"].y > 0 ? `+${elementOffsets["image"].y}` : elementOffsets["image"].y}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleResetElementPosition("image");
-                                      }}
-                                      className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
-                                    >
-                                      <RotateCcw className="size-2.5" /> Reset
-                                    </button>
-                                    <span className="text-white/40">|</span>
-                                  </>
-                                )}
-                                <span className="text-ok-on-dark">⏱ 0:02 – 0:12</span>
-                                <span className="text-white/40">|</span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setToMessage("Replaced with anatomical vascular model");
-                                    setTimeout(() => setToMessage(null), 2000);
-                                  }}
-                                  className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
-                                >
-                                  <Sparkles className="size-2.5" /> Replace
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Draggable Element 2: Real Kinematic Video Clip */}
-                        {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
-                          <div
-                            onPointerDown={(e) => handlePointerDownElement(e, "video-clip")}
-                            onPointerMove={(e) => handlePointerMoveElement(e, "video-clip")}
-                            onPointerUp={(e) => handlePointerUpElement(e, "video-clip")}
-                            onMouseEnter={() => setHoveredCanvasElementId("video-clip")}
-                            onMouseLeave={() => setHoveredCanvasElementId(null)}
-                            style={{
-                              transform: `translate(${elementOffsets["video-clip"]?.x || 0}px, ${elementOffsets["video-clip"]?.y || 0}px)`,
-                            }}
-                            className={cn(
-                              "pointer-events-auto relative flex-1 rounded-2xl bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none overflow-hidden",
-                              selectedCanvasElementId === "video-clip"
-                                ? "border-2 border-dashed border-brand ring-4 ring-brand/25 shadow-2xl"
-                                : hoveredCanvasElementId === "video-clip"
-                                ? "border border-dashed border-white/60"
-                                : "border-white/20 hover:border-white/40"
-                            )}
-                          >
-                            {/* Real Looping Video Player (Synced with scene play/pause) */}
-                            <video
-                              ref={canvasVideoRef}
-                              src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
-                              loop
-                              muted
-                              playsInline
-                              className="size-full object-cover pointer-events-none opacity-90"
-                            />
-
-                            <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
-                              <span className="text-micro font-extrabold text-info-on-dark uppercase tracking-wide bg-black/70 px-1.5 py-0.5 rounded border border-sky-400/40">
-                                🎬 Video Clip
-                              </span>
-                              <span className="text-micro text-white/80 bg-black/60 px-1 py-0.5 rounded flex items-center gap-0.5">
-                                <Move className="size-2" /> Draggable
-                              </span>
-                            </div>
-
-                            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 pt-4">
-                              <div className="text-caption font-bold text-white truncate">
-                                {selectedScene.mediaLabel || "3D Mechanism Kinematics"}
-                              </div>
-                            </div>
-
-                            {/* Floating Formatting Pill when selected */}
-                            {selectedCanvasElementId === "video-clip" && (
-                              <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
-                                <Film className="size-3 text-brand" />
-                                <span>Video Clip</span>
-                                <span className="text-white/40">|</span>
-                                {elementOffsets["video-clip"] && (
-                                  <>
-                                    <span className="text-warn-on-dark font-mono text-micro">
-                                      X:{elementOffsets["video-clip"].x > 0 ? `+${elementOffsets["video-clip"].x}` : elementOffsets["video-clip"].x} Y:{elementOffsets["video-clip"].y > 0 ? `+${elementOffsets["video-clip"].y}` : elementOffsets["video-clip"].y}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleResetElementPosition("video-clip");
-                                      }}
-                                      className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
-                                    >
-                                      <RotateCcw className="size-2.5" /> Reset
-                                    </button>
-                                    <span className="text-white/40">|</span>
-                                  </>
-                                )}
-                                <span className="text-ok-on-dark">⏱ 0:04 – 0:14</span>
-                                <span className="text-white/40">|</span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setToMessage("Swapped to receptor binding 3D animation");
-                                    setTimeout(() => setToMessage(null), 2000);
-                                  }}
-                                  className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
-                                >
-                                  <Sparkles className="size-2.5" /> Swap Clip
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Core Headline Overlay (Draggable) */}
-                    <div
-                      onPointerDown={(e) => handlePointerDownElement(e, "headline")}
-                      onPointerMove={(e) => handlePointerMoveElement(e, "headline")}
-                      onPointerUp={(e) => handlePointerUpElement(e, "headline")}
-                      onMouseEnter={() => setHoveredCanvasElementId("headline")}
-                      onMouseLeave={() => setHoveredCanvasElementId(null)}
-                      style={{
-                        transform: `translate(${elementOffsets["headline"]?.x || 0}px, ${elementOffsets["headline"]?.y || 0}px)`,
-                      }}
-                      className={cn(
-                        "pointer-events-auto relative p-2.5 rounded-xl transition-shadow cursor-grab active:cursor-grabbing",
-                        selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[54%]" : "max-w-[80%]",
-                        selectedCanvasElementId === "headline"
-                          ? "border-2 border-dashed border-brand bg-black/40 ring-4 ring-brand/20"
-                          : hoveredCanvasElementId === "headline"
-                          ? "border border-dashed border-white/60 bg-black/20"
-                          : ""
-                      )}
-                    >
-                      <h3 className="text-display sm:text-display-lg font-[850] tracking-tight leading-tight text-white drop-shadow-md select-none">
-                        {selectedScene.title}
-                      </h3>
-
-                      {/* Floating Inline Formatting Pill */}
-                      {selectedCanvasElementId === "headline" && (
-                        <div className="absolute -top-9 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
-                          <Type className="size-3 text-brand" />
-                          <span>Title Layer</span>
-                          <span className="text-white/40">|</span>
-                          {elementOffsets["headline"] && (
-                            <>
-                              <span className="text-warn-on-dark font-mono text-micro">
-                                X:{elementOffsets["headline"].x > 0 ? `+${elementOffsets["headline"].x}` : elementOffsets["headline"].x} Y:{elementOffsets["headline"].y > 0 ? `+${elementOffsets["headline"].y}` : elementOffsets["headline"].y}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleResetElementPosition("headline");
-                                }}
-                                className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
-                              >
-                                <RotateCcw className="size-2.5" /> Reset
-                              </button>
-                              <span className="text-white/40">|</span>
-                            </>
-                          )}
-                          <span className="text-ok-on-dark">⏱ 0:01 – 0:09</span>
-                          <span className="text-white/40">|</span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setToMessage("Rephrased headline with clinical clarity");
-                              setTimeout(() => setToMessage(null), 2000);
-                            }}
-                            className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
-                          >
-                            <Sparkles className="size-2.5" /> Rephrase
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Subtitle / Narration Script Overlay (Word-by-Word Voiceover Sync) */}
-                    <div
-                      onPointerDown={(e) => handlePointerDownElement(e, "narration")}
-                      onPointerMove={(e) => handlePointerMoveElement(e, "narration")}
-                      onPointerUp={(e) => handlePointerUpElement(e, "narration")}
-                      onMouseEnter={() => setHoveredCanvasElementId("narration")}
-                      onMouseLeave={() => setHoveredCanvasElementId(null)}
-                      style={{
-                        transform: `translate(${elementOffsets["narration"]?.x || 0}px, ${elementOffsets["narration"]?.y || 0}px)`,
-                      }}
-                      className={cn(
-                        "pointer-events-auto relative p-2.5 rounded-2xl transition-all cursor-grab active:cursor-grabbing select-none backdrop-blur-md",
-                        selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[56%]" : "max-w-[80%]",
-                        selectedCanvasElementId === "narration"
-                          ? "border-2 border-dashed border-brand bg-black/60 ring-4 ring-brand/20 shadow-2xl"
-                          : hoveredCanvasElementId === "narration"
-                          ? "border border-dashed border-white/60 bg-black/40"
-                          : "border border-white/15 bg-black/30 hover:border-white/30"
-                      )}
-                    >
-                      {/* Subtitle Sync Indicator Header */}
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand/25 border border-brand/40 text-micro font-extrabold uppercase tracking-wider text-brand-light">
-                          <Mic2 className="size-2.5" /> Subtitle · Voiceover Sync
-                        </span>
-                        {scenePlaying && (
-                          <span className="flex items-center gap-1 text-micro font-mono text-ok-on-dark">
-                            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                            Live Track
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Text-by-Text Word Karaoke Subtitle Display */}
-                      <p className="text-body-lg sm:text-body-lg font-normal leading-relaxed text-white drop-shadow-sm">
-                        {(() => {
-                          const words = (selectedScene.narration || "").trim().split(/\s+/);
-                          const totalWords = words.length;
-                          const dur = selectedScene.duration || 10;
-                          // Scale active progress from 0.2s to dur - 0.6s
-                          const activeProgress = Math.max(0, Math.min(1, (sceneCurrentTime - 0.2) / Math.max(0.1, dur - 0.8)));
-                          const currentWordIndex = Math.min(
-                            totalWords - 1,
-                            Math.floor(activeProgress * totalWords)
-                          );
-
-                          return words.map((word, idx) => {
-                            const isPast = idx < currentWordIndex;
-                            const isCurrent = idx === currentWordIndex;
-
-                            return (
-                              <span
-                                key={`${word}-${idx}`}
-                                className={cn(
-                                  "inline-block mr-1 transition-all duration-150 rounded px-0.5",
-                                  isCurrent
-                                    ? "text-brand-light font-bold scale-105 bg-brand/20 shadow-xs ring-1 ring-brand/35 -translate-y-0.5"
-                                    : isPast
-                                    ? "text-white font-medium opacity-100"
-                                    : "text-white/35 font-normal"
-                                )}
-                              >
-                                {word}
-                              </span>
-                            );
-                          });
-                        })()}
-                      </p>
-
-                      {selectedCanvasElementId === "narration" && (
-                        <div className="absolute -top-8 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
-                          <Mic2 className="size-3 text-brand" />
-                          <span>Voiceover Sync</span>
-                          <span className="text-white/40">|</span>
-                          {elementOffsets["narration"] && (
-                            <>
-                              <span className="text-warn-on-dark font-mono text-micro">
-                                X:{elementOffsets["narration"].x > 0 ? `+${elementOffsets["narration"].x}` : elementOffsets["narration"].x} Y:{elementOffsets["narration"].y > 0 ? `+${elementOffsets["narration"].y}` : elementOffsets["narration"].y}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleResetElementPosition("narration");
-                                }}
-                                className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
-                              >
-                                <RotateCcw className="size-2.5" /> Reset
-                              </button>
-                              <span className="text-white/40">|</span>
-                            </>
-                          )}
-                          <span className="text-ok-on-dark">⏱ 0:01 – 0:13</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bottom Grounding Badge */}
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectCanvasElement("claim");
-                      }}
-                      className={cn(
-                        "pointer-events-auto flex items-center justify-between pt-2 border-t border-white/10 text-caption text-white/60 cursor-pointer p-1 rounded transition-colors",
-                        selectedCanvasElementId === "claim" && "ring-1 ring-ok bg-black/20"
-                      )}
-                    >
-                      <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}® · HCP Prescribing Brief</span>
-                      <span className="rounded bg-emerald-950/80 border border-emerald-400/40 text-ok-on-dark px-2 py-0.5 font-bold">
-                        🛡 {selectedScene.claim}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* ── Mini Scene Playback Controls & Scrubber (Scoped strictly to this scene) ── */}
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6 z-20">
-                    <div className="flex items-center gap-3 text-white">
-                      {/* Play/Pause Button */}
-                      <button
-                        type="button"
-                        onClick={() => setScenePlaying(!scenePlaying)}
-                        className="size-8 rounded-full bg-brand hover:bg-brand-deep flex items-center justify-center text-white shadow-md transition-transform active:scale-95 cursor-pointer shrink-0"
-                      >
-                        {scenePlaying ? <Pause className="size-3.5 fill-current" /> : <Play className="size-3.5 fill-current ml-0.5" />}
-                      </button>
-
-                      {/* Scene Timecode Display */}
-                      <span className="text-label font-mono font-bold text-white/90 shrink-0">
-                        0:{Math.floor(sceneCurrentTime).toString().padStart(2, "0")} / 0:{selectedScene.duration}s
-                      </span>
-
-                      {/* Single Scene Scrubber Bar */}
-                      <div
-                        onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const pct = (e.clientX - rect.left) / rect.width;
-                          setSceneCurrentTime(+(pct * (selectedScene.duration || 10)).toFixed(1));
-                        }}
-                        className="relative flex-1 h-3 bg-white/20 rounded-full cursor-pointer overflow-hidden flex items-center"
-                      >
-                        <div
-                          style={{
-                            width: `${(sceneCurrentTime / (selectedScene.duration || 10)) * 100}%`,
-                          }}
-                          className="h-full bg-brand rounded-full transition-all duration-75"
-                        />
-                      </div>
-
-                      <span className="text-caption text-white/60 font-bold hidden sm:inline shrink-0">
-                        Scene {selectedScene.number} Scope
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ── Multi-Layer Production Timeline Bar (Collapsible) ── */}
-              <div className="border-t border-hair bg-canvas text-ink shrink-0">
-                <div className="flex h-9 items-center justify-between px-4 border-b border-hair bg-card">
-                  <div className="flex items-center gap-2.5 text-label font-bold text-ink">
-                    <Layers className="size-3.5 text-brand" />
-                    <span>Production Layers</span>
-                    <span className="rounded-md bg-ok-bg px-2 py-0.5 text-micro font-semibold text-[#5a6660]">
-                      Scene {selectedScene.number} · {selectedScene.duration}s
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setTimelineOpen(!timelineOpen)}
-                    className="flex items-center gap-1.5 text-label font-bold text-brand hover:text-brand-deep transition-colors cursor-pointer"
-                  >
-                    <span>{timelineOpen ? "Hide Layers" : "Show Layers"}</span>
-                    {timelineOpen ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
-                  </button>
-                </div>
-
-                {timelineOpen && (
-                  <div className="max-h-[200px] overflow-y-auto bg-card select-none flex flex-col text-label border-b border-hair">
-                    <div className="h-6 shrink-0 flex items-center border-b border-hair bg-subtle text-micro text-ink-3 font-bold sticky top-0 z-10 px-3">
-                      <div className="w-[160px] shrink-0 border-r border-hair pr-2 uppercase">Scene {selectedScene.number} Tracks</div>
-                      <div className="flex-1 flex justify-between px-3">
-                        <span>0:00</span>
-                        <span>0:03</span>
-                        <span>0:06</span>
-                        <span>0:09</span>
-                        <span>0:12</span>
-                        <span>0:{selectedScene.duration}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col divide-y divide-hair">
-                      {/* Track 1: Background */}
-                      <div
-                        onClick={() => handleSelectCanvasElement("moa")}
-                        className={cn(
-                          "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "moa" ? "bg-tint/40" : "bg-canvas hover:bg-card"
-                        )}
-                      >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <ImageIcon className="size-3.5 text-ok" />
-                          <span className="truncate">1. Bg Canvas</span>
-                        </div>
-                        <div className="flex-1 h-full p-1">
-                          <div className="h-full rounded bg-ok-bg border border-ok-line flex items-center px-2 text-micro font-bold text-ok">
-                            Bg_Emerald_Gradient.png [0:00 – 0:{selectedScene.duration}]
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Track 2: 3D MoA Model */}
-                      <div
-                        onClick={() => handleSelectCanvasElement("moa")}
-                        className={cn(
-                          "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "moa" ? "bg-tint/40" : "bg-canvas hover:bg-card"
-                        )}
-                      >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <Film className="size-3.5 text-brand" />
-                          <span className="truncate">2. 3D MoA Target</span>
-                        </div>
-                        <div className="flex-1 h-full p-1">
-                          <div className="h-full rounded bg-tint border border-brand/30 flex items-center px-2 text-micro font-bold text-brand-deep">
-                            3D_CLEARSKIN_Anatomy.mp4 [0:00 – 0:{selectedScene.duration}]
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Track 3: Clinical Chart Image Layer */}
-                      <div
-                        onClick={() => handleSelectCanvasElement("image")}
-                        className={cn(
-                          "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "image" ? "bg-tint/40" : "bg-canvas hover:bg-card"
-                        )}
-                      >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <ImageIcon className="size-3.5 text-lime-ink" />
-                          <span className="truncate">3. Chart Image</span>
-                        </div>
-                        <div className="flex-1 h-full p-1">
-                          <div className="h-full w-[85%] rounded bg-lime-bg border border-lime-line flex items-center px-2 text-micro font-bold text-lime-ink truncate">
-                            CLEARSKIN_Phase_III_ForestPlot.png [0:02 – 0:12]
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Track 4: 3D Video Clip Layer */}
-                      <div
-                        onClick={() => handleSelectCanvasElement("video-clip")}
-                        className={cn(
-                          "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "video-clip" ? "bg-tint/40" : "bg-canvas hover:bg-card"
-                        )}
-                      >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <Film className="size-3.5 text-info-on-dark" />
-                          <span className="truncate">4. B-Roll Video</span>
-                        </div>
-                        <div className="flex-1 h-full p-1">
-                          <div className="h-full w-[75%] rounded bg-info-bg border border-info-line flex items-center px-2 text-micro font-bold text-info-on-dark truncate">
-                            Cellular_Receptor_Binding_4K.mp4 [0:04 – 0:{selectedScene.duration}]
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Track 5: Headline Copy */}
-                      <div
-                        onClick={() => handleSelectCanvasElement("headline")}
-                        className={cn(
-                          "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "headline" ? "bg-tint/40" : "bg-canvas hover:bg-card"
-                        )}
-                      >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <Type className="size-3.5 text-info-on-dark" />
-                          <span className="truncate">5. Text Headline</span>
-                        </div>
-                        <div className="flex-1 h-full p-1">
-                          <div className="h-full w-3/4 rounded bg-info-bg border border-info-line flex items-center px-2 text-micro font-bold text-info-on-dark truncate">
-                            &quot;{selectedScene.title}&quot; [0:01 – 0:09]
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Track 6: Voiceover */}
-                      <div
-                        onClick={() => handleSelectCanvasElement("narration")}
-                        className={cn(
-                          "h-8 flex items-center transition-colors cursor-pointer",
-                          selectedCanvasElementId === "narration" ? "bg-tint/40" : "bg-canvas hover:bg-card"
-                        )}
-                      >
-                        <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
-                          <Mic2 className="size-3.5 text-warn" />
-                          <span className="truncate">6. Voiceover</span>
-                        </div>
-                        <div className="flex-1 h-full p-1">
-                          <div className="h-full w-4/5 rounded bg-warn-bg border border-warn-line flex items-center px-2 text-micro font-bold text-warn truncate">
-                            Eleanor VO · Clinical narration [0:01 – 0:13]
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════════════════════════
-              MODE 3: FINAL SHARED REVIEW VIEW (Master Player with YouTube-Style Segmented Scrubber)
-             ══════════════════════════════════════════════════════════════════════════════════ */}
-          {isReview && (
-            <div className="relative flex min-h-0 flex-1 flex-col bg-[#0d1411]">
-              {/* Master Video Container */}
-              <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-8">
-                <div className="relative aspect-video w-full max-w-[920px] rounded-[20px] bg-black shadow-on-dark ring-1 ring-white/10 overflow-hidden flex flex-col justify-between">
-                  {/* Master Video Canvas */}
-                  <div className="absolute inset-0">
-                    <MasterVideoSequenceComposition
-                      sceneList={sceneList}
-                      activeScene={activeMasterChapter}
-                      brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
-                      isPlaying={masterPlaying}
-                    />
-                  </div>
-
-                  {/* Top Bar Pill in Player */}
-                  <div className="relative z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent text-white text-label">
-                    <div className="flex items-center gap-2 font-extrabold">
-                      <span className="rounded-full bg-ok/20 border border-emerald-400/30 px-2.5 py-0.5 text-ok-on-dark">
-                        HD Master Render
-                      </span>
-                      <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora"} HCP Master Video</span>
-                    </div>
-                    <div className="text-white/70 font-semibold">
-                      Chapter {activeMasterChapter?.number} of {chapters.length}
-                    </div>
-                  </div>
-
-                  {/* ── Bottom Master Video Controls with YouTube-Style Segmented Chapter Scrubber ── */}
-                  <div className="relative z-10 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-4 pt-8 text-white space-y-3">
-                    {/* YouTube-style Segmented Chapter Seek Bar */}
-                    <div className="relative w-full">
-                      {/* Floating Chapter Tooltip on Hover */}
-                      {hoveredChapter && (
-                        <div
-                          style={{
-                            left: `${((hoveredScrubTime || hoveredChapter.start) / totalDurationSeconds) * 100}%`,
-                          }}
-                          className="absolute -top-10 -translate-x-1/2 rounded-lg bg-[#1a2620] border border-white/20 px-3 py-1 text-caption font-bold text-white shadow-xl pointer-events-none whitespace-nowrap z-30"
-                        >
-                          <span>{hoveredScrubTime ? `0:${Math.floor(hoveredScrubTime).toString().padStart(2, "0")}` : ""}</span>
-                          <span className="text-white/40 mx-1">·</span>
-                          <span className="text-ok-on-dark">{hoveredChapter.title}</span>
-                        </div>
-                      )}
-
-                      {/* Segmented Timeline Track */}
-                      <div className="flex items-center gap-1.5 w-full h-4 py-1 cursor-pointer">
-                        {chapters.map((ch) => {
-                          const segWidthPct = (ch.duration / totalDurationSeconds) * 100;
-                          const progressInChapter = Math.max(
-                            0,
-                            Math.min(1, (masterCurrentTime - ch.start) / ch.duration)
-                          );
-
-                          return (
-                            <div
-                              key={ch.id}
-                              style={{ width: `${segWidthPct}%` }}
-                              onMouseEnter={(e) => {
-                                setHoveredChapter(ch);
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const pct = (e.clientX - rect.left) / rect.width;
-                                setHoveredScrubTime(+(ch.start + pct * ch.duration).toFixed(1));
-                              }}
-                              onMouseMove={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const pct = (e.clientX - rect.left) / rect.width;
-                                setHoveredScrubTime(+(ch.start + pct * ch.duration).toFixed(1));
-                              }}
-                              onMouseLeave={() => {
-                                setHoveredChapter(null);
-                                setHoveredScrubTime(null);
-                              }}
-                              onClick={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const pct = (e.clientX - rect.left) / rect.width;
-                                setMasterCurrentTime(+(ch.start + pct * ch.duration).toFixed(1));
-                              }}
-                              className="group relative h-2 rounded-full bg-white/25 hover:h-2.5 transition-all overflow-hidden"
-                            >
-                              <div
-                                style={{ width: `${progressInChapter * 100}%` }}
-                                className="h-full bg-brand transition-all duration-75"
-                              />
                             </div>
                           );
                         })}
+
+                        <button
+                          type="button"
+                          onClick={handleAddDirectScriptScene}
+                          className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-hair-2 p-4 text-body font-bold text-ink-2 hover:border-brand hover:bg-tint/50 hover:text-brand-deep transition-all cursor-pointer shadow-2xs"
+                        >
+                          <Plus className="size-4 text-brand" />
+                          <span>Add Script Scene</span>
+                        </button>
+                      </>
+                    )}
+                </div>
+
+                {!isEditor && !isReview && !isGenerating && (
+                  <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
+                    <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-on-dark backdrop-blur-md max-w-[580px] w-auto">
+                      <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                        {isScriptComplete ? (
+                          <Sparkles className="size-4.5 text-brand shrink-0" />
+                        ) : (
+                          <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />
+                        )}
+                        <div className="min-w-0">
+                          <div className="text-body font-bold text-white tracking-tight truncate">
+                            {isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={handleStartSceneEditor}
+                        disabled={!isScriptComplete}
+                        size="sm"
+                        className={cn(
+                          "h-9.5 px-5 rounded-full text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
+                          isScriptComplete
+                            ? "bg-brand hover:bg-brand-deep text-white hover:-translate-y-0.5 cursor-pointer"
+                            : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                        )}
+                      >
+                        <Sparkles className="size-3.5 mr-1.5" /> <span>Generate Scenes</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </aside>
+      }
+      main={
+          <main
+            style={{
+              flex: isEditor || isReview ? 1 : "0 0 0px",
+              width: isEditor || isReview ? "auto" : "0px",
+              minWidth: 0,
+              opacity: isEditor || isReview ? 1 : 0,
+              transition: "all 0.45s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+            className={cn(
+              "flex flex-col min-h-0 overflow-hidden",
+              !isEditor && !isReview && "pointer-events-none"
+            )}
+          >
+            {/* ══════════════════════════════════════════════════════════════════
+                MODE 2: CANVA-STYLE SCENE CANVAS EDITOR (studioMode === "editor")
+               ══════════════════════════════════════════════════════════════════ */}
+            {isEditor && (
+              <div className="relative flex min-h-0 flex-1 flex-col bg-[#e6e9e6]">
+                {/* Sub-header */}
+                <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#cad1cd]/70 bg-white/60 px-4 backdrop-blur-sm">
+                  <div className="flex items-center gap-2.5 text-label font-bold text-ink">
+                    <span className="rounded-md bg-card border border-hair-2 px-2 py-0.5 shadow-2xs font-extrabold">
+                      Scene {selectedScene.number} of {sceneList.length}
+                    </span>
+                    <span>{selectedScene.title}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-label">
+                    <span className="rounded-md bg-card border border-hair-2 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
+                      Fit 16:9
+                    </span>
+                    <Button variant="ghost" size="icon" className="size-7" aria-label="Full screen">
+                      <Expand className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* ── Canva-style Interactive Scene Workspace ── */}
+                <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden">
+                  <div
+                    onClick={() => setSelectedCanvasElementId(null)}
+                    className="relative aspect-video w-full max-w-[840px] rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
+                  >
+                    {/* Layer 1: Background Gradient Graphic */}
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectCanvasElement("background");
+                      }}
+                      onMouseEnter={() => setHoveredCanvasElementId("bg")}
+                      onMouseLeave={() => setHoveredCanvasElementId(null)}
+                      className={cn(
+                        "absolute inset-0 transition-all",
+                        selectedCanvasElementId === "background" && "ring-2 ring-ok"
+                      )}
+                    >
+                      <div className="absolute inset-0 bg-radial from-[#1e4d3f] via-[#173d31] to-[#0f2820]" />
+                    </div>
+
+                    {/* Layer 2: 3D Kinetic Anatomy / MoA Model */}
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectCanvasElement("moa");
+                      }}
+                      onMouseEnter={() => setHoveredCanvasElementId("visual-3d")}
+                      onMouseLeave={() => setHoveredCanvasElementId(null)}
+                      className={cn(
+                        "absolute right-4 top-4 size-56 sm:size-72 rounded-full transition-all cursor-pointer",
+                        selectedCanvasElementId === "moa"
+                          ? "border-2 border-dashed border-brand ring-4 ring-brand/20"
+                          : hoveredCanvasElementId === "visual-3d"
+                          ? "border border-dashed border-white/50"
+                          : ""
+                      )}
+                    >
+                      <div className="size-full rounded-full border border-white/15 animate-spin duration-15000 flex items-center justify-center">
+                        <div className="size-3/4 rounded-full border border-lime-line/30 flex items-center justify-center">
+                          <div className="size-6 rounded-full bg-lime-bg shadow-soft" />
+                        </div>
                       </div>
                     </div>
 
-                    {/* Master Playback Controls Row */}
-                    <div className="flex items-center justify-between text-white text-body">
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setMasterPlaying(!masterPlaying)}
-                          className="size-9 rounded-full bg-brand hover:bg-brand-deep flex items-center justify-center text-white shadow-md cursor-pointer transition-transform active:scale-95"
-                        >
-                          {masterPlaying ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current ml-0.5" />}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setIsMuted(!isMuted)}
-                          className="text-white/80 hover:text-white cursor-pointer"
-                        >
-                          {isMuted ? <VolumeX className="size-4.5" /> : <Volume2 className="size-4.5" />}
-                        </button>
-
-                        <span className="font-mono font-bold text-body text-white">
-                          0:{Math.floor(masterCurrentTime).toString().padStart(2, "0")} / 0:{totalDurationSeconds}s
-                        </span>
-
-                        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-label font-bold text-white/90">
-                          <span className="size-1.5 rounded-full bg-brand" />
-                          <span>
-                            Chapter {activeMasterChapter?.number}: {activeMasterChapter?.title}
-                          </span>
-                        </span>
+                    {/* Structured Canvas Content Overlay */}
+                    <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 text-white pointer-events-none">
+                      {/* Top Narrative Pillar Tag */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectCanvasElement("tag");
+                        }}
+                        onMouseEnter={() => setHoveredCanvasElementId("tag")}
+                        onMouseLeave={() => setHoveredCanvasElementId(null)}
+                        className={cn(
+                          "pointer-events-auto inline-flex items-center gap-2 text-label font-extrabold uppercase tracking-[0.16em] text-white/80 p-1.5 rounded-lg transition-all cursor-pointer w-fit",
+                          selectedCanvasElementId === "tag"
+                            ? "border-2 border-dashed border-brand bg-black/40 ring-2 ring-brand/30"
+                            : hoveredCanvasElementId === "tag"
+                            ? "border border-dashed border-white/60 bg-black/20"
+                            : ""
+                        )}
+                      >
+                        <span className="size-2 rounded-full bg-lime-bg" />
+                        <span>{selectedScene.narrativeTag || "PIVOTAL EVIDENCE"}</span>
+                        <span className="text-micro font-bold text-white/50 lowercase ml-1">(0:00–0:{selectedScene.duration})</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-caption font-extrabold uppercase bg-white/10 px-2 py-0.5 rounded text-white/80">
-                          CC
+                      {/* Right-Side Media Showcase (Draggable real Image and Video Clip Elements for ~60% of scenes) */}
+                      {selectedScene.mediaType && selectedScene.mediaType !== "none" && (
+                        <div className="absolute right-5 top-11 bottom-14 w-[40%] flex flex-col gap-3 z-20 pointer-events-none">
+                          {/* Draggable Element 1: Real Anatomical Heart Image */}
+                          {(selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
+                            <div
+                              onPointerDown={(e) => handlePointerDownElement(e, "image")}
+                              onPointerMove={(e) => handlePointerMoveElement(e, "image")}
+                              onPointerUp={(e) => handlePointerUpElement(e, "image")}
+                              onMouseEnter={() => setHoveredCanvasElementId("image")}
+                              onMouseLeave={() => setHoveredCanvasElementId(null)}
+                              style={{
+                                transform: `translate(${elementOffsets["image"]?.x || 0}px, ${elementOffsets["image"]?.y || 0}px)`,
+                              }}
+                              className={cn(
+                                "pointer-events-auto relative flex-1 rounded-2xl p-3 bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none flex items-center gap-3",
+                                selectedCanvasElementId === "image"
+                                  ? "border-2 border-dashed border-brand ring-4 ring-brand/25 bg-black/85 shadow-2xl"
+                                  : hoveredCanvasElementId === "image"
+                                  ? "border border-dashed border-white/60 bg-black/75"
+                                  : "border-white/20 hover:border-white/40"
+                              )}
+                            >
+                              {/* Real Anatomical Heart Graphic */}
+                              <div className="w-[72px] h-[82px] flex items-center justify-center shrink-0">
+                                <img
+                                  src={selectedScene.mediaImageSrc || "/anatomical-heart.png"}
+                                  alt="Cardiac Anatomy"
+                                  className="max-h-full max-w-full object-contain drop-shadow-on-dark pointer-events-none"
+                                />
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 mb-1">
+                                  <span className="font-extrabold text-lime-ink text-micro uppercase tracking-wider bg-lime-bg/15 px-1.5 py-0.5 rounded border border-lime-line/30">
+                                    🫀 Image Asset
+                                  </span>
+                                  <span className="text-white/60 text-micro font-semibold flex items-center gap-0.5">
+                                    <Move className="size-2.5" /> Draggable
+                                  </span>
+                                </div>
+                                <div className="text-label font-bold text-white leading-tight">
+                                  {selectedScene.mediaLabel || "Cardiac & Vascular Structure"}
+                                </div>
+                                <div className="text-micro text-white/50 mt-1">
+                                  FDA Prescribing Brief §4.2
+                                </div>
+                              </div>
+
+                              {/* Floating Formatting Pill when selected */}
+                              {selectedCanvasElementId === "image" && (
+                                <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
+                                  <ImageIcon className="size-3 text-brand" />
+                                  <span>Image Layer</span>
+                                  <span className="text-white/40">|</span>
+                                  {elementOffsets["image"] && (
+                                    <>
+                                      <span className="text-warn-on-dark font-mono text-micro">
+                                        X:{elementOffsets["image"].x > 0 ? `+${elementOffsets["image"].x}` : elementOffsets["image"].x} Y:{elementOffsets["image"].y > 0 ? `+${elementOffsets["image"].y}` : elementOffsets["image"].y}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleResetElementPosition("image");
+                                        }}
+                                        className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
+                                      >
+                                        <RotateCcw className="size-2.5" /> Reset
+                                      </button>
+                                      <span className="text-white/40">|</span>
+                                    </>
+                                  )}
+                                  <span className="text-ok-on-dark">⏱ 0:02 – 0:12</span>
+                                  <span className="text-white/40">|</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setToMessage("Replaced with anatomical vascular model");
+                                      setTimeout(() => setToMessage(null), 2000);
+                                    }}
+                                    className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
+                                  >
+                                    <Sparkles className="size-2.5" /> Replace
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Draggable Element 2: Real Kinematic Video Clip */}
+                          {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
+                            <div
+                              onPointerDown={(e) => handlePointerDownElement(e, "video-clip")}
+                              onPointerMove={(e) => handlePointerMoveElement(e, "video-clip")}
+                              onPointerUp={(e) => handlePointerUpElement(e, "video-clip")}
+                              onMouseEnter={() => setHoveredCanvasElementId("video-clip")}
+                              onMouseLeave={() => setHoveredCanvasElementId(null)}
+                              style={{
+                                transform: `translate(${elementOffsets["video-clip"]?.x || 0}px, ${elementOffsets["video-clip"]?.y || 0}px)`,
+                              }}
+                              className={cn(
+                                "pointer-events-auto relative flex-1 rounded-2xl bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none overflow-hidden",
+                                selectedCanvasElementId === "video-clip"
+                                  ? "border-2 border-dashed border-brand ring-4 ring-brand/25 shadow-2xl"
+                                  : hoveredCanvasElementId === "video-clip"
+                                  ? "border border-dashed border-white/60"
+                                  : "border-white/20 hover:border-white/40"
+                              )}
+                            >
+                              {/* Real Looping Video Player (Synced with scene play/pause) */}
+                              <video
+                                ref={canvasVideoRef}
+                                src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
+                                loop
+                                muted
+                                playsInline
+                                className="size-full object-cover pointer-events-none opacity-90"
+                              />
+
+                              <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
+                                <span className="text-micro font-extrabold text-info-on-dark uppercase tracking-wide bg-black/70 px-1.5 py-0.5 rounded border border-sky-400/40">
+                                  🎬 Video Clip
+                                </span>
+                                <span className="text-micro text-white/80 bg-black/60 px-1 py-0.5 rounded flex items-center gap-0.5">
+                                  <Move className="size-2" /> Draggable
+                                </span>
+                              </div>
+
+                              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 pt-4">
+                                <div className="text-caption font-bold text-white truncate">
+                                  {selectedScene.mediaLabel || "3D Mechanism Kinematics"}
+                                </div>
+                              </div>
+
+                              {/* Floating Formatting Pill when selected */}
+                              {selectedCanvasElementId === "video-clip" && (
+                                <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
+                                  <Film className="size-3 text-brand" />
+                                  <span>Video Clip</span>
+                                  <span className="text-white/40">|</span>
+                                  {elementOffsets["video-clip"] && (
+                                    <>
+                                      <span className="text-warn-on-dark font-mono text-micro">
+                                        X:{elementOffsets["video-clip"].x > 0 ? `+${elementOffsets["video-clip"].x}` : elementOffsets["video-clip"].x} Y:{elementOffsets["video-clip"].y > 0 ? `+${elementOffsets["video-clip"].y}` : elementOffsets["video-clip"].y}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleResetElementPosition("video-clip");
+                                        }}
+                                        className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
+                                      >
+                                        <RotateCcw className="size-2.5" /> Reset
+                                      </button>
+                                      <span className="text-white/40">|</span>
+                                    </>
+                                  )}
+                                  <span className="text-ok-on-dark">⏱ 0:04 – 0:14</span>
+                                  <span className="text-white/40">|</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setToMessage("Swapped to receptor binding 3D animation");
+                                      setTimeout(() => setToMessage(null), 2000);
+                                    }}
+                                    className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
+                                  >
+                                    <Sparkles className="size-2.5" /> Swap Clip
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Core Headline Overlay (Draggable) */}
+                      <div
+                        onPointerDown={(e) => handlePointerDownElement(e, "headline")}
+                        onPointerMove={(e) => handlePointerMoveElement(e, "headline")}
+                        onPointerUp={(e) => handlePointerUpElement(e, "headline")}
+                        onMouseEnter={() => setHoveredCanvasElementId("headline")}
+                        onMouseLeave={() => setHoveredCanvasElementId(null)}
+                        style={{
+                          transform: `translate(${elementOffsets["headline"]?.x || 0}px, ${elementOffsets["headline"]?.y || 0}px)`,
+                        }}
+                        className={cn(
+                          "pointer-events-auto relative p-2.5 rounded-xl transition-shadow cursor-grab active:cursor-grabbing",
+                          selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[54%]" : "max-w-[80%]",
+                          selectedCanvasElementId === "headline"
+                            ? "border-2 border-dashed border-brand bg-black/40 ring-4 ring-brand/20"
+                            : hoveredCanvasElementId === "headline"
+                            ? "border border-dashed border-white/60 bg-black/20"
+                            : ""
+                        )}
+                      >
+                        <h3 className="text-display sm:text-display-lg font-[850] tracking-tight leading-tight text-white drop-shadow-md select-none">
+                          {selectedScene.title}
+                        </h3>
+
+                        {/* Floating Inline Formatting Pill */}
+                        {selectedCanvasElementId === "headline" && (
+                          <div className="absolute -top-9 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
+                            <Type className="size-3 text-brand" />
+                            <span>Title Layer</span>
+                            <span className="text-white/40">|</span>
+                            {elementOffsets["headline"] && (
+                              <>
+                                <span className="text-warn-on-dark font-mono text-micro">
+                                  X:{elementOffsets["headline"].x > 0 ? `+${elementOffsets["headline"].x}` : elementOffsets["headline"].x} Y:{elementOffsets["headline"].y > 0 ? `+${elementOffsets["headline"].y}` : elementOffsets["headline"].y}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResetElementPosition("headline");
+                                  }}
+                                  className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
+                                >
+                                  <RotateCcw className="size-2.5" /> Reset
+                                </button>
+                                <span className="text-white/40">|</span>
+                              </>
+                            )}
+                            <span className="text-ok-on-dark">⏱ 0:01 – 0:09</span>
+                            <span className="text-white/40">|</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setToMessage("Rephrased headline with clinical clarity");
+                                setTimeout(() => setToMessage(null), 2000);
+                              }}
+                              className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
+                            >
+                              <Sparkles className="size-2.5" /> Rephrase
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Subtitle / Narration Script Overlay (Word-by-Word Voiceover Sync) */}
+                      <div
+                        onPointerDown={(e) => handlePointerDownElement(e, "narration")}
+                        onPointerMove={(e) => handlePointerMoveElement(e, "narration")}
+                        onPointerUp={(e) => handlePointerUpElement(e, "narration")}
+                        onMouseEnter={() => setHoveredCanvasElementId("narration")}
+                        onMouseLeave={() => setHoveredCanvasElementId(null)}
+                        style={{
+                          transform: `translate(${elementOffsets["narration"]?.x || 0}px, ${elementOffsets["narration"]?.y || 0}px)`,
+                        }}
+                        className={cn(
+                          "pointer-events-auto relative p-2.5 rounded-2xl transition-all cursor-grab active:cursor-grabbing select-none backdrop-blur-md",
+                          selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[56%]" : "max-w-[80%]",
+                          selectedCanvasElementId === "narration"
+                            ? "border-2 border-dashed border-brand bg-black/60 ring-4 ring-brand/20 shadow-2xl"
+                            : hoveredCanvasElementId === "narration"
+                            ? "border border-dashed border-white/60 bg-black/40"
+                            : "border border-white/15 bg-black/30 hover:border-white/30"
+                        )}
+                      >
+                        {/* Subtitle Sync Indicator Header */}
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand/25 border border-brand/40 text-micro font-extrabold uppercase tracking-wider text-brand-light">
+                            <Mic2 className="size-2.5" /> Subtitle · Voiceover Sync
+                          </span>
+                          {scenePlaying && (
+                            <span className="flex items-center gap-1 text-micro font-mono text-ok-on-dark">
+                              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              Live Track
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Text-by-Text Word Karaoke Subtitle Display */}
+                        <p className="text-body-lg sm:text-body-lg font-normal leading-relaxed text-white drop-shadow-sm">
+                          {(() => {
+                            const words = (selectedScene.narration || "").trim().split(/\s+/);
+                            const totalWords = words.length;
+                            const dur = selectedScene.duration || 10;
+                            // Scale active progress from 0.2s to dur - 0.6s
+                            const activeProgress = Math.max(0, Math.min(1, (sceneCurrentTime - 0.2) / Math.max(0.1, dur - 0.8)));
+                            const currentWordIndex = Math.min(
+                              totalWords - 1,
+                              Math.floor(activeProgress * totalWords)
+                            );
+
+                            return words.map((word, idx) => {
+                              const isPast = idx < currentWordIndex;
+                              const isCurrent = idx === currentWordIndex;
+
+                              return (
+                                <span
+                                  key={`${word}-${idx}`}
+                                  className={cn(
+                                    "inline-block mr-1 transition-all duration-150 rounded px-0.5",
+                                    isCurrent
+                                      ? "text-brand-light font-bold scale-105 bg-brand/20 shadow-xs ring-1 ring-brand/35 -translate-y-0.5"
+                                      : isPast
+                                      ? "text-white font-medium opacity-100"
+                                      : "text-white/35 font-normal"
+                                  )}
+                                >
+                                  {word}
+                                </span>
+                              );
+                            });
+                          })()}
+                        </p>
+
+                        {selectedCanvasElementId === "narration" && (
+                          <div className="absolute -top-8 left-0 z-30 flex items-center gap-1.5 rounded-lg bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
+                            <Mic2 className="size-3 text-brand" />
+                            <span>Voiceover Sync</span>
+                            <span className="text-white/40">|</span>
+                            {elementOffsets["narration"] && (
+                              <>
+                                <span className="text-warn-on-dark font-mono text-micro">
+                                  X:{elementOffsets["narration"].x > 0 ? `+${elementOffsets["narration"].x}` : elementOffsets["narration"].x} Y:{elementOffsets["narration"].y > 0 ? `+${elementOffsets["narration"].y}` : elementOffsets["narration"].y}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleResetElementPosition("narration");
+                                  }}
+                                  className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
+                                >
+                                  <RotateCcw className="size-2.5" /> Reset
+                                </button>
+                                <span className="text-white/40">|</span>
+                              </>
+                            )}
+                            <span className="text-ok-on-dark">⏱ 0:01 – 0:13</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom Grounding Badge */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectCanvasElement("claim");
+                        }}
+                        className={cn(
+                          "pointer-events-auto flex items-center justify-between pt-2 border-t border-white/10 text-caption text-white/60 cursor-pointer p-1 rounded transition-colors",
+                          selectedCanvasElementId === "claim" && "ring-1 ring-ok bg-black/20"
+                        )}
+                      >
+                        <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}® · HCP Prescribing Brief</span>
+                        <span className="rounded bg-emerald-950/80 border border-emerald-400/40 text-ok-on-dark px-2 py-0.5 font-bold">
+                          🛡 {selectedScene.claim}
                         </span>
-                        <span className="text-caption font-extrabold text-brand bg-brand/15 px-2 py-0.5 rounded">
-                          HD 1080p
+                      </div>
+                    </div>
+
+                    {/* ── Mini Scene Playback Controls & Scrubber (Scoped strictly to this scene) ── */}
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6 z-20">
+                      <div className="flex items-center gap-3 text-white">
+                        {/* Play/Pause Button */}
+                        <button
+                          type="button"
+                          onClick={() => setScenePlaying(!scenePlaying)}
+                          className="size-8 rounded-full bg-brand hover:bg-brand-deep flex items-center justify-center text-white shadow-md transition-transform active:scale-95 cursor-pointer shrink-0"
+                        >
+                          {scenePlaying ? <Pause className="size-3.5 fill-current" /> : <Play className="size-3.5 fill-current ml-0.5" />}
+                        </button>
+
+                        {/* Scene Timecode Display */}
+                        <span className="text-label font-mono font-bold text-white/90 shrink-0">
+                          0:{Math.floor(sceneCurrentTime).toString().padStart(2, "0")} / 0:{selectedScene.duration}s
                         </span>
-                        <Button variant="ghost" size="icon" className="size-8 text-white hover:bg-white/10">
-                          <Maximize2 className="size-4" />
-                        </Button>
+
+                        {/* Single Scene Scrubber Bar */}
+                        <div
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const pct = (e.clientX - rect.left) / rect.width;
+                            setSceneCurrentTime(+(pct * (selectedScene.duration || 10)).toFixed(1));
+                          }}
+                          className="relative flex-1 h-3 bg-white/20 rounded-full cursor-pointer overflow-hidden flex items-center"
+                        >
+                          <div
+                            style={{
+                              width: `${(sceneCurrentTime / (selectedScene.duration || 10)) * 100}%`,
+                            }}
+                            className="h-full bg-brand rounded-full transition-all duration-75"
+                          />
+                        </div>
+
+                        <span className="text-caption text-white/60 font-bold hidden sm:inline shrink-0">
+                          Scene {selectedScene.number} Scope
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Multi-Layer Production Timeline Bar (Collapsible) ── */}
+                <div className="border-t border-hair bg-canvas text-ink shrink-0">
+                  <div className="flex h-9 items-center justify-between px-4 border-b border-hair bg-card">
+                    <div className="flex items-center gap-2.5 text-label font-bold text-ink">
+                      <Layers className="size-3.5 text-brand" />
+                      <span>Production Layers</span>
+                      <span className="rounded-md bg-ok-bg px-2 py-0.5 text-micro font-semibold text-[#5a6660]">
+                        Scene {selectedScene.number} · {selectedScene.duration}s
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setTimelineOpen(!timelineOpen)}
+                      className="flex items-center gap-1.5 text-label font-bold text-brand hover:text-brand-deep transition-colors cursor-pointer"
+                    >
+                      <span>{timelineOpen ? "Hide Layers" : "Show Layers"}</span>
+                      {timelineOpen ? <ChevronDown className="size-3.5" /> : <ChevronUp className="size-3.5" />}
+                    </button>
+                  </div>
+
+                  {timelineOpen && (
+                    <div className="max-h-[200px] overflow-y-auto bg-card select-none flex flex-col text-label border-b border-hair">
+                      <div className="h-6 shrink-0 flex items-center border-b border-hair bg-subtle text-micro text-ink-3 font-bold sticky top-0 z-10 px-3">
+                        <div className="w-[160px] shrink-0 border-r border-hair pr-2 uppercase">Scene {selectedScene.number} Tracks</div>
+                        <div className="flex-1 flex justify-between px-3">
+                          <span>0:00</span>
+                          <span>0:03</span>
+                          <span>0:06</span>
+                          <span>0:09</span>
+                          <span>0:12</span>
+                          <span>0:{selectedScene.duration}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col divide-y divide-hair">
+                        {/* Track 1: Background */}
+                        <div
+                          onClick={() => handleSelectCanvasElement("moa")}
+                          className={cn(
+                            "h-8 flex items-center transition-colors cursor-pointer",
+                            selectedCanvasElementId === "moa" ? "bg-tint/40" : "bg-canvas hover:bg-card"
+                          )}
+                        >
+                          <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                            <ImageIcon className="size-3.5 text-ok" />
+                            <span className="truncate">1. Bg Canvas</span>
+                          </div>
+                          <div className="flex-1 h-full p-1">
+                            <div className="h-full rounded bg-ok-bg border border-ok-line flex items-center px-2 text-micro font-bold text-ok">
+                              Bg_Emerald_Gradient.png [0:00 – 0:{selectedScene.duration}]
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Track 2: 3D MoA Model */}
+                        <div
+                          onClick={() => handleSelectCanvasElement("moa")}
+                          className={cn(
+                            "h-8 flex items-center transition-colors cursor-pointer",
+                            selectedCanvasElementId === "moa" ? "bg-tint/40" : "bg-canvas hover:bg-card"
+                          )}
+                        >
+                          <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                            <Film className="size-3.5 text-brand" />
+                            <span className="truncate">2. 3D MoA Target</span>
+                          </div>
+                          <div className="flex-1 h-full p-1">
+                            <div className="h-full rounded bg-tint border border-brand/30 flex items-center px-2 text-micro font-bold text-brand-deep">
+                              3D_CLEARSKIN_Anatomy.mp4 [0:00 – 0:{selectedScene.duration}]
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Track 3: Clinical Chart Image Layer */}
+                        <div
+                          onClick={() => handleSelectCanvasElement("image")}
+                          className={cn(
+                            "h-8 flex items-center transition-colors cursor-pointer",
+                            selectedCanvasElementId === "image" ? "bg-tint/40" : "bg-canvas hover:bg-card"
+                          )}
+                        >
+                          <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                            <ImageIcon className="size-3.5 text-lime-ink" />
+                            <span className="truncate">3. Chart Image</span>
+                          </div>
+                          <div className="flex-1 h-full p-1">
+                            <div className="h-full w-[85%] rounded bg-lime-bg border border-lime-line flex items-center px-2 text-micro font-bold text-lime-ink truncate">
+                              CLEARSKIN_Phase_III_ForestPlot.png [0:02 – 0:12]
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Track 4: 3D Video Clip Layer */}
+                        <div
+                          onClick={() => handleSelectCanvasElement("video-clip")}
+                          className={cn(
+                            "h-8 flex items-center transition-colors cursor-pointer",
+                            selectedCanvasElementId === "video-clip" ? "bg-tint/40" : "bg-canvas hover:bg-card"
+                          )}
+                        >
+                          <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                            <Film className="size-3.5 text-info-on-dark" />
+                            <span className="truncate">4. B-Roll Video</span>
+                          </div>
+                          <div className="flex-1 h-full p-1">
+                            <div className="h-full w-[75%] rounded bg-info-bg border border-info-line flex items-center px-2 text-micro font-bold text-info-on-dark truncate">
+                              Cellular_Receptor_Binding_4K.mp4 [0:04 – 0:{selectedScene.duration}]
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Track 5: Headline Copy */}
+                        <div
+                          onClick={() => handleSelectCanvasElement("headline")}
+                          className={cn(
+                            "h-8 flex items-center transition-colors cursor-pointer",
+                            selectedCanvasElementId === "headline" ? "bg-tint/40" : "bg-canvas hover:bg-card"
+                          )}
+                        >
+                          <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                            <Type className="size-3.5 text-info-on-dark" />
+                            <span className="truncate">5. Text Headline</span>
+                          </div>
+                          <div className="flex-1 h-full p-1">
+                            <div className="h-full w-3/4 rounded bg-info-bg border border-info-line flex items-center px-2 text-micro font-bold text-info-on-dark truncate">
+                              &quot;{selectedScene.title}&quot; [0:01 – 0:09]
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Track 6: Voiceover */}
+                        <div
+                          onClick={() => handleSelectCanvasElement("narration")}
+                          className={cn(
+                            "h-8 flex items-center transition-colors cursor-pointer",
+                            selectedCanvasElementId === "narration" ? "bg-tint/40" : "bg-canvas hover:bg-card"
+                          )}
+                        >
+                          <div className="w-[160px] shrink-0 h-full flex items-center gap-2 px-3 border-r border-hair bg-card text-caption font-bold">
+                            <Mic2 className="size-3.5 text-warn" />
+                            <span className="truncate">6. Voiceover</span>
+                          </div>
+                          <div className="flex-1 h-full p-1">
+                            <div className="h-full w-4/5 rounded bg-warn-bg border border-warn-line flex items-center px-2 text-micro font-bold text-warn truncate">
+                              Eleanor VO · Clinical narration [0:01 – 0:13]
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════════════════════════════
+                MODE 3: FINAL SHARED REVIEW VIEW (Master Player with YouTube-Style Segmented Scrubber)
+               ══════════════════════════════════════════════════════════════════════════════════ */}
+            {isReview && (
+              <div className="relative flex min-h-0 flex-1 flex-col bg-[#0d1411]">
+                {/* Master Video Container */}
+                <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-8">
+                  <div className="relative aspect-video w-full max-w-[920px] rounded-[20px] bg-black shadow-on-dark ring-1 ring-white/10 overflow-hidden flex flex-col justify-between">
+                    {/* Master Video Canvas */}
+                    <div className="absolute inset-0">
+                      <MasterVideoSequenceComposition
+                        sceneList={sceneList}
+                        activeScene={activeMasterChapter}
+                        brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
+                        isPlaying={masterPlaying}
+                      />
+                    </div>
+
+                    {/* Top Bar Pill in Player */}
+                    <div className="relative z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent text-white text-label">
+                      <div className="flex items-center gap-2 font-extrabold">
+                        <span className="rounded-full bg-ok/20 border border-emerald-400/30 px-2.5 py-0.5 text-ok-on-dark">
+                          HD Master Render
+                        </span>
+                        <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora"} HCP Master Video</span>
+                      </div>
+                      <div className="text-white/70 font-semibold">
+                        Chapter {activeMasterChapter?.number} of {chapters.length}
+                      </div>
+                    </div>
+
+                    {/* ── Bottom Master Video Controls with YouTube-Style Segmented Chapter Scrubber ── */}
+                    <div className="relative z-10 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-4 pt-8 text-white space-y-3">
+                      {/* YouTube-style Segmented Chapter Seek Bar */}
+                      <div className="relative w-full">
+                        {/* Floating Chapter Tooltip on Hover */}
+                        {hoveredChapter && (
+                          <div
+                            style={{
+                              left: `${((hoveredScrubTime || hoveredChapter.start) / totalDurationSeconds) * 100}%`,
+                            }}
+                            className="absolute -top-10 -translate-x-1/2 rounded-lg bg-[#1a2620] border border-white/20 px-3 py-1 text-caption font-bold text-white shadow-xl pointer-events-none whitespace-nowrap z-30"
+                          >
+                            <span>{hoveredScrubTime ? `0:${Math.floor(hoveredScrubTime).toString().padStart(2, "0")}` : ""}</span>
+                            <span className="text-white/40 mx-1">·</span>
+                            <span className="text-ok-on-dark">{hoveredChapter.title}</span>
+                          </div>
+                        )}
+
+                        {/* Segmented Timeline Track */}
+                        <div className="flex items-center gap-1.5 w-full h-4 py-1 cursor-pointer">
+                          {chapters.map((ch) => {
+                            const segWidthPct = (ch.duration / totalDurationSeconds) * 100;
+                            const progressInChapter = Math.max(
+                              0,
+                              Math.min(1, (masterCurrentTime - ch.start) / ch.duration)
+                            );
+
+                            return (
+                              <div
+                                key={ch.id}
+                                style={{ width: `${segWidthPct}%` }}
+                                onMouseEnter={(e) => {
+                                  setHoveredChapter(ch);
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const pct = (e.clientX - rect.left) / rect.width;
+                                  setHoveredScrubTime(+(ch.start + pct * ch.duration).toFixed(1));
+                                }}
+                                onMouseMove={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const pct = (e.clientX - rect.left) / rect.width;
+                                  setHoveredScrubTime(+(ch.start + pct * ch.duration).toFixed(1));
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredChapter(null);
+                                  setHoveredScrubTime(null);
+                                }}
+                                onClick={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const pct = (e.clientX - rect.left) / rect.width;
+                                  setMasterCurrentTime(+(ch.start + pct * ch.duration).toFixed(1));
+                                }}
+                                className="group relative h-2 rounded-full bg-white/25 hover:h-2.5 transition-all overflow-hidden"
+                              >
+                                <div
+                                  style={{ width: `${progressInChapter * 100}%` }}
+                                  className="h-full bg-brand transition-all duration-75"
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Master Playback Controls Row */}
+                      <div className="flex items-center justify-between text-white text-body">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setMasterPlaying(!masterPlaying)}
+                            className="size-9 rounded-full bg-brand hover:bg-brand-deep flex items-center justify-center text-white shadow-md cursor-pointer transition-transform active:scale-95"
+                          >
+                            {masterPlaying ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current ml-0.5" />}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setIsMuted(!isMuted)}
+                            className="text-white/80 hover:text-white cursor-pointer"
+                          >
+                            {isMuted ? <VolumeX className="size-4.5" /> : <Volume2 className="size-4.5" />}
+                          </button>
+
+                          <span className="font-mono font-bold text-body text-white">
+                            0:{Math.floor(masterCurrentTime).toString().padStart(2, "0")} / 0:{totalDurationSeconds}s
+                          </span>
+
+                          <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-label font-bold text-white/90">
+                            <span className="size-1.5 rounded-full bg-brand" />
+                            <span>
+                              Chapter {activeMasterChapter?.number}: {activeMasterChapter?.title}
+                            </span>
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-caption font-extrabold uppercase bg-white/10 px-2 py-0.5 rounded text-white/80">
+                            CC
+                          </span>
+                          <span className="text-caption font-extrabold text-brand bg-brand/15 px-2 py-0.5 rounded">
+                            HD 1080p
+                          </span>
+                          <Button variant="ghost" size="icon" className="size-8 text-white hover:bg-white/10">
+                            <Maximize2 className="size-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </main>
-
-        <SidePanel
-          open={copilotPanelOpen}
-          width={copilotPanelWidth}
-          onWidthChange={setCopilotPanelWidth}
-          onResizingChange={setCopilotPanelResizing}
-          storageKey="swishx.copilotPanelWidth"
-          /* The editor and review modes put a fixed rail left of the canvas,
-             so the canvas floor has to account for it or a full-width drag at
-             tablet size leaves ~140px of canvas. */
-          minCanvas={isReview ? 240 + 360 : isEditor ? 220 + 360 : 360}
-        >
+            )}
+          </main>
+      }
+      panel={
+        <>
           <div className="p-2.5 border-b border-hair bg-subtle">
             {studioMode === "scenes" ? (
               /* ── SCRIPT STAGE: Only Chat & Claims Tabs (No Edit Tab) ── */
@@ -2851,275 +2855,278 @@ export function StudioScreen() {
               </div>
             )}
           </div>
-        </SidePanel>
-      </div>
+        </>
+      }
+      overlay={
+        <>
+        {toastMessage && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-ink text-white px-4 py-2 text-body font-bold shadow-lg">{toastMessage}</div>
+        )}
 
-      {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-ink text-white px-4 py-2 text-body font-bold shadow-lg">{toastMessage}</div>
-      )}
-
-      {generateVideoModalOpen && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Confirm Video Generation"
-        >
-          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-float">
-            <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
-              <div>
-                <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-                  <Sparkles className="size-3.5" /> Generation Engine
+        {generateVideoModalOpen && (
+          <div
+            className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirm Video Generation"
+          >
+            <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-float">
+              <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
+                <div>
+                  <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
+                    <Sparkles className="size-3.5" /> Generation Engine
+                  </div>
+                  <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
+                    Confirm Video Generation
+                  </h2>
                 </div>
-                <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
-                  Confirm Video Generation
-                </h2>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setGenerateVideoModalOpen(false)}
-                className="size-8 rounded-full hover:bg-black/5 cursor-pointer"
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-
-            <div className="p-6 space-y-5">
-              {/* Cost & Spec Card */}
-              <div className="rounded-2xl bg-[#121614] border border-white/10 p-5 text-white shadow-md">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <div>
-                    <div className="text-label font-extrabold uppercase tracking-wider text-white/60">
-                      Credits Deducted
-                    </div>
-                    <div className="text-display font-[900] text-white mt-0.5">
-                      ⚡ {selectedQuality === "cinematic" ? "7,500" : "2,500"} Credits
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
-                    {selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-3 text-label text-white/75">
-                  <div>
-                    <span className="text-white/50 block text-caption uppercase font-bold">Duration &amp; Scenes</span>
-                    <strong className="text-white">{totalDurationSeconds}s · 5 Scenes</strong>
-                  </div>
-                  <div>
-                    <span className="text-white/50 block text-caption uppercase font-bold">Estimated Render Time</span>
-                    <strong className="text-white">~{selectedQuality === "cinematic" ? "12–14 min" : "7–9 min"}</strong>
-                  </div>
-                  <div>
-                    <span className="text-white/50 block text-caption uppercase font-bold">Team Balance</span>
-                    <strong className="text-ok-on-dark">50,000 Credits</strong>
-                  </div>
-                  <div>
-                    <span className="text-white/50 block text-caption uppercase font-bold">Balance Remaining</span>
-                    <strong className="text-white">
-                      {(50000 - (selectedQuality === "cinematic" ? 7500 : 2500)).toLocaleString()} Credits
-                    </strong>
-                  </div>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setGenerateVideoModalOpen(false)}
+                  className="size-8 rounded-full hover:bg-black/5 cursor-pointer"
+                >
+                  <X className="size-4" />
+                </Button>
               </div>
 
-              {/* Automated Quality & MLR Pre-Flight Verification Card */}
-              <div
-                className={cn(
-                  "rounded-2xl border p-4 space-y-2.5 text-body transition",
-                  hasBlockers
-                    ? "border-warn-line bg-warn-bg/60 text-warn"
-                    : "border-ok-line bg-ok-bg/70 text-ok"
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold">
-                    {hasBlockers ? (
-                      <AlertTriangle className="size-4 text-warn shrink-0" />
-                    ) : (
-                      <ShieldCheck className="size-4 text-ok shrink-0" />
-                    )}
-                    <span>Quality &amp; MLR Pre-Flight Verification</span>
-                  </div>
-                  <span
-                    className={cn(
-                      "rounded-full border px-2.5 py-0.5 text-caption font-extrabold",
-                      hasBlockers
-                        ? "bg-danger-bg text-danger border-danger"
-                        : "bg-ok-bg text-ok border-ok-line"
-                    )}
-                  >
-                    {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-label pt-1">
-                  {/* 1. MLR Check Card (With Blocker & Fix Action) */}
-                  {!mlrCheckResolved ? (
-                    <div className="flex flex-col justify-between bg-danger-bg/90 rounded-lg p-2.5 border border-danger text-danger">
-                      <div className="flex items-start gap-1.5">
-                        <AlertTriangle className="size-3.5 text-danger shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold block text-danger">MLR: Unverified Comparative Claim</span>
-                          <span className="text-caption text-danger/80 leading-tight block mt-0.5">
-                            Scene 3 claims superiority without citing head-to-head trial comparator.
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleFixMlrBlocker}
-                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-danger hover:bg-rose-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
-                      >
-                        <Sparkles className="size-2.5" />
-                        <span>Fix with SwishX →</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-ink">24 Verified Claims Cited</span>
-                        <span className="text-caption text-ink-3">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2. Quality Check Card (With Blocker & Fix Action) */}
-                  {!qaCheckResolved ? (
-                    <div className="flex flex-col justify-between bg-warn-bg/90 rounded-lg p-2.5 border border-warn-line text-warn">
-                      <div className="flex items-start gap-1.5">
-                        <AlertTriangle className="size-3.5 text-warn shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold block text-warn">Quality: Narration Density &gt;150 wpm</span>
-                          <span className="text-caption text-warn/80 leading-tight block mt-0.5">
-                            Scene 3 voiceover exceeds speech pacing limits with redundant words.
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleFixQaBlocker}
-                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-warn hover:bg-amber-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
-                      >
-                        <Sparkles className="size-2.5" />
-                        <span>Fix with SwishX →</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-ink">Script Pacing &amp; Audio Sync</span>
-                        <span className="text-caption text-ink-3">Optimal 135 wpm speech cadence</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3. Fair Balance & ISI Present */}
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                    <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+              <div className="p-6 space-y-5">
+                {/* Cost & Spec Card */}
+                <div className="rounded-2xl bg-[#121614] border border-white/10 p-5 text-white shadow-md">
+                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
                     <div>
-                      <span className="font-bold block text-ink">Fair Balance &amp; ISI Present</span>
-                      <span className="text-caption text-ink-3">Contraindication footnotes verified</span>
+                      <div className="text-label font-extrabold uppercase tracking-wider text-white/60">
+                        Credits Deducted
+                      </div>
+                      <div className="text-display font-[900] text-white mt-0.5">
+                        ⚡ {selectedQuality === "cinematic" ? "7,500" : "2,500"} Credits
+                      </div>
                     </div>
-                  </div>
-
-                  {/* 4. Medical Terminology */}
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                    <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block text-ink">Medical Terminology Clear</span>
-                      <span className="text-caption text-ink-3">Generic name &amp; dosing accurate</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Optional Auto-Fix helper */}
-                {hasBlockers && (
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-hair mt-1">
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles className="size-3 text-brand" />
-                      Want SwishX to auto-fix both blockers instantly?
+                    <span className="rounded-full bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
+                      {selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleAutoFixBoth}
-                      className="text-brand font-bold hover:underline cursor-pointer"
-                    >
-                      Auto-Fix Both ⚡
-                    </button>
                   </div>
-                )}
-              </div>
 
-              {/* Informational Notice */}
-              <p className="text-body text-ink-3 leading-relaxed">
-                Generation renders in the background using neural motion models. You will receive an email notification when processing completes, and can continue working in SwishX.
-              </p>
+                  <div className="grid grid-cols-2 gap-3 pt-3 text-label text-white/75">
+                    <div>
+                      <span className="text-white/50 block text-caption uppercase font-bold">Duration &amp; Scenes</span>
+                      <strong className="text-white">{totalDurationSeconds}s · 5 Scenes</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/50 block text-caption uppercase font-bold">Estimated Render Time</span>
+                      <strong className="text-white">~{selectedQuality === "cinematic" ? "12–14 min" : "7–9 min"}</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/50 block text-caption uppercase font-bold">Team Balance</span>
+                      <strong className="text-ok-on-dark">50,000 Credits</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/50 block text-caption uppercase font-bold">Balance Remaining</span>
+                      <strong className="text-white">
+                        {(50000 - (selectedQuality === "cinematic" ? 7500 : 2500)).toLocaleString()} Credits
+                      </strong>
+                    </div>
+                  </div>
+                </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-hair">
-                {hasBlockers ? (
-                  <span className="text-label text-danger font-semibold flex items-center gap-1">
-                    <AlertTriangle className="size-3 shrink-0" />
-                    Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
-                  </span>
-                ) : (
-                  <span className="text-label text-ok font-bold flex items-center gap-1">
-                    <CheckCircle2 className="size-3.5 text-ok shrink-0" />
-                    All Quality &amp; MLR checks verified
-                  </span>
-                )}
+                {/* Automated Quality & MLR Pre-Flight Verification Card */}
+                <div
+                  className={cn(
+                    "rounded-2xl border p-4 space-y-2.5 text-body transition",
+                    hasBlockers
+                      ? "border-warn-line bg-warn-bg/60 text-warn"
+                      : "border-ok-line bg-ok-bg/70 text-ok"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-bold">
+                      {hasBlockers ? (
+                        <AlertTriangle className="size-4 text-warn shrink-0" />
+                      ) : (
+                        <ShieldCheck className="size-4 text-ok shrink-0" />
+                      )}
+                      <span>Quality &amp; MLR Pre-Flight Verification</span>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full border px-2.5 py-0.5 text-caption font-extrabold",
+                        hasBlockers
+                          ? "bg-danger-bg text-danger border-danger"
+                          : "bg-ok-bg text-ok border-ok-line"
+                      )}
+                    >
+                      {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
+                    </span>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setGenerateVideoModalOpen(false)}
-                    className="font-bold"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={hasBlockers}
-                    onClick={handleConfirmVideoGeneration}
-                    className={cn(
-                      "font-bold px-5 gap-1.5 transition-all",
-                      hasBlockers
-                        ? "bg-black/10 text-black/35 cursor-not-allowed border-none shadow-none"
-                        : "bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-label pt-1">
+                    {/* 1. MLR Check Card (With Blocker & Fix Action) */}
+                    {!mlrCheckResolved ? (
+                      <div className="flex flex-col justify-between bg-danger-bg/90 rounded-lg p-2.5 border border-danger text-danger">
+                        <div className="flex items-start gap-1.5">
+                          <AlertTriangle className="size-3.5 text-danger shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold block text-danger">MLR: Unverified Comparative Claim</span>
+                            <span className="text-caption text-danger/80 leading-tight block mt-0.5">
+                              Scene 3 claims superiority without citing head-to-head trial comparator.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleFixMlrBlocker}
+                          className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-danger hover:bg-rose-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                        >
+                          <Sparkles className="size-2.5" />
+                          <span>Fix with SwishX →</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                        <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block text-ink">24 Verified Claims Cited</span>
+                          <span className="text-caption text-ink-3">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
+                        </div>
+                      </div>
                     )}
-                  >
-                    <Sparkles className="size-3.5" />
-                    <span>Confirm &amp; Generate Video</span>
-                  </Button>
+
+                    {/* 2. Quality Check Card (With Blocker & Fix Action) */}
+                    {!qaCheckResolved ? (
+                      <div className="flex flex-col justify-between bg-warn-bg/90 rounded-lg p-2.5 border border-warn-line text-warn">
+                        <div className="flex items-start gap-1.5">
+                          <AlertTriangle className="size-3.5 text-warn shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold block text-warn">Quality: Narration Density &gt;150 wpm</span>
+                            <span className="text-caption text-warn/80 leading-tight block mt-0.5">
+                              Scene 3 voiceover exceeds speech pacing limits with redundant words.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleFixQaBlocker}
+                          className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-warn hover:bg-amber-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                        >
+                          <Sparkles className="size-2.5" />
+                          <span>Fix with SwishX →</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                        <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block text-ink">Script Pacing &amp; Audio Sync</span>
+                          <span className="text-caption text-ink-3">Optimal 135 wpm speech cadence</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 3. Fair Balance & ISI Present */}
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-ink">Fair Balance &amp; ISI Present</span>
+                        <span className="text-caption text-ink-3">Contraindication footnotes verified</span>
+                      </div>
+                    </div>
+
+                    {/* 4. Medical Terminology */}
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-ink">Medical Terminology Clear</span>
+                        <span className="text-caption text-ink-3">Generic name &amp; dosing accurate</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Optional Auto-Fix helper */}
+                  {hasBlockers && (
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-hair mt-1">
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="size-3 text-brand" />
+                        Want SwishX to auto-fix both blockers instantly?
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleAutoFixBoth}
+                        className="text-brand font-bold hover:underline cursor-pointer"
+                      >
+                        Auto-Fix Both ⚡
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Informational Notice */}
+                <p className="text-body text-ink-3 leading-relaxed">
+                  Generation renders in the background using neural motion models. You will receive an email notification when processing completes, and can continue working in SwishX.
+                </p>
+
+                <div className="flex items-center justify-between pt-2 border-t border-hair">
+                  {hasBlockers ? (
+                    <span className="text-label text-danger font-semibold flex items-center gap-1">
+                      <AlertTriangle className="size-3 shrink-0" />
+                      Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
+                    </span>
+                  ) : (
+                    <span className="text-label text-ok font-bold flex items-center gap-1">
+                      <CheckCircle2 className="size-3.5 text-ok shrink-0" />
+                      All Quality &amp; MLR checks verified
+                    </span>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setGenerateVideoModalOpen(false)}
+                      className="font-bold"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={hasBlockers}
+                      onClick={handleConfirmVideoGeneration}
+                      className={cn(
+                        "font-bold px-5 gap-1.5 transition-all",
+                        hasBlockers
+                          ? "bg-black/10 text-black/35 cursor-not-allowed border-none shadow-none"
+                          : "bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
+                      )}
+                    >
+                      <Sparkles className="size-3.5" />
+                      <span>Confirm &amp; Generate Video</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Share & Distribute Modal */}
-      <ShareReviewModal
-        open={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
-        assetType="video"
-        assetTitle={projectTitle}
-        brandName={brandName}
-        durationSeconds={totalDurationSeconds}
-        onExportDirect={() => {
-          setToMessage("Preparing high-res 1080p MP4 master download...");
-          setTimeout(() => setToMessage(null), 2500);
-        }}
-        onShowToast={(msg) => {
-          setToMessage(msg);
-          setTimeout(() => setToMessage(null), 3000);
-        }}
-      />
-    </div>
+        {/* Share & Distribute Modal */}
+        <ShareReviewModal
+          open={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          assetType="video"
+          assetTitle={projectTitle}
+          brandName={brandName}
+          durationSeconds={totalDurationSeconds}
+          onExportDirect={() => {
+            setToMessage("Preparing high-res 1080p MP4 master download...");
+            setTimeout(() => setToMessage(null), 2500);
+          }}
+          onShowToast={(msg) => {
+            setToMessage(msg);
+            setTimeout(() => setToMessage(null), 3000);
+          }}
+        />
+        </>
+      }
+    />
   );
 }
 
