@@ -439,6 +439,10 @@ export function InfographicDirectionsScreen() {
       panelWidth={copilotPanelWidth}
       onPanelWidthChange={setCopilotPanelWidth}
       panelStorageKey="swishx.copilotPanelWidth"
+      /* Below 1024 there is not enough width for canvas + inspector:
+         the panel closes once on the way down, and a deliberate
+         re-open sticks. Tablet portrait is review-only by design. */
+      autoCollapsePanelBelow="laptop"
       header={
         <ScreenHeader>
           <button

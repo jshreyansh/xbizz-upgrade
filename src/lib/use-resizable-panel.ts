@@ -97,6 +97,20 @@ export function useResizablePanel(options: ResizablePanelOptions) {
     return value;
   }, [clamp, onWidthChange, storageKey]);
 
+  // Re-clamp when the viewport shrinks. Without this a width dragged wide on a
+  // large display persists — through localStorage, across sessions — into a
+  // 1024 laptop and starves the canvas, since the floor is only enforced at
+  // drag time. Only ever narrows: it never re-widens a width you chose.
+  useEffect(() => {
+    if (disabled) return;
+    const onResize = () => {
+      const clamped = clamp(width);
+      if (clamped < width) onWidthChange(clamped);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [clamp, disabled, onWidthChange, width]);
+
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLElement>) => {
     if (disabled || e.button !== 0) return;
     e.preventDefault();

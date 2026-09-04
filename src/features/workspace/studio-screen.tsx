@@ -872,6 +872,10 @@ export function StudioScreen() {
       onPanelWidthChange={setCopilotPanelWidth}
       onPanelResizingChange={setCopilotPanelResizing}
       panelStorageKey="swishx.copilotPanelWidth"
+      /* Below 1024 there is not enough width for canvas + inspector:
+         the panel closes once on the way down, and a deliberate
+         re-open sticks. Tablet portrait is review-only by design. */
+      autoCollapsePanelBelow="laptop"
       /* The editor and review modes put a fixed rail left of the canvas, so
          the canvas floor has to account for it or a full-width drag at tablet
          size leaves ~140px of canvas. */

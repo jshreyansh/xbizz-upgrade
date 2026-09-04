@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Plus, Search, Sparkles, X } from "lucide-react";
+import { ArrowRight, Check, CheckCircle2, Plus, Search, Sparkles, X } from "lucide-react";
 import { Button, IconButton } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Container } from "@/components/ui/container";
@@ -13,6 +13,8 @@ import { Label, Text } from "@/components/ui/text";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { SidePanel, SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
+import { ActionBar } from "@/components/patterns/action-bar";
+import { Sheet } from "@/components/patterns/sheet";
 import { ScaleRow, SwatchRow } from "./token-table";
 
 /**
@@ -77,6 +79,7 @@ export default function DesignSystemPage() {
   const [chips, setChips] = useState<string[]>(["derm"]);
   const [otherOpen, setOtherOpen] = useState(false);
   const [demoPanelWidth, setDemoPanelWidth] = useState(SIDE_PANEL_DEFAULT_WIDTH);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [custom, setCustom] = useState("");
 
   return (
@@ -294,6 +297,58 @@ export default function DesignSystemPage() {
                 </SidePanel>
               </div>
             </Stack>
+
+            <Stack gap={2} className="mt-6">
+              <Label size="micro">ActionBar — the pill that closes a canvas</Label>
+              <Text size="caption" tone="muted">
+                Status on the left, the stage&apos;s primary CTA on the right. Three canvases had
+                this with three sets of hand-tuned pixels; they now share one. It is
+                <code className="px-1">sticky mt-auto</code>, not fixed — it belongs to the
+                scrolling canvas, so it never floats over the inspector, and only the pill takes
+                pointer events so the canvas stays scrollable across its full width.
+              </Text>
+              <div className="flex h-32 flex-col overflow-hidden rounded-panel border border-hair bg-canvas px-4">
+                <ActionBar
+                  icon={<CheckCircle2 className="size-4.5 shrink-0 text-ok-on-dark" />}
+                  title="Ready to generate script"
+                  description="Grounded against 214 approved claims"
+                  action={
+                    <Button size="sm" shape="pill" className="shrink-0">
+                      Confirm <ArrowRight className="ml-1.5 size-3.5" />
+                    </Button>
+                  }
+                />
+              </div>
+            </Stack>
+
+            <Stack gap={2} className="mt-6">
+              <Label size="micro">Sheet — a panel with nowhere to dock</Label>
+              <Text size="caption" tone="muted">
+                <code className="px-1">Panel</code> in a fixed position: scrim, edge, escape to
+                close, and no second scroll container. This is what the inspector becomes at
+                tablet portrait. No production call site yet — it exists for the tablet tier.
+              </Text>
+              <div>
+                <Button size="sm" variant="secondary" onClick={() => setSheetOpen(true)}>
+                  Open a right sheet
+                </Button>
+              </div>
+              <Sheet
+                open={sheetOpen}
+                onClose={() => setSheetOpen(false)}
+                title="Inspector"
+                description="Header pinned, body scrolls, footer pinned."
+                footer={<Button size="sm" onClick={() => setSheetOpen(false)}>Done</Button>}
+              >
+                <Stack gap={2}>
+                  {Array.from({ length: 14 }, (_, i) => (
+                    <div key={i} className="rounded-control border border-hair bg-subtle px-3 py-2">
+                      <Text size="caption" tone="muted">Row {i + 1} — the body is the only scroller</Text>
+                    </div>
+                  ))}
+                </Stack>
+              </Sheet>
+            </Stack>
           </Section>
 
           <Section id="layout" n="06" title="Layout"
@@ -305,6 +360,49 @@ export default function DesignSystemPage() {
                   <div key={n} className="flex items-center gap-3">
                     <Text size="micro" tone="subtle" className="w-20 shrink-0 font-mono">{short(n)}</Text>
                     <div className="h-3 rounded-chip bg-tint border border-tint-line" style={{ width: `min(100%, var(${n}))` }} />
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-2 flex flex-col gap-2">
+                <Label size="micro">Screen archetypes</Label>
+                <Text size="caption" tone="muted">
+                  Every workspace screen is one of two shapes. Both come from
+                  <code className="px-1">WorkbenchLayout</code>, which owns the root column and the
+                  row; each region owns its own element, width and scrolling. Regions are declared
+                  as slots — header, rail, main, panel, overlay — so the tablet and phone tiers can
+                  change how a region is presented without any screen knowing.
+                </Text>
+                {[
+                  ["SplitLayout", "header + main + panel", "plan · creative plan"],
+                  ["WorkbenchLayout", "header + rail + main + panel", "script/editor · creative studio"],
+                ].map(([name, shape, used]) => (
+                  <div key={name} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-control border border-hair bg-subtle px-3 py-2">
+                    <Text size="caption" weight="bold">{name}</Text>
+                    <Text size="caption" tone="muted" className="font-mono">{shape}</Text>
+                    <Text size="micro" tone="subtle" className="ml-auto">{used}</Text>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-2 flex flex-col gap-2">
+                <Label size="micro">Responsive tiers</Label>
+                <Text size="caption" tone="muted">
+                  These drive presentation, not styling — styling stays in Tailwind&apos;s own
+                  sm/md/lg. Below 1024 the inspector closes once on the way down; re-opening it is
+                  a deliberate act and sticks. A panel width dragged wide on a large display is
+                  re-clamped down when the viewport shrinks, never re-widened.
+                </Text>
+                {[
+                  ["desktop", "\u2265 1280", "three columns, inspector open"],
+                  ["laptop", "1024 \u2013 1279", "three columns, inspector open, width capped by the canvas floor"],
+                  ["tablet", "768 \u2013 1023", "inspector auto-closes; becomes a Sheet in the tablet tier"],
+                  ["compact", "< 768", "review only \u2014 the phone tier, not built yet"],
+                ].map(([name, range, behaviour]) => (
+                  <div key={name} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-control border border-hair bg-subtle px-3 py-2">
+                    <Text size="caption" weight="bold" className="w-16 shrink-0">{name}</Text>
+                    <Text size="caption" tone="muted" className="w-24 shrink-0 font-mono">{range}</Text>
+                    <Text size="micro" tone="subtle">{behaviour}</Text>
                   </div>
                 ))}
               </div>

@@ -33,13 +33,15 @@ export function useLayout(): Layout | null {
   const [layout, setLayout] = useState<Layout | null>(null);
 
   useEffect(() => {
+    // Read synchronously, NOT inside requestAnimationFrame. rAF does not run
+    // in a hidden or background tab, so deferring the first read there left
+    // layout null indefinitely for anyone who opened the app in a background
+    // tab — and every responsive rule keyed off it silently never armed.
+    // An effect already runs after paint, so there was nothing to wait for.
     const read = () => setLayout(resolve(window.innerWidth));
-    const raf = requestAnimationFrame(read);
+    read();
     window.addEventListener("resize", read);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", read);
-    };
+    return () => window.removeEventListener("resize", read);
   }, []);
 
   return layout;
