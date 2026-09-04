@@ -45,7 +45,7 @@ import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspa
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
-import { SidePanel } from "@/components/patterns/side-panel";
+import { SplitLayout } from "@/components/patterns/workbench-layout";
 
 type InfographicSubStep = "brief" | "content";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
@@ -328,10 +328,9 @@ export function InfographicDirectionsScreen() {
     setVideoSubStage,
     copilotPanelOpen,
     copilotPanelWidth,
-    copilotPanelResizing,
     setCopilotPanelWidth,
-    setCopilotPanelResizing,
     toggleCopilotPanel,
+    setCopilotPanelOpen,
   } = useWorkspaceStore();
 
   const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
@@ -432,248 +431,185 @@ export function InfographicDirectionsScreen() {
   const selectedTemplate = TEMPLATE_ARCHETYPES.find((t) => t.id === infographicTemplate) || TEMPLATE_ARCHETYPES[0];
 
   return (
-    <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#eef1ed] text-left">
-      {/* ─── Clean Header Bar (Identical to Video Screen) ─── */}
-      <ScreenHeader>
-        <button
-          type="button"
-          onClick={() => {
-            if (currentStep === "content") setCurrentStep("brief");
-            else {
-              setVideoSubStage("intake");
-              setView("create");
-            }
-          }}
-          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
-          aria-label="Back"
-        >
-          <ArrowLeft className="size-4" />
-        </button>
-
-        <SwishXMark compact />
-        <div className="mx-3 h-5 w-px bg-hair" />
-
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-body font-[800] text-ink">
-              {brandName} HCP launch
-            </span>
-            <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
-              Draft v1
-            </span>
-          </div>
-          <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
-            Saved just now · Canvas Studio · MLR Ready
-          </div>
-        </div>
-
-        {/* State Switcher in Header */}
-        <div className="ml-6 hidden items-center gap-1 sm:flex">
-          <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-            {currentStep === "brief" ? "Plan View" : "Blueprint View"}
-          </span>
-        </div>
-
-        <div className="ml-4 hidden items-center gap-0.5 lg:flex">
-          <Button variant="ghost" size="icon" aria-label="Undo">
-            <Undo2 className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Redo" disabled>
-            <Redo2 className="size-4" />
-          </Button>
-          <div className="mx-1 h-5 w-px bg-hair" />
-          <Button variant="ghost" size="sm">
-            <History className="size-3.5" /> Versions
-          </Button>
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          {/* Toggle Right Sidebar Panel Button */}
+    <SplitLayout
+      className="bg-[#eef1ed] text-left"
+      panelOpen={copilotPanelOpen}
+      onPanelOpenChange={setCopilotPanelOpen}
+      panelWidth={copilotPanelWidth}
+      onPanelWidthChange={setCopilotPanelWidth}
+      panelStorageKey="swishx.copilotPanelWidth"
+      header={
+        <ScreenHeader>
           <button
             type="button"
-            onClick={toggleCopilotPanel}
-            className={cn(
-              "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
-              copilotPanelOpen
-                ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
-                : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
-            )}
-            title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
+            onClick={() => {
+              if (currentStep === "content") setCurrentStep("brief");
+              else {
+                setVideoSubStage("intake");
+                setView("create");
+              }
+            }}
+            className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
+            aria-label="Back"
           >
-            <PanelRight className="size-4" />
+            <ArrowLeft className="size-4" />
           </button>
-        </div>
-      </ScreenHeader>
 
-      {/* ─── Main Body: Left Planning Canvas / Right SwishX Assistant ─── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden relative">
-        {/* ── LEFT CANVAS ── */}
-        <section
-          style={{
-            width: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            minWidth: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            maxWidth: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            transition: copilotPanelResizing ? "none" : "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          className="flex flex-col shrink-0 min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4 relative"
-        >
-          {/* ══════════════════════════════════════════════════════════════════
-              STAGE 1: BRIEF & CREATIVE PARAMETERS (Exact Layout as Video Screen)
-             ══════════════════════════════════════════════════════════════════ */}
-          {currentStep === "brief" && (
-            <>
-              {/* Header in Left Canvas (Identical to Video Screen) */}
-              <div className="flex items-center justify-between pb-1 shrink-0">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
-                      Available Context
-                    </span>
-                    <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-ok-line">
-                      Grounding active
+          <SwishXMark compact />
+          <div className="mx-3 h-5 w-px bg-hair" />
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-body font-[800] text-ink">
+                {brandName} HCP launch
+              </span>
+              <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
+                Draft v1
+              </span>
+            </div>
+            <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
+              Saved just now · Canvas Studio · MLR Ready
+            </div>
+          </div>
+
+          {/* State Switcher in Header */}
+          <div className="ml-6 hidden items-center gap-1 sm:flex">
+            <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
+              {currentStep === "brief" ? "Plan View" : "Blueprint View"}
+            </span>
+          </div>
+
+          <div className="ml-4 hidden items-center gap-0.5 lg:flex">
+            <Button variant="ghost" size="icon" aria-label="Undo">
+              <Undo2 className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Redo" disabled>
+              <Redo2 className="size-4" />
+            </Button>
+            <div className="mx-1 h-5 w-px bg-hair" />
+            <Button variant="ghost" size="sm">
+              <History className="size-3.5" /> Versions
+            </Button>
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            {/* Toggle Right Sidebar Panel Button */}
+            <button
+              type="button"
+              onClick={toggleCopilotPanel}
+              className={cn(
+                "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
+                copilotPanelOpen
+                  ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
+                  : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+              )}
+              title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
+            >
+              <PanelRight className="size-4" />
+            </button>
+          </div>
+        </ScreenHeader>
+      }
+      main={
+          <section
+            className="flex flex-1 min-w-0 flex-col min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4 relative"
+          >
+            {/* ══════════════════════════════════════════════════════════════════
+                STAGE 1: BRIEF & CREATIVE PARAMETERS (Exact Layout as Video Screen)
+               ══════════════════════════════════════════════════════════════════ */}
+            {currentStep === "brief" && (
+              <>
+                {/* Header in Left Canvas (Identical to Video Screen) */}
+                <div className="flex items-center justify-between pb-1 shrink-0">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
+                        Available Context
+                      </span>
+                      <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-ok-line">
+                        Grounding active
+                      </span>
+                    </div>
+                    <h2 className="text-display font-[850] text-ink tracking-tight mt-0.5">
+                      {brandName} Dossier Plan &amp; Creative Parameters
+                    </h2>
+                    <p className="text-body text-ink-3 mt-0.5">
+                      Refine audience target, page format, layout archetype, and clinical angles before confirming the creative.
+                    </p>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2">
+                    <span className="rounded-full bg-card px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
+                      ✓ 214 approved claims cited
                     </span>
                   </div>
-                  <h2 className="text-display font-[850] text-ink tracking-tight mt-0.5">
-                    {brandName} Dossier Plan &amp; Creative Parameters
-                  </h2>
-                  <p className="text-body text-ink-3 mt-0.5">
-                    Refine audience target, page format, layout archetype, and clinical angles before confirming the creative.
-                  </p>
                 </div>
-                <div className="hidden sm:flex items-center gap-2">
-                  <span className="rounded-full bg-card px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
-                    ✓ 214 approved claims cited
-                  </span>
-                </div>
-              </div>
 
-              {/* ─── Rich Accordion Sections with Distinct Icons & Zoom Animation ─── */}
-              <div className="space-y-3 min-w-0 w-full">
-                {/* 1. Research & Sources (Unified Top Starting Tile) */}
-                <CreativePlanSection
-                  icon={ShieldCheck}
-                  title="Research and Sources"
-                  summary={
-                    sourceGroundingMode === "both"
-                      ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
-                      : sourceGroundingMode === "my-sources"
-                      ? `${uploadedDocs.length} custom files active · Dossier ignored`
-                      : `${brandName} SmPC Approved Dossier · 214 claims`
-                  }
-                  status="From source"
-                  tone="done"
-                  open={openSection === "sources"}
-                  onToggle={() => setOpenSection(openSection === "sources" ? null : "sources")}
-                >
-                  <ResearchSourcesContent
-                    brandName={brandName || "Velmora"}
-                    sourceGroundingMode={sourceGroundingMode}
-                    onSetSourceGroundingMode={setSourceGroundingMode}
-                    uploadedDocs={uploadedDocs}
-                    onSetUploadedDocs={setUploadedDocs}
-                    onPreviewDossier={(d) => setPreviewDossier(d)}
-                    onContinue={() => setOpenSection("format")}
-                  />
-                </CreativePlanSection>
+                {/* ─── Rich Accordion Sections with Distinct Icons & Zoom Animation ─── */}
+                <div className="space-y-3 min-w-0 w-full">
+                  {/* 1. Research & Sources (Unified Top Starting Tile) */}
+                  <CreativePlanSection
+                    icon={ShieldCheck}
+                    title="Research and Sources"
+                    summary={
+                      sourceGroundingMode === "both"
+                        ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
+                        : sourceGroundingMode === "my-sources"
+                        ? `${uploadedDocs.length} custom files active · Dossier ignored`
+                        : `${brandName} SmPC Approved Dossier · 214 claims`
+                    }
+                    status="From source"
+                    tone="done"
+                    open={openSection === "sources"}
+                    onToggle={() => setOpenSection(openSection === "sources" ? null : "sources")}
+                  >
+                    <ResearchSourcesContent
+                      brandName={brandName || "Velmora"}
+                      sourceGroundingMode={sourceGroundingMode}
+                      onSetSourceGroundingMode={setSourceGroundingMode}
+                      uploadedDocs={uploadedDocs}
+                      onSetUploadedDocs={setUploadedDocs}
+                      onPreviewDossier={(d) => setPreviewDossier(d)}
+                      onContinue={() => setOpenSection("format")}
+                    />
+                  </CreativePlanSection>
 
-                {/* 2. Format & Page Shape */}
-                <CreativePlanSection
-                  icon={LayoutGrid}
-                  title="Format & Page shape"
-                  summary={`${FORMAT_OPTIONS.find((f) => f.id === pageShape)?.label || "Portrait 3:4"}`}
-                  status="From brief"
-                  tone="done"
-                  open={openSection === "format"}
-                  onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
-                >
-                  <div className="space-y-4">
-                    <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
-                      <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
-                        Why this fits
+                  {/* 2. Format & Page Shape */}
+                  <CreativePlanSection
+                    icon={LayoutGrid}
+                    title="Format & Page shape"
+                    summary={`${FORMAT_OPTIONS.find((f) => f.id === pageShape)?.label || "Portrait 3:4"}`}
+                    status="From brief"
+                    tone="done"
+                    open={openSection === "format"}
+                    onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
+                  >
+                    <div className="space-y-4">
+                      <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
+                        <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
+                          Why this fits
+                        </div>
+                        <p className="text-body text-ink-2">
+                          {FORMAT_OPTIONS.find((f) => f.id === pageShape)?.whyFits || "Ideal for iPad clinical discussions and vertical digital reading."}
+                        </p>
                       </div>
-                      <p className="text-body text-ink-2">
-                        {FORMAT_OPTIONS.find((f) => f.id === pageShape)?.whyFits || "Ideal for iPad clinical discussions and vertical digital reading."}
-                      </p>
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {FORMAT_OPTIONS.map((fmt) => {
-                        const isSelected = pageShape === fmt.id;
-                        return (
-                          <button
-                            key={fmt.id}
-                            type="button"
-                            onClick={() => setPageShape(fmt.id as any)}
-                            className={cn(
-                              "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[85px]",
-                              isSelected
-                                ? "border-2 border-brand bg-card text-ink shadow-xs"
-                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                            )}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="font-bold text-body-lg">{fmt.label}</div>
-                              <div
-                                className={cn(
-                                  "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
-                                  isSelected
-                                    ? "border-brand bg-brand text-white"
-                                    : "border-hair-3"
-                                )}
-                              >
-                                {isSelected && <Check className="size-2.5 stroke-[3]" />}
-                              </div>
-                            </div>
-                            <div className="text-label text-ink-3 mt-1">{fmt.sub}</div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </CreativePlanSection>
-
-                {/* 2. Message and Audience */}
-                <CreativePlanSection
-                  icon={Users}
-                  title="Message and audience"
-                  summary={`${AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.title || "Doctor / HCP"} · ${specialty} · ${language}`}
-                  status="Confirmed"
-                  tone="done"
-                  open={openSection === "audience"}
-                  onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
-                >
-                  <div className="space-y-4">
-                    <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
-                      <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
-                        Why this fits
-                      </div>
-                      <p className="text-body text-ink-2">
-                        {AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.whyFits || "Deep mechanistic clarity with primary clinical endpoints & prescribing limits."}
-                      </p>
-                    </div>
-
-                    <div>
-                      <div className="text-body-lg font-bold text-ink mb-2.5">Who is this for?</div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {AUDIENCE_OPTIONS.map((opt) => {
-                          const isSelected = selectedAudienceId === opt.id;
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {FORMAT_OPTIONS.map((fmt) => {
+                          const isSelected = pageShape === fmt.id;
                           return (
                             <button
-                              key={opt.id}
+                              key={fmt.id}
                               type="button"
-                              onClick={() => {
-                                setSelectedAudienceId(opt.id);
-                                setAudience(opt.title.split("/")[0].trim() as any);
-                              }}
+                              onClick={() => setPageShape(fmt.id as any)}
                               className={cn(
-                                "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]",
+                                "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[85px]",
                                 isSelected
                                   ? "border-2 border-brand bg-card text-ink shadow-xs"
                                   : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
                               <div className="flex items-start justify-between gap-2">
-                                <div className="font-bold text-body-lg text-ink">{opt.title}</div>
+                                <div className="font-bold text-body-lg">{fmt.label}</div>
                                 <div
                                   className={cn(
                                     "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
@@ -685,535 +621,590 @@ export function InfographicDirectionsScreen() {
                                   {isSelected && <Check className="size-2.5 stroke-[3]" />}
                                 </div>
                               </div>
-                              <div className="text-label text-ink-3 mt-1.5 leading-snug">{opt.desc}</div>
+                              <div className="text-label text-ink-3 mt-1">{fmt.sub}</div>
                             </button>
                           );
                         })}
                       </div>
                     </div>
+                  </CreativePlanSection>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                      <div>
-                        <label className="block text-body font-bold text-ink mb-1">
-                          Specialty (optional)
-                        </label>
-                        <select
-                          value={specialty}
-                          onChange={(e) => setSpecialty(e.target.value)}
-                          className="w-full h-10 rounded-xl border border-hair-2 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
-                        >
-                          {SPECIALTIES.map((sp) => (
-                            <option key={sp} value={sp}>
-                              {sp}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="text-caption text-ink-3 mt-1">
-                          Decides which endpoints and terminology count as key messages.
+                  {/* 2. Message and Audience */}
+                  <CreativePlanSection
+                    icon={Users}
+                    title="Message and audience"
+                    summary={`${AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.title || "Doctor / HCP"} · ${specialty} · ${language}`}
+                    status="Confirmed"
+                    tone="done"
+                    open={openSection === "audience"}
+                    onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
+                  >
+                    <div className="space-y-4">
+                      <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
+                        <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
+                          Why this fits
+                        </div>
+                        <p className="text-body text-ink-2">
+                          {AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.whyFits || "Deep mechanistic clarity with primary clinical endpoints & prescribing limits."}
                         </p>
                       </div>
 
                       <div>
-                        <label className="block text-body font-bold text-ink mb-1">Language</label>
-                        <select
-                          value={language}
-                          onChange={(e) => setLanguage(e.target.value)}
-                          className="w-full h-10 rounded-xl border border-hair-2 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
-                        >
-                          <option value="English">English</option>
-                          <option value="Hindi">Hindi</option>
-                          <option value="Spanish">Spanish</option>
-                          <option value="French">French</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </CreativePlanSection>
-
-                {/* 3. Design & Layout Archetype */}
-                <CreativePlanSection
-                  icon={Palette}
-                  title="Design & Layout Archetype"
-                  summary={`${selectedTemplate.name} · ${selectedTemplate.badge}`}
-                  status="Recommended"
-                  tone="done"
-                  open={openSection === "design"}
-                  onToggle={() => setOpenSection(openSection === "design" ? null : "design")}
-                >
-                  <div className="space-y-4">
-                    <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
-                      <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
-                        Visual layout structure
-                      </div>
-                      <p className="text-body text-ink-2">
-                        The deck is built from one of these archetypes. Each sample carries the typography, charts, and layout elements the creative will use.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-                      {TEMPLATE_ARCHETYPES.map((tpl) => {
-                        const isSelected = infographicTemplate === tpl.id;
-                        return (
-                          <div
-                            key={tpl.id}
-                            onClick={() => setInfographicTemplate(tpl.id)}
-                            className={cn(
-                              "rounded-control border bg-card p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
-                              isSelected
-                                ? "border-2 border-brand bg-card shadow-xs"
-                                : "border-hair-2 hover:border-hair-3 hover:bg-canvas"
-                            )}
-                          >
-                            <div>
-                              <div className="flex items-center justify-between mb-1">
-                                <h3 className="text-subhead font-bold text-ink">{tpl.name}</h3>
-                                {isSelected ? (
-                                  <span className="size-4.5 rounded-full bg-brand text-white grid place-items-center text-caption font-black">
-                                    ✓
-                                  </span>
-                                ) : (
-                                  <span className="size-4.5 rounded-full border-2 border-hair-3 shrink-0" />
+                        <div className="text-body-lg font-bold text-ink mb-2.5">Who is this for?</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                          {AUDIENCE_OPTIONS.map((opt) => {
+                            const isSelected = selectedAudienceId === opt.id;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedAudienceId(opt.id);
+                                  setAudience(opt.title.split("/")[0].trim() as any);
+                                }}
+                                className={cn(
+                                  "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]",
+                                  isSelected
+                                    ? "border-2 border-brand bg-card text-ink shadow-xs"
+                                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                                 )}
-                              </div>
-                              <p className="text-label text-ink-3 leading-snug mb-2.5 line-clamp-2">{tpl.tagline}</p>
-
-                              <div
-                                style={{ background: tpl.previewBg }}
-                                className="rounded-xl p-3 text-white mb-2.5 shadow-inner min-h-[115px] flex flex-col justify-between"
                               >
-                                <div>
-                                  <span className="inline-block px-1.5 py-0.5 rounded bg-white/20 text-micro font-extrabold uppercase tracking-wide">
-                                    {tpl.badge}
-                                  </span>
-                                  <div className="text-title font-black tracking-tight mt-1 leading-none">
-                                    {tpl.metric}
-                                  </div>
-                                  <div className="text-micro text-white/70 mt-0.5">{tpl.metricSub}</div>
-                                </div>
-
-                                <div className="space-y-0.5 pt-1.5 border-t border-white/15">
-                                  {tpl.points.slice(0, 2).map((pt, i) => (
-                                    <div key={i} className="text-micro text-white/85 flex items-center gap-1 truncate">
-                                      <span className="size-1 rounded-full bg-white/60 shrink-0" />
-                                      <span>{pt}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            <Button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setInfographicTemplate(tpl.id);
-                              }}
-                              variant={isSelected ? "primary" : "secondary"}
-                              size="sm"
-                              className={cn(
-                                "w-full h-8 rounded-xl text-label font-bold transition cursor-pointer",
-                                isSelected
-                                  ? "bg-brand hover:bg-brand-deep text-white"
-                                  : "border-hair-2 hover:border-brand text-ink"
-                              )}
-                            >
-                              {isSelected ? `Using ${tpl.name}` : `Use ${tpl.name}`}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </CreativePlanSection>
-
-                {/* 4. What should this deck achieve? (Objective & Angle) */}
-                <CreativePlanSection
-                  icon={Target}
-                  title="What should this deck achieve? (Objective & Angle)"
-                  summary={`${OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.label || "Adoption"} · ${selectedAngles.length} topics`}
-                  status="Recommended"
-                  tone="done"
-                  open={openSection === "objective"}
-                  onToggle={() => setOpenSection(openSection === "objective" ? null : "objective")}
-                >
-                  <div className="space-y-4">
-                    <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
-                      <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
-                        Why this fits
-                      </div>
-                      <p className="text-body text-ink-2">
-                        {OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.whyFits || "Focuses on dosing titration, eGFR cut-offs, and first-line prescription protocols."}
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-body font-bold text-ink mb-1.5">
-                        Campaign Objective
-                      </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
-                        {OBJECTIVE_OPTIONS.map((obj) => {
-                          const isSelected = objective === obj.id;
-                          return (
-                            <button
-                              key={obj.id}
-                              type="button"
-                              onClick={() => setObjective(obj.id)}
-                              className={cn(
-                                "relative p-3 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[80px]",
-                                isSelected
-                                  ? "border-2 border-brand bg-card text-ink shadow-xs"
-                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                              )}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="font-bold text-body-lg">{obj.label}</div>
-                                <div
-                                  className={cn(
-                                    "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
-                                    isSelected
-                                      ? "border-brand bg-brand text-white"
-                                      : "border-hair-3"
-                                  )}
-                                >
-                                  {isSelected && <Check className="size-2.5 stroke-[3]" />}
-                                </div>
-                              </div>
-                              <div className="text-caption text-ink-3 mt-1 leading-tight">{obj.desc}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-body font-bold text-ink mb-1.5">
-                        Content Angles (Select topics to prioritize)
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {CONTENT_ANGLES.map((ang) => {
-                          const isSelected = selectedAngles.includes(ang);
-                          return (
-                            <button
-                              key={ang}
-                              type="button"
-                              onClick={() => toggleAngle(ang)}
-                              className={cn(
-                                "px-3.5 py-1.5 rounded-xl border text-body font-bold transition cursor-pointer flex items-center gap-1.5",
-                                isSelected
-                                  ? "bg-brand text-white border-brand shadow-2xs hover:bg-brand-deep"
-                                  : "bg-card text-ink-2 border-hair-2 hover:border-hair-3 hover:bg-canvas"
-                              )}
-                            >
-                              {isSelected && <Check className="size-3 stroke-[3]" />}
-                              <span>{ang}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </CreativePlanSection>
-
-                {/* 5. Product & Brand Visual Assets */}
-                <CreativePlanSection
-                  icon={ImageIcon}
-                  title="Product & Device Visual Assets"
-                  summary={`${LOGO_PLACEMENTS.find((l) => l.id === infographicLogoPlacement)?.label || "Bottom right"} · ${infographicPages === "2" ? "2 pages" : "1 page"}`}
-                  status="Optional"
-                  tone="default"
-                  open={openSection === "assets"}
-                  onToggle={() => setOpenSection(openSection === "assets" ? null : "assets")}
-                >
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-body font-bold text-ink mb-1">Logo placement</div>
-                      <p className="text-label text-ink-3 mb-2">
-                        Every page keeps this corner clear, and your approved logo is placed into it after the page is drawn.
-                      </p>
-                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                        {LOGO_PLACEMENTS.map((lp) => {
-                          const isSelected = infographicLogoPlacement === lp.id;
-                          return (
-                            <button
-                              key={lp.id}
-                              type="button"
-                              onClick={() => setInfographicLogoPlacement(lp.id as any)}
-                              className={cn(
-                                "p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
-                                isSelected
-                                  ? "border-2 border-brand bg-card text-ink shadow-2xs"
-                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                              )}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="font-bold text-body">{lp.label}</div>
-                                <div
-                                  className={cn(
-                                    "size-4 rounded-full border-2 grid place-items-center shrink-0",
-                                    isSelected
-                                      ? "border-brand bg-brand text-white"
-                                      : "border-hair-3"
-                                  )}
-                                >
-                                  {isSelected && <Check className="size-2.5 stroke-[3]" />}
-                                </div>
-                              </div>
-                              <div className="text-micro text-ink-3 mt-0.5 leading-tight">{lp.desc}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-body font-bold text-ink mb-1">Product packshots (Optional)</div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        {packshots.map((ps) => (
-                          <div key={ps.id} className="relative group rounded-xl border border-hair-2 overflow-hidden bg-card p-1 shadow-2xs">
-                            <img src={ps.url} alt={ps.name} className="size-16 object-cover rounded-lg" />
-                            <span className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-micro font-bold px-1 rounded truncate">
-                              {ps.name}
-                            </span>
-                          </div>
-                        ))}
-                        <input type="file" ref={fileUploadRef} className="hidden" />
-                        <button
-                          type="button"
-                          onClick={() => fileUploadRef.current?.click()}
-                          className="h-16 px-4 rounded-xl border-2 border-dashed border-hair-3 hover:border-brand flex flex-col items-center justify-center gap-1 text-label font-bold text-ink-2 hover:text-brand bg-card cursor-pointer transition"
-                        >
-                          <Upload className="size-4" />
-                          <span>Add product image</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-body font-bold text-ink mb-1.5">How many pages?</div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[460px]">
-                        <button
-                          type="button"
-                          onClick={() => setInfographicPages("1")}
-                          className={cn(
-                            "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
-                            infographicPages === "1"
-                              ? "border-2 border-brand bg-card text-ink shadow-2xs"
-                              : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                          )}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="font-bold text-body-lg">One page</div>
-                            <div
-                              className={cn(
-                                "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
-                                infographicPages === "1"
-                                  ? "border-brand bg-brand text-white"
-                                  : "border-hair-3"
-                              )}
-                            >
-                              {infographicPages === "1" && <Check className="size-3 stroke-[3]" />}
-                            </div>
-                          </div>
-                          <div className="text-label text-ink-3 mt-0.5">A single concise surface</div>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setInfographicPages("2")}
-                          className={cn(
-                            "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
-                            infographicPages === "2"
-                              ? "border-2 border-brand bg-card text-ink shadow-2xs"
-                              : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                          )}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="font-bold text-body-lg">Two pages</div>
-                            <div
-                              className={cn(
-                                "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
-                                infographicPages === "2"
-                                  ? "border-brand bg-brand text-white"
-                                  : "border-hair-3"
-                              )}
-                            >
-                              {infographicPages === "2" && <Check className="size-3 stroke-[3]" />}
-                            </div>
-                          </div>
-                          <div className="text-label text-ink-3 mt-0.5">A front summary and back evidence spread</div>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </CreativePlanSection>
-
-
-              </div>
-            </>
-          )}
-
-          {/* ══════════════════════════════════════════════════════════════════
-              STAGE 2: CONTENT BLUEPRINT / PLAN (Expandable Citations)
-             ══════════════════════════════════════════════════════════════════ */}
-          {currentStep === "content" && (
-            <div className="space-y-4 max-w-[880px] mx-auto w-full">
-              {/* Header Box */}
-              <div className="bg-card p-5 rounded-2xl border border-hair-2 shadow-2xs">
-                <div className="text-label font-extrabold uppercase tracking-wider text-brand mb-1">
-                  Content Blueprint &amp; Claim Partition
-                </div>
-                <h2 className="text-display font-black tracking-tight text-ink">
-                  One tablet, three approved jobs: {brandName} (tirzelamide) in moderate-to-severe plaque psoriasis
-                </h2>
-                <p className="text-body text-ink-3 mt-1">
-                  8 sections on {infographicPages === "2" ? "2 pages" : "1 page"} · 13 verified claims grounded in CDSCO / FDA dossier
-                </p>
-              </div>
-
-              {/* Transparent "Left Out" Box (MLR Discipline) */}
-              <div className="rounded-2xl border border-warn-line/80 bg-warn-bg/70 p-4 shadow-2xs">
-                <div className="flex items-center gap-2 text-warn font-bold text-body mb-1.5">
-                  <ShieldCheck className="size-4 text-warn shrink-0" />
-                  <span>Left out deliberately for MLR Compliance</span>
-                </div>
-                <p className="text-label text-warn/90 leading-relaxed">
-                  The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved CDSCO primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1.
-                </p>
-              </div>
-
-              {/* Numbered Sections List with Interactive Expandable Citations */}
-              <div className="space-y-3">
-                {CONTENT_PLAN_SECTIONS.map((sec) => {
-                  const isExpanded = expandedCitations[sec.num];
-                  return (
-                    <div
-                      key={sec.num}
-                      className="bg-card p-4.5 rounded-2xl border border-hair-2 shadow-2xs hover:border-hair-3 transition-all duration-200"
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="size-6.5 rounded-full bg-tint text-brand-deep font-black text-body grid place-items-center shrink-0 mt-0.5">
-                          {sec.num}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-bold text-subhead text-ink">{sec.title}</h4>
-                            <span className="text-caption text-ink-3 font-normal italic">
-                              ({sec.role})
-                            </span>
-                          </div>
-                          <p className="text-body text-ink-2 mt-1.5 leading-relaxed">{sec.body}</p>
-
-                          {/* Expandable Citation Button */}
-                          <div className="mt-2.5">
-                            <button
-                              type="button"
-                              onClick={() => toggleCitation(sec.num)}
-                              className={cn(
-                                "text-label font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 border transition cursor-pointer",
-                                isExpanded
-                                  ? "bg-ok-bg/80 text-ok border-ok-line ring-2 ring-ok/20"
-                                  : "bg-ok-bg text-ok border-ok-line hover:bg-ok-bg/60"
-                              )}
-                            >
-                              <CheckCircle2 className="size-3.5 text-ok shrink-0" />
-                              <span>{sec.citations.length} {sec.citations.length === 1 ? "citation" : "citations"} · Grounded in label</span>
-                              <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
-                            </button>
-
-                            {/* Rich Expanded Citations Drawer */}
-                            {isExpanded && (
-                              <div className="mt-2.5 space-y-2 rounded-xl bg-[#f7faf8] p-3 border border-ok-line/80 text-label animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="text-caption font-extrabold uppercase tracking-wider text-ok flex items-center gap-1">
-                                  <FileCheck2 className="size-3 text-ok" />
-                                  <span>Verified Dossier Citations &amp; Label Grounding</span>
-                                </div>
-
-                                {sec.citations.map((cit, cIdx) => (
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="font-bold text-body-lg text-ink">{opt.title}</div>
                                   <div
-                                    key={cIdx}
-                                    className="p-2.5 rounded-lg bg-card border border-ok-line shadow-2xs space-y-1"
+                                    className={cn(
+                                      "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
+                                      isSelected
+                                        ? "border-brand bg-brand text-white"
+                                        : "border-hair-3"
+                                    )}
                                   >
-                                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                                      <div className="font-bold text-body text-ink flex items-center gap-1.5">
-                                        <span className="size-1.5 rounded-full bg-ok shrink-0" />
-                                        <span>{cit.doc}</span>
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-micro font-extrabold text-brand-deep bg-tint px-1.5 py-0.5 rounded border border-tint-line">
-                                          {cit.claimId}
-                                        </span>
-                                        <span className="text-micro text-ok bg-ok-bg px-1.5 py-0.5 rounded border border-ok-line">
-                                          {cit.mlrRef}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <p className="text-label text-ink-3 italic leading-relaxed pl-3 border-l-2 border-ok-line">
-                                      &ldquo;{cit.quote}&rdquo;
-                                    </p>
+                                    {isSelected && <Check className="size-2.5 stroke-[3]" />}
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                                </div>
+                                <div className="text-label text-ink-3 mt-1.5 leading-snug">{opt.desc}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <div>
+                          <label className="block text-body font-bold text-ink mb-1">
+                            Specialty (optional)
+                          </label>
+                          <select
+                            value={specialty}
+                            onChange={(e) => setSpecialty(e.target.value)}
+                            className="w-full h-10 rounded-xl border border-hair-2 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
+                          >
+                            {SPECIALTIES.map((sp) => (
+                              <option key={sp} value={sp}>
+                                {sp}
+                              </option>
+                            ))}
+                          </select>
+                          <p className="text-caption text-ink-3 mt-1">
+                            Decides which endpoints and terminology count as key messages.
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-body font-bold text-ink mb-1">Language</label>
+                          <select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value)}
+                            className="w-full h-10 rounded-xl border border-hair-2 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
+                          >
+                            <option value="English">English</option>
+                            <option value="Hindi">Hindi</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                          </select>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+                  </CreativePlanSection>
 
-          {/* ══════════════════════════════════════════════════════════════════
-              UNIFIED FLOATING ACTION PILL AT MIDDLE BOTTOM (Exact Video Twin)
-             ══════════════════════════════════════════════════════════════════ */}
-          <div className="sticky bottom-4 z-30 flex justify-center pointer-events-none mt-auto pt-6 pb-2">
-            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-ink text-white p-1.5 pl-4 pr-1.5 shadow-on-dark border border-white/12 backdrop-blur-md transition-all duration-200 hover:scale-[1.01]">
-              <div className="flex items-center gap-2 text-left min-w-0 pr-2">
-                <span className="size-6 rounded-full bg-ok/20 border border-emerald-400/40 text-ok-on-dark grid place-items-center shrink-0">
-                  <Check className="size-3.5 stroke-[3]" />
-                </span>
-                <div className="min-w-0">
-                  <div className="text-body font-bold text-white tracking-tight truncate">
-                    {currentStep === "brief"
-                      ? "Ready to create creative"
-                      : "Ready to generate canvas"}
+                  {/* 3. Design & Layout Archetype */}
+                  <CreativePlanSection
+                    icon={Palette}
+                    title="Design & Layout Archetype"
+                    summary={`${selectedTemplate.name} · ${selectedTemplate.badge}`}
+                    status="Recommended"
+                    tone="done"
+                    open={openSection === "design"}
+                    onToggle={() => setOpenSection(openSection === "design" ? null : "design")}
+                  >
+                    <div className="space-y-4">
+                      <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
+                        <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
+                          Visual layout structure
+                        </div>
+                        <p className="text-body text-ink-2">
+                          The deck is built from one of these archetypes. Each sample carries the typography, charts, and layout elements the creative will use.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+                        {TEMPLATE_ARCHETYPES.map((tpl) => {
+                          const isSelected = infographicTemplate === tpl.id;
+                          return (
+                            <div
+                              key={tpl.id}
+                              onClick={() => setInfographicTemplate(tpl.id)}
+                              className={cn(
+                                "rounded-control border bg-card p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
+                                isSelected
+                                  ? "border-2 border-brand bg-card shadow-xs"
+                                  : "border-hair-2 hover:border-hair-3 hover:bg-canvas"
+                              )}
+                            >
+                              <div>
+                                <div className="flex items-center justify-between mb-1">
+                                  <h3 className="text-subhead font-bold text-ink">{tpl.name}</h3>
+                                  {isSelected ? (
+                                    <span className="size-4.5 rounded-full bg-brand text-white grid place-items-center text-caption font-black">
+                                      ✓
+                                    </span>
+                                  ) : (
+                                    <span className="size-4.5 rounded-full border-2 border-hair-3 shrink-0" />
+                                  )}
+                                </div>
+                                <p className="text-label text-ink-3 leading-snug mb-2.5 line-clamp-2">{tpl.tagline}</p>
+
+                                <div
+                                  style={{ background: tpl.previewBg }}
+                                  className="rounded-xl p-3 text-white mb-2.5 shadow-inner min-h-[115px] flex flex-col justify-between"
+                                >
+                                  <div>
+                                    <span className="inline-block px-1.5 py-0.5 rounded bg-white/20 text-micro font-extrabold uppercase tracking-wide">
+                                      {tpl.badge}
+                                    </span>
+                                    <div className="text-title font-black tracking-tight mt-1 leading-none">
+                                      {tpl.metric}
+                                    </div>
+                                    <div className="text-micro text-white/70 mt-0.5">{tpl.metricSub}</div>
+                                  </div>
+
+                                  <div className="space-y-0.5 pt-1.5 border-t border-white/15">
+                                    {tpl.points.slice(0, 2).map((pt, i) => (
+                                      <div key={i} className="text-micro text-white/85 flex items-center gap-1 truncate">
+                                        <span className="size-1 rounded-full bg-white/60 shrink-0" />
+                                        <span>{pt}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <Button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setInfographicTemplate(tpl.id);
+                                }}
+                                variant={isSelected ? "primary" : "secondary"}
+                                size="sm"
+                                className={cn(
+                                  "w-full h-8 rounded-xl text-label font-bold transition cursor-pointer",
+                                  isSelected
+                                    ? "bg-brand hover:bg-brand-deep text-white"
+                                    : "border-hair-2 hover:border-brand text-ink"
+                                )}
+                              >
+                                {isSelected ? `Using ${tpl.name}` : `Use ${tpl.name}`}
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </CreativePlanSection>
+
+                  {/* 4. What should this deck achieve? (Objective & Angle) */}
+                  <CreativePlanSection
+                    icon={Target}
+                    title="What should this deck achieve? (Objective & Angle)"
+                    summary={`${OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.label || "Adoption"} · ${selectedAngles.length} topics`}
+                    status="Recommended"
+                    tone="done"
+                    open={openSection === "objective"}
+                    onToggle={() => setOpenSection(openSection === "objective" ? null : "objective")}
+                  >
+                    <div className="space-y-4">
+                      <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
+                        <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
+                          Why this fits
+                        </div>
+                        <p className="text-body text-ink-2">
+                          {OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.whyFits || "Focuses on dosing titration, eGFR cut-offs, and first-line prescription protocols."}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-body font-bold text-ink mb-1.5">
+                          Campaign Objective
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
+                          {OBJECTIVE_OPTIONS.map((obj) => {
+                            const isSelected = objective === obj.id;
+                            return (
+                              <button
+                                key={obj.id}
+                                type="button"
+                                onClick={() => setObjective(obj.id)}
+                                className={cn(
+                                  "relative p-3 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[80px]",
+                                  isSelected
+                                    ? "border-2 border-brand bg-card text-ink shadow-xs"
+                                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                                )}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="font-bold text-body-lg">{obj.label}</div>
+                                  <div
+                                    className={cn(
+                                      "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
+                                      isSelected
+                                        ? "border-brand bg-brand text-white"
+                                        : "border-hair-3"
+                                    )}
+                                  >
+                                    {isSelected && <Check className="size-2.5 stroke-[3]" />}
+                                  </div>
+                                </div>
+                                <div className="text-caption text-ink-3 mt-1 leading-tight">{obj.desc}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-body font-bold text-ink mb-1.5">
+                          Content Angles (Select topics to prioritize)
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {CONTENT_ANGLES.map((ang) => {
+                            const isSelected = selectedAngles.includes(ang);
+                            return (
+                              <button
+                                key={ang}
+                                type="button"
+                                onClick={() => toggleAngle(ang)}
+                                className={cn(
+                                  "px-3.5 py-1.5 rounded-xl border text-body font-bold transition cursor-pointer flex items-center gap-1.5",
+                                  isSelected
+                                    ? "bg-brand text-white border-brand shadow-2xs hover:bg-brand-deep"
+                                    : "bg-card text-ink-2 border-hair-2 hover:border-hair-3 hover:bg-canvas"
+                                )}
+                              >
+                                {isSelected && <Check className="size-3 stroke-[3]" />}
+                                <span>{ang}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </CreativePlanSection>
+
+                  {/* 5. Product & Brand Visual Assets */}
+                  <CreativePlanSection
+                    icon={ImageIcon}
+                    title="Product & Device Visual Assets"
+                    summary={`${LOGO_PLACEMENTS.find((l) => l.id === infographicLogoPlacement)?.label || "Bottom right"} · ${infographicPages === "2" ? "2 pages" : "1 page"}`}
+                    status="Optional"
+                    tone="default"
+                    open={openSection === "assets"}
+                    onToggle={() => setOpenSection(openSection === "assets" ? null : "assets")}
+                  >
+                    <div className="space-y-4">
+                      <div>
+                        <div className="text-body font-bold text-ink mb-1">Logo placement</div>
+                        <p className="text-label text-ink-3 mb-2">
+                          Every page keeps this corner clear, and your approved logo is placed into it after the page is drawn.
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                          {LOGO_PLACEMENTS.map((lp) => {
+                            const isSelected = infographicLogoPlacement === lp.id;
+                            return (
+                              <button
+                                key={lp.id}
+                                type="button"
+                                onClick={() => setInfographicLogoPlacement(lp.id as any)}
+                                className={cn(
+                                  "p-2.5 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
+                                  isSelected
+                                    ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                                )}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="font-bold text-body">{lp.label}</div>
+                                  <div
+                                    className={cn(
+                                      "size-4 rounded-full border-2 grid place-items-center shrink-0",
+                                      isSelected
+                                        ? "border-brand bg-brand text-white"
+                                        : "border-hair-3"
+                                    )}
+                                  >
+                                    {isSelected && <Check className="size-2.5 stroke-[3]" />}
+                                  </div>
+                                </div>
+                                <div className="text-micro text-ink-3 mt-0.5 leading-tight">{lp.desc}</div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-body font-bold text-ink mb-1">Product packshots (Optional)</div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          {packshots.map((ps) => (
+                            <div key={ps.id} className="relative group rounded-xl border border-hair-2 overflow-hidden bg-card p-1 shadow-2xs">
+                              <img src={ps.url} alt={ps.name} className="size-16 object-cover rounded-lg" />
+                              <span className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-micro font-bold px-1 rounded truncate">
+                                {ps.name}
+                              </span>
+                            </div>
+                          ))}
+                          <input type="file" ref={fileUploadRef} className="hidden" />
+                          <button
+                            type="button"
+                            onClick={() => fileUploadRef.current?.click()}
+                            className="h-16 px-4 rounded-xl border-2 border-dashed border-hair-3 hover:border-brand flex flex-col items-center justify-center gap-1 text-label font-bold text-ink-2 hover:text-brand bg-card cursor-pointer transition"
+                          >
+                            <Upload className="size-4" />
+                            <span>Add product image</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-body font-bold text-ink mb-1.5">How many pages?</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[460px]">
+                          <button
+                            type="button"
+                            onClick={() => setInfographicPages("1")}
+                            className={cn(
+                              "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
+                              infographicPages === "1"
+                                ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                            )}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="font-bold text-body-lg">One page</div>
+                              <div
+                                className={cn(
+                                  "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
+                                  infographicPages === "1"
+                                    ? "border-brand bg-brand text-white"
+                                    : "border-hair-3"
+                                )}
+                              >
+                                {infographicPages === "1" && <Check className="size-3 stroke-[3]" />}
+                              </div>
+                            </div>
+                            <div className="text-label text-ink-3 mt-0.5">A single concise surface</div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setInfographicPages("2")}
+                            className={cn(
+                              "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
+                              infographicPages === "2"
+                                ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                            )}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="font-bold text-body-lg">Two pages</div>
+                              <div
+                                className={cn(
+                                  "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
+                                  infographicPages === "2"
+                                    ? "border-brand bg-brand text-white"
+                                    : "border-hair-3"
+                                )}
+                              >
+                                {infographicPages === "2" && <Check className="size-3 stroke-[3]" />}
+                              </div>
+                            </div>
+                            <div className="text-label text-ink-3 mt-0.5">A front summary and back evidence spread</div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </CreativePlanSection>
+
+
+                </div>
+              </>
+            )}
+
+            {/* ══════════════════════════════════════════════════════════════════
+                STAGE 2: CONTENT BLUEPRINT / PLAN (Expandable Citations)
+               ══════════════════════════════════════════════════════════════════ */}
+            {currentStep === "content" && (
+              <div className="space-y-4 max-w-[880px] mx-auto w-full">
+                {/* Header Box */}
+                <div className="bg-card p-5 rounded-2xl border border-hair-2 shadow-2xs">
+                  <div className="text-label font-extrabold uppercase tracking-wider text-brand mb-1">
+                    Content Blueprint &amp; Claim Partition
                   </div>
-                  <div className="text-caption text-white/70 truncate">
-                    Grounded against 214 approved claims
+                  <h2 className="text-display font-black tracking-tight text-ink">
+                    One tablet, three approved jobs: {brandName} (tirzelamide) in moderate-to-severe plaque psoriasis
+                  </h2>
+                  <p className="text-body text-ink-3 mt-1">
+                    8 sections on {infographicPages === "2" ? "2 pages" : "1 page"} · 13 verified claims grounded in CDSCO / FDA dossier
+                  </p>
+                </div>
+
+                {/* Transparent "Left Out" Box (MLR Discipline) */}
+                <div className="rounded-2xl border border-warn-line/80 bg-warn-bg/70 p-4 shadow-2xs">
+                  <div className="flex items-center gap-2 text-warn font-bold text-body mb-1.5">
+                    <ShieldCheck className="size-4 text-warn shrink-0" />
+                    <span>Left out deliberately for MLR Compliance</span>
                   </div>
+                  <p className="text-label text-warn/90 leading-relaxed">
+                    The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved CDSCO primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1.
+                  </p>
+                </div>
+
+                {/* Numbered Sections List with Interactive Expandable Citations */}
+                <div className="space-y-3">
+                  {CONTENT_PLAN_SECTIONS.map((sec) => {
+                    const isExpanded = expandedCitations[sec.num];
+                    return (
+                      <div
+                        key={sec.num}
+                        className="bg-card p-4.5 rounded-2xl border border-hair-2 shadow-2xs hover:border-hair-3 transition-all duration-200"
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="size-6.5 rounded-full bg-tint text-brand-deep font-black text-body grid place-items-center shrink-0 mt-0.5">
+                            {sec.num}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="font-bold text-subhead text-ink">{sec.title}</h4>
+                              <span className="text-caption text-ink-3 font-normal italic">
+                                ({sec.role})
+                              </span>
+                            </div>
+                            <p className="text-body text-ink-2 mt-1.5 leading-relaxed">{sec.body}</p>
+
+                            {/* Expandable Citation Button */}
+                            <div className="mt-2.5">
+                              <button
+                                type="button"
+                                onClick={() => toggleCitation(sec.num)}
+                                className={cn(
+                                  "text-label font-bold px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 border transition cursor-pointer",
+                                  isExpanded
+                                    ? "bg-ok-bg/80 text-ok border-ok-line ring-2 ring-ok/20"
+                                    : "bg-ok-bg text-ok border-ok-line hover:bg-ok-bg/60"
+                                )}
+                              >
+                                <CheckCircle2 className="size-3.5 text-ok shrink-0" />
+                                <span>{sec.citations.length} {sec.citations.length === 1 ? "citation" : "citations"} · Grounded in label</span>
+                                <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
+                              </button>
+
+                              {/* Rich Expanded Citations Drawer */}
+                              {isExpanded && (
+                                <div className="mt-2.5 space-y-2 rounded-xl bg-[#f7faf8] p-3 border border-ok-line/80 text-label animate-in fade-in slide-in-from-top-1 duration-200">
+                                  <div className="text-caption font-extrabold uppercase tracking-wider text-ok flex items-center gap-1">
+                                    <FileCheck2 className="size-3 text-ok" />
+                                    <span>Verified Dossier Citations &amp; Label Grounding</span>
+                                  </div>
+
+                                  {sec.citations.map((cit, cIdx) => (
+                                    <div
+                                      key={cIdx}
+                                      className="p-2.5 rounded-lg bg-card border border-ok-line shadow-2xs space-y-1"
+                                    >
+                                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                                        <div className="font-bold text-body text-ink flex items-center gap-1.5">
+                                          <span className="size-1.5 rounded-full bg-ok shrink-0" />
+                                          <span>{cit.doc}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-micro font-extrabold text-brand-deep bg-tint px-1.5 py-0.5 rounded border border-tint-line">
+                                            {cit.claimId}
+                                          </span>
+                                          <span className="text-micro text-ok bg-ok-bg px-1.5 py-0.5 rounded border border-ok-line">
+                                            {cit.mlrRef}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <p className="text-label text-ink-3 italic leading-relaxed pl-3 border-l-2 border-ok-line">
+                                        &ldquo;{cit.quote}&rdquo;
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+            )}
 
-              <Button
-                onClick={() => {
-                  if (currentStep === "brief") setCurrentStep("content");
-                  else {
-                    setView("studio");
-                    setVideoSubStage("studio");
-                  }
-                }}
-                className="h-9 px-5 rounded-full text-body font-bold shadow-sm transition-all duration-200 shrink-0 bg-brand hover:bg-brand-deep text-white cursor-pointer hover:scale-105"
-              >
-                <span>
-                  {currentStep === "brief"
-                    ? "Confirm Plan & Review Blueprint"
-                    : "Approve Plan & Open Canvas Studio"}
-                </span>
-                <ArrowRight className="size-3.5 ml-1.5" />
-              </Button>
+            {/* ══════════════════════════════════════════════════════════════════
+                UNIFIED FLOATING ACTION PILL AT MIDDLE BOTTOM (Exact Video Twin)
+               ══════════════════════════════════════════════════════════════════ */}
+            <div className="sticky bottom-4 z-30 flex justify-center pointer-events-none mt-auto pt-6 pb-2">
+              <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-ink text-white p-1.5 pl-4 pr-1.5 shadow-on-dark border border-white/12 backdrop-blur-md transition-all duration-200 hover:scale-[1.01]">
+                <div className="flex items-center gap-2 text-left min-w-0 pr-2">
+                  <span className="size-6 rounded-full bg-ok/20 border border-emerald-400/40 text-ok-on-dark grid place-items-center shrink-0">
+                    <Check className="size-3.5 stroke-[3]" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-body font-bold text-white tracking-tight truncate">
+                      {currentStep === "brief"
+                        ? "Ready to create creative"
+                        : "Ready to generate canvas"}
+                    </div>
+                    <div className="text-caption text-white/70 truncate">
+                      Grounded against 214 approved claims
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    if (currentStep === "brief") setCurrentStep("content");
+                    else {
+                      setView("studio");
+                      setVideoSubStage("studio");
+                    }
+                  }}
+                  className="h-9 px-5 rounded-full text-body font-bold shadow-sm transition-all duration-200 shrink-0 bg-brand hover:bg-brand-deep text-white cursor-pointer hover:scale-105"
+                >
+                  <span>
+                    {currentStep === "brief"
+                      ? "Confirm Plan & Review Blueprint"
+                      : "Approve Plan & Open Canvas Studio"}
+                  </span>
+                  <ArrowRight className="size-3.5 ml-1.5" />
+                </Button>
+              </div>
             </div>
-          </div>
-        </section>
-
-        {/* ── RIGHT PANEL (Chat Assistant with Docked Action Cards) ── */}
-        <SidePanel
-          open={copilotPanelOpen}
-          width={copilotPanelWidth}
-          onWidthChange={setCopilotPanelWidth}
-          onResizingChange={setCopilotPanelResizing}
-          storageKey="swishx.copilotPanelWidth"
-        >
+          </section>
+      }
+      panel={
+        <>
           {/* Chat Top Banner */}
           <div className="p-3.5 border-b border-hair bg-card shrink-0">
             <div className="flex items-center justify-between">
@@ -1366,16 +1357,19 @@ export function InfographicDirectionsScreen() {
               </div>
             </div>
           </div>
-        </SidePanel>
-      </div>
-
-      {previewDossier && (
-        <DossierPreviewModal
-          dossier={previewDossier}
-          onClose={() => setPreviewDossier(null)}
-        />
-      )}
-    </div>
+        </>
+      }
+      overlay={
+        <>
+          {previewDossier && (
+            <DossierPreviewModal
+              dossier={previewDossier}
+              onClose={() => setPreviewDossier(null)}
+            />
+          )}
+        </>
+      }
+    />
   );
 }
 
