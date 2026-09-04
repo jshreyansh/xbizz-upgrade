@@ -58,6 +58,7 @@ import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { ActionBar } from "@/components/patterns/action-bar";
+import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets";
@@ -371,13 +372,37 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setOpenSection((current) => (current === section ? null : section));
   };
 
+  /**
+   * The order the plan is meant to be worked through. Every section advances
+   * via this, so the flow is one click after another rather than each section
+   * deciding for itself where to go — which is how `selectTreatment` used to
+   * collapse everything to null and leave Product Assets to be found by hand.
+   */
+  const sectionOrder: PlanSectionId[] = [
+    "sources",
+    isMagicAvatar ? "voice" : "treatment",
+    ...(isProductFocus ? (["product-assets"] as PlanSectionId[]) : []),
+    "message",
+    "delivery",
+    ...(isMagicAvatar ? [] : (["voice"] as PlanSectionId[])),
+    "story",
+  ];
+
+  const advanceFrom = (section: PlanSectionId) => {
+    setEditingDecision(null);
+    const i = sectionOrder.indexOf(section);
+    setOpenSection(i >= 0 && i < sectionOrder.length - 1 ? sectionOrder[i + 1] : null);
+  };
+
   const selectTreatment = (id: string) => {
     setTreatmentId(id);
     if (assetType === "video") setPresentationMode(id as PresentationMode);
     if (id !== "presenter") setPresenter("");
     if (!derivedPlan.followsSuppliedScript) setStoryStructure(structureForTreatment(assetType, id));
     setConfirmedTreatment(true);
-    setOpenSection(id === "presenter" ? "voice" : null);
+    // Was `: null`, which closed everything and stranded Product Assets.
+    if (id === "presenter") setOpenSection("voice");
+    else advanceFrom("treatment");
   };
 
   const toggleTopic = (topic: string) =>
@@ -643,7 +668,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       uploadedDocs={uploadedDocs}
                       onSetUploadedDocs={setUploadedDocs}
                       onPreviewDossier={(d) => setPreviewDossier(d)}
-                      onContinue={() => toggleSection(isMagicAvatar ? "voice" : "treatment")}
+                      onContinue={() => advanceFrom("sources")}
                     />
                   </PlanSection>
 
@@ -766,7 +791,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         <Button
                           onClick={() => {
                             setConfirmedTreatment(true);
-                            setOpenSection(isProductFocus ? "product-assets" : "message");
+                            advanceFrom("voice");
                           }}
                           className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
                         >
@@ -835,12 +860,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         <Button
                           onClick={() => {
                             setConfirmedTreatment(true);
-                            setOpenSection(isProductFocus ? "product-assets" : null);
+                            advanceFrom("treatment");
                           }}
                           className="mt-3 bg-brand text-white"
                         >
                           Use recommendation <ArrowRight className="size-4" />
                         </Button>
+                      )}
+                      {confirmedTreatment && (
+                        <PlanSectionContinue onClick={() => advanceFrom("treatment")} />
                       )}
                     </PlanSection>
                   )}
@@ -956,7 +984,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 },
                               ]);
                             }
-                            setOpenSection("message");
+                            advanceFrom("product-assets");
                           }}
                           className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
                         >
@@ -964,6 +992,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </Button>
                       </div>
                     </div>
+                    {productMediaList.length > 0 && (
+                      <PlanSectionContinue onClick={() => advanceFrom("product-assets")} />
+                    )}
                   </PlanSection>
 
                   {/* 3. Message and Audience */}
@@ -1046,6 +1077,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </div>
                       </DecisionRow>
                     </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("message")} />
                   </PlanSection>
 
                   {/* 4. Delivery & Cost */}
@@ -1208,6 +1240,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </div>
                       </div>
                     </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("delivery")} />
                   </PlanSection>
 
                   {/* 5. Presenter, Voice and Sound (for standard video mode) */}
@@ -1329,6 +1362,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           />
                         </DecisionRow>
                       </div>
+                      <PlanSectionContinue onClick={() => advanceFrom("voice")} />
                     </PlanSection>
                   )}
 
@@ -1352,6 +1386,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           : profile.treatments.map((item) => item.label)
                       }
                     />
+                    <PlanSectionContinue onClick={() => advanceFrom("story")} />
                   </PlanSection>
                 </div>
 

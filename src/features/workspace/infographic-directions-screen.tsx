@@ -46,6 +46,7 @@ import { ResearchSourcesContent } from "@/features/workspace/research-sources-se
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { ActionBar } from "@/components/patterns/action-bar";
+import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 
 type InfographicSubStep = "brief" | "content";
@@ -338,6 +339,18 @@ export function InfographicDirectionsScreen() {
 
   const [currentStep, setCurrentStep] = useState<InfographicSubStep>("brief");
   const [openSection, setOpenSection] = useState<PlanSectionId | null>("sources");
+
+  /**
+   * Same ordered walk as the video plan: every section advances through this,
+   * so the canvas is worked top to bottom by clicking rather than by hunting
+   * for whichever tile still needs attention.
+   */
+  const sectionOrder: PlanSectionId[] = ["sources", "format", "audience", "design", "objective", "assets"];
+
+  const advanceFrom = (section: PlanSectionId) => {
+    const i = sectionOrder.indexOf(section);
+    setOpenSection(i >= 0 && i < sectionOrder.length - 1 ? sectionOrder[i + 1] : null);
+  };
   const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
   const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>([
     { name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`, size: "3.6 MB", date: "Today" },
@@ -574,7 +587,7 @@ export function InfographicDirectionsScreen() {
                       uploadedDocs={uploadedDocs}
                       onSetUploadedDocs={setUploadedDocs}
                       onPreviewDossier={(d) => setPreviewDossier(d)}
-                      onContinue={() => setOpenSection("format")}
+                      onContinue={() => advanceFrom("sources")}
                     />
                   </CreativePlanSection>
 
@@ -632,6 +645,7 @@ export function InfographicDirectionsScreen() {
                         })}
                       </div>
                     </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("format")} />
                   </CreativePlanSection>
 
                   {/* 2. Message and Audience */}
@@ -730,6 +744,7 @@ export function InfographicDirectionsScreen() {
                         </div>
                       </div>
                     </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("audience")} />
                   </CreativePlanSection>
 
                   {/* 3. Design & Layout Archetype */}
@@ -826,6 +841,7 @@ export function InfographicDirectionsScreen() {
                         })}
                       </div>
                     </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("design")} />
                   </CreativePlanSection>
 
                   {/* 4. What should this deck achieve? (Objective & Angle) */}
@@ -914,6 +930,7 @@ export function InfographicDirectionsScreen() {
                         </div>
                       </div>
                     </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("objective")} />
                   </CreativePlanSection>
 
                   {/* 5. Product & Brand Visual Assets */}
@@ -1047,6 +1064,7 @@ export function InfographicDirectionsScreen() {
                         </div>
                       </div>
                     </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("assets")} />
                   </CreativePlanSection>
 
 
