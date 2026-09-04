@@ -44,7 +44,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
-import { SidePanel } from "@/components/patterns/side-panel";
+import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 
 export type CreativeStudioMode = "editor" | "generating" | "review";
 
@@ -186,8 +186,8 @@ export function InfographicStudioScreen() {
     copilotPanelOpen,
     copilotPanelWidth,
     setCopilotPanelWidth,
-    setCopilotPanelResizing,
     toggleCopilotPanel,
+    setCopilotPanelOpen,
     setView,
     setVideoSubStage,
   } = useWorkspaceStore();
@@ -434,287 +434,288 @@ export function InfographicStudioScreen() {
   };
 
   return (
-    <div className="flex h-screen min-h-[720px] flex-col overflow-hidden bg-[#edf0ed] text-left">
-      {/* ─── Top Header Bar ─── */}
-      <ScreenHeader spread>
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            type="button"
-            onClick={() => {
-              if (studioMode === "review") {
-                setStudioMode("editor");
-              } else {
-                setView("directions");
-                setVideoSubStage("directions");
-              }
-            }}
-            className="focus-ring mr-1 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 hover:text-ink cursor-pointer"
-            title="Back"
-            aria-label="Back"
-          >
-            <ArrowLeft className="size-4" />
-          </button>
+    <WorkbenchLayout
+      className="bg-[#edf0ed] text-left"
+      panelOpen={copilotPanelOpen}
+      onPanelOpenChange={setCopilotPanelOpen}
+      panelWidth={copilotPanelWidth}
+      onPanelWidthChange={setCopilotPanelWidth}
+      panelStorageKey="swishx.copilotPanelWidth"
+      header={
+        <ScreenHeader spread>
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (studioMode === "review") {
+                  setStudioMode("editor");
+                } else {
+                  setView("directions");
+                  setVideoSubStage("directions");
+                }
+              }}
+              className="focus-ring mr-1 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 hover:text-ink cursor-pointer"
+              title="Back"
+              aria-label="Back"
+            >
+              <ArrowLeft className="size-4" />
+            </button>
 
-          <SwishXMark compact />
-          <div className="mx-2.5 h-5 w-px bg-hair" />
+            <SwishXMark compact />
+            <div className="mx-2.5 h-5 w-px bg-hair" />
 
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="truncate text-body-lg font-[850] text-ink tracking-tight">
-                {brandName} HCP Infographic
-              </span>
-              <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
-                Draft v1
-              </span>
-            </div>
-            <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
-              Saved just now · Canvas Studio · {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} ({pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"})
-            </div>
-          </div>
-
-          {/* Mode Switchers */}
-          <div className="ml-4 hidden items-center gap-1.5 md:flex">
-            {studioMode === "editor" && (
-              <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">
-                Canvas Editor
-              </span>
-            )}
-            {studioMode === "generating" && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse">
-                <Sparkles className="size-3 text-brand-deep animate-spin" />
-                <span>Generating High-Res Creative...</span>
-              </span>
-            )}
-            {studioMode === "review" && (
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => setStudioMode("editor")}
-                  className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"
-                >
-                  <Pencil className="size-3 text-brand" />
-                  <span>Editor</span>
-                </button>
-                <span className="text-ink-3">/</span>
-                <span className="rounded-full bg-ok-bg px-3 py-0.5 text-caption font-extrabold text-ok border border-ok-line">
-                  Shared Review View · Final Asset
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="truncate text-body-lg font-[850] text-ink tracking-tight">
+                  {brandName} HCP Infographic
+                </span>
+                <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
+                  Draft v1
                 </span>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Center Canvas Zoom Controls */}
-        {studioMode !== "generating" && (
-          <div className="hidden sm:flex items-center gap-1 rounded-xl border border-hair-2 bg-subtle p-1 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
-              className="p-1 text-ink-2 hover:text-black rounded hover:bg-card cursor-pointer"
-              title="Zoom Out"
-            >
-              <ZoomOut className="size-3.5" />
-            </button>
-            <span className="text-label font-mono font-bold text-ink px-1.5 min-w-[45px] text-center">
-              {zoomLevel}%
-            </span>
-            <button
-              type="button"
-              onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
-              className="p-1 text-ink-2 hover:text-black rounded hover:bg-card cursor-pointer"
-              title="Zoom In"
-            >
-              <ZoomIn className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setZoomLevel(100)}
-              className="px-2 py-0.5 text-caption font-bold text-brand hover:bg-card rounded cursor-pointer"
-            >
-              Fit
-            </button>
-          </div>
-        )}
-
-        {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
-        <div className="flex items-center gap-2">
-          {studioMode === "editor" && (
-            <Button
-              size="sm"
-              onClick={() => setConfirmGenerateModalOpen(true)}
-              className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4.5 hover:scale-[1.02] transition-transform"
-            >
-              <Sparkles className="size-3.5" />
-              <span>Generate and Publish</span>
-            </Button>
-          )}
-
-          {studioMode === "review" && (
-            <Button
-              size="sm"
-              onClick={() => setShareModalOpen(true)}
-              className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4 hover:scale-[1.02] transition-transform"
-            >
-              <Share2 className="size-3.5" />
-              <span>Share Link</span>
-            </Button>
-          )}
-
-          <button
-            type="button"
-            onClick={toggleCopilotPanel}
-            className={cn(
-              "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
-              copilotPanelOpen
-                ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
-                : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
-            )}
-            title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
-            aria-label="Toggle sidebar"
-          >
-            <PanelRight className="size-4" />
-          </button>
-        </div>
-      </ScreenHeader>
-
-      {/* ─── Main Studio Body ─── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden relative">
-        {/* ── GENERATING HIGH-RES OVERLAY ── */}
-        {studioMode === "generating" && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-subtle animate-in fade-in duration-300">
-            <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-              <Sparkles className="size-10 text-brand animate-pulse" />
-            </div>
-            <h3 className="text-display font-extrabold text-ink tracking-tight">
-              Generating High-Resolution Creative &amp; Proofs...
-            </h3>
-            <p className="text-body-lg text-ink-3 mt-1.5 max-w-[440px]">
-              Synthesizing publication-grade vectors, clinical PASI 90 stat heroes, and PromoMats-verified claim links.
-            </p>
-
-            <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
-              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                <span className="font-semibold">Validated 214 CDSCO / FDA dossier claims</span>
-              </div>
-              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                <span className="font-semibold">Synthesized high-res vectors &amp; layout</span>
-              </div>
-              <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                <span className="font-semibold">Grounded ISI fair balance tables &amp; leave-behind</span>
+              <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
+                Saved just now · Canvas Studio · {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} ({pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"})
               </div>
             </div>
-          </div>
-        )}
 
-        {/* ── LEFT SIDEBAR: Pages Thumbnails & Graphic Layers (Editor & Review) ── */}
-        {studioMode !== "generating" && (
-          <aside className="w-56 sm:w-60 border-r border-hair bg-[#f8f9f7] flex flex-col shrink-0 overflow-y-auto">
-            {/* Pages Strip Header */}
-            <div className="p-3 border-b border-hair bg-card flex items-center justify-between">
-              <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3">
-                {isReview ? `Pages · ${pagesList.length}` : `Pages (${pagesList.length})`}
-              </span>
-              {!isReview && (
-                <button
-                  type="button"
-                  onClick={handleAddPage}
-                  className="p-1 text-brand hover:bg-tint rounded cursor-pointer transition-colors"
-                  title="Add Page"
-                >
-                  <Plus className="size-4 stroke-[2.5]" />
-                </button>
+            {/* Mode Switchers */}
+            <div className="ml-4 hidden items-center gap-1.5 md:flex">
+              {studioMode === "editor" && (
+                <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">
+                  Canvas Editor
+                </span>
+              )}
+              {studioMode === "generating" && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse">
+                  <Sparkles className="size-3 text-brand-deep animate-spin" />
+                  <span>Generating High-Res Creative...</span>
+                </span>
+              )}
+              {studioMode === "review" && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setStudioMode("editor")}
+                    className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"
+                  >
+                    <Pencil className="size-3 text-brand" />
+                    <span>Editor</span>
+                  </button>
+                  <span className="text-ink-3">/</span>
+                  <span className="rounded-full bg-ok-bg px-3 py-0.5 text-caption font-extrabold text-ok border border-ok-line">
+                    Shared Review View · Final Asset
+                  </span>
+                </div>
               )}
             </div>
+          </div>
 
-            {/* Page Thumbnails List */}
-            <div className="p-3 space-y-3 border-b border-hair">
-              {pagesList.map((pg) => {
-                const isActive = activePageId === pg.id;
-                return (
-                  <button
-                    key={pg.id}
-                    type="button"
-                    onClick={() => setInfographicActivePage(pg.id)}
-                    className={cn(
-                      "w-full flex flex-col gap-1.5 p-2.5 rounded-xl border text-left transition cursor-pointer relative shadow-2xs",
-                      isActive
-                        ? "border-brand bg-tint/50 ring-2 ring-brand/15"
-                        : "border-hair-2 bg-card hover:border-hair-3"
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-label font-bold text-ink truncate">{pg.name}</span>
-                      {isActive && <span className="size-2 rounded-full bg-brand" />}
-                    </div>
-                    <div className="aspect-[3/4] w-full rounded-lg bg-card border border-hair-2 p-2 flex flex-col justify-between overflow-hidden shadow-inner-xs">
-                      <div className={cn("h-2 w-14 rounded", pg.id === 1 ? "bg-[#14233c]" : "bg-info-strong")} />
-                      <div className="h-4 w-full bg-brand/20 rounded" />
-                      <div className="h-6 w-full bg-black/5 rounded" />
-                      <div className="h-2 w-full bg-black/10 rounded" />
-                    </div>
-                  </button>
-                );
-              })}
+          {/* Center Canvas Zoom Controls */}
+          {studioMode !== "generating" && (
+            <div className="hidden sm:flex items-center gap-1 rounded-xl border border-hair-2 bg-subtle p-1 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
+                className="p-1 text-ink-2 hover:text-black rounded hover:bg-card cursor-pointer"
+                title="Zoom Out"
+              >
+                <ZoomOut className="size-3.5" />
+              </button>
+              <span className="text-label font-mono font-bold text-ink px-1.5 min-w-[45px] text-center">
+                {zoomLevel}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
+                className="p-1 text-ink-2 hover:text-black rounded hover:bg-card cursor-pointer"
+                title="Zoom In"
+              >
+                <ZoomIn className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setZoomLevel(100)}
+                className="px-2 py-0.5 text-caption font-bold text-brand hover:bg-card rounded cursor-pointer"
+              >
+                Fit
+              </button>
             </div>
+          )}
 
-            {/* Graphic Layers Tree (In Editor Mode) */}
+          {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
+          <div className="flex items-center gap-2">
             {studioMode === "editor" && (
-              <div className="p-3 flex-1">
-                <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-2">
-                  Graphic Layers
+              <Button
+                size="sm"
+                onClick={() => setConfirmGenerateModalOpen(true)}
+                className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4.5 hover:scale-[1.02] transition-transform"
+              >
+                <Sparkles className="size-3.5" />
+                <span>Generate and Publish</span>
+              </Button>
+            )}
+
+            {studioMode === "review" && (
+              <Button
+                size="sm"
+                onClick={() => setShareModalOpen(true)}
+                className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4 hover:scale-[1.02] transition-transform"
+              >
+                <Share2 className="size-3.5" />
+                <span>Share Link</span>
+              </Button>
+            )}
+
+            <button
+              type="button"
+              onClick={toggleCopilotPanel}
+              className={cn(
+                "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
+                copilotPanelOpen
+                  ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
+                  : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+              )}
+              title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
+              aria-label="Toggle sidebar"
+            >
+              <PanelRight className="size-4" />
+            </button>
+          </div>
+        </ScreenHeader>
+      }
+      rail={
+        studioMode !== "generating" ? (
+            <aside className="w-56 sm:w-60 border-r border-hair bg-[#f8f9f7] flex flex-col shrink-0 overflow-y-auto">
+              {/* Pages Strip Header */}
+              <div className="p-3 border-b border-hair bg-card flex items-center justify-between">
+                <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3">
+                  {isReview ? `Pages · ${pagesList.length}` : `Pages (${pagesList.length})`}
                 </span>
-                <div className="space-y-1">
-                  {[
-                    { id: "header", label: "1. Brand & Formulation Header" },
-                    { id: "heroStat", label: "2. Stat Hero (52% PASI 90)" },
-                    { id: "moa", label: "3. Cellular MoA Cascade" },
-                    { id: "chart", label: "4. Pivotal EMBRACE-3 Chart" },
-                    { id: "isi", label: "5. Fair Balance & ISI" },
-                  ].map((layer) => (
+                {!isReview && (
+                  <button
+                    type="button"
+                    onClick={handleAddPage}
+                    className="p-1 text-brand hover:bg-tint rounded cursor-pointer transition-colors"
+                    title="Add Page"
+                  >
+                    <Plus className="size-4 stroke-[2.5]" />
+                  </button>
+                )}
+              </div>
+
+              {/* Page Thumbnails List */}
+              <div className="p-3 space-y-3 border-b border-hair">
+                {pagesList.map((pg) => {
+                  const isActive = activePageId === pg.id;
+                  return (
                     <button
-                      key={layer.id}
+                      key={pg.id}
                       type="button"
-                      onClick={() => handleSelectBlock(layer.id as any)}
+                      onClick={() => setInfographicActivePage(pg.id)}
                       className={cn(
-                        "w-full flex items-center justify-between p-2 rounded-lg text-left text-label font-medium transition cursor-pointer",
-                        selectedBlockId === layer.id
-                          ? "bg-tint font-bold text-brand-deep shadow-2xs border border-brand/20"
-                          : "hover:bg-black/5 text-ink"
+                        "w-full flex flex-col gap-1.5 p-2.5 rounded-xl border text-left transition cursor-pointer relative shadow-2xs",
+                        isActive
+                          ? "border-brand bg-tint/50 ring-2 ring-brand/15"
+                          : "border-hair-2 bg-card hover:border-hair-3"
                       )}
                     >
-                      <div className="flex items-center gap-2 truncate">
-                        <Layers className="size-3 text-ink-3 shrink-0" />
-                        <span className="truncate">{layer.label}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-label font-bold text-ink truncate">{pg.name}</span>
+                        {isActive && <span className="size-2 rounded-full bg-brand" />}
                       </div>
-                      {selectedBlockId === layer.id && <span className="size-1.5 rounded-full bg-brand" />}
+                      <div className="aspect-[3/4] w-full rounded-lg bg-card border border-hair-2 p-2 flex flex-col justify-between overflow-hidden shadow-inner-xs">
+                        <div className={cn("h-2 w-14 rounded", pg.id === 1 ? "bg-[#14233c]" : "bg-info-strong")} />
+                        <div className="h-4 w-full bg-brand/20 rounded" />
+                        <div className="h-6 w-full bg-black/5 rounded" />
+                        <div className="h-2 w-full bg-black/10 rounded" />
+                      </div>
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
-            )}
 
-            {/* Review Info (In Review Mode) */}
-            {studioMode === "review" && (
-              <div className="p-3.5 space-y-3 flex-1 text-label">
-                <div className="rounded-xl border border-ok-line bg-ok-bg/70 p-2.5 text-ok space-y-1">
-                  <div className="font-bold flex items-center gap-1.5 text-label">
-                    <ShieldCheck className="size-3.5 text-ok" />
-                    <span>MLR Clearance Grounded</span>
+              {/* Graphic Layers Tree (In Editor Mode) */}
+              {studioMode === "editor" && (
+                <div className="p-3 flex-1">
+                  <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-2">
+                    Graphic Layers
+                  </span>
+                  <div className="space-y-1">
+                    {[
+                      { id: "header", label: "1. Brand & Formulation Header" },
+                      { id: "heroStat", label: "2. Stat Hero (52% PASI 90)" },
+                      { id: "moa", label: "3. Cellular MoA Cascade" },
+                      { id: "chart", label: "4. Pivotal EMBRACE-3 Chart" },
+                      { id: "isi", label: "5. Fair Balance & ISI" },
+                    ].map((layer) => (
+                      <button
+                        key={layer.id}
+                        type="button"
+                        onClick={() => handleSelectBlock(layer.id as any)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-2 rounded-lg text-left text-label font-medium transition cursor-pointer",
+                          selectedBlockId === layer.id
+                            ? "bg-tint font-bold text-brand-deep shadow-2xs border border-brand/20"
+                            : "hover:bg-black/5 text-ink"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <Layers className="size-3 text-ink-3 shrink-0" />
+                          <span className="truncate">{layer.label}</span>
+                        </div>
+                        {selectedBlockId === layer.id && <span className="size-1.5 rounded-full bg-brand" />}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-caption text-ok leading-snug">
-                    Passed label verification against CDSCO §1.1, §2.1 and §5.2.
-                  </p>
+                </div>
+              )}
+
+              {/* Review Info (In Review Mode) */}
+              {studioMode === "review" && (
+                <div className="p-3.5 space-y-3 flex-1 text-label">
+                  <div className="rounded-xl border border-ok-line bg-ok-bg/70 p-2.5 text-ok space-y-1">
+                    <div className="font-bold flex items-center gap-1.5 text-label">
+                      <ShieldCheck className="size-3.5 text-ok" />
+                      <span>MLR Clearance Grounded</span>
+                    </div>
+                    <p className="text-caption text-ok leading-snug">
+                      Passed label verification against CDSCO §1.1, §2.1 and §5.2.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </aside>
+        ) : undefined
+      }
+      main={
+        studioMode === "generating" ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-subtle animate-in fade-in duration-300">
+              <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
+                <Sparkles className="size-10 text-brand animate-pulse" />
+              </div>
+              <h3 className="text-display font-extrabold text-ink tracking-tight">
+                Generating High-Resolution Creative &amp; Proofs...
+              </h3>
+              <p className="text-body-lg text-ink-3 mt-1.5 max-w-[440px]">
+                Synthesizing publication-grade vectors, clinical PASI 90 stat heroes, and PromoMats-verified claim links.
+              </p>
+
+              <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Validated 214 CDSCO / FDA dossier claims</span>
+                </div>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Synthesized high-res vectors &amp; layout</span>
+                </div>
+                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                  <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                  <span className="font-semibold">Grounded ISI fair balance tables &amp; leave-behind</span>
                 </div>
               </div>
-            )}
-          </aside>
-        )}
-
-        {/* ── CENTER CANVAS: Fixed Top-Clipping & Full Interactive Rendering ── */}
-        {studioMode !== "generating" && (
-          <main className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 bg-[#e5e8e4] flex justify-center items-start">
+            </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 bg-[#e5e8e4] flex justify-center items-start">
             <div className="w-full max-w-[720px] flex justify-center py-4 my-auto">
               <div
                 style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "center top" }}
@@ -881,18 +882,12 @@ export function InfographicStudioScreen() {
                 </div>
               </div>
             </div>
-          </main>
-        )}
-
-        {/* ── RIGHT PANEL (Chat Assistant, Editable Properties, Comments & Claims) ── */}
-        {studioMode !== "generating" && (
-          <SidePanel
-            open={copilotPanelOpen}
-            width={copilotPanelWidth}
-            onWidthChange={setCopilotPanelWidth}
-            onResizingChange={setCopilotPanelResizing}
-            storageKey="swishx.copilotPanelWidth"
-          >
+          </div>
+        )
+      }
+      panel={
+        studioMode !== "generating" ? (
+          <>
             {/* Top Tabs Switcher */}
             <div className="p-3 border-b border-hair bg-canvas shrink-0">
               <div className="flex rounded-xl bg-[#edeef0] p-1 text-body font-bold">
@@ -1331,337 +1326,340 @@ export function InfographicStudioScreen() {
                 </div>
               </div>
             )}
-          </SidePanel>
-        )}
-      </div>
+          </>
+        ) : undefined
+      }
+      overlay={
+        <>
+        {/* ── SHARE & DISTRIBUTE MODAL ── */}
+        <ShareReviewModal
+          open={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          assetType="infographic"
+          assetTitle={`${brandName} HCP Infographic`}
+          brandName={brandName}
+          onExportDirect={() => {
+            setExportModalOpen(true);
+          }}
+          onShowToast={(msg) => showToast(msg)}
+        />
 
-      {/* ── SHARE & DISTRIBUTE MODAL ── */}
-      <ShareReviewModal
-        open={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
-        assetType="infographic"
-        assetTitle={`${brandName} HCP Infographic`}
-        brandName={brandName}
-        onExportDirect={() => {
-          setExportModalOpen(true);
-        }}
-        onShowToast={(msg) => showToast(msg)}
-      />
-
-      {/* ── EXPORT MODAL ── */}
-      {exportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-[460px] rounded-2xl bg-card p-6 shadow-2xl border border-hair-2 text-left space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="size-8 rounded-full bg-tint text-brand grid place-items-center font-bold">
-                  <Download className="size-4" />
-                </span>
-                <h3 className="text-subhead font-black text-ink">Export High-Res Package</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setExportModalOpen(false)}
-                className="size-7 rounded-full hover:bg-black/5 grid place-items-center text-ink-3"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-            <p className="text-body text-ink-3">
-              Select desired export format for {brandName} HCP Leave-Behind ({pagesList.length} pages):
-            </p>
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  showToast("Generated CMYK Print-Ready PDF with 3mm Bleed");
-                  setExportModalOpen(false);
-                }}
-                className="w-full p-3 rounded-xl border border-hair-2 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
-              >
-                <div>
-                  <div className="font-bold text-body-lg text-ink">Print-Ready PDF (CMYK · 300 DPI)</div>
-                  <div className="text-label text-ink-3">Includes crop marks and 3mm bleed for commercial print</div>
-                </div>
-                <Download className="size-4 text-brand" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  showToast("Downloaded Digital RGB Tablet PDF");
-                  setExportModalOpen(false);
-                }}
-                className="w-full p-3 rounded-xl border border-hair-2 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
-              >
-                <div>
-                  <div className="font-bold text-body-lg text-ink">Digital Screen PDF (RGB · 150 DPI)</div>
-                  <div className="text-label text-ink-3">Optimized for iPad detailing &amp; Veeva CLM presentation</div>
-                </div>
-                <Download className="size-4 text-brand" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── CONFIRM CREATIVE GENERATION MODAL (Matching Exact Form & Rate Spec with Quality & MLR Layer) ── */}
-      {confirmGenerateModalOpen && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Confirm Creative Generation"
-        >
-          <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-float text-left">
-            <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
-              <div>
-                <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-                  <Sparkles className="size-3.5" /> Generation Engine
-                </div>
-                <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
-                  Confirm Creative Generation
-                </h2>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setConfirmGenerateModalOpen(false)}
-                className="size-8 rounded-full hover:bg-black/5 cursor-pointer"
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-
-            <div className="p-6 space-y-5">
-              {/* Cost & Spec Card */}
-              <div className="rounded-2xl bg-[#121614] border border-white/10 p-5 text-white shadow-md">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <div>
-                    <div className="text-label font-extrabold uppercase tracking-wider text-white/60">
-                      Credits Deducted
-                    </div>
-                    <div className="text-display font-[900] text-white mt-0.5">
-                      ⚡ {(pagesList.length * 300).toLocaleString()} Credits
-                    </div>
-                  </div>
-                  <span className="rounded-full bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
-                    Vector 300 DPI
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-3 text-label text-white/75">
-                  <div>
-                    <span className="text-white/50 block text-caption uppercase font-bold">Pages &amp; Format</span>
-                    <strong className="text-white">
-                      {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} · {pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-white/50 block text-caption uppercase font-bold">Estimated Render Time</span>
-                    <strong className="text-white">~30–45 sec</strong>
-                  </div>
-                  <div>
-                    <span className="text-white/50 block text-caption uppercase font-bold">Team Balance</span>
-                    <strong className="text-ok-on-dark">50,000 Credits</strong>
-                  </div>
-                  <div>
-                    <span className="text-white/50 block text-caption uppercase font-bold">Balance Remaining</span>
-                    <strong className="text-white">
-                      {(50000 - pagesList.length * 300).toLocaleString()} Credits
-                    </strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Automated Quality & MLR Pre-Flight Verification Card */}
-              <div
-                className={cn(
-                  "rounded-2xl border p-4 space-y-2.5 text-body transition",
-                  hasBlockers
-                    ? "border-warn-line bg-warn-bg/60 text-warn"
-                    : "border-ok-line bg-ok-bg/70 text-ok"
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-bold">
-                    {hasBlockers ? (
-                      <AlertTriangle className="size-4 text-warn shrink-0" />
-                    ) : (
-                      <ShieldCheck className="size-4 text-ok shrink-0" />
-                    )}
-                    <span>Quality &amp; MLR Pre-Flight Verification</span>
-                  </div>
-                  <span
-                    className={cn(
-                      "rounded-full border px-2.5 py-0.5 text-caption font-extrabold",
-                      hasBlockers
-                        ? "bg-danger-bg text-danger border-danger"
-                        : "bg-ok-bg text-ok border-ok-line"
-                    )}
-                  >
-                    {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-label pt-1">
-                  {/* 1. MLR Check Card (With Blocker & Fix Action) */}
-                  {!mlrCheckResolved ? (
-                    <div className="flex flex-col justify-between bg-danger-bg/90 rounded-lg p-2.5 border border-danger text-danger">
-                      <div className="flex items-start gap-1.5">
-                        <AlertTriangle className="size-3.5 text-danger shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold block text-danger">MLR: Unverified Comparative Claim</span>
-                          <span className="text-caption text-danger/80 leading-tight block mt-0.5">
-                            Hero card compares efficacy without citing comparator placebo cohort.
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleFixMlrBlocker}
-                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-danger hover:bg-rose-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
-                      >
-                        <Sparkles className="size-2.5" />
-                        <span>Fix with SwishX →</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-ink">24 Verified Claims Cited</span>
-                        <span className="text-caption text-ink-3">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2. Quality Check Card (With Blocker & Fix Action) */}
-                  {!qaCheckResolved ? (
-                    <div className="flex flex-col justify-between bg-warn-bg/90 rounded-lg p-2.5 border border-warn-line text-warn">
-                      <div className="flex items-start gap-1.5">
-                        <AlertTriangle className="size-3.5 text-warn shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold block text-warn">Quality: Subtitle Phrasing Redundancy</span>
-                          <span className="text-caption text-warn/80 leading-tight block mt-0.5">
-                            Tagline contains redundant descriptors and unstandardized dosing syntax.
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleFixQaBlocker}
-                        className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-warn hover:bg-amber-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
-                      >
-                        <Sparkles className="size-2.5" />
-                        <span>Fix with SwishX →</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-ink">Editorial &amp; Spelling Clear</span>
-                        <span className="text-caption text-ink-3">Nomenclature and syntax verified</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3. Fair Balance & ISI Present */}
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                    <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block text-ink">Fair Balance &amp; ISI Present</span>
-                      <span className="text-caption text-ink-3">eGFR ≥25 &amp; box warnings verified</span>
-                    </div>
-                  </div>
-
-                  {/* 4. Vector Layout & Contrast */}
-                  <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                    <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold block text-ink">Vector Layout &amp; Contrast</span>
-                      <span className="text-caption text-ink-3">300 DPI CMYK ready hierarchy</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Optional Auto-Fix helper */}
-                {hasBlockers && (
-                  <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-hair mt-1">
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles className="size-3 text-brand" />
-                      Want SwishX to auto-fix both blockers instantly?
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleAutoFixBoth}
-                      className="text-brand font-bold hover:underline cursor-pointer"
-                    >
-                      Auto-Fix Both ⚡
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Informational Notice */}
-              <p className="text-body text-ink-3 leading-relaxed">
-                Generation renders in the background using publication vector models. You will receive an email notification when processing completes, and can continue working in SwishX.
-              </p>
-
-              <div className="flex items-center justify-between pt-2 border-t border-hair">
-                {hasBlockers ? (
-                  <span className="text-label text-danger font-semibold flex items-center gap-1">
-                    <AlertTriangle className="size-3 shrink-0" />
-                    Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
-                  </span>
-                ) : (
-                  <span className="text-label text-ok font-bold flex items-center gap-1">
-                    <CheckCircle2 className="size-3.5 text-ok shrink-0" />
-                    All Quality &amp; MLR checks verified
-                  </span>
-                )}
-
+        {/* ── EXPORT MODAL ── */}
+        {exportModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="w-full max-w-[460px] rounded-2xl bg-card p-6 shadow-2xl border border-hair-2 text-left space-y-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setConfirmGenerateModalOpen(false)}
-                    className="font-bold cursor-pointer"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={hasBlockers}
-                    onClick={() => {
-                      if (hasBlockers) return;
-                      setConfirmGenerateModalOpen(false);
-                      handlePublishCreative();
-                    }}
-                    className={cn(
-                      "font-bold px-5 gap-1.5 transition-all",
-                      hasBlockers
-                        ? "bg-black/10 text-black/35 cursor-not-allowed border-none shadow-none"
-                        : "bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
+                  <span className="size-8 rounded-full bg-tint text-brand grid place-items-center font-bold">
+                    <Download className="size-4" />
+                  </span>
+                  <h3 className="text-subhead font-black text-ink">Export High-Res Package</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExportModalOpen(false)}
+                  className="size-7 rounded-full hover:bg-black/5 grid place-items-center text-ink-3"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+              <p className="text-body text-ink-3">
+                Select desired export format for {brandName} HCP Leave-Behind ({pagesList.length} pages):
+              </p>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    showToast("Generated CMYK Print-Ready PDF with 3mm Bleed");
+                    setExportModalOpen(false);
+                  }}
+                  className="w-full p-3 rounded-xl border border-hair-2 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
+                >
+                  <div>
+                    <div className="font-bold text-body-lg text-ink">Print-Ready PDF (CMYK · 300 DPI)</div>
+                    <div className="text-label text-ink-3">Includes crop marks and 3mm bleed for commercial print</div>
+                  </div>
+                  <Download className="size-4 text-brand" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    showToast("Downloaded Digital RGB Tablet PDF");
+                    setExportModalOpen(false);
+                  }}
+                  className="w-full p-3 rounded-xl border border-hair-2 hover:border-brand hover:bg-tint/30 text-left flex items-center justify-between cursor-pointer transition"
+                >
+                  <div>
+                    <div className="font-bold text-body-lg text-ink">Digital Screen PDF (RGB · 150 DPI)</div>
+                    <div className="text-label text-ink-3">Optimized for iPad detailing &amp; Veeva CLM presentation</div>
+                  </div>
+                  <Download className="size-4 text-brand" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CONFIRM CREATIVE GENERATION MODAL (Matching Exact Form & Rate Spec with Quality & MLR Layer) ── */}
+        {confirmGenerateModalOpen && (
+          <div
+            className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirm Creative Generation"
+          >
+            <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-float text-left">
+              <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
+                <div>
+                  <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
+                    <Sparkles className="size-3.5" /> Generation Engine
+                  </div>
+                  <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
+                    Confirm Creative Generation
+                  </h2>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setConfirmGenerateModalOpen(false)}
+                  className="size-8 rounded-full hover:bg-black/5 cursor-pointer"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                {/* Cost & Spec Card */}
+                <div className="rounded-2xl bg-[#121614] border border-white/10 p-5 text-white shadow-md">
+                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                    <div>
+                      <div className="text-label font-extrabold uppercase tracking-wider text-white/60">
+                        Credits Deducted
+                      </div>
+                      <div className="text-display font-[900] text-white mt-0.5">
+                        ⚡ {(pagesList.length * 300).toLocaleString()} Credits
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
+                      Vector 300 DPI
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-3 text-label text-white/75">
+                    <div>
+                      <span className="text-white/50 block text-caption uppercase font-bold">Pages &amp; Format</span>
+                      <strong className="text-white">
+                        {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} · {pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-white/50 block text-caption uppercase font-bold">Estimated Render Time</span>
+                      <strong className="text-white">~30–45 sec</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/50 block text-caption uppercase font-bold">Team Balance</span>
+                      <strong className="text-ok-on-dark">50,000 Credits</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/50 block text-caption uppercase font-bold">Balance Remaining</span>
+                      <strong className="text-white">
+                        {(50000 - pagesList.length * 300).toLocaleString()} Credits
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Automated Quality & MLR Pre-Flight Verification Card */}
+                <div
+                  className={cn(
+                    "rounded-2xl border p-4 space-y-2.5 text-body transition",
+                    hasBlockers
+                      ? "border-warn-line bg-warn-bg/60 text-warn"
+                      : "border-ok-line bg-ok-bg/70 text-ok"
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-bold">
+                      {hasBlockers ? (
+                        <AlertTriangle className="size-4 text-warn shrink-0" />
+                      ) : (
+                        <ShieldCheck className="size-4 text-ok shrink-0" />
+                      )}
+                      <span>Quality &amp; MLR Pre-Flight Verification</span>
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full border px-2.5 py-0.5 text-caption font-extrabold",
+                        hasBlockers
+                          ? "bg-danger-bg text-danger border-danger"
+                          : "bg-ok-bg text-ok border-ok-line"
+                      )}
+                    >
+                      {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-label pt-1">
+                    {/* 1. MLR Check Card (With Blocker & Fix Action) */}
+                    {!mlrCheckResolved ? (
+                      <div className="flex flex-col justify-between bg-danger-bg/90 rounded-lg p-2.5 border border-danger text-danger">
+                        <div className="flex items-start gap-1.5">
+                          <AlertTriangle className="size-3.5 text-danger shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold block text-danger">MLR: Unverified Comparative Claim</span>
+                            <span className="text-caption text-danger/80 leading-tight block mt-0.5">
+                              Hero card compares efficacy without citing comparator placebo cohort.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleFixMlrBlocker}
+                          className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-danger hover:bg-rose-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                        >
+                          <Sparkles className="size-2.5" />
+                          <span>Fix with SwishX →</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                        <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block text-ink">24 Verified Claims Cited</span>
+                          <span className="text-caption text-ink-3">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
+                        </div>
+                      </div>
                     )}
-                  >
-                    <Sparkles className="size-3.5" />
-                    <span>Confirm &amp; Generate Creative</span>
-                  </Button>
+
+                    {/* 2. Quality Check Card (With Blocker & Fix Action) */}
+                    {!qaCheckResolved ? (
+                      <div className="flex flex-col justify-between bg-warn-bg/90 rounded-lg p-2.5 border border-warn-line text-warn">
+                        <div className="flex items-start gap-1.5">
+                          <AlertTriangle className="size-3.5 text-warn shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold block text-warn">Quality: Subtitle Phrasing Redundancy</span>
+                            <span className="text-caption text-warn/80 leading-tight block mt-0.5">
+                              Tagline contains redundant descriptors and unstandardized dosing syntax.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleFixQaBlocker}
+                          className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-warn hover:bg-amber-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
+                        >
+                          <Sparkles className="size-2.5" />
+                          <span>Fix with SwishX →</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                        <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block text-ink">Editorial &amp; Spelling Clear</span>
+                          <span className="text-caption text-ink-3">Nomenclature and syntax verified</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 3. Fair Balance & ISI Present */}
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-ink">Fair Balance &amp; ISI Present</span>
+                        <span className="text-caption text-ink-3">eGFR ≥25 &amp; box warnings verified</span>
+                      </div>
+                    </div>
+
+                    {/* 4. Vector Layout & Contrast */}
+                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
+                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold block text-ink">Vector Layout &amp; Contrast</span>
+                        <span className="text-caption text-ink-3">300 DPI CMYK ready hierarchy</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Optional Auto-Fix helper */}
+                  {hasBlockers && (
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-hair mt-1">
+                      <span className="flex items-center gap-1.5">
+                        <Sparkles className="size-3 text-brand" />
+                        Want SwishX to auto-fix both blockers instantly?
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleAutoFixBoth}
+                        className="text-brand font-bold hover:underline cursor-pointer"
+                      >
+                        Auto-Fix Both ⚡
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Informational Notice */}
+                <p className="text-body text-ink-3 leading-relaxed">
+                  Generation renders in the background using publication vector models. You will receive an email notification when processing completes, and can continue working in SwishX.
+                </p>
+
+                <div className="flex items-center justify-between pt-2 border-t border-hair">
+                  {hasBlockers ? (
+                    <span className="text-label text-danger font-semibold flex items-center gap-1">
+                      <AlertTriangle className="size-3 shrink-0" />
+                      Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
+                    </span>
+                  ) : (
+                    <span className="text-label text-ok font-bold flex items-center gap-1">
+                      <CheckCircle2 className="size-3.5 text-ok shrink-0" />
+                      All Quality &amp; MLR checks verified
+                    </span>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => setConfirmGenerateModalOpen(false)}
+                      className="font-bold cursor-pointer"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      disabled={hasBlockers}
+                      onClick={() => {
+                        if (hasBlockers) return;
+                        setConfirmGenerateModalOpen(false);
+                        handlePublishCreative();
+                      }}
+                      className={cn(
+                        "font-bold px-5 gap-1.5 transition-all",
+                        hasBlockers
+                          ? "bg-black/10 text-black/35 cursor-not-allowed border-none shadow-none"
+                          : "bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
+                      )}
+                    >
+                      <Sparkles className="size-3.5" />
+                      <span>Confirm &amp; Generate Creative</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ── TOAST NOTIFICATION ── */}
-      {toastMessage && (
-        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-ink text-white px-4 py-2 text-body font-bold shadow-2xl border border-white/15 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <CheckCircle2 className="size-4 text-ok-on-dark" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-    </div>
+        {/* ── TOAST NOTIFICATION ── */}
+        {toastMessage && (
+          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-ink text-white px-4 py-2 text-body font-bold shadow-2xl border border-white/15 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <CheckCircle2 className="size-4 text-ok-on-dark" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+        </>
+      }
+    />
   );
 }

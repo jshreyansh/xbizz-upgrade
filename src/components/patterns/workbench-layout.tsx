@@ -22,7 +22,7 @@ import { atLeast, useLayout, type Layout } from "@/lib/use-breakpoint";
  */
 export interface WorkbenchLayoutProps {
   header?: ReactNode;
-  /** Left rail — scene list, page list. Omit for a two-pane screen. */
+  /** Left rail — scene list, page list. A complete element. Omit for two-pane. */
   rail?: ReactNode;
   main: ReactNode;
   /** Right inspector — chat, edit, claims. */
@@ -33,7 +33,6 @@ export interface WorkbenchLayoutProps {
   overlay?: ReactNode;
 
   mainClassName?: string;
-  railWidth?: number;
   panelWidth?: number;
   /** Supply this to make the panel drag-resizable. */
   onPanelWidthChange?: (width: number) => void;
@@ -57,7 +56,7 @@ export interface WorkbenchLayoutProps {
 export function WorkbenchLayout({
   header, rail, main, panel, bottomBar, overlay,
   mainClassName,
-  railWidth = 305, panelWidth = SIDE_PANEL_DEFAULT_WIDTH,
+  panelWidth = SIDE_PANEL_DEFAULT_WIDTH,
   onPanelWidthChange, onPanelResizingChange, panelStorageKey,
   panelOpen = true, onPanelOpenChange,
   autoCollapsePanelBelow,
@@ -83,14 +82,10 @@ export function WorkbenchLayout({
       {header}
 
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        {rail && (
-          <aside
-            className="flex min-h-0 shrink-0 flex-col overflow-hidden border-r border-hair"
-            style={{ width: railWidth, minWidth: railWidth }}
-          >
-            {rail}
-          </aside>
-        )}
+        {/* The rail renders as given. Its width is genuinely screen-specific
+            (the scene rail is responsive, the page rail is fixed) and it
+            brings its own scroll, so a wrapper here could only fight it. */}
+        {rail}
 
         {/* No wrapper div around {main}. The adopting screens each bring their
             own scrolling region, and an extra overflow-hidden ancestor between
@@ -125,7 +120,7 @@ export function WorkbenchLayout({
  * without a rail — kept as its own name because that is what the directions,
  * plan and blueprint screens are, and naming it makes the archetype legible.
  */
-export type SplitLayoutProps = Omit<WorkbenchLayoutProps, "rail" | "railWidth">;
+export type SplitLayoutProps = Omit<WorkbenchLayoutProps, "rail">;
 
 export function SplitLayout(props: SplitLayoutProps) {
   return <WorkbenchLayout {...props} />;
