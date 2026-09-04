@@ -57,7 +57,7 @@ import { ResearchSourcesContent } from "@/features/workspace/research-sources-se
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
-import { SidePanel } from "@/components/patterns/side-panel";
+import { SplitLayout } from "@/components/patterns/workbench-layout";
 
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets";
 
@@ -233,9 +233,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setSelectedQuality,
     copilotPanelOpen,
     copilotPanelWidth,
-    copilotPanelResizing,
     setCopilotPanelWidth,
-    setCopilotPanelResizing,
     setCopilotPanelOpen,
     toggleCopilotPanel,
   } = useWorkspaceStore();
@@ -483,751 +481,181 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#edf0ed] h-screen overflow-hidden">
-      {/* ─── Top Studio-Matched Header Bar (Same as Scenes & Editor) ─── */}
-      <ScreenHeader>
-        <button
-          onClick={handleBackToBrief}
-          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
-          aria-label="Back to brief"
-        >
-          <ArrowLeft className="size-4" />
-        </button>
-        <SwishXMark compact />
-        <div className="mx-3 h-5 w-px bg-hair" />
+    <SplitLayout
+      className="bg-[#edf0ed]"
+      panelOpen={copilotPanelOpen}
+      onPanelOpenChange={setCopilotPanelOpen}
+      panelWidth={copilotPanelWidth}
+      onPanelWidthChange={setCopilotPanelWidth}
+      panelStorageKey="swishx.copilotPanelWidth"
+      header={
+        <ScreenHeader>
+          <button
+            onClick={handleBackToBrief}
+            className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
+            aria-label="Back to brief"
+          >
+            <ArrowLeft className="size-4" />
+          </button>
+          <SwishXMark compact />
+          <div className="mx-3 h-5 w-px bg-hair" />
 
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-body font-[800] text-ink">{projectName}</span>
-            <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
-              Draft v1
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-body font-[800] text-ink">{projectName}</span>
+              <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
+                Draft v1
+              </span>
+            </div>
+            <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
+              Saved just now · {presenter || "Maya Kapoor"}
+            </div>
+          </div>
+
+          {/* State Switcher in Header */}
+          <div className="ml-6 hidden items-center gap-1 sm:flex">
+            <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
+              Plan View
             </span>
           </div>
-          <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
-            Saved just now · {presenter || "Maya Kapoor"}
+
+          <div className="ml-4 hidden items-center gap-0.5 lg:flex">
+            <Button variant="ghost" size="icon" aria-label="Undo">
+              <Undo2 className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon" aria-label="Redo" disabled>
+              <Redo2 className="size-4" />
+            </Button>
+            <div className="mx-1 h-5 w-px bg-hair" />
+            <Button variant="ghost" size="sm">
+              <History className="size-3.5" /> Versions
+            </Button>
           </div>
-        </div>
 
-        {/* State Switcher in Header */}
-        <div className="ml-6 hidden items-center gap-1 sm:flex">
-          <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-            Plan View
-          </span>
-        </div>
+          <div className="ml-auto flex items-center gap-2">
+            {/* Toggle Right Sidebar Panel Button (Icon Only) */}
+            <button
+              type="button"
+              onClick={toggleCopilotPanel}
+              className={cn(
+                "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
+                copilotPanelOpen
+                  ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
+                  : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
+              )}
+              title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
+              aria-label="Toggle sidebar"
+            >
+              <PanelRight className="size-4" />
+            </button>
 
-        <div className="ml-4 hidden items-center gap-0.5 lg:flex">
-          <Button variant="ghost" size="icon" aria-label="Undo">
-            <Undo2 className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Redo" disabled>
-            <Redo2 className="size-4" />
-          </Button>
-          <div className="mx-1 h-5 w-px bg-hair" />
-          <Button variant="ghost" size="sm">
-            <History className="size-3.5" /> Versions
-          </Button>
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          {/* Toggle Right Sidebar Panel Button (Icon Only) */}
-          <button
-            type="button"
-            onClick={toggleCopilotPanel}
-            className={cn(
-              "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
-              copilotPanelOpen
-                ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
-                : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
-            )}
-            title={copilotPanelOpen ? "Collapse sidebar (⌘\\)" : "Expand sidebar (⌘\\)"}
-            aria-label="Toggle sidebar"
+            <Button variant="ghost" size="icon" aria-label="More">
+              <MoreHorizontal className="size-4" />
+            </Button>
+          </div>
+        </ScreenHeader>
+      }
+      main={
+          <section
+            className="flex flex-1 min-w-0 flex-col min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
           >
-            <PanelRight className="size-4" />
-          </button>
-
-          <Button variant="ghost" size="icon" aria-label="More">
-            <MoreHorizontal className="size-4" />
-          </Button>
-        </div>
-      </ScreenHeader>
-
-      {/* ── Main Split View: Left (Plan Canvas), Right (Chat Assistant) ── */}
-      <div className="flex-1 flex overflow-hidden min-h-0 relative">
-        {/* ── LEFT PANEL (Plan Canvas OR Loader) ── */}
-        <section
-          style={{
-            width: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            minWidth: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            maxWidth: copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-            transition: copilotPanelResizing ? "none" : "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-          }}
-          className="flex flex-col shrink-0 min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
-        >
-          {isGenerating ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
-              <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-                <Sparkles className="size-10 text-brand animate-pulse" />
-              </div>
-              <h3 className="text-display font-extrabold text-ink tracking-tight">
-                Generating Clinical Script &amp; Storyboard...
-              </h3>
-              <p className="text-body-lg text-ink-3 mt-1.5 max-w-[440px]">
-                Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims.
-              </p>
-
-              <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
+            {isGenerating ? (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
+                <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
+                  <Sparkles className="size-10 text-brand animate-pulse" />
                 </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Synthesized 5-scene clinical narrative &amp; script</span>
-                </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Linking citations to FDA label §5.1</span>
+                <h3 className="text-display font-extrabold text-ink tracking-tight">
+                  Generating Clinical Script &amp; Storyboard...
+                </h3>
+                <p className="text-body-lg text-ink-3 mt-1.5 max-w-[440px]">
+                  Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims.
+                </p>
+
+                <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
+                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                    <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                    <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
+                  </div>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                    <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                    <span className="font-semibold">Synthesized 5-scene clinical narrative &amp; script</span>
+                  </div>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                    <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
+                    <span className="font-semibold">Linking citations to FDA label §5.1</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <>
-              {/* Header in Left Canvas */}
-              <div className="flex items-center justify-between pb-2 shrink-0">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
-                      Available Context
-                    </span>
-                    <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-ok-line">
-                      Grounding active
+            ) : (
+              <>
+                {/* Header in Left Canvas */}
+                <div className="flex items-center justify-between pb-2 shrink-0">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
+                        Available Context
+                      </span>
+                      <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-ok-line">
+                        Grounding active
+                      </span>
+                    </div>
+                    <h2 className="text-display font-[850] text-ink tracking-tight mt-0.5">
+                      {brandName} Dossier Plan &amp; Storyboard Parameters
+                    </h2>
+                    <p className="text-body text-ink-3 mt-0.5">
+                      Refine the creative treatment, audience focus, and evidence cues before confirming scenes.
+                    </p>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2">
+                    <span className="rounded-full bg-card px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
+                      ✓ 214 approved claims cited
                     </span>
                   </div>
-                  <h2 className="text-display font-[850] text-ink tracking-tight mt-0.5">
-                    {brandName} Dossier Plan &amp; Storyboard Parameters
-                  </h2>
-                  <p className="text-body text-ink-3 mt-0.5">
-                    Refine the creative treatment, audience focus, and evidence cues before confirming scenes.
-                  </p>
                 </div>
-                <div className="hidden sm:flex items-center gap-2">
-                  <span className="rounded-full bg-card px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
-                    ✓ 214 approved claims cited
-                  </span>
-                </div>
-              </div>
 
-              {/* ─── Rich Accordion Sections with Dynamic Focus Enlargement & Dimming ─── */}
-              <div className="space-y-3 min-w-0 w-full">
-                {/* 1. Research & Sources (Unified Top Starting Tile) */}
-                <PlanSection
-                  icon={ShieldCheck}
-                  title="Research and Sources"
-                  summary={
-                    sourceGroundingMode === "both"
-                      ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
-                      : sourceGroundingMode === "my-sources"
-                      ? `${uploadedDocs.length} custom files active · Dossier ignored`
-                      : `${brandName} SmPC Approved Dossier · 214 claims`
-                  }
-                  status="From source"
-                  open={openSection === "sources"}
-                  onToggle={() => toggleSection("sources")}
-                  tone="done"
-                >
-                  <ResearchSourcesContent
-                    brandName={brandName || "Velmora"}
-                    sourceGroundingMode={sourceGroundingMode}
-                    onSetSourceGroundingMode={setSourceGroundingMode}
-                    uploadedDocs={uploadedDocs}
-                    onSetUploadedDocs={setUploadedDocs}
-                    onPreviewDossier={(d) => setPreviewDossier(d)}
-                    onContinue={() => toggleSection(isMagicAvatar ? "voice" : "treatment")}
-                  />
-                </PlanSection>
-
-                {/* 2. Creative Treatment (in regular mode) OR Presenter & Voice (in Magic Avatar mode) */}
-                {isMagicAvatar ? (
+                {/* ─── Rich Accordion Sections with Dynamic Focus Enlargement & Dimming ─── */}
+                <div className="space-y-3 min-w-0 w-full">
+                  {/* 1. Research & Sources (Unified Top Starting Tile) */}
                   <PlanSection
-                    icon={Mic2}
-                    title="Presenter, voice and sound"
-                    summary={`${presenter || "Dr. Maya Kapoor"} · ${language} · ${music}`}
-                    status={presenter ? "Confirmed" : "Needs you"}
-                    open={openSection === "voice"}
-                    onToggle={() => toggleSection("voice")}
-                    tone={presenter ? "done" : "attention"}
-                  >
-                    <div className="mb-4">
-                      <div className="text-body-lg font-semibold text-ink-3 mb-2.5">
-                        Select AI Presenter Avatar
-                      </div>
-                      <div className="grid gap-2.5 sm:grid-cols-3">
-                        {presenters.slice(0, 2).map((person) => (
-                          <button
-                            key={person.name}
-                            onClick={() => setPresenter(person.name)}
-                            className={cn(
-                              "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
-                              presenter === person.name
-                                ? "border-brand bg-tint ring-2 ring-brand text-brand-deep shadow-xs"
-                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                            )}
-                          >
-                            <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
-                            <div className="min-w-0 flex-1">
-                              <span className="block truncate font-bold text-body-lg">{person.name}</span>
-                              <span className="block text-label text-ink-3 font-normal">{person.role}</span>
-                            </div>
-                            {presenter === person.name && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />}
-                          </button>
-                        ))}
-                        <button
-                          onClick={() => setPresenterLibraryOpen(true)}
-                          className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-hair-2 bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-3 hover:bg-canvas cursor-pointer"
-                        >
-                          <span className="flex -space-x-2.5">
-                            {presenters.slice(2).map((person) => (
-                              <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
-                            ))}
-                          </span>
-                          <span className="ml-1 text-body-lg text-ink-2">Avatar Library</span>
-                          <ArrowRight className="ml-auto size-4 text-ink-3" />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <DecisionRow
-                        label="Language"
-                        value={language}
-                        icon={<Globe2 className="size-4" />}
-                        editing={editingDecision === "language"}
-                        onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
-                      >
-                        <ChoiceGroup
-                          label="Choose a language"
-                          value={language}
-                          onChange={(next) => {
-                            setLanguage(next);
-                            setEditingDecision(null);
-                          }}
-                          options={["English", "Hindi", "Spanish", "French", "German"]}
-                          icon={() => <Globe2 className="size-4" />}
-                        />
-                      </DecisionRow>
-                      <DecisionRow
-                        label="Voice"
-                        value={voice}
-                        icon={<Mic2 className="size-4" />}
-                        editing={editingDecision === "voice"}
-                        onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
-                        onPreview={() => previewAudio("voice", voice)}
-                        playing={previewingAudio === voice}
-                      >
-                        <AudioChoices
-                          label="Choose and preview a voice"
-                          value={voice}
-                          options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
-                          onChange={(next) => {
-                            setVoice(next);
-                            setEditingDecision(null);
-                          }}
-                          previewing={previewingAudio}
-                          onPreview={(option) => previewAudio("voice", option)}
-                          onOpenLibrary={() => setVoiceLibraryOpen(true)}
-                        />
-                      </DecisionRow>
-                      <DecisionRow
-                        label="Background music"
-                        value={music}
-                        icon={<Music2 className="size-4" />}
-                        editing={editingDecision === "music"}
-                        onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
-                        onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
-                        playing={previewingAudio === music}
-                      >
-                        <AudioChoices
-                          label="Choose and preview music"
-                          value={music}
-                          options={["No music", "Calm clinical", "Warm", "Uplifting"]}
-                          onChange={(next) => {
-                            setMusic(next);
-                            setEditingDecision(null);
-                          }}
-                          previewing={previewingAudio}
-                          onPreview={(option) => previewAudio("music", option)}
-                          music
-                        />
-                      </DecisionRow>
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-hair flex justify-end">
-                      <Button
-                        onClick={() => {
-                          setConfirmedTreatment(true);
-                          setOpenSection(isProductFocus ? "product-assets" : "message");
-                        }}
-                        className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
-                      >
-                        {isProductFocus ? "Confirm Avatar & Proceed to Product Assets" : "Confirm Avatar & Continue"} <ArrowRight className="size-4 ml-1" />
-                      </Button>
-                    </div>
-                  </PlanSection>
-                ) : (
-                  <PlanSection
-                    icon={Film}
-                    title="Creative treatment"
-                    summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`}
-                    status={confirmedTreatment ? "Confirmed" : "Needs you"}
-                    open={openSection === "treatment"}
-                    onToggle={() => toggleSection("treatment")}
-                    tone={confirmedTreatment ? "done" : "attention"}
-                  >
-                    <div className="squircle rounded-panel bg-subtle px-4 py-3.5">
-                      <div className="text-body-lg font-semibold text-brand">Why this fits</div>
-                      <p className="mt-1 text-body-lg leading-5 text-ink-3">{profile.rationale}</p>
-                    </div>
-                    <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
-                      {profile.treatments.map((item, index) => {
-                        const selected = treatmentId === item.id;
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => selectTreatment(item.id)}
-                            className={cn(
-                              "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
-                              selected
-                                ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
-                                : "border-[#e4e9e6] bg-card opacity-85 hover:opacity-100 hover:border-hair-3"
-                            )}
-                          >
-                            <div>
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <span className="font-bold text-subhead text-ink flex items-center gap-1.5 leading-tight">
-                                  {item.label}
-                                </span>
-                                <span
-                                  className={cn(
-                                    "grid size-5 shrink-0 place-items-center rounded-full border transition",
-                                    selected
-                                      ? "border-brand bg-brand text-white"
-                                      : "border-[#d6ddd9] bg-card"
-                                  )}
-                                >
-                                  {selected && <Check className="size-3" strokeWidth={3.5} />}
-                                </span>
-                              </div>
-                              {index === 0 && (
-                                <span className="inline-block mb-2 rounded-full bg-card px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line shadow-2xs">
-                                  Recommended
-                                </span>
-                              )}
-                              <p className="text-body leading-relaxed text-ink-3">
-                                {item.description}
-                              </p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {!confirmedTreatment && (
-                      <Button
-                        onClick={() => {
-                          setConfirmedTreatment(true);
-                          setOpenSection(isProductFocus ? "product-assets" : null);
-                        }}
-                        className="mt-3 bg-brand text-white"
-                      >
-                        Use recommendation <ArrowRight className="size-4" />
-                      </Button>
-                    )}
-                  </PlanSection>
-                )}
-
-                {/* 2. Elevated Product Packshot & Visual Assets */}
-                <PlanSection
-                  icon={PackageCheck}
-                  title="Product & Device Visual Assets"
-                  summary={
-                    productMediaList.length > 0
-                      ? `${productMediaList.length} media attached · 3D packshots grounded`
-                      : isProductFocus
-                      ? "Required for Product Introduction · Please attach product photos/videos"
-                      : "Optional product packshots & 3D device renders"
-                  }
-                  status={
-                    isProductFocus
-                      ? productMediaList.length > 0
-                        ? "Attached"
-                        : "Needs Assets"
-                      : "Optional"
-                  }
-                  open={openSection === "product-assets"}
-                  onToggle={() => toggleSection("product-assets")}
-                  tone={productMediaList.length > 0 ? "done" : isProductFocus ? "attention" : "default"}
-                >
-                  <div className="space-y-3.5">
-                    <div className="rounded-control bg-canvas border border-hair p-3.5 text-body text-ink-2 leading-relaxed">
-                      <p className="font-bold text-ink mb-1">
-                        📸 Product Packshots &amp; Device Reference Media
-                      </p>
-                      <p className="text-ink-3 text-body">
-                        Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {productMediaList.map((media) => (
-                        <div
-                          key={media.id}
-                          className="group relative rounded-xl border border-hair bg-card overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
-                        >
-                          <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
-                            <img
-                              src={media.preview}
-                              alt={media.name}
-                              className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-micro font-bold text-white uppercase backdrop-blur-xs">
-                              {media.type}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setProductMediaList((prev) => prev.filter((m) => m.id !== media.id))}
-                              className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-danger transition cursor-pointer backdrop-blur-xs"
-                              title="Remove media"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          </div>
-
-                          <div className="p-2.5">
-                            <span className="block truncate text-body font-bold text-ink">
-                              {media.name}
-                            </span>
-                            <span className="text-caption text-ink-3 block mt-0.5 font-medium">
-                              {media.size} · Uploaded
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const sampleItem = {
-                            id: `media-${Date.now()}`,
-                            name: "Velmora_Autoinjector_3D_Packshot.png",
-                            type: "image" as const,
-                            preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
-                            size: "4.2 MB",
-                          };
-                          setProductMediaList((prev) => [...prev, sampleItem]);
-                        }}
-                        className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand/40 bg-card p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
-                      >
-                        <div className="grid size-8 place-items-center rounded-full bg-tint text-brand">
-                          <Plus className="size-4" />
-                        </div>
-                        <div>
-                          <span className="block text-body font-bold text-brand">
-                            {productMediaList.length === 0 ? "Upload Product Photos / Videos" : "Add More Product Media"}
-                          </span>
-                          <span className="text-caption text-ink-3 mt-0.5 block">
-                            PNG, JPG, MP4 · Click to attach asset
-                          </span>
-                        </div>
-                      </button>
-                    </div>
-
-                    <div className="mt-3 flex justify-end">
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          if (productMediaList.length === 0) {
-                            setProductMediaList([
-                              {
-                                id: `media-${Date.now()}`,
-                                name: "Velmora_Autoinjector_3D_Packshot.png",
-                                type: "image",
-                                preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
-                                size: "4.2 MB",
-                              },
-                            ]);
-                          }
-                          setOpenSection("message");
-                        }}
-                        className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
-                      >
-                        Save Product Assets &amp; Next <ArrowRight className="size-3.5 ml-1" />
-                      </Button>
-                    </div>
-                  </div>
-                </PlanSection>
-
-                {/* 3. Message and Audience */}
-                <PlanSection
-                  icon={Target}
-                  title="Message and audience"
-                  summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
-                  status="From brief"
-                  open={openSection === "message"}
-                  onToggle={() => toggleSection("message")}
-                >
-                  <div className="space-y-2">
-                    <DecisionRow
-                      label="Audience"
-                      value={audience}
-                      icon={<AudienceIcon value={audience} />}
-                      editing={editingDecision === "audience"}
-                      onEdit={() => setEditingDecision(editingDecision === "audience" ? null : "audience")}
-                    >
-                      <ChoiceGroup
-                        label="Choose the primary audience"
-                        value={audience}
-                        onChange={(next) => {
-                          setAudience(next as Audience);
-                          setEditingDecision(null);
-                        }}
-                        options={audienceOptions}
-                        icon={(next) => <AudienceIcon value={next} />}
-                      />
-                    </DecisionRow>
-                    <DecisionRow
-                      label="Objective"
-                      value={goal}
-                      icon={<Target className="size-4" />}
-                      editing={editingDecision === "objective"}
-                      onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}
-                    >
-                      <ChoiceGroup
-                        label="What should this accomplish?"
-                        value={goal}
-                        onChange={(next) => {
-                          setGoal(next);
-                          setStoreGoal(next);
-                          setEditingDecision(null);
-                        }}
-                        options={["New launch", "Awareness", "Adoption", "Retention", "Education"]}
-                        icon={() => <Target className="size-4" />}
-                      />
-                    </DecisionRow>
-                    <DecisionRow
-                      label="Topics"
-                      value={selectedTopics.join(" · ")}
-                      icon={<LayoutList className="size-4" />}
-                      editing={editingDecision === "topics"}
-                      onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}
-                    >
-                      <div className="text-body-lg font-semibold text-ink-3">Include only what matters</div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {topics.map((topic) => (
-                          <button
-                            key={topic}
-                            onClick={() => toggleTopic(topic)}
-                            aria-pressed={selectedTopics.includes(topic)}
-                            className={cn(
-                              "focus-ring min-h-10 rounded-[12px] border px-3 text-body-lg font-medium transition cursor-pointer",
-                              selectedTopics.includes(topic)
-                                ? "border-hair-3 bg-subtle text-brand"
-                                : "border-hair-2 hover:border-hair-3"
-                            )}
-                          >
-                            {selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}
-                            {topic}
-                          </button>
-                        ))}
-                      </div>
-                      <div className="mt-3 flex justify-end">
-                        <Button size="sm" onClick={() => setEditingDecision(null)}>
-                          Done
-                        </Button>
-                      </div>
-                    </DecisionRow>
-                  </div>
-                </PlanSection>
-
-                {/* 4. Delivery & Cost */}
-                <PlanSection
-                  icon={MonitorPlay}
-                  title="Delivery & Cost"
-                  summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration} · ${selectedQuality === "cinematic" ? "Cinematic" : "HD"} (⚡ ${estimatedCredits.toLocaleString()} credits)`}
-                  status={`${estimatedCredits.toLocaleString()} credits`}
-                  tone="done"
-                  open={openSection === "delivery"}
-                  onToggle={() => toggleSection("delivery")}
-                >
-                  <div className="space-y-3">
-                    <DecisionRow
-                      label="Destinations"
-                      value={displayIntendedUses(intendedUse)}
-                      icon={<ChannelIcon value={parseIntendedUses(intendedUse)[0]} />}
-                      editing={editingDecision === "channel"}
-                      onEdit={() => setEditingDecision(editingDecision === "channel" ? null : "channel")}
-                    >
-                      <MultiChoiceGroup
-                        label="Choose one or more destinations"
-                        values={parseIntendedUses(intendedUse)}
-                        onChange={(next) => setIntendedUse(serializeIntendedUses(next))}
-                        onDone={() => setEditingDecision(null)}
-                        options={useOptions}
-                        icon={(next) => <ChannelIcon value={next} />}
-                      />
-                    </DecisionRow>
-                    <DecisionRow
-                      label={assetType === "video" ? "Frame" : "Format"}
-                      value={effectiveFormat}
-                      icon={<FrameGlyph value={effectiveFormat} />}
-                      editing={editingDecision === "format"}
-                      onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
-                    >
-                      <FormatChoices
-                        label="Choose the output shape"
-                        value={effectiveFormat}
-                        options={profile.formatOptions}
-                        onChange={(next) => {
-                          setFormat(next);
-                          setEditingDecision(null);
-                        }}
-                      />
-                    </DecisionRow>
-                    <DecisionRow
-                      label={assetType === "video" ? "Length" : "Amount"}
-                      value={duration}
-                      icon={<Clock3 className="size-4" />}
-                      editing={editingDecision === "length"}
-                      onEdit={() => setEditingDecision(editingDecision === "length" ? null : "length")}
-                    >
-                      <SteppedControl
-                        label={assetType === "video" ? "Video length" : "Content amount"}
-                        value={duration}
-                        options={profile.lengthOptions}
-                        onChange={setDuration}
-                      />
-                      <div className="mt-3 flex justify-end">
-                        <Button size="sm" onClick={() => setEditingDecision(null)}>
-                          Done
-                        </Button>
-                      </div>
-                    </DecisionRow>
-
-                    {/* Output Quality & Generation Engine Selector */}
-                    <div className="pt-2 border-t border-hair">
-                      <label className="text-body font-bold text-ink block mb-2">
-                        Generation Output Quality
-                      </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Option 1: HD */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedQuality("hd")}
-                          className={cn(
-                            "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
-                            selectedQuality === "hd"
-                              ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
-                              : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                          )}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <span className="font-extrabold text-subhead text-ink">HD Motion</span>
-                              <span className="rounded-full bg-warn-bg border border-warn-line/80 px-2 py-0.5 text-caption font-extrabold text-warn">
-                                ⚡ {Math.round((durationSeconds / 60) * 2500).toLocaleString()} credits
-                              </span>
-                            </div>
-                            <p className="text-body leading-relaxed text-ink-3">
-                              Lifelike motion that stops the scroll — ideal for launches &amp; HCP presentations.
-                            </p>
-                          </div>
-                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-hair text-label text-ink-3">
-                            <span className="flex items-center gap-1 font-medium">⏱ 7–9 min render</span>
-                            {selectedQuality === "hd" && (
-                              <span className="font-bold text-brand flex items-center gap-1">
-                                <Check className="size-3.5" strokeWidth={3} /> Selected
-                              </span>
-                            )}
-                          </div>
-                        </button>
-
-                        {/* Option 2: Cinematic */}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedQuality("cinematic")}
-                          className={cn(
-                            "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
-                            selectedQuality === "cinematic"
-                              ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
-                              : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                          )}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between gap-2 mb-1.5">
-                              <span className="font-extrabold text-subhead text-ink">Cinematic 4K</span>
-                              <span className="rounded-full bg-tint border border-tint-line px-2 py-0.5 text-caption font-extrabold text-brand-deep">
-                                ⚡ {Math.round((durationSeconds / 60) * 7500).toLocaleString()} credits
-                              </span>
-                            </div>
-                            <p className="text-body leading-relaxed text-ink-3">
-                              Ultra-realistic, fully generated 3D anatomical scenes — for flagship congresses.
-                            </p>
-                          </div>
-                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-hair text-label text-ink-3">
-                            <span className="flex items-center gap-1 font-medium">⏱ 12–14 min render</span>
-                            {selectedQuality === "cinematic" && (
-                              <span className="font-bold text-brand flex items-center gap-1">
-                                <Check className="size-3.5" strokeWidth={3} /> Selected
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Live Real-Time Cost & Balance Breakdown Card */}
-                    <div className="rounded-[16px] bg-[#121614] border border-white/10 p-4 text-white shadow-md">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
-                        <div className="flex items-center gap-2">
-                          <div className="size-7 rounded-lg bg-brand/20 border border-brand/40 flex items-center justify-center">
-                            <Sparkles className="size-3.5 text-brand" />
-                          </div>
-                          <div>
-                            <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Estimated Project Cost</div>
-                            <div className="text-subhead font-[850] text-white">⚡ {estimatedCredits.toLocaleString()} Credits</div>
-                          </div>
-                        </div>
-                        <div className="text-right sm:text-right text-label text-white/70">
-                          <span>Team Balance: </span>
-                          <strong className="text-ok-on-dark font-bold">50,000 credits</strong>
-                        </div>
-                      </div>
-                      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-label text-white/75">
-                        <span>Format: <strong className="text-white font-semibold">{effectiveFormat}</strong> ({duration})</span>
-                        <span>Quality: <strong className="text-white font-semibold">{selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}</strong></span>
-                        <span>Estimated Render: <strong className="text-white font-semibold">~{estimatedRenderTime}</strong></span>
-                      </div>
-                    </div>
-                  </div>
-                </PlanSection>
-
-                {/* 5. Presenter, Voice and Sound (for standard video mode) */}
-                {!isMagicAvatar && assetType === "video" && treatmentId !== "visual-only" && (
-                  <PlanSection
-                    icon={Mic2}
-                    title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"}
+                    icon={ShieldCheck}
+                    title="Research and Sources"
                     summary={
-                      needsPresenter
-                        ? `${presenter || "Choose presenter"} · ${language} · ${music}`
-                        : `${voice} · ${language} · ${music}`
+                      sourceGroundingMode === "both"
+                        ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
+                        : sourceGroundingMode === "my-sources"
+                        ? `${uploadedDocs.length} custom files active · Dossier ignored`
+                        : `${brandName} SmPC Approved Dossier · 214 claims`
                     }
-                    status={needsPresenter && !presenter ? "Needs you" : "Recommended"}
-                    open={openSection === "voice"}
-                    onToggle={() => toggleSection("voice")}
-                    tone={needsPresenter && !presenter ? "attention" : "default"}
+                    status="From source"
+                    open={openSection === "sources"}
+                    onToggle={() => toggleSection("sources")}
+                    tone="done"
                   >
-                    {needsPresenter && (
+                    <ResearchSourcesContent
+                      brandName={brandName || "Velmora"}
+                      sourceGroundingMode={sourceGroundingMode}
+                      onSetSourceGroundingMode={setSourceGroundingMode}
+                      uploadedDocs={uploadedDocs}
+                      onSetUploadedDocs={setUploadedDocs}
+                      onPreviewDossier={(d) => setPreviewDossier(d)}
+                      onContinue={() => toggleSection(isMagicAvatar ? "voice" : "treatment")}
+                    />
+                  </PlanSection>
+
+                  {/* 2. Creative Treatment (in regular mode) OR Presenter & Voice (in Magic Avatar mode) */}
+                  {isMagicAvatar ? (
+                    <PlanSection
+                      icon={Mic2}
+                      title="Presenter, voice and sound"
+                      summary={`${presenter || "Dr. Maya Kapoor"} · ${language} · ${music}`}
+                      status={presenter ? "Confirmed" : "Needs you"}
+                      open={openSection === "voice"}
+                      onToggle={() => toggleSection("voice")}
+                      tone={presenter ? "done" : "attention"}
+                    >
                       <div className="mb-4">
                         <div className="text-body-lg font-semibold text-ink-3 mb-2.5">
-                          Who appears on screen?
+                          Select AI Presenter Avatar
                         </div>
                         <div className="grid gap-2.5 sm:grid-cols-3">
                           {presenters.slice(0, 2).map((person) => (
@@ -1263,150 +691,712 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           </button>
                         </div>
                       </div>
-                    )}
+
+                      <div className="space-y-2">
+                        <DecisionRow
+                          label="Language"
+                          value={language}
+                          icon={<Globe2 className="size-4" />}
+                          editing={editingDecision === "language"}
+                          onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                        >
+                          <ChoiceGroup
+                            label="Choose a language"
+                            value={language}
+                            onChange={(next) => {
+                              setLanguage(next);
+                              setEditingDecision(null);
+                            }}
+                            options={["English", "Hindi", "Spanish", "French", "German"]}
+                            icon={() => <Globe2 className="size-4" />}
+                          />
+                        </DecisionRow>
+                        <DecisionRow
+                          label="Voice"
+                          value={voice}
+                          icon={<Mic2 className="size-4" />}
+                          editing={editingDecision === "voice"}
+                          onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
+                          onPreview={() => previewAudio("voice", voice)}
+                          playing={previewingAudio === voice}
+                        >
+                          <AudioChoices
+                            label="Choose and preview a voice"
+                            value={voice}
+                            options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                            onChange={(next) => {
+                              setVoice(next);
+                              setEditingDecision(null);
+                            }}
+                            previewing={previewingAudio}
+                            onPreview={(option) => previewAudio("voice", option)}
+                            onOpenLibrary={() => setVoiceLibraryOpen(true)}
+                          />
+                        </DecisionRow>
+                        <DecisionRow
+                          label="Background music"
+                          value={music}
+                          icon={<Music2 className="size-4" />}
+                          editing={editingDecision === "music"}
+                          onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
+                          onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
+                          playing={previewingAudio === music}
+                        >
+                          <AudioChoices
+                            label="Choose and preview music"
+                            value={music}
+                            options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                            onChange={(next) => {
+                              setMusic(next);
+                              setEditingDecision(null);
+                            }}
+                            previewing={previewingAudio}
+                            onPreview={(option) => previewAudio("music", option)}
+                            music
+                          />
+                        </DecisionRow>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-hair flex justify-end">
+                        <Button
+                          onClick={() => {
+                            setConfirmedTreatment(true);
+                            setOpenSection(isProductFocus ? "product-assets" : "message");
+                          }}
+                          className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
+                        >
+                          {isProductFocus ? "Confirm Avatar & Proceed to Product Assets" : "Confirm Avatar & Continue"} <ArrowRight className="size-4 ml-1" />
+                        </Button>
+                      </div>
+                    </PlanSection>
+                  ) : (
+                    <PlanSection
+                      icon={Film}
+                      title="Creative treatment"
+                      summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`}
+                      status={confirmedTreatment ? "Confirmed" : "Needs you"}
+                      open={openSection === "treatment"}
+                      onToggle={() => toggleSection("treatment")}
+                      tone={confirmedTreatment ? "done" : "attention"}
+                    >
+                      <div className="squircle rounded-panel bg-subtle px-4 py-3.5">
+                        <div className="text-body-lg font-semibold text-brand">Why this fits</div>
+                        <p className="mt-1 text-body-lg leading-5 text-ink-3">{profile.rationale}</p>
+                      </div>
+                      <div className="mt-3.5 grid gap-3 sm:grid-cols-3">
+                        {profile.treatments.map((item, index) => {
+                          const selected = treatmentId === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => selectTreatment(item.id)}
+                              className={cn(
+                                "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
+                                selected
+                                  ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
+                                  : "border-[#e4e9e6] bg-card opacity-85 hover:opacity-100 hover:border-hair-3"
+                              )}
+                            >
+                              <div>
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <span className="font-bold text-subhead text-ink flex items-center gap-1.5 leading-tight">
+                                    {item.label}
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      "grid size-5 shrink-0 place-items-center rounded-full border transition",
+                                      selected
+                                        ? "border-brand bg-brand text-white"
+                                        : "border-[#d6ddd9] bg-card"
+                                    )}
+                                  >
+                                    {selected && <Check className="size-3" strokeWidth={3.5} />}
+                                  </span>
+                                </div>
+                                {index === 0 && (
+                                  <span className="inline-block mb-2 rounded-full bg-card px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line shadow-2xs">
+                                    Recommended
+                                  </span>
+                                )}
+                                <p className="text-body leading-relaxed text-ink-3">
+                                  {item.description}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {!confirmedTreatment && (
+                        <Button
+                          onClick={() => {
+                            setConfirmedTreatment(true);
+                            setOpenSection(isProductFocus ? "product-assets" : null);
+                          }}
+                          className="mt-3 bg-brand text-white"
+                        >
+                          Use recommendation <ArrowRight className="size-4" />
+                        </Button>
+                      )}
+                    </PlanSection>
+                  )}
+
+                  {/* 2. Elevated Product Packshot & Visual Assets */}
+                  <PlanSection
+                    icon={PackageCheck}
+                    title="Product & Device Visual Assets"
+                    summary={
+                      productMediaList.length > 0
+                        ? `${productMediaList.length} media attached · 3D packshots grounded`
+                        : isProductFocus
+                        ? "Required for Product Introduction · Please attach product photos/videos"
+                        : "Optional product packshots & 3D device renders"
+                    }
+                    status={
+                      isProductFocus
+                        ? productMediaList.length > 0
+                          ? "Attached"
+                          : "Needs Assets"
+                        : "Optional"
+                    }
+                    open={openSection === "product-assets"}
+                    onToggle={() => toggleSection("product-assets")}
+                    tone={productMediaList.length > 0 ? "done" : isProductFocus ? "attention" : "default"}
+                  >
+                    <div className="space-y-3.5">
+                      <div className="rounded-control bg-canvas border border-hair p-3.5 text-body text-ink-2 leading-relaxed">
+                        <p className="font-bold text-ink mb-1">
+                          📸 Product Packshots &amp; Device Reference Media
+                        </p>
+                        <p className="text-ink-3 text-body">
+                          Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {productMediaList.map((media) => (
+                          <div
+                            key={media.id}
+                            className="group relative rounded-xl border border-hair bg-card overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
+                          >
+                            <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
+                              <img
+                                src={media.preview}
+                                alt={media.name}
+                                className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-micro font-bold text-white uppercase backdrop-blur-xs">
+                                {media.type}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setProductMediaList((prev) => prev.filter((m) => m.id !== media.id))}
+                                className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-danger transition cursor-pointer backdrop-blur-xs"
+                                title="Remove media"
+                              >
+                                <X className="size-3.5" />
+                              </button>
+                            </div>
+
+                            <div className="p-2.5">
+                              <span className="block truncate text-body font-bold text-ink">
+                                {media.name}
+                              </span>
+                              <span className="text-caption text-ink-3 block mt-0.5 font-medium">
+                                {media.size} · Uploaded
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const sampleItem = {
+                              id: `media-${Date.now()}`,
+                              name: "Velmora_Autoinjector_3D_Packshot.png",
+                              type: "image" as const,
+                              preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                              size: "4.2 MB",
+                            };
+                            setProductMediaList((prev) => [...prev, sampleItem]);
+                          }}
+                          className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand/40 bg-card p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
+                        >
+                          <div className="grid size-8 place-items-center rounded-full bg-tint text-brand">
+                            <Plus className="size-4" />
+                          </div>
+                          <div>
+                            <span className="block text-body font-bold text-brand">
+                              {productMediaList.length === 0 ? "Upload Product Photos / Videos" : "Add More Product Media"}
+                            </span>
+                            <span className="text-caption text-ink-3 mt-0.5 block">
+                              PNG, JPG, MP4 · Click to attach asset
+                            </span>
+                          </div>
+                        </button>
+                      </div>
+
+                      <div className="mt-3 flex justify-end">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (productMediaList.length === 0) {
+                              setProductMediaList([
+                                {
+                                  id: `media-${Date.now()}`,
+                                  name: "Velmora_Autoinjector_3D_Packshot.png",
+                                  type: "image",
+                                  preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                                  size: "4.2 MB",
+                                },
+                              ]);
+                            }
+                            setOpenSection("message");
+                          }}
+                          className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
+                        >
+                          Save Product Assets &amp; Next <ArrowRight className="size-3.5 ml-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  </PlanSection>
+
+                  {/* 3. Message and Audience */}
+                  <PlanSection
+                    icon={Target}
+                    title="Message and audience"
+                    summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
+                    status="From brief"
+                    open={openSection === "message"}
+                    onToggle={() => toggleSection("message")}
+                  >
                     <div className="space-y-2">
                       <DecisionRow
-                        label="Language"
-                        value={language}
-                        icon={<Globe2 className="size-4" />}
-                        editing={editingDecision === "language"}
-                        onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                        label="Audience"
+                        value={audience}
+                        icon={<AudienceIcon value={audience} />}
+                        editing={editingDecision === "audience"}
+                        onEdit={() => setEditingDecision(editingDecision === "audience" ? null : "audience")}
                       >
                         <ChoiceGroup
-                          label="Choose a language"
-                          value={language}
+                          label="Choose the primary audience"
+                          value={audience}
                           onChange={(next) => {
-                            setLanguage(next);
+                            setAudience(next as Audience);
                             setEditingDecision(null);
                           }}
-                          options={["English", "Hindi", "Spanish", "French", "German"]}
-                          icon={() => <Globe2 className="size-4" />}
+                          options={audienceOptions}
+                          icon={(next) => <AudienceIcon value={next} />}
                         />
                       </DecisionRow>
                       <DecisionRow
-                        label="Voice"
-                        value={voice}
-                        icon={<Mic2 className="size-4" />}
-                        editing={editingDecision === "voice"}
-                        onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
-                        onPreview={() => previewAudio("voice", voice)}
-                        playing={previewingAudio === voice}
+                        label="Objective"
+                        value={goal}
+                        icon={<Target className="size-4" />}
+                        editing={editingDecision === "objective"}
+                        onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}
                       >
-                        <AudioChoices
-                          label="Choose and preview a voice"
-                          value={voice}
-                          options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                        <ChoiceGroup
+                          label="What should this accomplish?"
+                          value={goal}
                           onChange={(next) => {
-                            setVoice(next);
+                            setGoal(next);
+                            setStoreGoal(next);
                             setEditingDecision(null);
                           }}
-                          previewing={previewingAudio}
-                          onPreview={(option) => previewAudio("voice", option)}
-                          onOpenLibrary={() => setVoiceLibraryOpen(true)}
+                          options={["New launch", "Awareness", "Adoption", "Retention", "Education"]}
+                          icon={() => <Target className="size-4" />}
                         />
                       </DecisionRow>
                       <DecisionRow
-                        label="Background music"
-                        value={music}
-                        icon={<Music2 className="size-4" />}
-                        editing={editingDecision === "music"}
-                        onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
-                        onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
-                        playing={previewingAudio === music}
+                        label="Topics"
+                        value={selectedTopics.join(" · ")}
+                        icon={<LayoutList className="size-4" />}
+                        editing={editingDecision === "topics"}
+                        onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}
                       >
-                        <AudioChoices
-                          label="Choose and preview music"
-                          value={music}
-                          options={["No music", "Calm clinical", "Warm", "Uplifting"]}
-                          onChange={(next) => {
-                            setMusic(next);
-                            setEditingDecision(null);
-                          }}
-                          previewing={previewingAudio}
-                          onPreview={(option) => previewAudio("music", option)}
-                          music
-                        />
+                        <div className="text-body-lg font-semibold text-ink-3">Include only what matters</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {topics.map((topic) => (
+                            <button
+                              key={topic}
+                              onClick={() => toggleTopic(topic)}
+                              aria-pressed={selectedTopics.includes(topic)}
+                              className={cn(
+                                "focus-ring min-h-10 rounded-[12px] border px-3 text-body-lg font-medium transition cursor-pointer",
+                                selectedTopics.includes(topic)
+                                  ? "border-hair-3 bg-subtle text-brand"
+                                  : "border-hair-2 hover:border-hair-3"
+                              )}
+                            >
+                              {selectedTopics.includes(topic) && <Check className="mr-1.5 inline size-3.5" />}
+                              {topic}
+                            </button>
+                          ))}
+                        </div>
+                        <div className="mt-3 flex justify-end">
+                          <Button size="sm" onClick={() => setEditingDecision(null)}>
+                            Done
+                          </Button>
+                        </div>
                       </DecisionRow>
                     </div>
                   </PlanSection>
-                )}
 
-
-
-                {/* 7. Story Structure */}
-                <PlanSection
-                  icon={LayoutList}
-                  title="Story structure"
-                  summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : "sections"}`}
-                  status={derivedPlan.followsSuppliedScript ? "From script" : "Recommended"}
-                  open={openSection === "story"}
-                  onToggle={() => toggleSection("story")}
-                >
-                  <StructureChoices
-                    value={storyStructure}
-                    onChange={setStoryStructure}
-                    options={
-                      assetType === "video"
-                        ? ["Product → Proof", "Problem → Solution", "Mechanism → Evidence"]
-                        : profile.treatments.map((item) => item.label)
-                    }
-                  />
-                </PlanSection>
-              </div>
-
-              {/* Centered Floating Confirmation CTA at the bottom of the Left Stage */}
-              <div className="sticky bottom-4 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full pt-6 pb-2">
-                <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-on-dark backdrop-blur-md max-w-[580px] w-auto">
-                  <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                    {isPlanReady ? (
-                      <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
-                    ) : (
-                      <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <div className="text-body font-bold text-white tracking-tight truncate">
-                        {isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
-                      </div>
-                      <p className="text-label text-white/70 truncate">
-                        {isPlanReady
-                          ? "Grounded against 214 approved claims"
-                          : needsProductAssets
-                          ? "Please attach product visual assets"
-                          : needsPresenter && !presenter
-                          ? "Please select an AI presenter"
-                          : "Please confirm creative treatment"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleConfirmPlan}
-                    disabled={!isPlanReady || isGenerating}
-                    size="sm"
-                    className={cn(
-                      "h-9.5 px-5 rounded-full text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
-                      isPlanReady && !isGenerating
-                        ? "bg-brand hover:bg-brand-deep text-white hover:-translate-y-0.5 cursor-pointer"
-                        : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
-                    )}
+                  {/* 4. Delivery & Cost */}
+                  <PlanSection
+                    icon={MonitorPlay}
+                    title="Delivery & Cost"
+                    summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration} · ${selectedQuality === "cinematic" ? "Cinematic" : "HD"} (⚡ ${estimatedCredits.toLocaleString()} credits)`}
+                    status={`${estimatedCredits.toLocaleString()} credits`}
+                    tone="done"
+                    open={openSection === "delivery"}
+                    onToggle={() => toggleSection("delivery")}
                   >
-                    <span>Confirm Plan &amp; Build Script</span>
-                    <ArrowRight className="size-3.5 ml-1.5" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </section>
+                    <div className="space-y-3">
+                      <DecisionRow
+                        label="Destinations"
+                        value={displayIntendedUses(intendedUse)}
+                        icon={<ChannelIcon value={parseIntendedUses(intendedUse)[0]} />}
+                        editing={editingDecision === "channel"}
+                        onEdit={() => setEditingDecision(editingDecision === "channel" ? null : "channel")}
+                      >
+                        <MultiChoiceGroup
+                          label="Choose one or more destinations"
+                          values={parseIntendedUses(intendedUse)}
+                          onChange={(next) => setIntendedUse(serializeIntendedUses(next))}
+                          onDone={() => setEditingDecision(null)}
+                          options={useOptions}
+                          icon={(next) => <ChannelIcon value={next} />}
+                        />
+                      </DecisionRow>
+                      <DecisionRow
+                        label={assetType === "video" ? "Frame" : "Format"}
+                        value={effectiveFormat}
+                        icon={<FrameGlyph value={effectiveFormat} />}
+                        editing={editingDecision === "format"}
+                        onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
+                      >
+                        <FormatChoices
+                          label="Choose the output shape"
+                          value={effectiveFormat}
+                          options={profile.formatOptions}
+                          onChange={(next) => {
+                            setFormat(next);
+                            setEditingDecision(null);
+                          }}
+                        />
+                      </DecisionRow>
+                      <DecisionRow
+                        label={assetType === "video" ? "Length" : "Amount"}
+                        value={duration}
+                        icon={<Clock3 className="size-4" />}
+                        editing={editingDecision === "length"}
+                        onEdit={() => setEditingDecision(editingDecision === "length" ? null : "length")}
+                      >
+                        <SteppedControl
+                          label={assetType === "video" ? "Video length" : "Content amount"}
+                          value={duration}
+                          options={profile.lengthOptions}
+                          onChange={setDuration}
+                        />
+                        <div className="mt-3 flex justify-end">
+                          <Button size="sm" onClick={() => setEditingDecision(null)}>
+                            Done
+                          </Button>
+                        </div>
+                      </DecisionRow>
 
-        {/* ── RIGHT PANEL (1/3 width = 410px): Interactive AI Planning Director Chat Assistant ── */}
-        <SidePanel
-          open={copilotPanelOpen}
-          width={copilotPanelWidth}
-          onWidthChange={setCopilotPanelWidth}
-          onResizingChange={setCopilotPanelResizing}
-          storageKey="swishx.copilotPanelWidth"
-        >
+                      {/* Output Quality & Generation Engine Selector */}
+                      <div className="pt-2 border-t border-hair">
+                        <label className="text-body font-bold text-ink block mb-2">
+                          Generation Output Quality
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Option 1: HD */}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedQuality("hd")}
+                            className={cn(
+                              "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
+                              selectedQuality === "hd"
+                                ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
+                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                            )}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <span className="font-extrabold text-subhead text-ink">HD Motion</span>
+                                <span className="rounded-full bg-warn-bg border border-warn-line/80 px-2 py-0.5 text-caption font-extrabold text-warn">
+                                  ⚡ {Math.round((durationSeconds / 60) * 2500).toLocaleString()} credits
+                                </span>
+                              </div>
+                              <p className="text-body leading-relaxed text-ink-3">
+                                Lifelike motion that stops the scroll — ideal for launches &amp; HCP presentations.
+                              </p>
+                            </div>
+                            <div className="mt-3 flex items-center justify-between pt-2 border-t border-hair text-label text-ink-3">
+                              <span className="flex items-center gap-1 font-medium">⏱ 7–9 min render</span>
+                              {selectedQuality === "hd" && (
+                                <span className="font-bold text-brand flex items-center gap-1">
+                                  <Check className="size-3.5" strokeWidth={3} /> Selected
+                                </span>
+                              )}
+                            </div>
+                          </button>
+
+                          {/* Option 2: Cinematic */}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedQuality("cinematic")}
+                            className={cn(
+                              "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
+                              selectedQuality === "cinematic"
+                                ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
+                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                            )}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <span className="font-extrabold text-subhead text-ink">Cinematic 4K</span>
+                                <span className="rounded-full bg-tint border border-tint-line px-2 py-0.5 text-caption font-extrabold text-brand-deep">
+                                  ⚡ {Math.round((durationSeconds / 60) * 7500).toLocaleString()} credits
+                                </span>
+                              </div>
+                              <p className="text-body leading-relaxed text-ink-3">
+                                Ultra-realistic, fully generated 3D anatomical scenes — for flagship congresses.
+                              </p>
+                            </div>
+                            <div className="mt-3 flex items-center justify-between pt-2 border-t border-hair text-label text-ink-3">
+                              <span className="flex items-center gap-1 font-medium">⏱ 12–14 min render</span>
+                              {selectedQuality === "cinematic" && (
+                                <span className="font-bold text-brand flex items-center gap-1">
+                                  <Check className="size-3.5" strokeWidth={3} /> Selected
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Live Real-Time Cost & Balance Breakdown Card */}
+                      <div className="rounded-[16px] bg-[#121614] border border-white/10 p-4 text-white shadow-md">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
+                          <div className="flex items-center gap-2">
+                            <div className="size-7 rounded-lg bg-brand/20 border border-brand/40 flex items-center justify-center">
+                              <Sparkles className="size-3.5 text-brand" />
+                            </div>
+                            <div>
+                              <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Estimated Project Cost</div>
+                              <div className="text-subhead font-[850] text-white">⚡ {estimatedCredits.toLocaleString()} Credits</div>
+                            </div>
+                          </div>
+                          <div className="text-right sm:text-right text-label text-white/70">
+                            <span>Team Balance: </span>
+                            <strong className="text-ok-on-dark font-bold">50,000 credits</strong>
+                          </div>
+                        </div>
+                        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-label text-white/75">
+                          <span>Format: <strong className="text-white font-semibold">{effectiveFormat}</strong> ({duration})</span>
+                          <span>Quality: <strong className="text-white font-semibold">{selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}</strong></span>
+                          <span>Estimated Render: <strong className="text-white font-semibold">~{estimatedRenderTime}</strong></span>
+                        </div>
+                      </div>
+                    </div>
+                  </PlanSection>
+
+                  {/* 5. Presenter, Voice and Sound (for standard video mode) */}
+                  {!isMagicAvatar && assetType === "video" && treatmentId !== "visual-only" && (
+                    <PlanSection
+                      icon={Mic2}
+                      title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"}
+                      summary={
+                        needsPresenter
+                          ? `${presenter || "Choose presenter"} · ${language} · ${music}`
+                          : `${voice} · ${language} · ${music}`
+                      }
+                      status={needsPresenter && !presenter ? "Needs you" : "Recommended"}
+                      open={openSection === "voice"}
+                      onToggle={() => toggleSection("voice")}
+                      tone={needsPresenter && !presenter ? "attention" : "default"}
+                    >
+                      {needsPresenter && (
+                        <div className="mb-4">
+                          <div className="text-body-lg font-semibold text-ink-3 mb-2.5">
+                            Who appears on screen?
+                          </div>
+                          <div className="grid gap-2.5 sm:grid-cols-3">
+                            {presenters.slice(0, 2).map((person) => (
+                              <button
+                                key={person.name}
+                                onClick={() => setPresenter(person.name)}
+                                className={cn(
+                                  "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                                  presenter === person.name
+                                    ? "border-brand bg-tint ring-2 ring-brand text-brand-deep shadow-xs"
+                                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                                )}
+                              >
+                                <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <span className="block truncate font-bold text-body-lg">{person.name}</span>
+                                  <span className="block text-label text-ink-3 font-normal">{person.role}</span>
+                                </div>
+                                {presenter === person.name && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />}
+                              </button>
+                            ))}
+                            <button
+                              onClick={() => setPresenterLibraryOpen(true)}
+                              className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-hair-2 bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-3 hover:bg-canvas cursor-pointer"
+                            >
+                              <span className="flex -space-x-2.5">
+                                {presenters.slice(2).map((person) => (
+                                  <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                                ))}
+                              </span>
+                              <span className="ml-1 text-body-lg text-ink-2">Avatar Library</span>
+                              <ArrowRight className="ml-auto size-4 text-ink-3" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <DecisionRow
+                          label="Language"
+                          value={language}
+                          icon={<Globe2 className="size-4" />}
+                          editing={editingDecision === "language"}
+                          onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                        >
+                          <ChoiceGroup
+                            label="Choose a language"
+                            value={language}
+                            onChange={(next) => {
+                              setLanguage(next);
+                              setEditingDecision(null);
+                            }}
+                            options={["English", "Hindi", "Spanish", "French", "German"]}
+                            icon={() => <Globe2 className="size-4" />}
+                          />
+                        </DecisionRow>
+                        <DecisionRow
+                          label="Voice"
+                          value={voice}
+                          icon={<Mic2 className="size-4" />}
+                          editing={editingDecision === "voice"}
+                          onEdit={() => setEditingDecision(editingDecision === "voice" ? null : "voice")}
+                          onPreview={() => previewAudio("voice", voice)}
+                          playing={previewingAudio === voice}
+                        >
+                          <AudioChoices
+                            label="Choose and preview a voice"
+                            value={voice}
+                            options={["Rohan · clear and measured", "Riya · friendly and clear", "Dev · warm and conversational"]}
+                            onChange={(next) => {
+                              setVoice(next);
+                              setEditingDecision(null);
+                            }}
+                            previewing={previewingAudio}
+                            onPreview={(option) => previewAudio("voice", option)}
+                            onOpenLibrary={() => setVoiceLibraryOpen(true)}
+                          />
+                        </DecisionRow>
+                        <DecisionRow
+                          label="Background music"
+                          value={music}
+                          icon={<Music2 className="size-4" />}
+                          editing={editingDecision === "music"}
+                          onEdit={() => setEditingDecision(editingDecision === "music" ? null : "music")}
+                          onPreview={music === "No music" ? undefined : () => previewAudio("music", music)}
+                          playing={previewingAudio === music}
+                        >
+                          <AudioChoices
+                            label="Choose and preview music"
+                            value={music}
+                            options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                            onChange={(next) => {
+                              setMusic(next);
+                              setEditingDecision(null);
+                            }}
+                            previewing={previewingAudio}
+                            onPreview={(option) => previewAudio("music", option)}
+                            music
+                          />
+                        </DecisionRow>
+                      </div>
+                    </PlanSection>
+                  )}
+
+
+
+                  {/* 7. Story Structure */}
+                  <PlanSection
+                    icon={LayoutList}
+                    title="Story structure"
+                    summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : "sections"}`}
+                    status={derivedPlan.followsSuppliedScript ? "From script" : "Recommended"}
+                    open={openSection === "story"}
+                    onToggle={() => toggleSection("story")}
+                  >
+                    <StructureChoices
+                      value={storyStructure}
+                      onChange={setStoryStructure}
+                      options={
+                        assetType === "video"
+                          ? ["Product → Proof", "Problem → Solution", "Mechanism → Evidence"]
+                          : profile.treatments.map((item) => item.label)
+                      }
+                    />
+                  </PlanSection>
+                </div>
+
+                {/* Centered Floating Confirmation CTA at the bottom of the Left Stage */}
+                <div className="sticky bottom-4 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full pt-6 pb-2">
+                  <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-on-dark backdrop-blur-md max-w-[580px] w-auto">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-1">
+                      {isPlanReady ? (
+                        <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
+                      ) : (
+                        <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-body font-bold text-white tracking-tight truncate">
+                          {isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
+                        </div>
+                        <p className="text-label text-white/70 truncate">
+                          {isPlanReady
+                            ? "Grounded against 214 approved claims"
+                            : needsProductAssets
+                            ? "Please attach product visual assets"
+                            : needsPresenter && !presenter
+                            ? "Please select an AI presenter"
+                            : "Please confirm creative treatment"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleConfirmPlan}
+                      disabled={!isPlanReady || isGenerating}
+                      size="sm"
+                      className={cn(
+                        "h-9.5 px-5 rounded-full text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
+                        isPlanReady && !isGenerating
+                          ? "bg-brand hover:bg-brand-deep text-white hover:-translate-y-0.5 cursor-pointer"
+                          : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
+                      )}
+                    >
+                      <span>Confirm Plan &amp; Build Script</span>
+                      <ArrowRight className="size-3.5 ml-1.5" />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+      }
+      panel={
+        <>
           {/* Chat Top Online Banner */}
           <div className="p-3.5 border-b border-hair bg-card shrink-0">
             <div className="rounded-xl border border-brand/15 bg-tint p-2.5">
@@ -1566,46 +1556,49 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               </div>
             </div>
           </div>
-        </SidePanel>
-      </div>
-
-      {/* ── Modals & Drawers ── */}
-      {presenterLibraryOpen && (
-        <PresenterLibrary
-          selected={presenter}
-          onSelect={(name) => {
-            setPresenter(name);
-            setPresenterLibraryOpen(false);
-          }}
-          onClose={() => setPresenterLibraryOpen(false)}
-        />
-      )}
-      {voiceLibraryOpen && (
-        <VoiceLibrary
-          selected={voice}
-          onSelect={(name) => {
-            setVoice(name);
-            setVoiceLibraryOpen(false);
-          }}
-          onClose={() => setVoiceLibraryOpen(false)}
-          previewing={previewingAudio}
-          onPreview={(name) => previewAudio("voice", name)}
-        />
-      )}
-      {sourceManagerOpen && (
-        <SourceManager
-          selectedIds={selectedSourceIds}
-          onToggle={toggleSource}
-          onClose={() => setSourceManagerOpen(false)}
-        />
-      )}
-      {previewDossier && (
-        <DossierPreviewModal
-          dossier={previewDossier}
-          onClose={() => setPreviewDossier(null)}
-        />
-      )}
-    </div>
+        </>
+      }
+      overlay={
+        <>
+          {/* ── Modals & Drawers ── */}
+          {presenterLibraryOpen && (
+            <PresenterLibrary
+              selected={presenter}
+              onSelect={(name) => {
+                setPresenter(name);
+                setPresenterLibraryOpen(false);
+              }}
+              onClose={() => setPresenterLibraryOpen(false)}
+            />
+          )}
+          {voiceLibraryOpen && (
+            <VoiceLibrary
+              selected={voice}
+              onSelect={(name) => {
+                setVoice(name);
+                setVoiceLibraryOpen(false);
+              }}
+              onClose={() => setVoiceLibraryOpen(false)}
+              previewing={previewingAudio}
+              onPreview={(name) => previewAudio("voice", name)}
+            />
+          )}
+          {sourceManagerOpen && (
+            <SourceManager
+              selectedIds={selectedSourceIds}
+              onToggle={toggleSource}
+              onClose={() => setSourceManagerOpen(false)}
+            />
+          )}
+          {previewDossier && (
+            <DossierPreviewModal
+              dossier={previewDossier}
+              onClose={() => setPreviewDossier(null)}
+            />
+          )}
+        </>
+      }
+    />
   );
 }
 
