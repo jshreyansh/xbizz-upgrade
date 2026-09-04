@@ -574,6 +574,28 @@ button.rounded-full {
   30% { transform: translateY(-3.5px); opacity: 1; }
 }
 
+@keyframes shimmer {
+  0%   { background-position: -160% 0; }
+  100% { background-position: 260% 0; }
+}
+
+/* Skeleton sweep for a tile whose content is being fetched. Brand-tinted and
+   low-contrast on purpose: it should read as "this is working", not as an
+   empty or errored state. The reduced-motion block below neuters it. */
+.shimmer {
+  background-image: linear-gradient(
+    100deg,
+    transparent 18%,
+    color-mix(in srgb, var(--color-brand) 8%, transparent) 42%,
+    color-mix(in srgb, var(--color-brand) 15%, transparent) 50%,
+    color-mix(in srgb, var(--color-brand) 8%, transparent) 58%,
+    transparent 82%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.4s linear infinite;
+}
+
 @keyframes chat-pulse {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-live) 45%, transparent); }
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-live) 0%, transparent); }

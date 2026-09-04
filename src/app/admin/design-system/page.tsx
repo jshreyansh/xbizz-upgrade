@@ -169,6 +169,27 @@ export default function DesignSystemPage() {
                 <Label size="micro" className="mb-2 block">Easing</Label>
                 <SwatchRow names={EASINGS} label={short} utility={(n) => `ease-${short(n)}`} />
               </div>
+              <div>
+                <Label size="micro" className="mb-2 block">Skeleton — <code>.shimmer</code></Label>
+                <Text size="caption" tone="muted" className="mb-2 block">
+                  For a tile whose content is being fetched. Brand-tinted and low-contrast on
+                  purpose: it should read as &ldquo;this is working&rdquo;, not as an empty or
+                  errored state. Put it on the card and grey blocks where the content will land.
+                  Honours prefers-reduced-motion.
+                </Text>
+                <div className="grid gap-2.5 sm:grid-cols-3">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="shimmer flex flex-col gap-2 rounded-control border border-hair bg-card p-3 shadow-2xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="h-3.5 w-16 rounded-chip bg-black/8" />
+                        <div className="h-3.5 w-14 rounded-chip bg-black/6" />
+                      </div>
+                      <div className="h-3.5 w-full rounded-chip bg-black/8" />
+                      <div className="mt-1 h-6.5 w-full rounded-chip bg-black/5" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </Stack>
           </Section>
 

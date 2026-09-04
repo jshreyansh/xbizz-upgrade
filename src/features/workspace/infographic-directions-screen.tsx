@@ -571,18 +571,16 @@ export function InfographicDirectionsScreen() {
                     icon={ShieldCheck}
                     title="Research and Sources"
                     summary={
-                      research.researching
-                        ? research.label
-                        : sourceGroundingMode === "both"
+                      sourceGroundingMode === "both"
                         ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
                         : sourceGroundingMode === "my-sources"
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
                         : `${brandName} SmPC Approved Dossier · 214 claims`
                     }
                     status={research.researching ? `Researching · ${research.current}/${research.total}` : "From source"}
-                    tone={research.researching ? "attention" : "done"}
-                    /* Held closed while the research runs — same as the video plan. */
-                    open={!research.researching && openSection === "sources"}
+                    tone="done"
+                    /* Open while the research runs — same as the video plan. */
+                    open={research.researching || openSection === "sources"}
                     onToggle={() => { if (!research.researching) setOpenSection(openSection === "sources" ? null : "sources"); }}
                   >
                     <ResearchSourcesContent
@@ -593,6 +591,7 @@ export function InfographicDirectionsScreen() {
                       onSetUploadedDocs={setUploadedDocs}
                       onPreviewDossier={(d) => setPreviewDossier(d)}
                       onContinue={() => advanceFrom("sources")}
+                      research={research}
                     />
                   </CreativePlanSection>
 

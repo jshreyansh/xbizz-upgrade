@@ -9,11 +9,13 @@ import {
   Plus,
   X,
   FileText,
+  Loader2,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
+import type { PlanResearch } from "@/features/workspace/use-plan-research";
 
 export interface ResearchSourcesSectionProps {
   brandName: string;
@@ -23,6 +25,8 @@ export interface ResearchSourcesSectionProps {
   onSetUploadedDocs: React.Dispatch<React.SetStateAction<Array<{ name: string; size: string; date: string }>>>;
   onPreviewDossier: (dossier: DossierPreviewData) => void;
   onContinue: () => void;
+  /** Live grounding research, if the plan has just been generated. */
+  research?: PlanResearch;
 }
 
 export function ResearchSourcesContent({
@@ -33,9 +37,17 @@ export function ResearchSourcesContent({
   onSetUploadedDocs,
   onPreviewDossier,
   onContinue,
+  research,
 }: ResearchSourcesSectionProps) {
   const docUploadRef = useRef<HTMLInputElement>(null);
-  const [dossiersOpen, setDossiersOpen] = useState(false);
+  // null = follow the research; true/false = the reader's own choice.
+  // Without the null state the tray snapped shut the instant research
+  // finished, throwing away the three dossiers you just watched it assemble.
+  const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  const researching = Boolean(research?.researching);
+  // The research plays INSIDE this tray, so it is held open for the duration
+  // and cannot be collapsed out from under itself.
+  const trayOpen = researching || (userOpen ?? Boolean(research?.completed));
 
   const molecule =
     brandName === "Onkavia"
@@ -196,40 +208,89 @@ export function ResearchSourcesContent({
       </div>
 
       {/* Verified dossiers. Reference material, not a decision, so it sits
-          BELOW the choice and starts collapsed. */}
+          BELOW the choice and starts collapsed — except while the grounding
+          research runs, which plays out inside it. */}
       <div className="rounded-panel bg-[#f4f6f3] border border-[#e2e8e3]">
         <button
           type="button"
-          onClick={() => setDossiersOpen((v) => !v)}
-          aria-expanded={dossiersOpen}
-          className="flex w-full cursor-pointer items-center justify-between gap-2 p-4 text-left"
+          onClick={() => { if (!researching) setUserOpen(!trayOpen); }}
+          aria-expanded={trayOpen}
+          aria-busy={researching || undefined}
+          className={cn(
+            "flex w-full items-center justify-between gap-2 p-4 text-left",
+            researching ? "cursor-default" : "cursor-pointer",
+          )}
         >
           <div className="flex min-w-0 items-center gap-2">
             <ShieldCheck className="size-4 shrink-0 text-ok" />
             <span className="text-body font-extrabold text-ink truncate">
               Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
             </span>
-            <span className="shrink-0 text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-full">
-              SmPC &amp; Label Active
-            </span>
+            {researching ? (
+              <span className="shrink-0 text-caption font-bold text-brand bg-tint border border-brand/20 px-2 py-0.2 rounded-full">
+                Researching
+              </span>
+            ) : (
+              <span className="shrink-0 text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-full">
+                SmPC &amp; Label Active
+              </span>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden text-label text-ink-3 sm:inline">
-              {dossiersOpen
+            <span className="hidden text-label text-ink-3 sm:inline tabular-nums">
+              {researching
+                ? `${research?.progress ?? 0}%`
+                : trayOpen
                 ? "Click View to inspect full claims & sources"
                 : `${prebuiltDossiers.length} verified dossiers`}
             </span>
-            <ChevronDown className={cn("size-4 text-ink-3 transition-transform duration-200", dossiersOpen && "rotate-180")} />
+            {!researching && (
+              <ChevronDown className={cn("size-4 text-ink-3 transition-transform duration-200", trayOpen && "rotate-180")} />
+            )}
           </div>
         </button>
 
-        {dossiersOpen && (
+        {trayOpen && (
           <div className="px-4 pb-4 animate-in fade-in duration-150">
+          {researching && (
+            <div className="mb-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Loader2 className="size-3.5 shrink-0 animate-spin text-brand" />
+                <span className="text-label font-semibold text-ink-2">{research?.label}</span>
+                <span className="ml-auto shrink-0 text-label text-ink-3 tabular-nums">
+                  Step {research?.current} of {research?.total}
+                </span>
+              </div>
+              <div className="h-1 w-full overflow-hidden rounded-full bg-black/8">
+                <div
+                  className="h-full rounded-full bg-brand transition-[width] duration-150 ease-linear"
+                  style={{ width: `${research?.progress ?? 0}%` }}
+                />
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {prebuiltDossiers.map((dossier, idx) => (
+              researching && idx >= (research?.step ?? 0) ? (
+                <div
+                  key={idx}
+                  aria-hidden
+                  className="p-3 rounded-control bg-card border border-[#dce3de] shadow-2xs flex flex-col gap-2 shimmer"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="h-3.5 w-16 rounded-chip bg-black/8" />
+                    <div className="h-3.5 w-14 rounded-chip bg-black/6" />
+                  </div>
+                  <div className="h-3.5 w-full rounded-chip bg-black/8" />
+                  <div className="mt-1 h-6.5 w-full rounded-chip bg-black/5" />
+                </div>
+              ) : (
               <div
                 key={idx}
-                className="p-3 rounded-control bg-card border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2"
+                className={cn(
+                  "p-3 rounded-control bg-card border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2",
+                  researching && "animate-in fade-in zoom-in-95 duration-300",
+                )}
               >
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -254,6 +315,7 @@ export function ResearchSourcesContent({
                   <span>View</span>
                 </button>
               </div>
+              )
             ))}
           </div>
           </div>

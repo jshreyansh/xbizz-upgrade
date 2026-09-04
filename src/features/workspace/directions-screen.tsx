@@ -653,21 +653,18 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     icon={ShieldCheck}
                     title="Research and Sources"
                     summary={
-                      research.researching
-                        ? research.label
-                        : sourceGroundingMode === "both"
+                      sourceGroundingMode === "both"
                         ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
                         : sourceGroundingMode === "my-sources"
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
                         : `${brandName} SmPC Approved Dossier · 214 claims`
                     }
                     status={research.researching ? `Researching · ${research.current}/${research.total}` : "From source"}
-                    /* Held closed while the research runs: the tool calls play
-                       in the summary line, so the section reads as working
-                       rather than as a filled-in result that appeared. */
-                    open={!research.researching && openSection === "sources"}
+                    /* Open while the research runs — the progress plays inside
+                       the dossier tray, so there is something to watch. */
+                    open={research.researching || openSection === "sources"}
                     onToggle={() => { if (!research.researching) toggleSection("sources"); }}
-                    tone={research.researching ? "attention" : "done"}
+                    tone="done"
                   >
                     <ResearchSourcesContent
                       brandName={brandName || "Velmora"}
@@ -677,6 +674,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       onSetUploadedDocs={setUploadedDocs}
                       onPreviewDossier={(d) => setPreviewDossier(d)}
                       onContinue={() => advanceFrom("sources")}
+                      research={research}
                     />
                   </PlanSection>
 
