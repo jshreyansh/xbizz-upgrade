@@ -47,6 +47,7 @@ import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
+import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 
 type InfographicSubStep = "brief" | "content";
@@ -339,6 +340,7 @@ export function InfographicDirectionsScreen() {
 
   const [currentStep, setCurrentStep] = useState<InfographicSubStep>("brief");
   const [openSection, setOpenSection] = useState<PlanSectionId | null>("sources");
+  const research = usePlanResearch();
 
   /**
    * Same ordered walk as the video plan: every section advances through this,
@@ -569,16 +571,19 @@ export function InfographicDirectionsScreen() {
                     icon={ShieldCheck}
                     title="Research and Sources"
                     summary={
-                      sourceGroundingMode === "both"
+                      research.researching
+                        ? research.label
+                        : sourceGroundingMode === "both"
                         ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
                         : sourceGroundingMode === "my-sources"
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
                         : `${brandName} SmPC Approved Dossier · 214 claims`
                     }
-                    status="From source"
-                    tone="done"
-                    open={openSection === "sources"}
-                    onToggle={() => setOpenSection(openSection === "sources" ? null : "sources")}
+                    status={research.researching ? `Researching · ${research.current}/${research.total}` : "From source"}
+                    tone={research.researching ? "attention" : "done"}
+                    /* Held closed while the research runs — same as the video plan. */
+                    open={!research.researching && openSection === "sources"}
+                    onToggle={() => { if (!research.researching) setOpenSection(openSection === "sources" ? null : "sources"); }}
                   >
                     <ResearchSourcesContent
                       brandName={brandName || "Velmora"}

@@ -59,6 +59,7 @@ import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
+import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets";
@@ -193,6 +194,8 @@ function FormattedMessageText({ text }: { text: string }) {
 export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const assetType = useWorkspaceStore((state) => state.assetType);
+  // Above the early return on purpose: below it this is a conditional hook.
+  const research = usePlanResearch();
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -650,16 +653,21 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     icon={ShieldCheck}
                     title="Research and Sources"
                     summary={
-                      sourceGroundingMode === "both"
+                      research.researching
+                        ? research.label
+                        : sourceGroundingMode === "both"
                         ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
                         : sourceGroundingMode === "my-sources"
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
                         : `${brandName} SmPC Approved Dossier · 214 claims`
                     }
-                    status="From source"
-                    open={openSection === "sources"}
-                    onToggle={() => toggleSection("sources")}
-                    tone="done"
+                    status={research.researching ? `Researching · ${research.current}/${research.total}` : "From source"}
+                    /* Held closed while the research runs: the tool calls play
+                       in the summary line, so the section reads as working
+                       rather than as a filled-in result that appeared. */
+                    open={!research.researching && openSection === "sources"}
+                    onToggle={() => { if (!research.researching) toggleSection("sources"); }}
+                    tone={research.researching ? "attention" : "done"}
                   >
                     <ResearchSourcesContent
                       brandName={brandName || "Velmora"}

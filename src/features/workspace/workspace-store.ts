@@ -41,6 +41,9 @@ interface WorkspaceState {
   navCollapsed: boolean;
   teamDockOpen: boolean;
   copilotPanelOpen: boolean;
+  /** True for the few seconds after a brief is submitted, while the plan
+   *  screen shows the grounding research being assembled. */
+  planResearching: boolean;
   /** Right inspector width in px. Drag-resizable; persisted by <SidePanel>. */
   copilotPanelWidth: number;
   /** True only mid-drag, so width transitions can be suspended. */
@@ -86,6 +89,7 @@ interface WorkspaceState {
   setNavCollapsed: (collapsed: boolean) => void;
   setTeamDockOpen: (open: boolean) => void;
   toggleTeamDock: () => void;
+  setPlanResearching: (researching: boolean) => void;
   setCopilotPanelOpen: (open: boolean) => void;
   toggleCopilotPanel: () => void;
   setCopilotPanelWidth: (width: number) => void;
@@ -130,6 +134,7 @@ const initialState = {
   navCollapsed: false,
   teamDockOpen: false,
   copilotPanelOpen: true,
+  planResearching: false,
   copilotPanelWidth: SIDE_PANEL_DEFAULT_WIDTH,
   copilotPanelResizing: false,
   pageShape: "3:4" as "3:4" | "16:9" | "A4",
@@ -193,6 +198,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setNavCollapsed: (navCollapsed) => set({ navCollapsed }),
   setTeamDockOpen: (teamDockOpen) => set({ teamDockOpen }),
   toggleTeamDock: () => set((state) => ({ teamDockOpen: !state.teamDockOpen })),
+  setPlanResearching: (planResearching) => set({ planResearching }),
   setCopilotPanelOpen: (copilotPanelOpen) => set({ copilotPanelOpen }),
   toggleCopilotPanel: () => set((state) => ({ copilotPanelOpen: !state.copilotPanelOpen })),
   setCopilotPanelWidth: (copilotPanelWidth) => set({ copilotPanelWidth }),

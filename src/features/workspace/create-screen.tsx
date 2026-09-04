@@ -134,6 +134,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setSelectedSourceIds,
     setDemoScenarioId,
     setView,
+    setPlanResearching,
     setChatMessages,
   } = useWorkspaceStore();
 
@@ -257,6 +258,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         text: `I've structured a 5-scene video plan grounded in the **${bName}** dossier and approved claims. You can review the parameters on the left canvas, or chat with me to make any adjustments.`,
       },
     ]);
+    // Kick off the grounding research the plan screen shows while it settles.
+    setPlanResearching(true);
     setView("directions");
     setVideoSubStage("directions");
   };
