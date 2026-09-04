@@ -854,7 +854,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                     Recommended
                                   </span>
                                 )}
-                                <p className="text-body leading-relaxed text-ink-3">
+                                <p className="text-label leading-snug text-ink-3">
                                   {item.description}
                                 </p>
                               </div>
@@ -975,32 +975,29 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </button>
                       </div>
 
-                      <div className="mt-3 flex justify-end">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (productMediaList.length === 0) {
-                              setProductMediaList([
-                                {
-                                  id: `media-${Date.now()}`,
-                                  name: "Velmora_Autoinjector_3D_Packshot.png",
-                                  type: "image",
-                                  preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
-                                  size: "4.2 MB",
-                                },
-                              ]);
-                            }
-                            advanceFrom("product-assets");
-                          }}
-                          className="bg-brand hover:bg-brand-deep text-white font-bold cursor-pointer"
-                        >
-                          Save Product Assets &amp; Next <ArrowRight className="size-3.5 ml-1" />
-                        </Button>
-                      </div>
                     </div>
-                    {productMediaList.length > 0 && (
-                      <PlanSectionContinue onClick={() => advanceFrom("product-assets")} />
-                    )}
+                    {/* ONE continue, like every other section. This used to be a
+                        bespoke orange "Save Product Assets & Next" that always
+                        rendered, so the footer added for consistency stacked a
+                        second button under it. The attach-if-empty behaviour it
+                        carried is preserved here. */}
+                    <PlanSectionContinue
+                      label={productMediaList.length === 0 ? "Attach & Continue" : "Save & Continue"}
+                      onClick={() => {
+                        if (productMediaList.length === 0) {
+                          setProductMediaList([
+                            {
+                              id: `media-${Date.now()}`,
+                              name: "Velmora_Autoinjector_3D_Packshot.png",
+                              type: "image",
+                              preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                              size: "4.2 MB",
+                            },
+                          ]);
+                        }
+                        advanceFrom("product-assets");
+                      }}
+                    />
                   </PlanSection>
 
                   {/* 3. Message and Audience */}
@@ -1152,33 +1149,33 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
                       {/* Output Quality & Generation Engine Selector */}
                       <div className="pt-2 border-t border-hair">
-                        <label className="text-body font-bold text-ink block mb-2">
+                        <label className="text-body font-bold text-ink block mb-1.5">
                           Generation Output Quality
                         </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {/* Option 1: HD */}
                           <button
                             type="button"
                             onClick={() => setSelectedQuality("hd")}
                             className={cn(
-                              "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
+                              "group relative rounded-control border p-3 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
                               selectedQuality === "hd"
                                 ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
                                 : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
                             <div>
-                              <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <span className="font-extrabold text-subhead text-ink">HD Motion</span>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="font-extrabold text-body-lg text-ink">HD Motion</span>
                                 <span className="rounded-full bg-warn-bg border border-warn-line/80 px-2 py-0.5 text-caption font-extrabold text-warn">
                                   ⚡ {Math.round((durationSeconds / 60) * 2500).toLocaleString()} credits
                                 </span>
                               </div>
-                              <p className="text-body leading-relaxed text-ink-3">
+                              <p className="text-label leading-snug text-ink-3">
                                 Lifelike motion that stops the scroll — ideal for launches &amp; HCP presentations.
                               </p>
                             </div>
-                            <div className="mt-3 flex items-center justify-between pt-2 border-t border-hair text-label text-ink-3">
+                            <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-hair text-caption text-ink-3">
                               <span className="flex items-center gap-1 font-medium">⏱ 7–9 min render</span>
                               {selectedQuality === "hd" && (
                                 <span className="font-bold text-brand flex items-center gap-1">
@@ -1193,24 +1190,24 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             type="button"
                             onClick={() => setSelectedQuality("cinematic")}
                             className={cn(
-                              "group relative rounded-[16px] border p-4 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
+                              "group relative rounded-control border p-3 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
                               selectedQuality === "cinematic"
                                 ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
                                 : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
                             <div>
-                              <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <span className="font-extrabold text-subhead text-ink">Cinematic 4K</span>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="font-extrabold text-body-lg text-ink">Cinematic 4K</span>
                                 <span className="rounded-full bg-tint border border-tint-line px-2 py-0.5 text-caption font-extrabold text-brand-deep">
                                   ⚡ {Math.round((durationSeconds / 60) * 7500).toLocaleString()} credits
                                 </span>
                               </div>
-                              <p className="text-body leading-relaxed text-ink-3">
+                              <p className="text-label leading-snug text-ink-3">
                                 Ultra-realistic, fully generated 3D anatomical scenes — for flagship congresses.
                               </p>
                             </div>
-                            <div className="mt-3 flex items-center justify-between pt-2 border-t border-hair text-label text-ink-3">
+                            <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-hair text-caption text-ink-3">
                               <span className="flex items-center gap-1 font-medium">⏱ 12–14 min render</span>
                               {selectedQuality === "cinematic" && (
                                 <span className="font-bold text-brand flex items-center gap-1">
