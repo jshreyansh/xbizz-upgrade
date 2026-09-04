@@ -70,6 +70,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { ActionBar } from "@/components/patterns/action-bar";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 
 const evidenceConfig: Record<EvidenceState, { label: string; className: string }> = {
@@ -1257,20 +1258,13 @@ export function StudioScreen() {
                 </div>
 
                 {!isEditor && !isReview && !isGenerating && (
-                  <div className="sticky bottom-3 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full">
-                    <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-on-dark backdrop-blur-md max-w-[580px] w-auto">
-                      <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                        {isScriptComplete ? (
-                          <Sparkles className="size-4.5 text-brand shrink-0" />
-                        ) : (
-                          <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />
-                        )}
-                        <div className="min-w-0">
-                          <div className="text-body font-bold text-white tracking-tight truncate">
-                            {isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
-                          </div>
-                        </div>
-                      </div>
+                  <ActionBar
+                    gutter={false}
+                    icon={isScriptComplete
+                      ? <Sparkles className="size-4.5 text-brand shrink-0" />
+                      : <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />}
+                    title={isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
+                    action={
                       <Button
                         onClick={handleStartSceneEditor}
                         disabled={!isScriptComplete}
@@ -1284,8 +1278,8 @@ export function StudioScreen() {
                       >
                         <Sparkles className="size-3.5 mr-1.5" /> <span>Generate Scenes</span>
                       </Button>
-                    </div>
-                  </div>
+                    }
+                  />
                 )}
               </>
             )}

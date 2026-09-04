@@ -57,6 +57,7 @@ import { ResearchSourcesContent } from "@/features/workspace/research-sources-se
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { ActionBar } from "@/components/patterns/action-bar";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets";
@@ -1351,30 +1352,19 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 </div>
 
                 {/* Centered Floating Confirmation CTA at the bottom of the Left Stage */}
-                <div className="sticky bottom-4 z-30 flex justify-center shrink-0 mt-auto pointer-events-none w-full pt-6 pb-2">
-                  <div className="pointer-events-auto flex items-center justify-between gap-4 sm:gap-6 px-4 sm:px-5 py-2.5 rounded-full bg-[#111613] border border-white/12 shadow-on-dark backdrop-blur-md max-w-[580px] w-auto">
-                    <div className="flex items-center gap-2.5 min-w-0 pr-1">
-                      {isPlanReady ? (
-                        <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
-                      ) : (
-                        <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />
-                      )}
-                      <div className="min-w-0">
-                        <div className="text-body font-bold text-white tracking-tight truncate">
-                          {isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
-                        </div>
-                        <p className="text-label text-white/70 truncate">
-                          {isPlanReady
-                            ? "Grounded against 214 approved claims"
-                            : needsProductAssets
-                            ? "Please attach product visual assets"
-                            : needsPresenter && !presenter
-                            ? "Please select an AI presenter"
-                            : "Please confirm creative treatment"}
-                        </p>
-                      </div>
-                    </div>
-
+                <ActionBar
+                  icon={isPlanReady
+                    ? <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
+                    : <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />}
+                  title={isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
+                  description={isPlanReady
+                    ? "Grounded against 214 approved claims"
+                    : needsProductAssets
+                    ? "Please attach product visual assets"
+                    : needsPresenter && !presenter
+                    ? "Please select an AI presenter"
+                    : "Please confirm creative treatment"}
+                  action={
                     <Button
                       onClick={handleConfirmPlan}
                       disabled={!isPlanReady || isGenerating}
@@ -1389,8 +1379,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       <span>Confirm Plan &amp; Build Script</span>
                       <ArrowRight className="size-3.5 ml-1.5" />
                     </Button>
-                  </div>
-                </div>
+                  }
+                />
               </>
             )}
           </section>

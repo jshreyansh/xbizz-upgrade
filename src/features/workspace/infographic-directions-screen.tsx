@@ -45,6 +45,7 @@ import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspa
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { ActionBar } from "@/components/patterns/action-bar";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 
 type InfographicSubStep = "brief" | "content";
@@ -1164,24 +1165,15 @@ export function InfographicDirectionsScreen() {
             {/* ══════════════════════════════════════════════════════════════════
                 UNIFIED FLOATING ACTION PILL AT MIDDLE BOTTOM (Exact Video Twin)
                ══════════════════════════════════════════════════════════════════ */}
-            <div className="sticky bottom-4 z-30 flex justify-center pointer-events-none mt-auto pt-6 pb-2">
-              <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-ink text-white p-1.5 pl-4 pr-1.5 shadow-on-dark border border-white/12 backdrop-blur-md transition-all duration-200 hover:scale-[1.01]">
-                <div className="flex items-center gap-2 text-left min-w-0 pr-2">
-                  <span className="size-6 rounded-full bg-ok/20 border border-emerald-400/40 text-ok-on-dark grid place-items-center shrink-0">
-                    <Check className="size-3.5 stroke-[3]" />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-body font-bold text-white tracking-tight truncate">
-                      {currentStep === "brief"
-                        ? "Ready to create creative"
-                        : "Ready to generate canvas"}
-                    </div>
-                    <div className="text-caption text-white/70 truncate">
-                      Grounded against 214 approved claims
-                    </div>
-                  </div>
-                </div>
-
+            <ActionBar
+              icon={
+                <span className="size-6 rounded-full bg-ok/20 border border-emerald-400/40 text-ok-on-dark grid place-items-center shrink-0">
+                  <Check className="size-3.5 stroke-[3]" />
+                </span>
+              }
+              title={currentStep === "brief" ? "Ready to create creative" : "Ready to generate canvas"}
+              description="Grounded against 214 approved claims"
+              action={
                 <Button
                   onClick={() => {
                     if (currentStep === "brief") setCurrentStep("content");
@@ -1190,7 +1182,7 @@ export function InfographicDirectionsScreen() {
                       setVideoSubStage("studio");
                     }
                   }}
-                  className="h-9 px-5 rounded-full text-body font-bold shadow-sm transition-all duration-200 shrink-0 bg-brand hover:bg-brand-deep text-white cursor-pointer hover:scale-105"
+                  className="h-9 px-5 rounded-full text-body font-bold shadow-sm transition-all duration-200 shrink-0 bg-brand hover:bg-brand-deep text-white cursor-pointer hover:-translate-y-0.5"
                 >
                   <span>
                     {currentStep === "brief"
@@ -1199,8 +1191,8 @@ export function InfographicDirectionsScreen() {
                   </span>
                   <ArrowRight className="size-3.5 ml-1.5" />
                 </Button>
-              </div>
-            </div>
+              }
+            />
           </section>
       }
       panel={
