@@ -73,7 +73,7 @@ const CREATION_TILES: TileOption[] = [
   },
   {
     icon: ImageIcon,
-    title: "Detailing",
+    title: "Docs",
     subtitle: "Infographics, Banners & Detail Aids",
     accent: "var(--brand-deep)",
     description: "Leave-behinds, journal ads and print-ready banners built straight from your approved claims.",
@@ -96,9 +96,22 @@ const CREATION_TILES: TileOption[] = [
 const RECENT_PROJECTS: RecentProject[] = [
   { studio: "Reel", status: "In MLR", title: "Velmora — MoA explainer", meta: "Cardiologists · US · 60s", progress: 85, updated: "Today, 09:15", action: "Open" },
   { studio: "Avatar", status: "Draft", title: "Dr. Rao — dosing update", meta: "HCP · EU · 45s", progress: 35, updated: "Yesterday", action: "Resume" },
-  { studio: "Detailing", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
+  { studio: "Docs", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
   { studio: "Web", status: "Draft", title: "Nirvexa launch microsite", meta: "HCP portal · 6 sections", progress: 55, updated: "3 days ago", action: "Resume" },
 ];
+
+/** The hero band's sample video — same real doctor-avatar clip featured
+ *  further down in the showcase lane, so clicking it opens the same player. */
+const HERO_SAMPLE: ShowcaseItem = {
+  title: "Dr. Anita Rao on first-line use",
+  subtitle: "HCP · UK · MHRA",
+  meta: "1:00",
+  aspect: "16/9",
+  gradient: "linear-gradient(160deg,#0a1f18,#13382c 48%,#1d5442)",
+  hasPlay: true,
+  tag: "Avatar",
+  videoSrc: "/avatar-showcase.mp4",
+};
 
 const SHOWCASE_LANES: ShowcaseLane[] = [
   {
@@ -203,7 +216,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#16233f,#2c4573 50%,#5b7fb8)",
         hasPlay: true,
-        tag: "Detailing",
+        tag: "Docs",
         videoSrc: "/326638_medium.mp4",
       },
       {
@@ -213,7 +226,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#33193f,#5b2c70 50%,#9a63bc)",
         hasPlay: true,
-        tag: "Detailing",
+        tag: "Docs",
         videoSrc: "/21617-319452308_medium.mp4",
       },
       {
@@ -223,7 +236,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#0f2e28,#1b5546 50%,#3d9880)",
         hasPlay: true,
-        tag: "Detailing",
+        tag: "Docs",
         videoSrc: "/46621-448480587_medium.mp4",
       },
     ],
@@ -246,8 +259,9 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
         flexDirection: "column",
         alignItems: "center",
         gap: 10,
-        padding: "34px 28px 28px",
-        background: hovered ? "#fdfefe" : "#fff",
+        padding: "36px 28px 28px",
+        backgroundColor: hovered ? "#fdfefe" : "#fff",
+        backgroundImage: `linear-gradient(180deg, ${tile.glow} 0%, transparent 58%)`,
         border: hovered ? "1px solid var(--hair-2)" : "1px solid var(--hair)",
         cursor: "pointer",
         textAlign: "center",
@@ -259,6 +273,12 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
       }}
       className={`rounded-card group hover:-translate-y-1 ${hovered ? "shadow-float" : "shadow-hair"}`}
     >
+      {/* Gradient spine — the tile's own hue, full strength, as a top accent */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 transition-all duration-300"
+        style={{ height: hovered ? 5 : 3.5, background: tile.gradient }}
+      />
       {/* Ambient mood glow — warms up on hover, the "happy to be here" cue */}
       <span
         aria-hidden
@@ -948,7 +968,7 @@ export function HomeScreen() {
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
       useWorkspaceStore.getState().setView("create");
       router.push("/create");
-    } else if (tile.title === "Detailing") {
+    } else if (tile.title === "Docs") {
       useWorkspaceStore.getState().setAssetType("infographic");
       useWorkspaceStore.getState().setCreationMode("magic-chart");
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
@@ -969,17 +989,14 @@ export function HomeScreen() {
 
   return (
     <div className="page-enter space-y-9 max-w-[1180px] pb-12">
-      {/* Premium dark hero band — the "wow" welcome moment, built for a
-          C-suite / clinical audience: restrained, editorial, no cute
-          gradient blobs. The signature pharma-mark carries the visual
-          weight instead of playful iconography. */}
+      {/* Premium dark hero band — compact, with a real sample video (not an
+          icon or illustration) so the welcome moment shows the actual kind
+          of content this product makes. */}
       <div
-        className="relative overflow-hidden rounded-card shadow-on-dark"
+        className="relative flex items-stretch overflow-hidden rounded-card shadow-on-dark"
         style={{ background: "linear-gradient(150deg,#0c0e12,#171310 55%,#1d140d)" }}
       >
-        <PharmaSignature
-          className="pointer-events-none absolute -right-16 top-1/2 h-[560px] w-[560px] -translate-y-1/2 text-white/90 max-md:hidden"
-        />
+        <PharmaSignature className="pointer-events-none absolute -left-28 -top-28 h-[380px] w-[380px] text-white/60 opacity-70 max-md:hidden" />
         {/* Fine grain — the same premium texture used on the auth screen */}
         <div
           aria-hidden
@@ -990,30 +1007,72 @@ export function HomeScreen() {
           }}
         />
 
-        <div className="relative z-10 max-w-[600px] px-9 py-11 sm:px-12 sm:py-14">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3 py-1 text-caption font-extrabold uppercase tracking-[.1em] text-brand-light">
-            <i className="block size-1.5 rounded-full bg-brand" />
-            MLR-ready. In minutes.
-          </span>
-
-          <h1 className="mt-4 text-hero-lg font-black leading-[1.08] tracking-tight text-white">
-            {hour === null ? "Welcome" : greeting(hour)},{" "}
-            <span
-              style={{
-                background: "linear-gradient(96deg,var(--brand-light),var(--brand) 55%,var(--brand-2))",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-              }}
-            >
-              {PERSONA.firstName}
+        <div className="relative z-10 flex flex-1 flex-wrap items-center gap-6 px-8 py-6 sm:px-10 sm:py-7">
+          <div className="min-w-0 flex-1" style={{ minWidth: 260 }}>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3 py-1 text-caption font-extrabold uppercase tracking-[.1em] text-brand-light">
+              <i className="block size-1.5 rounded-full bg-brand" />
+              MLR-ready. In minutes.
             </span>
-            .
-          </h1>
-          <p className="mt-3 max-w-[46ch] text-subhead font-medium leading-relaxed text-white/60">
-            Every asset your team ships is written from an approved dossier, with a source behind each claim —
-            ready for the people who have to sign off on it.
-          </p>
+
+            <h1 className="mt-3 text-display-lg font-black leading-[1.1] tracking-tight text-white">
+              {hour === null ? "Welcome" : greeting(hour)},{" "}
+              <span
+                style={{
+                  background: "linear-gradient(96deg,var(--brand-light),var(--brand) 55%,var(--brand-2))",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                {PERSONA.firstName}
+              </span>
+              .
+            </h1>
+            <p className="mt-2 max-w-[42ch] text-body-lg font-medium leading-relaxed text-white/60">
+              Every asset your team ships is written from an approved dossier, with a source behind each claim.
+            </p>
+          </div>
+
+          {/* Real sample video — Dr. Anita Rao, the avatar reel this studio
+              actually produces. Autoplays muted so the "content" is
+              literally on screen, not implied by an icon. */}
+          <div
+            className="group relative shrink-0 cursor-pointer overflow-hidden rounded-panel"
+            style={{ width: 200, height: 132 }}
+            onClick={() => setPlayingVideoItem(HERO_SAMPLE)}
+          >
+            <video
+              src="/avatar-showcase.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(180deg, rgba(0,0,0,.1) 0%, transparent 45%, rgba(0,0,0,.8) 100%)" }}
+            />
+            <span className="absolute left-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.05em] text-white/90">
+              Sample
+            </span>
+            <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-micro font-bold text-white/90">1:00</span>
+
+            {/* Pulsing play button — the "slight micro-animation" */}
+            <span className="absolute inset-0 grid place-items-center">
+              <span
+                className="grid size-9 place-items-center rounded-full bg-white/95 text-ink"
+                style={{ animation: "play-pulse 2.4s ease-in-out infinite" }}
+              >
+                <Play size={13} fill="currentColor" style={{ marginLeft: 1 }} />
+              </span>
+            </span>
+
+            <div className="absolute inset-x-0 bottom-0 p-2.5">
+              <span className="block text-label font-bold text-white">Dr. Anita Rao</span>
+              <span className="block text-micro text-white/55">HCP avatar · first-line use</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1092,26 +1151,6 @@ export function HomeScreen() {
                 <ShowcaseCard key={idx} item={item} onPlay={(i) => setPlayingVideoItem(i)} />
               ))}
             </div>
-            <button
-              type="button"
-              onClick={() => router.push("/dossiers")}
-              style={{
-                marginTop: 16,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "11px 20px",
-                borderRadius: "var(--r)",
-                fontWeight: 750,
-                fontSize: 14,
-                color: "#fff",
-                background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-                boxShadow: "0 12px 24px -12px rgba(253,72,22,.6)",
-              }}
-            >
-              Create your first dossier
-              <ArrowRight size={15} />
-            </button>
           </>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>

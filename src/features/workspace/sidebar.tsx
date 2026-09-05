@@ -2,9 +2,33 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, type ReactNode } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { LogoMark } from "@/components/ui/logo-mark";
+
+/** Premium collapse/expand control — a small dark chip so it reads as a
+ *  deliberate, discoverable control in both states, rather than an
+ *  implicit "click the logo" affordance. */
+function SidebarToggle({ collapsed, onClick }: { collapsed: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+      className="group grid size-8 shrink-0 place-items-center rounded-control transition-transform duration-200 hover:scale-105 active:scale-95"
+      style={{
+        background: "linear-gradient(155deg,#2a2e38,#14161c)",
+        boxShadow: "0 4px 12px -5px rgba(10,13,20,.45), inset 0 1px 0 rgba(255,255,255,.1)",
+      }}
+    >
+      {collapsed ? (
+        <PanelLeftOpen size={15} strokeWidth={2} className="text-white/85 transition-transform duration-300 group-hover:translate-x-0.5" />
+      ) : (
+        <PanelLeftClose size={15} strokeWidth={2} className="text-white/85 transition-transform duration-300 group-hover:-translate-x-0.5" />
+      )}
+    </button>
+  );
+}
 
 interface CreateTile {
   label: string;
@@ -14,7 +38,7 @@ interface CreateTile {
 
 const CREATE_TILES: CreateTile[] = [
   { label: "Video", icon: "video", targetAsset: "video" },
-  { label: "Detailing", icon: "image", targetAsset: "infographic" },
+  { label: "Docs", icon: "image", targetAsset: "infographic" },
   { label: "Web", icon: "globe", targetAsset: "web" },
 ];
 
@@ -219,50 +243,19 @@ export function Sidebar() {
       >
         {/* Subtle inner top highlight — the premium "glass edge" cue */}
         <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
-        {/* Top Header: Logo (Click to expand if collapsed) + Minimize Button in Open State */}
-        <div
-          className={`flex items-center pt-4 pb-2.5 px-4 ${
-            collapsed ? "justify-center" : "justify-between"
-          }`}
-        >
-          {/* Logo Button: Expands when collapsed */}
-          <button
-            onClick={() => collapsed && setCollapsed(false)}
-            title={collapsed ? "Click to expand sidebar" : undefined}
-            className={`flex items-center gap-2.5 font-[800] text-title tracking-tight text-ink ${
-              collapsed ? "cursor-pointer hover:scale-105 transition-transform" : "cursor-default"
-            }`}
-          >
+        {/* Top Header: brand mark + a premium toggle chip, present and
+            equally discoverable in both collapsed and expanded states. */}
+        <div className={`flex items-center pt-4 pb-2.5 px-4 ${collapsed ? "flex-col gap-2.5" : "justify-between"}`}>
+          <div className="flex items-center gap-2.5 font-[800] text-title tracking-tight text-ink">
             <LogoMark size={24} className="text-brand" />
             {!collapsed && (
               <span>
                 swish<span className="text-brand">X</span>
               </span>
             )}
-          </button>
+          </div>
 
-          {/* Minimize toggle button ONLY visible in open state */}
-          {!collapsed && (
-            <button
-              onClick={() => setCollapsed(true)}
-              title="Collapse sidebar"
-              className="group flex size-7 items-center justify-center rounded-lg text-ink-3 hover:bg-black/5 hover:text-ink transition-colors"
-            >
-              <svg
-                width={16}
-                height={16}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                className="transition-transform duration-300 group-hover:-translate-x-0.5"
-              >
-                <rect x="3" y="4" width="18" height="16" rx="2.5" />
-                <path d="M9 4v16" />
-                <path d="M15 9l-2.5 3 2.5 3" />
-              </svg>
-            </button>
-          )}
+          <SidebarToggle collapsed={collapsed} onClick={() => setCollapsed(!collapsed)} />
         </div>
 
         {/* ── Scrollable Body with comfortable lateral padding ── */}
