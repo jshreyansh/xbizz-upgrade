@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Video, Image as ImageIcon, Globe, ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
-import { PharmaSignature } from "@/components/ui/pharma-signature";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { cn } from "@/lib/cn";
 import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
@@ -273,11 +272,20 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
       }}
       className={`rounded-card group hover:-translate-y-1 ${hovered ? "shadow-float" : "shadow-hair"}`}
     >
-      {/* Gradient spine — the tile's own hue, full strength, as a top accent */}
+      {/* Gradient spine — the tile's own hue, full strength, as a top accent.
+          Inset highlight + drop shadow give it a raised, embossed edge that
+          deepens on hover rather than just changing colour. */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 transition-all duration-300"
-        style={{ height: hovered ? 5 : 3.5, background: tile.gradient }}
+        style={{
+          height: hovered ? 6 : 4,
+          background: tile.gradient,
+          borderRadius: "0 0 5px 5px",
+          boxShadow: hovered
+            ? `inset 0 1px 0 rgba(255,255,255,.55), 0 3px 9px -2px ${tile.glow}`
+            : `inset 0 1px 0 rgba(255,255,255,.4), 0 1px 3px -1px ${tile.glow}`,
+        }}
       />
       {/* Ambient mood glow — warms up on hover, the "happy to be here" cue */}
       <span
@@ -989,109 +997,133 @@ export function HomeScreen() {
 
   return (
     <div className="page-enter space-y-9 max-w-[1180px] pb-12">
-      {/* Premium dark hero band — compact, with a real sample video (not an
-          icon or illustration) so the welcome moment shows the actual kind
-          of content this product makes. */}
-      <div
-        className="relative flex items-stretch overflow-hidden rounded-card shadow-on-dark"
-        style={{ background: "linear-gradient(150deg,#0c0e12,#171310 55%,#1d140d)" }}
-      >
-        <PharmaSignature className="pointer-events-none absolute -left-28 -top-28 h-[380px] w-[380px] text-white/60 opacity-70 max-md:hidden" />
-        {/* Fine grain — the same premium texture used on the auth screen */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[.05]"
-          style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='.55'/></svg>\")",
-          }}
-        />
+      {/* Light, colourful ambient zone — hero + studio picker share one soft
+          multi-hue glow (brand, blue, violet) instead of a dark band, so the
+          welcome moment feels bright and premium rather than "dark mode". */}
+      <div className="relative">
+        <div aria-hidden className="pointer-events-none absolute inset-[-10%] overflow-hidden" style={{ filter: "blur(50px)" }}>
+          <span
+            className="absolute rounded-full"
+            style={{
+              width: 420,
+              height: 340,
+              left: "8%",
+              top: "-8%",
+              background: "radial-gradient(circle, rgba(253,72,22,.16), transparent 68%)",
+              animation: "float 24s ease-in-out infinite alternate",
+            }}
+          />
+          <span
+            className="absolute rounded-full"
+            style={{
+              width: 360,
+              height: 300,
+              left: "38%",
+              top: "-4%",
+              background: "radial-gradient(circle, rgba(29,78,216,.11), transparent 70%)",
+              animation: "float 30s ease-in-out infinite alternate-reverse",
+            }}
+          />
+          <span
+            className="absolute rounded-full"
+            style={{
+              width: 320,
+              height: 280,
+              left: "64%",
+              top: "10%",
+              background: "radial-gradient(circle, rgba(91,33,182,.1), transparent 70%)",
+              animation: "float 27s ease-in-out infinite alternate",
+            }}
+          />
+        </div>
 
-        <div className="relative z-10 flex flex-1 flex-wrap items-center gap-6 px-8 py-6 sm:px-10 sm:py-7">
-          <div className="min-w-0 flex-1" style={{ minWidth: 260 }}>
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3 py-1 text-caption font-extrabold uppercase tracking-[.1em] text-brand-light">
-              <i className="block size-1.5 rounded-full bg-brand" />
-              MLR-ready. In minutes.
-            </span>
-
-            <h1 className="mt-3 text-display-lg font-black leading-[1.1] tracking-tight text-white">
-              {hour === null ? "Welcome" : greeting(hour)},{" "}
-              <span
-                style={{
-                  background: "linear-gradient(96deg,var(--brand-light),var(--brand) 55%,var(--brand-2))",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                {PERSONA.firstName}
+        <div className="relative z-10 space-y-7">
+          {/* Hero — greeting + a real sample video, no dark band */}
+          <div className="flex flex-wrap items-center gap-6 rounded-card border border-hair bg-white/70 px-8 py-6 shadow-hair backdrop-blur-sm sm:px-10 sm:py-7">
+            <div className="min-w-0 flex-1" style={{ minWidth: 260 }}>
+              <span className="inline-flex items-center gap-2 rounded-full border border-tint-line bg-tint px-3 py-1 text-caption font-extrabold uppercase tracking-[.1em] text-brand-deep">
+                <i className="block size-1.5 rounded-full bg-brand" />
+                MLR-ready. In minutes.
               </span>
-              .
-            </h1>
-            <p className="mt-2 max-w-[42ch] text-body-lg font-medium leading-relaxed text-white/60">
-              Every asset your team ships is written from an approved dossier, with a source behind each claim.
-            </p>
-          </div>
 
-          {/* Real sample video — Dr. Anita Rao, the avatar reel this studio
-              actually produces. Autoplays muted so the "content" is
-              literally on screen, not implied by an icon. */}
-          <div
-            className="group relative shrink-0 cursor-pointer overflow-hidden rounded-panel"
-            style={{ width: 200, height: 132 }}
-            onClick={() => setPlayingVideoItem(HERO_SAMPLE)}
-          >
-            <video
-              src="/avatar-showcase.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
+              <h1 className="mt-3 text-display-lg font-black leading-[1.1] tracking-tight text-ink">
+                {hour === null ? "Welcome" : greeting(hour)},{" "}
+                <span
+                  style={{
+                    background: "linear-gradient(96deg,var(--brand-deep),var(--brand) 55%,var(--brand-2))",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  {PERSONA.firstName}
+                </span>
+              </h1>
+              <p className="mt-2 max-w-[42ch] text-body-lg font-medium leading-relaxed text-ink-3">
+                Every asset your team ships is written from an approved dossier, with a source behind each claim.
+              </p>
+            </div>
+
+            {/* Real sample video — Dr. Anita Rao, the avatar reel this studio
+                actually produces. Autoplays muted so the "content" is
+                literally on screen, not implied by an icon. */}
             <div
-              className="absolute inset-0"
-              style={{ background: "linear-gradient(180deg, rgba(0,0,0,.1) 0%, transparent 45%, rgba(0,0,0,.8) 100%)" }}
-            />
-            <span className="absolute left-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.05em] text-white/90">
-              Sample
-            </span>
-            <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-micro font-bold text-white/90">1:00</span>
-
-            {/* Pulsing play button — the "slight micro-animation" */}
-            <span className="absolute inset-0 grid place-items-center">
-              <span
-                className="grid size-9 place-items-center rounded-full bg-white/95 text-ink"
-                style={{ animation: "play-pulse 2.4s ease-in-out infinite" }}
-              >
-                <Play size={13} fill="currentColor" style={{ marginLeft: 1 }} />
+              className="group relative shrink-0 cursor-pointer overflow-hidden rounded-panel"
+              style={{ width: 200, height: 132 }}
+              onClick={() => setPlayingVideoItem(HERO_SAMPLE)}
+            >
+              <video
+                src="/avatar-showcase.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div
+                className="absolute inset-0"
+                style={{ background: "linear-gradient(180deg, rgba(0,0,0,.1) 0%, transparent 45%, rgba(0,0,0,.8) 100%)" }}
+              />
+              <span className="absolute left-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.05em] text-white/90">
+                Sample
               </span>
-            </span>
+              <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-micro font-bold text-white/90">1:00</span>
 
-            <div className="absolute inset-x-0 bottom-0 p-2.5">
-              <span className="block text-label font-bold text-white">Dr. Anita Rao</span>
-              <span className="block text-micro text-white/55">HCP avatar · first-line use</span>
+              {/* Pulsing play button — the "slight micro-animation" */}
+              <span className="absolute inset-0 grid place-items-center">
+                <span
+                  className="grid size-9 place-items-center rounded-full bg-white/95 text-ink"
+                  style={{ animation: "play-pulse 2.4s ease-in-out infinite" }}
+                >
+                  <Play size={13} fill="currentColor" style={{ marginLeft: 1 }} />
+                </span>
+              </span>
+
+              <div className="absolute inset-x-0 bottom-0 p-2.5">
+                <span className="block text-label font-bold text-white">Dr. Anita Rao</span>
+                <span className="block text-micro text-white/55">HCP avatar · first-line use</span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Studio tiles */}
-      <div>
-        <div className="mb-4 flex items-baseline justify-between">
-          <h2 className="text-title font-extrabold tracking-tight text-ink">Pick a studio</h2>
-          <span className="text-body text-ink-4">Every asset traces back to your Brand Dossier</span>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${CREATION_TILES.length}, 1fr)`,
-            gap: 16,
-          }}
-        >
-          {CREATION_TILES.map((tile, i) => (
-            <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} delay={i * 70} />
-          ))}
+          {/* Studio tiles — sitting in the same soft ambient zone */}
+          <div>
+            <div className="mb-4 flex items-baseline justify-between">
+              <h2 className="text-title font-extrabold tracking-tight text-ink">Pick a studio</h2>
+              <span className="text-body text-ink-4">Every asset traces back to your Brand Dossier</span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${CREATION_TILES.length}, 1fr)`,
+                gap: 16,
+              }}
+            >
+              {CREATION_TILES.map((tile, i) => (
+                <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} delay={i * 70} />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

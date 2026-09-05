@@ -15,16 +15,16 @@ function SidebarToggle({ collapsed, onClick }: { collapsed: boolean; onClick: ()
     <button
       onClick={onClick}
       title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-      className="group grid size-8 shrink-0 place-items-center rounded-control transition-transform duration-200 hover:scale-105 active:scale-95"
+      className="group grid size-8 shrink-0 place-items-center rounded-control border border-hair-2 text-ink-3 transition-all duration-200 hover:scale-105 hover:border-tint-line hover:text-brand-deep active:scale-95"
       style={{
-        background: "linear-gradient(155deg,#2a2e38,#14161c)",
-        boxShadow: "0 4px 12px -5px rgba(10,13,20,.45), inset 0 1px 0 rgba(255,255,255,.1)",
+        background: "linear-gradient(155deg,#ffffff,#f6f4f2)",
+        boxShadow: "0 2px 6px -2px rgba(10,13,20,.1), inset 0 1px 0 rgba(255,255,255,.9)",
       }}
     >
       {collapsed ? (
-        <PanelLeftOpen size={15} strokeWidth={2} className="text-white/85 transition-transform duration-300 group-hover:translate-x-0.5" />
+        <PanelLeftOpen size={15} strokeWidth={2} className="transition-transform duration-300 group-hover:translate-x-0.5" />
       ) : (
-        <PanelLeftClose size={15} strokeWidth={2} className="text-white/85 transition-transform duration-300 group-hover:-translate-x-0.5" />
+        <PanelLeftClose size={15} strokeWidth={2} className="transition-transform duration-300 group-hover:-translate-x-0.5" />
       )}
     </button>
   );
