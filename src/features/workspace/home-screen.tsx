@@ -1139,7 +1139,17 @@ export function HomeScreen() {
           <div>
             <div className="mb-4 flex items-baseline justify-between">
               <h2 className="text-title font-extrabold tracking-tight text-ink">Pick a studio</h2>
-              <span className="text-body text-ink-4">Every asset traces back to your Brand Dossier</span>
+              <span className="flex items-center gap-2 text-body text-ink-4">
+                Every asset traces back to your Brand Dossier
+                <span aria-hidden className="text-ink-4">·</span>
+                <button
+                  type="button"
+                  onClick={() => router.push("/create/describe")}
+                  className="font-bold text-brand-deep hover:underline"
+                >
+                  Or just describe your idea →
+                </button>
+              </span>
             </div>
             <div
               style={{
