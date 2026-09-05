@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Figtree } from "next/font/google";
+import { Figtree, Caveat } from "next/font/google";
 import { Providers } from "@/app/providers";
 import "./globals.css";
 
@@ -14,6 +14,15 @@ const figtree = Figtree({
   display: "swap",
 });
 
+/** A single handwritten-style accent font, used sparingly for the small
+ *  script annotations that give a page a human, designed touch (e.g. the
+ *  homepage hero's "From science to impact") — not for body copy. */
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-script",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "SwishX — Content Studio",
   description: "Evidence-native creative production for life sciences.",
@@ -21,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="en" className={figtree.variable}>
+    <html lang="en" className={`${figtree.variable} ${caveat.variable}`}>
       <body suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>

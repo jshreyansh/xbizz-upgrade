@@ -28,6 +28,10 @@ interface TileOption {
   gradient: string;
   /** Soft ambient glow color behind the card, matching its gradient hue. */
   glow: string;
+  /** Light diagonal wash across the whole card — pastel version of the hue. */
+  wash: string;
+  /** Which floating mockup graphic represents this studio's output. */
+  mockup: "video" | "doc" | "web";
 }
 
 interface ShowcaseItem {
@@ -69,6 +73,8 @@ const CREATION_TILES: TileOption[] = [
     href: "/create",
     gradient: "linear-gradient(145deg,#6ea2ff,#3d6bff 55%,#1d3fd6)",
     glow: "rgba(61,107,255,.16)",
+    wash: "linear-gradient(135deg,#eef3ff 0%,#fff 55%)",
+    mockup: "video",
   },
   {
     icon: ImageIcon,
@@ -79,6 +85,8 @@ const CREATION_TILES: TileOption[] = [
     href: "#",
     gradient: "linear-gradient(145deg,#c199ff,#9b5bff 55%,#6d1fd8)",
     glow: "rgba(155,91,255,.16)",
+    wash: "linear-gradient(135deg,#f5f0ff 0%,#fff 55%)",
+    mockup: "doc",
   },
   {
     icon: Globe,
@@ -89,6 +97,8 @@ const CREATION_TILES: TileOption[] = [
     href: "/create",
     gradient: "linear-gradient(145deg,#4fdb9c,#16b878 55%,#0a8556)",
     glow: "rgba(22,184,120,.16)",
+    wash: "linear-gradient(135deg,#eafff5 0%,#fff 55%)",
+    mockup: "web",
   },
 ];
 
@@ -243,6 +253,54 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
 ];
 
 /* ─── Top Creation Flow Tile Component ─────────────────────────────────────── */
+/* ─── Floating mockup graphics — a stand-in for real product photography,
+   each a small glass card tilted for depth so the studio picker shows what
+   it actually makes instead of just an icon. ────────────────────────────── */
+function StudioMockup({ type }: { type: TileOption["mockup"] }) {
+  if (type === "video") {
+    return (
+      <div className="relative flex h-[92px] w-[132px] flex-col justify-end overflow-hidden rounded-xl border border-white/70 bg-white/60 p-2 shadow-lg backdrop-blur-sm">
+        <span className="absolute left-1/2 top-1/2 grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-card shadow-md">
+          <Play size={11} fill="var(--brand)" color="var(--brand)" style={{ marginLeft: 1 }} />
+        </span>
+        <span className="h-1.5 w-3/4 rounded-full bg-white/70" />
+        <span className="mt-1 h-1.5 w-1/2 rounded-full bg-white/50" />
+      </div>
+    );
+  }
+  if (type === "doc") {
+    return (
+      <div className="relative flex h-[92px] w-[112px] flex-col gap-1.5 overflow-hidden rounded-xl border border-white/70 bg-white/60 p-2.5 shadow-lg backdrop-blur-sm">
+        <span className="size-4 rounded-md" style={{ background: "var(--violet)" }} />
+        <div className="mt-0.5 flex items-end gap-1">
+          {[0.5, 0.8, 0.35, 0.65].map((h, i) => (
+            <span key={i} className="w-2 rounded-sm" style={{ height: `${h * 30}px`, background: "var(--violet)", opacity: 0.35 + i * 0.15 }} />
+          ))}
+        </div>
+        <span className="mt-auto h-1 w-full rounded-full bg-black/[.06]" />
+        <span className="h-1 w-2/3 rounded-full bg-black/[.06]" />
+      </div>
+    );
+  }
+  return (
+    <div className="relative flex h-[92px] w-[132px] flex-col overflow-hidden rounded-xl border border-white/70 bg-white/60 shadow-lg backdrop-blur-sm">
+      <div className="flex items-center gap-1 border-b border-hair px-2 py-1.5">
+        {["#ff6b57", "#ffbd44", "#28c93f"].map((c) => (
+          <span key={c} className="size-1.5 rounded-full" style={{ background: c, opacity: 0.7 }} />
+        ))}
+      </div>
+      <div className="flex flex-1 items-center justify-center gap-1.5 p-2">
+        <span className="h-full w-2.5 rounded-sm bg-black/[.05]" />
+        <div className="flex flex-1 flex-col gap-1">
+          <span className="h-1.5 w-3/4 rounded-full" style={{ background: "#16b878", opacity: 0.5 }} />
+          <span className="h-1 w-1/2 rounded-full bg-black/[.06]" />
+          <span className="mt-1 h-4 w-full rounded-md" style={{ background: "#16b878", opacity: 0.18 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: () => void; delay?: number }) {
   const [hovered, setHovered] = useState(false);
   const Icon = tile.icon;
@@ -256,59 +314,35 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
       style={{
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        gap: 10,
-        padding: "36px 28px 28px",
-        backgroundColor: hovered ? "#fdfefe" : "#fff",
-        backgroundImage: `linear-gradient(180deg, ${tile.glow} 0%, transparent 58%)`,
+        alignItems: "flex-start",
+        gap: 8,
+        padding: "26px 24px 24px",
+        backgroundImage: tile.wash,
         border: hovered ? "1px solid var(--hair-2)" : "1px solid var(--hair)",
         cursor: "pointer",
-        textAlign: "center",
+        textAlign: "left",
         transition: "all .28s cubic-bezier(0.16, 1, 0.3, 1)",
         position: "relative",
-        minHeight: 250,
+        minHeight: 240,
         overflow: "hidden",
         animation: `rise-in-stagger 480ms cubic-bezier(0.2,0.8,0.2,1) ${delay}ms both`,
       }}
       className={`rounded-card group hover:-translate-y-1 ${hovered ? "shadow-float" : "shadow-hair"}`}
     >
-      {/* Gradient spine — the tile's own hue, full strength, as a top accent.
-          Inset highlight + drop shadow give it a raised, embossed edge that
-          deepens on hover rather than just changing colour. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 transition-all duration-300"
-        style={{
-          height: hovered ? 6 : 4,
-          background: tile.gradient,
-          borderRadius: "0 0 5px 5px",
-          boxShadow: hovered
-            ? `inset 0 1px 0 rgba(255,255,255,.55), 0 3px 9px -2px ${tile.glow}`
-            : `inset 0 1px 0 rgba(255,255,255,.4), 0 1px 3px -1px ${tile.glow}`,
-        }}
-      />
-      {/* Ambient mood glow — warms up on hover, the "happy to be here" cue */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute transition-opacity duration-500"
-        style={{
-          top: -40,
-          left: "50%",
-          transform: "translateX(-50%)",
-          width: 200,
-          height: 200,
-          borderRadius: "50%",
-          background: `radial-gradient(circle, ${tile.glow}, transparent 70%)`,
-          filter: "blur(4px)",
-          opacity: hovered ? 1 : 0.55,
-        }}
-      />
       {/* One-shot shimmer sweep across the card on hover */}
       <span
         aria-hidden
         className="pointer-events-none absolute inset-y-0 left-0 w-1/3 opacity-0 group-hover:opacity-100 group-hover:[animation:shimmer-sweep_1.2s_ease-out]"
-        style={{ background: "linear-gradient(115deg,transparent 20%,rgba(255,255,255,.5) 50%,transparent 80%)" }}
+        style={{ background: "linear-gradient(115deg,transparent 20%,rgba(255,255,255,.6) 50%,transparent 80%)" }}
       />
+
+      {/* Floating mockup — tilted, sitting in the card's upper-right */}
+      <div
+        className="pointer-events-none absolute transition-transform duration-500"
+        style={{ right: -14, top: 18, transform: hovered ? "rotate(4deg) translateY(-4px)" : "rotate(7deg)" }}
+      >
+        <StudioMockup type={tile.mockup} />
+      </div>
 
       {/* Gradient icon badge — refined, premium finish with a soft glass sheen */}
       <span
@@ -316,11 +350,10 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
           position: "relative",
           display: "grid",
           placeItems: "center",
-          width: 60,
-          height: 60,
-          borderRadius: 18,
+          width: 52,
+          height: 52,
+          borderRadius: 16,
           flexShrink: 0,
-          marginBottom: 4,
           background: tile.gradient,
           color: "#fff",
           boxShadow: hovered
@@ -335,16 +368,16 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
           style={{
             position: "absolute",
             inset: 0,
-            borderRadius: 18,
+            borderRadius: 16,
             background: "linear-gradient(155deg,rgba(255,255,255,.4),transparent 45%)",
             pointerEvents: "none",
           }}
         />
-        <Icon size={26} strokeWidth={1.75} style={{ position: "relative" }} />
+        <Icon size={22} strokeWidth={1.75} style={{ position: "relative" }} />
       </span>
 
       {/* Title */}
-      <h3 className="relative m-0 text-display font-extrabold leading-tight tracking-tight text-ink">{tile.title}</h3>
+      <h3 className="relative m-0 mt-2 text-display font-extrabold leading-tight tracking-tight text-ink">{tile.title}</h3>
 
       {/* Colored subtitle */}
       <span className="relative text-body font-bold" style={{ color: tile.accent }}>
@@ -352,37 +385,18 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
       </span>
 
       {/* Description */}
-      <p
-        className="relative text-body-lg leading-relaxed text-ink-3"
-        style={{
-          margin: "4px 0 0",
-          maxWidth: "30ch",
-        }}
-      >
-        {tile.description}
-      </p>
+      <p className="relative m-0 max-w-[26ch] text-body-lg leading-relaxed text-ink-3">{tile.description}</p>
 
-      {/* Get started — clickable pill CTA */}
+      {/* Circular arrow CTA */}
       <span
+        className="relative mt-auto grid size-10 place-items-center rounded-full text-white transition-all duration-300"
         style={{
-          position: "relative",
-          marginTop: "auto",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          fontSize: 12.5,
-          fontWeight: 750,
-          padding: "8px 16px",
-          borderRadius: 99,
-          color: hovered ? "#fff" : "var(--brand-deep)",
-          background: hovered ? tile.gradient : "var(--tint)",
-          border: hovered ? "1px solid transparent" : "1px solid var(--tint-line)",
-          boxShadow: hovered ? "0 6px 14px -8px rgba(16,24,40,.22)" : "none",
-          transition: "all .24s ease",
+          background: tile.gradient,
+          boxShadow: hovered ? `0 8px 18px -6px ${tile.glow}` : `0 4px 10px -4px ${tile.glow}`,
+          transform: hovered ? "translateX(3px)" : "translateX(0)",
         }}
       >
-        Get started
-        <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-1" />
+        <ArrowRight size={16} />
       </span>
     </button>
   );
@@ -1039,7 +1053,7 @@ export function HomeScreen() {
 
         <div className="relative z-10 space-y-7">
           {/* Hero — greeting + a real sample video, no dark band */}
-          <div className="flex flex-wrap items-center gap-6 rounded-card border border-hair bg-white/70 px-8 py-6 shadow-hair backdrop-blur-sm sm:px-10 sm:py-7">
+          <div className="relative flex flex-wrap items-center gap-6 rounded-card border border-hair bg-white/70 px-8 py-6 shadow-hair backdrop-blur-sm sm:px-10 sm:py-7">
             <div className="min-w-0 flex-1" style={{ minWidth: 260 }}>
               <span className="inline-flex items-center gap-2 rounded-full border border-tint-line bg-tint px-3 py-1 text-caption font-extrabold uppercase tracking-[.1em] text-brand-deep">
                 <i className="block size-1.5 rounded-full bg-brand" />
@@ -1062,6 +1076,21 @@ export function HomeScreen() {
               <p className="mt-2 max-w-[42ch] text-body-lg font-medium leading-relaxed text-ink-3">
                 Every asset your team ships is written from an approved dossier, with a source behind each claim.
               </p>
+            </div>
+
+            {/* Handwritten script accent — a small human touch between the
+                copy and the sample video, echoing the reference's own
+                "From science to impact" annotation. */}
+            <div
+              aria-hidden
+              className="pointer-events-none hidden select-none flex-col items-start lg:flex"
+              style={{ fontFamily: "var(--font-script)", color: "var(--brand-deep)", transform: "rotate(-3deg)" }}
+            >
+              <span style={{ fontSize: 22, lineHeight: 1.1 }}>From science</span>
+              <span style={{ fontSize: 22, lineHeight: 1.1 }}>to impact</span>
+              <svg width="86" height="10" viewBox="0 0 86 10" fill="none" style={{ marginTop: 2 }}>
+                <path d="M2 6c14-6 28-6 40 0s28 6 42 0" stroke="var(--brand)" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </div>
 
             {/* Real sample video — Dr. Anita Rao, the avatar reel this studio

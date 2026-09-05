@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Play, X } from "lucide-react";
+import { Play, Search, X } from "lucide-react";
 
 interface TopbarProps {
   pageTitle?: string;
@@ -28,10 +28,49 @@ export function Topbar({ pageTitle = "Home" }: TopbarProps) {
         }}
       >
         {/* Page context */}
-        <b style={{ fontSize: 14.5, fontWeight: 720, letterSpacing: "-.3px", color: "var(--ink)" }}>{pageTitle}</b>
+        <b style={{ fontSize: 14.5, fontWeight: 720, letterSpacing: "-.3px", color: "var(--ink)", flexShrink: 0 }}>{pageTitle}</b>
+
+        {/* Centered search — visual affordance for now, wires up to real search later */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 0, padding: "0 24px" }}>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              width: "100%",
+              maxWidth: 380,
+              padding: "8px 12px",
+              borderRadius: 99,
+              border: "1px solid var(--hair-2)",
+              background: "#fff",
+              cursor: "text",
+            }}
+          >
+            <Search size={14} color="var(--ink-4)" style={{ flexShrink: 0 }} />
+            <input
+              type="text"
+              placeholder="Search anything…"
+              style={{ flex: 1, minWidth: 0, border: "none", outline: "none", fontSize: 13, color: "var(--ink)", background: "transparent" }}
+            />
+            <span
+              style={{
+                flexShrink: 0,
+                fontSize: 10.5,
+                fontWeight: 700,
+                color: "var(--ink-4)",
+                background: "var(--surface-subtle)",
+                border: "1px solid var(--hair)",
+                borderRadius: 6,
+                padding: "2px 6px",
+              }}
+            >
+              ⌘K
+            </span>
+          </label>
+        </div>
 
         {/* Right-aligned: Watch demo + icon buttons */}
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
           <button
             type="button"
             onClick={() => setDemoOpen(true)}
