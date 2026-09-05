@@ -506,6 +506,11 @@ button.rounded-full {
   animation: rise-in-stagger 420ms var(--ease-entrance) both;
 }
 
+@keyframes shimmer-sweep {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(220%); }
+}
+
 @keyframes step-fade-in {
   from {
     opacity: 0;

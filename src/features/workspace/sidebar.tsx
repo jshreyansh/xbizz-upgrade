@@ -35,7 +35,6 @@ const ASSET_GROUPS: NavGroup[] = [
   {
     label: "Assets",
     items: [
-      { label: "Brand Dossiers", shortLabel: "Brands", icon: "dossier", href: "/dossiers" },
       { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library" },
       { label: "Content Library", shortLabel: "Contents", icon: "library", href: "#" },
       { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "#" },
@@ -212,10 +211,14 @@ export function Sidebar() {
       <aside
         style={{
           width: sbw,
-          transition: "width 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
+          transition: "width 0.32s cubic-bezier(0.22, 1, 0.36, 1), border-radius 0.32s cubic-bezier(0.22, 1, 0.36, 1)",
         }}
-        className="relative flex h-full flex-col rounded-card border border-hair bg-white/95 shadow-float backdrop-blur-xl transition-all overflow-hidden"
+        className={`relative flex h-full flex-col border border-hair bg-white/95 shadow-float backdrop-blur-xl transition-all overflow-hidden ${
+          collapsed ? "rounded-panel" : "rounded-card"
+        }`}
       >
+        {/* Subtle inner top highlight — the premium "glass edge" cue */}
+        <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
         {/* Top Header: Logo (Click to expand if collapsed) + Minimize Button in Open State */}
         <div
           className={`flex items-center pt-4 pb-2.5 px-4 ${
@@ -243,7 +246,7 @@ export function Sidebar() {
             <button
               onClick={() => setCollapsed(true)}
               title="Collapse sidebar"
-              className="flex size-7 items-center justify-center rounded-lg text-ink-3 hover:bg-black/5 hover:text-ink transition-colors"
+              className="group flex size-7 items-center justify-center rounded-lg text-ink-3 hover:bg-black/5 hover:text-ink transition-colors"
             >
               <svg
                 width={16}
@@ -252,6 +255,7 @@ export function Sidebar() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
+                className="transition-transform duration-300 group-hover:-translate-x-0.5"
               >
                 <rect x="3" y="4" width="18" height="16" rx="2.5" />
                 <path d="M9 4v16" />
@@ -339,7 +343,7 @@ export function Sidebar() {
             ) : (
               /* Collapsed Mode: Studio Icon with Solid Orange Filled Shape in Unselected, Solid Chip in Selected */
               <div className="flex flex-col items-center gap-1">
-                <div className="my-1 h-px w-6 bg-black/10" />
+                <div className="my-1 h-px w-7 bg-gradient-to-r from-transparent via-hair-2 to-transparent" />
                 <button
                   onClick={() => handleCreateNav("video")}
                   className={`group relative flex w-[58px] flex-col items-center justify-center rounded-control py-2 px-1 gap-1 transition-all duration-200 cursor-pointer ${
@@ -373,7 +377,7 @@ export function Sidebar() {
                 </div>
               ) : (
                 <div className="my-1.5 flex justify-center">
-                  <div className="h-px w-6 bg-black/10" />
+                  <div className="h-px w-7 bg-gradient-to-r from-transparent via-hair-2 to-transparent" />
                 </div>
               )}
 

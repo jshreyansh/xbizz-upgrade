@@ -18,6 +18,8 @@ interface TileOption {
   description: string;
   href: string;
   gradient: string;
+  /** Soft ambient glow color behind the card, matching its gradient hue. */
+  glow: string;
 }
 
 interface ShowcaseItem {
@@ -58,6 +60,7 @@ const CREATION_TILES: TileOption[] = [
     description: "Drug explainers and lip-synced doctor presenters, MLR-ready in minutes.",
     href: "/create",
     gradient: "linear-gradient(145deg,#6ea2ff,#3d6bff 55%,#1d3fd6)",
+    glow: "rgba(61,107,255,.16)",
   },
   {
     icon: ImageIcon,
@@ -67,6 +70,7 @@ const CREATION_TILES: TileOption[] = [
     description: "Leave-behinds, journal ads and banners from your approved claims.",
     href: "#",
     gradient: "linear-gradient(145deg,#c199ff,#9b5bff 55%,#6d1fd8)",
+    glow: "rgba(155,91,255,.16)",
   },
   {
     icon: Globe,
@@ -76,6 +80,7 @@ const CREATION_TILES: TileOption[] = [
     description: "On-label microsites and HCP portals, signed off before publish.",
     href: "/create",
     gradient: "linear-gradient(145deg,#4fdb9c,#16b878 55%,#0a8556)",
+    glow: "rgba(22,184,120,.16)",
   },
 ];
 
@@ -217,7 +222,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
 ];
 
 /* ─── Top Creation Flow Tile Component ─────────────────────────────────────── */
-function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }) {
+function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: () => void; delay?: number }) {
   const [hovered, setHovered] = useState(false);
   const Icon = tile.icon;
 
@@ -243,9 +248,33 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
         position: "relative",
         minHeight: 250,
         overflow: "hidden",
+        animation: `rise-in-stagger 480ms cubic-bezier(0.2,0.8,0.2,1) ${delay}ms both`,
       }}
       className="hover:-translate-y-1 group"
     >
+      {/* Ambient mood glow — warms up on hover, the "happy to be here" cue */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute transition-opacity duration-500"
+        style={{
+          top: -40,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 200,
+          height: 200,
+          borderRadius: "50%",
+          background: `radial-gradient(circle, ${tile.glow}, transparent 70%)`,
+          filter: "blur(4px)",
+          opacity: hovered ? 1 : 0.55,
+        }}
+      />
+      {/* One-shot shimmer sweep across the card on hover */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 w-1/3 opacity-0 group-hover:opacity-100 group-hover:[animation:shimmer-sweep_1.2s_ease-out]"
+        style={{ background: "linear-gradient(115deg,transparent 20%,rgba(255,255,255,.5) 50%,transparent 80%)" }}
+      />
+
       {/* Gradient icon badge — refined, premium finish with a soft glass sheen */}
       <span
         style={{
@@ -259,9 +288,11 @@ function CreationCard({ tile, onOpen }: { tile: TileOption; onOpen: () => void }
           marginBottom: 4,
           background: tile.gradient,
           color: "#fff",
-          boxShadow: "0 8px 16px -8px rgba(16,24,40,.28), inset 0 1px 0 rgba(255,255,255,.45), inset 0 -8px 14px -6px rgba(0,0,0,.14)",
-          transition: "transform .32s cubic-bezier(0.16, 1, 0.3, 1)",
-          transform: hovered ? "scale(1.06)" : "scale(1)",
+          boxShadow: hovered
+            ? `0 12px 22px -8px ${tile.glow}, inset 0 1px 0 rgba(255,255,255,.45), inset 0 -8px 14px -6px rgba(0,0,0,.14)`
+            : "0 8px 16px -8px rgba(16,24,40,.28), inset 0 1px 0 rgba(255,255,255,.45), inset 0 -8px 14px -6px rgba(0,0,0,.14)",
+          transition: "transform .32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .32s ease",
+          transform: hovered ? "scale(1.08) rotate(-4deg)" : "scale(1)",
         }}
       >
         <span
@@ -946,56 +977,98 @@ export function HomeScreen() {
 
   return (
     <div className="page-enter space-y-9 max-w-[1180px] pb-12">
-      {/* Eyebrow pill */}
-      <div className="pt-1">
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 7,
-            padding: "6px 13px",
-            border: "1px solid var(--tint-line)",
-            background: "var(--tint)",
-            color: "var(--brand-deep)",
-            borderRadius: 99,
-            fontSize: 11.5,
-            fontWeight: 800,
-            letterSpacing: ".05em",
-            textTransform: "uppercase",
-          }}
-        >
-          <i style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)", display: "block" }} />
-          MLR-ready. In minutes.
-        </span>
+      {/* Hero + studio tiles, with a warm ambient glow behind them */}
+      <div style={{ position: "relative" }}>
+        <div style={{ position: "absolute", inset: "-70px -30px auto auto", width: 460, height: 360, pointerEvents: "none", zIndex: 0 }}>
+          <span
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "50%",
+              background: "radial-gradient(circle at 65% 35%, rgba(253,72,22,.13), transparent 65%)",
+              filter: "blur(6px)",
+              animation: "float 26s ease-in-out infinite alternate",
+            }}
+          />
+          <span
+            style={{
+              position: "absolute",
+              inset: "60px 140px auto auto",
+              width: 220,
+              height: 220,
+              borderRadius: "50%",
+              background: "radial-gradient(circle, rgba(124,58,237,.09), transparent 68%)",
+              filter: "blur(6px)",
+              animation: "float 32s ease-in-out infinite alternate-reverse",
+            }}
+          />
+        </div>
 
-        <h1
-          style={{
-            fontSize: "clamp(30px, 3.4vw, 42px)",
-            lineHeight: 1.1,
-            fontWeight: 800,
-            letterSpacing: "-1.2px",
-            margin: "14px 0 0",
-            color: "var(--ink)",
-          }}
-        >
-          What do you want to create today?
-        </h1>
-        <p className="mt-2.5 text-subhead text-ink-3 font-medium">
-          Pick a studio. Every asset is written from your Brand Dossier, with a source behind each claim.
-        </p>
-      </div>
+        <div style={{ position: "relative", zIndex: 1 }}>
+          {/* Eyebrow pill */}
+          <div className="pt-1">
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "6px 13px",
+                border: "1px solid var(--tint-line)",
+                background: "var(--tint)",
+                color: "var(--brand-deep)",
+                borderRadius: 99,
+                fontSize: 11.5,
+                fontWeight: 800,
+                letterSpacing: ".05em",
+                textTransform: "uppercase",
+              }}
+            >
+              <i style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)", display: "block" }} />
+              MLR-ready. In minutes.
+            </span>
 
-      {/* Creation tiles — bordered cards */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${CREATION_TILES.length}, 1fr)`,
-          gap: 16,
-        }}
-      >
-        {CREATION_TILES.map((tile) => (
-          <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} />
-        ))}
+            <h1
+              style={{
+                fontSize: "clamp(30px, 3.4vw, 42px)",
+                lineHeight: 1.1,
+                fontWeight: 800,
+                letterSpacing: "-1.2px",
+                margin: "14px 0 0",
+                color: "var(--ink)",
+              }}
+            >
+              What do you want to{" "}
+              <span
+                style={{
+                  background: "linear-gradient(96deg,var(--brand-deep),var(--brand) 55%,#ff9a5e)",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  color: "transparent",
+                }}
+              >
+                create
+              </span>{" "}
+              today?
+            </h1>
+            <p className="mt-2.5 text-subhead text-ink-3 font-medium">
+              Pick a studio. Every asset is written from your Brand Dossier, with a source behind each claim.
+            </p>
+          </div>
+
+          {/* Creation tiles — bordered cards */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${CREATION_TILES.length}, 1fr)`,
+              gap: 16,
+              marginTop: 36,
+            }}
+          >
+            {CREATION_TILES.map((tile, i) => (
+              <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} delay={i * 70} />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Recent projects — new-user empty state vs returning-user activity.
