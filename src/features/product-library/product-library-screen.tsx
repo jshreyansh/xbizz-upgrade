@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Grid3x3, List, Plus, ShieldCheck, Eye, Star, Package } from "lucide-react";
 import { PRODUCTS } from "@/features/product-library/mock-products";
 
@@ -12,6 +13,7 @@ const STATS = [
 ];
 
 export function ProductLibraryScreen() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
 
@@ -131,6 +133,12 @@ export function ProductLibraryScreen() {
         {filtered.map((p, i) => (
           <div
             key={p.id}
+            onClick={() => router.push(`/product-library/${p.id}`)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") router.push(`/product-library/${p.id}`);
+            }}
             className="group rise-in-stagger hover:-translate-y-1 transition-all duration-200"
             style={{
               background: "#fff",
