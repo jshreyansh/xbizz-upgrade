@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Play, Search, X } from "lucide-react";
+import { Menu, Play, Search, X } from "lucide-react";
 
 interface TopbarProps {
   pageTitle?: string;
+  /** Opens the off-canvas mobile navigation drawer. Only the hamburger
+   *  button (mobile-only) calls this — desktop keeps the persistent
+   *  sidebar and never renders the button. */
+  onMenuClick?: () => void;
 }
 
-export function Topbar({ pageTitle = "Home" }: TopbarProps) {
+export function Topbar({ pageTitle = "Home", onMenuClick }: TopbarProps) {
   const [demoOpen, setDemoOpen] = useState(false);
 
   return (
@@ -27,14 +31,30 @@ export function Topbar({ pageTitle = "Home" }: TopbarProps) {
           zIndex: 3,
         }}
       >
+        {/* Mobile-only menu trigger — the persistent sidebar becomes an
+            off-canvas drawer below the md breakpoint (see AppShell). */}
+        {onMenuClick && (
+          <button
+            type="button"
+            onClick={onMenuClick}
+            aria-label="Open navigation"
+            className="grid size-8 shrink-0 place-items-center rounded-control text-ink-2 md:hidden"
+          >
+            <Menu size={18} />
+          </button>
+        )}
+
         {/* Page context */}
         <b style={{ fontSize: 14.5, fontWeight: 720, letterSpacing: "-.3px", color: "var(--ink)", flexShrink: 0 }}>{pageTitle}</b>
 
-        {/* Centered search — visual affordance for now, wires up to real search later */}
+        {/* Centered search — visual affordance for now, wires up to real search later.
+            The input itself is hidden below sm (no room for it alongside the
+            menu trigger, title, and right-side icons on a phone), but the
+            wrapper stays so it keeps acting as a flexible spacer. */}
         <div style={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 0, padding: "0 24px" }}>
           <label
+            className="hidden sm:flex"
             style={{
-              display: "flex",
               alignItems: "center",
               gap: 8,
               width: "100%",

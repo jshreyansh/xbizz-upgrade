@@ -1010,7 +1010,7 @@ export function HomeScreen() {
   };
 
   return (
-    <div className="page-enter space-y-9 max-w-[1180px] pb-12">
+    <div className="page-enter space-y-10 max-w-[1180px] pb-12 lg:space-y-12">
       {/* Light, colourful ambient zone — hero + studio picker share one soft
           multi-hue glow (brand, blue, violet) instead of a dark band, so the
           welcome moment feels bright and premium rather than "dark mode". */}
@@ -1137,11 +1137,11 @@ export function HomeScreen() {
 
           {/* Studio tiles — sitting in the same soft ambient zone */}
           <div>
-            <div className="mb-4 flex items-baseline justify-between">
+            <div className="mb-5 flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:justify-between">
               <h2 className="text-title font-extrabold tracking-tight text-ink">Pick a studio</h2>
-              <span className="flex items-center gap-2 text-body text-ink-4">
+              <span className="flex flex-wrap items-center gap-2 text-body text-ink-4">
                 Every asset traces back to your Brand Dossier
-                <span aria-hidden className="text-ink-4">·</span>
+                <span aria-hidden className="hidden text-ink-4 sm:inline">·</span>
                 <button
                   type="button"
                   onClick={() => router.push("/create/describe")}
@@ -1151,13 +1151,7 @@ export function HomeScreen() {
                 </button>
               </span>
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${CREATION_TILES.length}, 1fr)`,
-                gap: 16,
-              }}
-            >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
               {CREATION_TILES.map((tile, i) => (
                 <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} delay={i * 70} />
               ))}
@@ -1166,11 +1160,15 @@ export function HomeScreen() {
         </div>
       </div>
 
+      {/* Soft fade divider — a quieter section break than a hard hairline,
+          echoing the same gradient-fade treatment used on the sidebar. */}
+      <div aria-hidden className="h-px w-full bg-gradient-to-r from-transparent via-hair-2 to-transparent" />
+
       {/* Recent projects — new-user empty state vs returning-user activity.
           The toggle below is a preview control for this demo (no backend
           to detect account age from), not a real user-facing setting. */}
       <div>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 14 }}>
+        <div className="flex-wrap" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 14, gap: 12 }}>
           <div>
             <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--brand)", display: "block", marginBottom: 4 }}>
               {isNewUser ? "New here? Start with an example" : "Pick up where you left off"}
@@ -1224,7 +1222,7 @@ export function HomeScreen() {
             </div>
           </>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
             {RECENT_PROJECTS.map((project) => (
               <RecentProjectCard key={project.title} project={project} />
             ))}
