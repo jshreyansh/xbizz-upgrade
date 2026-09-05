@@ -5,9 +5,18 @@ import { useRouter } from "next/navigation";
 import { Video, Image as ImageIcon, Globe, ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
+import { PharmaSignature } from "@/components/ui/pharma-signature";
+import { PERSONA } from "@/features/workspace/mock-personas";
 import { cn } from "@/lib/cn";
 import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
+
+function greeting(hour: number) {
+  if (hour < 5) return "Still up";
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 interface TileOption {
@@ -64,10 +73,10 @@ const CREATION_TILES: TileOption[] = [
   },
   {
     icon: ImageIcon,
-    title: "Creatives",
-    subtitle: "Infographics, Detail Aid",
+    title: "Detailing",
+    subtitle: "Infographics, Banners & Detail Aids",
     accent: "var(--brand-deep)",
-    description: "Leave-behinds, journal ads and banners from your approved claims.",
+    description: "Leave-behinds, journal ads and print-ready banners built straight from your approved claims.",
     href: "#",
     gradient: "linear-gradient(145deg,#c199ff,#9b5bff 55%,#6d1fd8)",
     glow: "rgba(155,91,255,.16)",
@@ -87,7 +96,7 @@ const CREATION_TILES: TileOption[] = [
 const RECENT_PROJECTS: RecentProject[] = [
   { studio: "Reel", status: "In MLR", title: "Velmora — MoA explainer", meta: "Cardiologists · US · 60s", progress: 85, updated: "Today, 09:15", action: "Open" },
   { studio: "Avatar", status: "Draft", title: "Dr. Rao — dosing update", meta: "HCP · EU · 45s", progress: 35, updated: "Yesterday", action: "Resume" },
-  { studio: "Creatives", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
+  { studio: "Detailing", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
   { studio: "Web", status: "Draft", title: "Nirvexa launch microsite", meta: "HCP portal · 6 sections", progress: 55, updated: "3 days ago", action: "Resume" },
 ];
 
@@ -194,7 +203,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#16233f,#2c4573 50%,#5b7fb8)",
         hasPlay: true,
-        tag: "Creatives",
+        tag: "Detailing",
         videoSrc: "/326638_medium.mp4",
       },
       {
@@ -204,7 +213,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#33193f,#5b2c70 50%,#9a63bc)",
         hasPlay: true,
-        tag: "Creatives",
+        tag: "Detailing",
         videoSrc: "/21617-319452308_medium.mp4",
       },
       {
@@ -214,7 +223,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#0f2e28,#1b5546 50%,#3d9880)",
         hasPlay: true,
-        tag: "Creatives",
+        tag: "Detailing",
         videoSrc: "/46621-448480587_medium.mp4",
       },
     ],
@@ -238,10 +247,8 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
         alignItems: "center",
         gap: 10,
         padding: "34px 28px 28px",
-        borderRadius: "var(--r-xl)",
         background: hovered ? "#fdfefe" : "#fff",
         border: hovered ? "1px solid var(--hair-2)" : "1px solid var(--hair)",
-        boxShadow: hovered ? "0 16px 32px -18px rgba(16,24,40,.16)" : "0 1px 3px rgba(16,24,40,.03)",
         cursor: "pointer",
         textAlign: "center",
         transition: "all .28s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -250,7 +257,7 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
         overflow: "hidden",
         animation: `rise-in-stagger 480ms cubic-bezier(0.2,0.8,0.2,1) ${delay}ms both`,
       }}
-      className="hover:-translate-y-1 group"
+      className={`rounded-card group hover:-translate-y-1 ${hovered ? "shadow-float" : "shadow-hair"}`}
     >
       {/* Ambient mood glow — warms up on hover, the "happy to be here" cue */}
       <span
@@ -292,7 +299,7 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
             ? `0 12px 22px -8px ${tile.glow}, inset 0 1px 0 rgba(255,255,255,.45), inset 0 -8px 14px -6px rgba(0,0,0,.14)`
             : "0 8px 16px -8px rgba(16,24,40,.28), inset 0 1px 0 rgba(255,255,255,.45), inset 0 -8px 14px -6px rgba(0,0,0,.14)",
           transition: "transform .32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .32s ease",
-          transform: hovered ? "scale(1.08) rotate(-4deg)" : "scale(1)",
+          transform: hovered ? "scale(1.07)" : "scale(1)",
         }}
       >
         <span
@@ -309,41 +316,18 @@ function CreationCard({ tile, onOpen, delay = 0 }: { tile: TileOption; onOpen: (
       </span>
 
       {/* Title */}
-      <h3
-        style={{
-          position: "relative",
-          fontSize: 19,
-          fontWeight: 800,
-          color: "var(--ink)",
-          letterSpacing: "-.4px",
-          margin: 0,
-          lineHeight: 1.2,
-        }}
-      >
-        {tile.title}
-      </h3>
+      <h3 className="relative m-0 text-display font-extrabold leading-tight tracking-tight text-ink">{tile.title}</h3>
 
       {/* Colored subtitle */}
-      <span
-        style={{
-          position: "relative",
-          fontSize: 12.5,
-          fontWeight: 750,
-          color: tile.accent,
-        }}
-      >
+      <span className="relative text-body font-bold" style={{ color: tile.accent }}>
         {tile.subtitle}
       </span>
 
       {/* Description */}
       <p
+        className="relative text-body-lg leading-relaxed text-ink-3"
         style={{
-          position: "relative",
-          fontSize: 13.5,
-          color: "var(--ink-3)",
           margin: "4px 0 0",
-          lineHeight: 1.55,
-          fontWeight: 450,
           maxWidth: "30ch",
         }}
       >
@@ -949,6 +933,14 @@ export function HomeScreen() {
   const [playingVideoItem, setPlayingVideoItem] = useState<ShowcaseItem | null>(null);
   const [isNewUser, setIsNewUser] = useState(true);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
+  const [hour, setHour] = useState<number | null>(null);
+
+  // Computed client-side only, after mount — this value only exists in the
+  // viewer's local time, so it can't be part of the server-rendered markup.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate, see comment above.
+    setHour(new Date().getHours());
+  }, []);
 
   function openTile(tile: TileOption) {
     if (tile.title === "Video") {
@@ -956,7 +948,7 @@ export function HomeScreen() {
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
       useWorkspaceStore.getState().setView("create");
       router.push("/create");
-    } else if (tile.title === "Creatives") {
+    } else if (tile.title === "Detailing") {
       useWorkspaceStore.getState().setAssetType("infographic");
       useWorkspaceStore.getState().setCreationMode("magic-chart");
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
@@ -977,97 +969,70 @@ export function HomeScreen() {
 
   return (
     <div className="page-enter space-y-9 max-w-[1180px] pb-12">
-      {/* Hero + studio tiles, with a warm ambient glow behind them */}
-      <div style={{ position: "relative" }}>
-        <div style={{ position: "absolute", inset: "-70px -30px auto auto", width: 460, height: 360, pointerEvents: "none", zIndex: 0 }}>
-          <span
-            style={{
-              position: "absolute",
-              inset: 0,
-              borderRadius: "50%",
-              background: "radial-gradient(circle at 65% 35%, rgba(253,72,22,.13), transparent 65%)",
-              filter: "blur(6px)",
-              animation: "float 26s ease-in-out infinite alternate",
-            }}
-          />
-          <span
-            style={{
-              position: "absolute",
-              inset: "60px 140px auto auto",
-              width: 220,
-              height: 220,
-              borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(124,58,237,.09), transparent 68%)",
-              filter: "blur(6px)",
-              animation: "float 32s ease-in-out infinite alternate-reverse",
-            }}
-          />
-        </div>
+      {/* Premium dark hero band — the "wow" welcome moment, built for a
+          C-suite / clinical audience: restrained, editorial, no cute
+          gradient blobs. The signature pharma-mark carries the visual
+          weight instead of playful iconography. */}
+      <div
+        className="relative overflow-hidden rounded-card shadow-on-dark"
+        style={{ background: "linear-gradient(150deg,#0c0e12,#171310 55%,#1d140d)" }}
+      >
+        <PharmaSignature
+          className="pointer-events-none absolute -right-16 top-1/2 h-[560px] w-[560px] -translate-y-1/2 text-white/90 max-md:hidden"
+        />
+        {/* Fine grain — the same premium texture used on the auth screen */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[.05]"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='.55'/></svg>\")",
+          }}
+        />
 
-        <div style={{ position: "relative", zIndex: 1 }}>
-          {/* Eyebrow pill */}
-          <div className="pt-1">
+        <div className="relative z-10 max-w-[600px] px-9 py-11 sm:px-12 sm:py-14">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.06] px-3 py-1 text-caption font-extrabold uppercase tracking-[.1em] text-brand-light">
+            <i className="block size-1.5 rounded-full bg-brand" />
+            MLR-ready. In minutes.
+          </span>
+
+          <h1 className="mt-4 text-hero-lg font-black leading-[1.08] tracking-tight text-white">
+            {hour === null ? "Welcome" : greeting(hour)},{" "}
             <span
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                padding: "6px 13px",
-                border: "1px solid var(--tint-line)",
-                background: "var(--tint)",
-                color: "var(--brand-deep)",
-                borderRadius: 99,
-                fontSize: 11.5,
-                fontWeight: 800,
-                letterSpacing: ".05em",
-                textTransform: "uppercase",
+                background: "linear-gradient(96deg,var(--brand-light),var(--brand) 55%,var(--brand-2))",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
               }}
             >
-              <i style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--brand)", display: "block" }} />
-              MLR-ready. In minutes.
+              {PERSONA.firstName}
             </span>
+            .
+          </h1>
+          <p className="mt-3 max-w-[46ch] text-subhead font-medium leading-relaxed text-white/60">
+            Every asset your team ships is written from an approved dossier, with a source behind each claim —
+            ready for the people who have to sign off on it.
+          </p>
+        </div>
+      </div>
 
-            <h1
-              style={{
-                fontSize: "clamp(30px, 3.4vw, 42px)",
-                lineHeight: 1.1,
-                fontWeight: 800,
-                letterSpacing: "-1.2px",
-                margin: "14px 0 0",
-                color: "var(--ink)",
-              }}
-            >
-              What do you want to{" "}
-              <span
-                style={{
-                  background: "linear-gradient(96deg,var(--brand-deep),var(--brand) 55%,#ff9a5e)",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  color: "transparent",
-                }}
-              >
-                create
-              </span>{" "}
-              today?
-            </h1>
-            <p className="mt-2.5 text-subhead text-ink-3 font-medium">
-              Pick a studio. Every asset is written from your Brand Dossier, with a source behind each claim.
-            </p>
-          </div>
-
-          {/* Creation tiles — bordered cards */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${CREATION_TILES.length}, 1fr)`,
-              gap: 16,
-              marginTop: 36,
-            }}
-          >
-            {CREATION_TILES.map((tile, i) => (
-              <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} delay={i * 70} />
-            ))}
-          </div>
+      {/* Studio tiles */}
+      <div>
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 className="text-title font-extrabold tracking-tight text-ink">Pick a studio</h2>
+          <span className="text-body text-ink-4">Every asset traces back to your Brand Dossier</span>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${CREATION_TILES.length}, 1fr)`,
+            gap: 16,
+          }}
+        >
+          {CREATION_TILES.map((tile, i) => (
+            <CreationCard key={tile.title} tile={tile} onOpen={() => openTile(tile)} delay={i * 70} />
+          ))}
         </div>
       </div>
 

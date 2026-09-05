@@ -6,6 +6,7 @@ import { BeatSources } from "@/features/onboarding/beat-sources";
 import { BeatOutputs } from "@/features/onboarding/beat-outputs";
 import type { OnboardingBeat } from "@/types/content";
 import { LogoMark } from "@/components/ui/logo-mark";
+import { PharmaSignature } from "@/components/ui/pharma-signature";
 
 const TOTAL = 2;
 
@@ -46,6 +47,10 @@ export function OnboardingShell() {
           <span key={i} className="absolute rounded-full" style={{ width: b.size, height: b.size, left: b.left, top: b.top, background: b.bg, animation: `float 24s ease-in-out infinite alternate${b.delay ? ` ${b.delay}` : ""}` }} />
         ))}
       </div>
+
+      {/* Signature pharma mark — the same premium visual used on the login
+          screen and post-login homepage, tying the three moments together */}
+      <PharmaSignature className="pointer-events-none absolute -right-20 -top-16 h-[540px] w-[540px] text-ink opacity-[.07]" />
 
       {/* Top bar */}
       <div className="relative z-10 flex items-center justify-between px-9 py-7">

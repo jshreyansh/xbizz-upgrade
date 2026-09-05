@@ -14,7 +14,7 @@ interface CreateTile {
 
 const CREATE_TILES: CreateTile[] = [
   { label: "Video", icon: "video", targetAsset: "video" },
-  { label: "Creatives", icon: "image", targetAsset: "infographic" },
+  { label: "Detailing", icon: "image", targetAsset: "infographic" },
   { label: "Web", icon: "globe", targetAsset: "web" },
 ];
 

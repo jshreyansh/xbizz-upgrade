@@ -2,6 +2,7 @@
 
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { LogoMark } from "@/components/ui/logo-mark";
+import { PharmaSignature } from "@/components/ui/pharma-signature";
 
 const MARKETS = ["🇺🇸 FDA", "🇪🇺 EMA", "🇬🇧 MHRA", "🇯🇵 PMDA", "🇮🇳 CDSCO", "🇦🇺 TGA", "🇧🇷 ANVISA", "+33 more"];
 const STATS = [
@@ -27,15 +28,17 @@ export function SignInScreen() {
         className="relative z-[2] flex min-w-0 flex-[1.12] flex-col justify-between"
         style={{ padding: "54px 62px", color: "#fff" }}
       >
+        <PharmaSignature className="pointer-events-none absolute -right-24 top-1/2 h-[620px] w-[620px] -translate-y-1/2 text-white/80" />
+
         {/* Wordmark */}
-        <div>
+        <div className="relative z-10">
           <div style={{ display: "inline-flex", alignItems: "center", gap: 9, color: "#fff", fontSize: 22, fontWeight: 800, letterSpacing: "-1px" }}>
             <LogoMark size={24} />
             swish<span style={{ color: "var(--brand)" }}>X</span>
           </div>
         </div>
 
-        <div>
+        <div className="relative z-10">
           <div
             className="mb-[22px] inline-flex items-center gap-[9px] font-bold uppercase"
             style={{ fontSize: 11, letterSpacing: ".22em", color: "rgba(255,255,255,.62)" }}
@@ -141,7 +144,7 @@ export function SignInScreen() {
           </div>
         </div>
 
-        <p style={{ margin: 0, fontSize: 11.5, color: "rgba(255,255,255,.34)", letterSpacing: ".01em" }}>
+        <p className="relative z-10" style={{ margin: 0, fontSize: 11.5, color: "rgba(255,255,255,.34)", letterSpacing: ".01em" }}>
           Every claim retrieved from allow-listed sources, cited, and fact-checked — or dropped. SOC 2 Type II · GDPR · HIPAA-aligned
         </p>
       </div>
