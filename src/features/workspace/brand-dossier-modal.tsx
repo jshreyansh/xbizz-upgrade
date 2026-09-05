@@ -239,8 +239,34 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-card border border-[#d8deda] bg-card shadow-2xl overflow-hidden text-left">
 
         {/* ── Modal Header ── */}
-        <div className="flex items-center justify-between border-b border-hair-2 bg-canvas px-7 py-4 shrink-0">
-          <div className="flex items-center gap-3">
+        <div className="relative flex items-center justify-between overflow-hidden border-b border-hair-2 bg-canvas px-7 py-4 shrink-0">
+          {/* Decorative organic wave texture — purely visual, sits behind the
+              header content. Low-contrast coral/peach washes so the header
+              reads as designed rather than a flat bar. */}
+          <svg
+            aria-hidden
+            className="pointer-events-none absolute inset-0 h-full w-full select-none"
+            preserveAspectRatio="none"
+            viewBox="0 0 880 84"
+          >
+            <path d="M0,54 C110,20 220,78 340,50 C460,22 560,72 660,46 C740,26 810,44 880,34 L880,84 L0,84 Z" fill="var(--tint)" opacity="0.55" />
+            <path d="M0,64 C130,36 250,80 400,58 C520,40 620,74 740,54 C800,44 840,54 880,48 L880,84 L0,84 Z" fill="var(--tint-line)" opacity="0.4" />
+            <path d="M0,74 C160,58 320,84 480,68 C600,56 700,78 880,62 L880,84 L0,84 Z" fill="var(--brand-2)" opacity="0.1" />
+          </svg>
+
+          {/* Handwritten script accent — a small human touch tucked in the
+              header's quiet margin, echoing the homepage hero's own
+              "From science to impact" annotation. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute right-16 top-2.5 hidden select-none leading-none lg:block"
+            style={{ fontFamily: "var(--font-script)", color: "var(--brand-deep)", transform: "rotate(-3deg)" }}
+          >
+            <span className="block" style={{ fontSize: 15 }}>Better conversations.</span>
+            <span className="block" style={{ fontSize: 15 }}>Brighter outcomes.</span>
+          </span>
+
+          <div className="relative z-10 flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-xl bg-tint text-brand-deep border border-tint-line shadow-2xs">
               <Sparkles className="size-4.5 text-brand" />
             </div>
@@ -257,7 +283,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           <button
             type="button"
             onClick={onClose}
-            className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-black/5 hover:text-ink transition-colors cursor-pointer"
+            className="relative z-10 grid size-8 place-items-center rounded-full text-ink-3 hover:bg-black/5 hover:text-ink transition-colors cursor-pointer"
             aria-label="Close"
           >
             <X className="size-4.5" />
