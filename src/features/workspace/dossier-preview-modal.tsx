@@ -90,7 +90,7 @@ export function DossierPreviewModal({
                   {dossier.market}
                 </span>
                 <span className="text-label font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-md border border-ok-line flex items-center gap-1">
-                  <CheckCircle2 className="size-3" /> Verified SmPC & Label
+                  <CheckCircle2 className="size-3" /> Verified Label & Claims
                 </span>
               </div>
               <h2 className="text-display font-[850] text-ink mt-1 tracking-tight">

@@ -12,7 +12,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
  */
 export const RESEARCH_STEPS = [
   "Searching verified regulatory dossiers…",
-  "Pulling SmPC and FDA label references…",
+  "Pulling approved label references…",
   "Validating claims against approved sources…",
   "Assembling the cited dossier…",
 ] as const;

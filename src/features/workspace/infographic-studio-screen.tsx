@@ -154,8 +154,8 @@ const DEFAULT_PAGE_2: InfographicPageData = {
   },
   isi: {
     title: "Important Safety Information & Precautions",
-    content: "Initiation is not recommended in patients with eGFR < 25 mL/min/1.73m². Co-administration with strong CYP3A4 inhibitors should be monitored. Consult full CDSCO SmPC.",
-    citation: "CDSCO SmPC §2.1 & §5.2",
+    content: "Initiation is not recommended in patients with eGFR < 25 mL/min/1.73m². Co-administration with strong CYP3A4 inhibitors should be monitored. Consult full CDSCO Package Insert.",
+    citation: "CDSCO Package Insert §2.1 & §5.2",
   },
 };
 

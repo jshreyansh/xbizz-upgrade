@@ -395,7 +395,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             <div className="flex items-center gap-2 shrink-0 ml-2">
                               {brand.hasDossier && (
                                 <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-full border border-ok-line">
-                                  SmPC Ready
+                                  Dossier Ready
                                 </span>
                               )}
                               <span className="text-label font-bold text-brand flex items-center gap-0.5">

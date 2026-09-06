@@ -171,7 +171,7 @@ export function ResearchSourcesContent({
             {
               id: "swishx-only" as const,
               title: "Only SwishX approved dossiers",
-              desc: "Strictly uses verified SmPC and FDA prescribing label packages.",
+              desc: "Strictly uses verified prescribing label and regulatory dossier packages.",
             },
           ].map((opt) => {
             const isSelected = sourceGroundingMode === opt.id;
@@ -232,7 +232,7 @@ export function ResearchSourcesContent({
               </span>
             ) : (
               <span className="shrink-0 text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-full">
-                SmPC &amp; Label Active
+                Label &amp; Claims Active
               </span>
             )}
           </div>

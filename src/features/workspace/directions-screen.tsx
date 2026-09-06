@@ -654,10 +654,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     title="Research and Sources"
                     summary={
                       sourceGroundingMode === "both"
-                        ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
+                        ? `${brandName} Approved Dossier + ${uploadedDocs.length} custom files active`
                         : sourceGroundingMode === "my-sources"
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
-                        : `${brandName} SmPC Approved Dossier · 214 claims`
+                        : `${brandName} Approved Dossier · 214 claims`
                     }
                     status={research.researching ? `Researching · ${research.current}/${research.total}` : "From source"}
                     /* Open while the research runs — the progress plays inside

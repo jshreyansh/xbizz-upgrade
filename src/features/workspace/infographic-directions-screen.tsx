@@ -203,10 +203,10 @@ const CONTENT_PLAN_SECTIONS: ContentPlanSection[] = [
     body: "The opening line orients the reader: Velmora is a single once-daily oral dual kinase inhibitor whose approved licence spans moderate-to-severe plaque psoriasis, psoriatic arthritis, and systemic clinical clearance.",
     citations: [
       {
-        doc: "VELMORA™ Summary of Product Characteristics (SmPC) §1.1",
+        doc: "VELMORA™ Approved Prescribing Information §1.1",
         quote: "Velmora (tirzelamide) 200mg is a selective dual kinase inhibitor indicated for moderate-to-severe plaque psoriasis and multi-organ inflammatory management.",
         claimId: "Claim #104",
-        mlrRef: "CDSCO SmPC §1.1 · Approved 2026",
+        mlrRef: "CDSCO Package Insert §1.1 · Approved 2026",
       },
     ],
   },
@@ -238,7 +238,7 @@ const CONTENT_PLAN_SECTIONS: ContentPlanSection[] = [
   },
   {
     num: 3,
-    title: "Where the licence stops: eGFR ≥25",
+    title: "Where the license stops: eGFR ≥25",
     role: "how it is used · a comparison at one moment",
     body: "The one threshold a prescriber has to know at a first meeting: for chronic management, initiation is not recommended below eGFR 25 mL/min/1.73m². Patients already on treatment may continue 10 mg once daily under monitoring.",
     citations: [
@@ -572,10 +572,10 @@ export function InfographicDirectionsScreen() {
                     title="Research and Sources"
                     summary={
                       sourceGroundingMode === "both"
-                        ? `${brandName} SmPC Dossier + ${uploadedDocs.length} custom files active`
+                        ? `${brandName} Approved Dossier + ${uploadedDocs.length} custom files active`
                         : sourceGroundingMode === "my-sources"
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
-                        : `${brandName} SmPC Approved Dossier · 214 claims`
+                        : `${brandName} Approved Dossier · 214 claims`
                     }
                     status={research.researching ? `Researching · ${research.current}/${research.total}` : "From source"}
                     tone="done"

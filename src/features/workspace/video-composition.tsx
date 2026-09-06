@@ -341,7 +341,7 @@ export function DynamicSceneComposition({
           }}
         >
           <span>{brandName}™ · For US Healthcare Professionals Only</span>
-          <span>Approved SmPC §4.2 · ClearSkin-1 Trial</span>
+          <span>Approved Label §4.2 · ClearSkin-1 Trial</span>
         </div>
       </div>
     </div>
