@@ -46,7 +46,6 @@ import {
   ShieldCheck,
   Sliders,
   SlidersHorizontal,
-  Sparkles,
   Tag,
   Timer,
   Trash2,
@@ -70,8 +69,10 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
+import { PreflightPanel } from "@/features/workspace/preflight-panel";
 
 const evidenceConfig: Record<EvidenceState, { label: string; className: string }> = {
   approved: { label: "Approved", className: "bg-[#e5f1e9] text-[#2d6749]" },
@@ -906,7 +907,7 @@ export function StudioScreen() {
                 <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">Canvas Editor</span>
               </div>
             )}
-            {studioMode === "generating" && <span className="inline-flex items-center gap-1.5 rounded-full bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse"><Sparkles className="size-3 text-brand-deep animate-spin" /><span>Generating High-Res Video...</span></span>}
+            {studioMode === "generating" && <span className="inline-flex items-center gap-1.5 rounded-full bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse"><span>Generating High-Res Video...</span></span>}
             {studioMode === "review" && (
               <div className="flex items-center gap-1.5">
                 <button onClick={handleReturnToEditor} className="focus-ring flex items-center gap-1.5 rounded-lg border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"><Pencil className="size-3 text-brand" /> <span>Editor</span></button>
@@ -935,7 +936,7 @@ export function StudioScreen() {
 
             {isEditor && (
               <>
-                <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><Sparkles className="size-3.5" /> <span>Generate and Publish</span></Button>
+                <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><LogoMark size={14} /> <span>Generate and Publish</span></Button>
               </>
             )}
             {isReview && (
@@ -967,7 +968,7 @@ export function StudioScreen() {
             {isGenerating ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
                 <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-                  <Sparkles className="size-10 text-brand animate-pulse" />
+                  <LogoMark size={40} className="text-brand animate-pulse" />
                 </div>
 
                 <h3 className="text-display font-extrabold text-ink tracking-tight">
@@ -998,7 +999,7 @@ export function StudioScreen() {
                     {videoGenStep >= 5 ? (
                       <Check className="size-4.5 shrink-0 text-ok" strokeWidth={2.5} />
                     ) : (
-                      <Sparkles className="size-4.5 shrink-0 text-brand animate-spin" />
+                      <LogoMark size={18} className="shrink-0 text-brand animate-spin" />
                     )}
                     <span className="font-semibold">Final cloud master render ({selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"})</span>
                   </div>
@@ -1118,7 +1119,7 @@ export function StudioScreen() {
                                 {isGenerated ? (
                                   <span className="size-1.5 rounded-full bg-ok" />
                                 ) : (
-                                  <Sparkles className="size-2.5 text-brand animate-spin" />
+                                  <LogoMark size={10} className="text-brand animate-spin" />
                                 )}
                                 <span className="text-micro text-ink-3 font-medium">{sc.duration}s</span>
                               </div>
@@ -1265,7 +1266,7 @@ export function StudioScreen() {
                   <ActionBar
                     gutter={false}
                     icon={isScriptComplete
-                      ? <Sparkles className="size-4.5 text-brand shrink-0" />
+                      ? <LogoMark size={18} className="text-brand shrink-0" />
                       : <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />}
                     title={isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
                     action={
@@ -1280,7 +1281,7 @@ export function StudioScreen() {
                             : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
                         )}
                       >
-                        <Sparkles className="size-3.5 mr-1.5" /> <span>Generate Scenes</span>
+                        <LogoMark size={14} className="mr-1.5" /> <span>Generate Scenes</span>
                       </Button>
                     }
                   />
@@ -1480,7 +1481,7 @@ export function StudioScreen() {
                                     }}
                                     className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
                                   >
-                                    <Sparkles className="size-2.5" /> Replace
+ Replace
                                   </button>
                                 </div>
                               )}
@@ -1567,7 +1568,7 @@ export function StudioScreen() {
                                     }}
                                     className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
                                   >
-                                    <Sparkles className="size-2.5" /> Swap Clip
+ Swap Clip
                                   </button>
                                 </div>
                               )}
@@ -1634,7 +1635,7 @@ export function StudioScreen() {
                               }}
                               className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
                             >
-                              <Sparkles className="size-2.5" /> Rephrase
+ Rephrase
                             </button>
                           </div>
                         )}
@@ -2225,7 +2226,7 @@ export function StudioScreen() {
                     <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="size-6 rounded-full bg-brand/15 text-brand grid place-items-center shrink-0">
-                          <Sparkles className="size-3.5" />
+                          <LogoMark size={14} />
                         </div>
                         <div className="min-w-0">
                           <div className="text-label font-bold text-ink truncate">
@@ -2248,7 +2249,7 @@ export function StudioScreen() {
                             : "bg-black/10 text-black/40 cursor-not-allowed"
                         )}
                       >
-                        <Sparkles className="size-3 mr-1" />
+                        <LogoMark size={12} className="mr-1" />
                         <span>Generate Scenes</span>
                       </Button>
                     </div>
@@ -2298,7 +2299,7 @@ export function StudioScreen() {
                             className="inline-flex items-center gap-1.5 rounded-lg bg-card border border-brand/30 px-2 py-0.5 text-label font-bold text-brand-deep shadow-2xs"
                           >
                             {ctx.type === "element" ? (
-                              <Sparkles className="size-3 text-brand shrink-0" />
+                              <LogoMark size={12} className="text-brand shrink-0" />
                             ) : ctx.type === "scene" ? (
                               <Film className="size-3 text-brand shrink-0" />
                             ) : ctx.type === "file" ? (
@@ -2805,7 +2806,7 @@ export function StudioScreen() {
                       onClick={handleSaveAndCentralizeToChat}
                       className="w-full h-10 bg-brand hover:bg-brand-deep text-white font-extrabold text-body rounded-xl shadow-xs gap-2 cursor-pointer transition-transform active:scale-[0.98]"
                     >
-                      <Sparkles className="size-4" />
+                      <LogoMark size={16} />
                       <span>Save &amp; Apply with SwishX</span>
                     </Button>
                     <p className="text-caption text-ink-3 text-center mt-1.5">
@@ -2872,7 +2873,7 @@ export function StudioScreen() {
               <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
                 <div>
                   <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-                    <Sparkles className="size-3.5" /> Generation Engine
+                    <LogoMark size={14} /> Generation Engine
                   </div>
                   <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
                     Confirm Video Generation
@@ -2927,135 +2928,46 @@ export function StudioScreen() {
                   </div>
                 </div>
 
-                {/* Automated Quality & MLR Pre-Flight Verification Card */}
-                <div
-                  className={cn(
-                    "rounded-2xl border p-4 space-y-2.5 text-body transition",
-                    hasBlockers
-                      ? "border-warn-line bg-warn-bg/60 text-warn"
-                      : "border-ok-line bg-ok-bg/70 text-ok"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold">
-                      {hasBlockers ? (
-                        <AlertTriangle className="size-4 text-warn shrink-0" />
-                      ) : (
-                        <ShieldCheck className="size-4 text-ok shrink-0" />
-                      )}
-                      <span>Quality &amp; MLR Pre-Flight Verification</span>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full border px-2.5 py-0.5 text-caption font-extrabold",
-                        hasBlockers
-                          ? "bg-danger-bg text-danger border-danger"
-                          : "bg-ok-bg text-ok border-ok-line"
-                      )}
-                    >
-                      {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-label pt-1">
-                    {/* 1. MLR Check Card (With Blocker & Fix Action) */}
-                    {!mlrCheckResolved ? (
-                      <div className="flex flex-col justify-between bg-danger-bg/90 rounded-lg p-2.5 border border-danger text-danger">
-                        <div className="flex items-start gap-1.5">
-                          <AlertTriangle className="size-3.5 text-danger shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold block text-danger">MLR: Unverified Comparative Claim</span>
-                            <span className="text-caption text-danger/80 leading-tight block mt-0.5">
-                              Scene 3 claims superiority without citing head-to-head trial comparator.
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleFixMlrBlocker}
-                          className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-danger hover:bg-rose-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
-                        >
-                          <Sparkles className="size-2.5" />
-                          <span>Fix with SwishX →</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                        <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold block text-ink">24 Verified Claims Cited</span>
-                          <span className="text-caption text-ink-3">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 2. Quality Check Card (With Blocker & Fix Action) */}
-                    {!qaCheckResolved ? (
-                      <div className="flex flex-col justify-between bg-warn-bg/90 rounded-lg p-2.5 border border-warn-line text-warn">
-                        <div className="flex items-start gap-1.5">
-                          <AlertTriangle className="size-3.5 text-warn shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold block text-warn">Quality: Narration Density &gt;150 wpm</span>
-                            <span className="text-caption text-warn/80 leading-tight block mt-0.5">
-                              Scene 3 voiceover exceeds speech pacing limits with redundant words.
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleFixQaBlocker}
-                          className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-warn hover:bg-amber-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
-                        >
-                          <Sparkles className="size-2.5" />
-                          <span>Fix with SwishX →</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                        <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold block text-ink">Script Pacing &amp; Audio Sync</span>
-                          <span className="text-caption text-ink-3">Optimal 135 wpm speech cadence</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 3. Fair Balance & ISI Present */}
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-ink">Fair Balance &amp; ISI Present</span>
-                        <span className="text-caption text-ink-3">Contraindication footnotes verified</span>
-                      </div>
-                    </div>
-
-                    {/* 4. Medical Terminology */}
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-ink">Medical Terminology Clear</span>
-                        <span className="text-caption text-ink-3">Generic name &amp; dosing accurate</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Optional Auto-Fix helper */}
-                  {hasBlockers && (
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-hair mt-1">
-                      <span className="flex items-center gap-1.5">
-                        <Sparkles className="size-3 text-brand" />
-                        Want SwishX to auto-fix both blockers instantly?
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleAutoFixBoth}
-                        className="text-brand font-bold hover:underline cursor-pointer"
-                      >
-                        Auto-Fix Both ⚡
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {/* Automated Quality & MLR Pre-Flight Verification */}
+                <PreflightPanel
+                  onFixAll={handleAutoFixBoth}
+                  checks={[
+                    mlrCheckResolved
+                      ? {
+                          id: "mlr",
+                          source: "MLR",
+                          title: "24 verified claims cited",
+                          detail: "EMBRACE-3 §2.4 grounded (p < 0.001)",
+                        }
+                      : {
+                          id: "mlr",
+                          source: "MLR",
+                          severity: "blocker" as const,
+                          title: "Unverified comparative claim",
+                          detail: "Scene 3 claims superiority without citing a head-to-head trial comparator.",
+                          onFix: handleFixMlrBlocker,
+                        },
+                    qaCheckResolved
+                      ? {
+                          id: "qa",
+                          source: "Quality",
+                          title: "Script pacing and audio sync",
+                          detail: "Optimal 135 wpm speech cadence",
+                        }
+                      : {
+                          id: "qa",
+                          source: "Quality",
+                          severity: "warning" as const,
+                          title: "Narration density over 150 wpm",
+                          detail: "Scene 3 voiceover exceeds speech pacing limits with redundant words.",
+                          onFix: handleFixQaBlocker,
+                        },
+                    { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "Contraindication footnotes verified" },
+                    { id: "terms", source: "Quality", title: "Medical terminology clear", detail: "Generic name and dosing accurate" },
+                    { id: "refs", source: "MLR", title: "Reference list complete", detail: "All citations resolve to approved sources" },
+                    { id: "sync", source: "Quality", title: "Scene timing within budget", detail: "5 scenes fit the 60 second runtime" },
+                  ]}
+                />
 
                 {/* Informational Notice */}
                 <p className="text-body text-ink-3 leading-relaxed">
@@ -3095,7 +3007,7 @@ export function StudioScreen() {
                           : "bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
                       )}
                     >
-                      <Sparkles className="size-3.5" />
+                      <LogoMark size={14} />
                       <span>Confirm &amp; Generate Video</span>
                     </Button>
                   </div>

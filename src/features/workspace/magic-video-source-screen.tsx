@@ -6,7 +6,6 @@ import {
   ArrowRight,
   Check,
   Plus,
-  Sparkles,
   Users,
   Target,
   Layers,
@@ -742,7 +741,6 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
               /* Case B: Brand has NO Dossier Yet */
               <div className="rounded-[22px] border border-dashed border-warn-line bg-warn-bg/50 p-6 text-center space-y-3.5">
                 <div className="size-12 rounded-2xl bg-warn-bg border border-warn-line text-warn grid place-items-center mx-auto shadow-2xs">
-                  <Sparkles className="size-6 text-warn" />
                 </div>
                 <div>
                   <h4 className="text-subhead font-[850] text-ink">
@@ -757,7 +755,6 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                   onClick={() => router.push("/dossiers")}
                   className="bg-brand hover:bg-brand-deep text-white font-extrabold text-body h-10 px-5 rounded-xl shadow-xs gap-2 cursor-pointer transition-transform hover:-translate-y-0.5"
                 >
-                  <Sparkles className="size-4" />
                   <span>Upload or Create for {selectedBrand.name}</span>
                   <ArrowRight className="size-3.5" />
                 </Button>

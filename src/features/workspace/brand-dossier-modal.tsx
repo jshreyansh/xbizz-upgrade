@@ -10,7 +10,6 @@ import {
   Edit3,
   Lock,
   Search,
-  Sparkles,
   Square,
   Target,
   X,
@@ -268,7 +267,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           <div className="relative z-10 flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-xl bg-tint text-brand-deep border border-tint-line shadow-2xs">
-              <Sparkles className="size-4.5 text-brand" />
             </div>
             <div>
               <h2 className="text-title font-[850] text-ink tracking-tight">

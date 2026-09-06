@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
 import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
@@ -78,7 +78,6 @@ export default function NewDossierPathPage() {
             className="hover:-translate-y-0.5 transition-transform"
           >
             <span style={{ width: 46, height: 46, borderRadius: 14, display: "grid", placeItems: "center", background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff" }}>
-              <Sparkles size={21} />
             </span>
             <b style={{ fontSize: 15, fontWeight: 800, color: "var(--ink)" }}>Create</b>
             <span style={{ fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.45 }}>Auto-drafted from approved sources, yours to review and edit</span>

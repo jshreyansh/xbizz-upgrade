@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Paperclip, Send, Sparkles } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo-mark";
 
 /* ─── Shared, fully-client-side "assistant chat" building block, reused on
@@ -142,7 +142,6 @@ export function DossierAssistantPanel({
           </div>
           <p style={{ margin: "1px 0 0", fontSize: 11, color: "var(--ink-4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</p>
         </div>
-        <Sparkles size={14} color="var(--brand)" style={{ flexShrink: 0, opacity: 0.55 }} />
       </div>
 
       <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", padding: "14px 15px", display: "flex", flexDirection: "column", gap: 12 }}>

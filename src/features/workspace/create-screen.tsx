@@ -23,7 +23,6 @@ import {
   Redo2,
   Search,
   ShieldCheck,
-  Sparkles,
   Target,
   Undo2,
   Upload,

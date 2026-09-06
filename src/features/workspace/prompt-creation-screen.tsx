@@ -157,8 +157,7 @@ export function PromptCreationScreen() {
 
         {/* Heading */}
         <div className="text-center">
-          <span className="inline-flex items-center gap-1.5 text-label font-extrabold uppercase tracking-[.12em] text-brand-deep">
-            <Sparkles size={13} /> Turn ideas into impact
+          <span className="inline-flex items-center gap-1.5 text-label font-extrabold uppercase tracking-[.12em] text-brand-deep"> Turn ideas into impact
           </span>
           <h1 className="mx-auto mt-3 max-w-[16ch] text-hero-lg font-extrabold leading-[1.08] tracking-tight text-ink">
             What video would you like to create today?

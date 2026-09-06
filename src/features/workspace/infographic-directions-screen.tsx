@@ -29,7 +29,6 @@ import {
   RotateCcw,
   Send,
   ShieldCheck,
-  Sparkles,
   Target,
   Undo2,
   Upload,
@@ -45,6 +44,7 @@ import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspa
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
@@ -1227,7 +1227,7 @@ export function InfographicDirectionsScreen() {
           <div className="p-3.5 border-b border-hair bg-card shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-body font-bold text-brand">
-                <Sparkles className="size-3.5" />
+                <LogoMark size={14} />
                 <span>Direct with SwishX</span>
               </div>
               <span className="rounded-full bg-ok/15 text-ok px-2 py-0.5 text-micro font-bold">
@@ -1324,7 +1324,7 @@ export function InfographicDirectionsScreen() {
               <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className="size-6 rounded-full bg-ok text-white grid place-items-center shrink-0">
-                    <Sparkles className="size-3.5" />
+                    <LogoMark size={14} />
                   </div>
                   <div className="min-w-0">
                     <div className="text-label font-bold text-ink truncate">

@@ -10,7 +10,6 @@ import {
   ExternalLink,
   BookOpen,
   Layers,
-  Sparkles,
   AlertCircle,
   Building2,
 } from "lucide-react";
@@ -153,7 +152,6 @@ export function DossierPreviewModal({
           <div className="space-y-3 pt-4 border-t border-hair">
             <div className="flex items-center justify-between">
               <h3 className="text-body-lg font-[850] text-ink flex items-center gap-2">
-                <Sparkles className="size-4 text-brand" />
                 <span>Approved Clinical Claims & Evidence Summary</span>
               </h3>
               <span className="text-label font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-full">

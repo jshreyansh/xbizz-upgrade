@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Sparkles, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { useDossierDraftStore } from "@/features/dossiers/dossier-draft-store";
 
@@ -53,7 +53,6 @@ export function DossierListScreen({
             flexShrink: 0,
           }}
         >
-          <Sparkles size={16} />
           Create Brand Dossier
         </button>
       </div>

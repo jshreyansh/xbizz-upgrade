@@ -28,7 +28,6 @@ import {
   Send,
   Share2,
   ShieldCheck,
-  Sparkles,
   Type,
   Undo2,
   ZoomIn,
@@ -44,7 +43,9 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
+import { PreflightPanel } from "@/features/workspace/preflight-panel";
 
 export type CreativeStudioMode = "editor" | "generating" | "review";
 
@@ -491,7 +492,7 @@ export function InfographicStudioScreen() {
               )}
               {studioMode === "generating" && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse">
-                  <Sparkles className="size-3 text-brand-deep animate-spin" />
+                  <LogoMark size={12} className="text-brand-deep animate-spin" />
                   <span>Generating High-Res Creative...</span>
                 </span>
               )}
@@ -553,7 +554,7 @@ export function InfographicStudioScreen() {
                 onClick={() => setConfirmGenerateModalOpen(true)}
                 className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4.5 hover:scale-[1.02] transition-transform"
               >
-                <Sparkles className="size-3.5" />
+                <LogoMark size={14} />
                 <span>Generate and Publish</span>
               </Button>
             )}
@@ -694,7 +695,7 @@ export function InfographicStudioScreen() {
         studioMode === "generating" ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-subtle animate-in fade-in duration-300">
               <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-                <Sparkles className="size-10 text-brand animate-pulse" />
+                <LogoMark size={40} className="text-brand animate-pulse" />
               </div>
               <h3 className="text-display font-extrabold text-ink tracking-tight">
                 Generating High-Resolution Creative &amp; Proofs...
@@ -1011,7 +1012,7 @@ export function InfographicStudioScreen() {
                         size="sm"
                         className="h-7.5 px-3 rounded-lg text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02] gap-1"
                       >
-                        <Sparkles className="size-3 mr-0.5 fill-current" />
+                        <LogoMark size={12} className="mr-0.5 fill-current" />
                         <span>Generate and Publish</span>
                       </Button>
                     </div>
@@ -1416,7 +1417,7 @@ export function InfographicStudioScreen() {
               <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
                 <div>
                   <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-                    <Sparkles className="size-3.5" /> Generation Engine
+                    <LogoMark size={14} /> Generation Engine
                   </div>
                   <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
                     Confirm Creative Generation
@@ -1473,135 +1474,46 @@ export function InfographicStudioScreen() {
                   </div>
                 </div>
 
-                {/* Automated Quality & MLR Pre-Flight Verification Card */}
-                <div
-                  className={cn(
-                    "rounded-2xl border p-4 space-y-2.5 text-body transition",
-                    hasBlockers
-                      ? "border-warn-line bg-warn-bg/60 text-warn"
-                      : "border-ok-line bg-ok-bg/70 text-ok"
-                  )}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold">
-                      {hasBlockers ? (
-                        <AlertTriangle className="size-4 text-warn shrink-0" />
-                      ) : (
-                        <ShieldCheck className="size-4 text-ok shrink-0" />
-                      )}
-                      <span>Quality &amp; MLR Pre-Flight Verification</span>
-                    </div>
-                    <span
-                      className={cn(
-                        "rounded-full border px-2.5 py-0.5 text-caption font-extrabold",
-                        hasBlockers
-                          ? "bg-danger-bg text-danger border-danger"
-                          : "bg-ok-bg text-ok border-ok-line"
-                      )}
-                    >
-                      {hasBlockers ? `${6 - blockerCount}/6 Passed · ${blockerCount} Blockers` : "6/6 Passed · 0 Blockers"}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-label pt-1">
-                    {/* 1. MLR Check Card (With Blocker & Fix Action) */}
-                    {!mlrCheckResolved ? (
-                      <div className="flex flex-col justify-between bg-danger-bg/90 rounded-lg p-2.5 border border-danger text-danger">
-                        <div className="flex items-start gap-1.5">
-                          <AlertTriangle className="size-3.5 text-danger shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold block text-danger">MLR: Unverified Comparative Claim</span>
-                            <span className="text-caption text-danger/80 leading-tight block mt-0.5">
-                              Hero card compares efficacy without citing comparator placebo cohort.
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleFixMlrBlocker}
-                          className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-danger hover:bg-rose-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
-                        >
-                          <Sparkles className="size-2.5" />
-                          <span>Fix with SwishX →</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                        <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold block text-ink">24 Verified Claims Cited</span>
-                          <span className="text-caption text-ink-3">EMBRACE-3 §2.4 grounded (p &lt; 0.001)</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 2. Quality Check Card (With Blocker & Fix Action) */}
-                    {!qaCheckResolved ? (
-                      <div className="flex flex-col justify-between bg-warn-bg/90 rounded-lg p-2.5 border border-warn-line text-warn">
-                        <div className="flex items-start gap-1.5">
-                          <AlertTriangle className="size-3.5 text-warn shrink-0 mt-0.5" />
-                          <div>
-                            <span className="font-bold block text-warn">Quality: Subtitle Phrasing Redundancy</span>
-                            <span className="text-caption text-warn/80 leading-tight block mt-0.5">
-                              Tagline contains redundant descriptors and unstandardized dosing syntax.
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleFixQaBlocker}
-                          className="mt-2 inline-flex items-center gap-1 self-start rounded-md bg-warn hover:bg-amber-700 text-white text-caption font-bold px-2 py-0.5 shadow-2xs cursor-pointer transition"
-                        >
-                          <Sparkles className="size-2.5" />
-                          <span>Fix with SwishX →</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                        <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold block text-ink">Editorial &amp; Spelling Clear</span>
-                          <span className="text-caption text-ink-3">Nomenclature and syntax verified</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* 3. Fair Balance & ISI Present */}
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-ink">Fair Balance &amp; ISI Present</span>
-                        <span className="text-caption text-ink-3">eGFR ≥25 &amp; box warnings verified</span>
-                      </div>
-                    </div>
-
-                    {/* 4. Vector Layout & Contrast */}
-                    <div className="flex items-start gap-1.5 bg-white/70 rounded-lg p-2.5 border border-ok-line text-ok">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold block text-ink">Vector Layout &amp; Contrast</span>
-                        <span className="text-caption text-ink-3">300 DPI CMYK ready hierarchy</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Optional Auto-Fix helper */}
-                  {hasBlockers && (
-                    <div className="flex items-center justify-between p-2 rounded-xl bg-black/[0.04] text-label font-semibold text-ink-2 border border-hair mt-1">
-                      <span className="flex items-center gap-1.5">
-                        <Sparkles className="size-3 text-brand" />
-                        Want SwishX to auto-fix both blockers instantly?
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleAutoFixBoth}
-                        className="text-brand font-bold hover:underline cursor-pointer"
-                      >
-                        Auto-Fix Both ⚡
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {/* Automated Quality & MLR Pre-Flight Verification */}
+                <PreflightPanel
+                  onFixAll={handleAutoFixBoth}
+                  checks={[
+                    mlrCheckResolved
+                      ? {
+                          id: "mlr",
+                          source: "MLR",
+                          title: "24 verified claims cited",
+                          detail: "EMBRACE-3 §2.4 grounded (p < 0.001)",
+                        }
+                      : {
+                          id: "mlr",
+                          source: "MLR",
+                          severity: "blocker" as const,
+                          title: "Unverified comparative claim",
+                          detail: "Hero card compares efficacy without citing the comparator placebo cohort.",
+                          onFix: handleFixMlrBlocker,
+                        },
+                    qaCheckResolved
+                      ? {
+                          id: "qa",
+                          source: "Quality",
+                          title: "Editorial and spelling clear",
+                          detail: "Nomenclature and syntax verified",
+                        }
+                      : {
+                          id: "qa",
+                          source: "Quality",
+                          severity: "warning" as const,
+                          title: "Subtitle phrasing redundancy",
+                          detail: "Tagline contains redundant descriptors and unstandardised dosing syntax.",
+                          onFix: handleFixQaBlocker,
+                        },
+                    { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "eGFR ≥25 and box warnings verified" },
+                    { id: "vector", source: "Quality", title: "Vector layout and contrast", detail: "300 DPI CMYK ready hierarchy" },
+                    { id: "terms", source: "Quality", title: "Medical terminology clear", detail: "Generic name and dosing accurate" },
+                    { id: "refs", source: "MLR", title: "Reference list complete", detail: "All citations resolve to approved sources" },
+                  ]}
+                />
 
                 {/* Informational Notice */}
                 <p className="text-body text-ink-3 leading-relaxed">
@@ -1645,7 +1557,7 @@ export function InfographicStudioScreen() {
                           : "bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
                       )}
                     >
-                      <Sparkles className="size-3.5" />
+                      <LogoMark size={14} />
                       <span>Confirm &amp; Generate Creative</span>
                     </Button>
                   </div>

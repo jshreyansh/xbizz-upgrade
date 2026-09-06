@@ -33,7 +33,6 @@ import {
   Redo2,
   Send,
   ShieldCheck,
-  Sparkles,
   Target,
   Undo2,
   Users,
@@ -57,6 +56,7 @@ import { ResearchSourcesContent } from "@/features/workspace/research-sources-se
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
@@ -595,7 +595,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             {isGenerating ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
                 <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-                  <Sparkles className="size-10 text-brand animate-pulse" />
+                  <LogoMark size={40} className="text-brand animate-pulse" />
                 </div>
                 <h3 className="text-display font-extrabold text-ink tracking-tight">
                   Generating Clinical Script &amp; Storyboard...
@@ -1224,7 +1224,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
                           <div className="flex items-center gap-2">
                             <div className="size-7 rounded-lg bg-brand/20 border border-brand/40 flex items-center justify-center">
-                              <Sparkles className="size-3.5 text-brand" />
+
                             </div>
                             <div>
                               <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Estimated Project Cost</div>
@@ -1433,7 +1433,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           <div className="p-3.5 border-b border-hair bg-card shrink-0">
             <div className="rounded-xl border border-brand/15 bg-tint p-2.5">
               <div className="flex items-center gap-2 text-label font-bold text-brand-deep">
-                <Sparkles className="size-3.5 text-brand" />
+                <LogoMark size={14} className="text-brand" />
                 <span>Direct with SwishX</span>
                 <span className="ml-auto rounded-full bg-ok/15 text-ok px-2 py-0.5 text-micro font-bold">
                   {isGenerating ? "Synthesizing..." : "Online"}
@@ -1497,7 +1497,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className={cn("size-6 rounded-full grid place-items-center shrink-0", isPlanReady ? "bg-ok text-white" : "bg-black/10 text-ink-3")}>
-                  {isPlanReady ? <Check className="size-3.5 stroke-[3]" /> : <Sparkles className="size-3 text-brand" />}
+                  {isPlanReady ? <Check className="size-3.5 stroke-[3]" /> : <LogoMark size={12} className="text-brand" />}
                 </div>
                 <div className="min-w-0">
                   <div className="text-label font-bold text-ink truncate">

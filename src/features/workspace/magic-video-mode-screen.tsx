@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Film, UserCircle2, ArrowRight, Play, Check, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { Film, UserCircle2, ArrowRight, Play, Check, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 

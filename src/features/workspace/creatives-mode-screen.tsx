@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   Image as ImageIcon,
   Layers,
-  Sparkles,
   ArrowRight,
   Check,
   ChevronLeft,

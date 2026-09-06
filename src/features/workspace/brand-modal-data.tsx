@@ -33,13 +33,13 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShoppingCart,
-  Sparkles,
   Stethoscope,
   Target,
   TrendingUp,
   Truck,
   UserCheck,
   Users,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
