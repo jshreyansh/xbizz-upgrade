@@ -139,6 +139,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   const isInfographic = assetType === "infographic";
   const activeHeadlines = isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
+  // Longest by character count, which is what decides the wrap.
+  const longestHeadline = activeHeadlines.reduce((a, b) => (b.length > a.length ? b : a));
 
   const [sourceLibraryOpen, setSourceLibraryOpen] = useState(false);
   const [scenarioLibraryOpen, setScenarioLibraryOpen] = useState(false);
@@ -397,9 +399,30 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       {/* Center stage */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-14">
         <div className="w-full flex flex-col items-center space-y-5">
-          {/* ── Hero Heading ── */}
-          <div className="text-center max-w-[840px] min-h-[44px] sm:min-h-[50px] flex items-center justify-center">
-            <h1 className="text-display-lg sm:text-hero md:text-hero-lg font-[850] text-ink tracking-tight inline-flex items-center justify-center flex-wrap">
+          {/* ── Hero Heading ──
+              The headline types itself and cycles between phrases of very
+              different lengths, so its height changed mid-animation and shoved
+              the prompt box down the page. A fixed min-height cannot fix that:
+              how many lines the longest phrase takes depends on the width.
+
+              So the box is sized by an invisible copy of the LONGEST phrase —
+              cursor included, since that can tip a line into wrapping — and the
+              live headline is laid over it. The reserve is therefore always the
+              worst case at whatever width you are at, and nothing below moves. */}
+          <div className="relative w-full max-w-[840px] text-center">
+            <h1
+              aria-hidden
+              className="invisible text-display-lg sm:text-hero md:text-hero-lg font-[850] tracking-tight"
+            >
+              {longestHeadline}
+              <span className="inline-block w-[3px] ml-2" />
+            </h1>
+            {/* Top-aligned, not centred. Centring in a two-line reserve puts a
+                one-line phrase ~25px lower than a two-line one, so the headline
+                still jumped — including mid-typing, the moment a long phrase
+                wrapped. Anchored to the top, the first line never moves and the
+                second simply appears beneath it. */}
+            <h1 className="absolute inset-x-0 top-0 flex flex-wrap items-start justify-center text-display-lg sm:text-hero md:text-hero-lg font-[850] text-ink tracking-tight">
               <span>{displayedHeadline || "\u00A0"}</span>
               <span
                 className="inline-block w-[3px] h-[0.85em] bg-brand ml-2 rounded-full animate-cursor-blink align-middle shrink-0"
