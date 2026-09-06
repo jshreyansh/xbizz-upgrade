@@ -422,10 +422,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 still jumped — including mid-typing, the moment a long phrase
                 wrapped. Anchored to the top, the first line never moves and the
                 second simply appears beneath it. */}
-            <h1 className="absolute inset-x-0 top-0 flex flex-wrap items-start justify-center text-display-lg sm:text-hero md:text-hero-lg font-[850] text-ink tracking-tight">
-              <span>{displayedHeadline || "\u00A0"}</span>
+            {/* Plain text flow, NOT flex. As a flex container the caret was a
+                separate flex item, so flex-wrap dropped it onto a line of its
+                own below the text instead of trailing the last word. Inline,
+                it sits at the end of the final line and wraps with it. */}
+            <h1 className="absolute inset-x-0 top-0 text-center text-display-lg sm:text-hero md:text-hero-lg font-[850] text-ink tracking-tight">
+              {displayedHeadline || "\u00A0"}
               <span
-                className="inline-block w-[3px] h-[0.85em] bg-brand ml-2 rounded-full animate-cursor-blink align-middle shrink-0"
+                className="ml-2 inline-block h-[0.85em] w-[3px] rounded-full bg-brand align-middle animate-cursor-blink"
                 aria-hidden="true"
               />
             </h1>
