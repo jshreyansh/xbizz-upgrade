@@ -13,7 +13,7 @@ import { useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard, CheckRow } from "@/features/settings/settings-parts";
 import {
   PERMISSIONS, ROLES, ROLE_PERMISSIONS, SENIORITY,
-  type Member, type Role, type Seniority,
+  type Member, type PermissionId, type Role, type Seniority,
 } from "@/features/settings/settings-types";
 import { cn } from "@/lib/cn";
 
@@ -32,6 +32,9 @@ export function SectionTeam() {
   const [inviteEmails, setInviteEmails] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("Marketing");
   const [inviteSeniority, setInviteSeniority] = useState<Seniority>("Associate");
+  // Seeded from the role, then editable — same contract as an existing member,
+  // so what you grant at invite time is what they arrive with.
+  const [invitePerms, setInvitePerms] = useState<PermissionId[]>([...ROLE_PERMISSIONS["Marketing"]]);
   const [deactivating, setDeactivating] = useState<string | null>(null);
   const [reason, setReason] = useState("");
 
@@ -76,7 +79,7 @@ export function SectionTeam() {
   const sendInvites = () => {
     const emails = inviteEmails.split(/[\s,;]+/).map((e) => e.trim()).filter(Boolean);
     if (emails.length === 0) return;
-    s.sendInvites(emails, inviteRole, inviteSeniority);
+    s.sendInvites(emails, inviteRole, inviteSeniority, invitePerms);
     setInviteEmails("");
     setComposerOpen(false);
   };
@@ -126,7 +129,11 @@ export function SectionTeam() {
                 <div className="flex flex-wrap items-end gap-3">
                   <label className="flex flex-col gap-1">
                     <Text size="label" tone="muted" weight="semibold">Role</Text>
-                    <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as Role)}
+                    <select value={inviteRole} onChange={(e) => {
+                        const r = e.target.value as Role;
+                        setInviteRole(r);
+                        setInvitePerms([...ROLE_PERMISSIONS[r]]);
+                      }}
                       className="rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink cursor-pointer focus:border-brand focus:outline-none">
                       {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
@@ -138,6 +145,41 @@ export function SectionTeam() {
                       {SENIORITY.map((r) => <option key={r} value={r}>{r}</option>)}
                     </select>
                   </label>
+                </div>
+
+                <div>
+                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                    <Text size="label" tone="muted" weight="semibold">
+                      Permissions — {invitePerms.length} of {PERMISSIONS.length}
+                    </Text>
+                    {!sameSet(invitePerms, ROLE_PERMISSIONS[inviteRole]) && (
+                      <button
+                        type="button"
+                        onClick={() => setInvitePerms([...ROLE_PERMISSIONS[inviteRole]])}
+                        className="flex items-center gap-1 text-brand transition-colors hover:underline cursor-pointer"
+                      >
+                        <RotateCcw className="size-3" />
+                        <span className="text-label font-bold">Reset to {inviteRole} default</span>
+                      </button>
+                    )}
+                  </div>
+                  <Text size="caption" tone="subtle" className="mb-2 block">
+                    Seeded from {inviteRole}. Change them here and the invitee arrives with exactly this set.
+                  </Text>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {PERMISSIONS.map((p) => (
+                      <CheckRow
+                        key={p.id}
+                        checked={invitePerms.includes(p.id)}
+                        onChange={() => setInvitePerms((cur) =>
+                          cur.includes(p.id) ? cur.filter((x) => x !== p.id) : [...cur, p.id])}
+                        label={p.label}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
                   <Button size="sm" onClick={sendInvites} disabled={!inviteEmails.trim()}>
                     <Send className="size-3.5" /> Send invites
                   </Button>

@@ -6,7 +6,7 @@ import {
   type ApprovalChain, type BrandKit, type IntegrationLog, type IntegrationStatus,
   type Invoice, type JoinRequest, type Language, type Member, type NotificationPref,
   type PendingInvite, type PermissionId, type Pronunciation, type Role, type Seniority,
-  type TeamsChannel, type ThemeChoice, type TopUpEntry, type Typeface, type UsageEntry,
+  type ColorRole, type TeamsChannel, type ThemeChoice, type TopUpEntry, type Typeface, type UsageEntry,
 } from "@/features/settings/settings-types";
 
 /**
@@ -19,7 +19,7 @@ import {
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 const MEMBERS: Member[] = [
-  { id: "m1", name: "Maya Kapoor",    email: "maya.kapoor@velmora.com",  role: "Marketing",           seniority: "Lead",      permissions: ROLE_PERMISSIONS["Marketing"],           status: "active", lastActive: "2 minutes ago" },
+  { id: "m1", name: "Maya Kapoor",    email: "maya.kapoor@velmora.com",  role: "Marketing",           seniority: "Lead",      permissions: [...ROLE_PERMISSIONS["Marketing"], "admin"],           status: "active", lastActive: "2 minutes ago" },
   { id: "m2", name: "Rohan Mehta",    email: "rohan.mehta@velmora.com",  role: "Design",              seniority: "Manager",   permissions: ROLE_PERMISSIONS["Design"],              status: "active", lastActive: "1 hour ago" },
   { id: "m3", name: "Dr. Anita Rao",  email: "anita.rao@velmora.com",    role: "Medical reviewer",    seniority: "Director",  permissions: ROLE_PERMISSIONS["Medical reviewer"],    status: "active", lastActive: "Yesterday" },
   { id: "m4", name: "Sam Whitfield",  email: "sam.w@velmora.com",        role: "Legal reviewer",      seniority: "Director",  permissions: ROLE_PERMISSIONS["Legal reviewer"],      status: "active", lastActive: "3 days ago" },
@@ -117,10 +117,11 @@ const INVOICES: Invoice[] = [
 ];
 
 interface SettingsState {
-  /** Whether the signed-in persona is an admin. Drives which tabs render. */
+  /** Derived from the current persona's permissions — never set on its own. */
   isAdmin: boolean;
   currentUserId: string;
-  setIsAdmin: (v: boolean) => void;
+  /** Switch persona. Drives which tabs render and whether chains are editable. */
+  setCurrentUser: (memberId: string) => void;
 
   // 1 — workspace profile
   workspaceName: string;
@@ -137,7 +138,7 @@ interface SettingsState {
   setTypefaces: (t: Typeface[]) => void;
   addTypeface: (name: string) => void;
   removeTypeface: (id: string) => void;
-  setBrandColor: (hex: string) => void;
+  setBrandColor: (role: ColorRole, hex: string) => void;
 
   // 3 — user profile
   firstName: string; lastName: string; email: string; phone: string;
@@ -154,7 +155,7 @@ interface SettingsState {
   toggleMemberPermission: (id: string, p: PermissionId) => void;
   resetMemberPermissions: (id: string) => void;
   setMemberStatus: (id: string, status: Member["status"], reason?: string) => void;
-  sendInvites: (emails: string[], role: Role, seniority: Seniority) => void;
+  sendInvites: (emails: string[], role: Role, seniority: Seniority, permissions: PermissionId[]) => void;
   revokeInvite: (id: string) => void;
   resolveJoinRequest: (id: string, accept: boolean, role?: Role, seniority?: Seniority) => void;
 
@@ -214,7 +215,18 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   isAdmin: true,
   currentUserId: "m1",
-  setIsAdmin: (isAdmin) => set({ isAdmin }),
+  setCurrentUser: (memberId) => set((s) => {
+    const m = s.members.find((x) => x.id === memberId);
+    if (!m) return s;
+    return {
+      currentUserId: memberId,
+      isAdmin: m.permissions.includes("admin"),
+      // The profile tab shows the persona you are viewing as.
+      firstName: m.name.split(" ").slice(0, -1).join(" ") || m.name,
+      lastName: m.name.split(" ").slice(-1)[0] ?? "",
+      email: m.email,
+    };
+  }),
 
   workspaceName: "Velmora Commercial",
   legalEntity: "Velmora Therapeutics Inc.",
@@ -238,8 +250,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       { id: "tf2", name: "Inter",         source: "google" },
       { id: "tf3", name: "IBM Plex Mono", source: "google" },
     ],
-    brandColor: "#fd4816",
-    accents: ["#12784a", "#b82f0c"],
+    colors: {
+      primary: "#fd4816",
+      accent: "#b82f0c",
+      callout: "#fff1ec",
+      text: "#0a0d14",
+    },
   },
   setLogo: (slot, file) => set((s) => {
     const logos = { ...s.brandKit.logos };
@@ -255,7 +271,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   removeTypeface: (id) => set((s) => ({
     brandKit: { ...s.brandKit, typefaces: s.brandKit.typefaces.filter((t) => t.id !== id) },
   })),
-  setBrandColor: (brandColor) => set((s) => ({ brandKit: { ...s.brandKit, brandColor } })),
+  setBrandColor: (role, hex) => set((s) => ({
+    brandKit: { ...s.brandKit, colors: { ...s.brandKit.colors, [role]: hex } },
+  })),
 
   firstName: "Maya",
   lastName: "Kapoor",
@@ -273,8 +291,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   members: MEMBERS,
   invites: [
-    { id: "iv1", email: "nadia.hassan@velmora.com", role: "Marketing",   seniority: "Manager",   invitedAt: "2 days ago" },
-    { id: "iv2", email: "tom.becker@velmora.com",   role: "Field Force", seniority: "Associate", invitedAt: "5 days ago" },
+    { id: "iv1", email: "nadia.hassan@velmora.com", role: "Marketing",   seniority: "Manager",   permissions: [...ROLE_PERMISSIONS["Marketing"]],   invitedAt: "2 days ago" },
+    // Invited without Studio access — a deliberate narrowing at invite time.
+    { id: "iv2", email: "tom.becker@velmora.com",   role: "Field Force", seniority: "Associate", permissions: ["analytics"],                        invitedAt: "5 days ago" },
   ],
   joinRequests: [
     { id: "jr1", name: "Elena Sokolova", email: "elena.s@velmora.com", requestedAt: "Yesterday" },
@@ -299,8 +318,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setMemberStatus: (id, status, reason) => set((s) => ({
     members: s.members.map((m) => (m.id === id ? { ...m, status, deactivationReason: status === "deactivated" ? reason : undefined } : m)),
   })),
-  sendInvites: (emails, role, seniority) => set((s) => ({
-    invites: [...s.invites, ...emails.map((email) => ({ id: uid(), email, role, seniority, invitedAt: "Just now" }))],
+  sendInvites: (emails, role, seniority, permissions) => set((s) => ({
+    invites: [...s.invites, ...emails.map((email) => ({
+      id: uid(), email, role, seniority, permissions: [...permissions], invitedAt: "Just now",
+    }))],
   })),
   revokeInvite: (id) => set((s) => ({ invites: s.invites.filter((i) => i.id !== id) })),
   resolveJoinRequest: (id, accept, role = "Read only", seniority = "Associate") => set((s) => {

@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Trash2, Upload, X } from "lucide-react";
+import { Trash2, Upload, X } from "lucide-react";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
 import { Stack } from "@/components/ui/stack";
 import { Field } from "@/components/ui/field";
-import { Button } from "@/components/ui/button";
 import { SortableList } from "@/components/patterns/sortable-list";
+import { FontPicker } from "@/features/settings/font-picker";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard, SaveBar, useDirty } from "@/features/settings/settings-parts";
-import type { LogoSlot } from "@/features/settings/settings-types";
+import { COLOR_ROLES, type LogoSlot } from "@/features/settings/settings-types";
 import { cn } from "@/lib/cn";
 
 /**
@@ -40,16 +39,6 @@ const MAX_TYPEFACES = ROLE_LABELS.length;
 export function SectionBrandKit() {
   const s = useSettingsStore();
   const { dirty, touch, clear } = useDirty();
-  const [newFace, setNewFace] = useState("");
-
-  const add = () => {
-    const name = newFace.trim();
-    if (!name || s.brandKit.typefaces.length >= MAX_TYPEFACES) return;
-    s.addTypeface(name);
-    setNewFace("");
-    touch();
-  };
-
   return (
     <Stack gap={4}>
       <SettingsCard
@@ -156,17 +145,12 @@ export function SectionBrandKit() {
           )}
 
           {s.brandKit.typefaces.length < MAX_TYPEFACES ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <Field
-                value={newFace}
-                onChange={(e) => setNewFace(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-                placeholder="Typeface name, e.g. Sofia Pro"
-                className="max-w-xs text-body"
+            <div className="flex flex-wrap items-center gap-3">
+              <FontPicker
+                exclude={s.brandKit.typefaces.map((t) => t.name)}
+                onPick={(name) => { s.addTypeface(name); touch(); }}
+                placeholder={`Add the ${ROLE_LABELS[s.brandKit.typefaces.length]?.toLowerCase() ?? "next"} typeface`}
               />
-              <Button size="sm" variant="secondary" onClick={add} disabled={!newFace.trim()}>
-                <Plus className="size-3.5" /> Add
-              </Button>
               <Text size="label" tone="subtle">
                 {MAX_TYPEFACES - s.brandKit.typefaces.length} slot
                 {MAX_TYPEFACES - s.brandKit.typefaces.length === 1 ? "" : "s"} left
@@ -181,29 +165,48 @@ export function SectionBrandKit() {
       </SettingsCard>
 
       <SettingsCard
-        title="Colours"
-        description="Checked against both grounds — a brand colour that fails on dark is a compliance problem in a video, not a taste problem."
+        title="Palette"
+        description="Four roles, named for where each colour lands. Contrast is checked against both grounds."
       >
-        <div className="flex flex-wrap items-end gap-4">
-          <div>
-            <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">Brand colour</Text>
-            <div className="flex items-center gap-2">
-              <span
-                aria-hidden
-                className="size-9 shrink-0 rounded-control border border-hair"
-                style={{ background: s.brandKit.brandColor }}
-              />
-              <Field
-                value={s.brandKit.brandColor}
-                onChange={(e) => { s.setBrandColor(e.target.value); touch(); }}
-                className="w-28 text-body font-mono"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Chip tone="ok" size="sm">Passes on light</Chip>
-            <Chip tone="warn" size="sm">Check on dark</Chip>
-          </div>
+        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+          {COLOR_ROLES.map((role) => {
+            const value = s.brandKit.colors[role.id];
+            return (
+              <div key={role.id}>
+                <Text size="caption" tone="subtle" className="mb-1.5 block uppercase tracking-wider">
+                  {role.label}
+                </Text>
+                <div className="flex items-center gap-2">
+                  <label
+                    className="relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-control border border-hair"
+                    style={{ background: value }}
+                  >
+                    <span className="sr-only">Pick {role.label}</span>
+                    <input
+                      type="color"
+                      value={value}
+                      onChange={(e) => { s.setBrandColor(role.id, e.target.value); touch(); }}
+                      className="absolute inset-0 cursor-pointer opacity-0"
+                    />
+                  </label>
+                  <Field
+                    value={value}
+                    onChange={(e) => { s.setBrandColor(role.id, e.target.value); touch(); }}
+                    placeholder="#RRGGBB"
+                    className="text-body font-mono"
+                  />
+                </div>
+                <Text size="caption" tone="subtle" className="mt-1 block">{role.trailing}</Text>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-hair pt-4">
+          <Text size="label" tone="muted" weight="semibold">Contrast</Text>
+          <Chip tone="ok" size="sm">Primary passes on light</Chip>
+          <Chip tone="warn" size="sm">Primary needs checking on dark</Chip>
+          <Chip tone="ok" size="sm">Text passes on callout</Chip>
         </div>
       </SettingsCard>
 

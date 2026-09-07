@@ -58,6 +58,8 @@ export interface PendingInvite {
   email: string;
   role: Role;
   seniority: Seniority;
+  /** What they arrive with — chosen at invite time, not on first sign-in. */
+  permissions: PermissionId[];
   invitedAt: string;
 }
 
@@ -100,12 +102,20 @@ export type LogoSlot =
   | "mark-light" | "mark-dark"
   | "animated" | "favicon";
 
+/** The four palette roles. Named for where each one lands, not by hue. */
+export const COLOR_ROLES = [
+  { id: "primary", label: "Primary",            trailing: "Buttons, links, the brand mark" },
+  { id: "accent",  label: "Accent",             trailing: "Highlights and secondary emphasis" },
+  { id: "callout", label: "Callout background", trailing: "Tinted panels and evidence blocks" },
+  { id: "text",    label: "Text",               trailing: "Body copy on light grounds" },
+] as const;
+export type ColorRole = (typeof COLOR_ROLES)[number]["id"];
+
 export interface BrandKit {
   logos: Partial<Record<LogoSlot, { fileName: string; size: string }>>;
   /** Order IS the role: 0 primary, 1 secondary, 2 tertiary. */
   typefaces: Typeface[];
-  brandColor: string;
-  accents: string[];
+  colors: Record<ColorRole, string>;
 }
 
 export interface NotificationPref {
