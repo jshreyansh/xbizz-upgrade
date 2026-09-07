@@ -15,6 +15,9 @@ import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { SidePanel, SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { Sheet } from "@/components/patterns/sheet";
+import { TabNav } from "@/components/patterns/tab-nav";
+import { DataTable } from "@/components/patterns/data-table";
+import { SortableList } from "@/components/patterns/sortable-list";
 import { ScaleRow, SwatchRow } from "./token-table";
 
 /**
@@ -41,6 +44,13 @@ const ACCENTS = ["--color-accent-blue", "--color-accent-violet", "--color-accent
 
 const TYPE = ["--text-micro", "--text-caption", "--text-label", "--text-body", "--text-body-lg",
   "--text-subhead", "--text-title", "--text-display", "--text-display-lg", "--text-hero", "--text-hero-lg"];
+
+interface DemoRow { name: string; role: string; active: boolean; credits: number }
+const DEMO_ROWS: DemoRow[] = [
+  { name: "Maya Kapoor", role: "Marketing", active: true, credits: 12500 },
+  { name: "Rohan Mehta", role: "Design", active: true, credits: 8400 },
+  { name: "Marco Duarte", role: "Field Force", active: false, credits: 0 },
+];
 
 const RADII = ["--radius-glyph", "--radius-chip", "--radius-control", "--radius-panel", "--radius-card"];
 const SHADOWS = ["--shadow-hair", "--shadow-soft", "--shadow-float", "--shadow-modal",
@@ -80,6 +90,8 @@ export default function DesignSystemPage() {
   const [otherOpen, setOtherOpen] = useState(false);
   const [demoPanelWidth, setDemoPanelWidth] = useState(SIDE_PANEL_DEFAULT_WIDTH);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [demoTab, setDemoTab] = useState("one");
+  const [demoOrder, setDemoOrder] = useState(["Sofia Pro", "Inter", "IBM Plex Mono"]);
   const [custom, setCustom] = useState("");
 
   return (
@@ -369,6 +381,77 @@ export default function DesignSystemPage() {
                   ))}
                 </Stack>
               </Sheet>
+            </Stack>
+
+            <Stack gap={2} className="mt-6">
+              <Label size="micro">TabNav — segmented, for different things rather than filtered views</Label>
+              <Text size="caption" tone="muted">
+                The first tab component in the repo; nothing rendered <code className="px-1">role=&quot;tablist&quot;</code>
+                before settings needed one. Segmented rather than underlined on purpose: an underline
+                says &ldquo;same list, filtered&rdquo;, a segment says &ldquo;somewhere else&rdquo;.
+                Concentric by construction &mdash; an 18px shell with a 4px gutter around 14px tabs,
+                which is the radius scale&apos;s own step. It scrolls rather than wraps, because nine
+                tabs do not fit at 1280px and wrapping makes the row&apos;s height depend on the viewport.
+              </Text>
+              <TabNav
+                ariaLabel="Demo"
+                activeId={demoTab}
+                onSelect={setDemoTab}
+                items={[
+                  { id: "one", label: "Workspace" },
+                  { id: "two", label: "Team", badge: 10 },
+                  { id: "three", label: "Billing & usage" },
+                  { id: "four", label: "Integrations" },
+                ]}
+              />
+            </Stack>
+
+            <Stack gap={2} className="mt-6">
+              <Label size="micro">DataTable — one shape, eight tables</Label>
+              <Text size="caption" tone="muted">
+                Members, approval chains, two integration logs, usage, top-ups, invoices and
+                pronunciations are the same table. Column-driven rather than children-driven, so every
+                one gets the same header, empty and loading treatment without each caller remembering
+                to build them. <code className="px-1">secondary</code> hides a column below sm;
+                <code className="px-1">numeric</code> right-aligns and applies tabular figures.
+              </Text>
+              <DataTable
+                columns={[
+                  { key: "name", header: "Person", cell: (r: DemoRow) => (
+                      <Text size="body" weight="semibold" className="text-ink">{r.name}</Text>
+                    ) },
+                  { key: "role", header: "Role", cell: (r: DemoRow) => <Chip tone="brand" size="xs">{r.role}</Chip> },
+                  { key: "status", header: "Status", cell: (r: DemoRow) => (
+                      <Chip tone={r.active ? "ok" : "default"} size="xs">{r.active ? "Active" : "Deactivated"}</Chip>
+                    ) },
+                  { key: "credits", header: "Credits", numeric: true, secondary: true,
+                    cell: (r: DemoRow) => r.credits.toLocaleString() },
+                ]}
+                rows={DEMO_ROWS}
+                rowKey={(r) => r.name}
+              />
+            </Stack>
+
+            <Stack gap={2} className="mt-6">
+              <Label size="micro">SortableList — where the order carries the meaning</Label>
+              <Text size="caption" tone="muted">
+                Two uses: brand-kit typefaces, where position IS the role, and approval stages, where
+                position is the sequence. Native drag-and-drop rather than a library &mdash; the lists
+                are short, and a drag library would be the largest dependency in the app for two call
+                sites. Up and down buttons sit beside the grip by design, not as a fallback: drag is
+                unreachable by keyboard, and in both cases the order means something.
+              </Text>
+              <SortableList
+                items={demoOrder}
+                itemKey={(x) => x}
+                onReorder={setDemoOrder}
+                renderItem={(x, i) => (
+                  <div className="flex items-center gap-2">
+                    <Chip tone={i === 0 ? "brand" : "default"} size="xs">{["Primary", "Secondary", "Tertiary"][i] ?? `#${i + 1}`}</Chip>
+                    <Text size="body" weight="semibold">{x}</Text>
+                  </div>
+                )}
+              />
             </Stack>
           </Section>
 
