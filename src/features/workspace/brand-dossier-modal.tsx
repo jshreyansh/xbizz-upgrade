@@ -13,6 +13,7 @@ import {
   Square,
   Target,
   X,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -235,7 +236,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       role="dialog" aria-modal="true"
     >
-      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-card border border-[#d8deda] bg-card shadow-2xl overflow-hidden text-left">
+      <div className="relative flex min-h-[580px] max-h-[92vh] w-full max-w-[880px] flex-col rounded-card border border-hair-2 bg-card shadow-2xl overflow-hidden text-left">
 
         {/* ── Modal Header ── */}
         <div className="relative flex items-center justify-between overflow-hidden border-b border-hair-2 bg-canvas px-7 py-4 shrink-0">
@@ -267,6 +268,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
           <div className="relative z-10 flex items-center gap-3">
             <div className="grid size-9 place-items-center rounded-xl bg-tint text-brand-deep border border-tint-line shadow-2xs">
+              <Plus className="size-4.5" strokeWidth={2.5} />
             </div>
             <div>
               <h2 className="text-title font-[850] text-ink tracking-tight">
@@ -295,8 +297,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           <div className={cn(
             "rounded-panel border transition-all duration-200",
             stage === "focus"
-              ? "border-brand/40 bg-[#f9faf9] shadow-xs p-5"
-              : "border-[#e5ebe6] bg-card hover:border-[#ccd6ce] p-3.5"
+              ? "border-brand/20 bg-[#f9faf9] shadow-xs p-5"
+              : "border-hair bg-card hover:border-hair-3 p-3.5"
           )}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -476,8 +478,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             <div className={cn(
               "rounded-panel border transition-all duration-200",
               stage === "audience"
-                ? "border-brand/40 bg-[#f9faf9] shadow-xs p-5"
-                : "border-[#e5ebe6] bg-card hover:border-[#ccd6ce] p-3.5"
+                ? "border-brand/20 bg-[#f9faf9] shadow-xs p-5"
+                : "border-hair bg-card hover:border-hair-3 p-3.5"
             )}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -608,7 +610,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             <div className="space-y-4 animate-in fade-in duration-200">
               
               {/* 3. Output Shape (ONLY 3: Landscape, Portrait, Square with Clean Geometric Icons) */}
-              <div className="rounded-panel border border-[#e5ebe6] bg-card p-4 space-y-2.5 shadow-2xs">
+              <div className="rounded-panel border border-hair bg-card p-4 space-y-2.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
@@ -647,7 +649,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               </div>
 
               {/* 4. Clinical Focus Topics (Audience-tailored Hero Cards) */}
-              <div className="rounded-panel border border-[#e5ebe6] bg-card p-5 space-y-3 shadow-2xs">
+              <div className="rounded-panel border border-hair bg-card p-5 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">

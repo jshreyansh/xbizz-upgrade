@@ -890,7 +890,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                     "group flex items-center justify-between gap-3.5 rounded-2xl border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",
                     isSelected
                       ? "border-brand bg-tint/70 ring-2 ring-brand/20 shadow-xs"
-                      : "border-hair bg-card hover:border-brand/80 hover:bg-[#fffcfb]"
+                      : "border-hair bg-card hover:border-brand hover:bg-[#fffcfb]"
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -1009,7 +1009,7 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
                 {list.map((scenario) => {
                   const active = scenario.id === currentScenarioId;
                   return (
-                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-[#adc4b8] bg-ok-bg" : "border-hair bg-card hover:border-hair-3")}>
+                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-hair-3 bg-ok-bg" : "border-hair bg-card hover:border-hair-3")}>
                       <div className="flex items-center justify-between">
                         <b className="text-body-lg font-semibold">{scenario.label}</b>
                         {active && <span className="rounded-full bg-brand px-2 py-0.5 text-caption font-bold text-white">Active</span>}
@@ -1069,7 +1069,7 @@ function SourceLibraryModal({
           {sources.map((source) => {
             const active = selectedIds.includes(source.id);
             return (
-              <div key={source.id} className={cn("flex items-center justify-between rounded-control border p-3 transition", active ? "border-[#adc4b8] bg-ok-bg" : "border-hair bg-card")}>
+              <div key={source.id} className={cn("flex items-center justify-between rounded-control border p-3 transition", active ? "border-hair-3 bg-ok-bg" : "border-hair bg-card")}>
                 <div className="min-w-0 flex-1 pr-3">
                   <b className="block truncate text-body-lg font-semibold">{source.name.replace(/DERMORA/g, brandName)}</b>
                   <span className="block truncate text-body text-ink-3">{source.detail.replace(/DERMORA/g, brandName)}</span>

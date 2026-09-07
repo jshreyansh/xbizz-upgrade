@@ -830,7 +830,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
                                 selected
                                   ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
-                                  : "border-[#e4e9e6] bg-card opacity-85 hover:opacity-100 hover:border-hair-3"
+                                  : "border-hair bg-card opacity-85 hover:opacity-100 hover:border-hair-3"
                               )}
                             >
                               <div>
@@ -843,7 +843,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                       "grid size-5 shrink-0 place-items-center rounded-full border transition",
                                       selected
                                         ? "border-brand bg-brand text-white"
-                                        : "border-[#d6ddd9] bg-card"
+                                        : "border-hair-2 bg-card"
                                     )}
                                   >
                                     {selected && <Check className="size-3" strokeWidth={3.5} />}
@@ -959,7 +959,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             };
                             setProductMediaList((prev) => [...prev, sampleItem]);
                           }}
-                          className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand/40 bg-card p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
+                          className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand/20 bg-card p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
                         >
                           <div className="grid size-8 place-items-center rounded-full bg-tint text-brand">
                             <Plus className="size-4" />
@@ -1223,7 +1223,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       <div className="rounded-[16px] bg-[#121614] border border-white/10 p-4 text-white shadow-md">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
                           <div className="flex items-center gap-2">
-                            <div className="size-7 rounded-lg bg-brand/20 border border-brand/40 flex items-center justify-center">
+                            <div className="size-7 rounded-lg bg-brand/20 border border-brand/20 flex items-center justify-center">
 
                             </div>
                             <div>
@@ -1431,7 +1431,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         <>
           {/* Chat Top Online Banner */}
           <div className="p-3.5 border-b border-hair bg-card shrink-0">
-            <div className="rounded-xl border border-brand/15 bg-tint p-2.5">
+            <div className="rounded-xl border border-brand/20 bg-tint p-2.5">
               <div className="flex items-center gap-2 text-label font-bold text-brand-deep">
                 <LogoMark size={14} className="text-brand" />
                 <span>Direct with SwishX</span>
@@ -1716,7 +1716,7 @@ function PlanSection({
               ? "bg-warn-bg text-warn border-warn-line"
               : tone === "done"
               ? "bg-tint text-brand-deep border-tint-line"
-              : "bg-ok-bg text-ink-3 border-[#e2e8e4]"
+              : "bg-ok-bg text-ink-3 border-hair"
           )}
         >
           {status}
@@ -1773,8 +1773,8 @@ function DecisionRow({
       className={cn(
         "squircle-panel overflow-hidden border transition-[opacity,border-color,box-shadow,background-color] duration-300 ease-entrance rounded-control",
         editing
-          ? "border-[#b7c9c0] bg-[#fbfdfc] opacity-100 shadow-soft"
-          : "border-[#e5e9e6] bg-card opacity-75 hover:opacity-100"
+          ? "border-hair-3 bg-[#fbfdfc] opacity-100 shadow-soft"
+          : "border-hair bg-card opacity-75 hover:opacity-100"
       )}
     >
       <div className="flex min-h-[58px] items-center gap-3 px-3.5">
@@ -2142,7 +2142,7 @@ function PresenterLibrary({
                 onClick={() => onSelect(person.name)}
                 className={cn(
                   "flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
-                  active ? "border-brand bg-tint ring-1 ring-brand" : "border-hair-2 hover:border-[#c8d4ce]"
+                  active ? "border-brand bg-tint ring-1 ring-brand" : "border-hair-2 hover:border-hair-3"
                 )}
               >
                 <FacePhoto person={person} className="size-14 rounded-control" />

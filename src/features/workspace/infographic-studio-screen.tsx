@@ -760,11 +760,11 @@ export function InfographicStudioScreen() {
                   <div
                     onClick={() => studioMode === "editor" && handleSelectBlock("heroStat")}
                     className={cn(
-                      "p-4 rounded-2xl bg-[#fff7f4] border border-[#ffdbce] shadow-2xs transition relative group",
+                      "p-4 rounded-2xl bg-[#fff7f4] border border-tint-line shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
                       selectedBlockId === "heroStat" && studioMode === "editor"
                         ? "ring-2 ring-brand shadow-sm bg-card"
-                        : "hover:border-brand/60"
+                        : "hover:border-brand"
                     )}
                   >
                     <div className="flex items-center justify-between mb-1">
@@ -1314,7 +1314,7 @@ export function InfographicStudioScreen() {
                   {CLAIMS_LIST.map((c) => (
                     <div
                       key={c.id}
-                      className="rounded-xl border border-hair bg-canvas p-3 text-left hover:border-brand/40 transition-colors"
+                      className="rounded-xl border border-hair bg-canvas p-3 text-left hover:border-brand/20 transition-colors"
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-micro font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-md">

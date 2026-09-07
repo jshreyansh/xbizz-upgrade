@@ -25,7 +25,7 @@ export function VideoWizardHeader({
   const progressPercent = (currentStep / 3) * 100;
 
   return (
-    <header className="sticky top-0 z-40 relative flex h-[62px] w-full shrink-0 items-center justify-between bg-card px-6 sm:px-8 border-b border-[#eef0eb] shadow-hair transition-colors duration-300">
+    <header className="sticky top-0 z-40 relative flex h-[62px] w-full shrink-0 items-center justify-between bg-card px-6 sm:px-8 border-b border-hair shadow-hair transition-colors duration-300">
       {/* Left: Back button with step indicator */}
       <div className="flex items-center gap-3 min-w-[140px]">
         <button

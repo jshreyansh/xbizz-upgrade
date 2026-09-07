@@ -124,7 +124,7 @@ export function SelectMenu({
             <span
               className={cn(
                 "grid size-5 shrink-0 place-items-center rounded-full border transition",
-                selected ? "border-brand" : "border-[#d6ddd9] bg-card"
+                selected ? "border-brand" : "border-hair-2 bg-card"
               )}
             >
               <span
@@ -158,7 +158,7 @@ export function SelectMenu({
           hasValue ? "text-ink" : "text-ink-4",
           open
             ? "border-[#9fb4aa] shadow-[0_0_0_3px_rgba(253,72,22,0.12)]"
-            : "border-hair-2 hover:border-[#cbd5d0] hover:bg-[#fcfdfc]"
+            : "border-hair-2 hover:border-hair-3 hover:bg-[#fcfdfc]"
         )}
         aria-label={ariaLabel}
         aria-haspopup="listbox"
@@ -292,7 +292,7 @@ export function MultiSelectMenu({
           "squircle-control focus-ring group flex h-11 w-full items-center justify-between rounded-[13px] border bg-card px-3.5 text-left text-body-lg font-medium text-ink shadow-hair transition",
           open
             ? "border-brand shadow-[0_0_0_3px_rgba(253,72,22,0.12)]"
-            : "border-hair-2 hover:border-[#cbd5d0] hover:bg-[#fcfdfc]"
+            : "border-hair-2 hover:border-hair-3 hover:bg-[#fcfdfc]"
         )}
         aria-label={ariaLabel}
         aria-haspopup="listbox"

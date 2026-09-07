@@ -477,7 +477,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             <div className="rounded-2xl border border-brand bg-tint/50 p-4 shadow-2xs transition-all">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="size-11 rounded-xl bg-card border border-brand/30 text-brand-deep font-[850] text-body-lg grid place-items-center shadow-2xs shrink-0">
+                  <div className="size-11 rounded-xl bg-card border border-brand/20 text-brand-deep font-[850] text-body-lg grid place-items-center shadow-2xs shrink-0">
                     {selectedBrand.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -806,7 +806,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                           "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-[13px] border py-2.5 px-2 text-center transition-all duration-200 cursor-pointer",
                           isSelected
                             ? "border-brand bg-tint text-brand-deep font-semibold shadow-xs ring-1 ring-brand"
-                            : "border-hair bg-canvas text-ink-2 hover:border-[#cbd5d0] hover:bg-card"
+                            : "border-hair bg-canvas text-ink-2 hover:border-hair-3 hover:bg-card"
                         )}
                       >
                         <span

@@ -1174,7 +1174,7 @@ export function StudioScreen() {
                                     <select
                                       value={sc.narrativeTag || "Evidence"}
                                       onChange={(e) => handleUpdateSceneTag(sc.id, e.target.value)}
-                                      className="appearance-none bg-tint border border-brand/25 text-brand-deep text-caption font-bold rounded-lg px-2 py-0.5 pr-5 cursor-pointer hover:bg-tint-strong transition-colors focus:outline-none"
+                                      className="appearance-none bg-tint border border-brand/20 text-brand-deep text-caption font-bold rounded-lg px-2 py-0.5 pr-5 cursor-pointer hover:bg-tint-strong transition-colors focus:outline-none"
                                     >
                                       {NARRATIVE_TAG_OPTIONS.map((tagOpt) => (
                                         <option key={tagOpt.id} value={tagOpt.id}>
@@ -1310,7 +1310,7 @@ export function StudioScreen() {
             {isEditor && (
               <div className="relative flex min-h-0 flex-1 flex-col bg-[#e6e9e6]">
                 {/* Sub-header */}
-                <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#cad1cd]/70 bg-white/60 px-4 backdrop-blur-sm">
+                <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair-3/70 bg-white/60 px-4 backdrop-blur-sm">
                   <div className="flex items-center gap-2.5 text-label font-bold text-ink">
                     <span className="rounded-md bg-card border border-hair-2 px-2 py-0.5 shadow-2xs font-extrabold">
                       Scene {selectedScene.number} of {sceneList.length}
@@ -1663,7 +1663,7 @@ export function StudioScreen() {
                       >
                         {/* Subtitle Sync Indicator Header */}
                         <div className="flex items-center gap-1.5 mb-1.5">
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand/25 border border-brand/40 text-micro font-extrabold uppercase tracking-wider text-brand-light">
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-brand/25 border border-brand/20 text-micro font-extrabold uppercase tracking-wider text-brand-light">
                             <Mic2 className="size-2.5" /> Subtitle · Voiceover Sync
                           </span>
                           {scenePlaying && (
@@ -1865,7 +1865,7 @@ export function StudioScreen() {
                             <span className="truncate">2. 3D MoA Target</span>
                           </div>
                           <div className="flex-1 h-full p-1">
-                            <div className="h-full rounded bg-tint border border-brand/30 flex items-center px-2 text-micro font-bold text-brand-deep">
+                            <div className="h-full rounded bg-tint border border-brand/20 flex items-center px-2 text-micro font-bold text-brand-deep">
                               3D_CLEARSKIN_Anatomy.mp4 [0:00 – 0:{selectedScene.duration}]
                             </div>
                           </div>
@@ -2206,7 +2206,7 @@ export function StudioScreen() {
                                 key={chipIdx}
                                 type="button"
                                 onClick={() => handleSendChatMessage(chip)}
-                                className="text-label font-bold text-brand-deep bg-tint hover:bg-tint-strong border border-brand/30 px-2.5 py-1 rounded-full transition cursor-pointer shadow-2xs hover:-translate-y-0.5"
+                                className="text-label font-bold text-brand-deep bg-tint hover:bg-tint-strong border border-brand/20 px-2.5 py-1 rounded-full transition cursor-pointer shadow-2xs hover:-translate-y-0.5"
                               >
                                 {chip}
                               </button>
@@ -2296,7 +2296,7 @@ export function StudioScreen() {
                         {attachedContexts.map((ctx) => (
                           <span
                             key={ctx.id}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-card border border-brand/30 px-2 py-0.5 text-label font-bold text-brand-deep shadow-2xs"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-card border border-brand/20 px-2 py-0.5 text-label font-bold text-brand-deep shadow-2xs"
                           >
                             {ctx.type === "element" ? (
                               <LogoMark size={12} className="text-brand shrink-0" />
@@ -2473,7 +2473,7 @@ export function StudioScreen() {
                 <div className="p-3.5 border-b border-hair bg-canvas space-y-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-label font-extrabold text-ink">Add Reviewer Comment</span>
-                    <span className="rounded-md bg-tint border border-brand/30 px-2 py-0.5 text-caption font-extrabold text-brand-deep">
+                    <span className="rounded-md bg-tint border border-brand/20 px-2 py-0.5 text-caption font-extrabold text-brand-deep">
                       ⏱ 0:{Math.floor(masterCurrentTime).toString().padStart(2, "0")}
                     </span>
                   </div>
@@ -2505,7 +2505,7 @@ export function StudioScreen() {
                         "rounded-xl border p-3 transition-all space-y-2",
                         comment.isResolved
                           ? "bg-canvas border-hair opacity-60"
-                          : "bg-card border-hair shadow-2xs hover:border-brand/40"
+                          : "bg-card border-hair shadow-2xs hover:border-brand/20"
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -2597,7 +2597,7 @@ export function StudioScreen() {
                       Scene {selectedScene.number}: {selectedScene.title}
                     </h3>
                   </div>
-                  <span className="rounded-full bg-tint border border-brand/30 px-2.5 py-0.5 text-caption font-extrabold text-brand-deep">
+                  <span className="rounded-full bg-tint border border-brand/20 px-2.5 py-0.5 text-caption font-extrabold text-brand-deep">
                     ({selectedScene.narrativeTag || "Evidence"})
                   </span>
                 </div>
@@ -2839,7 +2839,7 @@ export function StudioScreen() {
                     { id: "c3", title: "Safety and Adverse Profiles", status: "Supported", tag: "PI §6.2", detail: "Low incidence of treatment-emergent adverse reactions." },
                     { id: "c4", title: "Renal Perfusion Preservation", status: "Approved", tag: "Lancet 2024", detail: "Maintained glomerular filtration rate during maintenance dosing." },
                   ].map((c) => (
-                    <div key={c.id} className="rounded-xl border border-hair bg-canvas p-3 text-left hover:border-brand/40 transition-colors">
+                    <div key={c.id} className="rounded-xl border border-hair bg-canvas p-3 text-left hover:border-brand/20 transition-colors">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-micro font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-md">
                           {c.tag}

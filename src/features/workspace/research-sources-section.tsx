@@ -210,7 +210,7 @@ export function ResearchSourcesContent({
       {/* Verified dossiers. Reference material, not a decision, so it sits
           BELOW the choice and starts collapsed — except while the grounding
           research runs, which plays out inside it. */}
-      <div className="rounded-panel bg-[#f4f6f3] border border-[#e2e8e3]">
+      <div className="rounded-panel bg-[#f4f6f3] border border-hair">
         <button
           type="button"
           onClick={() => { if (!researching) setUserOpen(!trayOpen); }}
@@ -275,7 +275,7 @@ export function ResearchSourcesContent({
                 <div
                   key={idx}
                   aria-hidden
-                  className="p-3 rounded-control bg-card border border-[#dce3de] shadow-2xs flex flex-col gap-2 shimmer"
+                  className="p-3 rounded-control bg-card border border-hair-2 shadow-2xs flex flex-col gap-2 shimmer"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="h-3.5 w-16 rounded-chip bg-black/8" />
@@ -288,7 +288,7 @@ export function ResearchSourcesContent({
               <div
                 key={idx}
                 className={cn(
-                  "p-3 rounded-control bg-card border border-[#dce3de] flex flex-col justify-between shadow-2xs gap-2",
+                  "p-3 rounded-control bg-card border border-hair-2 flex flex-col justify-between shadow-2xs gap-2",
                   researching && "animate-in fade-in zoom-in-95 duration-300",
                 )}
               >
@@ -309,7 +309,7 @@ export function ResearchSourcesContent({
                 <button
                   type="button"
                   onClick={() => onPreviewDossier(dossier)}
-                  className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-chip bg-[#f0f4f1] hover:bg-tint text-brand-deep text-label font-bold border border-[#d8e0da] transition-colors cursor-pointer"
+                  className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-chip bg-[#f0f4f1] hover:bg-tint text-brand-deep text-label font-bold border border-hair-2 transition-colors cursor-pointer"
                 >
                   <Eye className="size-3.5 text-brand" />
                   <span>View</span>

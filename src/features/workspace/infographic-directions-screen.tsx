@@ -606,7 +606,7 @@ export function InfographicDirectionsScreen() {
                     onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
                   >
                     <div className="space-y-4">
-                      <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
+                      <div className="rounded-xl bg-subtle p-3 border border-hair">
                         <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                           Why this fits
                         </div>
@@ -663,7 +663,7 @@ export function InfographicDirectionsScreen() {
                     onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
                   >
                     <div className="space-y-4">
-                      <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
+                      <div className="rounded-xl bg-subtle p-3 border border-hair">
                         <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                           Why this fits
                         </div>
@@ -762,7 +762,7 @@ export function InfographicDirectionsScreen() {
                     onToggle={() => setOpenSection(openSection === "design" ? null : "design")}
                   >
                     <div className="space-y-4">
-                      <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
+                      <div className="rounded-xl bg-subtle p-3 border border-hair">
                         <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                           Visual layout structure
                         </div>
@@ -859,7 +859,7 @@ export function InfographicDirectionsScreen() {
                     onToggle={() => setOpenSection(openSection === "objective" ? null : "objective")}
                   >
                     <div className="space-y-4">
-                      <div className="rounded-xl bg-subtle p-3 border border-[#e1e9e4]">
+                      <div className="rounded-xl bg-subtle p-3 border border-hair">
                         <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
                           Why this fits
                         </div>
@@ -1472,8 +1472,8 @@ function CreativePlanSection({
             status === "Confirmed"
               ? "bg-tint text-brand-deep border-tint-line"
               : status === "Optional"
-              ? "bg-[#f5f5f5] text-[#737373] border-[#e5e5e5]"
-              : "bg-ok-bg text-ink-3 border-[#e2e8e4]"
+              ? "bg-[#f5f5f5] text-[#737373] border-hair"
+              : "bg-ok-bg text-ink-3 border-hair"
           )}
         >
           {status}
@@ -1488,7 +1488,7 @@ function CreativePlanSection({
       </button>
 
       {open && (
-        <div className="border-t border-[#edf2ef] px-4 pt-4 pb-5 sm:px-5 animate-in fade-in duration-200">
+        <div className="border-t border-hair px-4 pt-4 pb-5 sm:px-5 animate-in fade-in duration-200">
           {children}
         </div>
       )}
