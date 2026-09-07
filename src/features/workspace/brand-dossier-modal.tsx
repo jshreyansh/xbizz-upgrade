@@ -267,7 +267,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           </span>
 
           <div className="relative z-10 flex items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-xl bg-tint text-brand-deep border border-tint-line shadow-2xs">
+            <div className="grid size-9 place-items-center rounded-control bg-tint text-brand-deep border border-tint-line shadow-2xs">
               <Plus className="size-4.5" strokeWidth={2.5} />
             </div>
             <div>
@@ -314,7 +314,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   1. Clinical Grounding
                 </span>
                 {stage !== "focus" && (
-                  <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-full border border-tint-line ml-2">
+                  <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
                     {sourceMode === "brand"
                       ? selectedBrand?.name || "Brand Selected"
                       : `${selectedDiseaseIds.length} Therapy Areas: ${selectedDiseaseIds.map((id) => allDiseases.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`}
@@ -332,18 +332,18 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <span>Change</span>
                 </button>
               ) : (
-                <div className="inline-flex rounded-lg border border-hair bg-card p-0.5 gap-0.5 shadow-2xs">
+                <div className="inline-flex rounded-chip border border-hair bg-card p-0.5 gap-0.5 shadow-2xs">
                   <button
                     type="button"
                     onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
-                    className={cn("px-2.5 py-0.5 rounded-[6px] text-label font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
+                    className={cn("px-2.5 py-0.5 rounded-glyph text-label font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
                   >
                     Brand
                   </button>
                   <button
                     type="button"
                     onClick={() => { setSourceMode("disease"); setSelectedBrandId(""); setBrandSearch(""); }}
-                    className={cn("px-2.5 py-0.5 rounded-[6px] text-label font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
+                    className={cn("px-2.5 py-0.5 rounded-glyph text-label font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
                   >
                     Therapy Area
                   </button>
@@ -369,7 +369,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     </div>
 
                     {/* In-Flow Brand Selection List */}
-                    <div className="rounded-[16px] border border-hair-2/90 bg-card shadow-2xs divide-y divide-hair max-h-[220px] overflow-y-auto">
+                    <div className="rounded-panel border border-hair-2/90 bg-card shadow-2xs divide-y divide-hair max-h-[220px] overflow-y-auto">
                       {filteredBrands.map((brand) => {
                         const isSel = brand.id === selectedBrandId;
                         return (
@@ -383,7 +383,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             )}
                           >
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className={cn("grid size-7 place-items-center rounded-lg text-caption font-black border shrink-0", isSel ? "bg-brand text-white border-brand" : "bg-subtle text-ink-2 border-hair-2")}>
+                              <div className={cn("grid size-7 place-items-center rounded-chip text-caption font-black border shrink-0", isSel ? "bg-brand text-white border-brand" : "bg-subtle text-ink-2 border-hair-2")}>
                                 {brand.name.slice(0, 2).toUpperCase()}
                               </div>
                               <div className="min-w-0">
@@ -394,7 +394,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                             <div className="flex items-center gap-2 shrink-0 ml-2">
                               {brand.hasDossier && (
-                                <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-full border border-ok-line">
+                                <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-chip border border-ok-line">
                                   Dossier Ready
                                 </span>
                               )}
@@ -495,7 +495,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     2. Target Audience
                   </span>
                   {stage !== "audience" && (
-                    <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-full border border-tint-line ml-2">
+                    <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
                       {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}
                       {audience === "HCP" && selectedSpecialities.length > 0 ? ` (${selectedSpecialities.join(", ")})` : ""}
                     </span>
@@ -533,7 +533,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               : "border-hair bg-card hover:border-hair-3"
                           )}
                         >
-                          <div className={cn("grid size-7 place-items-center rounded-lg shrink-0 transition-colors", isSel ? "bg-brand text-white" : "bg-tint text-brand-deep")}>
+                          <div className={cn("grid size-7 place-items-center rounded-chip shrink-0 transition-colors", isSel ? "bg-brand text-white" : "bg-tint text-brand-deep")}>
                             <IconComp className="size-3.5" />
                           </div>
                           <div className="text-body font-[850] text-ink leading-none">{item.title}</div>
@@ -620,7 +620,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       Output Shape
                     </span>
                   </div>
-                  <span className="text-label font-bold text-ok bg-ok-bg px-2.5 py-0.5 rounded-full border border-ok-line">
+                  <span className="text-label font-bold text-ok bg-ok-bg px-2.5 py-0.5 rounded-chip border border-ok-line">
                     {SHAPE_OPTIONS.find((s) => s.id === selectedShape)?.label}
                   </span>
                 </div>
@@ -664,7 +664,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       </p>
                     </div>
                   </div>
-                  <span className="text-label font-bold text-brand-deep bg-tint px-2.5 py-0.5 rounded-full border border-tint-line shrink-0">
+                  <span className="text-label font-bold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line shrink-0">
                     {selectedTopics.length} Selected
                   </span>
                 </div>
@@ -687,7 +687,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       >
                         <div className="space-y-1">
                           <div className="flex items-center justify-between">
-                            <div className={cn("grid size-6 place-items-center rounded-md transition-colors shrink-0", isSel ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
+                            <div className={cn("grid size-6 place-items-center rounded-glyph transition-colors shrink-0", isSel ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
                               <IconComp className="size-3" />
                             </div>
                             <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>

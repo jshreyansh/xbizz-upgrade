@@ -332,7 +332,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       <ScreenHeader>
         <button
           onClick={handleBackToSource}
-          className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
+          className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5 cursor-pointer"
           aria-label="Back to modes"
         >
           <ArrowLeft className="size-4" />
@@ -343,7 +343,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="truncate text-body font-[800] text-ink">{projectName}</span>
-            <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
+            <span className="hidden rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
               Draft v1
             </span>
           </div>
@@ -357,7 +357,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           <button
             type="button"
             onClick={() => setDossierModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line hover:bg-tint/80 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line hover:bg-tint/80 transition-colors cursor-pointer"
           >
             <ShieldCheck className="size-3 text-brand" />
             <span>{currentBrandName}</span>
@@ -436,7 +436,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           {/* ── Prominently Wide AI Chat Input Box ── */}
-          <div className="w-full max-w-[940px] rounded-[26px] border border-hair bg-card shadow-float focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
+          <div className="w-full max-w-[940px] rounded-card border border-hair bg-card shadow-float focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
             <div className="p-6 pb-3">
               <textarea
                 value={brief}
@@ -454,7 +454,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             {localFiles.length > 0 && (
               <div className="px-6 pb-2.5 flex flex-wrap gap-1.5">
                 {localFiles.map((file) => (
-                  <span key={file} className="inline-flex items-center gap-1.5 rounded-lg bg-[#edf1f4] px-2.5 py-1 text-label font-medium text-ink-3 border border-hair">
+                  <span key={file} className="inline-flex items-center gap-1.5 rounded-chip bg-[#edf1f4] px-2.5 py-1 text-label font-medium text-ink-3 border border-hair">
                     <Paperclip className="size-3" />
                     <span className="max-w-[160px] truncate">{file}</span>
                     <button onClick={() => removeAttachment(file)} className="hover:text-black cursor-pointer"><X className="size-3" /></button>
@@ -480,7 +480,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                     title="Configure audience, topics & aspect ratio"
                     aria-label="Add options"
                     className={cn(
-                      "grid size-8 place-items-center rounded-xl border transition-all cursor-pointer shadow-2xs shrink-0",
+                      "grid size-8 place-items-center rounded-control border transition-all cursor-pointer shadow-2xs shrink-0",
                       plusMenuOpen
                         ? "border-brand bg-brand text-white ring-2 ring-brand/20 shadow-xs"
                         : "border-hair-2 bg-card text-ink-3 hover:text-brand hover:border-brand hover:bg-card"
@@ -490,7 +490,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   </button>
 
                   {plusMenuOpen && (
-                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-2xl border border-hair-2 bg-card p-1.5 shadow-float space-y-0.5">
+                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-panel border border-hair-2 bg-card p-1.5 shadow-float space-y-0.5">
                       {/* 1. Attach Files */}
                       <button
                         type="button"
@@ -498,7 +498,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                           setPlusMenuOpen(false);
                           fileInputRef.current?.click();
                         }}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-body font-medium text-ink hover:bg-black/5 text-left cursor-pointer transition-colors"
+                        className="flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-body font-medium text-ink hover:bg-black/5 text-left cursor-pointer transition-colors"
                       >
                         <Paperclip className="size-4 text-brand shrink-0" />
                         <span className="flex-1">Add files or briefs</span>
@@ -512,7 +512,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                         onMouseEnter={() => setActiveTier2("audience")}
                         onClick={() => setActiveTier2(activeTier2 === "audience" ? null : "audience")}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
+                          "flex w-full items-center justify-between rounded-control px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
                           activeTier2 === "audience"
                             ? "bg-tint text-brand-deep font-bold shadow-2xs"
                             : "text-ink hover:bg-black/5"
@@ -531,7 +531,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                         onMouseEnter={() => setActiveTier2("aspect")}
                         onClick={() => setActiveTier2(activeTier2 === "aspect" ? null : "aspect")}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
+                          "flex w-full items-center justify-between rounded-control px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
                           activeTier2 === "aspect"
                             ? "bg-tint text-brand-deep font-bold shadow-2xs"
                             : "text-ink hover:bg-black/5"
@@ -550,7 +550,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                         onMouseEnter={() => setActiveTier2("topics")}
                         onClick={() => setActiveTier2(activeTier2 === "topics" ? null : "topics")}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
+                          "flex w-full items-center justify-between rounded-control px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
                           activeTier2 === "topics"
                             ? "bg-tint text-brand-deep font-bold shadow-2xs"
                             : "text-ink hover:bg-black/5"
@@ -570,7 +570,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                           onMouseEnter={() => setActiveTier2("template")}
                           onClick={() => setActiveTier2(activeTier2 === "template" ? null : "template")}
                           className={cn(
-                            "flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
+                            "flex w-full items-center justify-between rounded-control px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
                             activeTier2 === "template"
                               ? "bg-tint text-brand-deep font-bold shadow-2xs"
                               : "text-ink hover:bg-black/5"
@@ -586,7 +586,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
                       {/* Tier 2 submenu */}
                       {activeTier2 && (
-                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-2xl border border-hair-2 bg-card p-2.5 shadow-float flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
+                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-panel border border-hair-2 bg-card p-2.5 shadow-float flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
                           {activeTier2 === "audience" && (
                             <div className="space-y-1">
                               <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
@@ -610,7 +610,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                       setAudience(item.id as Audience);
                                     }}
                                     className={cn(
-                                      "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
+                                      "flex w-full items-center justify-between p-2 rounded-control text-left transition-colors cursor-pointer",
                                       isSelected
                                         ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
                                         : "hover:bg-black/5 text-ink border border-transparent"
@@ -657,7 +657,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                       else setFormat(item.id);
                                     }}
                                     className={cn(
-                                      "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
+                                      "flex w-full items-center justify-between p-2 rounded-control text-left transition-colors cursor-pointer",
                                       isSelected
                                         ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
                                         : "hover:bg-black/5 text-ink border border-transparent"
@@ -695,7 +695,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                     type="button"
                                     onClick={() => toggleTopic(topic)}
                                     className={cn(
-                                      "flex w-full items-center justify-between p-2 rounded-xl text-left transition-colors cursor-pointer",
+                                      "flex w-full items-center justify-between p-2 rounded-control text-left transition-colors cursor-pointer",
                                       isSelected
                                         ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
                                         : "hover:bg-black/5 text-ink border border-transparent"
@@ -725,7 +725,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                       type="button"
                                       onClick={() => setInfographicPages(item.id as "1" | "2")}
                                       className={cn(
-                                        "p-2 rounded-xl text-center text-label font-bold border transition-colors cursor-pointer",
+                                        "p-2 rounded-control text-center text-label font-bold border transition-colors cursor-pointer",
                                         infographicPages === item.id
                                           ? "border-brand bg-tint text-brand-deep"
                                           : "border-hair-2 bg-card hover:bg-black/5 text-ink"
@@ -752,7 +752,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                                     type="button"
                                     onClick={() => setInfographicTemplate(item.id as any)}
                                     className={cn(
-                                      "flex w-full items-center justify-between p-1.5 px-2.5 rounded-lg text-left text-label transition-colors cursor-pointer",
+                                      "flex w-full items-center justify-between p-1.5 px-2.5 rounded-chip text-left text-label transition-colors cursor-pointer",
                                       infographicTemplate === item.id
                                         ? "bg-tint font-bold text-brand-deep"
                                         : "hover:bg-black/5 text-ink"
@@ -775,7 +775,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-label font-medium text-ink-3 hover:text-brand hover:bg-tint transition-colors cursor-pointer"
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-chip px-2.5 py-1.5 text-label font-medium text-ink-3 hover:text-brand hover:bg-tint transition-colors cursor-pointer"
                 >
                   <Paperclip className="size-3.5" />
                   <span>Attach</span>
@@ -794,7 +794,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   disabled={!brief.trim()}
                   title="Generate Plan (⌘↵)"
                   aria-label="Generate Plan"
-                  className="grid size-8 place-items-center rounded-xl bg-brand hover:bg-brand-deep text-white shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:shadow-md hover:scale-105"
+                  className="grid size-8 place-items-center rounded-control bg-brand hover:bg-brand-deep text-white shadow-sm transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:shadow-md hover:scale-105"
                 >
                   <ArrowUp className="size-4 stroke-[2.8]" />
                 </button>
@@ -822,26 +822,26 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <button
               type="button"
               onClick={() => setDossierModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-tint px-3 py-1 text-label font-bold text-brand-deep border border-tint-line shadow-2xs hover:bg-tint/80 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-chip bg-tint px-3 py-1 text-label font-bold text-brand-deep border border-tint-line shadow-2xs hover:bg-tint/80 transition-colors cursor-pointer"
             >
               <ShieldCheck className="size-3.5 text-brand" />
               <span>{sourceDisplayName}</span>
               <ChevronDown className="size-2.5 opacity-60" />
             </button>
             {audience && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
                 <Users className="size-3.5 text-brand" />
                 {audience}
               </span>
             )}
             {topics.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
+              <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
                 <Layers className="size-3.5 text-brand" />
                 {topics.length} {topics.length === 1 ? "topic" : "topics"}
               </span>
             )}
             {/* Engine context chip */}
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
+            <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
               <Film className="size-3.5 text-brand" />
               {modeDisplayName}
             </span>
@@ -861,7 +861,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 onRemove={() => setLocalFiles((prev) => prev.filter((f) => f !== file))}
               />
             ))}
-            <span className="inline-flex items-center gap-1 text-label font-bold text-ok bg-ok-bg border border-ok-line px-2.5 py-1 rounded-full ml-1">
+            <span className="inline-flex items-center gap-1 text-label font-bold text-ok bg-ok-bg border border-ok-line px-2.5 py-1 rounded-chip ml-1">
               <span className="size-1.5 rounded-full bg-ok animate-pulse" />
               Grounding Locked
             </span>
@@ -887,14 +887,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                     setSelectedSourceIds(["dermora-core", "dermora-claims", "dermora-brand"]);
                   }}
                   className={cn(
-                    "group flex items-center justify-between gap-3.5 rounded-2xl border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",
+                    "group flex items-center justify-between gap-3.5 rounded-panel border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",
                     isSelected
                       ? "border-brand bg-tint/70 ring-2 ring-brand/20 shadow-xs"
                       : "border-hair bg-card hover:border-brand hover:bg-[#fffcfb]"
                   )}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <span className="inline-flex items-center rounded-lg bg-tint px-2 py-0.5 text-label font-extrabold text-brand-deep border border-tint-line shrink-0">
+                    <span className="inline-flex items-center rounded-chip bg-tint px-2 py-0.5 text-label font-extrabold text-brand-deep border border-tint-line shrink-0">
                       {sample.tag}
                     </span>
                     <span className="text-body text-ink font-medium leading-normal line-clamp-1 flex-1">
@@ -956,7 +956,7 @@ function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: ()
     <span className={cn("flex min-h-9 max-w-full items-center gap-2 rounded-chip px-2.5 text-body font-medium border border-hair", color)}>
       <FileText className="size-3.5 shrink-0 opacity-75" />
       <span className="max-w-[210px] truncate">{source.name}</span>
-      {approved && <span className="rounded-full bg-white/65 px-1.5 py-0.5 text-caption font-semibold opacity-80">Current</span>}
+      {approved && <span className="rounded-chip bg-white/65 px-1.5 py-0.5 text-caption font-semibold opacity-80">Current</span>}
       <button onClick={onRemove} className="grid size-5 shrink-0 place-items-center rounded-full opacity-60 hover:bg-white/70 hover:opacity-100 transition" aria-label={`Remove ${source.name}`}>
         <X className="size-3" />
       </button>
@@ -1012,7 +1012,7 @@ function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: {
                     <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-hair-3 bg-ok-bg" : "border-hair bg-card hover:border-hair-3")}>
                       <div className="flex items-center justify-between">
                         <b className="text-body-lg font-semibold">{scenario.label}</b>
-                        {active && <span className="rounded-full bg-brand px-2 py-0.5 text-caption font-bold text-white">Active</span>}
+                        {active && <span className="rounded-chip bg-brand px-2 py-0.5 text-caption font-bold text-white">Active</span>}
                       </div>
                       <p className="mt-1 text-body leading-5 text-ink-3">{scenario.description}</p>
                     </button>
@@ -1051,7 +1051,7 @@ function SourceLibraryModal({
 }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/38 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
-      <div className="flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-[22px] border border-white/60 bg-card shadow-2xl">
+      <div className="flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-card border border-white/60 bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b border-hair p-5">
           <div>
             <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Regulatory Sources</div>
@@ -1060,7 +1060,7 @@ function SourceLibraryModal({
           <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-ok-bg" aria-label="Close"><X className="size-4" /></button>
         </div>
         <div className="p-4 border-b border-hair">
-          <div className="flex items-center gap-2 rounded-[12px] border border-hair bg-canvas px-3 py-2">
+          <div className="flex items-center gap-2 rounded-control border border-hair bg-canvas px-3 py-2">
             <Search className="size-4 text-ink-3" />
             <input value={query} onChange={(e) => onQueryChange(e.target.value)} placeholder="Search FDA labels, trial protocols, brand assets..." className="w-full bg-transparent text-body-lg outline-none" />
           </div>

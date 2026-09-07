@@ -90,7 +90,7 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
             >
               <t.icon size={15} />
               {t.label}
-              <span className={`rounded-full px-1.5 py-0.5 text-micro font-extrabold ${active ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4"}`}>
+              <span className={`rounded-chip px-1.5 py-0.5 text-micro font-extrabold ${active ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4"}`}>
                 {t.count}
               </span>
               {active && <span className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-brand" />}
@@ -135,7 +135,7 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
                     {d.status === "not started" ? "Not started yet" : `${d.sections} sections · ${d.claimsCited} claims cited · Updated ${d.updated}`}
                   </span>
                 </div>
-                <span className={`rounded-full px-2.5 py-1 text-caption font-extrabold ${s.bg} ${s.tone}`}>{s.label}</span>
+                <span className={`rounded-chip px-2.5 py-1 text-caption font-extrabold ${s.bg} ${s.tone}`}>{s.label}</span>
                 <button className="text-body-lg font-bold text-brand hover:text-brand-deep transition-colors">
                   {d.status === "not started" ? "Start →" : "View →"}
                 </button>
@@ -154,7 +154,7 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
             const s = CLAIM_STYLE[c.status];
             return (
               <div key={c.id} className={`flex items-start gap-3 rounded-control border ${s.line} bg-card p-3.5`}>
-                <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] ${s.bg} ${s.tone}`}>
+                <span className={`mt-0.5 shrink-0 rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] ${s.bg} ${s.tone}`}>
                   {c.status}
                 </span>
                 <div className="min-w-0 flex-1">

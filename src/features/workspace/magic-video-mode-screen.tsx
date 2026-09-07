@@ -194,7 +194,7 @@ export function MagicVideoModeScreen() {
           <div className="flex flex-col p-5 pb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-tint text-brand border border-tint-line">
+                <div className="grid size-10 place-items-center rounded-control bg-tint text-brand border border-tint-line">
                   <Film className="size-5" />
                 </div>
                 <div>
@@ -204,13 +204,13 @@ export function MagicVideoModeScreen() {
                   <p className="text-xs text-ink-2 font-medium">Start from scratch · Cinematic Medical Explainer</p>
                 </div>
               </div>
-              <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-bold text-brand border border-tint-line">
+              <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-bold text-brand border border-tint-line">
                 Start from Scratch
               </span>
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+            <div className="rounded-control bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
               <div className="grid size-4 place-items-center rounded-full bg-ok-bg text-ok shrink-0">
                 <Check className="size-2.5" />
               </div>
@@ -239,11 +239,11 @@ export function MagicVideoModeScreen() {
 
             {/* Top meta bar inside video */}
             <div className="absolute left-3.5 top-3.5 right-3.5 z-10 flex items-center justify-between pointer-events-none">
-              <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
+              <div className="flex items-center gap-1.5 rounded-chip bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
                 <Film className="size-3 text-brand" />
                 <span>{curReel.badge}</span>
               </div>
-              <div className="rounded-full bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
+              <div className="rounded-chip bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
                 {curReel.aspect}
               </div>
             </div>
@@ -282,7 +282,7 @@ export function MagicVideoModeScreen() {
             {/* Caption + citation lower-third */}
             <div className="absolute bottom-8 left-4 right-4 z-10 pointer-events-none">
               <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curReel.caption}</p>
-              <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
+              <div className="mt-1.5 inline-flex items-center gap-1 rounded-glyph bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
                 <Check className="size-2.5 text-ok-on-dark" />
                 <span>{curReel.citation}</span>
               </div>
@@ -309,7 +309,7 @@ export function MagicVideoModeScreen() {
           <div className="flex flex-col p-5 pb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-tint text-brand border border-tint-line">
+                <div className="grid size-10 place-items-center rounded-control bg-tint text-brand border border-tint-line">
                   <UserCircle2 className="size-5" />
                 </div>
                 <div>
@@ -319,13 +319,13 @@ export function MagicVideoModeScreen() {
                   <p className="text-xs text-ink-2 font-medium">Clinical Presenter &amp; Digital Twin</p>
                 </div>
               </div>
-              <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-bold text-brand border border-tint-line">
+              <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-bold text-brand border border-tint-line">
                 KOL Digital Twin
               </span>
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+            <div className="rounded-control bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
               <div className="grid size-4 place-items-center rounded-full bg-ok-bg text-ok shrink-0">
                 <Check className="size-2.5" />
               </div>
@@ -354,11 +354,11 @@ export function MagicVideoModeScreen() {
 
             {/* Top meta bar inside video */}
             <div className="absolute left-3.5 top-3.5 right-3.5 z-10 flex items-center justify-between pointer-events-none">
-              <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
+              <div className="flex items-center gap-1.5 rounded-chip bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
                 <UserCircle2 className="size-3 text-brand" />
                 <span>{curAvatar.badge}</span>
               </div>
-              <div className="rounded-full bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
+              <div className="rounded-chip bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
                 {curAvatar.aspect}
               </div>
             </div>
@@ -397,7 +397,7 @@ export function MagicVideoModeScreen() {
             {/* Caption + citation lower-third */}
             <div className="absolute bottom-8 left-4 right-4 z-10 pointer-events-none">
               <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curAvatar.caption}</p>
-              <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
+              <div className="mt-1.5 inline-flex items-center gap-1 rounded-glyph bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
                 <Check className="size-2.5 text-ok-on-dark" />
                 <span>{curAvatar.citation}</span>
               </div>

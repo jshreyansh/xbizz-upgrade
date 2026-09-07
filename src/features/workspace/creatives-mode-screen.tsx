@@ -195,7 +195,7 @@ export function CreativesModeScreen() {
           <div className="flex flex-col p-5 pb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-tint text-brand border border-tint-line">
+                <div className="grid size-10 place-items-center rounded-control bg-tint text-brand border border-tint-line">
                   <ImageIcon className="size-5" />
                 </div>
                 <div>
@@ -205,13 +205,13 @@ export function CreativesModeScreen() {
                   <p className="text-xs text-ink-2 font-medium">Start from scratch · HCP &amp; Patient Infographic</p>
                 </div>
               </div>
-              <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-bold text-brand border border-tint-line">
+              <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-bold text-brand border border-tint-line">
                 Start from Scratch
               </span>
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+            <div className="rounded-control bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
               <div className="grid size-4 place-items-center rounded-full bg-ok-bg text-ok shrink-0">
                 <Check className="size-2.5" />
               </div>
@@ -228,11 +228,11 @@ export function CreativesModeScreen() {
           >
             {/* Top meta bar */}
             <div className="flex items-center justify-between pointer-events-none z-10">
-              <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
+              <div className="flex items-center gap-1.5 rounded-chip bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
                 <ImageIcon className="size-3 text-brand" />
                 <span>{curChart.badge}</span>
               </div>
-              <div className="rounded-full bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
+              <div className="rounded-chip bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
                 {curChart.aspect}
               </div>
             </div>
@@ -273,7 +273,7 @@ export function CreativesModeScreen() {
             {/* Caption + citation */}
             <div className="z-10 pointer-events-none">
               <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curChart.caption}</p>
-              <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
+              <div className="mt-1.5 inline-flex items-center gap-1 rounded-glyph bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
                 <Check className="size-2.5 text-ok-on-dark" />
                 <span>{curChart.citation}</span>
               </div>
@@ -302,7 +302,7 @@ export function CreativesModeScreen() {
           <div className="flex flex-col p-5 pb-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="grid size-10 place-items-center rounded-xl bg-info-bg text-info border border-info-line">
+                <div className="grid size-10 place-items-center rounded-control bg-info-bg text-info border border-info-line">
                   <Layers className="size-5" />
                 </div>
                 <div>
@@ -312,13 +312,13 @@ export function CreativesModeScreen() {
                   <p className="text-xs text-ink-2 font-medium">Visual Detail Aid &amp; Slide Panels</p>
                 </div>
               </div>
-              <span className="rounded-full bg-info-bg px-2.5 py-0.5 text-caption font-bold text-info border border-info-line">
+              <span className="rounded-chip bg-info-bg px-2.5 py-0.5 text-caption font-bold text-info border border-info-line">
                 Field Force
               </span>
             </div>
 
             {/* Animated Rotating Feature ticker */}
-            <div className="rounded-xl bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
+            <div className="rounded-control bg-subtle border border-hair p-3 text-xs text-ink-2 min-h-[44px] flex items-center gap-2">
               <div className="grid size-4 place-items-center rounded-full bg-info-bg text-info shrink-0">
                 <Check className="size-2.5" />
               </div>
@@ -335,11 +335,11 @@ export function CreativesModeScreen() {
           >
             {/* Top meta bar */}
             <div className="flex items-center justify-between pointer-events-none z-10">
-              <div className="flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
+              <div className="flex items-center gap-1.5 rounded-chip bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md border border-white/10">
                 <Layers className="size-3 text-blue-400" />
                 <span>{curDeck.badge}</span>
               </div>
-              <div className="rounded-full bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
+              <div className="rounded-chip bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
                 {curDeck.aspect}
               </div>
             </div>
@@ -380,7 +380,7 @@ export function CreativesModeScreen() {
             {/* Caption + citation */}
             <div className="z-10 pointer-events-none">
               <p className="text-body font-semibold leading-snug text-white drop-shadow-md line-clamp-2">{curDeck.caption}</p>
-              <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
+              <div className="mt-1.5 inline-flex items-center gap-1 rounded-glyph bg-black/60 px-2 py-0.5 text-caption font-medium text-white/85 backdrop-blur-sm border border-white/10">
                 <Check className="size-2.5 text-blue-400" />
                 <span>{curDeck.citation}</span>
               </div>

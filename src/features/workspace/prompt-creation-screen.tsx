@@ -90,7 +90,7 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-[7px] text-body font-bold transition-all duration-150 hover:-translate-y-px"
+      className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-chip px-3 py-[7px] text-body font-bold transition-all duration-150 hover:-translate-y-px"
       style={{ background: toneStyles.bg, border: `1px solid ${toneStyles.border}`, color: toneStyles.color }}
     >
       {children}
@@ -251,7 +251,7 @@ export function PromptCreationScreen() {
                       className="flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-left text-body-lg font-semibold text-ink-2 hover:bg-subtle"
                     >
                       <span
-                        className="grid size-[15px] shrink-0 place-items-center rounded-[5px] border"
+                        className="grid size-[15px] shrink-0 place-items-center rounded-glyph border"
                         style={{ background: checked ? "var(--brand)" : "transparent", borderColor: checked ? "var(--brand)" : "var(--hair-2)" }}
                       >
                         {checked && <Check size={11} className="text-white" />}

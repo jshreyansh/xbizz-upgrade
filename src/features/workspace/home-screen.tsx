@@ -259,7 +259,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
 function StudioMockup({ type }: { type: TileOption["mockup"] }) {
   if (type === "video") {
     return (
-      <div className="relative flex h-[92px] w-[132px] flex-col justify-end overflow-hidden rounded-xl border border-white/70 bg-white/60 p-2 shadow-lg backdrop-blur-sm">
+      <div className="relative flex h-[92px] w-[132px] flex-col justify-end overflow-hidden rounded-control border border-white/70 bg-white/60 p-2 shadow-lg backdrop-blur-sm">
         <span className="absolute left-1/2 top-1/2 grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-card shadow-md">
           <Play size={11} fill="var(--brand)" color="var(--brand)" style={{ marginLeft: 1 }} />
         </span>
@@ -270,8 +270,8 @@ function StudioMockup({ type }: { type: TileOption["mockup"] }) {
   }
   if (type === "doc") {
     return (
-      <div className="relative flex h-[92px] w-[112px] flex-col gap-1.5 overflow-hidden rounded-xl border border-white/70 bg-white/60 p-2.5 shadow-lg backdrop-blur-sm">
-        <span className="size-4 rounded-md" style={{ background: "var(--violet)" }} />
+      <div className="relative flex h-[92px] w-[112px] flex-col gap-1.5 overflow-hidden rounded-control border border-white/70 bg-white/60 p-2.5 shadow-lg backdrop-blur-sm">
+        <span className="size-4 rounded-glyph" style={{ background: "var(--violet)" }} />
         <div className="mt-0.5 flex items-end gap-1">
           {[0.5, 0.8, 0.35, 0.65].map((h, i) => (
             <span key={i} className="w-2 rounded-sm" style={{ height: `${h * 30}px`, background: "var(--violet)", opacity: 0.35 + i * 0.15 }} />
@@ -283,7 +283,7 @@ function StudioMockup({ type }: { type: TileOption["mockup"] }) {
     );
   }
   return (
-    <div className="relative flex h-[92px] w-[132px] flex-col overflow-hidden rounded-xl border border-white/70 bg-white/60 shadow-lg backdrop-blur-sm">
+    <div className="relative flex h-[92px] w-[132px] flex-col overflow-hidden rounded-control border border-white/70 bg-white/60 shadow-lg backdrop-blur-sm">
       <div className="flex items-center gap-1 border-b border-hair px-2 py-1.5">
         {["#ff6b57", "#ffbd44", "#28c93f"].map((c) => (
           <span key={c} className="size-1.5 rounded-full" style={{ background: c, opacity: 0.7 }} />
@@ -294,7 +294,7 @@ function StudioMockup({ type }: { type: TileOption["mockup"] }) {
         <div className="flex flex-1 flex-col gap-1">
           <span className="h-1.5 w-3/4 rounded-full" style={{ background: "#16b878", opacity: 0.5 }} />
           <span className="h-1 w-1/2 rounded-full bg-black/[.06]" />
-          <span className="mt-1 h-4 w-full rounded-md" style={{ background: "#16b878", opacity: 0.18 }} />
+          <span className="mt-1 h-4 w-full rounded-glyph" style={{ background: "#16b878", opacity: 0.18 }} />
         </div>
       </div>
     </div>
@@ -1055,7 +1055,7 @@ export function HomeScreen() {
           {/* Hero — greeting + a real sample video, no dark band */}
           <div className="relative flex flex-wrap items-center gap-6 rounded-card border border-hair bg-white/70 px-8 py-6 shadow-hair backdrop-blur-sm sm:px-10 sm:py-7">
             <div className="min-w-0 flex-1" style={{ minWidth: 260 }}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-tint-line bg-tint px-3 py-1 text-caption font-extrabold uppercase tracking-[.1em] text-brand-deep">
+              <span className="inline-flex items-center gap-2 rounded-chip border border-tint-line bg-tint px-3 py-1 text-caption font-extrabold uppercase tracking-[.1em] text-brand-deep">
                 <i className="block size-1.5 rounded-full bg-brand" />
                 MLR-ready. In minutes.
               </span>
@@ -1113,10 +1113,10 @@ export function HomeScreen() {
                 className="absolute inset-0"
                 style={{ background: "linear-gradient(180deg, rgba(0,0,0,.1) 0%, transparent 45%, rgba(0,0,0,.8) 100%)" }}
               />
-              <span className="absolute left-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.05em] text-white/90">
+              <span className="absolute left-2 top-2 rounded-chip bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.05em] text-white/90">
                 Sample
               </span>
-              <span className="absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-micro font-bold text-white/90">1:00</span>
+              <span className="absolute right-2 top-2 rounded-chip bg-black/45 px-2 py-0.5 text-micro font-bold text-white/90">1:00</span>
 
               {/* Pulsing play button — the "slight micro-animation" */}
               <span className="absolute inset-0 grid place-items-center">
@@ -1268,7 +1268,7 @@ export function HomeScreen() {
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/40 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="rounded-md bg-brand px-2 py-0.5 text-caption font-extrabold uppercase text-white shrink-0">
+                <span className="rounded-glyph bg-brand px-2 py-0.5 text-caption font-extrabold uppercase text-white shrink-0">
                   {playingVideoItem.tag}
                 </span>
                 <span className="text-body-lg font-bold text-white truncate">
@@ -1321,7 +1321,7 @@ export function HomeScreen() {
                   setPlayingVideoItem(null);
                   router.push("/create");
                 }}
-                className="rounded-xl bg-brand px-4 py-2 text-body font-bold text-white shadow-lg hover:bg-brand-deep transition cursor-pointer shrink-0"
+                className="rounded-control bg-brand px-4 py-2 text-body font-bold text-white shadow-lg hover:bg-brand-deep transition cursor-pointer shrink-0"
               >
                 Create with this style →
               </button>

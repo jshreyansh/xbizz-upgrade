@@ -181,7 +181,7 @@ export function ResearchSourcesContent({
                 type="button"
                 onClick={() => onSetSourceGroundingMode(opt.id)}
                 className={cn(
-                  "p-3.5 rounded-[16px] border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
+                  "p-3.5 rounded-panel border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
                   isSelected
                     ? "border-2 border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
                     : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
@@ -227,11 +227,11 @@ export function ResearchSourcesContent({
               Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
             </span>
             {researching ? (
-              <span className="shrink-0 text-caption font-bold text-brand bg-tint border border-brand/20 px-2 py-0.2 rounded-full">
+              <span className="shrink-0 text-caption font-bold text-brand bg-tint border border-brand/20 px-2 py-0.2 rounded-chip">
                 Researching
               </span>
             ) : (
-              <span className="shrink-0 text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-full">
+              <span className="shrink-0 text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-chip">
                 Label &amp; Claims Active
               </span>
             )}
@@ -294,10 +294,10 @@ export function ResearchSourcesContent({
               >
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded border border-tint-line">
+                    <span className="text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded-glyph border border-tint-line">
                       {dossier.market}
                     </span>
-                    <span className="text-caption font-bold text-ok bg-ok-bg px-1.5 py-0.2 rounded">
+                    <span className="text-caption font-bold text-ok bg-ok-bg px-1.5 py-0.2 rounded-glyph">
                       {dossier.claims} claims
                     </span>
                   </div>
@@ -360,7 +360,7 @@ export function ResearchSourcesContent({
             {uploadedDocs.map((doc, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between gap-2 p-2.5 rounded-[12px] bg-card border border-hair-2 text-body"
+                className="flex items-center justify-between gap-2 p-2.5 rounded-control bg-card border border-hair-2 text-body"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className="size-4 text-brand shrink-0" />

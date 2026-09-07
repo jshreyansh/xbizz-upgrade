@@ -525,7 +525,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         <ScreenHeader>
           <button
             onClick={handleBackToBrief}
-            className="focus-ring mr-2 grid size-8 place-items-center rounded-lg text-ink-3 hover:bg-black/5 cursor-pointer"
+            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5 cursor-pointer"
             aria-label="Back to brief"
           >
             <ArrowLeft className="size-4" />
@@ -536,7 +536,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="truncate text-body font-[800] text-ink">{projectName}</span>
-              <span className="hidden rounded-full bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
+              <span className="hidden rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
                 Draft v1
               </span>
             </div>
@@ -547,7 +547,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
           {/* State Switcher in Header */}
           <div className="ml-6 hidden items-center gap-1 sm:flex">
-            <span className="rounded-full bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
+            <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
               Plan View
             </span>
           </div>
@@ -571,7 +571,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               type="button"
               onClick={toggleCopilotPanel}
               className={cn(
-                "grid size-8 place-items-center rounded-lg border transition-colors cursor-pointer",
+                "grid size-8 place-items-center rounded-chip border transition-colors cursor-pointer",
                 copilotPanelOpen
                   ? "border-hair-2 bg-black/5 text-ink hover:bg-black/10"
                   : "border-hair-2 bg-card text-ink-3 hover:text-ink hover:border-brand shadow-2xs"
@@ -594,7 +594,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           >
             {isGenerating ? (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
-                <div className="size-20 rounded-3xl bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
+                <div className="size-20 rounded-card bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
                   <LogoMark size={40} className="text-brand animate-pulse" />
                 </div>
                 <h3 className="text-display font-extrabold text-ink tracking-tight">
@@ -605,15 +605,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 </p>
 
                 <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
-                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                     <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                     <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
                   </div>
-                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                     <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                     <span className="font-semibold">Synthesized 5-scene clinical narrative &amp; script</span>
                   </div>
-                  <div className={cn("flex items-center gap-3 p-3 rounded-xl border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
+                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                     <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
                     <span className="font-semibold">Linking citations to FDA label §5.1</span>
                   </div>
@@ -628,7 +628,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
                         Available Context
                       </span>
-                      <span className="rounded-full bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-ok-line">
+                      <span className="rounded-chip bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-ok-line">
                         Grounding active
                       </span>
                     </div>
@@ -640,7 +640,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     </p>
                   </div>
                   <div className="hidden sm:flex items-center gap-2">
-                    <span className="rounded-full bg-card px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
+                    <span className="rounded-chip bg-card px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
                       ✓ 214 approved claims cited
                     </span>
                   </div>
@@ -827,7 +827,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               key={item.id}
                               onClick={() => selectTreatment(item.id)}
                               className={cn(
-                                "focus-ring flex flex-col justify-between rounded-[16px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
+                                "focus-ring flex flex-col justify-between rounded-panel border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
                                 selected
                                   ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
                                   : "border-hair bg-card opacity-85 hover:opacity-100 hover:border-hair-3"
@@ -850,7 +850,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                   </span>
                                 </div>
                                 {index === 0 && (
-                                  <span className="inline-block mb-2 rounded-full bg-card px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line shadow-2xs">
+                                  <span className="inline-block mb-2 rounded-chip bg-card px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line shadow-2xs">
                                     Recommended
                                   </span>
                                 )}
@@ -915,7 +915,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         {productMediaList.map((media) => (
                           <div
                             key={media.id}
-                            className="group relative rounded-xl border border-hair bg-card overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
+                            className="group relative rounded-control border border-hair bg-card overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
                           >
                             <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
                               <img
@@ -923,7 +923,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 alt={media.name}
                                 className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
-                              <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-micro font-bold text-white uppercase backdrop-blur-xs">
+                              <span className="absolute bottom-2 left-2 rounded-glyph bg-black/60 px-1.5 py-0.5 text-micro font-bold text-white uppercase backdrop-blur-xs">
                                 {media.type}
                               </span>
                               <button
@@ -959,7 +959,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             };
                             setProductMediaList((prev) => [...prev, sampleItem]);
                           }}
-                          className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-brand/20 bg-card p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
+                          className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-control border-2 border-dashed border-brand/20 bg-card p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
                         >
                           <div className="grid size-8 place-items-center rounded-full bg-tint text-brand">
                             <Plus className="size-4" />
@@ -1062,7 +1062,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               onClick={() => toggleTopic(topic)}
                               aria-pressed={selectedTopics.includes(topic)}
                               className={cn(
-                                "focus-ring min-h-10 rounded-[12px] border px-3 text-body-lg font-medium transition cursor-pointer",
+                                "focus-ring min-h-10 rounded-control border px-3 text-body-lg font-medium transition cursor-pointer",
                                 selectedTopics.includes(topic)
                                   ? "border-hair-3 bg-subtle text-brand"
                                   : "border-hair-2 hover:border-hair-3"
@@ -1167,7 +1167,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             <div>
                               <div className="flex items-center justify-between gap-2 mb-1">
                                 <span className="font-extrabold text-body-lg text-ink">HD Motion</span>
-                                <span className="rounded-full bg-warn-bg border border-warn-line/80 px-2 py-0.5 text-caption font-extrabold text-warn">
+                                <span className="rounded-chip bg-warn-bg border border-warn-line/80 px-2 py-0.5 text-caption font-extrabold text-warn">
                                   ⚡ {Math.round((durationSeconds / 60) * 2500).toLocaleString()} credits
                                 </span>
                               </div>
@@ -1199,7 +1199,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             <div>
                               <div className="flex items-center justify-between gap-2 mb-1">
                                 <span className="font-extrabold text-body-lg text-ink">Cinematic 4K</span>
-                                <span className="rounded-full bg-tint border border-tint-line px-2 py-0.5 text-caption font-extrabold text-brand-deep">
+                                <span className="rounded-chip bg-tint border border-tint-line px-2 py-0.5 text-caption font-extrabold text-brand-deep">
                                   ⚡ {Math.round((durationSeconds / 60) * 7500).toLocaleString()} credits
                                 </span>
                               </div>
@@ -1220,10 +1220,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       </div>
 
                       {/* Live Real-Time Cost & Balance Breakdown Card */}
-                      <div className="rounded-[16px] bg-[#121614] border border-white/10 p-4 text-white shadow-md">
+                      <div className="rounded-panel bg-[#121614] border border-white/10 p-4 text-white shadow-md">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-white/10">
                           <div className="flex items-center gap-2">
-                            <div className="size-7 rounded-lg bg-brand/20 border border-brand/20 flex items-center justify-center">
+                            <div className="size-7 rounded-chip bg-brand/20 border border-brand/20 flex items-center justify-center">
 
                             </div>
                             <div>
@@ -1412,7 +1412,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       disabled={!isPlanReady || isGenerating}
                       size="sm"
                       className={cn(
-                        "h-9.5 px-5 rounded-full text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
+                        "h-9.5 px-5 rounded-control text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
                         isPlanReady && !isGenerating
                           ? "bg-brand hover:bg-brand-deep text-white hover:-translate-y-0.5 cursor-pointer"
                           : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
@@ -1431,11 +1431,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         <>
           {/* Chat Top Online Banner */}
           <div className="p-3.5 border-b border-hair bg-card shrink-0">
-            <div className="rounded-xl border border-brand/20 bg-tint p-2.5">
+            <div className="rounded-control border border-brand/20 bg-tint p-2.5">
               <div className="flex items-center gap-2 text-label font-bold text-brand-deep">
                 <LogoMark size={14} className="text-brand" />
                 <span>Direct with SwishX</span>
-                <span className="ml-auto rounded-full bg-ok/15 text-ok px-2 py-0.5 text-micro font-bold">
+                <span className="ml-auto rounded-chip bg-ok/15 text-ok px-2 py-0.5 text-micro font-bold">
                   {isGenerating ? "Synthesizing..." : "Online"}
                 </span>
               </div>
@@ -1459,7 +1459,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 )}
                 <div
                   className={cn(
-                    "rounded-[15px] px-3.5 py-2.5 text-body-lg leading-relaxed shadow-2xs max-w-[85%]",
+                    "rounded-panel px-3.5 py-2.5 text-body-lg leading-relaxed shadow-2xs max-w-[85%]",
                     msg.role === "user"
                       ? "bg-brand text-white font-medium"
                       : "bg-card border border-hair text-ink"
@@ -1478,7 +1478,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           key={chip}
                           type="button"
                           onClick={() => handleSendChatMessage(chip)}
-                          className="text-label font-semibold text-brand-deep bg-tint hover:bg-[#ffe5dd] border border-tint-line px-2 py-0.5 rounded-full transition cursor-pointer"
+                          className="text-label font-semibold text-brand-deep bg-tint hover:bg-[#ffe5dd] border border-tint-line px-2 py-0.5 rounded-chip transition cursor-pointer"
                         >
                           {chip}
                         </button>
@@ -1494,7 +1494,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           {/* Bottom Chat Input Bar with Attached Primary Confirmation Bar */}
           <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
             {/* Attached Primary Action Bar above chat input */}
-            <div className="rounded-xl border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
+            <div className="rounded-control border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className={cn("size-6 rounded-full grid place-items-center shrink-0", isPlanReady ? "bg-ok text-white" : "bg-black/10 text-ink-3")}>
                   {isPlanReady ? <Check className="size-3.5 stroke-[3]" /> : <LogoMark size={12} className="text-brand" />}
@@ -1514,7 +1514,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 disabled={!isPlanReady || isGenerating}
                 size="sm"
                 className={cn(
-                  "h-7.5 px-3 rounded-lg text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer",
+                  "h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer",
                   isPlanReady && !isGenerating
                     ? "bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                     : "bg-black/10 text-black/40 cursor-not-allowed"
@@ -1526,26 +1526,26 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
 
             <div className="relative">
-              <div className="flex items-center gap-1.5 rounded-[12px] border border-hair-2 bg-subtle px-2.5 py-1.5 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
+              <div className="flex items-center gap-1.5 rounded-control border border-hair-2 bg-subtle px-2.5 py-1.5 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setChatContextOpen(!chatContextOpen)}
-                    className="grid size-6 place-items-center rounded-lg text-ink-3 hover:text-ink hover:bg-black/5 transition cursor-pointer"
+                    className="grid size-6 place-items-center rounded-chip text-ink-3 hover:text-ink hover:bg-black/5 transition cursor-pointer"
                     title="Add context"
                   >
                     <Plus className="size-3.5" />
                   </button>
 
                   {chatContextOpen && (
-                    <div className="absolute bottom-full left-0 mb-2 w-48 rounded-xl border border-hair-2 bg-card p-1 shadow-lg z-20 space-y-0.5">
+                    <div className="absolute bottom-full left-0 mb-2 w-48 rounded-control border border-hair-2 bg-card p-1 shadow-lg z-20 space-y-0.5">
                       <button
                         type="button"
                         onClick={() => {
                           setChatContextOpen(false);
                           handleSendChatMessage("Attach trial citations from CLARITY-CV study.");
                         }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 text-label font-medium text-ink-2 hover:bg-[#f4f5f3] rounded-lg transition text-left cursor-pointer"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-label font-medium text-ink-2 hover:bg-[#f4f5f3] rounded-chip transition text-left cursor-pointer"
                       >
                         <FileCheck2 className="size-3 text-brand" />
                         Attach trial citations
@@ -1556,7 +1556,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           setChatContextOpen(false);
                           handleSendChatMessage("Adjust narrative tone to be more clinical and objective.");
                         }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 text-label font-medium text-ink-2 hover:bg-[#f4f5f3] rounded-lg transition text-left cursor-pointer"
+                        className="w-full flex items-center gap-2 px-2 py-1.5 text-label font-medium text-ink-2 hover:bg-[#f4f5f3] rounded-chip transition text-left cursor-pointer"
                       >
                         <Target className="size-3 text-brand" />
                         Specify clinical tone
@@ -1581,7 +1581,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   type="button"
                   onClick={() => handleSendChatMessage()}
                   disabled={!chatInput.trim() || isGenerating}
-                  className="grid size-6 place-items-center rounded-lg bg-brand text-white disabled:opacity-30 hover:bg-brand-deep transition cursor-pointer disabled:cursor-not-allowed"
+                  className="grid size-6 place-items-center rounded-chip bg-brand text-white disabled:opacity-30 hover:bg-brand-deep transition cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Send className="size-3" />
                 </button>
@@ -1659,7 +1659,7 @@ function PlanSection({
       className={cn(
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-card border border-brand shadow-brand-soft rounded-[20px] my-3.5"
+          ? "z-20 w-full scale-100 bg-card border border-brand shadow-brand-soft rounded-card my-3.5"
           : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-hair hover:border-hair-3 rounded-control my-1"
       )}
     >
@@ -1674,7 +1674,7 @@ function PlanSection({
         <span
           className={cn(
             "squircle-control grid shrink-0 place-items-center transition-transform group-hover:scale-105",
-            open ? "size-10 rounded-[12px]" : "size-7 rounded-[8px]",
+            open ? "size-10 rounded-control" : "size-7 rounded-chip",
             tone === "attention"
               ? "bg-warn-bg text-warn"
               : tone === "done"
@@ -1778,7 +1778,7 @@ function DecisionRow({
       )}
     >
       <div className="flex min-h-[58px] items-center gap-3 px-3.5">
-        <span className="squircle-control grid size-8 shrink-0 place-items-center rounded-[9px] bg-[#edf3ef] text-brand">
+        <span className="squircle-control grid size-8 shrink-0 place-items-center rounded-chip bg-[#edf3ef] text-brand">
           {icon}
         </span>
         <span className="min-w-0 flex-1">
@@ -1839,7 +1839,7 @@ function ChoiceGroup({
               type="button"
               onClick={() => onChange(option)}
               className={cn(
-                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
+                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-control border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
                 active ? "border-hair-3 bg-subtle text-brand font-semibold shadow-2xs" : "border-hair-2 hover:border-hair-3"
               )}
             >
@@ -1884,7 +1884,7 @@ function MultiChoiceGroup({
                 onChange(next);
               }}
               className={cn(
-                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-[12px] border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
+                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-control border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
                 active ? "border-hair-3 bg-subtle text-brand font-semibold shadow-2xs" : "border-hair-2 hover:border-hair-3"
               )}
             >
@@ -1925,7 +1925,7 @@ function FormatChoices({
               type="button"
               onClick={() => onChange(option)}
               className={cn(
-                "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-[12px] border py-3 px-2 text-center text-body-lg font-medium transition cursor-pointer",
+                "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-control border py-3 px-2 text-center text-body-lg font-medium transition cursor-pointer",
                 active ? "border-hair-3 bg-subtle text-brand font-bold shadow-2xs" : "border-hair-2 hover:border-hair-3"
               )}
             >
@@ -2023,7 +2023,7 @@ function AudioChoices({
             <div
               key={option}
               className={cn(
-                "flex items-center justify-between rounded-[12px] border p-2.5 transition",
+                "flex items-center justify-between rounded-control border p-2.5 transition",
                 active ? "border-hair-3 bg-subtle" : "border-hair-2"
               )}
             >
@@ -2141,7 +2141,7 @@ function PresenterLibrary({
                 type="button"
                 onClick={() => onSelect(person.name)}
                 className={cn(
-                  "flex items-center gap-3 rounded-[16px] border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
+                  "flex items-center gap-3 rounded-panel border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
                   active ? "border-brand bg-tint ring-1 ring-brand" : "border-hair-2 hover:border-hair-3"
                 )}
               >
@@ -2200,7 +2200,7 @@ function VoiceLibrary({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-body-lg text-ink">{v.name}</span>
-                    <span className="rounded-full bg-card px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line">
+                    <span className="rounded-chip bg-card px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line">
                       {v.tag}
                     </span>
                   </div>
@@ -2264,7 +2264,7 @@ function SourceManager({
                   type="button"
                   onClick={() => onToggle(source.id)}
                   className={cn(
-                    "px-3 py-1.5 rounded-[9px] text-body font-bold transition cursor-pointer",
+                    "px-3 py-1.5 rounded-chip text-body font-bold transition cursor-pointer",
                     active ? "bg-card text-ink border border-hair-2" : "bg-brand text-white"
                   )}
                 >

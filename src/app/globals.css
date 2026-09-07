@@ -136,6 +136,10 @@
   --screen-header-h: 60px;
 
   /* Radii — named for what they wrap, not by t-shirt size */
+  /* A fifth, smaller step. The four roles below start at 10px, but small
+     inner elements — a size-5 icon tile, a micro badge, a menu option —
+     read as a CIRCLE at 10px. This is the step for anything under ~24px. */
+  --radius-glyph:    6px;
   --radius-chip:    10px;
   --radius-control: 14px;
   --radius-panel:   18px;

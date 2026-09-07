@@ -3,9 +3,9 @@ import { Building2, Globe2, Mail, MonitorPlay, Presentation, Stethoscope, UsersR
 const iconClass = "size-[17px] shrink-0";
 
 export function ChannelIcon({ value }: { value: string }) {
-  if (value === "LinkedIn") return <span className="grid size-5 shrink-0 place-items-center rounded-[5px] bg-[#0A66C2] text-label font-bold leading-none text-white">in</span>;
-  if (value === "Instagram") return <span className="grid size-5 shrink-0 place-items-center rounded-[6px] bg-gradient-to-br from-[#7c3aed] via-[#db2777] to-[#f59e0b] text-white"><InstagramMark /></span>;
-  if (value === "YouTube") return <span className="grid size-5 shrink-0 place-items-center rounded-[6px] bg-[#FF0033] text-white"><PlayMark /></span>;
+  if (value === "LinkedIn") return <span className="grid size-5 shrink-0 place-items-center rounded-glyph bg-[#0A66C2] text-label font-bold leading-none text-white">in</span>;
+  if (value === "Instagram") return <span className="grid size-5 shrink-0 place-items-center rounded-glyph bg-gradient-to-br from-[#7c3aed] via-[#db2777] to-[#f59e0b] text-white"><InstagramMark /></span>;
+  if (value === "YouTube") return <span className="grid size-5 shrink-0 place-items-center rounded-glyph bg-[#FF0033] text-white"><PlayMark /></span>;
   if (value === "Email") return <Mail className={iconClass} />;
   if (value === "Website") return <Globe2 className={iconClass} />;
   if (value === "Congress / event") return <UsersRound className={iconClass} />;

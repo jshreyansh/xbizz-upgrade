@@ -8,12 +8,13 @@ import { cn } from "@/lib/cn";
  * buttons and a roughly even split between pill and rounded — both of which
  * had no way to be expressed before.
  *
- * `shape` defaults to pill so the 79 existing call sites are unaffected.
+ * `shape` defaults to control: the pill shape was retired so that button
+ * corners match the rest of the radius scale rather than being a fifth value.
  */
 
 type ButtonVariant = "primary" | "secondary" | "soft" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg" | "icon";
-type ButtonShape = "pill" | "control" | "chip";
+type ButtonShape = "control" | "chip";
 
 const variants: Record<ButtonVariant, string> = {
   primary: "border-transparent bg-brand text-white hover:bg-brand-deep shadow-hair",
@@ -31,7 +32,6 @@ const sizes: Record<ButtonSize, string> = {
 };
 
 const shapes: Record<ButtonShape, string> = {
-  pill: "rounded-full",
   control: "rounded-control squircle",
   chip: "rounded-chip squircle",
 };
@@ -44,7 +44,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  { className, variant = "primary", size = "md", shape = "pill", fullWidth, type = "button", ...props },
+  { className, variant = "primary", size = "md", shape = "control", fullWidth, type = "button", ...props },
   ref,
 ) {
   return (

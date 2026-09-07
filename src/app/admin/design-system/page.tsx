@@ -42,7 +42,7 @@ const ACCENTS = ["--color-accent-blue", "--color-accent-violet", "--color-accent
 const TYPE = ["--text-micro", "--text-caption", "--text-label", "--text-body", "--text-body-lg",
   "--text-subhead", "--text-title", "--text-display", "--text-display-lg", "--text-hero", "--text-hero-lg"];
 
-const RADII = ["--radius-chip", "--radius-control", "--radius-panel", "--radius-card"];
+const RADII = ["--radius-glyph", "--radius-chip", "--radius-control", "--radius-panel", "--radius-card"];
 const SHADOWS = ["--shadow-hair", "--shadow-soft", "--shadow-float", "--shadow-modal",
   "--shadow-brand-soft", "--shadow-brand-lift", "--shadow-panel-left", "--shadow-on-dark"];
 const EASINGS = ["--ease-swish", "--ease-spring", "--ease-entrance", "--ease-exit"];
@@ -141,7 +141,7 @@ export default function DesignSystemPage() {
           </Section>
 
           <Section id="shape" n="03" title="Shape, elevation, motion"
-            note="Radii are named for what they wrap rather than by t-shirt size, so the name says where it belongs. Elevation has four neutral steps plus four purposeful ones.">
+            note="Five radii, named for what they wrap rather than by t-shirt size, so the name says where it belongs. This is the WHOLE scale — Tailwind's own rounded-lg/xl/2xl and arbitrary rounded-[Npx] are not used, because they gave ten spellings inside a 10px band with two of them pixel-identical. The pill shape was retired for the same reason: it was a fifth radius that never matched anything else. rounded-full survives only where an element is SQUARE and must read as a circle — an avatar, a status dot, an icon button. Elevation has four neutral steps plus four purposeful ones.">
             <Stack gap={6}>
               <div>
                 <Label size="micro" className="mb-2 block">Radii</Label>
@@ -205,8 +205,8 @@ export default function DesignSystemPage() {
                 {(["sm", "md", "lg"] as const).map((s) => <Button key={s} size={s}>{s}</Button>)}
                 <Button size="icon" aria-label="Add"><Plus className="size-4" /></Button>
               </Spec>
-              <Spec label="Button — shape (pill is the default, so existing calls are unaffected)">
-                {(["pill", "control", "chip"] as const).map((s) => (
+              <Spec label="Button — shape (control is the default; the pill shape was retired)">
+                {(["control", "chip"] as const).map((s) => (
                   <Button key={s} shape={s} variant="secondary">{s}</Button>
                 ))}
               </Spec>
@@ -334,7 +334,7 @@ export default function DesignSystemPage() {
                   title="Ready to generate script"
                   description="Grounded against 214 approved claims"
                   action={
-                    <Button size="sm" shape="pill" className="shrink-0">
+                    <Button size="sm" className="shrink-0">
                       Confirm <ArrowRight className="ml-1.5 size-3.5" />
                     </Button>
                   }

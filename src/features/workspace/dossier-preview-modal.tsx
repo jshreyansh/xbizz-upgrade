@@ -80,15 +80,15 @@ export function DossierPreviewModal({
         {/* Header */}
         <div className="flex items-start justify-between border-b border-hair-2 bg-canvas px-7 py-5 shrink-0">
           <div className="flex items-start gap-3.5">
-            <div className="grid size-11 place-items-center rounded-2xl bg-tint text-brand-deep border border-tint-line shrink-0 shadow-2xs">
+            <div className="grid size-11 place-items-center rounded-panel bg-tint text-brand-deep border border-tint-line shrink-0 shadow-2xs">
               <ShieldCheck className="size-6 text-brand" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-label font-extrabold uppercase tracking-wider text-brand-deep bg-tint px-2 py-0.5 rounded-md border border-tint-line">
+                <span className="text-label font-extrabold uppercase tracking-wider text-brand-deep bg-tint px-2 py-0.5 rounded-glyph border border-tint-line">
                   {dossier.market}
                 </span>
-                <span className="text-label font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-md border border-ok-line flex items-center gap-1">
+                <span className="text-label font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-glyph border border-ok-line flex items-center gap-1">
                   <CheckCircle2 className="size-3" /> Verified Label & Claims
                 </span>
               </div>
@@ -140,7 +140,7 @@ export function DossierPreviewModal({
                       </div>
                     </div>
                   </div>
-                  <span className="text-caption font-bold text-ok bg-ok-bg border border-ok-line px-2 py-0.5 rounded-full shrink-0">
+                  <span className="text-caption font-bold text-ok bg-ok-bg border border-ok-line px-2 py-0.5 rounded-chip shrink-0">
                     {doc.citations} citations
                   </span>
                 </div>
@@ -154,7 +154,7 @@ export function DossierPreviewModal({
               <h3 className="text-body-lg font-[850] text-ink flex items-center gap-2">
                 <span>Approved Clinical Claims & Evidence Summary</span>
               </h3>
-              <span className="text-label font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-full">
+              <span className="text-label font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-chip">
                 {dossier.claims} total claims available
               </span>
             </div>
@@ -163,13 +163,13 @@ export function DossierPreviewModal({
               {claimsList.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-[16px] border border-hair bg-card space-y-1.5 shadow-2xs"
+                  className="p-3.5 rounded-panel border border-hair bg-card space-y-1.5 shadow-2xs"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-label font-extrabold uppercase tracking-wide text-brand-deep">
                       {item.category}
                     </span>
-                    <span className="text-caption font-semibold text-ok bg-ok-bg px-1.5 py-0.2 rounded">
+                    <span className="text-caption font-semibold text-ok bg-ok-bg px-1.5 py-0.2 rounded-glyph">
                       ✓ MLR Approved
                     </span>
                   </div>

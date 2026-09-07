@@ -279,7 +279,7 @@ export function Sidebar() {
               }`}
             >
               <div
-                className={`grid size-7 place-items-center rounded-[9px] transition-all shrink-0 ${
+                className={`grid size-7 place-items-center rounded-chip transition-all shrink-0 ${
                   isHomeActive
                     ? "text-white"
                     : "text-ink-3 group-hover:text-brand"
@@ -319,7 +319,7 @@ export function Sidebar() {
                     <button
                       key={tile.label}
                       onClick={() => handleCreateNav(tile.targetAsset)}
-                      className={`group flex w-full h-[40px] items-center gap-3 rounded-[12px] px-3 text-left transition-all duration-150 cursor-pointer ${
+                      className={`group flex w-full h-[40px] items-center gap-3 rounded-control px-3 text-left transition-all duration-150 cursor-pointer ${
                         isTileActive
                           ? "bg-tint text-brand-deep font-bold"
                           : "text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
@@ -347,7 +347,7 @@ export function Sidebar() {
                   title="Studio"
                 >
                   <div
-                    className={`grid size-7 place-items-center rounded-[9px] transition-transform group-hover:scale-105 shrink-0 ${
+                    className={`grid size-7 place-items-center rounded-chip transition-transform group-hover:scale-105 shrink-0 ${
                       !isCreateActive ? "filter drop-shadow-brand-lift" : ""
                     }`}
                   >
@@ -404,7 +404,7 @@ export function Sidebar() {
                         {collapsed ? item.shortLabel : item.label}
                       </span>
                       {!collapsed && item.badge !== undefined && (
-                        <span className={`rounded-full px-2 py-0.5 text-caption font-bold ${isActive ? "bg-white/25 text-white" : "bg-brand text-white"}`}>
+                        <span className={`rounded-chip px-2 py-0.5 text-caption font-bold ${isActive ? "bg-white/25 text-white" : "bg-brand text-white"}`}>
                           {item.badge}
                         </span>
                       )}
@@ -420,7 +420,7 @@ export function Sidebar() {
         <div className="relative border-t border-hair p-2 space-y-1.5">
           {/* Token chip */}
           {!collapsed && (
-            <div className="flex items-center gap-2 rounded-[13px] border border-tint-line bg-gradient-to-r from-tint to-white px-2.5 py-2">
+            <div className="flex items-center gap-2 rounded-control border border-tint-line bg-gradient-to-r from-tint to-white px-2.5 py-2">
               <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth={2.2}>
                 <circle cx={12} cy={12} r={9} />
                 <path d="M12 7v10M9 10h6" />
@@ -486,7 +486,7 @@ export function Sidebar() {
                   </button>
                   <button className="flex w-full items-center justify-between rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left">
                     <span>Switch Workspace</span>
-                    <span className="rounded bg-black/[0.06] px-1.5 py-0.2 text-caption font-bold text-ink-3">3</span>
+                    <span className="rounded-glyph bg-black/[0.06] px-1.5 py-0.2 text-caption font-bold text-ink-3">3</span>
                   </button>
                   <button
                     onClick={handleSignOut}
@@ -513,10 +513,10 @@ export function Sidebar() {
             zIndex: 9999,
             animation: "spring-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
           }}
-          className="w-[250px] rounded-[22px] border border-hair bg-card p-3.5 shadow-float backdrop-blur-2xl"
+          className="w-[250px] rounded-card border border-hair bg-card p-3.5 shadow-float backdrop-blur-2xl"
         >
           <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-hair">
-            <span className="grid size-6 place-items-center rounded-lg bg-tint text-brand">
+            <span className="grid size-6 place-items-center rounded-chip bg-tint text-brand">
               <NavIcon name="studioFilled" active={false} />
             </span>
             <span className="text-body-lg font-[800] tracking-tight text-ink">Studio</span>
@@ -532,7 +532,7 @@ export function Sidebar() {
                 <button
                   key={tile.label}
                   onClick={() => handleCreateNav(tile.targetAsset)}
-                  className={`group flex w-full items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-left transition-all duration-150 cursor-pointer ${
+                  className={`group flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-left transition-all duration-150 cursor-pointer ${
                     isTileActive
                       ? "bg-tint text-brand-deep font-bold"
                       : "text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"

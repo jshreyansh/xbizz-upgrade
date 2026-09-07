@@ -44,7 +44,7 @@ export function VideoWizardHeader({
           <h1 className="text-subhead font-[800] tracking-tight text-ink sm:text-title truncate transition-all duration-300">
             {currentStepConfig.title}
           </h1>
-          <span className="shrink-0 rounded-full bg-tint px-2.5 py-0.5 text-label font-bold text-brand-deep border border-tint-line">
+          <span className="shrink-0 rounded-chip bg-tint px-2.5 py-0.5 text-label font-bold text-brand-deep border border-tint-line">
             Step {currentStep} of 3
           </span>
         </div>
@@ -72,7 +72,7 @@ export function VideoWizardHeader({
           onClick={onClose}
           variant="ghost"
           size="icon"
-          className="size-8 rounded-[9px] text-ink-3 hover:bg-black/5 hover:text-ink transition-colors"
+          className="size-8 rounded-chip text-ink-3 hover:bg-black/5 hover:text-ink transition-colors"
           aria-label="Exit creation"
         >
           <X className="size-4" />

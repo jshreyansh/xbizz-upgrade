@@ -26,16 +26,16 @@ export interface ChipOption {
 }
 
 const chip: Record<Size, string> = {
-  sm: "px-2.5 py-1 rounded-full text-label font-semibold border transition-all cursor-pointer flex items-center gap-1",
-  md: "px-3 py-1.5 rounded-full text-body font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
+  sm: "px-2.5 py-1 rounded-chip text-label font-semibold border transition-all cursor-pointer flex items-center gap-1",
+  md: "px-3 py-1.5 rounded-chip text-body font-semibold border transition-all cursor-pointer flex items-center gap-1.5",
 };
 
 const chipSelected = "bg-tint border-brand text-brand-deep font-bold shadow-2xs";
 const chipIdle = "bg-card border-hair-2 text-ink-2 hover:border-hair-3 hover:bg-subtle";
 
 const otherChip: Record<Size, string> = {
-  sm: "px-2.5 py-1 rounded-full text-label font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1",
-  md: "px-3 py-1.5 rounded-full text-body font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1.5",
+  sm: "px-2.5 py-1 rounded-chip text-label font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1",
+  md: "px-3 py-1.5 rounded-chip text-body font-semibold border border-dashed transition-all cursor-pointer flex items-center gap-1.5",
 };
 
 /** md carried a shadow on the open state and sm did not; preserved as-is. */
@@ -112,14 +112,14 @@ export function ChipMultiSelect({
       </div>
 
       {hasOther && isOtherOpen && (
-        <div className={cn("flex items-center gap-2 rounded-xl bg-subtle border border-hair-2 animate-in fade-in duration-100", box[size])}>
+        <div className={cn("flex items-center gap-2 rounded-control bg-subtle border border-hair-2 animate-in fade-in duration-100", box[size])}>
           <input
             type="text"
             value={customValue}
             onChange={(e) => onCustomChange?.(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") onCustomSubmit?.(); }}
             placeholder={customPlaceholder}
-            className="flex-1 bg-card rounded-lg border border-hair-2 px-3 py-1.5 text-body font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand"
+            className="flex-1 bg-card rounded-chip border border-hair-2 px-3 py-1.5 text-body font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand"
             autoFocus
           />
           <Button
