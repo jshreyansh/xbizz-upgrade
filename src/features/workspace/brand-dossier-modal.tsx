@@ -527,7 +527,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           type="button"
                           onClick={() => handleSelectAudience(item.id)}
                           className={cn(
-                            "flex flex-col items-center justify-center p-3 rounded-control border-2 text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
+                            "flex flex-col items-center justify-center p-3 rounded-control border text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
                             isSel
                               ? "border-brand bg-card ring-2 ring-brand/15 shadow-sm"
                               : "border-hair bg-card hover:border-hair-3"
@@ -634,7 +634,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         type="button"
                         onClick={() => setSelectedShape(opt.id)}
                         className={cn(
-                          "flex items-center justify-center gap-2.5 py-3 px-4 rounded-control border-2 transition-all cursor-pointer shadow-2xs",
+                          "flex items-center justify-center gap-2.5 py-3 px-4 rounded-control border transition-all cursor-pointer shadow-2xs",
                           isSel
                             ? "border-brand bg-tint text-brand-deep font-extrabold shadow-2xs ring-2 ring-brand/15"
                             : "border-hair bg-card hover:border-hair-3 text-ink"
@@ -679,7 +679,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         type="button"
                         onClick={() => toggleTopic(top.label)}
                         className={cn(
-                          "group relative flex flex-col justify-between p-3.5 rounded-control border-2 text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[92px]",
+                          "group relative flex flex-col justify-between p-3.5 rounded-control border text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[92px]",
                           isSel
                             ? "border-brand bg-[#f3f9f5] ring-2 ring-brand/15 shadow-sm"
                             : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
