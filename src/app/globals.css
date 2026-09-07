@@ -274,11 +274,14 @@ body {
   font-feature-settings: "cv11", "ss01";
 }
 
-button,
-input,
-textarea {
-  font: inherit;
-}
+/* NOTE: there used to be an UNLAYERED `button, input, textarea { font: inherit }`
+   here. It duplicated what Tailwind's own preflight already does inside
+   @layer base — but unlayered, so it outranked every layered utility, and a
+   text-* class on a form control was silently ignored. Every button and input
+   in the app rendered at the inherited 16px: measured 0 of 44 controls with a
+   size class actually honouring it. Deleted rather than re-layered, because
+   Tailwind's preflight covers the intent (form controls take the app's font
+   rather than the browser's) and does it in the right layer. */
 
 button {
   cursor: pointer;
