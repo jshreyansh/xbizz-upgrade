@@ -19,7 +19,8 @@ import {
 const uid = () => Math.random().toString(36).slice(2, 9);
 
 const MEMBERS: Member[] = [
-  { id: "m1", name: "Maya Kapoor",    email: "maya.kapoor@velmora.com",  role: "Marketing",           seniority: "Lead",      permissions: [...ROLE_PERMISSIONS["Marketing"], "admin"],           status: "active", lastActive: "2 minutes ago" },
+  { id: "m0", name: "Siva Gnanam",    email: "sivaprakasam.gnanam@swishx.com", role: "Admin",       seniority: "Director",  permissions: ROLE_PERMISSIONS["Admin"],               status: "active", lastActive: "Online now" },
+  { id: "m1", name: "Maya Kapoor",    email: "maya.kapoor@velmora.com",  role: "Marketing",           seniority: "Lead",      permissions: ROLE_PERMISSIONS["Marketing"],                      status: "active", lastActive: "2 minutes ago" },
   { id: "m2", name: "Rohan Mehta",    email: "rohan.mehta@velmora.com",  role: "Design",              seniority: "Manager",   permissions: ROLE_PERMISSIONS["Design"],              status: "active", lastActive: "1 hour ago" },
   { id: "m3", name: "Dr. Anita Rao",  email: "anita.rao@velmora.com",    role: "Medical reviewer",    seniority: "Director",  permissions: ROLE_PERMISSIONS["Medical reviewer"],    status: "active", lastActive: "Yesterday" },
   { id: "m4", name: "Sam Whitfield",  email: "sam.w@velmora.com",        role: "Legal reviewer",      seniority: "Director",  permissions: ROLE_PERMISSIONS["Legal reviewer"],      status: "active", lastActive: "3 days ago" },
@@ -34,6 +35,12 @@ const MEMBERS: Member[] = [
 ];
 
 const CHAINS: ApprovalChain[] = [
+  {
+    memberId: "m0",
+    stages: [
+      { id: "s0", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "seniority", floor: "Director" }, requireAll: false, onReject: "draft" },
+    ],
+  },
   {
     memberId: "m1",
     stages: [
@@ -214,7 +221,7 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   isAdmin: true,
-  currentUserId: "m1",
+  currentUserId: "m0",
   setCurrentUser: (memberId) => set((s) => {
     const m = s.members.find((x) => x.id === memberId);
     if (!m) return s;
@@ -275,9 +282,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     brandKit: { ...s.brandKit, colors: { ...s.brandKit.colors, [role]: hex } },
   })),
 
-  firstName: "Maya",
-  lastName: "Kapoor",
-  email: "maya.kapoor@velmora.com",
+  firstName: "Siva",
+  lastName: "Gnanam",
+  email: "sivaprakasam.gnanam@swishx.com",
   phone: "+1 415 555 0184",
   setProfileField: (k, v) => set({ [k]: v } as Partial<SettingsState>),
   notifications: NOTIFICATIONS,
