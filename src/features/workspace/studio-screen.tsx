@@ -1266,7 +1266,7 @@ export function StudioScreen() {
                   <ActionBar
                     gutter={false}
                     icon={isScriptComplete
-                      ? <LogoMark size={18} className="text-brand shrink-0" />
+                      ? <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
                       : <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />}
                     title={isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
                     action={

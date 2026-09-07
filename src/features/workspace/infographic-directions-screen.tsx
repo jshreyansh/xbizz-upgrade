@@ -1192,11 +1192,7 @@ export function InfographicDirectionsScreen() {
                 UNIFIED FLOATING ACTION PILL AT MIDDLE BOTTOM (Exact Video Twin)
                ══════════════════════════════════════════════════════════════════ */}
             <ActionBar
-              icon={
-                <span className="size-6 rounded-full bg-ok/20 border border-emerald-400/40 text-ok-on-dark grid place-items-center shrink-0">
-                  <Check className="size-3.5 stroke-[3]" />
-                </span>
-              }
+              icon={<CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />}
               title={currentStep === "brief" ? "Ready to create creative" : "Ready to generate canvas"}
               description="Grounded against 214 approved claims"
               action={

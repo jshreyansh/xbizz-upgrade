@@ -293,9 +293,14 @@ export function ResearchSourcesContent({
                 )}
               >
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded-glyph border border-tint-line">
-                      {dossier.market}
+                  <div className="flex items-center justify-between gap-2">
+                    {/* A document mark, because that is what a dossier is —
+                        the market badge says WHICH one, not what kind. */}
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <FileText className="size-3.5 shrink-0 text-brand-deep" />
+                      <span className="truncate text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded-glyph border border-tint-line">
+                        {dossier.market}
+                      </span>
                     </span>
                     <span className="text-caption font-bold text-ok bg-ok-bg px-1.5 py-0.2 rounded-glyph">
                       {dossier.claims} claims
