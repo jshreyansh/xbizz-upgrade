@@ -118,7 +118,7 @@ export function Step4ScriptReview() {
                     onClick={() => setScriptStructure(st.id)}
                     className={`transition-all duration-200 ${
                       isSelected
-                        ? "opacity-100 ring-2 ring-brand shadow-sm bg-tint"
+                        ? "opacity-100 ring-2 ring-brand/15 shadow-sm bg-tint"
                         : "opacity-70 hover:opacity-100 hover:-translate-y-0.5 bg-card"
                     }`}
                     style={{

@@ -482,7 +482,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                     className={cn(
                       "grid size-8 place-items-center rounded-control border transition-all cursor-pointer shadow-2xs shrink-0",
                       plusMenuOpen
-                        ? "border-brand bg-brand text-white ring-2 ring-brand/20 shadow-xs"
+                        ? "border-brand bg-brand text-white ring-2 ring-brand/15 shadow-xs"
                         : "border-hair-2 bg-card text-ink-3 hover:text-brand hover:border-brand hover:bg-card"
                     )}
                   >
@@ -889,7 +889,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   className={cn(
                     "group flex items-center justify-between gap-3.5 rounded-panel border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",
                     isSelected
-                      ? "border-brand bg-tint/70 ring-2 ring-brand/20 shadow-xs"
+                      ? "border-brand bg-tint/70 ring-2 ring-brand/15 shadow-xs"
                       : "border-hair bg-card hover:border-brand hover:bg-[#fffcfb]"
                   )}
                 >

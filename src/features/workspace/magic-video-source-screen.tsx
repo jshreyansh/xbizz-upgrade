@@ -656,7 +656,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                       className={cn(
                         "rounded-card border p-4.5 transition-all duration-200 cursor-pointer",
                         isSelected
-                          ? "border-brand bg-tint/60 ring-2 ring-brand/20 shadow-xs"
+                          ? "border-brand bg-tint/60 ring-2 ring-brand/15 shadow-xs"
                           : "border-hair bg-canvas hover:border-hair-3 hover:bg-card hover:shadow-2xs"
                       )}
                     >
@@ -805,7 +805,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                         className={cn(
                           "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-control border py-2.5 px-2 text-center transition-all duration-200 cursor-pointer",
                           isSelected
-                            ? "border-brand bg-tint text-brand-deep font-semibold shadow-xs ring-1 ring-brand"
+                            ? "border-brand bg-tint text-brand-deep font-semibold shadow-xs ring-2 ring-brand/15"
                             : "border-hair bg-canvas text-ink-2 hover:border-hair-3 hover:bg-card"
                         )}
                       >

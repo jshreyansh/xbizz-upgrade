@@ -115,7 +115,7 @@ export function Step3AudienceVoice() {
                     onClick={() => setAudience(a.id)}
                     className={`transition-all duration-200 ${
                       isSelected
-                        ? "opacity-100 ring-2 ring-brand shadow-sm bg-tint"
+                        ? "opacity-100 ring-2 ring-brand/15 shadow-sm bg-tint"
                         : "opacity-70 hover:opacity-100 hover:-translate-y-0.5 bg-card"
                     }`}
                     style={{
@@ -176,7 +176,7 @@ export function Step3AudienceVoice() {
                     onClick={() => setVoice(v.id)}
                     className={`flex items-center justify-between transition-all duration-200 ${
                       isSelected
-                        ? "opacity-100 ring-2 ring-brand shadow-sm bg-tint"
+                        ? "opacity-100 ring-2 ring-brand/15 shadow-sm bg-tint"
                         : "opacity-70 hover:opacity-100 hover:-translate-y-0.5 bg-card"
                     }`}
                     style={{

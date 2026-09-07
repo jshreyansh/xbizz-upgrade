@@ -1068,7 +1068,7 @@ export function StudioScreen() {
                             className={cn(
                               "group relative flex w-full flex-col rounded-control border p-2.5 text-left transition-all cursor-pointer",
                               isCurrent
-                                ? "border-brand bg-tint shadow-xs ring-1 ring-brand"
+                                ? "border-brand bg-tint shadow-xs ring-2 ring-brand/15"
                                 : "border-hair bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
@@ -1107,7 +1107,7 @@ export function StudioScreen() {
                             className={cn(
                               "group relative flex w-full flex-col rounded-control border p-2 text-left transition-all cursor-pointer",
                               isSelected
-                                ? "border-brand bg-card shadow-xs ring-1 ring-brand"
+                                ? "border-brand bg-card shadow-xs ring-2 ring-brand/15"
                                 : "border-hair bg-card hover:border-hair-3"
                             )}
                           >
@@ -1386,7 +1386,7 @@ export function StudioScreen() {
                         className={cn(
                           "pointer-events-auto inline-flex items-center gap-2 text-label font-extrabold uppercase tracking-[0.16em] text-white/80 p-1.5 rounded-chip transition-all cursor-pointer w-fit",
                           selectedCanvasElementId === "tag"
-                            ? "border-2 border-dashed border-brand bg-black/40 ring-2 ring-brand/30"
+                            ? "border-2 border-dashed border-brand bg-black/40 ring-2 ring-brand/15"
                             : hoveredCanvasElementId === "tag"
                             ? "border border-dashed border-white/60 bg-black/20"
                             : ""
@@ -1414,7 +1414,7 @@ export function StudioScreen() {
                               className={cn(
                                 "pointer-events-auto relative flex-1 rounded-panel p-3 bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none flex items-center gap-3",
                                 selectedCanvasElementId === "image"
-                                  ? "border-2 border-dashed border-brand ring-4 ring-brand/25 bg-black/85 shadow-2xl"
+                                  ? "border-2 border-dashed border-brand ring-4 ring-brand/20 bg-black/85 shadow-2xl"
                                   : hoveredCanvasElementId === "image"
                                   ? "border border-dashed border-white/60 bg-black/75"
                                   : "border-white/20 hover:border-white/40"
@@ -1502,7 +1502,7 @@ export function StudioScreen() {
                               className={cn(
                                 "pointer-events-auto relative flex-1 rounded-panel bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none overflow-hidden",
                                 selectedCanvasElementId === "video-clip"
-                                  ? "border-2 border-dashed border-brand ring-4 ring-brand/25 shadow-2xl"
+                                  ? "border-2 border-dashed border-brand ring-4 ring-brand/20 shadow-2xl"
                                   : hoveredCanvasElementId === "video-clip"
                                   ? "border border-dashed border-white/60"
                                   : "border-white/20 hover:border-white/40"
@@ -1697,7 +1697,7 @@ export function StudioScreen() {
                                   className={cn(
                                     "inline-block mr-1 transition-all duration-150 rounded-glyph px-0.5",
                                     isCurrent
-                                      ? "text-brand-light font-bold scale-105 bg-brand/20 shadow-xs ring-1 ring-brand/35 -translate-y-0.5"
+                                      ? "text-brand-light font-bold scale-105 bg-brand/20 shadow-xs ring-2 ring-brand/15 -translate-y-0.5"
                                       : isPast
                                       ? "text-white font-medium opacity-100"
                                       : "text-white/35 font-normal"

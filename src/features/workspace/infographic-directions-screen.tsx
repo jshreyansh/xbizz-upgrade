@@ -626,7 +626,7 @@ export function InfographicDirectionsScreen() {
                               className={cn(
                                 "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[85px]",
                                 isSelected
-                                  ? "border-2 border-brand bg-card text-ink shadow-xs"
+                                  ? "border-brand bg-card text-ink shadow-xs ring-2 ring-brand/15"
                                   : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
@@ -688,7 +688,7 @@ export function InfographicDirectionsScreen() {
                                 className={cn(
                                   "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]",
                                   isSelected
-                                    ? "border-2 border-brand bg-card text-ink shadow-xs"
+                                    ? "border-brand bg-card text-ink shadow-xs ring-2 ring-brand/15"
                                     : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                                 )}
                               >
@@ -781,7 +781,7 @@ export function InfographicDirectionsScreen() {
                               className={cn(
                                 "rounded-control border bg-card p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
                                 isSelected
-                                  ? "border-2 border-brand bg-card shadow-xs"
+                                  ? "border-brand bg-card shadow-xs ring-2 ring-brand/15"
                                   : "border-hair-2 hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
@@ -883,7 +883,7 @@ export function InfographicDirectionsScreen() {
                                 className={cn(
                                   "relative p-3 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[80px]",
                                   isSelected
-                                    ? "border-2 border-brand bg-card text-ink shadow-xs"
+                                    ? "border-brand bg-card text-ink shadow-xs ring-2 ring-brand/15"
                                     : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                                 )}
                               >
@@ -964,7 +964,7 @@ export function InfographicDirectionsScreen() {
                                 className={cn(
                                   "p-2.5 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                                   isSelected
-                                    ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                                    ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
                                     : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                                 )}
                               >
@@ -1020,7 +1020,7 @@ export function InfographicDirectionsScreen() {
                             className={cn(
                               "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                               infographicPages === "1"
-                                ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                                ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
                                 : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
@@ -1046,7 +1046,7 @@ export function InfographicDirectionsScreen() {
                             className={cn(
                               "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
                               infographicPages === "2"
-                                ? "border-2 border-brand bg-card text-ink shadow-2xs"
+                                ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
                                 : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
@@ -1416,7 +1416,7 @@ function CreativePlanSection({
       className={cn(
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-card border border-brand shadow-brand-soft rounded-card my-3.5"
+          ? "z-20 w-full scale-100 bg-card border border-hair shadow-brand-soft rounded-card my-3.5"
           : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-hair hover:border-hair-3 rounded-control my-1"
       )}
     >

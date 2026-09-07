@@ -183,7 +183,7 @@ export function ResearchSourcesContent({
                 className={cn(
                   "p-3.5 rounded-panel border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
                   isSelected
-                    ? "border-2 border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
+                    ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
                     : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                 )}
               >

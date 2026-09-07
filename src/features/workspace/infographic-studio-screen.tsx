@@ -763,7 +763,7 @@ export function InfographicStudioScreen() {
                       "p-4 rounded-panel bg-[#fff7f4] border border-tint-line shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
                       selectedBlockId === "heroStat" && studioMode === "editor"
-                        ? "ring-2 ring-brand shadow-sm bg-card"
+                        ? "ring-2 ring-brand/15 shadow-sm bg-card"
                         : "hover:border-brand"
                     )}
                   >
@@ -796,7 +796,7 @@ export function InfographicStudioScreen() {
                       "p-4 rounded-panel bg-subtle border border-hair shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
                       selectedBlockId === "moa" && studioMode === "editor"
-                        ? "ring-2 ring-brand shadow-sm bg-card"
+                        ? "ring-2 ring-brand/15 shadow-sm bg-card"
                         : "hover:border-hair-3"
                     )}
                   >
@@ -826,7 +826,7 @@ export function InfographicStudioScreen() {
                       "p-4 rounded-panel bg-card border border-hair shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
                       selectedBlockId === "chart" && studioMode === "editor"
-                        ? "ring-2 ring-brand shadow-sm"
+                        ? "ring-2 ring-brand/15 shadow-sm"
                         : "hover:border-hair-3"
                     )}
                   >
@@ -873,7 +873,7 @@ export function InfographicStudioScreen() {
                       "p-3.5 rounded-panel bg-[#fafafa] border border-hair mt-auto transition relative group",
                       studioMode === "editor" && "cursor-pointer",
                       selectedBlockId === "isi" && studioMode === "editor"
-                        ? "ring-2 ring-brand shadow-sm bg-card"
+                        ? "ring-2 ring-brand/15 shadow-sm bg-card"
                         : "hover:border-hair-3"
                     )}
                   >

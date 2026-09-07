@@ -701,7 +701,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               className={cn(
                                 "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
                                 presenter === person.name
-                                  ? "border-brand bg-tint ring-2 ring-brand text-brand-deep shadow-xs"
+                                  ? "border-brand bg-tint ring-2 ring-brand/15 text-brand-deep shadow-xs"
                                   : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                               )}
                             >
@@ -829,7 +829,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               className={cn(
                                 "focus-ring flex flex-col justify-between rounded-panel border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm cursor-pointer",
                                 selected
-                                  ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
+                                  ? "border-brand bg-tint ring-2 ring-brand/15 shadow-xs"
                                   : "border-hair bg-card opacity-85 hover:opacity-100 hover:border-hair-3"
                               )}
                             >
@@ -1160,7 +1160,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             className={cn(
                               "group relative rounded-control border p-3 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
                               selectedQuality === "hd"
-                                ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
+                                ? "border-brand bg-tint ring-2 ring-brand/15 shadow-xs"
                                 : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
@@ -1192,7 +1192,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             className={cn(
                               "group relative rounded-control border p-3 text-left transition-all duration-200 cursor-pointer flex flex-col justify-between",
                               selectedQuality === "cinematic"
-                                ? "border-brand bg-tint ring-2 ring-brand shadow-xs"
+                                ? "border-brand bg-tint ring-2 ring-brand/15 shadow-xs"
                                 : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                             )}
                           >
@@ -1274,7 +1274,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 className={cn(
                                   "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
                                   presenter === person.name
-                                    ? "border-brand bg-tint ring-2 ring-brand text-brand-deep shadow-xs"
+                                    ? "border-brand bg-tint ring-2 ring-brand/15 text-brand-deep shadow-xs"
                                     : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                                 )}
                               >
@@ -1659,7 +1659,7 @@ function PlanSection({
       className={cn(
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-card border border-brand shadow-brand-soft rounded-card my-3.5"
+          ? "z-20 w-full scale-100 bg-card border border-hair shadow-brand-soft rounded-card my-3.5"
           : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-hair hover:border-hair-3 rounded-control my-1"
       )}
     >
@@ -2142,7 +2142,7 @@ function PresenterLibrary({
                 onClick={() => onSelect(person.name)}
                 className={cn(
                   "flex items-center gap-3 rounded-panel border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
-                  active ? "border-brand bg-tint ring-1 ring-brand" : "border-hair-2 hover:border-hair-3"
+                  active ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 hover:border-hair-3"
                 )}
               >
                 <FacePhoto person={person} className="size-14 rounded-control" />
