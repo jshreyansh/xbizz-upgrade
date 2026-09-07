@@ -1494,7 +1494,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           {/* Bottom Chat Input Bar with Attached Primary Confirmation Bar */}
           <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
             {/* Attached Primary Action Bar above chat input */}
-            <div className="rounded-control border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
+            <div className="rounded-panel border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2 shadow-2xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className={cn("size-6 rounded-full grid place-items-center shrink-0", isPlanReady ? "bg-ok text-white" : "bg-black/10 text-ink-3")}>
                   {isPlanReady ? <Check className="size-3.5 stroke-[3]" /> : <LogoMark size={12} className="text-brand" />}

@@ -520,7 +520,7 @@ export function InfographicStudioScreen() {
               <button
                 type="button"
                 onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
-                className="p-1 text-ink-2 hover:text-black rounded-glyph hover:bg-card cursor-pointer"
+                className="p-1 text-ink-2 hover:text-black rounded-chip hover:bg-card cursor-pointer"
                 title="Zoom Out"
               >
                 <ZoomOut className="size-3.5" />
@@ -531,7 +531,7 @@ export function InfographicStudioScreen() {
               <button
                 type="button"
                 onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
-                className="p-1 text-ink-2 hover:text-black rounded-glyph hover:bg-card cursor-pointer"
+                className="p-1 text-ink-2 hover:text-black rounded-chip hover:bg-card cursor-pointer"
                 title="Zoom In"
               >
                 <ZoomIn className="size-3.5" />
@@ -539,7 +539,7 @@ export function InfographicStudioScreen() {
               <button
                 type="button"
                 onClick={() => setZoomLevel(100)}
-                className="px-2 py-0.5 text-caption font-bold text-brand hover:bg-card rounded-glyph cursor-pointer"
+                className="px-2 py-0.5 text-caption font-bold text-brand hover:bg-card rounded-chip cursor-pointer"
               >
                 Fit
               </button>
@@ -992,7 +992,7 @@ export function InfographicStudioScreen() {
                 <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
                   {/* Attached Primary Action Bar in Creative Editor Mode */}
                   {studioMode === "editor" && (
-                    <div className="rounded-control border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs flex items-center justify-between gap-2">
+                    <div className="rounded-panel border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2 shadow-2xs flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="size-6 rounded-full bg-brand/15 text-brand grid place-items-center shrink-0">
                           <ImageIcon className="size-3.5" />

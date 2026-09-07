@@ -332,7 +332,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <span>Change</span>
                 </button>
               ) : (
-                <div className="inline-flex rounded-chip border border-hair bg-card p-0.5 gap-0.5 shadow-2xs">
+                <div className="inline-flex rounded-chip border border-hair bg-card p-1 gap-0.5 shadow-2xs">
                   <button
                     type="button"
                     onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}

@@ -37,7 +37,7 @@ export function ActionBar({ icon, title, description, action, gutter = true, cla
         className,
       )}
     >
-      <div className="pointer-events-auto flex max-w-full items-center justify-between gap-4 rounded-control border border-white/12 bg-ink px-4 py-2.5 shadow-on-dark backdrop-blur-sm sm:gap-6 sm:px-5">
+      <div className="pointer-events-auto flex max-w-full items-center justify-between gap-4 rounded-card border border-white/12 bg-ink px-4 py-2.5 shadow-on-dark backdrop-blur-sm sm:gap-6 sm:px-5">
         <div className="flex min-w-0 items-center gap-2.5 pr-1">
           {icon}
           <div className="min-w-0">
