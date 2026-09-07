@@ -481,7 +481,11 @@ export function Sidebar() {
                 </div>
 
                 <div className="py-1 space-y-0.5">
-                  <button className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/settings")}
+                    className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left"
+                  >
                     Profile &amp; Settings
                   </button>
                   <button className="flex w-full items-center justify-between rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left">
