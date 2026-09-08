@@ -78,8 +78,10 @@ const ASSET_GROUPS: NavGroup[] = [
   },
 ];
 
-function NavIcon({ name, active = false }: { name: string; active?: boolean }): ReactNode {
-  const color = active ? "#fff" : "currentColor";
+function NavIcon({ name }: { name: string }): ReactNode {
+  // Inherits from the row, which owns the active colour. One source, so the
+  // glyph can never be white on an inactive row or ink on a solid one.
+  const color = "currentColor";
   const icons: Record<string, ReactNode> = {
     home: (
       <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
@@ -97,29 +99,29 @@ function NavIcon({ name, active = false }: { name: string; active?: boolean }): 
       <svg viewBox="0 0 24 24" className="size-4">
         <path
           d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z"
-          fill={active ? "#fff" : "var(--brand)"}
+          fill={color}
         />
         <path
           d="M19 2l.8 2.2L22 5l-2.2.8L19 8l-.8-2.2L16 5l2.2-.8L19 2z"
-          fill={active ? "#fff" : "var(--brand)"}
+          fill={color}
         />
       </svg>
     ),
     video: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
         <rect x="2" y="5" width="15" height="14" rx="3" />
         <path d="M17 9.5l5-3.5v12l-5-3.5z" />
       </svg>
     ),
     image: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
         <rect x="3" y="3" width="18" height="18" rx="3.5" />
         <circle cx="8.5" cy="8.5" r="1.5" />
         <path d="M21 15l-5-5L5 21" />
       </svg>
     ),
     globe: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={active ? "#fff" : "currentColor"} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
+      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
         <circle cx="12" cy="12" r="10" />
         <line x1="2" y1="12" x2="22" y2="12" />
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
@@ -285,7 +287,7 @@ export function Sidebar() {
                     : "text-ink-3 group-hover:text-brand"
                 }`}
               >
-                <NavIcon name="home" active={isHomeActive} />
+                <NavIcon name="home" />
               </div>
               <span
                 className={`tracking-tight ${
@@ -321,12 +323,12 @@ export function Sidebar() {
                       onClick={() => handleCreateNav(tile.targetAsset)}
                       className={`group flex w-full h-[40px] items-center gap-3 rounded-control px-3 text-left transition-all duration-150 cursor-pointer ${
                         isTileActive
-                          ? "bg-tint text-brand-deep font-bold"
+                          ? "bg-brand text-white shadow-brand-lift font-bold"
                           : "text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
                       }`}
                     >
-                      <span className={`shrink-0 transition-colors ${isTileActive ? "text-brand" : "text-ink-3 group-hover:text-brand"}`}>
-                        <NavIcon name={tile.icon} active={false} />
+                      <span className={`shrink-0 transition-colors ${isTileActive ? "text-white" : "text-ink-3 group-hover:text-brand"}`}>
+                        <NavIcon name={tile.icon} />
                       </span>
                       <span className="truncate text-body-lg tracking-tight">{tile.label}</span>
                     </button>
@@ -348,10 +350,10 @@ export function Sidebar() {
                 >
                   <div
                     className={`grid size-7 place-items-center rounded-chip transition-transform group-hover:scale-105 shrink-0 ${
-                      !isCreateActive ? "filter drop-shadow-brand-lift" : ""
+                      isCreateActive ? "text-white" : "text-brand filter drop-shadow-brand-lift"
                     }`}
                   >
-                    <NavIcon name="studioFilled" active={isCreateActive} />
+                    <NavIcon name="studioFilled" />
                   </div>
                   <span className={`text-caption tracking-tight leading-none text-center ${isCreateActive ? "font-[750] text-white" : "font-normal group-hover:font-bold text-ink"}`}>
                     Studio
@@ -394,7 +396,7 @@ export function Sidebar() {
                       }`}
                     >
                       <span className={`shrink-0 ${isActive ? "text-white" : "text-ink-3 group-hover:text-brand"}`}>
-                        <NavIcon name={item.icon} active={isActive} />
+                        <NavIcon name={item.icon} />
                       </span>
                       <span
                         className={`tracking-tight truncate ${
@@ -521,7 +523,7 @@ export function Sidebar() {
         >
           <div className="flex items-center gap-2 pb-2.5 mb-2.5 border-b border-hair">
             <span className="grid size-6 place-items-center rounded-chip bg-tint text-brand">
-              <NavIcon name="studioFilled" active={false} />
+              <NavIcon name="studioFilled" />
             </span>
             <span className="text-body-lg font-[800] tracking-tight text-ink">Studio</span>
           </div>
@@ -538,12 +540,12 @@ export function Sidebar() {
                   onClick={() => handleCreateNav(tile.targetAsset)}
                   className={`group flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-left transition-all duration-150 cursor-pointer ${
                     isTileActive
-                      ? "bg-tint text-brand-deep font-bold"
+                      ? "bg-brand text-white shadow-brand-lift font-bold"
                       : "text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
                   }`}
                 >
-                  <span className={`transition-colors ${isTileActive ? "text-brand" : "text-ink-3 group-hover:text-brand"}`}>
-                    <NavIcon name={tile.icon} active={false} />
+                  <span className={`transition-colors ${isTileActive ? "text-white" : "text-ink-3 group-hover:text-brand"}`}>
+                    <NavIcon name={tile.icon} />
                   </span>
                   <span className="truncate text-body-lg tracking-tight">{tile.label}</span>
                 </button>
