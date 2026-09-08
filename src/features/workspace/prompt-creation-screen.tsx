@@ -3,18 +3,18 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   ArrowUp,
   Building2,
   Check,
   ChevronDown,
   Film,
+  FlaskConical,
   Lock,
   Paperclip,
-  Play,
-  Sparkles,
   Users,
 } from "lucide-react";
-import { AppShell } from "@/features/workspace/app-shell";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BRAND_REGISTRY } from "@/features/dossiers/mock-dossiers";
 import type { Audience } from "@/types/content";
@@ -32,38 +32,32 @@ const TOPIC_LIBRARY = [
 ];
 
 interface ExamplePrompt {
-  icon: typeof Play;
-  title: string;
+  tag: string;
   text: string;
 }
 
 const EXAMPLE_PROMPTS: ExamplePrompt[] = [
   {
-    icon: Play,
-    title: "HCP Launch Video",
+    tag: "HCP Launch Video",
     text: "Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for DERMORA.",
   },
   {
-    icon: Film,
-    title: "Mechanism & Efficacy",
+    tag: "Mechanism & Efficacy",
     text: "Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety for Velmora.",
   },
   {
-    icon: Users,
-    title: "Clinical Briefing",
+    tag: "Clinical Briefing",
     text: "Generate a presenter-led clinical briefing explaining the dual mechanism of action and fair balance safety profile for Velmora.",
   },
 ];
 
 const MORE_EXAMPLE_PROMPTS: ExamplePrompt[] = [
   {
-    icon: Sparkles,
-    title: "Patient Journey Explainer",
+    tag: "Patient Journey",
     text: "Walk through a typical patient's first 90 days on Nirvexa, from diagnosis to dosing routine, in a warm and reassuring tone.",
   },
   {
-    icon: Building2,
-    title: "Payer Value Story",
+    tag: "Payer Value Story",
     text: "Summarize the health-economic case for Onkavia for a payer committee, leading with the QALY and budget-impact findings.",
   },
 ];
@@ -141,8 +135,30 @@ export function PromptCreationScreen() {
   }
 
   return (
-    <AppShell pageTitle="Create">
-      <div className="relative mx-auto flex min-h-[calc(100vh-160px)] max-w-[860px] flex-col justify-center py-10">
+    <div className="fixed inset-0 flex flex-col overflow-y-auto bg-canvas">
+      {/* Minimal, distraction-free header — no sidebar, no search bar. This
+          is a focused compose moment, not a dashboard page, matching the
+          same "zen" framing as the wizard's own project workspace. */}
+      <header className="flex shrink-0 items-center justify-between border-b border-hair px-6 py-3.5">
+        <button
+          type="button"
+          onClick={() => router.push("/")}
+          className="inline-flex items-center gap-2 rounded-control px-2 py-1.5 text-body font-bold text-ink-2 transition-colors hover:text-brand-deep"
+        >
+          <ArrowLeft size={15} /> Home
+        </button>
+        <div className="flex items-center gap-2 text-title font-[800] tracking-tight text-ink">
+          <LogoMark size={20} className="text-brand" />
+          <span>
+            swish<span className="text-brand">X</span>
+          </span>
+        </div>
+        <span className="inline-flex items-center gap-1.5 text-label font-bold text-ink-3">
+          <FlaskConical size={13} className="text-brand-deep" /> Sample Briefs
+        </span>
+      </header>
+
+      <div className="relative mx-auto flex w-full max-w-[860px] flex-1 flex-col justify-center px-6 py-10">
         {/* Soft ambient wash — calmer, single-hue version of the homepage hero's glow */}
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <span
@@ -157,8 +173,7 @@ export function PromptCreationScreen() {
 
         {/* Heading */}
         <div className="text-center">
-          <span className="inline-flex items-center gap-1.5 text-label font-extrabold uppercase tracking-[.12em] text-brand-deep"> Turn ideas into impact
-          </span>
+          <span className="text-label font-extrabold uppercase tracking-[.12em] text-brand-deep">Turn ideas into impact</span>
           <h1 className="mx-auto mt-3 max-w-[16ch] text-hero-lg font-extrabold leading-[1.08] tracking-tight text-ink">
             What video would you like to create today?
           </h1>
@@ -288,23 +303,17 @@ export function PromptCreationScreen() {
           </div>
           <div className="flex flex-col gap-1.5">
             {[...EXAMPLE_PROMPTS, ...(showMorePrompts ? MORE_EXAMPLE_PROMPTS : [])].map((ex) => {
-              const Icon = ex.icon;
               return (
                 <div
-                  key={ex.title}
+                  key={ex.tag}
                   className="group flex items-center gap-3 rounded-panel border border-hair bg-card px-4 py-3 transition-colors hover:border-tint-line"
                 >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-control bg-tint text-brand-deep">
-                    <Icon size={14} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <b className="block text-body-lg font-bold text-ink">{ex.title}</b>
-                    <p className="m-0 truncate text-body text-ink-3">&ldquo;{ex.text}&rdquo;</p>
-                  </div>
+                  <span className="shrink-0 rounded-chip bg-tint px-2.5 py-1 text-label font-extrabold text-brand-deep">{ex.tag}</span>
+                  <p className="m-0 min-w-0 flex-1 truncate text-body-lg text-ink-3">&ldquo;{ex.text}&rdquo;</p>
                   <button
                     type="button"
                     onClick={() => applyExamplePrompt(ex.text)}
-                    className="shrink-0 text-body font-bold text-brand-deep opacity-0 transition-opacity group-hover:opacity-100"
+                    className="shrink-0 text-body font-bold text-brand-deep opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                   >
                     Use prompt →
                   </button>
@@ -322,6 +331,6 @@ export function PromptCreationScreen() {
           <span className="text-caption font-extrabold uppercase tracking-[.14em] text-ink-4">From science to impact</span>
         </div>
       </div>
-    </AppShell>
+    </div>
   );
 }
