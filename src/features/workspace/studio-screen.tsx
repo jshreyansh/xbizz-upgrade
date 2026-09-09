@@ -21,6 +21,7 @@ import {
   LayoutPanelTop,
   Maximize2,
   MessageSquare,
+  MessageSquarePlus,
   Mic2,
   MoreHorizontal,
   Move,
@@ -507,24 +508,6 @@ export function StudioScreen() {
   const [chatContextMenuOpen, setChatContextMenuOpen] = useState(false);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Edit draft states for Scene Inspector
-  const [editDraftHeadline, setEditDraftHeadline] = useState(selectedScene.title);
-  const [editDraftNarration, setEditDraftNarration] = useState(selectedScene.narration);
-  const [editDraftVisual, setEditDraftVisual] = useState(selectedScene.visual || "");
-  const [editDraftNegativeVisual, setEditDraftNegativeVisual] = useState(
-    selectedScene.negativeVisual || "Overly stylized cartoons, text overlays, harsh shadows, low quality rendering."
-  );
-  const [editDraftDuration, setEditDraftDuration] = useState(selectedScene.duration || 10);
-
-  useEffect(() => {
-    setEditDraftHeadline(selectedScene.title);
-    setEditDraftNarration(selectedScene.narration);
-    setEditDraftVisual(selectedScene.visual || "");
-    setEditDraftNegativeVisual(
-      selectedScene.negativeVisual || "Overly stylized cartoons, text overlays, harsh shadows, low quality rendering."
-    );
-    setEditDraftDuration(selectedScene.duration || 10);
-  }, [selectedScene]);
 
   // Canvas Element Drag & Drop Positioning State
   const [elementOffsets, setElementOffsets] = useState<Record<string, { x: number; y: number }>>({});
@@ -626,49 +609,6 @@ export function StudioScreen() {
     ]);
   };
 
-  const handleSaveAndCentralizeToChat = () => {
-    // 1. Update scene in sceneList
-    setSceneList((prev) =>
-      prev.map((s) =>
-        s.id === selectedScene.id
-          ? {
-              ...s,
-              title: editDraftHeadline,
-              narration: editDraftNarration,
-              visual: editDraftVisual,
-              negativeVisual: editDraftNegativeVisual,
-              duration: editDraftDuration,
-            }
-          : s
-      )
-    );
-
-    // 2. Switch tab to Chat
-    setActiveTab("assistant");
-
-    // 3. Post user action message in chat
-    const userMsgText = `Applied edits for **Scene ${selectedScene.number}: ${editDraftHeadline}**:\n• **Headline:** "${editDraftHeadline}"\n• **Narration:** "${editDraftNarration}"\n• **Visual Prompt:** "${editDraftVisual}"\n• **Negative Visual:** "${editDraftNegativeVisual}"\n• **Duration:** ${editDraftDuration}s`;
-
-    addChatMessage({
-      role: "user",
-      text: userMsgText,
-    });
-
-    // 4. SwishX AI responds with confirmation and propagation options
-    setTimeout(() => {
-      addChatMessage({
-        role: "swishx",
-        text: `✓ Applied updates to **Scene ${selectedScene.number}: ${editDraftHeadline}**. The visual canvas, narration sync (${editDraftDuration}s), and kinematic rendering parameters have been updated.\n\nWould you like me to propagate this visual tone and pacing across the remaining scenes in the storyboard?`,
-        chips: [
-          `🪄 Update other scenes to match Scene ${selectedScene.number} style`,
-          `✓ Keep remaining scenes as is`,
-        ],
-      });
-    }, 450);
-
-    setToMessage(`Saved Scene ${selectedScene.number} and sent to SwishX chat`);
-    setTimeout(() => setToMessage(null), 3000);
-  };
 
   useEffect(() => {
     if (!scenePlaying) return;
@@ -3007,37 +2947,45 @@ export function StudioScreen() {
                 </div>
 
                 <div className="space-y-3.5">
-                  {/* 1. Headline Text (Chapter Title) */}
-                  <div>
-                    <label className="text-label font-bold text-ink-2 flex items-center justify-between mb-1">
-                      <span>Headline Text (Chapter Title)</span>
-                      <span className="text-caption text-ink-4 font-normal">On-screen header</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={editDraftHeadline}
-                      onChange={(e) => setEditDraftHeadline(e.target.value)}
-                      placeholder="Scene headline..."
-                      className="w-full rounded-control border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
-                    />
-                  </div>
-
-                  {/* 2. Narration Script */}
-                  <div>
-                    <label className="text-label font-bold text-ink-2 flex items-center justify-between mb-1">
-                      <span>Narration Script</span>
-                      <span className="text-caption text-ink-4 font-normal">
-                        {editDraftNarration ? `${editDraftNarration.split(" ").filter(Boolean).length} words` : "Empty"}
-                      </span>
-                    </label>
-                    <textarea
-                      value={editDraftNarration}
-                      onChange={(e) => setEditDraftNarration(e.target.value)}
-                      rows={3}
-                      placeholder="Voiceover narration script..."
-                      className="w-full rounded-control border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
-                    />
-                  </div>
+                  {/**
+                   * Read-only, both of them. This tab stopped being a form: the
+                   * scene's copy is shown so you can see what is there, and
+                   * changing it goes through the chat like every other edit, so
+                   * there is one route to a change rather than a form and a
+                   * conversation that can disagree about which won.
+                   */}
+                  {([
+                    { id: "headline", title: "Headline Text (Chapter Title)", meta: "On-screen header", body: selectedScene.title },
+                    {
+                      id: "narration",
+                      title: "Narration Script",
+                      meta: `${selectedScene.narration.split(" ").filter(Boolean).length} words`,
+                      body: selectedScene.narration,
+                    },
+                  ] as const).map((field) => (
+                    <div key={field.id}>
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="text-label font-bold text-ink-2">{field.title}</span>
+                        <span className="text-caption font-normal text-ink-4">{field.meta}</span>
+                      </div>
+                      <div className="rounded-control border border-hair-2 bg-canvas p-2.5">
+                        <p className="text-body font-medium leading-relaxed text-ink">{field.body}</p>
+                        <div className="mt-2 flex justify-end border-t border-hair pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("assistant");
+                              attachElementToChat(field.id);
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint cursor-pointer"
+                          >
+                            <MessageSquarePlus className="size-3" />
+                            <span>Add to chat</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
 
                   {/* Shots, between the scene's own copy above and the
                       scene-wide prompts below — a shot is smaller than the
@@ -3081,184 +3029,6 @@ export function StudioScreen() {
                     }}
                   />
 
-                  {/* 3. Visual Prompt */}
-                  <div>
-                    <label className="text-label font-bold text-ink-2 flex items-center justify-between mb-1">
-                      <span>Visual Prompt</span>
-                      <span className="text-caption text-ink-4 font-normal">Kinematic direction</span>
-                    </label>
-                    <textarea
-                      value={editDraftVisual}
-                      onChange={(e) => setEditDraftVisual(e.target.value)}
-                      rows={3}
-                      placeholder="Visual rendering prompt for scene..."
-                      className="w-full rounded-control border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
-                    />
-                  </div>
-
-                  {/* 4. Negative Visual Prompt */}
-                  <div>
-                    <label className="text-label font-bold text-ink-2 flex items-center justify-between mb-1">
-                      <span>Negative Visual Prompt</span>
-                      <span className="text-caption text-ink-4 font-normal">What to avoid</span>
-                    </label>
-                    <textarea
-                      value={editDraftNegativeVisual}
-                      onChange={(e) => setEditDraftNegativeVisual(e.target.value)}
-                      rows={2}
-                      placeholder="Elements to exclude (e.g. cartoons, blurry edges, harsh text)..."
-                      className="w-full rounded-control border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
-                    />
-                  </div>
-
-                  {/* 5. Attached Scene Media (Images & Video Clips) */}
-                  <div className="rounded-control border border-hair bg-canvas p-3 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-label font-extrabold text-ink flex items-center gap-1.5">
-                        <Layers className="size-3.5 text-brand" />
-                        Attached Scene Media
-                      </span>
-                      {selectedScene.mediaType && selectedScene.mediaType !== "none" ? (
-                        <span className="text-caption font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-chip border border-tint-line">
-                          {selectedScene.mediaType === "both" ? "2 Media Layers" : "1 Media Layer"}
-                        </span>
-                      ) : (
-                        <span className="text-caption font-bold text-ink-3 bg-black/5 px-2 py-0.5 rounded-chip">
-                          Typography Only
-                        </span>
-                      )}
-                    </div>
-
-                    {/* If scene has an image or both (e.g. Scene 3 Anatomical Heart) */}
-                    {(selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
-                      <div className="rounded-chip border border-hair bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="size-8 rounded-glyph bg-lime-bg border border-lime-line flex items-center justify-center p-1 shrink-0 overflow-hidden">
-                            <img
-                              src={selectedScene.mediaImageSrc || "/anatomical-heart.png"}
-                              alt="Heart"
-                              className="size-full object-contain"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-label font-bold text-ink truncate">
-                              {selectedScene.mediaLabel || "Anatomical Cardiac Structure"}
-                            </div>
-                            <div className="text-micro text-ink-3 flex items-center gap-1.5">
-                              <span>Image Asset</span>
-                              <span>·</span>
-                              <span className="text-ok font-semibold">0:02 – 0:12s</span>
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleSelectCanvasElement("image");
-                            setToMessage("Directing SwishX to replace chart image asset");
-                            setTimeout(() => setToMessage(null), 2500);
-                          }}
-                          className="rounded-chip bg-ok-bg hover:bg-[#e0e5e1] text-caption font-bold text-ink-2 px-2 py-1 transition-colors cursor-pointer shrink-0"
-                        >
-                          Replace
-                        </button>
-                      </div>
-                    )}
-
-                    {/* If scene has a video or both (e.g. Scene 2, 3, 4) */}
-                    {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
-                      <div className="rounded-chip border border-hair bg-card p-2 flex items-center justify-between gap-2 shadow-2xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className="size-8 rounded-glyph bg-info-bg border border-info-line flex items-center justify-center text-info-on-dark shrink-0 overflow-hidden">
-                            <video
-                              src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
-                              autoPlay
-                              loop
-                              muted
-                              playsInline
-                              className="size-full object-cover"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-label font-bold text-ink truncate">
-                              {selectedScene.mediaLabel || "3D Mechanism Kinematics"}
-                            </div>
-                            <div className="text-micro text-ink-3 flex items-center gap-1.5">
-                              <span>Video Clip</span>
-                              <span>·</span>
-                              <span className="text-info-on-dark font-semibold">0:04 – 0:{selectedScene.duration}s (60fps)</span>
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleSelectCanvasElement("video-clip");
-                            setToMessage("Directing SwishX to swap kinematic video clip");
-                            setTimeout(() => setToMessage(null), 2500);
-                          }}
-                          className="rounded-chip bg-ok-bg hover:bg-[#e0e5e1] text-caption font-bold text-ink-2 px-2 py-1 transition-colors cursor-pointer shrink-0"
-                        >
-                          Swap
-                        </button>
-                      </div>
-                    )}
-
-                    {(!selectedScene.mediaType || selectedScene.mediaType === "none") && (
-                      <div className="text-caption text-ink-3 py-1.5 px-2 bg-card rounded-chip border border-dashed border-hair-2 flex items-center justify-between">
-                        <span>Clean text &amp; narrative intro layout</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setToMessage("SwishX added 3D anatomical heart media layer");
-                            setTimeout(() => setToMessage(null), 2500);
-                          }}
-                          className="text-brand font-bold hover:underline cursor-pointer"
-                        >
-                          + Add Media
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 6. Duration */}
-                  <div>
-                    <label className="text-label font-bold text-ink-2 block mb-1">
-                      Scene Duration
-                    </label>
-                    <div className="flex items-center gap-2">
-                      {[8, 10, 14, 20].map((dur) => (
-                        <button
-                          key={dur}
-                          type="button"
-                          onClick={() => setEditDraftDuration(dur)}
-                          className={cn(
-                            "flex-1 rounded-control border py-1.5 text-label font-bold transition-all cursor-pointer",
-                            editDraftDuration === dur
-                              ? "bg-brand text-white border-brand shadow-xs"
-                              : "bg-card border-hair-2 text-ink-2 hover:bg-canvas"
-                          )}
-                        >
-                          {dur}s
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Centralized Save & Apply Action Button */}
-                  <div className="pt-2 border-t border-hair">
-                    <Button
-                      type="button"
-                      onClick={handleSaveAndCentralizeToChat}
-                      className="w-full h-10 bg-brand hover:bg-brand-deep text-white font-extrabold text-body rounded-control shadow-xs gap-2 cursor-pointer transition-transform active:scale-[0.98]"
-                    >
-                      <LogoMark size={16} />
-                      <span>Save &amp; Apply with SwishX</span>
-                    </Button>
-                    <p className="text-caption text-ink-3 text-center mt-1.5">
-                      Switches to Chat &amp; verifies clinical claims across storyboard
-                    </p>
-                  </div>
                 </div>
               </div>
             )}
