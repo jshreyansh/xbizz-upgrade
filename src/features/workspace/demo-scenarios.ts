@@ -1,6 +1,12 @@
 import type { AssetType, Audience } from "@/types/content";
 
-export type DemoScenarioCategory = "Happy paths" | "Dynamic branches" | "Missing information" | "Source and market" | "Other formats";
+/**
+ * Categories name what a case DOES to the flow, not the business situation.
+ * "Blocked" replaced "Missing information" because two of those cases now
+ * refuse to continue rather than merely warning, and "Other formats" went
+ * because asset type is what each screen filters on, not a category.
+ */
+export type DemoScenarioCategory = "Happy paths" | "Dynamic branches" | "Blocked" | "Source and market";
 
 export interface DemoScenario {
   id: string;
@@ -19,6 +25,8 @@ export interface DemoScenario {
     hasBrandKit?: boolean;
     followsSuppliedScript?: boolean;
     sourceConflict?: boolean;
+    /** The plan screen must refuse to build a script, for this reason. */
+    blocked?: "no-context" | "unusable-sources";
   };
   inputs: {
     assetType: AssetType;
@@ -27,6 +35,10 @@ export interface DemoScenario {
     market: string;
     intendedUse: string;
     selectedSourceIds: string[];
+    /** Files the user attached themselves. */
+    uploadedDocs?: string[];
+    /** Whether those files hold anything a script can be grounded in. */
+    sourcesVerify?: boolean;
   };
 }
 
@@ -44,7 +56,7 @@ export const demoScenarios: DemoScenario[] = [
     id: "patient-education",
     label: "Patient education video",
     category: "Happy paths",
-    description: "Patient-friendly education for a web experience.",
+    description: "Patient-friendly education \u2014 the audience that may ground on a therapy area instead of a brand.",
     expected: "Friendly voice · 16:9 · 45 sec · patient-impact emphasis",
     assertions: { presentationMode: "narrated", format: "16:9", length: "45 sec", voiceIncludes: "friendly", hasApprovedEvidence: true },
     inputs: { assetType: "video", brief: "Create a patient education video that explains what to expect from DERMORA in clear, reassuring language.", audience: "Patient", market: "United States", intendedUse: "Website", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
@@ -78,30 +90,30 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "weak-request",
-    label: "Weak request: Hello",
-    category: "Missing information",
+    label: "Vague request",
+    category: "Blocked",
     description: "Tests inline clarification before the plan.",
     expected: "Remain on Screen 1 and request the communication job",
     assertions: { shouldClarify: true },
     inputs: { assetType: "video", brief: "Hello", audience: "HCP", market: "United States", intendedUse: "HCP meeting", selectedSourceIds: ["dermora-core", "dermora-claims"] },
   },
   {
-    id: "no-approved-source",
-    label: "No approved source",
-    category: "Missing information",
-    description: "A detailed request without approved evidence.",
-    expected: "Concept-only storyboard · never marked MLR-ready",
-    assertions: { hasApprovedEvidence: false, hasBrandKit: false },
-    inputs: { assetType: "video", brief: "Create a patient awareness video about the burden of plaque psoriasis for a website.", audience: "Patient", market: "United States", intendedUse: "Website", selectedSourceIds: [] },
+    id: "no-context",
+    label: "Nothing to work from",
+    category: "Blocked",
+    description: "A real request, but no dossier on our side and nothing attached.",
+    expected: "Refused on the plan screen \u00b7 asks for context before any script",
+    assertions: { hasApprovedEvidence: false, hasBrandKit: false, blocked: "no-context" },
+    inputs: { assetType: "video", brief: "Create a patient awareness video about the burden of plaque psoriasis for a website.", audience: "Patient", market: "United States", intendedUse: "Website", selectedSourceIds: [], uploadedDocs: [] },
   },
   {
-    id: "missing-brand",
-    label: "Missing brand kit",
-    category: "Missing information",
-    description: "Evidence is available but branded production material is not.",
-    expected: "Evidence ready · brand material flagged without blocking storyboard",
-    assertions: { hasApprovedEvidence: true, hasBrandKit: false },
-    inputs: { assetType: "video", brief: "Create an HCP launch video explaining the DERMORA mechanism and evidence.", audience: "HCP", market: "United States", intendedUse: "HCP meeting", selectedSourceIds: ["dermora-core", "dermora-claims"] },
+    id: "unusable-sources",
+    label: "Attachments with nothing usable",
+    category: "Blocked",
+    description: "Files were attached, but none of them hold anything a script can be grounded in.",
+    expected: "Confirm refused \u00b7 offending files flagged inline \u00b7 chat asks for context or better files",
+    assertions: { hasApprovedEvidence: false, hasBrandKit: false, blocked: "unusable-sources" },
+    inputs: { assetType: "video", brief: "Create an HCP launch video explaining the DERMORA mechanism and pivotal evidence.", audience: "HCP", market: "United States", intendedUse: "HCP meeting", selectedSourceIds: [], uploadedDocs: ["Q3_Marketing_Calendar.xlsx", "Team_Offsite_Photos.zip"], sourcesVerify: false },
   },
   {
     id: "market-conflict",
@@ -113,31 +125,13 @@ export const demoScenarios: DemoScenario[] = [
     inputs: { assetType: "video", brief: "Create a launch video for Indian rheumatologists explaining the DERMORA mechanism.", audience: "HCP", market: "India", intendedUse: "Congress / event", selectedSourceIds: ["dermora-core", "dermora-india", "dermora-brand"] },
   },
   {
-    id: "data-carousel",
-    label: "Data-led carousel",
-    category: "Other formats",
-    description: "A social carousel built around clinical results.",
-    expected: "Data-led treatment · LinkedIn carousel · six pages · no video fields",
-    assertions: { treatmentId: "data", format: "LinkedIn carousel", length: "6 pages" },
-    inputs: { assetType: "carousel", brief: "Create a data-led carousel about the DERMORA pivotal evidence for dermatologists.", audience: "HCP", market: "United States", intendedUse: "LinkedIn", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
-  },
-  {
     id: "mechanism-infographic",
     label: "Mechanism infographic",
-    category: "Other formats",
-    description: "A congress infographic explaining a pathway.",
+    category: "Happy paths",
+    description: "The image flow\u2019s happy path \u2014 a congress infographic explaining a pathway.",
     expected: "Process hierarchy · landscape · detailed · no voice or music",
     assertions: { treatmentId: "process", format: "Landscape", length: "Detailed" },
     inputs: { assetType: "infographic", brief: "Create an infographic explaining the DERMORA mechanism as a clear step-by-step process.", audience: "HCP", market: "United States", intendedUse: "Congress / event", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
-  },
-  {
-    id: "product-visual",
-    label: "Product-first visual",
-    category: "Other formats",
-    description: "A launch visual centred on the product packshot.",
-    expected: "Product-first composition · 1:1 · brand kit applied",
-    assertions: { treatmentId: "product", format: "1:1", hasBrandKit: true },
-    inputs: { assetType: "visual", brief: "Create a product-first launch visual for DERMORA using the approved packshot and efficacy message.", audience: "HCP", market: "United States", intendedUse: "Website", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
   },
 ];
 

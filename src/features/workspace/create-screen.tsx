@@ -979,9 +979,8 @@ function AttachmentChip({ label, onRemove }: { label: string; onRemove: () => vo
 const scenarioCategoryIcons: Record<DemoScenarioCategory, typeof CircleCheck> = {
   "Happy paths": CircleCheck,
   "Dynamic branches": GitBranch,
-  "Missing information": TriangleAlert,
+  "Blocked": TriangleAlert,
   "Source and market": Globe2,
-  "Other formats": LayoutGrid,
 };
 
 function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: { currentScenarioId: string; onSelect: (scenario: DemoScenario) => void; onReset: () => void; onClose: () => void }) {

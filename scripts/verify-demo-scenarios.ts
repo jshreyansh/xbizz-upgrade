@@ -16,6 +16,21 @@ for (const scenario of demoScenarios) {
   if (expected.hasBrandKit !== undefined) assert.equal(plan.hasBrandKit, expected.hasBrandKit, `${scenario.id}: brand kit`);
   if (expected.followsSuppliedScript !== undefined) assert.equal(plan.followsSuppliedScript, expected.followsSuppliedScript, `${scenario.id}: supplied script`);
   if (expected.sourceConflict !== undefined) assert.equal(Boolean(plan.sourceConflict), expected.sourceConflict, `${scenario.id}: source conflict`);
+  if (expected.blocked !== undefined) {
+    // Why the plan screen must refuse: nothing supplied at all, or files that
+    // were supplied and then failed verification. Derived the same way the
+    // screen derives it, so the assertion cannot drift from the behaviour.
+    const docs = scenario.inputs.uploadedDocs ?? [];
+    const verified = scenario.inputs.sourcesVerify ?? true;
+    const reason = plan.hasApprovedEvidence
+      ? null
+      : docs.length === 0
+      ? "no-context"
+      : verified
+      ? null
+      : "unusable-sources";
+    assert.equal(reason, expected.blocked, `${scenario.id}: blocked reason`);
+  }
 }
 
 console.log(`Verified ${demoScenarios.length} demo scenarios.`);
