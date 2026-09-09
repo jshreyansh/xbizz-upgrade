@@ -10,7 +10,6 @@ import {
   FileText,
   Film,
   FlaskConical,
-  Globe2,
   History,
   Image as ImageIcon,
   Info,
@@ -29,16 +28,13 @@ import {
   UserCircle2,
   Users,
   X,
-  CircleCheck,
-  GitBranch,
-  LayoutGrid,
-  TriangleAlert,
 } from "lucide-react";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
-import { defaultDemoScenarioId, demoScenarios, type DemoScenario, type DemoScenarioCategory } from "@/features/workspace/demo-scenarios";
+import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
+import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
@@ -934,7 +930,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         />
       )}
       {scenarioLibraryOpen && (
-        <DemoScenarioDrawer
+        <ScenarioDrawer
           currentScenarioId={demoScenarioId}
           onSelect={loadScenario}
           onReset={() => loadScenario(demoScenarios.find((s) => s.id === defaultDemoScenarioId) ?? demoScenarios[0])}
@@ -973,59 +969,6 @@ function AttachmentChip({ label, onRemove }: { label: string; onRemove: () => vo
         <X className="size-3" />
       </button>
     </span>
-  );
-}
-
-const scenarioCategoryIcons: Record<DemoScenarioCategory, typeof CircleCheck> = {
-  "Happy paths": CircleCheck,
-  "Dynamic branches": GitBranch,
-  "Blocked": TriangleAlert,
-  "Source and market": Globe2,
-};
-
-function DemoScenarioDrawer({ currentScenarioId, onSelect, onReset, onClose }: { currentScenarioId: string; onSelect: (scenario: DemoScenario) => void; onReset: () => void; onClose: () => void }) {
-  const categories = [...new Set(demoScenarios.map((s) => s.category))];
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-ink/38 backdrop-blur-[2px]" role="dialog" aria-modal="true">
-      <div className="slide-left flex h-full w-full max-w-[440px] flex-col border-l border-white/50 bg-canvas shadow-2xl">
-        <div className="flex items-center justify-between border-b border-hair px-5 py-4">
-          <div>
-            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Demo Library</div>
-            <h3 className="text-title font-semibold">Sample briefs</h3>
-          </div>
-          <button onClick={onClose} className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-ok-bg" aria-label="Close"><X className="size-4" /></button>
-        </div>
-        <div className="flex-1 space-y-4 overflow-y-auto p-5">
-          {categories.map((category) => {
-            const CategoryIcon = scenarioCategoryIcons[category];
-            const list = demoScenarios.filter((item) => item.category === category);
-            return (
-              <div key={category} className="space-y-2">
-                <div className="flex items-center gap-1.5 text-body font-bold uppercase tracking-wider text-ink-3">
-                  <CategoryIcon className="size-3.5 text-brand" />
-                  <span>{category}</span>
-                </div>
-                {list.map((scenario) => {
-                  const active = scenario.id === currentScenarioId;
-                  return (
-                    <button key={scenario.id} onClick={() => onSelect(scenario)} className={cn("block w-full rounded-control border p-3 text-left transition hover:-translate-y-px hover:shadow-sm", active ? "border-hair-3 bg-ok-bg" : "border-hair bg-card hover:border-hair-3")}>
-                      <div className="flex items-center justify-between">
-                        <b className="text-body-lg font-semibold">{scenario.label}</b>
-                        {active && <span className="rounded-chip bg-brand px-2 py-0.5 text-caption font-bold text-white">Active</span>}
-                      </div>
-                      <p className="mt-1 text-body leading-5 text-ink-3">{scenario.description}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-        <div className="border-t border-hair p-4">
-          <Button variant="secondary" size="sm" onClick={onReset} className="w-full">Reset to default demo case</Button>
-        </div>
-      </div>
-    </div>
   );
 }
 

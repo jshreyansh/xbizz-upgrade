@@ -50,6 +50,8 @@ import { displayIntendedUses, parseIntendedUses, serializeIntendedUses } from "@
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { InfographicDirectionsScreen } from "@/features/workspace/infographic-directions-screen";
+import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
+import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
@@ -191,11 +193,31 @@ function FormattedMessageText({ text }: { text: string }) {
   );
 }
 
+/** The files a plan starts with when its use case does not say otherwise. */
+function defaultUploadedDocs(brand: string) {
+  return [
+    { name: `${brand || "Brand"}_Clinical_Study_Report_Phase3.pdf`, size: "4.2 MB", date: "Today" },
+    { name: `${brand || "Brand"}_Core_Visual_Aid_Brief.docx`, size: "840 KB", date: "Today" },
+  ];
+}
+
+/** Plausible file size by extension, so scenarios need not carry byte counts. */
+function sizeForFile(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase();
+  return ext === "pdf" ? "4.2 MB"
+    : ext === "docx" ? "840 KB"
+    : ext === "xlsx" ? "260 KB"
+    : ext === "zip" ? "18.4 MB"
+    : ext === "pptx" ? "6.1 MB"
+    : "1.2 MB";
+}
+
 export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const assetType = useWorkspaceStore((state) => state.assetType);
-  // Above the early return on purpose: below it this is a conditional hook.
+  // Above the early return on purpose: below it these are conditional hooks.
   const research = usePlanResearch();
+  const [useCaseDrawerOpen, setUseCaseDrawerOpen] = useState(false);
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -221,6 +243,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     addChatMessage,
     setAudience,
     setIntendedUse,
+    setBrief,
+    setMarket,
+    setCreationMode,
+    setSelectedSourceIds,
+    demoScenarioId,
+    setDemoScenarioId,
     setFormat,
     setDuration,
     setLanguage,
@@ -315,10 +343,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   const [openSection, setOpenSection] = useState<PlanSectionId | null>("sources");
   const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
-  const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>([
-    { name: `${brandName || "Brand"}_Clinical_Study_Report_Phase3.pdf`, size: "4.2 MB", date: "Today" },
-    { name: `${brandName || "Brand"}_Core_Visual_Aid_Brief.docx`, size: "840 KB", date: "Today" },
-  ]);
+  const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>(
+    () => defaultUploadedDocs(brandName)
+  );
   const [previewDossier, setPreviewDossier] = useState<DossierPreviewData | null>(null);
   const docUploadRef = useRef<HTMLInputElement>(null);
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
@@ -326,6 +353,87 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const [presenterLibraryOpen, setPresenterLibraryOpen] = useState(false);
   const [voiceLibraryOpen, setVoiceLibraryOpen] = useState(false);
   const [sourceManagerOpen, setSourceManagerOpen] = useState(false);
+  const activeScenario = demoScenarios.find((s) => s.id === demoScenarioId);
+
+  /**
+   * Switching the use case here swaps the whole context, not just a label —
+   * brief, audience, market, intended use and sources — because the plan is
+   * derived from those. The accordion set below then follows, since it is
+   * computed from the same inputs.
+   *
+   * Only cases for this asset type are offered (see ScenarioDrawer): changing
+   * asset type from inside this screen would hit the early return above and
+   * unmount the hooks beneath it.
+   */
+  const loadUseCase = (scenario: DemoScenario) => {
+    setBrief(scenario.inputs.brief);
+    setAudience(scenario.inputs.audience);
+    setMarket(scenario.inputs.market);
+    setIntendedUse(scenario.inputs.intendedUse);
+    setSelectedSourceIds(scenario.inputs.selectedSourceIds);
+    setDemoScenarioId(scenario.id);
+    setUseCaseDrawerOpen(false);
+
+    /**
+     * goal, topics and treatment are useState seeded once from the plan, so
+     * without this they survive the switch — and because isProductFocus reads
+     * topics and goal, a patient-education case kept showing Product & Device
+     * Visual Assets on the strength of the previous case's "Product
+     * introduction" topic. Re-derive them for the new inputs.
+     */
+    /**
+     * creationMode is deliberately NOT passed, and is cleared below.
+     *
+     * content-plan short-circuits on it — "magic-reel" forces narrated before
+     * the brief is even read — so the tile someone happened to click on the
+     * way in was overriding every case, and the visual-only case arrived
+     * narrated with a Voice section it has no use for. Once a use case is
+     * chosen it is the statement of intent, so the brief governs, exactly as
+     * the scenario's own assertions are written and verified.
+     */
+    setCreationMode("scratch");
+    const next = deriveContentPlan({
+      assetType,
+      brief: scenario.inputs.brief,
+      audience: scenario.inputs.audience,
+      market: scenario.inputs.market,
+      intendedUse: scenario.inputs.intendedUse,
+      selectedSourceIds: scenario.inputs.selectedSourceIds,
+      sourceType,
+      sourcePayload,
+    });
+    setGoal(next.goal);
+    setStoreGoal(next.goal);
+    setSelectedTopics(next.topics);
+    setStoreTopics(next.topics);
+    setTreatmentId(assetType === "video" ? next.presentationMode : next.treatmentId);
+    setPresentationMode(next.presentationMode);
+    setStoryStructure(next.storyStructure);
+
+    // The plan is being rebuilt around a different job, so the worked-through
+    // state goes back to the top rather than pretending the old answers hold.
+    /**
+     * What the user has attached is part of the case, not a constant. These
+     * were seeded with two plausible files for every plan, so "Nothing to work
+     * from" showed a clinical study report it is supposed to be missing, and
+     * "Attachments with nothing usable" showed useful-looking ones. A case
+     * that states its attachments gets exactly those — including none.
+     */
+    const docs = scenario.inputs.uploadedDocs;
+    setUploadedDocs(
+      docs
+        ? docs.map((name) => ({ name, size: sizeForFile(name), date: "Today" }))
+        // A case that says nothing about attachments means the user has their
+        // normal working files — not whichever files the last case left behind.
+        : defaultUploadedDocs(brandName)
+    );
+    // With nothing of ours to lean on, the user's own files are all there is.
+    setSourceGroundingMode(docs && docs.length > 0 ? "my-sources" : "both");
+
+    setOpenSection("sources");
+    setConfirmedTreatment(false);
+    setChatMessages([]);
+  };
 
   const approvedEvidenceCount = selectedSourceIds.filter((id) => id !== "dermora-reference").length;
   const needsPresenter = presentationMode === "presenter" || treatmentId === "presenter" || creationMode === "magic-avatar";
@@ -387,9 +495,19 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     ...(isProductFocus ? (["product-assets"] as PlanSectionId[]) : []),
     "message",
     "delivery",
-    ...(isMagicAvatar ? [] : (["voice"] as PlanSectionId[])),
+    // Visual-only has nothing to voice, and avatar mode already voiced it in
+    // slot 2 — either way there is no Voice section to advance into.
+    ...(isMagicAvatar || treatmentId === "visual-only" ? [] : (["voice"] as PlanSectionId[])),
     "story",
   ];
+
+  /**
+   * sectionOrder already decided which sections this plan HAS — it just only
+   * governed the advance chain, so Product & Device Visual Assets rendered for
+   * every plan and merely changed its summary text. A section not in the order
+   * is not part of this job and is not drawn.
+   */
+  const shows = (section: PlanSectionId) => sectionOrder.includes(section);
 
   const advanceFrom = (section: PlanSectionId) => {
     setEditingDecision(null);
@@ -545,11 +663,23 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
           </div>
 
-          {/* State Switcher in Header */}
-          <div className="ml-6 hidden items-center gap-1 sm:flex">
+          {/* Use case. Was a static "Plan View" chip, which named the screen
+              you were already looking at; this names the job the plan is for
+              and lets you change it without walking back to the brief. */}
+          <div className="ml-6 hidden items-center gap-1.5 sm:flex">
             <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
               Plan View
             </span>
+            <button
+              type="button"
+              onClick={() => setUseCaseDrawerOpen(true)}
+              aria-haspopup="dialog"
+              className="flex max-w-[240px] items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 py-1 text-caption font-bold text-ink-2 transition-colors hover:border-brand hover:text-brand cursor-pointer"
+            >
+              <Layers className="size-3 shrink-0 text-brand" />
+              <span className="truncate">{activeScenario?.label ?? "Choose use case"}</span>
+              <ChevronDown className="size-3 shrink-0 opacity-60" />
+            </button>
           </div>
 
           <div className="ml-4 hidden items-center gap-0.5 lg:flex">
@@ -880,6 +1010,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   )}
 
                   {/* 2. Elevated Product Packshot & Visual Assets */}
+                  {shows("product-assets") && (
                   <PlanSection
                     icon={PackageCheck}
                     title="Product & Device Visual Assets"
@@ -999,6 +1130,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       }}
                     />
                   </PlanSection>
+                  )}
 
                   {/* 3. Message and Audience */}
                   <PlanSection
@@ -1247,7 +1379,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   </PlanSection>
 
                   {/* 5. Presenter, Voice and Sound (for standard video mode) */}
-                  {!isMagicAvatar && assetType === "video" && treatmentId !== "visual-only" && (
+                  {shows("voice") && assetType === "video" && (
                     <PlanSection
                       icon={Mic2}
                       title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"}
@@ -1593,6 +1725,19 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       overlay={
         <>
           {/* ── Modals & Drawers ── */}
+          {useCaseDrawerOpen && (
+            <ScenarioDrawer
+              currentScenarioId={demoScenarioId}
+              assetType={assetType}
+              title="Use cases"
+              onSelect={loadUseCase}
+              onReset={() => {
+                const fallback = demoScenarios.find((s) => s.id === defaultDemoScenarioId) ?? demoScenarios[0];
+                loadUseCase(fallback);
+              }}
+              onClose={() => setUseCaseDrawerOpen(false)}
+            />
+          )}
           {presenterLibraryOpen && (
             <PresenterLibrary
               selected={presenter}
