@@ -24,6 +24,8 @@ import type {
   ProductVariation,
   ProductImage,
   ProductImageAngle,
+  ProductDocument,
+  DocumentFileType,
   DossierEntryStatus,
   ClaimStatus,
 } from "@/features/product-library/product-library-types";
@@ -85,6 +87,7 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
   const [variations, setVariations] = useState<ProductVariation[]>(detail.variations);
   const [activeVariationId, setActiveVariationId] = useState(detail.variations[0]?.id ?? "");
   const [angleFilter, setAngleFilter] = useState<ProductImageAngle | "All">("All");
+  const [documents, setDocuments] = useState<ProductDocument[]>(detail.documents);
 
   const activeVariation = useMemo(
     () => variations.find((v) => v.id === activeVariationId) ?? variations[0],
@@ -102,8 +105,27 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
     { key: "images", label: "Product Images", icon: ImageIcon, count: totalImages },
     { key: "dossier", label: "Dossier", icon: FileText, count: detail.dossiers.length },
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
-    { key: "documents", label: "Documents", icon: FolderOpen, count: detail.documents.length },
+    { key: "documents", label: "Documents", icon: FolderOpen, count: documents.length },
   ];
+
+  const UPLOADABLE_TYPES: DocumentFileType[] = ["PDF", "DOCX", "PPTX", "XLSX"];
+
+  function handleUploadDocument() {
+    const fileType = UPLOADABLE_TYPES[documents.length % UPLOADABLE_TYPES.length];
+    const doc: ProductDocument = {
+      id: `${product.id}-doc-${Date.now()}`,
+      name: `${product.name} — Untitled document`,
+      category: "Uncategorized",
+      fileType,
+      size: "—",
+      updated: "Just now",
+    };
+    setDocuments((prev) => [doc, ...prev]);
+  }
+
+  function handleDeleteDocument(id: string) {
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
+  }
 
   function updateActiveImages(fn: (images: ProductImage[]) => ProductImage[]) {
     setVariations((prev) => prev.map((v) => (v.id === activeVariation?.id ? { ...v, images: fn(v.images) } : v)));
@@ -171,7 +193,7 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
           <Stat value={product.dossiersVerified} label="Dossiers" />
           <Stat value={product.claimsApproved} label="Claims" />
           <Stat value={product.views} label="Views" />
-          <Stat value={detail.documents.length} label="Docs" />
+          <Stat value={documents.length} label="Docs" />
         </div>
       </div>
 
@@ -356,23 +378,44 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
       )}
 
       {tab === "documents" && (
-        <div className="flex flex-col gap-2">
-          {detail.documents.map((doc) => (
-            <div key={doc.id} className="flex items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair">
-              <span className={`grid size-9 shrink-0 place-items-center rounded-control text-caption font-extrabold ${FILE_TONE[doc.fileType] ?? "bg-subtle text-ink-3"}`}>
-                {doc.fileType}
-              </span>
-              <div className="min-w-0 flex-1">
-                <b className="block text-body-lg font-bold text-ink">{doc.name}</b>
-                <span className="text-caption text-ink-4">
-                  {doc.category} · {doc.size} · Updated {doc.updated}
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <button
+              onClick={handleUploadDocument}
+              className="inline-flex items-center gap-1.5 rounded-control border border-dashed border-hair-2 px-3 py-1.5 text-body font-bold text-ink-3 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
+            >
+              <Upload size={13} /> Upload document
+            </button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {documents.map((doc) => (
+              <div key={doc.id} className="group flex items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair">
+                <span className={`grid size-9 shrink-0 place-items-center rounded-control text-caption font-extrabold ${FILE_TONE[doc.fileType] ?? "bg-subtle text-ink-3"}`}>
+                  {doc.fileType}
                 </span>
+                <div className="min-w-0 flex-1">
+                  <b className="block text-body-lg font-bold text-ink">{doc.name}</b>
+                  <span className="text-caption text-ink-4">
+                    {doc.category} · {doc.size} · Updated {doc.updated}
+                  </span>
+                </div>
+                <button className="inline-flex items-center gap-1.5 text-body-lg font-bold text-brand hover:text-brand-deep transition-colors">
+                  <Download size={14} /> Download
+                </button>
+                <button
+                  type="button"
+                  title="Delete document"
+                  onClick={() => handleDeleteDocument(doc.id)}
+                  className="grid size-8 shrink-0 place-items-center rounded-control text-ink-4 opacity-0 transition-all group-hover:opacity-100 hover:bg-danger-bg hover:text-danger"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
-              <button className="inline-flex items-center gap-1.5 text-body-lg font-bold text-brand hover:text-brand-deep transition-colors">
-                <Download size={14} /> Download
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
+          {documents.length === 0 && (
+            <p className="py-10 text-center text-body-lg text-ink-4">No documents yet — upload one above.</p>
+          )}
         </div>
       )}
     </div>
