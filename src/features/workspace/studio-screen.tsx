@@ -66,7 +66,7 @@ import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { CommentsModal, ElementActionBar, ELEMENT_LABELS, type SceneComment } from "@/features/workspace/scene-comments";
-import { MediaPlaceholder } from "@/features/workspace/media-placeholder";
+import { AudioGeneratingPill, MediaPlaceholder } from "@/features/workspace/media-placeholder";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { ShotCards } from "@/features/workspace/shot-cards";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -1538,6 +1538,7 @@ export function StudioScreen() {
                 <div
                   className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden"
                 >
+                 <div className="flex w-full max-w-[840px] flex-col items-start gap-3">
                   <div
                     /**
                      * Only a click on the stage ITSELF deselects. It used to
@@ -1551,7 +1552,7 @@ export function StudioScreen() {
                       if (e.target === e.currentTarget) setSelectedCanvasElementId(null);
                     }}
                     data-canvas-stage
-                    className="relative aspect-video w-full max-w-[840px] rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
+                    className="relative aspect-video w-full rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
                   >
                     {/* Layer 1: Background Gradient Graphic */}
                     <div
@@ -2150,8 +2151,27 @@ export function StudioScreen() {
                       </div>
                     </div>
                   </div>
-                </div>
 
+                  {/* Audio renders after the visuals, so it is still in flight
+                      when the frame is already workable. Gone once the take
+                      lands — a finished asset needs no label. */}
+                  {selectedScenePhase < 2 && (
+                    <div className="flex flex-col items-start gap-2">
+                      {(["voiceover", "sfx"] as const).map((elementId) => {
+                        const timing = timingFor(selectedScene, elementId);
+                        if (!timing) return null;
+                        return (
+                          <AudioGeneratingPill
+                            key={elementId}
+                            label={ELEMENT_LABELS[elementId] ?? elementId}
+                            timing={timing}
+                          />
+                        );
+                      })}
+                    </div>
+                  )}
+                 </div>
+                </div>
 
                 {/* ── Multi-Layer Production Timeline Bar (Collapsible) ── */}
                 <div className="border-t border-hair bg-canvas text-ink shrink-0">

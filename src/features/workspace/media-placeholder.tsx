@@ -133,3 +133,46 @@ export function MediaPlaceholder({
     </div>
   );
 }
+
+/**
+ * Audio still rendering, under the frame.
+ *
+ * Voice-over and sound effects were the two assets with no generating state at
+ * all — they simply were not there and then they were, with nothing saying a
+ * render was in flight. They get the same treatment as the visual slots and
+ * for the same reason: the timing is known before the audio exists, so it can
+ * be shown.
+ *
+ * A pill rather than a box because audio occupies no space in the frame. It
+ * shimmers while rendering and is gone once the take lands — a finished asset
+ * needs no label.
+ */
+export function AudioGeneratingPill({
+  label,
+  timing,
+}: {
+  label: string;
+  timing?: ElementTiming;
+}) {
+  return (
+    <div
+      aria-busy
+      aria-label={`${label} generating${timing ? ` — ${timing.inAt}s to ${timing.outAt}s` : ""}`}
+      className="relative inline-flex items-center gap-2.5 overflow-hidden rounded-chip bg-brand px-3.5 py-2 shadow-brand-lift"
+    >
+      <span aria-hidden className="shimmer pointer-events-none absolute inset-0" />
+      <span className="relative text-body-lg font-[850] text-white">{label}</span>
+      <span className="dot-cycle relative inline-flex items-baseline text-label font-bold italic text-white/80">
+        Generating
+        <span aria-hidden>.</span>
+        <span aria-hidden>.</span>
+        <span aria-hidden>.</span>
+      </span>
+      {timing && (
+        <span className="relative text-caption tabular-nums text-white/60">
+          {timing.inAt.toFixed(1)}s – {timing.outAt.toFixed(1)}s
+        </span>
+      )}
+    </div>
+  );
+}

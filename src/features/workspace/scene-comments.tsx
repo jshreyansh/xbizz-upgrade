@@ -42,6 +42,8 @@ export const ELEMENT_LABELS: Record<string, string> = {
   tag: "Narrative tag",
   claim: "Claim badge",
   background: "Background",
+  voiceover: "Voice-over",
+  sfx: "Sound effects",
 };
 
 /**
