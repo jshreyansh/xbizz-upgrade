@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  GripVertical,
   Pencil,
   ShieldCheck,
   Trash2,
@@ -124,10 +123,6 @@ export interface ScriptSceneCardProps {
   onToggleEdit: () => void;
   /** Being rewritten right now — content is withheld rather than half-shown. */
   pending: boolean;
-  dragging: boolean;
-  onDragStart: () => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragEnd: () => void;
   onTitleChange: (value: string) => void;
   onTagChange: (value: string) => void;
   onNarrationChange: (value: string) => void;
@@ -147,7 +142,6 @@ export interface ScriptSceneCardProps {
 export function ScriptSceneCard({
   scene, index, total, tagOptions,
   selected, onToggleSelect, editing, onToggleEdit, pending,
-  dragging, onDragStart, onDragOver, onDragEnd,
   onTitleChange, onTagChange, onNarrationChange, onMove, onDelete,
 }: ScriptSceneCardProps) {
   const words = scene.narration ? scene.narration.split(" ").filter(Boolean).length : 0;
@@ -155,20 +149,13 @@ export function ScriptSceneCard({
 
   return (
     <article
-      draggable={!editing}
-      onDragStart={onDragStart}
-      onDragOver={onDragOver}
-      onDrop={(e) => e.preventDefault()}
-      onDragEnd={onDragEnd}
       // Clicking the card aims the chat at it. Suppressed while editing, so
       // working in the text never changes what the next instruction targets.
       onClick={editing ? undefined : onToggleSelect}
       className={cn(
         "relative flex flex-col gap-2 rounded-card border bg-card p-2.5 transition-all duration-200",
         !editing && "cursor-pointer",
-        dragging
-          ? "border-dashed border-brand opacity-40"
-          : selected
+        selected
           ? "border-brand ring-2 ring-brand/15 shadow-sm"
           : "border-hair shadow-2xs hover:border-hair-3 hover:shadow-xs"
       )}
@@ -176,15 +163,6 @@ export function ScriptSceneCard({
       {/* ── Header ── */}
       <div className="flex items-center justify-between gap-2 px-1 pb-2 border-b border-hair">
         <div className="flex min-w-0 items-center gap-1.5">
-          <span
-            className={cn(
-              "shrink-0 rounded-glyph p-0.5 text-ink-4 transition-colors",
-              editing ? "opacity-30" : "cursor-grab hover:text-ink active:cursor-grabbing"
-            )}
-            title={editing ? "Save to reorder" : "Drag to reorder"}
-          >
-            <GripVertical className="size-4" />
-          </span>
 
           {/* The scope tick. Always drawn, so the affordance is discoverable
               rather than appearing only on hover. */}

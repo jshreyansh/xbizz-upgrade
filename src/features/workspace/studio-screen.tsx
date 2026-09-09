@@ -190,7 +190,6 @@ export function StudioScreen() {
   const [toastMessage, setToMessage] = useState<string | null>(null);
 
   const [sceneList, setSceneList] = useState(scenes);
-  const [draggedSceneId, setDraggedSceneId] = useState<string | null>(null);
   const isScriptComplete = sceneList.length > 0 && sceneList.every((s) => s.narration && s.narration.trim().length > 0);
 
   const [directorInput, setDirectorInput] = useState("");
@@ -769,20 +768,6 @@ export function StudioScreen() {
     setTimeout(() => setToMessage(null), 2800);
   };
 
-  const handleDragStart = (id: string) => setDraggedSceneId(id);
-  const handleDragOver = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    if (!draggedSceneId || draggedSceneId === targetId) return;
-    const sourceIndex = sceneList.findIndex((s) => s.id === draggedSceneId);
-    const targetIndex = sceneList.findIndex((s) => s.id === targetId);
-    if (sourceIndex === -1 || targetIndex === -1) return;
-    const updated = [...sceneList];
-    const [moved] = updated.splice(sourceIndex, 1);
-    updated.splice(targetIndex, 0, moved);
-    const renumbered = updated.map((s, idx) => ({ ...s, number: idx + 1 }));
-    setSceneList(renumbered);
-  };
-  const handleDragEnd = () => setDraggedSceneId(null);
 
   const handlePostComment = () => {
     if (!newCommentText.trim()) return;
@@ -1260,10 +1245,6 @@ export function StudioScreen() {
                             editing={editingSceneIds.includes(sc.id)}
                             onToggleEdit={() => toggleSceneEditing(sc.id)}
                             pending={pendingSceneIds.includes(sc.id)}
-                            dragging={draggedSceneId === sc.id}
-                            onDragStart={() => handleDragStart(sc.id)}
-                            onDragOver={(e) => handleDragOver(e, sc.id)}
-                            onDragEnd={handleDragEnd}
                             onTitleChange={(v) => handleUpdateSceneTitle(sc.id, v)}
                             onTagChange={(v) => handleUpdateSceneTag(sc.id, v)}
                             onNarrationChange={(v) => handleUpdateSceneNarration(sc.id, v)}
