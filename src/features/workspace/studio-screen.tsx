@@ -369,6 +369,7 @@ export function StudioScreen() {
       // including the script view, which has no canvas at all.
       if (!target?.closest("[data-canvas-stage]")) {
         setElementMenuAt(null);
+        setSelectedCanvasElementId(null);
         return;
       }
       setElementMenuAt({ x: e.clientX, y: e.clientY });
@@ -1560,7 +1561,17 @@ export function StudioScreen() {
                   className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden"
                 >
                   <div
-                    onClick={() => setSelectedCanvasElementId(null)}
+                    /**
+                     * Only a click on the stage ITSELF deselects. It used to
+                     * deselect on any click inside it, so every element that
+                     * does not stopPropagation — the subtitle, the image, the
+                     * video — selected itself on pointerdown and was cleared by
+                     * its own click a frame later. The headline only worked
+                     * because it stops propagation explicitly.
+                     */
+                    onClick={(e) => {
+                      if (e.target === e.currentTarget) setSelectedCanvasElementId(null);
+                    }}
                     data-canvas-stage
                     className="relative aspect-video w-full max-w-[840px] rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
                   >
@@ -1645,6 +1656,9 @@ export function StudioScreen() {
                                   kind="image"
                                   label={selectedScene.mediaLabel || "Clinical still"}
                                   timing={timingFor(selectedScene, "image")}
+                                  currentTime={sceneCurrentTime}
+                                  selected={selectedCanvasElementId === "image"}
+                                  onSelect={() => handleSelectCanvasElement("image")}
                                   className="flex-1"
                                 />
                               )}
@@ -1653,6 +1667,9 @@ export function StudioScreen() {
                                   kind="video"
                                   label={selectedScene.visual || "Motion asset"}
                                   timing={timingFor(selectedScene, "video-clip")}
+                                  currentTime={sceneCurrentTime}
+                                  selected={selectedCanvasElementId === "video-clip"}
+                                  onSelect={() => handleSelectCanvasElement("video-clip")}
                                   className="flex-1"
                                 />
                               )}

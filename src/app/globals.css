@@ -613,6 +613,23 @@ button.rounded-full {
   animation: shimmer 1.4s linear infinite;
 }
 
+/* "Generating." -> "Generating.." -> "Generating..." — three dots revealed in
+   turn rather than three dots pulsing at once, so it reads as counting up.
+   Each dot holds its full opacity for the rest of the cycle after appearing,
+   which is what makes it a count rather than a flicker. The reduced-motion
+   block below collapses it to a static three. */
+@keyframes dot-cycle {
+  0%,  100% { opacity: 0.15; }
+  20%,  95% { opacity: 1; }
+}
+
+.dot-cycle > span {
+  animation: dot-cycle 1.5s infinite;
+}
+.dot-cycle > span:nth-child(1) { animation-delay: 0s; }
+.dot-cycle > span:nth-child(2) { animation-delay: 0.25s; }
+.dot-cycle > span:nth-child(3) { animation-delay: 0.5s; }
+
 @keyframes chat-pulse {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-live) 45%, transparent); }
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-live) 0%, transparent); }
