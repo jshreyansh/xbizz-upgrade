@@ -190,13 +190,16 @@ export function CommentsModal({
   comments: SceneComment[];
   /** Team comments only exist once a version has been published. */
   teamUnlocked: boolean;
-  onResolve: (id: string) => void;
-  onReject: (id: string) => void;
+  onResolve: (id: string, reason: string) => void;
+  onReject: (id: string, reason: string) => void;
   onSendToChat: (id: string) => void;
   onJump: (comment: SceneComment) => void;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<"mine" | "team">("mine");
+  /** The comment being closed, and the note that has to come with it. */
+  const [closing, setClosing] = useState<{ id: string; as: "resolved" | "rejected" } | null>(null);
+  const [reason, setReason] = useState("");
   const mine = comments.filter((c) => c.source === "mine");
   const team = comments.filter((c) => c.source === "team");
   const list = tab === "mine" ? mine : team;
@@ -289,27 +292,78 @@ export function CommentsModal({
                     <StatusChip comment={comment} />
                   </div>
 
-                  {comment.status === "rejected" && comment.closedReason && (
+                  {comment.status !== "open" && comment.closedReason && (
                     <p className="mt-2 border-t border-hair pt-2 text-caption leading-snug text-ink-3">
                       {comment.closedReason}
                     </p>
                   )}
 
-                  {comment.status === "open" && (
+                  {comment.status === "open" && closing?.id === comment.id && (
+                    /**
+                     * A note is required to close a TEAM comment, because the
+                     * person who wrote it can only see the shared link — a bare
+                     * "Resolved" tells them nothing about whether their point
+                     * was taken. Own comments close without one: you already
+                     * know why.
+                     */
+                    <div className="mt-2.5 space-y-1.5 border-t border-hair pt-2.5">
+                      <label className="block text-caption font-bold text-ink-2">
+                        {closing.as === "resolved" ? "What did you change?" : "Why is this being discarded?"}
+                        {comment.source === "team" && <span className="ml-1 text-danger">required</span>}
+                      </label>
+                      <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        rows={2}
+                        autoFocus
+                        placeholder={
+                          closing.as === "resolved"
+                            ? "e.g. Reordered the line so Week 16 leads."
+                            : "e.g. The label wording cannot change without a new MLR pass."
+                        }
+                        className="w-full resize-none rounded-control border border-hair-2 bg-canvas p-2 text-body text-ink focus:border-brand focus:bg-card focus:outline-none focus:ring-2 focus:ring-brand/15"
+                      />
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => { setClosing(null); setReason(""); }}
+                          className="rounded-glyph px-2 py-1 text-caption font-bold text-ink-3 hover:text-ink cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          disabled={comment.source === "team" && !reason.trim()}
+                          onClick={() => {
+                            const note = reason.trim();
+                            if (closing.as === "resolved") onResolve(comment.id, note);
+                            else onReject(comment.id, note);
+                            setClosing(null);
+                            setReason("");
+                          }}
+                          className="rounded-glyph bg-brand px-2.5 py-1 text-caption font-bold text-white transition hover:bg-brand-deep disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                        >
+                          {closing.as === "resolved" ? "Resolve" : "Discard"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {comment.status === "open" && closing?.id !== comment.id && (
                     <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-hair pt-2.5">
                       <button
                         type="button"
-                        onClick={() => onResolve(comment.id)}
+                        onClick={() => { setClosing({ id: comment.id, as: "resolved" }); setReason(""); }}
                         className="inline-flex items-center gap-1 rounded-glyph border border-ok-line bg-ok-bg px-2 py-1 text-caption font-bold text-ok transition hover:brightness-95 cursor-pointer"
                       >
                         <Check className="size-3" /> Resolve
                       </button>
                       <button
                         type="button"
-                        onClick={() => onReject(comment.id)}
+                        onClick={() => { setClosing({ id: comment.id, as: "rejected" }); setReason(""); }}
                         className="inline-flex items-center gap-1 rounded-glyph border border-hair-2 bg-card px-2 py-1 text-caption font-bold text-ink-3 transition hover:text-danger hover:border-danger-line cursor-pointer"
                       >
-                        <X className="size-3" /> Reject
+                        <X className="size-3" /> Discard
                       </button>
                       {!comment.sentToChat && (
                         <button

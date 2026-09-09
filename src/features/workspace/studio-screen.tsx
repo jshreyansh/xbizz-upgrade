@@ -66,6 +66,7 @@ import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { CommentsModal, ElementActionBar, ELEMENT_LABELS, type SceneComment } from "@/features/workspace/scene-comments";
+import { ReviewComments } from "@/features/workspace/review-comments";
 import { AudioGeneratingPill, MediaPlaceholder } from "@/features/workspace/media-placeholder";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { ShotCards } from "@/features/workspace/shot-cards";
@@ -452,7 +453,18 @@ export function StudioScreen() {
           text: `Done — applied that to **Scene ${comment.sceneNumber} · ${comment.elementLabel}** and marked the comment resolved. It stays in the list with my name against it, so you can check what I changed.`,
         });
         setComments((prev) =>
-          prev.map((c) => (c.id === comment.id ? { ...c, status: "resolved" as const, closedBy: "agent" as const } : c))
+          prev.map((c) =>
+            c.id === comment.id
+              ? {
+                  ...c,
+                  status: "resolved" as const,
+                  closedBy: "agent" as const,
+                  // The agent writes its own note, for the same reason the
+                  // owner has to: whoever raised it may only see the link.
+                  closedReason: `Applied to Scene ${comment.sceneNumber} · ${comment.elementLabel}.`,
+                }
+              : c
+          )
         );
       } else {
         addChatMessage({
@@ -470,7 +482,7 @@ export function StudioScreen() {
     }, 1500);
   };
 
-  const closeComment = (id: string, status: "resolved" | "rejected") =>
+  const closeComment = (id: string, status: "resolved" | "rejected", reason: string) =>
     setComments((prev) =>
       prev.map((c) =>
         c.id === id
@@ -478,7 +490,9 @@ export function StudioScreen() {
               ...c,
               status,
               closedBy: "user" as const,
-              closedReason: status === "rejected" ? "Dismissed by you." : undefined,
+              // The note the modal collected. Required for a team comment,
+              // because the reviewer who wrote it sees only the shared link.
+              closedReason: reason || undefined,
             }
           : c
       )
@@ -663,48 +677,7 @@ export function StudioScreen() {
     return chapters.find((c) => masterCurrentTime >= c.start && masterCurrentTime < c.end) || chapters[0];
   }, [chapters, masterCurrentTime]);
 
-  const [commentsList, setCommentsList] = useState([
-    {
-      id: "comment-1",
-      author: "Sarah Lin (Medical Director)",
-      role: "Medical Reviewer",
-      avatar: "SL",
-      timestampSec: 14,
-      timeFormatted: "0:14",
-      sceneNumber: 3,
-      sceneTitle: "Pivotal evidence",
-      text: "Ensure the CLEARSKIN p-value (p < 0.001) is displayed in the footnote overlay alongside Week 16 endpoint.",
-      createdAt: "10m ago",
-      isResolved: false,
-      replies: [
-        {
-          id: "rep-1",
-          author: "Maya Kapoor",
-          role: "Content Lead",
-          text: "Updated in Scene 3 footnote layer. Will reflect in final render.",
-          createdAt: "4m ago",
-        },
-      ],
-    },
-    {
-      id: "comment-2",
-      author: "David Vance (Brand Lead)",
-      role: "Marketing",
-      avatar: "DV",
-      timestampSec: 28,
-      timeFormatted: "0:28",
-      sceneNumber: 4,
-      sceneTitle: "Designed for practice",
-      text: "The dosing schedule animation feels clear and well paced for HCP meetings.",
-      createdAt: "18m ago",
-      isResolved: true,
-      replies: [],
-    },
-  ]);
 
-  const [newCommentText, setNewCommentText] = useState("");
-  const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
-  const [replyDraftText, setReplyDraftText] = useState("");
 
   const handleStartSceneEditor = () => {
     setStudioMode("editor");
@@ -948,40 +921,8 @@ export function StudioScreen() {
   };
 
 
-  const handlePostComment = () => {
-    if (!newCommentText.trim()) return;
-    const timeSec = Math.floor(masterCurrentTime);
-    const formatted = `0:${timeSec.toString().padStart(2, "0")}`;
-    const newComment = {
-      id: `comment-${Date.now()}`,
-      author: "Maya Kapoor",
-      role: "Content Lead",
-      avatar: "MK",
-      timestampSec: timeSec,
-      timeFormatted: formatted,
-      sceneNumber: activeMasterChapter?.number || 1,
-      sceneTitle: activeMasterChapter?.title || "Scene",
-      text: newCommentText.trim(),
-      createdAt: "Just now",
-      isResolved: false,
-      replies: [],
-    };
-    setCommentsList((prev) => [newComment, ...prev]);
-    setNewCommentText("");
-    setToMessage(`Comment posted at ${formatted}`);
-    setTimeout(() => setToMessage(null), 2500);
-  };
 
-  const handlePostReply = (commentId: string) => {
-    if (!replyDraftText.trim()) return;
-    setCommentsList((prev) => prev.map((c) => c.id === commentId ? { ...c, replies: [...c.replies, { id: `reply-${Date.now()}`, author: "Maya Kapoor", role: "Content Lead", text: replyDraftText.trim(), createdAt: "Just now" }] } : c));
-    setReplyingToCommentId(null);
-    setReplyDraftText("");
-    setToMessage("Reply added");
-    setTimeout(() => setToMessage(null), 2000);
-  };
 
-  const handleToggleResolveComment = (commentId: string) => setCommentsList((prev) => prev.map((c) => c.id === commentId ? { ...c, isResolved: !c.isResolved } : c));
 
   const handleSendChatMessage = (presetText?: string) => {
     const rawInput = (presetText || directorInput).trim();
@@ -1085,22 +1026,21 @@ export function StudioScreen() {
         const timeMatch = rawInput.match(/0:\d{2}|\d{1,2}s|\d{1,2}\s*sec/i);
         const extractedSec = timeMatch ? parseInt(timeMatch[0].replace(/[^0-9]/g, ""), 10) : Math.floor(masterCurrentTime);
         const formatted = `0:${extractedSec.toString().padStart(2, "0")}`;
-        const createdComment = {
-          id: `comment-${Date.now()}`,
-          author: "SwishX Assistant (via Prompt)",
-          role: "AI Copilot",
-          avatar: "SX",
-          timestampSec: extractedSec,
-          timeFormatted: formatted,
+        const created: SceneComment = {
+          id: `cm-${(commentSeq.current += 1)}`,
+          sceneId: selectedScene.id,
           sceneNumber: activeMasterChapter?.number || 1,
-          sceneTitle: activeMasterChapter?.title || "Pivotal evidence",
+          elementId: "narration",
+          elementLabel: ELEMENT_LABELS.narration,
           text: rawInput.replace(/add\s+(a\s+)?comment(\s+at\s+\S+)?\s*(that|to|for|:)?\s*/i, "").trim() || rawInput,
-          createdAt: "Just now",
-          isResolved: false,
-          replies: [],
+          author: "You",
+          source: "mine",
+          at: "Just now",
+          status: "open",
+          sentToChat: true,
         };
-        setCommentsList((prev) => [createdComment, ...prev]);
-        addChatMessage({ role: "swishx", text: `✓ I've added a timestamped reviewer comment at **${formatted}** (${activeMasterChapter?.title}): *" ${createdComment.text} "*` });
+        setComments((prev) => [created, ...prev]);
+        addChatMessage({ role: "swishx", text: `✓ I've added a timestamped reviewer comment at **${formatted}** (${activeMasterChapter?.title}): *" ${created.text} "*` });
       } else if (rawInput.toLowerCase().includes("mlr") || rawInput.toLowerCase().includes("comparative") || rawInput.toLowerCase().includes("embrace-3")) {
         setMlrCheckResolved(true);
         setSceneList((prev) =>
@@ -1197,8 +1137,11 @@ export function StudioScreen() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Comments. Carries the OPEN count, not the total: a resolved
-                comment is not something asking for attention. */}
+            {/* Owner-only. A reviewer on the shared link reads comments in
+                the Comments tab, which is scoped to what they may see — the
+                My/Team split behind this counter is the owner's view of the
+                same records. */}
+            {!isReview && (
             <button
               type="button"
               onClick={() => setCommentsOpen(true)}
@@ -1214,6 +1157,7 @@ export function StudioScreen() {
               <MessageSquare className="size-3.5" />
               <span className="text-caption font-bold tabular-nums">{openComments.length}</span>
             </button>
+            )}
 
             {/* Toggle Right Sidebar Panel Button (Icon Only) */}
             <button
@@ -2511,7 +2455,7 @@ export function StudioScreen() {
                     tab="comments"
                     current={activeTab}
                     onClick={setActiveTab}
-                    count={commentsList.length}
+                    count={openComments.length}
                   >
                     Comments
                   </InspectorTabButton>
@@ -2853,126 +2797,38 @@ export function StudioScreen() {
               </div>
             )}
 
-            {/* ── TAB 2: COMMENTS THREAD (In Review Mode) ── */}
+            {/* ── TAB 2: COMMENTS (what a reviewer sees on the shared link) ── */}
             {activeTab === "comments" && (
-              <div className="flex-1 flex flex-col min-h-0">
-                {/* Add New Comment Box */}
-                <div className="p-3.5 border-b border-hair bg-canvas space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-label font-extrabold text-ink">Add Reviewer Comment</span>
-                    <span className="rounded-glyph bg-tint border border-brand/20 px-2 py-0.5 text-caption font-extrabold text-brand-deep">
-                      ⏱ 0:{Math.floor(masterCurrentTime).toString().padStart(2, "0")}
-                    </span>
-                  </div>
-                  <textarea
-                    value={newCommentText}
-                    onChange={(e) => setNewCommentText(e.target.value)}
-                    placeholder="Provide compliance or marketing feedback at current timestamp..."
-                    rows={2}
-                    className="w-full rounded-control border border-hair-2 bg-card p-2.5 text-body text-ink resize-none focus:outline-none focus:border-brand shadow-2xs"
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={handlePostComment}
-                      disabled={!newCommentText.trim()}
-                      size="sm"
-                      className="bg-brand hover:bg-brand-deep text-white font-bold text-label h-8 px-4 cursor-pointer"
-                    >
-                      Post Comment
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Comments List */}
-                <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
-                  {commentsList.map((comment) => (
-                    <div
-                      key={comment.id}
-                      className={cn(
-                        "rounded-control border p-3 transition-all space-y-2",
-                        comment.isResolved
-                          ? "bg-canvas border-hair opacity-60"
-                          : "bg-card border-hair shadow-2xs hover:border-brand/20"
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <span className="size-6 rounded-full bg-brand/15 text-brand-deep font-extrabold text-caption grid place-items-center">
-                            {comment.avatar}
-                          </span>
-                          <div>
-                            <div className="text-label font-bold text-ink">{comment.author}</div>
-                            <div className="text-micro text-ink-3">{comment.createdAt}</div>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMasterCurrentTime(comment.timestampSec);
-                            setMasterPlaying(true);
-                          }}
-                          className="rounded-glyph bg-ok-bg border border-ok-line px-2 py-0.5 text-caption font-extrabold text-ok hover:bg-ok-bg transition-colors cursor-pointer"
-                        >
-                          ⏱ {comment.timeFormatted}
-                        </button>
-                      </div>
-
-                      <p className="text-body text-ink leading-relaxed">{comment.text}</p>
-
-                      {comment.replies.length > 0 && (
-                        <div className="space-y-1.5 pl-3 border-l-2 border-hair-2 mt-2">
-                          {comment.replies.map((rep) => (
-                            <div key={rep.id} className="text-label">
-                              <span className="font-bold text-ink">{rep.author}: </span>
-                              <span className="text-ink-2">{rep.text}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-1 border-t border-hair text-caption">
-                        <button
-                          type="button"
-                          onClick={() => setReplyingToCommentId(replyingToCommentId === comment.id ? null : comment.id)}
-                          className="text-brand font-bold hover:underline cursor-pointer"
-                        >
-                          Reply
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleResolveComment(comment.id)}
-                          className="text-ink-3 hover:text-ok font-semibold cursor-pointer"
-                        >
-                          {comment.isResolved ? "✓ Resolved" : "Mark as resolved"}
-                        </button>
-                      </div>
-
-                      {replyingToCommentId === comment.id && (
-                        <div className="pt-2 flex gap-1.5">
-                          <input
-                            type="text"
-                            value={replyDraftText}
-                            onChange={(e) => setReplyDraftText(e.target.value)}
-                            placeholder="Write a reply..."
-                            className="flex-1 rounded-chip border border-hair-2 px-2.5 py-1 text-label focus:outline-none focus:border-brand"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handlePostReply(comment.id)}
-                            className="bg-brand text-white text-caption h-7 px-2.5 font-bold"
-                          >
-                            Reply
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ReviewComments
+                comments={comments}
+                currentTimeLabel={`${Math.floor(masterCurrentTime / 60)}:${Math.floor(masterCurrentTime % 60).toString().padStart(2, "0")}`}
+                medicalReviewDone={mlrCheckResolved}
+                regulatoryReviewDone={qaCheckResolved}
+                onPost={(text) => {
+                  /* A reviewer's comment enters the SAME list the owner works
+                     in the editor. Two lists would mean the owner resolving
+                     one record and the reviewer reading another. */
+                  setComments((prev) => [
+                    {
+                      id: `cm-${(commentSeq.current += 1)}`,
+                      sceneId: selectedScene.id,
+                      sceneNumber: selectedScene.number,
+                      elementId: "narration",
+                      elementLabel: ELEMENT_LABELS.narration,
+                      text,
+                      author: "Sarah Lin · Medical",
+                      source: "team",
+                      at: "Just now",
+                      status: "open",
+                      sentToChat: false,
+                    },
+                    ...prev,
+                  ]);
+                  setToMessage("Comment posted to the project owner");
+                  setTimeout(() => setToMessage(null), 2500);
+                }}
+              />
             )}
-
-            {/* ── TAB 2 (In Editor Mode): EDIT PROPERTIES & CENTRALIZED FLOW ── */}
             {activeTab === "edit" && !isReview && (
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 <div className="border-b border-hair pb-3 flex items-center justify-between">
@@ -3137,8 +2993,8 @@ export function StudioScreen() {
           <CommentsModal
             comments={comments}
             teamUnlocked={teamCommentsUnlocked}
-            onResolve={(id) => closeComment(id, "resolved")}
-            onReject={(id) => closeComment(id, "rejected")}
+            onResolve={(id, reason) => closeComment(id, "resolved", reason)}
+            onReject={(id, reason) => closeComment(id, "rejected", reason)}
             onSendToChat={(id) => {
               const comment = comments.find((c) => c.id === id);
               if (comment) sendCommentToAgent(comment);
