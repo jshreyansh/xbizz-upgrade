@@ -53,7 +53,7 @@ export function ProductLibraryScreen() {
           }}
         >
           <Plus size={16} />
-          Add product
+          Create brand
         </button>
       </div>
 

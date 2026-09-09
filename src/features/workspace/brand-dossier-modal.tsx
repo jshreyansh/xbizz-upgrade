@@ -409,7 +409,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   {stage !== "audience" ? "✓" : "1"}
                 </div>
                 <span className="text-body-lg font-extrabold text-ink">
-                  1. Target Audience
+                  Target Audience
                 </span>
                 {stage !== "audience" && (
                   <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
@@ -451,12 +451,23 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         )}
                       >
                         <div
-                          className={cn(
-                            "grid size-12 place-items-center rounded-control shrink-0 transition-all duration-200",
-                            isSel ? "bg-brand text-white shadow-brand-lift" : "bg-tint text-brand-deep"
-                          )}
+                          className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-control transition-all duration-200"
+                          style={{
+                            background: isSel
+                              ? "linear-gradient(155deg,#ff8a52,var(--brand) 55%,var(--brand-deep))"
+                              : "linear-gradient(155deg,var(--tint),var(--tint-2))",
+                            boxShadow: isSel
+                              ? "0 10px 20px -8px rgba(253,72,22,.45), inset 0 1px 0 rgba(255,255,255,.5), inset 0 -6px 10px -6px rgba(0,0,0,.18)"
+                              : "inset 0 1px 0 rgba(255,255,255,.6), inset 0 -4px 8px -6px rgba(16,24,40,.08)",
+                          }}
                         >
-                          <IconComp className="size-6" />
+                          {/* Glass sheen — the same premium finish used on the homepage studio-picker icons */}
+                          <span
+                            aria-hidden
+                            className="pointer-events-none absolute inset-0"
+                            style={{ background: "linear-gradient(155deg,rgba(255,255,255,.45),transparent 45%)" }}
+                          />
+                          <IconComp className={cn("relative size-6", isSel ? "text-white" : "text-brand-deep")} strokeWidth={1.75} />
                         </div>
                         <div className="text-body-lg font-[850] text-ink leading-none">{item.title}</div>
                         <div className="text-label text-ink-3 leading-none">{item.subtitle}</div>
@@ -518,7 +529,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   2
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  2. Clinical Grounding
+                  Clinical Grounding
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -541,7 +552,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     {stage === "details" && groundingLabel ? "✓" : "2"}
                   </div>
                   <span className="text-body-lg font-extrabold text-ink">
-                    2. Clinical Grounding
+                    Clinical Grounding
                   </span>
                   {stage !== "grounding" && groundingLabel && (
                     <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
@@ -716,7 +727,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   3
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  3. Output Shape &amp; Clinical Focus Topics
+                  Output Shape &amp; Clinical Focus Topics
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
