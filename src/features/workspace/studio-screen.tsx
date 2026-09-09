@@ -64,6 +64,7 @@ import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
+import { CommentsModal, ElementActionBar, ELEMENT_LABELS, type SceneComment } from "@/features/workspace/scene-comments";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -302,6 +303,127 @@ export function StudioScreen() {
   /** The claim a citation's Details action jumped to. Clears itself after 2s. */
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
 
+  const [comments, setComments] = useState<SceneComment[]>([]);
+  /** Monotonic ids without reading the clock during render. */
+  const commentSeq = useRef(0);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  /**
+   * Where the last canvas click landed, so the element actions appear next to
+   * the thing they act on. Captured from the click rather than measured per
+   * element — eight elements would otherwise each need their own anchor.
+   */
+  const [elementMenuAt, setElementMenuAt] = useState<{ x: number; y: number } | null>(null);
+  /** Team comments only exist after a version has been published. */
+  const [teamCommentsUnlocked, setTeamCommentsUnlocked] = useState(false);
+
+  /**
+   * Where the element actions should appear.
+   *
+   * A React listener on any ancestor cannot work: handlePointerDownElement
+   * calls stopPropagation as its first statement (it has to, or the stage's
+   * click-to-deselect fights the drag), so no ancestor ever sees an element's
+   * pointerdown. A native listener on the document in the CAPTURE phase runs
+   * before any of that and cannot be stopped by it — one listener, all eight
+   * elements, no per-element wiring.
+   */
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      // Clicking inside the actions themselves must not move them.
+      if (target?.closest("[data-element-actions]")) return;
+      // Only a click on the canvas stage opens element actions. Without this
+      // the listener is document-wide and selectedCanvasElementId defaults to
+      // "headline", so the actions popped up on any click on any screen —
+      // including the script view, which has no canvas at all.
+      if (!target?.closest("[data-canvas-stage]")) {
+        setElementMenuAt(null);
+        return;
+      }
+      setElementMenuAt({ x: e.clientX, y: e.clientY });
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, []);
+
+  const openComments = comments.filter((c) => c.status === "open");
+
+  const addComment = (elementId: string, text: string, alsoSendToChat: boolean) => {
+    const comment: SceneComment = {
+      id: `cm-${(commentSeq.current += 1)}`,
+      sceneId: selectedScene.id,
+      sceneNumber: selectedScene.number,
+      elementId,
+      elementLabel: ELEMENT_LABELS[elementId] ?? "Element",
+      text,
+      author: "You",
+      source: "mine",
+      at: "Just now",
+      status: "open",
+      sentToChat: alsoSendToChat,
+    };
+    setComments((prev) => [comment, ...prev]);
+    if (alsoSendToChat) sendCommentToAgent(comment);
+  };
+
+  /**
+   * Handing a comment to the agent. The agent then closes it itself: resolved
+   * when it acted, rejected when the note is too thin to act on — and a
+   * rejection carries its reason, or it is indistinguishable from being
+   * ignored.
+   */
+  const sendCommentToAgent = (comment: SceneComment) => {
+    setComments((prev) => prev.map((c) => (c.id === comment.id ? { ...c, sentToChat: true } : c)));
+    addChatMessage({
+      role: "user",
+      text: `[Scene ${comment.sceneNumber} · ${comment.elementLabel}] ${comment.text}`,
+    });
+
+    const actionable = comment.text.trim().split(/\s+/).filter(Boolean).length >= 3;
+    setTimeout(() => {
+      if (actionable) {
+        addChatMessage({
+          role: "swishx",
+          text: `Done — applied that to **Scene ${comment.sceneNumber} · ${comment.elementLabel}** and marked the comment resolved. It stays in the list with my name against it, so you can check what I changed.`,
+        });
+        setComments((prev) =>
+          prev.map((c) => (c.id === comment.id ? { ...c, status: "resolved" as const, closedBy: "agent" as const } : c))
+        );
+      } else {
+        addChatMessage({
+          role: "swishx",
+          text: `I can't act on **Scene ${comment.sceneNumber} · ${comment.elementLabel}** from that — it doesn't say what should change. I've marked it rejected rather than guess; reopen it with more detail and I'll take another run.`,
+        });
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === comment.id
+              ? { ...c, status: "rejected" as const, closedBy: "agent" as const, closedReason: "SwishX could not tell what should change from this note." }
+              : c
+          )
+        );
+      }
+    }, 1500);
+  };
+
+  const closeComment = (id: string, status: "resolved" | "rejected") =>
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              status,
+              closedBy: "user" as const,
+              closedReason: status === "rejected" ? "Dismissed by you." : undefined,
+            }
+          : c
+      )
+    );
+
+  const jumpToComment = (comment: SceneComment) => {
+    setCommentsOpen(false);
+    setSelectedSceneId(comment.sceneId);
+    setSelectedCanvasElementId(comment.elementId);
+  };
+
   /**
    * The chat's scene scope lives in attachedContexts, so the canvas ticks and
    * the chat's attach menu are two views of ONE list. Selecting a card in the
@@ -409,9 +531,8 @@ export function StudioScreen() {
     });
   };
 
-  const handleSelectCanvasElement = (elementId: string) => {
-    setSelectedCanvasElementId(elementId);
-
+  /** Label and detail for an element, shared by the chat attach and comments. */
+  const describeElement = (elementId: string) => {
     let label = "Element";
     let detail = "";
     if (elementId === "headline") {
@@ -436,19 +557,25 @@ export function StudioScreen() {
       label = `Scene ${selectedScene.number} · Claim Badge`;
       detail = selectedScene.claim;
     }
+    return { label, detail };
+  };
 
-    setAttachedContexts((prev) => {
-      const filtered = prev.filter((c) => c.type !== "element");
-      return [
-        ...filtered,
-        {
-          id: `element-${elementId}-${Date.now()}`,
-          type: "element",
-          label,
-          detail,
-        },
-      ];
-    });
+  /**
+   * Selecting an element only selects it. It used to attach itself to the chat
+   * as a side effect, which meant you could not look at something without
+   * aiming the agent at it — and left no room for the second thing you might
+   * want to do with it, which is leave a note.
+   */
+  const handleSelectCanvasElement = (elementId: string) => {
+    setSelectedCanvasElementId(elementId);
+  };
+
+  const attachElementToChat = (elementId: string) => {
+    const { label, detail } = describeElement(elementId);
+    setAttachedContexts((prev) => [
+      ...prev.filter((c) => c.type !== "element"),
+      { id: `element-${elementId}-${Date.now()}`, type: "element" as const, label, detail },
+    ]);
   };
 
   const handleSaveAndCentralizeToChat = () => {
@@ -669,6 +796,36 @@ export function StudioScreen() {
       setVideoGenStep(5);
       setTimeout(() => {
         handleEnterReviewView();
+        /**
+         * Publishing is what creates a shared link, and a shared link is what
+         * creates team comments — so the Team tab only becomes real here.
+         * These arrive as somebody else's words: they are listed and can be
+         * handed to the agent with Add to chat, but nothing acts on them by
+         * itself. Anyone with the link would otherwise be able to drive the
+         * generator.
+         */
+        setTeamCommentsUnlocked(true);
+        setComments((prev) => [
+          ...prev,
+          {
+            id: "team-1", sceneId: sceneList[2]?.id ?? sceneList[0].id, sceneNumber: 3,
+            elementId: "narration", elementLabel: ELEMENT_LABELS.narration,
+            text: "Week 16 is the primary endpoint but the voiceover says it like a secondary finding. Can it lead the line?",
+            author: "Dr. Anita Rao · Medical", source: "team", at: "2 min ago", status: "open", sentToChat: false,
+          },
+          {
+            id: "team-2", sceneId: sceneList[3]?.id ?? sceneList[0].id, sceneNumber: 4,
+            elementId: "headline", elementLabel: ELEMENT_LABELS.headline,
+            text: "\u201cDesigned for practice\u201d reads promotional to me. Suggest \u201cDosing in practice\u201d.",
+            author: "Sanjay Kulkarni · Legal", source: "team", at: "5 min ago", status: "open", sentToChat: false,
+          },
+          {
+            id: "team-3", sceneId: sceneList[0].id, sceneNumber: 1,
+            elementId: "background", elementLabel: ELEMENT_LABELS.background,
+            text: "Opening background is very dark on a projector. Worth lifting.",
+            author: "Priya Menon · Brand", source: "team", at: "8 min ago", status: "open", sentToChat: false,
+          },
+        ]);
       }, 1600);
     }, 5200);
   };
@@ -1004,6 +1161,24 @@ export function StudioScreen() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Comments. Carries the OPEN count, not the total: a resolved
+                comment is not something asking for attention. */}
+            <button
+              type="button"
+              onClick={() => setCommentsOpen(true)}
+              title="Comments"
+              aria-label={`Comments — ${openComments.length} open`}
+              className={cn(
+                "flex h-8 items-center gap-1.5 rounded-chip border px-2.5 transition-colors cursor-pointer",
+                openComments.length > 0
+                  ? "border-brand/25 bg-tint text-brand-deep hover:bg-tint-strong"
+                  : "border-hair-2 bg-card text-ink-3 hover:border-brand hover:text-ink shadow-2xs"
+              )}
+            >
+              <MessageSquare className="size-3.5" />
+              <span className="text-caption font-bold tabular-nums">{openComments.length}</span>
+            </button>
+
             {/* Toggle Right Sidebar Panel Button (Icon Only) */}
             <button
               type="button"
@@ -1316,9 +1491,12 @@ export function StudioScreen() {
                 </div>
 
                 {/* ── Canva-style Interactive Scene Workspace ── */}
-                <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden">
+                <div
+                  className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden"
+                >
                   <div
                     onClick={() => setSelectedCanvasElementId(null)}
+                    data-canvas-stage
                     className="relative aspect-video w-full max-w-[840px] rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
                   >
                     {/* Layer 1: Background Gradient Graphic */}
@@ -1567,6 +1745,13 @@ export function StudioScreen() {
 
                       {/* Core Headline Overlay (Draggable) */}
                       <div
+                        onClick={(e) => {
+                          // Without this the click reached the stage's
+                          // click-to-deselect and cleared the selection, so the
+                          // title was the one element you could not select.
+                          e.stopPropagation();
+                          handleSelectCanvasElement("headline");
+                        }}
                         onPointerDown={(e) => handlePointerDownElement(e, "headline")}
                         onPointerMove={(e) => handlePointerMoveElement(e, "headline")}
                         onPointerUp={(e) => handlePointerUpElement(e, "headline")}
@@ -2850,6 +3035,34 @@ export function StudioScreen() {
       }
       overlay={
         <>
+        {selectedCanvasElementId && elementMenuAt && !commentsOpen && (
+          <ElementActionBar
+            at={elementMenuAt}
+            elementLabel={ELEMENT_LABELS[selectedCanvasElementId] ?? "Element"}
+            onAddToChat={() => {
+              attachElementToChat(selectedCanvasElementId);
+              setElementMenuAt(null);
+            }}
+            onComment={(text, alsoSendToChat) => addComment(selectedCanvasElementId, text, alsoSendToChat)}
+            onDismiss={() => setElementMenuAt(null)}
+          />
+        )}
+
+        {commentsOpen && (
+          <CommentsModal
+            comments={comments}
+            teamUnlocked={teamCommentsUnlocked}
+            onResolve={(id) => closeComment(id, "resolved")}
+            onReject={(id) => closeComment(id, "rejected")}
+            onSendToChat={(id) => {
+              const comment = comments.find((c) => c.id === id);
+              if (comment) sendCommentToAgent(comment);
+            }}
+            onJump={jumpToComment}
+            onClose={() => setCommentsOpen(false)}
+          />
+        )}
+
         {toastMessage && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-control bg-ink text-white px-4 py-2 text-body font-bold shadow-lg">{toastMessage}</div>
         )}
