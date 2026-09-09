@@ -61,8 +61,9 @@ import {
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
-import type { EvidenceState, InspectorTab, Scene, SceneCitation } from "@/types/content";
+import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
+import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -99,29 +100,6 @@ const REWRITE_CLAUSE_BY_TAG: Record<string, string> = {
   "Dosing":        " Once-daily dosing requires no titration.",
   "Safety":        " The adverse event profile was consistent with the approved label.",
   "Outro":         " Full prescribing information is available in the approved label.",
-};
-
-/**
- * The approved claims this project is grounded in. Module scope on purpose:
- * the Claims tab renders them and the citation badges under the narration
- * point INTO them, so a badge always resolves to a card that exists.
- */
-const APPROVED_CLAIMS = [
-  { id: "c1", title: "Primary CLEARSKIN Endpoint",     status: "Approved",  tag: "FDA \u00a75.1",  detail: "Significant PASI 90 response rate vs placebo at Week 16." },
-  { id: "c2", title: "Selective Mechanism Inhibition", status: "Approved",  tag: "EMBRACE-3",   detail: "Targeted pathway binding sparing secondary cytokine cascades." },
-  { id: "c3", title: "Safety and Adverse Profiles",    status: "Supported", tag: "PI \u00a76.2",   detail: "Low incidence of treatment-emergent adverse reactions." },
-  { id: "c4", title: "Renal Perfusion Preservation",   status: "Approved",  tag: "Lancet 2024", detail: "Maintained glomerular filtration rate during maintenance dosing." },
-];
-
-/** Which claims back each beat, so a badge's sources are true to the beat. */
-const CLAIMS_BY_TAG: Record<string, string[]> = {
-  "Intro":         ["c1", "c3", "c4"],
-  "Clinical Need": ["c1", "c3", "c4"],
-  "Mechanism":     ["c2", "c1"],
-  "Evidence":      ["c1", "c4", "c2"],
-  "Dosing":        ["c3", "c1"],
-  "Safety":        ["c3", "c4", "c1"],
-  "Outro":         ["c1"],
 };
 
 const TAG_DEPENDENTS: Record<string, string[]> = {
@@ -202,7 +180,15 @@ export function StudioScreen() {
   const [generatedSceneIds, setGeneratedSceneIds] = useState<string[]>([]);
   const [toastMessage, setToMessage] = useState<string | null>(null);
 
-  const [sceneList, setSceneList] = useState(scenes);
+  const [sceneList, setSceneList] = useState<Scene[]>(() =>
+    // Every line of an approved script IS grounded — the badges are not a
+    // reward for having edited it. Seeded here rather than in an effect so
+    // the first paint already shows them.
+    scenes.map((sc) => ({
+      ...sc,
+      citations: sc.citations ?? citationsFor(sc.narrativeTag ?? "Evidence", sc.narration),
+    }))
+  );
   const isScriptComplete = sceneList.length > 0 && sceneList.every((s) => s.narration && s.narration.trim().length > 0);
 
   const [directorInput, setDirectorInput] = useState("");
@@ -337,33 +323,6 @@ export function StudioScreen() {
 
   const toggleSceneEditing = (id: string) =>
     setEditingSceneIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-
-  /**
-   * Sources for a rewritten line, anchored to the sentence each one backs. The
-   * first claim in a line usually rests on the label plus the trial; anything
-   * after it rests on the trial alone — so the badges carry different counts,
-   * which is the point of showing a count at all.
-   */
-  const citationsFor = (tag: string, narration: string): SceneCitation[] => {
-    const claims = (CLAIMS_BY_TAG[tag] ?? ["c1"])
-      .map((id) => APPROVED_CLAIMS.find((c) => c.id === id))
-      .filter((c): c is (typeof APPROVED_CLAIMS)[number] => Boolean(c));
-    const sentenceCount = (narration.match(/[^.!?]+[.!?]*\s*/g) ?? [""]).length;
-    const last = Math.max(0, sentenceCount - 1);
-
-    const cite = (claim: (typeof APPROVED_CLAIMS)[number], at: number): SceneCitation => ({
-      id: `cite-${claim.id}-${at}`,
-      source: claim.tag,
-      title: `${claim.title} — ${claim.detail}`,
-      date: `${claim.status} · current`,
-      anchor: at,
-      claimId: claim.id,
-    });
-
-    if (last === 0 || claims.length === 1) return claims.map((c) => cite(c, 0));
-    // The clause the rewrite appended is the last sentence; it rests on one.
-    return [...claims.slice(0, -1).map((c) => cite(c, 0)), cite(claims[claims.length - 1], last)];
-  };
 
   /**
    * A citation is only useful if you can reach the claim behind it. Details
@@ -754,7 +713,15 @@ export function StudioScreen() {
   };
 
   const handleUpdateSceneNarration = (id: string, nextNarration: string) => {
-    setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, narration: nextNarration } : s)));
+    // Anchors are sentence indices, so editing the text can strand them past
+    // the end of the line. Recomputed on every edit rather than left to rot.
+    setSceneList((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...s, narration: nextNarration, citations: citationsFor(s.narrativeTag ?? "Evidence", nextNarration) }
+          : s
+      )
+    );
   };
 
 
@@ -2136,7 +2103,7 @@ export function StudioScreen() {
                   tab="evidence"
                   current={activeTab}
                   onClick={setActiveTab}
-                  count={24}
+                  count={APPROVED_CLAIMS.length}
                 >
                   Claims
                 </InspectorTabButton>
@@ -2174,7 +2141,7 @@ export function StudioScreen() {
                   tab="evidence"
                   current={activeTab}
                   onClick={setActiveTab}
-                  count={24}
+                  count={APPROVED_CLAIMS.length}
                 >
                   Claims
                 </InspectorTabButton>
@@ -2847,7 +2814,7 @@ export function StudioScreen() {
                     <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">
                       Compliance Grounding
                     </div>
-                    <h2 className="mt-0.5 text-body-lg font-[800] text-ink">24 Approved Claims</h2>
+                    <h2 className="mt-0.5 text-body-lg font-[800] text-ink">{APPROVED_CLAIMS.length} Approved Claims</h2>
                   </div>
                   <span className="rounded-chip bg-ok-bg text-ok border border-ok-line px-2.5 py-0.5 text-micro font-bold">
                     ✓ PromoMats Verified

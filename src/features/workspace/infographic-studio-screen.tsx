@@ -707,7 +707,7 @@ export function InfographicStudioScreen() {
               <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
                 <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                   <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Validated 214 CDSCO / FDA dossier claims</span>
+                  <span className="font-semibold">Validated 214 FDA dossier claims</span>
                 </div>
                 <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
                   <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />

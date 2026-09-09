@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Scene, SceneCitation } from "@/types/content";
+import { splitSegments } from "@/features/workspace/script-claims";
 
 /**
  * One line's sources, shown as a count rather than a list. A rewritten line
@@ -183,11 +184,15 @@ export function ScriptSceneCard({
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   /**
-   * Sentences are the anchor unit: a source backs a claim, and a claim is a
-   * sentence. Trailing whitespace is kept inside each piece so the paragraph
-   * still flows as one block of text with the badges sitting in it.
+   * The SAME splitter citationsFor anchors against — importing it rather than
+   * repeating the regex, because an anchor computed against one split and
+   * rendered against another lands past the end of the text and the badge
+   * silently drops to the fallback row.
+   *
+   * Trailing whitespace stays inside each piece so the paragraph still flows
+   * as one block with the badges sitting inside it.
    */
-  const sentences = scene.narration.match(/[^.!?]+[.!?]*\s*/g) ?? [];
+  const sentences = splitSegments(scene.narration);
   const citations = pending ? [] : scene.citations ?? [];
 
   const byAnchor = new Map<number, SceneCitation[]>();
