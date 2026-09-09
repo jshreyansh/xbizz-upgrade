@@ -3,26 +3,32 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Grid3x3, List, Plus, ShieldCheck, Eye, Star, Package } from "lucide-react";
-import { PRODUCTS } from "@/features/product-library/mock-products";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
-
-const STATS = [
-  { icon: Package, label: "products in the library", value: PRODUCTS.length, tint: "var(--tint)", color: "var(--brand-deep)" },
-  { icon: Eye, label: "named product views", value: PRODUCTS.reduce((s, p) => s + p.views, 0), tint: "#eef1ff", color: "#3d3fce" },
-  { icon: ShieldCheck, label: "dossiers verified", value: PRODUCTS.reduce((s, p) => s + p.dossiersVerified, 0), tint: "var(--ok-bg)", color: "var(--ok)" },
-  { icon: Star, label: "approved claims", value: PRODUCTS.reduce((s, p) => s + p.claimsApproved, 0), tint: "#f4edff", color: "#7c3aed" },
-];
+import { useProductLibraryStore } from "@/features/product-library/product-library-store";
+import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
 
 export function ProductLibraryScreen() {
   const router = useRouter();
+  const products = useProductLibraryStore((s) => s.products);
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const STATS = useMemo(
+    () => [
+      { icon: Package, label: "products in the library", value: products.length, tint: "var(--tint)", color: "var(--brand-deep)" },
+      { icon: Eye, label: "named product views", value: products.reduce((s, p) => s + p.views, 0), tint: "#eef1ff", color: "#3d3fce" },
+      { icon: ShieldCheck, label: "dossiers verified", value: products.reduce((s, p) => s + p.dossiersVerified, 0), tint: "var(--ok-bg)", color: "var(--ok)" },
+      { icon: Star, label: "approved claims", value: products.reduce((s, p) => s + p.claimsApproved, 0), tint: "#f4edff", color: "#7c3aed" },
+    ],
+    [products]
+  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return PRODUCTS;
-    return PRODUCTS.filter((p) => p.name.toLowerCase().includes(q) || p.genericName.toLowerCase().includes(q));
-  }, [query]);
+    if (!q) return products;
+    return products.filter((p) => p.name.toLowerCase().includes(q) || p.genericName.toLowerCase().includes(q));
+  }, [products, query]);
 
   return (
     <div className="page-enter space-y-6">
@@ -35,6 +41,7 @@ export function ProductLibraryScreen() {
           </p>
         </div>
         <button
+          onClick={() => setCreateOpen(true)}
           className="hover:-translate-y-0.5 hover:shadow-lg transition-all"
           style={{
             display: "inline-flex",
@@ -56,6 +63,8 @@ export function ProductLibraryScreen() {
           Create brand
         </button>
       </div>
+
+      <CreateBrandModal open={createOpen} onClose={() => setCreateOpen(false)} />
 
       {/* Search + view toggle */}
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
