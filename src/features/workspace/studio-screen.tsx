@@ -323,10 +323,27 @@ export function StudioScreen() {
   const toggleSceneEditing = (id: string) =>
     setEditingSceneIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
-  const citationsFor = (tag: string): SceneCitation[] => [
-    { id: `fda-${tag}`, source: "FDA Label", title: `${brandName} Prescribing Information — \u00a75.1 Warnings and Precautions`, date: "March 18, 2026" },
-    { id: `trial-${tag}`, source: "CLEARSKIN-2", title: "Pivotal Phase III efficacy and safety readout at week 24", date: "January 9, 2026" },
-  ];
+  /**
+   * Sources for a rewritten line, anchored to the sentence each one backs. The
+   * first claim in a line usually rests on the label plus the trial; anything
+   * after it rests on the trial alone — so the badges carry different counts,
+   * which is the point of showing a count at all.
+   */
+  const citationsFor = (tag: string, narration: string): SceneCitation[] => {
+    const sentenceCount = (narration.match(/[^.!?]+[.!?]*\s*/g) ?? [""]).length;
+    const last = Math.max(0, sentenceCount - 1);
+    const pool: SceneCitation[] = [
+      { id: `fda-${tag}`, source: "FDA Label", title: `${brandName} Prescribing Information — \u00a75.1 Warnings and Precautions`, date: "March 18, 2026", anchor: 0 },
+      { id: `trial-${tag}`, source: "CLEARSKIN-2", title: "Pivotal Phase III efficacy and safety readout at week 24", date: "January 9, 2026", anchor: 0 },
+      { id: `dossier-${tag}`, source: `${brandName} Dossier`, title: "Approved claims library — clinical evidence section", date: "August 12, 2026", anchor: 0 },
+    ];
+    if (last === 0) return pool;
+    // The clause the rewrite added is the last sentence; it rests on the trial.
+    return [
+      ...pool.slice(0, 2),
+      { ...pool[2], id: `dossier-${tag}-tail`, anchor: last },
+    ];
+  };
   const [chatContextMenuOpen, setChatContextMenuOpen] = useState(false);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -863,10 +880,11 @@ export function StudioScreen() {
               if (!changedIds.includes(sc.id)) return sc;
               const tag = sc.narrativeTag || "Evidence";
               const clause = REWRITE_CLAUSE_BY_TAG[tag] ?? "";
+              const nextNarration = sc.narration.includes(clause.trim()) ? sc.narration : `${sc.narration}${clause}`;
               return {
                 ...sc,
-                narration: sc.narration.includes(clause.trim()) ? sc.narration : `${sc.narration}${clause}`,
-                citations: citationsFor(tag),
+                narration: nextNarration,
+                citations: citationsFor(tag, nextNarration),
               };
             })
           );

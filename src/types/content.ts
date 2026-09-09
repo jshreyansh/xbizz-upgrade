@@ -48,6 +48,12 @@ export interface SceneCitation {
   source: string;
   title: string;
   date: string;
+  /**
+   * Index of the sentence this source backs, so the badge sits at the claim it
+   * supports rather than in a footnote pile under the paragraph. Several
+   * sources sharing an anchor collapse into one badge carrying their count.
+   */
+  anchor?: number;
 }
 
 export interface Scene {

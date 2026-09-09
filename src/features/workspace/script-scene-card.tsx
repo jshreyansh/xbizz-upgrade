@@ -52,20 +52,13 @@ function CitationPill({ citations }: { citations: SceneCitation[] }) {
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
         aria-expanded={open}
+        aria-label={`${citations.length} source${citations.length > 1 ? "s" : ""} for this line`}
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-chip border px-2 py-0.5 text-caption font-bold transition-colors cursor-pointer",
-          open
-            ? "border-brand bg-tint text-brand-deep"
-            : "border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand-deep"
+          "mx-1 inline-flex translate-y-[-1px] items-center rounded-full px-1.5 py-0.5 align-middle text-micro font-bold leading-none transition-colors cursor-pointer",
+          open ? "bg-brand text-white" : "bg-ink text-white hover:bg-brand"
         )}
       >
-        <span className="size-3 shrink-0 rounded-full bg-ink-3" aria-hidden />
-        <span className="max-w-[120px] truncate">{citations[0].source}</span>
-        {citations.length > 1 && (
-          <span className="rounded-full bg-ink px-1.5 text-micro font-bold text-white">
-            +{citations.length - 1}
-          </span>
-        )}
+        +{citations.length}
       </button>
 
       {open && (
@@ -146,6 +139,27 @@ export function ScriptSceneCard({
 }: ScriptSceneCardProps) {
   const words = scene.narration ? scene.narration.split(" ").filter(Boolean).length : 0;
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+
+  /**
+   * Sentences are the anchor unit: a source backs a claim, and a claim is a
+   * sentence. Trailing whitespace is kept inside each piece so the paragraph
+   * still flows as one block of text with the badges sitting in it.
+   */
+  const sentences = scene.narration.match(/[^.!?]+[.!?]*\s*/g) ?? [];
+  const citations = pending ? [] : scene.citations ?? [];
+
+  const byAnchor = new Map<number, SceneCitation[]>();
+  const unanchored: SceneCitation[] = [];
+  for (const citation of citations) {
+    const at = citation.anchor;
+    // An anchor past the end of the text has lost its sentence — usually
+    // because the line was edited down. Show it in the row rather than drop it.
+    if (at === undefined || at < 0 || at >= sentences.length || editing) {
+      unanchored.push(citation);
+    } else {
+      byAnchor.set(at, [...(byAnchor.get(at) ?? []), citation]);
+    }
+  }
 
   return (
     <article
@@ -296,18 +310,26 @@ export function ScriptSceneCard({
           />
         ) : (
           <p className="text-subhead leading-relaxed text-ink">
-            {scene.narration || (
-              <span className="text-ink-4">No narration yet. Choose Edit to write it.</span>
-            )}
+            {scene.narration
+              ? sentences.map((sentence, i) => (
+                  <span key={i}>
+                    {sentence}
+                    {byAnchor.get(i) && <CitationPill citations={byAnchor.get(i)!} />}
+                  </span>
+                ))
+              : <span className="text-ink-4">No narration yet. Choose Edit to write it.</span>}
           </p>
         )}
 
-        {!pending && scene.citations && scene.citations.length > 0 && (
+        {/* Inline badges cannot live inside a textarea, and a source whose
+            anchor no longer matches a sentence would otherwise vanish — both
+            fall back to a row under the field. */}
+        {!pending && unanchored.length > 0 && (
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-hair pt-2.5">
             <span className="text-caption font-extrabold uppercase tracking-wider text-ink-4">
               Sources
             </span>
-            <CitationPill citations={scene.citations} />
+            <CitationPill citations={unanchored} />
           </div>
         )}
       </div>
