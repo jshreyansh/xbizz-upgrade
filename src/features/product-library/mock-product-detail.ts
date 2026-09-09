@@ -1,10 +1,13 @@
-import { DOSSIER_TYPES } from "@/features/product-library/product-library-types";
+import { DOSSIER_TYPES, IMAGE_ANGLES } from "@/features/product-library/product-library-types";
 import type {
   LibraryProduct,
   ProductDetail,
   ProductDossierEntry,
   ProductClaim,
   ProductImage,
+  ProductVariation,
+  ProductDocument,
+  DocumentFileType,
   DossierEntryStatus,
 } from "@/features/product-library/product-library-types";
 
@@ -41,7 +44,23 @@ const CLAIM_TEMPLATES: Record<string, ((name: string, generic: string) => string
   ],
 };
 
-const IMAGE_KINDS: ProductImage["kind"][] = ["Pack shot", "Device", "Reference", "Lifestyle"];
+/** Pack-size / strength labels per product type, so "variations" reads as a
+ *  real presentation choice rather than an arbitrary list. */
+const VARIATION_LABELS: Record<LibraryProduct["type"], string[]> = {
+  Tablet: ["10 mg · 10s strip", "20 mg · 10s strip", "40 mg · 30s bottle"],
+  Capsule: ["250 mg · 10s strip", "500 mg · 10s strip"],
+  Syrup: ["60 mL bottle", "100 mL bottle"],
+  Injection: ["1 mL vial", "5 mL vial", "Pre-filled syringe"],
+  Device: ["Single-use pen", "Refill cartridge"],
+};
+
+const DOCUMENT_TEMPLATES: Array<{ name: string; category: string; fileType: DocumentFileType; size: string }> = [
+  { name: "Prescribing Information (SmPC)", category: "Regulatory", fileType: "PDF", size: "1.8 MB" },
+  { name: "Field Training Deck", category: "Training", fileType: "PPTX", size: "6.2 MB" },
+  { name: "Batch Release Certificate", category: "Quality", fileType: "PDF", size: "420 KB" },
+  { name: "MLR Sign-off Record", category: "Compliance", fileType: "PDF", size: "290 KB" },
+  { name: "Packaging Artwork Spec", category: "Regulatory", fileType: "DOCX", size: "1.1 MB" },
+];
 
 function statusFor(index: number, verified: number, total: number): DossierEntryStatus {
   if (index < verified) return "verified";
@@ -49,9 +68,18 @@ function statusFor(index: number, verified: number, total: number): DossierEntry
   return "not started";
 }
 
-/** Derives a full ProductDetail (images, 6 dossier types, claims list) from a
- *  product's summary card stats — deterministic per product id, so the same
- *  product always renders the same detail content. */
+function buildImages(productId: string, variationId: string, gradient: string): ProductImage[] {
+  return IMAGE_ANGLES.map((angle, i) => ({
+    id: `${productId}-${variationId}-img-${i}`,
+    label: `${angle} shot`,
+    angle,
+    gradient,
+  }));
+}
+
+/** Derives a full ProductDetail (variations, 6 dossier types, claims,
+ *  documents) from a product's summary card stats — deterministic per
+ *  product id, so the same product always renders the same detail content. */
 export function buildProductDetail(product: LibraryProduct): ProductDetail {
   const dossiers: ProductDossierEntry[] = DOSSIER_TYPES.map((type, i) => {
     const status = statusFor(i, product.dossiersVerified, product.dossiersTotal);
@@ -82,12 +110,19 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
       })
     );
 
-  const images: ProductImage[] = IMAGE_KINDS.map((kind, i) => ({
-    id: `${product.id}-img-${i}`,
-    label: `${product.name} — ${kind.toLowerCase()}`,
-    kind,
-    gradient: product.gradient,
+  const variations: ProductVariation[] = VARIATION_LABELS[product.type].map((label, i) => {
+    const id = `${product.id}-var-${i}`;
+    return { id, label, images: buildImages(product.id, id, product.gradient) };
+  });
+
+  const documents: ProductDocument[] = DOCUMENT_TEMPLATES.map((tpl, i) => ({
+    id: `${product.id}-doc-${i}`,
+    name: `${product.name} — ${tpl.name}`,
+    category: tpl.category,
+    fileType: tpl.fileType,
+    size: tpl.size,
+    updated: i % 2 === 0 ? product.updated : "3 weeks ago",
   }));
 
-  return { images, dossiers, claims };
+  return { variations, dossiers, claims, documents };
 }

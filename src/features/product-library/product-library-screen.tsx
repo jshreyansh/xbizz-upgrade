@@ -219,7 +219,7 @@ export function ProductLibraryScreen() {
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: view === "list" ? 0 : "10px 0" }}>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: p.dossiersVerified === p.dossiersTotal ? "var(--ok-bg)" : "var(--tint-2)", color: p.dossiersVerified === p.dossiersTotal ? "var(--ok)" : "var(--brand-deep)", border: `1px solid ${p.dossiersVerified === p.dossiersTotal ? "var(--ok-line)" : "var(--tint-line)"}` }}>
-                  {p.dossiersVerified}/{p.dossiersTotal} dossiers
+                  {p.dossiersVerified} dossiers
                 </span>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "var(--surface-subtle)", color: "var(--ink-3)", border: "1px solid var(--hair)" }}>
                   {p.claimsApproved} claims

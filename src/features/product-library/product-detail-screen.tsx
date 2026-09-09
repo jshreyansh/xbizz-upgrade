@@ -1,21 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Image as ImageIcon, FileText, ListChecks, CheckCircle2, Clock, Circle, Plus } from "lucide-react";
-import type { LibraryProduct, ProductDetail, ProductImage, DossierEntryStatus, ClaimStatus } from "@/features/product-library/product-library-types";
+import {
+  ChevronLeft,
+  Image as ImageIcon,
+  FileText,
+  ListChecks,
+  FolderOpen,
+  CheckCircle2,
+  Clock,
+  Circle,
+  Plus,
+  Upload,
+  Trash2,
+  RefreshCw,
+  Download,
+  Layers,
+} from "lucide-react";
+import type {
+  LibraryProduct,
+  ProductDetail,
+  ProductVariation,
+  ProductImage,
+  ProductImageAngle,
+  DossierEntryStatus,
+  ClaimStatus,
+} from "@/features/product-library/product-library-types";
+import { IMAGE_ANGLES } from "@/features/product-library/product-library-types";
 import { ProductArtwork, type ArtworkKind } from "@/features/product-library/product-artwork";
 
-/** "Pack shot" borrows the product's own type; the other three image kinds
- *  always render the same themed artwork regardless of product. */
-function artworkFor(imageKind: ProductImage["kind"], productType: LibraryProduct["type"]): ArtworkKind {
-  if (imageKind === "Pack shot") return productType;
-  if (imageKind === "Device") return "Device";
-  if (imageKind === "Reference") return "Molecule";
-  return "Lifestyle";
+/** Only the lifestyle angle borrows the generic wellness scene — every other
+ *  angle is a shot of the product's own type, distinguished by orientation. */
+function artworkFor(angle: ProductImageAngle, productType: LibraryProduct["type"]): ArtworkKind {
+  return angle === "Lifestyle" ? "Lifestyle" : productType;
 }
 
-type Tab = "images" | "dossier" | "claims";
+/** A cheap stand-in for a different camera angle: the same vector artwork,
+ *  reflected/rotated, since there's no real photography to shoot from. */
+const ANGLE_TRANSFORM: Record<ProductImageAngle, string> = {
+  Front: "none",
+  Back: "scaleX(-1)",
+  Side: "rotate(-10deg) scale(1.05)",
+  Top: "rotate(90deg) scale(0.92)",
+  Packaging: "rotate(5deg)",
+  Lifestyle: "none",
+};
+
+type Tab = "images" | "dossier" | "claims" | "documents";
 
 const STATUS_STYLE: Record<DossierEntryStatus, { icon: typeof CheckCircle2; tone: string; bg: string; label: string }> = {
   verified: { icon: CheckCircle2, tone: "text-ok", bg: "bg-ok-bg", label: "Verified" },
@@ -29,15 +61,85 @@ const CLAIM_STYLE: Record<ClaimStatus, { tone: string; bg: string; line: string 
   "held out": { tone: "text-danger", bg: "bg-danger-bg", line: "border-danger" },
 };
 
+const FILE_TONE: Record<string, string> = {
+  PDF: "bg-danger-bg text-danger",
+  DOCX: "bg-[#e8f0ff] text-[#2452d6]",
+  PPTX: "bg-warn-bg text-warn",
+  XLSX: "bg-ok-bg text-ok",
+};
+
+/** Small stat used in the compact profile row — a single solid number, never
+ *  an "x/y" fraction (a completed count reads clearer than a ratio here). */
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="text-center">
+      <b className="block text-subhead font-extrabold leading-none text-ink">{value}</b>
+      <span className="text-micro font-bold uppercase tracking-[.05em] text-ink-4">{label}</span>
+    </div>
+  );
+}
+
 export function ProductDetailScreen({ product, detail }: { product: LibraryProduct; detail: ProductDetail }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("images");
+  const [variations, setVariations] = useState<ProductVariation[]>(detail.variations);
+  const [activeVariationId, setActiveVariationId] = useState(detail.variations[0]?.id ?? "");
+  const [angleFilter, setAngleFilter] = useState<ProductImageAngle | "All">("All");
+
+  const activeVariation = useMemo(
+    () => variations.find((v) => v.id === activeVariationId) ?? variations[0],
+    [variations, activeVariationId]
+  );
+
+  const visibleImages = useMemo(
+    () => (angleFilter === "All" ? activeVariation?.images ?? [] : (activeVariation?.images ?? []).filter((img) => img.angle === angleFilter)),
+    [activeVariation, angleFilter]
+  );
+
+  const totalImages = variations.reduce((sum, v) => sum + v.images.length, 0);
 
   const TABS: { key: Tab; label: string; icon: typeof ImageIcon; count: number }[] = [
-    { key: "images", label: "Product Images", icon: ImageIcon, count: detail.images.length },
+    { key: "images", label: "Product Images", icon: ImageIcon, count: totalImages },
     { key: "dossier", label: "Dossier", icon: FileText, count: detail.dossiers.length },
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
+    { key: "documents", label: "Documents", icon: FolderOpen, count: detail.documents.length },
   ];
+
+  function updateActiveImages(fn: (images: ProductImage[]) => ProductImage[]) {
+    setVariations((prev) => prev.map((v) => (v.id === activeVariation?.id ? { ...v, images: fn(v.images) } : v)));
+  }
+
+  function handleUpload() {
+    if (!activeVariation) return;
+    const used = new Set(activeVariation.images.map((img) => img.angle));
+    const nextAngle = IMAGE_ANGLES.find((a) => !used.has(a)) ?? "Front";
+    const id = `${activeVariation.id}-img-${Date.now()}`;
+    updateActiveImages((images) => [...images, { id, label: `${nextAngle} shot`, angle: nextAngle, gradient: product.gradient }]);
+  }
+
+  function handleReplace(imageId: string) {
+    updateActiveImages((images) =>
+      images.map((img) => {
+        if (img.id !== imageId) return img;
+        const i = IMAGE_ANGLES.indexOf(img.angle);
+        const nextAngle = IMAGE_ANGLES[(i + 1) % IMAGE_ANGLES.length];
+        return { ...img, angle: nextAngle, label: `${nextAngle} shot` };
+      })
+    );
+  }
+
+  function handleDelete(imageId: string) {
+    updateActiveImages((images) => images.filter((img) => img.id !== imageId));
+  }
+
+  function handleAddVariation() {
+    const id = `${product.id}-var-custom-${Date.now()}`;
+    const label = `New variation ${variations.length + 1}`;
+    const newVariation: ProductVariation = { id, label, images: [] };
+    setVariations((prev) => [...prev, newVariation]);
+    setActiveVariationId(id);
+    setAngleFilter("All");
+  }
 
   return (
     <div className="page-enter space-y-6 max-w-[980px]">
@@ -50,51 +152,26 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
         Product Library
       </button>
 
-      {/* Header banner */}
-      <div className="overflow-hidden rounded-card border border-hair bg-card shadow-soft">
-        <div className="relative overflow-hidden" style={{ background: product.gradient, minHeight: 190 }}>
-          <span
-            aria-hidden
-            className="pointer-events-none absolute rounded-full"
-            style={{ width: "55%", height: "140%", right: "-5%", top: "-30%", background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
-          />
-          <span
-            className="absolute left-4 top-4 z-10 rounded-chip px-2.5 py-1 text-caption font-extrabold uppercase tracking-[.04em] text-white/90"
-            style={{ background: "rgba(0,0,0,.22)" }}
-          >
-            {product.type}
-          </span>
-          <span
-            className="absolute bottom-4 left-4 z-10 grid size-11 place-items-center rounded-control text-title font-extrabold text-white backdrop-blur-sm"
-            style={{ background: "rgba(0,0,0,.24)" }}
-          >
-            {product.name.slice(0, 2).toUpperCase()}
-          </span>
-          <div className="absolute -bottom-4 right-[2%] h-[92%] w-[42%] max-w-[280px]">
-            <ProductArtwork kind={product.type} className="h-full w-full" />
+      {/* Compact profile row — no full-width cover photo, just the essentials */}
+      <div className="flex flex-wrap items-center gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair">
+        <span
+          className="grid size-12 shrink-0 place-items-center rounded-control text-title font-extrabold text-white"
+          style={{ background: product.gradient }}
+        >
+          {product.name.slice(0, 2).toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-title font-extrabold tracking-tight text-ink">{product.name}</h1>
+            <span className="rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold uppercase tracking-[.03em] text-ink-3">{product.type}</span>
           </div>
+          <span className="text-body italic text-ink-3">{product.genericName}</span>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-4 p-5">
-          <div>
-            <h1 className="text-display-lg font-extrabold tracking-tight text-ink">{product.name}</h1>
-            <span className="text-body-lg italic text-ink-3">{product.genericName}</span>
-          </div>
-          <div className="flex gap-6">
-            <div>
-              <b className="block text-display font-extrabold text-ink">
-                {product.dossiersVerified}/{product.dossiersTotal}
-              </b>
-              <span className="text-caption font-bold uppercase tracking-[.05em] text-ink-4">Dossiers</span>
-            </div>
-            <div>
-              <b className="block text-display font-extrabold text-ink">{product.claimsApproved}</b>
-              <span className="text-caption font-bold uppercase tracking-[.05em] text-ink-4">Claims</span>
-            </div>
-            <div>
-              <b className="block text-display font-extrabold text-ink">{product.views}</b>
-              <span className="text-caption font-bold uppercase tracking-[.05em] text-ink-4">Views</span>
-            </div>
-          </div>
+        <div className="flex items-center gap-5">
+          <Stat value={product.dossiersVerified} label="Dossiers" />
+          <Stat value={product.claimsApproved} label="Claims" />
+          <Stat value={product.views} label="Views" />
+          <Stat value={detail.documents.length} label="Docs" />
         </div>
       </div>
 
@@ -123,32 +200,111 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
 
       {/* Tab content */}
       {tab === "images" && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-          {detail.images.map((img) => (
-            <div
-              key={img.id}
-              className="group overflow-hidden rounded-panel border border-hair bg-card shadow-hair transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft"
+        <div className="space-y-4">
+          {/* Variations */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="mr-1 inline-flex items-center gap-1.5 text-label font-bold uppercase tracking-[.06em] text-ink-4">
+              <Layers size={12} /> Variation
+            </span>
+            {variations.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => {
+                  setActiveVariationId(v.id);
+                  setAngleFilter("All");
+                }}
+                className={`rounded-chip border px-3 py-1.5 text-body font-bold transition-colors ${
+                  v.id === activeVariation?.id
+                    ? "border-brand bg-tint text-brand-deep"
+                    : "border-hair-2 bg-card text-ink-2 hover:border-hair-3"
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+            <button
+              onClick={handleAddVariation}
+              className="inline-flex items-center gap-1 rounded-chip border border-dashed border-hair-2 px-3 py-1.5 text-body font-bold text-ink-4 transition-colors hover:border-brand hover:text-brand-deep"
             >
-              <div className="relative overflow-hidden" style={{ background: img.gradient, height: 150 }}>
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute rounded-full"
-                  style={{ width: "70%", height: "70%", right: "-15%", top: "-15%", background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
-                />
-                <div className="absolute inset-0 p-3 transition-transform duration-300 group-hover:scale-[1.04]">
-                  <ProductArtwork kind={artworkFor(img.kind, product.type)} className="h-full w-full" />
+              <Plus size={13} /> Add variation
+            </button>
+          </div>
+
+          {/* Angle filter */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(["All", ...IMAGE_ANGLES] as const).map((a) => (
+              <button
+                key={a}
+                onClick={() => setAngleFilter(a)}
+                className={`rounded-chip px-2.5 py-1 text-caption font-bold transition-colors ${
+                  angleFilter === a ? "bg-ink text-white" : "bg-subtle text-ink-3 hover:bg-tint-2"
+                }`}
+              >
+                {a === "All" ? "All angles" : a}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+            {visibleImages.map((img) => (
+              <div
+                key={img.id}
+                className="group overflow-hidden rounded-panel border border-hair bg-card shadow-hair transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft"
+              >
+                <div className="relative overflow-hidden" style={{ background: img.gradient, height: 150 }}>
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute rounded-full"
+                    style={{ width: "70%", height: "70%", right: "-15%", top: "-15%", background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
+                  />
+                  <div
+                    className="absolute inset-0 p-3 transition-transform duration-300 group-hover:scale-[1.04]"
+                    style={{ transform: ANGLE_TRANSFORM[img.angle] }}
+                  >
+                    <ProductArtwork kind={artworkFor(img.angle, product.type)} className="h-full w-full" />
+                  </div>
+
+                  {/* Hover toolbar — Replace / Delete */}
+                  <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                    <button
+                      type="button"
+                      title="Replace image"
+                      onClick={() => handleReplace(img.id)}
+                      className="grid size-7 place-items-center rounded-control text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+                      style={{ background: "rgba(0,0,0,.35)" }}
+                    >
+                      <RefreshCw size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      title="Delete image"
+                      onClick={() => handleDelete(img.id)}
+                      className="grid size-7 place-items-center rounded-control text-white backdrop-blur-sm transition-colors hover:bg-danger"
+                      style={{ background: "rgba(0,0,0,.35)" }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <span className="block text-body font-bold text-ink">{img.angle}</span>
+                  <span className="text-caption text-ink-4">{img.label}</span>
                 </div>
               </div>
-              <div className="p-3">
-                <span className="block text-body font-bold text-ink">{img.kind}</span>
-                <span className="text-caption text-ink-4">{img.label}</span>
-              </div>
-            </div>
-          ))}
-          <button className="flex min-h-[178px] flex-col items-center justify-center gap-2 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2">
-            <Plus size={18} />
-            <span className="text-body font-bold">Add image</span>
-          </button>
+            ))}
+
+            <button
+              onClick={handleUpload}
+              className="flex min-h-[178px] flex-col items-center justify-center gap-2 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
+            >
+              <Upload size={18} />
+              <span className="text-body font-bold">Upload</span>
+            </button>
+          </div>
+
+          {visibleImages.length === 0 && (
+            <p className="py-6 text-center text-body text-ink-4">No {angleFilter.toLowerCase()} shot yet for this variation — upload one above.</p>
+          )}
         </div>
       )}
 
@@ -196,6 +352,27 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
               </div>
             );
           })}
+        </div>
+      )}
+
+      {tab === "documents" && (
+        <div className="flex flex-col gap-2">
+          {detail.documents.map((doc) => (
+            <div key={doc.id} className="flex items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair">
+              <span className={`grid size-9 shrink-0 place-items-center rounded-control text-caption font-extrabold ${FILE_TONE[doc.fileType] ?? "bg-subtle text-ink-3"}`}>
+                {doc.fileType}
+              </span>
+              <div className="min-w-0 flex-1">
+                <b className="block text-body-lg font-bold text-ink">{doc.name}</b>
+                <span className="text-caption text-ink-4">
+                  {doc.category} · {doc.size} · Updated {doc.updated}
+                </span>
+              </div>
+              <button className="inline-flex items-center gap-1.5 text-body-lg font-bold text-brand hover:text-brand-deep transition-colors">
+                <Download size={14} /> Download
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>

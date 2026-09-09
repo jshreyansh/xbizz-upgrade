@@ -37,17 +37,39 @@ export interface ProductClaim {
   status: ClaimStatus;
 }
 
-export type ProductImageKind = "Pack shot" | "Device" | "Reference" | "Lifestyle";
+/** Every photography angle a variation's pack can be shot from. */
+export const IMAGE_ANGLES = ["Front", "Back", "Side", "Top", "Packaging", "Lifestyle"] as const;
+export type ProductImageAngle = (typeof IMAGE_ANGLES)[number];
 
 export interface ProductImage {
   id: string;
   label: string;
-  kind: ProductImageKind;
+  angle: ProductImageAngle;
   gradient: string;
 }
 
-export interface ProductDetail {
+/** A pack size, strength, or presentation of the product — each keeps its
+ *  own full angle set of photography rather than sharing one image pool. */
+export interface ProductVariation {
+  id: string;
+  label: string;
   images: ProductImage[];
+}
+
+export type DocumentFileType = "PDF" | "DOCX" | "PPTX" | "XLSX";
+
+export interface ProductDocument {
+  id: string;
+  name: string;
+  category: string;
+  fileType: DocumentFileType;
+  size: string;
+  updated: string;
+}
+
+export interface ProductDetail {
+  variations: ProductVariation[];
   dossiers: ProductDossierEntry[];
   claims: ProductClaim[];
+  documents: ProductDocument[];
 }
