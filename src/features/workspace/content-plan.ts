@@ -168,7 +168,28 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
 
   const music = inputs.assetType === "video" && presentationMode === "visual-only" && intendedUses.some((use) => ["Social channel", "LinkedIn", "Instagram", "YouTube"].includes(use)) ? "Calm clinical" : "No music";
 
-  const sourceConflict = null;
+  /**
+   * Two approved labels from different markets cannot both govern one asset —
+   * and the plan cannot pick for you, because the answer is regulatory rather
+   * than editorial. Each source carries its market as the first segment of its
+   * detail line ("US \u00b7 v4.2 \u00b7 approved..."), so a request grounded in
+   * more than one market is a decision the user has to make explicitly.
+   *
+   * Brand kits and existing assets are excluded: they carry no market authority.
+   */
+  const sourceMarkets = [
+    ...new Set(
+      selectedSources
+        .filter((source) => source.kind === "approved-source" || source.kind === "claims")
+        .map((source) => source.detail.split("\u00b7")[0].trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  const sourceConflict =
+    sourceMarkets.length > 1
+      ? `Sources span ${sourceMarkets.slice(0, -1).join(", ")} and ${sourceMarkets[sourceMarkets.length - 1]}. This request is for ${inputs.market} \u2014 choose which label governs.`
+      : null;
 
   return {
     goal,
