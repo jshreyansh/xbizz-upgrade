@@ -232,6 +232,16 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const [verifyingSources, setVerifyingSources] = useState(false);
   const [promptEditorOpen, setPromptEditorOpen] = useState(false);
   const [promptDraft, setPromptDraft] = useState("");
+  /**
+   * Sections the user has worked through and confirmed.
+   *
+   * Nothing recorded this before, so after a bounce back from Confirm every
+   * section still read "Recommended" or "From brief" — as if none of it had
+   * been decided. The user then has to re-read the whole plan to find the one
+   * thing that actually needs them. Confirmed sections say so, and only the
+   * blocker asks.
+   */
+  const [confirmedSections, setConfirmedSections] = useState<PlanSectionId[]>([]);
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -455,6 +465,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
     setOpenSection("sources");
     setConfirmedTreatment(false);
+    setConfirmedSections([]);
     setChatMessages([]);
   };
 
@@ -645,6 +656,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   const advanceFrom = (section: PlanSectionId) => {
     setEditingDecision(null);
+    // Pressing Continue on a section is the confirmation of it.
+    setConfirmedSections((prev) => (prev.includes(section) ? prev : [...prev, section]));
     const i = sectionOrder.indexOf(section);
     setOpenSection(i >= 0 && i < sectionOrder.length - 1 ? sectionOrder[i + 1] : null);
   };
@@ -993,12 +1006,22 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
                         : `${brandName} Approved Dossier · 214 claims`
                     }
-                    status={research.researching ? `Researching · ${research.current}/${research.total}` : "From source"}
+                    status={
+                      research.researching
+                        ? `Researching · ${research.current}/${research.total}`
+                        : groundingBlocked
+                        ? "Needs you"
+                        : confirmedSections.includes("sources")
+                        ? "Confirmed"
+                        : "From source"
+                    }
                     /* Open while the research runs — the progress plays inside
                        the dossier tray, so there is something to watch. */
                     open={research.researching || openSection === "sources"}
                     onToggle={() => { if (!research.researching) toggleSection("sources"); }}
-                    tone="done"
+                    /* Sources is the one section that can BE the blocker, so
+                       it is the one whose tone can turn. */
+                    tone={groundingBlocked ? "attention" : "done"}
                   >
                     <ResearchSourcesContent
                       brandName={brandName || "Velmora"}
@@ -1352,7 +1375,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     icon={Target}
                     title="Message and audience"
                     summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
-                    status="From brief"
+                    status={confirmedSections.includes("message") ? "Confirmed" : "From brief"}
                     open={openSection === "message"}
                     onToggle={() => toggleSection("message")}
                   >
@@ -1435,7 +1458,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     icon={MonitorPlay}
                     title="Delivery & Cost"
                     summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration} · ${selectedQuality === "cinematic" ? "Cinematic" : "HD"} (⚡ ${estimatedCredits.toLocaleString()} credits)`}
-                    status={`${estimatedCredits.toLocaleString()} credits`}
+                    status={
+                      confirmedSections.includes("delivery")
+                        ? "Confirmed"
+                        : `${estimatedCredits.toLocaleString()} credits`
+                    }
                     tone="done"
                     open={openSection === "delivery"}
                     onToggle={() => toggleSection("delivery")}
@@ -1603,10 +1630,22 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           ? `${presenter || "Choose presenter"} · ${language} · ${music}`
                           : `${voice} · ${language} · ${music}`
                       }
-                      status={needsPresenter && !presenter ? "Needs you" : "Recommended"}
+                      status={
+                        needsPresenter && !presenter
+                          ? "Needs you"
+                          : confirmedSections.includes("voice")
+                          ? "Confirmed"
+                          : "Recommended"
+                      }
                       open={openSection === "voice"}
                       onToggle={() => toggleSection("voice")}
-                      tone={needsPresenter && !presenter ? "attention" : "default"}
+                      tone={
+                        needsPresenter && !presenter
+                          ? "attention"
+                          : confirmedSections.includes("voice")
+                          ? "done"
+                          : "default"
+                      }
                     >
                       {needsPresenter && (
                         <div className="mb-4">
@@ -1723,7 +1762,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     icon={LayoutList}
                     title="Story structure"
                     summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : "sections"}`}
-                    status={derivedPlan.followsSuppliedScript ? "From script" : "Recommended"}
+                    status={
+                      derivedPlan.followsSuppliedScript
+                        ? "From script"
+                        : confirmedSections.includes("story")
+                        ? "Confirmed"
+                        : "Recommended"
+                    }
                     open={openSection === "story"}
                     onToggle={() => toggleSection("story")}
                   >

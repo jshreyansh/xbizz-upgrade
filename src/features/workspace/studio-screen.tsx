@@ -811,7 +811,11 @@ export function StudioScreen() {
          * generator.
          */
         setTeamCommentsUnlocked(true);
-        setComments((prev) => [
+        setComments((prev) =>
+          // Idempotent: handleEnterReviewView runs from more than one path, and
+          // these ids are fixed, so appending unconditionally duplicated
+          // team-2 and team-3 and React reported the clashing keys.
+          prev.some((c) => c.id === "team-1") ? prev : [
           ...prev,
           {
             id: "team-1", sceneId: sceneList[2]?.id ?? sceneList[0].id, sceneNumber: 3,
@@ -831,7 +835,8 @@ export function StudioScreen() {
             text: "Opening background is very dark on a projector. Worth lifting.",
             author: "Priya Menon · Brand", source: "team", at: "8 min ago", status: "open", sentToChat: false,
           },
-        ]);
+        ]
+        );
       }, 1600);
     }, 5200);
   };
