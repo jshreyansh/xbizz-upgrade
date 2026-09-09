@@ -434,7 +434,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             {/* Expanded Body for Step 1 */}
             {stage === "audience" && (
               <div className="pt-4 space-y-4 animate-in fade-in duration-150">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
                   {AUDIENCE_OPTIONS.map((item) => {
                     const isSel = audience === item.id;
                     const IconComp = item.icon;
@@ -444,17 +444,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         type="button"
                         onClick={() => handleSelectAudience(item.id)}
                         className={cn(
-                          "flex flex-col items-center justify-center p-3 rounded-control border text-center transition-all cursor-pointer shadow-2xs min-h-[85px] gap-1.5",
+                          "flex flex-col items-center justify-center p-4 rounded-panel border text-center transition-all duration-200 cursor-pointer min-h-[128px] gap-2.5",
                           isSel
-                            ? "border-brand bg-card ring-2 ring-brand/15 shadow-sm"
-                            : "border-hair bg-card hover:border-hair-3"
+                            ? "border-brand bg-card ring-2 ring-brand/15 shadow-brand-soft -translate-y-0.5"
+                            : "border-hair bg-card shadow-hair hover:-translate-y-0.5 hover:border-hair-3 hover:shadow-soft"
                         )}
                       >
-                        <div className={cn("grid size-7 place-items-center rounded-chip shrink-0 transition-colors", isSel ? "bg-brand text-white" : "bg-tint text-brand-deep")}>
-                          <IconComp className="size-3.5" />
+                        <div
+                          className={cn(
+                            "grid size-12 place-items-center rounded-control shrink-0 transition-all duration-200",
+                            isSel ? "bg-brand text-white shadow-brand-lift" : "bg-tint text-brand-deep"
+                          )}
+                        >
+                          <IconComp className="size-6" />
                         </div>
-                        <div className="text-body font-[850] text-ink leading-none">{item.title}</div>
-                        <div className="text-micro text-ink-3 leading-none">{item.subtitle}</div>
+                        <div className="text-body-lg font-[850] text-ink leading-none">{item.title}</div>
+                        <div className="text-label text-ink-3 leading-none">{item.subtitle}</div>
                       </button>
                     );
                   })}
