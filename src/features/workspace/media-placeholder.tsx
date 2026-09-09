@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, ImageIcon, Layers, Video } from "lucide-react";
+import { BarChart3, Clock, ImageIcon, Layers, Video } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { ElementTiming } from "@/types/content";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
@@ -31,7 +31,7 @@ export function MediaPlaceholder({
   selected = false,
   className,
 }: {
-  kind: "image" | "video" | "background";
+  kind: "image" | "video" | "background" | "graph";
   /** What is coming, e.g. "Cardiac & Vascular Model". */
   label: string;
   /**
@@ -56,8 +56,8 @@ export function MediaPlaceholder({
   selected?: boolean;
   className?: string;
 }) {
-  const Icon = kind === "video" ? Video : kind === "image" ? ImageIcon : Layers;
-  const noun = kind === "video" ? "Video" : kind === "image" ? "Image" : "Background";
+  const Icon = kind === "video" ? Video : kind === "image" ? ImageIcon : kind === "graph" ? BarChart3 : Layers;
+  const noun = kind === "video" ? "Video" : kind === "image" ? "Image" : kind === "graph" ? "Chart" : "Background";
 
   // The same motion the real asset will use — see element-motion.
   const motion = elementMotion(timing, currentTime);

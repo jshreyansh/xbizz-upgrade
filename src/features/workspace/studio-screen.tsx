@@ -70,6 +70,7 @@ import { ReviewComments } from "@/features/workspace/review-comments";
 import { AudioGeneratingPill, MediaPlaceholder } from "@/features/workspace/media-placeholder";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { ShotCards } from "@/features/workspace/shot-cards";
+import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -301,6 +302,15 @@ export function StudioScreen() {
   // declared timings decorative for everything except the media.
   const motionHeadline = elementMotion(timingFor(selectedScene, "headline"), sceneCurrentTime);
   const motionNarration = elementMotion(timingFor(selectedScene, "narration"), sceneCurrentTime);
+  const motionBgVideo = elementMotion(timingFor(selectedScene, "bg-video"), sceneCurrentTime);
+  const motionGraph = elementMotion(timingFor(selectedScene, "graph"), sceneCurrentTime);
+  /** Progress through the graph's own window, which drives its bars. */
+  const graphProgress = (() => {
+    const timing = timingFor(selectedScene, "graph");
+    if (!timing) return 1;
+    const span = Math.max(0.1, timing.outAt - timing.inAt);
+    return Math.max(0, Math.min(1, (sceneCurrentTime - timing.inAt) / span));
+  })();
   const canvasVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Sync canvas video element playback with scenePlaying
@@ -1503,6 +1513,41 @@ export function StudioScreen() {
                     data-canvas-stage
                     className="relative aspect-video w-full rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
                   >
+                    {/* Layer 0: footage background, when the scene has one.
+                        Over the gradient plate, so the plate is the fallback
+                        while the clip renders rather than the intended look. */}
+                    {selectedScene.backgroundKind === "video" && (
+                      selectedScenePhase >= 2 && selectedScene.bgVideoSrc ? (
+                        <>
+                          <video
+                            src={selectedScene.bgVideoSrc}
+                            muted
+                            loop
+                            autoPlay
+                            playsInline
+                            className="absolute inset-0 z-0 h-full w-full object-cover"
+                            style={{
+                              opacity: motionBgVideo.opacity,
+                              transform: motionBgVideo.transform || undefined,
+                              ...motionTransition(motionBgVideo.durationMs),
+                            }}
+                          />
+                          {/* Copy over footage needs a scrim a plate does not. */}
+                          <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#06100d]/85 via-[#06100d]/55 to-[#06100d]/20" />
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 z-[1] grid place-items-center p-8">
+                          <MediaPlaceholder
+                            kind="background"
+                            label="Full-frame footage behind the copy"
+                            timing={timingFor(selectedScene, "bg-video")}
+                            currentTime={sceneCurrentTime}
+                            className="h-full w-full"
+                          />
+                        </div>
+                      )
+                    )}
+
                     {/* Layer 1: Background Gradient Graphic */}
                     <div
                       onClick={(e) => {
@@ -1602,6 +1647,34 @@ export function StudioScreen() {
                                 />
                               )}
                             </>
+                          )}
+
+                          {/* The chart layer: a generated asset like the
+                              others, so it waits behind a placeholder and then
+                              draws itself from the playhead. */}
+                          {selectedScene.graph && (
+                            selectedScenePhase >= 2 ? (
+                              <div
+                                className="pointer-events-auto"
+                                style={{
+                                  opacity: motionGraph.opacity,
+                                  transform: motionGraph.transform || undefined,
+                                  ...motionTransition(motionGraph.durationMs),
+                                }}
+                              >
+                                <SceneGraphLayer graph={selectedScene.graph} progress={graphProgress} />
+                              </div>
+                            ) : (
+                              <MediaPlaceholder
+                                kind="graph"
+                                label={selectedScene.graph.title}
+                                timing={timingFor(selectedScene, "graph")}
+                                currentTime={sceneCurrentTime}
+                                selected={selectedCanvasElementId === "graph"}
+                                onSelect={() => handleSelectCanvasElement("graph")}
+                                className="flex-1"
+                              />
+                            )
                           )}
 
                           {/* Draggable Element 1: Real Anatomical Heart Image */}

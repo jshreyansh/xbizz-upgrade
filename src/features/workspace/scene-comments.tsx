@@ -44,6 +44,8 @@ export const ELEMENT_LABELS: Record<string, string> = {
   background: "Background",
   voiceover: "Voice-over",
   sfx: "Sound effects",
+  "bg-video": "Background footage",
+  graph: "Chart",
 };
 
 /**

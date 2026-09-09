@@ -3,6 +3,7 @@
 import React from "react";
 import type { Scene } from "@/types/content";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
+import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 import { scenes as defaultScenes } from "@/features/workspace/mock-data";
 
 export interface SceneCompositionProps {
@@ -30,6 +31,7 @@ export function DynamicSceneComposition({
 }: SceneCompositionProps & { sceneTime?: number }) {
   const currentTheme = sceneThemeColors[((scene.number || 1) - 1) % sceneThemeColors.length];
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const bgVideoRef = React.useRef<HTMLVideoElement>(null);
 
   /**
    * The element timings, applied here as well as on the editor canvas.
@@ -43,6 +45,14 @@ export function DynamicSceneComposition({
    * thumbnails, where there is no playhead and the still should show
    * everything.
    */
+  /** How far the playhead has travelled through one element's window, 0..1. */
+  const progressOf = (elementId: string) => {
+    const timing = scene.timings?.find((entry) => entry.elementId === elementId);
+    if (!timing || sceneTime === undefined) return 1;
+    const span = Math.max(0.1, timing.outAt - timing.inAt);
+    return Math.max(0, Math.min(1, (sceneTime - timing.inAt) / span));
+  };
+
   const motionOf = (elementId: string): React.CSSProperties => {
     const timing = scene.timings?.find((entry) => entry.elementId === elementId);
     const motion = elementMotion(timing, sceneTime);
@@ -61,6 +71,12 @@ export function DynamicSceneComposition({
       videoRef.current.pause();
     }
   }, [isPlaying, scene.mediaVideoSrc]);
+
+  React.useEffect(() => {
+    if (!bgVideoRef.current) return;
+    if (isPlaying) bgVideoRef.current.play().catch(() => {});
+    else bgVideoRef.current.pause();
+  }, [isPlaying, scene.bgVideoSrc]);
 
   return (
     <div
@@ -82,6 +98,38 @@ export function DynamicSceneComposition({
           background: `radial-gradient(circle at 76% 34%, rgba(213,238,91,.15), transparent 32%), ${currentTheme.bg}`,
         }}
       />
+
+      {/* A scene whose background IS footage. Layered over the plate rather
+          than replacing it, so the plate shows through if the clip has not
+          arrived — the gradient is the fallback, not the intended look. */}
+      {scene.backgroundKind === "video" && scene.bgVideoSrc && (
+        <video
+          ref={bgVideoRef}
+          src={scene.bgVideoSrc}
+          muted
+          loop
+          playsInline
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            ...motionOf("bg-video"),
+          }}
+        />
+      )}
+      {/* Copy has to stay readable over footage, which a gradient plate does
+          not need. */}
+      {scene.backgroundKind === "video" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(105deg, rgba(6,16,13,0.86) 0%, rgba(6,16,13,0.55) 48%, rgba(6,16,13,0.2) 100%)",
+          }}
+        />
+      )}
 
       {/* 3D Kinetic Orbital Rings & Ambient Elements */}
       <div
@@ -337,6 +385,17 @@ export function DynamicSceneComposition({
           >
             {scene.title}
           </h2>
+
+          {/* The chart, when the scene has one. Positioned with the copy
+              rather than in the media column, because it IS the read-out the
+              copy is describing. */}
+          {scene.graph && (
+            <SceneGraphLayer
+              graph={scene.graph}
+              progress={progressOf("graph")}
+              style={{ marginTop: 10, maxWidth: 320, ...motionOf("graph") }}
+            />
+          )}
 
           <p
             style={{

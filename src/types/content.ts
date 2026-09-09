@@ -127,4 +127,34 @@ export interface Scene {
   timings?: ElementTiming[];
   /** The beats within the scene. Element membership is derived, not stored. */
   shots?: Shot[];
+  /**
+   * What fills the frame behind everything.
+   *
+   * "video" means the background IS footage with the copy over it, rather than
+   * the gradient plate. It is a generated asset like any other, so it has a
+   * timing entry under the element id "bg-video" and a placeholder while it
+   * renders — the plate showing through underneath is the fallback, not the
+   * design.
+   */
+  backgroundKind?: "gradient" | "video";
+  bgVideoSrc?: string;
+  /** An animated chart layer, element id "graph". Also generated. */
+  graph?: SceneGraph;
+}
+
+/**
+ * A chart drawn as a scene layer.
+ *
+ * Values are the real numbers the claim rests on, so the bars are the evidence
+ * rather than decoration — and the animation is driven by the playhead's
+ * progress through the graph's own window, which is what makes it identical
+ * in the editor and in the published video, and correct when scrubbed.
+ */
+export interface SceneGraph {
+  title: string;
+  unit: string;
+  series: Array<{ label: string; value: number; highlight?: boolean }>;
+  /** The largest value the axis has to reach. */
+  max: number;
+  footnote: string;
 }

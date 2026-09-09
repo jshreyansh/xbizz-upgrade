@@ -45,6 +45,8 @@ export const creativeDirections: CreativeDirection[] = [
 export const scenes: Scene[] = [
   {
     id: "scene-1",
+    backgroundKind: "video",
+    bgVideoSrc: "/133898-758336558_medium.mp4",
     shots: [
       { id: "s1-a", index: 1, startAt: 0,   endAt: 3.2, label: "Establish the patient",   transitionIn: "Open on black", narrationFragment: 'For adults living with moderate-to-severe plaque psoriasis,', visualStory: 'Opens on a restrained clinical portrait; the headline fades up over a still frame before any motion begins.' },
       { id: "s1-b", index: 2, startAt: 3.2, endAt: 7.2, label: "Widen to the burden",     transitionIn: "Slow push in 4%", narrationFragment: 'visible symptoms can be only part of the burden.', visualStory: 'The camera pushes in slowly as the portrait gives way to an abstract skin-barrier landscape behind the copy.' },
@@ -56,6 +58,7 @@ export const scenes: Scene[] = [
       { elementId: "background", inAt: 0, outAt: 8.0, transitionIn: "Slow push in 4%", transitionOut: "Cross dissolve 400ms" },
       { elementId: "voiceover", inAt: 0.8, outAt: 8.0, transitionIn: "Fade in 200ms", transitionOut: "Fade out 400ms" },
       { elementId: "sfx", inAt: 0, outAt: 1.6, transitionIn: "Cut in", transitionOut: "Duck under VO" },
+      { elementId: "bg-video", inAt: 0, outAt: 8.0, transitionIn: "Fade up from black 600ms", transitionOut: "Cross dissolve 400ms" },
     ],
     number: 1,
     title: "The unresolved burden",
@@ -99,6 +102,17 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-3",
+    graph: {
+      title: "PASI 90 response at Week 16",
+      unit: "% of patients",
+      max: 60,
+      series: [
+        { label: "DERMORA", value: 52, highlight: true },
+        { label: "Active comparator", value: 34 },
+        { label: "Placebo", value: 18 },
+      ],
+      footnote: "CLEARSKIN-3 · p < 0.001 vs placebo",
+    },
     shots: [
       { id: "s3-a", index: 1, startAt: 0,    endAt: 1.2,  label: "Title on clean plate",   transitionIn: "Cut", narrationFragment: 'In the pivotal CLEARSKIN study,', visualStory: 'Title on a clean plate; no media yet, so the claim reads before anything moves.' },
       { id: "s3-b", index: 2, startAt: 1.2,  endAt: 5.0,  label: "Bring in the still",     transitionIn: "Cross dissolve 400ms", narrationFragment: 'a greater proportion of patients', visualStory: 'The anatomical still cross-dissolves in beside the copy as the population is described.' },
@@ -114,6 +128,7 @@ export const scenes: Scene[] = [
       { elementId: "background", inAt: 0, outAt: 14.0, transitionIn: "Cut", transitionOut: "Cross dissolve 400ms" },
       { elementId: "voiceover", inAt: 0.7, outAt: 14.0, transitionIn: "Fade in 200ms", transitionOut: "Fade out 400ms" },
       { elementId: "sfx", inAt: 6.4, outAt: 8.6, transitionIn: "Cut in on wipe", transitionOut: "Duck under VO" },
+      { elementId: "graph", inAt: 8.6, outAt: 14.0, transitionIn: "Bars draw up 900ms", transitionOut: "Fade out 300ms" },
     ],
     number: 3,
     title: "Pivotal evidence",
