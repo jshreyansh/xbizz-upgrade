@@ -3,22 +3,18 @@
 import {
   AlertCircle,
   AlertTriangle,
-  ArrowDown,
   ArrowLeft,
   ArrowRight,
-  ArrowUp,
   BookOpenCheck,
   Check,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  Clock,
   Download,
   Expand,
   FileCheck2,
   FileText,
   Film,
-  GripVertical,
   History,
   Image as ImageIcon,
   Layers,
@@ -43,12 +39,10 @@ import {
   ScanLine,
   Send,
   Share2,
-  ShieldCheck,
   Sliders,
   SlidersHorizontal,
   Tag,
   Timer,
-  Trash2,
   Type,
   Undo2,
   Volume2,
@@ -67,7 +61,8 @@ import {
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
-import type { EvidenceState, InspectorTab } from "@/types/content";
+import type { EvidenceState, InspectorTab, Scene, SceneCitation } from "@/types/content";
+import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -98,6 +93,33 @@ const NARRATIVE_TAG_OPTIONS = [
   { id: "Safety", label: "Safety" },
   { id: "Outro", label: "Outro" },
 ];
+
+/**
+ * Which later beats a change to one beat invalidates. Narration is not a list
+ * of independent lines: rewrite the burden in the intro and the evidence and
+ * dosing beats that reference it no longer follow. Editing one scene therefore
+ * pulls its dependents in rather than leaving the script quietly inconsistent.
+ */
+/** What a rewritten beat gains. Enough to see the line actually changed. */
+const REWRITE_CLAUSE_BY_TAG: Record<string, string> = {
+  "Intro":         " Daily function and quality of life are affected alongside the visible signs.",
+  "Clinical Need": " Many patients remain inadequately controlled on current therapy.",
+  "Mechanism":     " Selective binding keeps activity to the intended pathway.",
+  "Evidence":      " The primary endpoint was met at week 24 in the pivotal trial.",
+  "Dosing":        " Once-daily dosing requires no titration.",
+  "Safety":        " The adverse event profile was consistent with the approved label.",
+  "Outro":         " Full prescribing information is available in the approved label.",
+};
+
+const TAG_DEPENDENTS: Record<string, string[]> = {
+  "Intro":         ["Evidence", "Dosing"],
+  "Clinical Need": ["Evidence", "Dosing"],
+  "Mechanism":     ["Evidence"],
+  "Evidence":      ["Outro"],
+  "Dosing":        ["Safety", "Outro"],
+  "Safety":        ["Outro"],
+  "Outro":         [],
+};
 
 function FormattedMessageText({ text }: { text: string }) {
   const parts = text.split(/(\*\*.*?\*\*)/g);
@@ -275,6 +297,37 @@ export function StudioScreen() {
   }
 
   const [attachedContexts, setAttachedContexts] = useState<AttachedChatContext[]>([]);
+  /** Cards whose narration is unlocked. Read-only is the default. */
+  const [editingSceneIds, setEditingSceneIds] = useState<string[]>([]);
+  /** Cards being rewritten right now. Drives the shimmer. */
+  const [pendingSceneIds, setPendingSceneIds] = useState<string[]>([]);
+
+  /**
+   * The chat's scene scope lives in attachedContexts, so the canvas ticks and
+   * the chat's attach menu are two views of ONE list. Selecting a card in the
+   * canvas shows a chip in the chat, and attaching Scene 4 from the chat ticks
+   * the card — without a second piece of state that can disagree.
+   */
+  const scopedSceneIds = attachedContexts
+    .filter((c) => c.id.startsWith("scene-"))
+    .map((c) => c.id.slice("scene-".length));
+
+  const toggleSceneScope = (scene: Scene) => {
+    const key = `scene-${scene.id}`;
+    setAttachedContexts((prev) =>
+      prev.some((c) => c.id === key)
+        ? prev.filter((c) => c.id !== key)
+        : [...prev, { id: key, type: "scene" as const, label: `Scene ${scene.number}`, detail: scene.title }]
+    );
+  };
+
+  const toggleSceneEditing = (id: string) =>
+    setEditingSceneIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const citationsFor = (tag: string): SceneCitation[] => [
+    { id: `fda-${tag}`, source: "FDA Label", title: `${brandName} Prescribing Information — \u00a75.1 Warnings and Precautions`, date: "March 18, 2026" },
+    { id: `trial-${tag}`, source: "CLEARSKIN-2", title: "Pivotal Phase III efficacy and safety readout at week 24", date: "January 9, 2026" },
+  ];
   const [chatContextMenuOpen, setChatContextMenuOpen] = useState(false);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -784,6 +837,64 @@ export function StudioScreen() {
 
     const isCommentIntent = rawInput.toLowerCase().includes("comment") || rawInput.toLowerCase().includes("note") || rawInput.toLowerCase().includes("feedback");
 
+    /**
+     * An instruction aimed at specific scenes rewrites those scenes — and then
+     * the beats that depend on them. The dependents are announced as a separate
+     * step rather than folded into the first message, because the user asked
+     * for the scenes they picked; the extra ones are the agent's call and it
+     * should say so before changing them.
+     */
+    const targetIds = scopedSceneIds.filter((id) => sceneList.some((s) => s.id === id));
+    if (targetIds.length > 0 && !isCommentIntent) {
+      const targets = sceneList.filter((s) => targetIds.includes(s.id));
+      const nameOf = (s: Scene) => `Scene ${s.number} — ${s.title}`;
+
+      setPendingSceneIds(targetIds);
+      addChatMessage({
+        role: "swishx",
+        text: `Rewriting **${targets.map(nameOf).join("**, **")}** against the approved sources...`,
+      });
+
+      setTimeout(() => {
+        const dependentTags = new Set(
+          targets.flatMap((s) => TAG_DEPENDENTS[s.narrativeTag || "Evidence"] ?? [])
+        );
+        const dependents = sceneList.filter(
+          (s) => !targetIds.includes(s.id) && dependentTags.has(s.narrativeTag || "Evidence")
+        );
+
+        if (dependents.length > 0) {
+          setPendingSceneIds((prev) => [...prev, ...dependents.map((d) => d.id)]);
+          addChatMessage({
+            role: "swishx",
+            text: `That changes what follows — **${dependents.map(nameOf).join("**, **")}** ${dependents.length > 1 ? "both build" : "builds"} on it, so ${dependents.length > 1 ? "they are" : "it is"} being updated to stay consistent.`,
+          });
+        }
+
+        const changedIds = [...targetIds, ...dependents.map((d) => d.id)];
+        setTimeout(() => {
+          setSceneList((prev) =>
+            prev.map((sc) => {
+              if (!changedIds.includes(sc.id)) return sc;
+              const tag = sc.narrativeTag || "Evidence";
+              const clause = REWRITE_CLAUSE_BY_TAG[tag] ?? "";
+              return {
+                ...sc,
+                narration: sc.narration.includes(clause.trim()) ? sc.narration : `${sc.narration}${clause}`,
+                citations: citationsFor(tag),
+              };
+            })
+          );
+          setPendingSceneIds([]);
+          addChatMessage({
+            role: "swishx",
+            text: `Updated ${changedIds.length} scene${changedIds.length > 1 ? "s" : ""}. Every line resolves to an approved source — open the source pill under a line to see which.`,
+          });
+        }, 1500);
+      }, 1100);
+      return;
+    }
+
     setTimeout(() => {
       if (rawInput.includes("Update other scenes")) {
         setSceneList((prev) =>
@@ -1137,118 +1248,29 @@ export function StudioScreen() {
                       })
                     : (
                       <>
-                        {sceneList.map((sc, idx) => {
-                          const isDragging = draggedSceneId === sc.id;
-                          return (
-                            <div
-                              key={sc.id}
-                              draggable
-                              onDragStart={() => handleDragStart(sc.id)}
-                              onDragOver={(e) => handleDragOver(e, sc.id)}
-                              onDrop={(e) => e.preventDefault()}
-                              onDragEnd={handleDragEnd}
-                              className={cn(
-                                "relative flex flex-col rounded-panel border bg-card p-4 transition-all duration-200 shadow-2xs hover:shadow-xs",
-                                isDragging ? "opacity-40 border-dashed border-brand" : "border-hair"
-                              )}
-                            >
-                              <div className="flex items-center justify-between gap-2 mb-2.5 pb-2 border-b border-hair">
-                                <div className="flex items-center gap-2">
-                                  <div className="cursor-grab active:cursor-grabbing text-ink-4 hover:text-ink p-0.5 rounded-glyph transition-colors" title="Drag to reorder">
-                                    <GripVertical className="size-4" />
-                                  </div>
-                                  <span className="flex size-6 items-center justify-center rounded-chip bg-ink text-label font-bold text-white shadow-2xs">
-                                    {sc.number}
-                                  </span>
-                                  <input
-                                    type="text"
-                                    value={sc.title}
-                                    onChange={(e) => handleUpdateSceneTitle(sc.id, e.target.value)}
-                                    className="text-body-lg font-[850] text-ink bg-transparent border-b border-transparent hover:border-hair-3 focus:border-brand focus:outline-none px-1 py-0.5 rounded-glyph transition-all"
-                                    placeholder="Scene Title"
-                                  />
-                                </div>
-
-                                <div className="flex items-center gap-1.5">
-                                  <div className="relative">
-                                    <select
-                                      value={sc.narrativeTag || "Evidence"}
-                                      onChange={(e) => handleUpdateSceneTag(sc.id, e.target.value)}
-                                      className="appearance-none bg-tint border border-brand/20 text-brand-deep text-caption font-bold rounded-chip px-2 py-0.5 pr-5 cursor-pointer hover:bg-tint-strong transition-colors focus:outline-none"
-                                    >
-                                      {NARRATIVE_TAG_OPTIONS.map((tagOpt) => (
-                                        <option key={tagOpt.id} value={tagOpt.id}>
-                                          ({tagOpt.label})
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <ChevronDown className="size-2.5 text-brand-deep absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none opacity-70" />
-                                  </div>
-
-                                  <span className="flex items-center gap-1 rounded-glyph bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3 border border-hair">
-                                    <Clock className="size-2.5" />
-                                    {sc.duration || 10}s
-                                  </span>
-
-                                  <div className="flex items-center gap-0.5 ml-1 border-l border-hair-2 pl-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleMoveScene(idx, "up")}
-                                      disabled={idx === 0}
-                                      title="Move Up"
-                                      className="p-1 rounded-glyph text-ink-4 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
-                                    >
-                                      <ArrowUp className="size-3" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleMoveScene(idx, "down")}
-                                      disabled={idx === sceneList.length - 1}
-                                      title="Move Down"
-                                      className="p-1 rounded-glyph text-ink-4 hover:text-ink hover:bg-black/5 disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
-                                    >
-                                      <ArrowDown className="size-3" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteScene(sc.id)}
-                                      title="Delete Scene"
-                                      className="p-1 rounded-glyph text-ink-4 hover:text-danger hover:bg-danger-bg cursor-pointer ml-0.5"
-                                    >
-                                      <Trash2 className="size-3" />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between text-caption font-extrabold uppercase tracking-wider text-ink-3">
-                                  <span>Narration Script</span>
-                                  <span className="font-semibold lowercase">
-                                    {sc.narration ? `${sc.narration.split(" ").filter(Boolean).length} words` : "0 words"}
-                                  </span>
-                                </div>
-                                <textarea
-                                  value={sc.narration}
-                                  onChange={(e) => handleUpdateSceneNarration(sc.id, e.target.value)}
-                                  placeholder="Enter clinical voiceover script for this scene..."
-                                  rows={2}
-                                  className="w-full rounded-control border border-hair-2 bg-canvas p-2.5 text-body leading-relaxed text-ink focus:bg-card focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition-all resize-none shadow-2xs"
-                                />
-                              </div>
-
-                              <div className="flex items-center justify-between pt-2 mt-2 border-t border-hair text-caption">
-                                <span className="inline-flex items-center gap-1.5 text-ok font-semibold bg-ok-bg px-2 py-0.5 rounded-glyph border border-ok-line/60">
-                                  <ShieldCheck className="size-3 text-ok" />
-                                  <span>{sc.claim}</span>
-                                </span>
-                                <span className="text-caption text-ink-4">
-                                  Tag: <strong>({sc.narrativeTag || "Evidence"})</strong>
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {sceneList.map((sc, idx) => (
+                          <ScriptSceneCard
+                            key={sc.id}
+                            scene={sc}
+                            index={idx}
+                            total={sceneList.length}
+                            tagOptions={NARRATIVE_TAG_OPTIONS}
+                            selected={scopedSceneIds.includes(sc.id)}
+                            onToggleSelect={() => toggleSceneScope(sc)}
+                            editing={editingSceneIds.includes(sc.id)}
+                            onToggleEdit={() => toggleSceneEditing(sc.id)}
+                            pending={pendingSceneIds.includes(sc.id)}
+                            dragging={draggedSceneId === sc.id}
+                            onDragStart={() => handleDragStart(sc.id)}
+                            onDragOver={(e) => handleDragOver(e, sc.id)}
+                            onDragEnd={handleDragEnd}
+                            onTitleChange={(v) => handleUpdateSceneTitle(sc.id, v)}
+                            onTagChange={(v) => handleUpdateSceneTag(sc.id, v)}
+                            onNarrationChange={(v) => handleUpdateSceneNarration(sc.id, v)}
+                            onMove={(dir) => handleMoveScene(idx, dir)}
+                            onDelete={() => handleDeleteScene(sc.id)}
+                          />
+                        ))}
 
                         <button
                           type="button"
@@ -2397,31 +2419,32 @@ export function StudioScreen() {
                                 Attach Scene Scope
                               </div>
                               <div className="max-h-40 overflow-y-auto space-y-0.5">
-                                {sceneList.map((sc) => (
-                                  <button
-                                    key={sc.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setAttachedContexts((prev) => {
-                                        if (prev.some((c) => c.id === `scene-${sc.id}`)) return prev;
-                                        return [
-                                          ...prev,
-                                          {
-                                            id: `scene-${sc.id}`,
-                                            type: "scene",
-                                            label: `Scene ${sc.number}`,
-                                            detail: sc.title,
-                                          },
-                                        ];
-                                      });
-                                      setChatContextMenuOpen(false);
-                                    }}
-                                    className="w-full flex items-center justify-between px-2.5 py-1 text-label font-medium text-ink-2 hover:bg-subtle rounded-chip transition text-left cursor-pointer"
-                                  >
-                                    <span className="truncate">Scene {sc.number}: {sc.title}</span>
-                                    <span className="text-micro text-ink-4 font-bold shrink-0 ml-1">({sc.narrativeTag || "Evidence"})</span>
-                                  </button>
-                                ))}
+                                {sceneList.map((sc) => {
+                                  const inScope = scopedSceneIds.includes(sc.id);
+                                  return (
+                                    <button
+                                      key={sc.id}
+                                      type="button"
+                                      /* Toggles the same list the canvas ticks write to, and
+                                         stays open so several scenes can be picked in one go. */
+                                      onClick={() => toggleSceneScope(sc)}
+                                      aria-pressed={inScope}
+                                      className={cn(
+                                        "w-full flex items-center gap-1.5 px-2.5 py-1 text-label font-medium rounded-chip transition text-left cursor-pointer",
+                                        inScope ? "bg-tint text-brand-deep font-bold" : "text-ink-2 hover:bg-subtle"
+                                      )}
+                                    >
+                                      <span className={cn(
+                                        "grid size-3.5 shrink-0 place-items-center rounded-full border transition-colors",
+                                        inScope ? "border-brand bg-brand text-white" : "border-hair-3 text-transparent"
+                                      )}>
+                                        <Check className="size-2 stroke-[3]" />
+                                      </span>
+                                      <span className="truncate flex-1">Scene {sc.number}: {sc.title}</span>
+                                      <span className="text-micro text-ink-4 font-bold shrink-0">({sc.narrativeTag || "Evidence"})</span>
+                                    </button>
+                                  );
+                                })}
                               </div>
 
                               <button

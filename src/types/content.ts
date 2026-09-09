@@ -38,6 +38,18 @@ export interface CreativeDirection {
   risk: "Low" | "Moderate";
 }
 
+/**
+ * One source behind a line of narration. A rewritten line usually resolves to
+ * more than one, which is why the UI shows a count and lets you page through
+ * them rather than picking one to display.
+ */
+export interface SceneCitation {
+  id: string;
+  source: string;
+  title: string;
+  date: string;
+}
+
 export interface Scene {
   id: string;
   number: number;
@@ -53,4 +65,6 @@ export interface Scene {
   mediaImageSrc?: string;
   mediaVideoSrc?: string;
   mediaLabel?: string;
+  /** Attached when a line is written or rewritten from approved sources. */
+  citations?: SceneCitation[];
 }
