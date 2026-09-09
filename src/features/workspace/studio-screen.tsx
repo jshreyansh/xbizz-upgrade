@@ -84,16 +84,6 @@ const dossierNames: Record<string, string> = {
   pulmovax: "PulmoVax",
 };
 
-const NARRATIVE_TAG_OPTIONS = [
-  { id: "Intro", label: "Intro" },
-  { id: "Clinical Need", label: "Clinical Need" },
-  { id: "Mechanism", label: "Mechanism" },
-  { id: "Evidence", label: "Evidence" },
-  { id: "Dosing", label: "Dosing" },
-  { id: "Safety", label: "Safety" },
-  { id: "Outro", label: "Outro" },
-];
-
 /**
  * Which later beats a change to one beat invalidates. Narration is not a list
  * of independent lines: rewrite the burden in the intro and the evidence and
@@ -109,6 +99,29 @@ const REWRITE_CLAUSE_BY_TAG: Record<string, string> = {
   "Dosing":        " Once-daily dosing requires no titration.",
   "Safety":        " The adverse event profile was consistent with the approved label.",
   "Outro":         " Full prescribing information is available in the approved label.",
+};
+
+/**
+ * The approved claims this project is grounded in. Module scope on purpose:
+ * the Claims tab renders them and the citation badges under the narration
+ * point INTO them, so a badge always resolves to a card that exists.
+ */
+const APPROVED_CLAIMS = [
+  { id: "c1", title: "Primary CLEARSKIN Endpoint",     status: "Approved",  tag: "FDA \u00a75.1",  detail: "Significant PASI 90 response rate vs placebo at Week 16." },
+  { id: "c2", title: "Selective Mechanism Inhibition", status: "Approved",  tag: "EMBRACE-3",   detail: "Targeted pathway binding sparing secondary cytokine cascades." },
+  { id: "c3", title: "Safety and Adverse Profiles",    status: "Supported", tag: "PI \u00a76.2",   detail: "Low incidence of treatment-emergent adverse reactions." },
+  { id: "c4", title: "Renal Perfusion Preservation",   status: "Approved",  tag: "Lancet 2024", detail: "Maintained glomerular filtration rate during maintenance dosing." },
+];
+
+/** Which claims back each beat, so a badge's sources are true to the beat. */
+const CLAIMS_BY_TAG: Record<string, string[]> = {
+  "Intro":         ["c1", "c3", "c4"],
+  "Clinical Need": ["c1", "c3", "c4"],
+  "Mechanism":     ["c2", "c1"],
+  "Evidence":      ["c1", "c4", "c2"],
+  "Dosing":        ["c3", "c1"],
+  "Safety":        ["c3", "c4", "c1"],
+  "Outro":         ["c1"],
 };
 
 const TAG_DEPENDENTS: Record<string, string[]> = {
@@ -300,6 +313,8 @@ export function StudioScreen() {
   const [editingSceneIds, setEditingSceneIds] = useState<string[]>([]);
   /** Cards being rewritten right now. Drives the shimmer. */
   const [pendingSceneIds, setPendingSceneIds] = useState<string[]>([]);
+  /** The claim a citation's Details action jumped to. Clears itself after 2s. */
+  const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
 
   /**
    * The chat's scene scope lives in attachedContexts, so the canvas ticks and
@@ -330,19 +345,35 @@ export function StudioScreen() {
    * which is the point of showing a count at all.
    */
   const citationsFor = (tag: string, narration: string): SceneCitation[] => {
+    const claims = (CLAIMS_BY_TAG[tag] ?? ["c1"])
+      .map((id) => APPROVED_CLAIMS.find((c) => c.id === id))
+      .filter((c): c is (typeof APPROVED_CLAIMS)[number] => Boolean(c));
     const sentenceCount = (narration.match(/[^.!?]+[.!?]*\s*/g) ?? [""]).length;
     const last = Math.max(0, sentenceCount - 1);
-    const pool: SceneCitation[] = [
-      { id: `fda-${tag}`, source: "FDA Label", title: `${brandName} Prescribing Information — \u00a75.1 Warnings and Precautions`, date: "March 18, 2026", anchor: 0 },
-      { id: `trial-${tag}`, source: "CLEARSKIN-2", title: "Pivotal Phase III efficacy and safety readout at week 24", date: "January 9, 2026", anchor: 0 },
-      { id: `dossier-${tag}`, source: `${brandName} Dossier`, title: "Approved claims library — clinical evidence section", date: "August 12, 2026", anchor: 0 },
-    ];
-    if (last === 0) return pool;
-    // The clause the rewrite added is the last sentence; it rests on the trial.
-    return [
-      ...pool.slice(0, 2),
-      { ...pool[2], id: `dossier-${tag}-tail`, anchor: last },
-    ];
+
+    const cite = (claim: (typeof APPROVED_CLAIMS)[number], at: number): SceneCitation => ({
+      id: `cite-${claim.id}-${at}`,
+      source: claim.tag,
+      title: `${claim.title} — ${claim.detail}`,
+      date: `${claim.status} · current`,
+      anchor: at,
+      claimId: claim.id,
+    });
+
+    if (last === 0 || claims.length === 1) return claims.map((c) => cite(c, 0));
+    // The clause the rewrite appended is the last sentence; it rests on one.
+    return [...claims.slice(0, -1).map((c) => cite(c, 0)), cite(claims[claims.length - 1], last)];
+  };
+
+  /**
+   * A citation is only useful if you can reach the claim behind it. Details
+   * switches the panel to Claims and marks the card for two seconds — long
+   * enough to find it in the list, short enough to leave no stuck state.
+   */
+  const handleCitationDetails = (claimId: string) => {
+    setActiveTab("evidence");
+    setHighlightedClaimId(claimId);
+    window.setTimeout(() => setHighlightedClaimId(null), 2000);
   };
   const [chatContextMenuOpen, setChatContextMenuOpen] = useState(false);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
@@ -716,30 +747,7 @@ export function StudioScreen() {
     setTimeout(() => setToMessage(null), 2500);
   };
 
-  const handleMoveScene = (index: number, direction: "up" | "down") => {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= sceneList.length) return;
-    const updated = [...sceneList];
-    const [moved] = updated.splice(index, 1);
-    updated.splice(targetIndex, 0, moved);
-    const renumbered = updated.map((s, idx) => ({ ...s, number: idx + 1 }));
-    setSceneList(renumbered);
-  };
 
-  const handleDeleteScene = (id: string) => {
-    if (sceneList.length <= 1) {
-      setToMessage("At least one scene is required in storyboard");
-      setTimeout(() => setToMessage(null), 2000);
-      return;
-    }
-    const updated = sceneList.filter((s) => s.id !== id).map((s, idx) => ({ ...s, number: idx + 1 }));
-    setSceneList(updated);
-    if (selectedSceneId === id && updated[0]) {
-      setSelectedSceneId(updated[0].id);
-    }
-    setToMessage("Scene deleted");
-    setTimeout(() => setToMessage(null), 2000);
-  };
 
   const handleUpdateSceneTitle = (id: string, nextTitle: string) => {
     setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, title: nextTitle } : s)));
@@ -749,9 +757,6 @@ export function StudioScreen() {
     setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, narration: nextNarration } : s)));
   };
 
-  const handleUpdateSceneTag = (id: string, nextTag: string) => {
-    setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, narrativeTag: nextTag } : s)));
-  };
 
   const handleCreateSceneFromModal = (sceneData: {
     insertPosition: number;
@@ -1251,23 +1256,18 @@ export function StudioScreen() {
                       })
                     : (
                       <>
-                        {sceneList.map((sc, idx) => (
+                        {sceneList.map((sc) => (
                           <ScriptSceneCard
                             key={sc.id}
                             scene={sc}
-                            index={idx}
-                            total={sceneList.length}
-                            tagOptions={NARRATIVE_TAG_OPTIONS}
                             selected={scopedSceneIds.includes(sc.id)}
                             onToggleSelect={() => toggleSceneScope(sc)}
                             editing={editingSceneIds.includes(sc.id)}
                             onToggleEdit={() => toggleSceneEditing(sc.id)}
                             pending={pendingSceneIds.includes(sc.id)}
+                            onCitationDetails={handleCitationDetails}
                             onTitleChange={(v) => handleUpdateSceneTitle(sc.id, v)}
-                            onTagChange={(v) => handleUpdateSceneTag(sc.id, v)}
                             onNarrationChange={(v) => handleUpdateSceneNarration(sc.id, v)}
-                            onMove={(dir) => handleMoveScene(idx, dir)}
-                            onDelete={() => handleDeleteScene(sc.id)}
                           />
                         ))}
 
@@ -2855,13 +2855,16 @@ export function StudioScreen() {
                 </div>
 
                 <div className="space-y-2.5">
-                  {[
-                    { id: "c1", title: "Primary CLEARSKIN Endpoint", status: "Approved", tag: "FDA §5.1", detail: "Significant PASI 90 response rate vs placebo at Week 16." },
-                    { id: "c2", title: "Selective Mechanism Inhibition", status: "Approved", tag: "EMBRACE-3", detail: "Targeted pathway binding sparing secondary cytokine cascades." },
-                    { id: "c3", title: "Safety and Adverse Profiles", status: "Supported", tag: "PI §6.2", detail: "Low incidence of treatment-emergent adverse reactions." },
-                    { id: "c4", title: "Renal Perfusion Preservation", status: "Approved", tag: "Lancet 2024", detail: "Maintained glomerular filtration rate during maintenance dosing." },
-                  ].map((c) => (
-                    <div key={c.id} className="rounded-control border border-hair bg-canvas p-3 text-left hover:border-brand/20 transition-colors">
+                  {APPROVED_CLAIMS.map((c) => (
+                    <div
+                      key={c.id}
+                      className={cn(
+                        "rounded-control border p-3 text-left transition-all duration-300",
+                        highlightedClaimId === c.id
+                          ? "border-brand bg-tint ring-2 ring-brand/25 shadow-sm"
+                          : "border-hair bg-canvas hover:border-brand/20"
+                      )}
+                    >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-micro font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-glyph">
                           {c.tag}

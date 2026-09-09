@@ -54,6 +54,8 @@ export interface SceneCitation {
    * sources sharing an anchor collapse into one badge carrying their count.
    */
   anchor?: number;
+  /** The approved claim this resolves to, so the badge can jump to its card. */
+  claimId?: string;
 }
 
 export interface Scene {

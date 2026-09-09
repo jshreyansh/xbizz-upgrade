@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
-  ArrowDown,
-  ArrowUp,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
   Pencil,
   ShieldCheck,
-  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Scene, SceneCitation } from "@/types/content";
@@ -22,35 +19,69 @@ import type { Scene, SceneCitation } from "@/types/content";
  * the narration the card exists to show — so the pill carries the first
  * source's name and a count, and paging happens in the popover.
  */
-function CitationPill({ citations }: { citations: SceneCitation[] }) {
+function CitationPill({ citations, onDetails }: { citations: SceneCitation[]; onDetails?: (claimId: string) => void }) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ left: number; top: number } | null>(null);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Positioned in a portal against the viewport rather than inside the card.
+   * The script canvas is an overflow-y-auto column, so an absolutely
+   * positioned popover was clipped at its edges — the card lost its right
+   * side and its counter. Clamped to stay on screen, and flipped above the
+   * badge when there is no room below.
+   */
+  const place = useCallback(() => {
+    const rect = anchorRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const width = 290;
+    const height = cardRef.current?.offsetHeight ?? 150;
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+    const below = rect.bottom + 6;
+    const top = below + height > window.innerHeight - 12 ? Math.max(12, rect.top - height - 6) : below;
+    setCoords({ left, top });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (anchorRef.current?.contains(target) || cardRef.current?.contains(target)) return;
+      setOpen(false);
     };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); setCoords(null); } };
     document.addEventListener("pointerdown", onDown);
     document.addEventListener("keydown", onKey);
+    // capture: the canvas column scrolls, not the window.
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
     return () => {
       document.removeEventListener("pointerdown", onDown);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
     };
-  }, [open]);
+  }, [open, place]);
 
   if (citations.length === 0) return null;
   const current = citations[Math.min(index, citations.length - 1)];
 
   return (
-    <div ref={ref} className="relative inline-block">
+    <>
       <button
+        ref={anchorRef}
         type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        // Measured here rather than in an effect: an effect that positions on
+        // mount sets state during render-commit, and the popover would flash
+        // at the wrong place for one frame before correcting.
+        onClick={(e) => {
+          e.stopPropagation();
+          if (open) { setOpen(false); setCoords(null); return; }
+          place();
+          setOpen(true);
+        }}
         aria-expanded={open}
         aria-label={`${citations.length} source${citations.length > 1 ? "s" : ""} for this line`}
         className={cn(
@@ -61,10 +92,12 @@ function CitationPill({ citations }: { citations: SceneCitation[] }) {
         +{citations.length}
       </button>
 
-      {open && (
+      {open && createPortal(
         <div
+          ref={cardRef}
           onClick={(e) => e.stopPropagation()}
-          className="absolute left-0 top-full z-50 mt-1.5 w-[290px] rounded-panel border border-hair-2 bg-card p-3 shadow-float"
+          style={{ left: coords?.left ?? -9999, top: coords?.top ?? -9999 }}
+          className="fixed z-[9999] w-[290px] rounded-panel border border-hair-2 bg-card p-3 shadow-float"
         >
           <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-1">
@@ -97,18 +130,28 @@ function CitationPill({ citations }: { citations: SceneCitation[] }) {
             <span className="text-label font-bold text-ink">{current.source}</span>
           </div>
           <p className="mt-1 text-body leading-snug text-ink-2">{current.title}</p>
-          <p className="mt-1.5 text-caption text-ink-4">{current.date}</p>
-        </div>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <span className="text-caption text-ink-4">{current.date}</span>
+            {current.claimId && onDetails && (
+              <button
+                type="button"
+                onClick={() => { setOpen(false); onDetails(current.claimId!); }}
+                className="inline-flex items-center gap-1 rounded-glyph px-1.5 py-0.5 text-caption font-bold text-brand transition-colors hover:bg-tint cursor-pointer"
+              >
+                <span>Details</span>
+                <ChevronRight className="size-3" />
+              </button>
+            )}
+          </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
 
 export interface ScriptSceneCardProps {
   scene: Scene;
-  index: number;
-  total: number;
-  tagOptions: Array<{ id: string; label: string }>;
   /** In the chat's scope, so the next instruction applies to it. */
   selected: boolean;
   onToggleSelect: () => void;
@@ -116,11 +159,10 @@ export interface ScriptSceneCardProps {
   onToggleEdit: () => void;
   /** Being rewritten right now — content is withheld rather than half-shown. */
   pending: boolean;
+  /** Jump to the approved claim behind a citation. */
+  onCitationDetails?: (claimId: string) => void;
   onTitleChange: (value: string) => void;
-  onTagChange: (value: string) => void;
   onNarrationChange: (value: string) => void;
-  onMove: (direction: "up" | "down") => void;
-  onDelete: () => void;
 }
 
 /**
@@ -133,9 +175,9 @@ export interface ScriptSceneCardProps {
  * Concentric radii: shell 24 with 10px padding puts the inner blocks at 14.
  */
 export function ScriptSceneCard({
-  scene, index, total, tagOptions,
-  selected, onToggleSelect, editing, onToggleEdit, pending,
-  onTitleChange, onTagChange, onNarrationChange, onMove, onDelete,
+  scene,
+  selected, onToggleSelect, editing, onToggleEdit, pending, onCitationDetails,
+  onTitleChange, onNarrationChange,
 }: ScriptSceneCardProps) {
   const words = scene.narration ? scene.narration.split(" ").filter(Boolean).length : 0;
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -213,53 +255,12 @@ export function ScriptSceneCard({
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5">
-          <div className="relative">
-            <select
-              value={scene.narrativeTag || "Evidence"}
-              onChange={(e) => onTagChange(e.target.value)}
-              onClick={stop}
-              className="cursor-pointer appearance-none rounded-chip border border-brand/20 bg-tint px-2 py-0.5 pr-5 text-caption font-bold text-brand-deep transition-colors hover:bg-tint-strong focus:outline-none"
-            >
-              {tagOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>({opt.label})</option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 size-2.5 -translate-y-1/2 text-brand-deep opacity-70" />
-          </div>
 
           <span className="flex items-center gap-1 rounded-glyph border border-hair bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
             <Clock className="size-2.5" />
             {scene.duration || 10}s
           </span>
 
-          <div className="ml-1 flex items-center gap-0.5 border-l border-hair-2 pl-1">
-            <button
-              type="button"
-              onClick={(e) => { stop(e); onMove("up"); }}
-              disabled={index === 0}
-              title="Move up"
-              className="cursor-pointer rounded-glyph p-1 text-ink-4 transition-colors hover:bg-black/5 hover:text-ink disabled:pointer-events-none disabled:opacity-20"
-            >
-              <ArrowUp className="size-3" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { stop(e); onMove("down"); }}
-              disabled={index === total - 1}
-              title="Move down"
-              className="cursor-pointer rounded-glyph p-1 text-ink-4 transition-colors hover:bg-black/5 hover:text-ink disabled:pointer-events-none disabled:opacity-20"
-            >
-              <ArrowDown className="size-3" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { stop(e); onDelete(); }}
-              title="Delete scene"
-              className="ml-0.5 cursor-pointer rounded-glyph p-1 text-ink-4 transition-colors hover:bg-danger-bg hover:text-danger"
-            >
-              <Trash2 className="size-3" />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -314,7 +315,7 @@ export function ScriptSceneCard({
               ? sentences.map((sentence, i) => (
                   <span key={i}>
                     {sentence}
-                    {byAnchor.get(i) && <CitationPill citations={byAnchor.get(i)!} />}
+                    {byAnchor.get(i) && <CitationPill citations={byAnchor.get(i)!} onDetails={onCitationDetails} />}
                   </span>
                 ))
               : <span className="text-ink-4">No narration yet. Choose Edit to write it.</span>}
@@ -329,7 +330,7 @@ export function ScriptSceneCard({
             <span className="text-caption font-extrabold uppercase tracking-wider text-ink-4">
               Sources
             </span>
-            <CitationPill citations={unanchored} />
+            <CitationPill citations={unanchored} onDetails={onCitationDetails} />
           </div>
         )}
       </div>
