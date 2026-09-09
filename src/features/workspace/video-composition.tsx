@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { Scene } from "@/types/content";
+import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { scenes as defaultScenes } from "@/features/workspace/mock-data";
 
 export interface SceneCompositionProps {
@@ -25,9 +26,32 @@ export function DynamicSceneComposition({
   brandName = "DERMORA",
   totalScenes = 5,
   isPlaying = true,
-}: SceneCompositionProps) {
+  sceneTime,
+}: SceneCompositionProps & { sceneTime?: number }) {
   const currentTheme = sceneThemeColors[((scene.number || 1) - 1) % sceneThemeColors.length];
   const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  /**
+   * The element timings, applied here as well as on the editor canvas.
+   *
+   * The published video was playing every element for the whole scene: the
+   * transitions existed only where they were authored. A reviewer watching
+   * the shared link saw a different cut from the one the owner had built,
+   * which makes their feedback about a video nobody shipped.
+   *
+   * sceneTime is optional because the same composition renders the rail
+   * thumbnails, where there is no playhead and the still should show
+   * everything.
+   */
+  const motionOf = (elementId: string): React.CSSProperties => {
+    const timing = scene.timings?.find((entry) => entry.elementId === elementId);
+    const motion = elementMotion(timing, sceneTime);
+    return {
+      opacity: motion.opacity,
+      transform: motion.transform || undefined,
+      ...motionTransition(motion.durationMs),
+    };
+  };
 
   React.useEffect(() => {
     if (!videoRef.current) return;
@@ -105,6 +129,7 @@ export function DynamicSceneComposition({
           {(scene.mediaType === "image" || scene.mediaType === "both") && (
             <div
               style={{
+                ...motionOf("image"),
                 flex: scene.mediaType === "both" ? 1 : 1.4,
                 borderRadius: 16,
                 background: "rgba(10, 25, 20, 0.78)",
@@ -171,6 +196,7 @@ export function DynamicSceneComposition({
           {(scene.mediaType === "video" || scene.mediaType === "both") && (
             <div
               style={{
+                ...motionOf("video-clip"),
                 flex: scene.mediaType === "both" ? 1 : 1.4,
                 borderRadius: 16,
                 background: "rgba(8, 20, 16, 0.85)",
@@ -299,6 +325,7 @@ export function DynamicSceneComposition({
         <div style={{ marginTop: "auto", marginBottom: "auto", maxWidth: 520 }}>
           <h2
             style={{
+              ...motionOf("headline"),
               fontSize: 27,
               fontWeight: 900,
               lineHeight: 1.15,
@@ -313,6 +340,7 @@ export function DynamicSceneComposition({
 
           <p
             style={{
+              ...motionOf("narration"),
               fontSize: 13.5,
               fontWeight: 500,
               lineHeight: 1.45,
@@ -359,11 +387,14 @@ export function MasterVideoSequenceComposition({
   activeScene,
   brandName = "DERMORA",
   isPlaying = false,
+  sceneTime,
 }: {
   sceneList?: Scene[];
   activeScene?: Scene;
   brandName?: string;
   isPlaying?: boolean;
+  /** Seconds INTO the active scene, not into the whole video. */
+  sceneTime?: number;
 }) {
   const currentScene = activeScene || sceneList[0] || defaultScenes[0];
 
@@ -374,6 +405,7 @@ export function MasterVideoSequenceComposition({
         brandName={brandName}
         totalScenes={sceneList.length}
         isPlaying={isPlaying}
+        sceneTime={sceneTime}
       />
     </div>
   );

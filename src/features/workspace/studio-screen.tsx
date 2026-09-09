@@ -2292,6 +2292,9 @@ export function StudioScreen() {
                         activeScene={activeMasterChapter}
                         brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
                         isPlaying={masterPlaying}
+                        /* Scene-relative, so each element's in/out is measured
+                           from its own scene rather than the whole video. */
+                        sceneTime={Math.max(0, masterCurrentTime - (activeMasterChapter?.start ?? 0))}
                       />
                     </div>
 
