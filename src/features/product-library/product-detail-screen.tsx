@@ -3,7 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Image as ImageIcon, FileText, ListChecks, CheckCircle2, Clock, Circle, Plus } from "lucide-react";
-import type { LibraryProduct, ProductDetail, DossierEntryStatus, ClaimStatus } from "@/features/product-library/product-library-types";
+import type { LibraryProduct, ProductDetail, ProductImage, DossierEntryStatus, ClaimStatus } from "@/features/product-library/product-library-types";
+import { ProductArtwork, type ArtworkKind } from "@/features/product-library/product-artwork";
+
+/** "Pack shot" borrows the product's own type; the other three image kinds
+ *  always render the same themed artwork regardless of product. */
+function artworkFor(imageKind: ProductImage["kind"], productType: LibraryProduct["type"]): ArtworkKind {
+  if (imageKind === "Pack shot") return productType;
+  if (imageKind === "Device") return "Device";
+  if (imageKind === "Reference") return "Molecule";
+  return "Lifestyle";
+}
 
 type Tab = "images" | "dossier" | "claims";
 
@@ -42,15 +52,27 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
 
       {/* Header banner */}
       <div className="overflow-hidden rounded-card border border-hair bg-card shadow-soft">
-        <div className="relative flex items-end gap-4 p-6" style={{ background: product.gradient, minHeight: 108 }}>
+        <div className="relative overflow-hidden" style={{ background: product.gradient, minHeight: 190 }}>
           <span
             aria-hidden
-            className="absolute left-3 top-3 rounded-chip px-2.5 py-1 text-caption font-extrabold uppercase tracking-[.04em] text-white/90"
+            className="pointer-events-none absolute rounded-full"
+            style={{ width: "55%", height: "140%", right: "-5%", top: "-30%", background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
+          />
+          <span
+            className="absolute left-4 top-4 z-10 rounded-chip px-2.5 py-1 text-caption font-extrabold uppercase tracking-[.04em] text-white/90"
             style={{ background: "rgba(0,0,0,.22)" }}
           >
             {product.type}
           </span>
-          <b className="text-hero-lg font-black tracking-tight text-white/95">{product.name.slice(0, 2).toUpperCase()}</b>
+          <span
+            className="absolute bottom-4 left-4 z-10 grid size-11 place-items-center rounded-control text-title font-extrabold text-white backdrop-blur-sm"
+            style={{ background: "rgba(0,0,0,.24)" }}
+          >
+            {product.name.slice(0, 2).toUpperCase()}
+          </span>
+          <div className="absolute -bottom-4 right-[2%] h-[92%] w-[42%] max-w-[280px]">
+            <ProductArtwork kind={product.type} className="h-full w-full" />
+          </div>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div>
@@ -103,9 +125,19 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
       {tab === "images" && (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
           {detail.images.map((img) => (
-            <div key={img.id} className="overflow-hidden rounded-panel border border-hair bg-card shadow-hair transition-shadow hover:shadow-soft">
-              <div className="flex items-center justify-center" style={{ background: img.gradient, height: 130 }}>
-                <ImageIcon size={26} className="text-white/80" strokeWidth={1.5} />
+            <div
+              key={img.id}
+              className="group overflow-hidden rounded-panel border border-hair bg-card shadow-hair transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft"
+            >
+              <div className="relative overflow-hidden" style={{ background: img.gradient, height: 150 }}>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute rounded-full"
+                  style={{ width: "70%", height: "70%", right: "-15%", top: "-15%", background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
+                />
+                <div className="absolute inset-0 p-3 transition-transform duration-300 group-hover:scale-[1.04]">
+                  <ProductArtwork kind={artworkFor(img.kind, product.type)} className="h-full w-full" />
+                </div>
               </div>
               <div className="p-3">
                 <span className="block text-body font-bold text-ink">{img.kind}</span>

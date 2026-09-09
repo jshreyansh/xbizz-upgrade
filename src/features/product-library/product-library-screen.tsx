@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Grid3x3, List, Plus, ShieldCheck, Eye, Star, Package } from "lucide-react";
 import { PRODUCTS } from "@/features/product-library/mock-products";
+import { ProductArtwork } from "@/features/product-library/product-artwork";
 
 const STATS = [
   { icon: Package, label: "products in the library", value: PRODUCTS.length, tint: "var(--tint)", color: "var(--brand-deep)" },
@@ -156,15 +157,17 @@ export function ProductLibraryScreen() {
               className="relative overflow-hidden"
               style={{
                 background: p.gradient,
-                height: view === "list" ? 64 : 120,
+                height: view === "list" ? 64 : 168,
                 width: view === "list" ? 90 : "100%",
                 flexShrink: 0,
-                display: "flex",
-                alignItems: "flex-end",
-                padding: view === "list" ? 0 : "10px 14px",
-                justifyContent: view === "list" ? "center" : "flex-start",
               }}
             >
+              {/* Ambient glow behind the artwork — gives the packshot a lit, studio feel */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute rounded-full"
+                style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.28),transparent 70%)" }}
+              />
               <span
                 className="pointer-events-none absolute inset-y-0 left-0 w-1/2 opacity-0 group-hover:opacity-100 group-hover:[animation:shimmer-sweep_1.1s_ease-out]"
                 style={{
@@ -176,6 +179,7 @@ export function ProductLibraryScreen() {
                   position: "absolute",
                   top: 10,
                   left: 12,
+                  zIndex: 2,
                   fontSize: 10,
                   fontWeight: 800,
                   textTransform: "uppercase",
@@ -188,10 +192,22 @@ export function ProductLibraryScreen() {
               >
                 {p.type}
               </span>
-              {view !== "list" && (
-                <b style={{ fontSize: 28, fontWeight: 800, color: "rgba(255,255,255,.92)", letterSpacing: "-1px" }}>
-                  {p.name.slice(0, 2).toUpperCase()}
-                </b>
+              {view === "list" ? (
+                <div className="absolute inset-0 flex items-center justify-center p-2">
+                  <ProductArtwork kind={p.type} className="h-full w-full drop-shadow-sm" />
+                </div>
+              ) : (
+                <>
+                  <div className="absolute -bottom-3 right-[-8%] h-[85%] w-3/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
+                    <ProductArtwork kind={p.type} className="h-full w-full" />
+                  </div>
+                  <span
+                    className="absolute bottom-3 left-3 grid size-9 place-items-center rounded-control text-body font-extrabold text-white backdrop-blur-sm"
+                    style={{ background: "rgba(0,0,0,.24)" }}
+                  >
+                    {p.name.slice(0, 2).toUpperCase()}
+                  </span>
+                </>
               )}
             </div>
 
