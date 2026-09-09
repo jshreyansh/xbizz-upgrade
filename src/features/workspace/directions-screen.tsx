@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  Pencil,
   ArrowLeft,
   ArrowRight,
   BookOpenCheck,
@@ -45,7 +46,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
-import { deriveContentPlan } from "@/features/workspace/content-plan";
+import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
 import { displayIntendedUses, parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -469,6 +470,51 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    * Project modal carries — so "Nothing to work from" still claimed an
    * approved dossier and offered to ground a script in it.
    */
+  /**
+   * Markets whose approved labels are all selected at once. Derived the same
+   * way content-plan derives the conflict, from the market each source carries
+   * as the first segment of its detail line.
+   */
+  const conflictingMarkets = derivedPlan.sourceConflict
+    ? [
+        ...new Set(
+          selectedSourceIds
+            .map((id) => planningSources.find((source) => source.id === id))
+            .filter((source) => source?.kind === "approved-source" || source?.kind === "claims")
+            .map((source) => source!.detail.split("\u00b7")[0].trim())
+            .filter(Boolean)
+        ),
+      ]
+    : [];
+
+  /**
+   * Resolving means removing the competing label, not ticking a box. The old
+   * sourceConflictResolved flag had no caller anywhere — it was unreachable
+   * while sourceConflict was hardcoded null, so making the conflict real left
+   * this case blocked with no way forward.
+   */
+  const resolveSourceConflict = (keepMarket: string) => {
+    for (const id of [...selectedSourceIds]) {
+      const source = planningSources.find((item) => item.id === id);
+      if (!source) continue;
+      const isAuthority = source.kind === "approved-source" || source.kind === "claims";
+      if (!isAuthority) continue;
+      if (source.detail.split("\u00b7")[0].trim() !== keepMarket) toggleSource(id);
+    }
+    setSourceConflictResolved(true);
+    addChatMessage({
+      role: "swishx",
+      text: `Using the **${keepMarket}** label as the governing source. The other market's dossier has been removed from this plan.`,
+    });
+  };
+
+  /**
+   * A brief too thin to plan from. Observable without checking anything, so it
+   * is said here rather than saved up for Confirm — the plan below it would be
+   * guesswork presented as decisions.
+   */
+  const requestTooVague = !isRequestSpecific(brief);
+
   const hasDossiers = selectedSourceIds.some((id) => {
     const kind = planningSources.find((source) => source.id === id)?.kind;
     return kind === "approved-source" || kind === "claims";
@@ -524,7 +570,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    * counted as unresolved so Start is refused, and named first below so the
    * bar says the real reason rather than "confirm creative treatment".
    */
-  const groundingBlocked = nothingToGroundIn || sourcesUnusable;
+  const groundingBlocked = nothingToGroundIn || sourcesUnusable || requestTooVague;
 
   const unresolvedCount =
     (groundingBlocked ? 1 : 0) +
@@ -659,7 +705,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       addChatMessage({ role: "user", text: "Confirm plan & build script" });
       addChatMessage({
         role: "swishx",
-        text: `I can't build a script yet — there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Add more → Edit the prompt** to give me the context in words.`,
+        text: requestTooVague
+          ? `Before I write anything: this request doesn't say what the asset has to do. Tell me the communication job — who it is for and what it has to land — with **Add more → Edit the prompt**.`
+          : `I can't build a script yet — there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Add more → Edit the prompt** to give me the context in words.`,
       });
       return;
     }
@@ -907,6 +955,31 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   </div>
                 </div>
 
+                {requestTooVague && (
+                  /* Above the accordions, because it is not a parameter — the
+                     parameters below it are inferred from a request that does
+                     not say enough to infer them from. */
+                  <div className="rounded-panel border border-danger-line bg-danger-bg p-4">
+                    <div className="flex items-start gap-2.5">
+                      <AlertCircle className="mt-0.5 size-4.5 shrink-0 text-danger" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-body-lg font-extrabold text-danger">
+                          This request is too vague to plan from
+                        </p>
+                        <p className="mt-0.5 text-body leading-snug text-ink-2">
+                          Everything below is a guess. Say what the asset has to do — who it speaks
+                          to and what it has to land — and the plan will be built from that instead.
+                        </p>
+                        <div className="mt-3">
+                          <Button size="sm" variant="primary" onClick={openPromptEditor} className="text-label font-bold cursor-pointer">
+                            <Pencil className="size-3.5" /> Edit the prompt
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* ─── Rich Accordion Sections with Dynamic Focus Enlargement & Dimming ─── */}
                 <div className="space-y-3 min-w-0 w-full">
                   {/* 1. Research & Sources (Unified Top Starting Tile) */}
@@ -945,6 +1018,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       hasDossiers={hasDossiers}
                       sourcesUnusable={sourcesUnusable}
                       onEditPrompt={openPromptEditor}
+                      conflictingMarkets={sourceConflictResolved ? [] : conflictingMarkets}
+                      onResolveConflict={resolveSourceConflict}
                     />
                   </PlanSection>
 
@@ -1675,6 +1750,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     : isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
                   description={isPlanReady
                     ? "Grounded against 214 approved claims"
+                    : requestTooVague
+                    ? "The request is too vague to plan from — say what the asset has to do"
                     : nothingToGroundIn
                     ? "No approved dossier and no attachments — add context to continue"
                     : sourcesUnusable

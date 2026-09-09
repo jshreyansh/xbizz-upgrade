@@ -35,6 +35,10 @@ export interface ResearchSourcesSectionProps {
   sourcesUnusable?: boolean;
   /** Open the prompt for editing — the other way to supply missing context. */
   onEditPrompt: () => void;
+  /** Markets whose approved labels are both selected, if that has happened. */
+  conflictingMarkets?: string[];
+  /** Keep one market's label and drop the others. */
+  onResolveConflict?: (market: string) => void;
 }
 
 export function ResearchSourcesContent({
@@ -49,6 +53,8 @@ export function ResearchSourcesContent({
   hasDossiers,
   sourcesUnusable = false,
   onEditPrompt,
+  conflictingMarkets = [],
+  onResolveConflict,
 }: ResearchSourcesSectionProps) {
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const docUploadRef = useRef<HTMLInputElement>(null);
@@ -220,6 +226,41 @@ export function ResearchSourcesContent({
         </div>
       )}
 
+      {conflictingMarkets.length > 1 && onResolveConflict && (
+        /* Two markets' approved labels are both selected. Which one governs is
+           a regulatory answer, not an editorial one, so the plan must not pick
+           — but it must offer the choice, or the plan is blocked with no way
+           forward. Choosing keeps that market's label and drops the others,
+           which removes the ambiguity rather than merely acknowledging it. */
+        <div className="rounded-panel border border-warn-line bg-warn-bg p-3.5">
+          <div className="flex items-start gap-2.5">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warn" />
+            <div className="min-w-0 flex-1">
+              <p className="text-body font-extrabold text-warn">
+                Two markets&apos; labels are selected
+              </p>
+              <p className="mt-0.5 text-label leading-snug text-ink-2">
+                {conflictingMarkets.join(" and ")} approved sources are both attached. One label has
+                to govern this asset — choose which, and the others are removed.
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {conflictingMarkets.map((market) => (
+                  <Button
+                    key={market}
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => onResolveConflict(market)}
+                    className="text-label font-bold cursor-pointer"
+                  >
+                    Use the {market} label
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 3 Grounding Options */}
       <div className="space-y-2">
         <span className="text-label font-bold uppercase tracking-wider text-ink-3">
@@ -289,7 +330,6 @@ export function ResearchSourcesContent({
       {/* Verified dossiers. Reference material, not a decision, so it sits
           BELOW the choice and starts collapsed — except while the grounding
           research runs, which plays out inside it. */}
-      {hasDossiers && (
       <div className="rounded-panel bg-[#f4f6f3] border border-hair">
         <button
           type="button"
@@ -305,6 +345,15 @@ export function ResearchSourcesContent({
             <ShieldCheck className="size-4 shrink-0 text-ok" />
             <span className="text-body font-extrabold text-ink truncate">
               Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
+            </span>
+            {/* The count is the point when it is zero: "we looked and there
+                are none" is information, where a missing tray reads as a
+                section that failed to load. */}
+            <span className={cn(
+              "shrink-0 rounded-chip border px-2 py-0.2 text-caption font-bold tabular-nums",
+              hasDossiers ? "border-hair-2 bg-card text-ink-3" : "border-danger-line bg-danger-bg text-danger"
+            )}>
+              {hasDossiers ? prebuiltDossiers.length : 0} sourced
             </span>
             {researching ? (
               <span className="shrink-0 text-caption font-bold text-brand bg-tint border border-brand/20 px-2 py-0.2 rounded-chip">
@@ -349,7 +398,17 @@ export function ResearchSourcesContent({
               </div>
             </div>
           )}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          {!hasDossiers && (
+            <div className="rounded-control border border-dashed border-hair-2 bg-card px-4 py-6 text-center">
+              <p className="text-body font-bold text-ink-2">No approved dossier for this request</p>
+              <p className="mt-0.5 text-label text-ink-4">
+                We searched the {brandName || "brand"} library and found nothing cleared for this
+                market and audience. Your own sources are the only grounding available.
+              </p>
+            </div>
+          )}
+
+          <div className={cn("grid grid-cols-1 sm:grid-cols-3 gap-2.5", !hasDossiers && "hidden")}>
             {prebuiltDossiers.map((dossier, idx) => (
               researching && idx >= (research?.step ?? 0) ? (
                 <div
@@ -406,8 +465,6 @@ export function ResearchSourcesContent({
           </div>
         )}
       </div>
-
-      )}
 
       {/* Uploaded Documents Context */}
       {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources" || nothingToGroundIn || sourcesUnusable) && (
