@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import {
+  Pencil,
+  TriangleAlert,
   ShieldCheck,
   Eye,
   Check,
@@ -27,6 +29,12 @@ export interface ResearchSourcesSectionProps {
   onContinue: () => void;
   /** Live grounding research, if the plan has just been generated. */
   research?: PlanResearch;
+  /** Whether SwishX has approved dossiers for this case at all. */
+  hasDossiers: boolean;
+  /** Set when the attached files were checked and held nothing usable. */
+  sourcesUnusable?: boolean;
+  /** Open the prompt for editing — the other way to supply missing context. */
+  onEditPrompt: () => void;
 }
 
 export function ResearchSourcesContent({
@@ -38,7 +46,11 @@ export function ResearchSourcesContent({
   onPreviewDossier,
   onContinue,
   research,
+  hasDossiers,
+  sourcesUnusable = false,
+  onEditPrompt,
 }: ResearchSourcesSectionProps) {
+  const [addMenuOpen, setAddMenuOpen] = useState(false);
   const docUploadRef = useRef<HTMLInputElement>(null);
   // null = follow the research; true/false = the reader's own choice.
   // Without the null state the tray snapped shut the instant research
@@ -59,6 +71,20 @@ export function ResearchSourcesContent({
       : brandName === "Cardioxa"
       ? "levomilnacipran ER"
       : "tirzelamide";
+
+  const hasUserDocs = uploadedDocs.length > 0;
+  /**
+   * A grounding mode you cannot honour is not an option. Offering "Only my
+   * sources" with nothing attached invites a choice that produces an ungrounded
+   * script, so each mode is enabled only where its material exists — and the
+   * option comes back the moment the user uploads something.
+   */
+  const modeAvailable = {
+    "both": hasDossiers && hasUserDocs,
+    "my-sources": hasUserDocs,
+    "swishx-only": hasDossiers,
+  } as const;
+  const nothingToGroundIn = !hasDossiers && !hasUserDocs;
 
   const prebuiltDossiers: DossierPreviewData[] = [
     {
@@ -151,6 +177,49 @@ export function ResearchSourcesContent({
 
   return (
     <div className="space-y-4">
+      {nothingToGroundIn && (
+        /* Stated plainly and at the top: there is no combination of these
+           controls that produces a grounded script, so the user needs to
+           supply something rather than keep choosing. */
+        <div className="rounded-panel border border-danger-line bg-danger-bg p-3.5">
+          <div className="flex items-start gap-2.5">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
+            <div className="min-w-0">
+              <p className="text-body font-extrabold text-danger">Nothing to ground this in</p>
+              <p className="mt-0.5 text-label leading-snug text-ink-2">
+                There is no approved {brandName || "brand"} dossier for this request and no files
+                attached. Add a file, or add the missing context to your prompt, before a script
+                can be written.
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                <Button size="sm" variant="primary" onClick={() => docUploadRef.current?.click()} className="text-label font-bold cursor-pointer">
+                  <Plus className="size-3.5" /> Attach files
+                </Button>
+                <Button size="sm" variant="secondary" onClick={onEditPrompt} className="text-label font-bold cursor-pointer">
+                  Edit the prompt
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sourcesUnusable && !nothingToGroundIn && (
+        /* The files are present but were checked and hold nothing usable. */
+        <div className="rounded-panel border border-danger-line bg-danger-bg p-3.5">
+          <div className="flex items-start gap-2.5">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
+            <div className="min-w-0">
+              <p className="text-body font-extrabold text-danger">These sources cannot ground a script</p>
+              <p className="mt-0.5 text-label leading-snug text-ink-2">
+                We read every attached file and found no clinical content to build claims from.
+                Replace them, or add the context to your prompt.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 3 Grounding Options */}
       <div className="space-y-2">
         <span className="text-label font-bold uppercase tracking-wider text-ink-3">
@@ -162,29 +231,37 @@ export function ResearchSourcesContent({
               id: "both" as const,
               title: "Both SwishX dossiers and My attachments",
               desc: "Combines verified regulatory label data with your uploaded attachments.",
+              missing: "Needs both an approved dossier and at least one attachment",
             },
             {
               id: "my-sources" as const,
               title: "Only My sources & attachments",
               desc: "Strictly uses your files; ignores the prebuilt regulatory dossier.",
+              missing: "Attach a file to use this",
             },
             {
               id: "swishx-only" as const,
               title: "Only SwishX approved dossiers",
               desc: "Strictly uses verified prescribing label and regulatory dossier packages.",
+              missing: "No approved dossier exists for this request",
             },
           ].map((opt) => {
             const isSelected = sourceGroundingMode === opt.id;
+            const available = modeAvailable[opt.id];
             return (
               <button
                 key={opt.id}
                 type="button"
+                disabled={!available}
+                title={available ? undefined : opt.missing}
                 onClick={() => onSetSourceGroundingMode(opt.id)}
                 className={cn(
-                  "p-3.5 rounded-panel border text-left transition cursor-pointer flex flex-col justify-between min-h-[90px]",
-                  isSelected
-                    ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
-                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                  "p-3.5 rounded-panel border text-left transition flex flex-col justify-between min-h-[90px]",
+                  !available
+                    ? "border-hair bg-canvas opacity-45 cursor-not-allowed"
+                    : isSelected
+                    ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15 cursor-pointer"
+                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas cursor-pointer"
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -200,7 +277,9 @@ export function ResearchSourcesContent({
                     {isSelected && <Check className="size-3 stroke-[3]" />}
                   </div>
                 </div>
-                <div className="text-label text-ink-3 mt-1.5 leading-snug">{opt.desc}</div>
+                <div className="text-label text-ink-3 mt-1.5 leading-snug">
+                  {available ? opt.desc : opt.missing}
+                </div>
               </button>
             );
           })}
@@ -210,6 +289,7 @@ export function ResearchSourcesContent({
       {/* Verified dossiers. Reference material, not a decision, so it sits
           BELOW the choice and starts collapsed — except while the grounding
           research runs, which plays out inside it. */}
+      {hasDossiers && (
       <div className="rounded-panel bg-[#f4f6f3] border border-hair">
         <button
           type="button"
@@ -327,21 +407,65 @@ export function ResearchSourcesContent({
         )}
       </div>
 
-      {/* Uploaded Documents Context (Shown when Option 1 or 2 is selected) */}
-      {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources") && (
+      )}
+
+      {/* Uploaded Documents Context */}
+      {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources" || nothingToGroundIn || sourcesUnusable) && (
         <div className="space-y-2 pt-2 border-t border-hair animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
             <span className="text-label font-bold uppercase tracking-wider text-ink-3">
               My Uploaded Documents &amp; Briefs ({uploadedDocs.length})
             </span>
-            <button
-              type="button"
-              onClick={() => docUploadRef.current?.click()}
-              className="inline-flex items-center gap-1.5 text-label font-bold text-brand hover:underline cursor-pointer"
-            >
-              <Plus className="size-3.5" />
-              <span>Add more files</span>
-            </button>
+            {/* "Add more" rather than "Add more files": attaching a file is
+                only one of the two ways to supply what is missing, and the
+                other one is editing the prompt this plan was built from. */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setAddMenuOpen((v) => !v)}
+                aria-expanded={addMenuOpen}
+                aria-haspopup="menu"
+                className="inline-flex items-center gap-1.5 text-label font-bold text-brand hover:underline cursor-pointer"
+              >
+                <Plus className="size-3.5" />
+                <span>Add more</span>
+                <ChevronDown className={cn("size-3 transition-transform", addMenuOpen && "rotate-180")} />
+              </button>
+
+              {addMenuOpen && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Close menu"
+                    onClick={() => setAddMenuOpen(false)}
+                    className="fixed inset-0 z-40 cursor-default"
+                  />
+                  <div role="menu" className="absolute right-0 top-full z-50 mt-1.5 w-60 rounded-panel border border-hair-2 bg-card p-1.5 shadow-float">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => { setAddMenuOpen(false); docUploadRef.current?.click(); }}
+                      className="flex w-full items-center gap-2 rounded-control px-2.5 py-2 text-left text-body font-medium text-ink transition hover:bg-tint hover:text-brand-deep cursor-pointer"
+                    >
+                      <FileText className="size-3.5 shrink-0 text-brand" />
+                      <span>Upload files</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => { setAddMenuOpen(false); onEditPrompt(); }}
+                      className="flex w-full items-start gap-2 rounded-control px-2.5 py-2 text-left transition hover:bg-tint cursor-pointer group"
+                    >
+                      <Pencil className="mt-0.5 size-3.5 shrink-0 text-brand" />
+                      <span className="min-w-0">
+                        <span className="block text-body font-medium text-ink group-hover:text-brand-deep">Edit the prompt</span>
+                        <span className="block text-caption leading-snug text-ink-3">Add the context in words instead of a file</span>
+                      </span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           <input
@@ -365,11 +489,21 @@ export function ResearchSourcesContent({
             {uploadedDocs.map((doc, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between gap-2 p-2.5 rounded-control bg-card border border-hair-2 text-body"
+                className={cn(
+                  "flex items-center justify-between gap-2 p-2.5 rounded-control text-body border",
+                  // The file that failed verification is marked where the file
+                  // is, not only in a banner above it.
+                  sourcesUnusable ? "border-danger-line bg-danger-bg" : "bg-card border-hair-2"
+                )}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="size-4 text-brand shrink-0" />
-                  <span className="font-semibold text-ink truncate">{doc.name}</span>
+                  <FileText className={cn("size-4 shrink-0", sourcesUnusable ? "text-danger" : "text-brand")} />
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-ink">{doc.name}</span>
+                    {sourcesUnusable && (
+                      <span className="block text-caption font-bold text-danger">No usable clinical content</span>
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-caption text-ink-3">{doc.size}</span>

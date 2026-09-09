@@ -218,6 +218,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   // Above the early return on purpose: below it these are conditional hooks.
   const research = usePlanResearch();
   const [useCaseDrawerOpen, setUseCaseDrawerOpen] = useState(false);
+  /** Set by a case whose attachments were checked and hold nothing usable. */
+  const [sourcesUnusable, setSourcesUnusable] = useState(false);
+  const [promptEditorOpen, setPromptEditorOpen] = useState(false);
+  const [promptDraft, setPromptDraft] = useState("");
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -246,6 +250,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setBrief,
     setMarket,
     setCreationMode,
+    setSourceType,
     setSelectedSourceIds,
     demoScenarioId,
     setDemoScenarioId,
@@ -371,6 +376,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setMarket(scenario.inputs.market);
     setIntendedUse(scenario.inputs.intendedUse);
     setSelectedSourceIds(scenario.inputs.selectedSourceIds);
+    // sourceType is what makes derivedPlan.hasApprovedEvidence true on its
+    // own, so a case with no sources must not keep claiming "dossier".
+    setSourceType(scenario.inputs.selectedSourceIds.length > 0 ? "dossier" : "text");
     setDemoScenarioId(scenario.id);
     setUseCaseDrawerOpen(false);
 
@@ -429,17 +437,84 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     );
     // With nothing of ours to lean on, the user's own files are all there is.
     setSourceGroundingMode(docs && docs.length > 0 ? "my-sources" : "both");
+    // Whether those files hold anything is part of the case too.
+    setSourcesUnusable(scenario.inputs.sourcesVerify === false);
 
     setOpenSection("sources");
     setConfirmedTreatment(false);
     setChatMessages([]);
   };
 
+  /**
+   * Whether SwishX has anything approved for this request. The dossier tray,
+   * the grounding modes and the block all hang off this, so it is derived from
+   * the sources the case actually selected rather than assumed.
+   */
+  /**
+   * Read from the sources this case actually selected, NOT from
+   * derivedPlan.hasApprovedEvidence: content-plan short-circuits that on
+   * sourceType === "dossier", which every project started from the New
+   * Project modal carries — so "Nothing to work from" still claimed an
+   * approved dossier and offered to ground a script in it.
+   */
+  const hasDossiers = selectedSourceIds.some((id) => {
+    const kind = planningSources.find((source) => source.id === id)?.kind;
+    return kind === "approved-source" || kind === "claims";
+  });
+  const hasUserDocs = uploadedDocs.length > 0;
+  const nothingToGroundIn = !hasDossiers && !hasUserDocs;
+
+  /**
+   * The mode that is actually in force. Stored preference is kept so it
+   * returns when both sides are available again — the user asked for "both"
+   * once, and uploading a file should give them "both" back rather than
+   * leaving them on whatever we fell back to.
+   */
+  const effectiveGroundingMode =
+    hasDossiers && hasUserDocs
+      ? sourceGroundingMode
+      : hasUserDocs
+      ? "my-sources"
+      : hasDossiers
+      ? "swishx-only"
+      : sourceGroundingMode;
+
+  const openPromptEditor = () => {
+    setPromptDraft(brief);
+    setPromptEditorOpen(true);
+  };
+
+  const savePromptEdit = () => {
+    const next = promptDraft.trim();
+    setPromptEditorOpen(false);
+    if (!next || next === brief) return;
+    setBrief(next);
+    // Context supplied in words counts as context: the plan re-derives, and
+    // with it the section set — which is the point of editing here rather
+    // than walking back to the brief screen.
+    setSourcesUnusable(false);
+    setOpenSection("sources");
+    addChatMessage({ role: "user", text: next });
+    addChatMessage({
+      role: "swishx",
+      text: "Thanks — re-reading the plan against that. The parameters on the left have been updated.",
+    });
+  };
+
   const approvedEvidenceCount = selectedSourceIds.filter((id) => id !== "dermora-reference").length;
   const needsPresenter = presentationMode === "presenter" || treatmentId === "presenter" || creationMode === "magic-avatar";
   const needsProductAssets = isProductFocus && productMediaList.length === 0;
 
+  /**
+   * Two states that no amount of confirming resolves: nothing to ground in at
+   * all, and attachments that were read and hold nothing usable. They are
+   * counted as unresolved so Start is refused, and named first below so the
+   * bar says the real reason rather than "confirm creative treatment".
+   */
+  const groundingBlocked = nothingToGroundIn || sourcesUnusable;
+
   const unresolvedCount =
+    (groundingBlocked ? 1 : 0) +
     (confirmedTreatment ? 0 : 1) +
     (needsPresenter && !presenter ? 1 : 0) +
     (needsProductAssets ? 1 : 0) +
@@ -560,6 +635,24 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   };
 
   const handleConfirmPlan = () => {
+    /**
+     * Verification happens BEFORE anything starts generating, and failure
+     * keeps the user on this screen. The old handler set isGenerating and
+     * navigated to the studio on a timer with no gate at all, so a plan with
+     * nothing behind it produced a script anyway.
+     */
+    if (groundingBlocked) {
+      setOpenSection("sources");
+      addChatMessage({ role: "user", text: "Confirm plan & build script" });
+      addChatMessage({
+        role: "swishx",
+        text: nothingToGroundIn
+          ? `I can't build a script yet — there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Add more → Edit the prompt** to give me the context in words.`
+          : `I read every attached file and found nothing a claim can be grounded in — they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Add more → Edit the prompt** to supply the context directly.`,
+      });
+      return;
+    }
+
     setIsGenerating(true);
     setGenerationStep(1);
 
@@ -798,13 +891,20 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   >
                     <ResearchSourcesContent
                       brandName={brandName || "Velmora"}
-                      sourceGroundingMode={sourceGroundingMode}
+                      sourceGroundingMode={effectiveGroundingMode}
                       onSetSourceGroundingMode={setSourceGroundingMode}
                       uploadedDocs={uploadedDocs}
-                      onSetUploadedDocs={setUploadedDocs}
+                      onSetUploadedDocs={(next) => {
+                        setUploadedDocs(next);
+                        // Files the user just chose have not been rejected.
+                        setSourcesUnusable(false);
+                      }}
                       onPreviewDossier={(d) => setPreviewDossier(d)}
                       onContinue={() => advanceFrom("sources")}
                       research={research}
+                      hasDossiers={hasDossiers}
+                      sourcesUnusable={sourcesUnusable}
+                      onEditPrompt={openPromptEditor}
                     />
                   </PlanSection>
 
@@ -1533,6 +1633,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   title={isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
                   description={isPlanReady
                     ? "Grounded against 214 approved claims"
+                    : nothingToGroundIn
+                    ? "No approved dossier and no attachments — add context to continue"
+                    : sourcesUnusable
+                    ? "Attached sources hold nothing usable — replace them or edit the prompt"
                     : needsProductAssets
                     ? "Please attach product visual assets"
                     : needsPresenter && !presenter
@@ -1725,6 +1829,63 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       overlay={
         <>
           {/* ── Modals & Drawers ── */}
+          {promptEditorOpen && (
+            /* The prompt from the previous screen, editable here. Supplying
+               the missing context in words is the alternative to attaching a
+               file, and walking back to the brief screen to do it would throw
+               away everything already decided on this one. */
+            <div className="fixed inset-0 z-[9999] grid place-items-center bg-ink/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Edit prompt">
+              <div className="rise-in w-full max-w-[620px] overflow-hidden rounded-card border border-hair-2 bg-card shadow-float">
+                <div className="flex items-start justify-between gap-3 border-b border-hair-2 bg-canvas px-6 py-4">
+                  <div>
+                    <div className="text-caption font-extrabold uppercase tracking-[0.14em] text-brand">Your request</div>
+                    <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">Edit the prompt</h2>
+                    <p className="mt-0.5 text-body text-ink-3">
+                      Add what is missing. The plan re-reads against it.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPromptEditorOpen(false)}
+                    aria-label="Close"
+                    className="grid size-8 place-items-center rounded-full text-ink-3 transition-colors hover:bg-black/5 hover:text-ink cursor-pointer"
+                  >
+                    <X className="size-4.5" />
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  <textarea
+                    value={promptDraft}
+                    onChange={(e) => setPromptDraft(e.target.value)}
+                    rows={7}
+                    autoFocus
+                    placeholder="Describe the asset, the audience, and the evidence it should rest on..."
+                    className="w-full resize-none rounded-control border border-hair-2 bg-canvas p-3.5 text-body-lg leading-relaxed text-ink transition-all focus:border-brand focus:bg-card focus:outline-none focus:ring-2 focus:ring-brand/15"
+                  />
+                  <p className="mt-2 text-label text-ink-3">
+                    {promptDraft.trim().split(/\s+/).filter(Boolean).length} words
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 border-t border-hair bg-canvas px-6 py-4">
+                  <Button variant="secondary" size="sm" onClick={() => setPromptEditorOpen(false)} className="px-4 font-bold text-body cursor-pointer">
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={savePromptEdit}
+                    disabled={!promptDraft.trim()}
+                    className="gap-2 px-5 font-bold text-body cursor-pointer disabled:opacity-40"
+                  >
+                    <span>Save &amp; re-read plan</span>
+                    <ArrowRight className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
           {useCaseDrawerOpen && (
             <ScenarioDrawer
               currentScenarioId={demoScenarioId}

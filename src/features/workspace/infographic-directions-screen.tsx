@@ -592,6 +592,10 @@ export function InfographicDirectionsScreen() {
                       onPreviewDossier={(d) => setPreviewDossier(d)}
                       onContinue={() => advanceFrom("sources")}
                       research={research}
+                      /* The image flow keeps its dossiers for now; the blocked
+                         cases are wired on the video plan screen only. */
+                      hasDossiers
+                      onEditPrompt={() => setOpenSection("sources")}
                     />
                   </CreativePlanSection>
 
