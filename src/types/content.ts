@@ -77,6 +77,35 @@ export interface ElementTiming {
   transitionOut?: string;
 }
 
+/**
+ * A part of a scene.
+ *
+ * Scenes are the chapters; shots are the beats inside one. A 14-second scene
+ * is not one static frame held for 14 seconds — elements and backgrounds come
+ * and go at shot boundaries, and the cut between them is where the transition
+ * happens.
+ *
+ * A shot deliberately does NOT list its elements. Which elements are in a shot
+ * is derived by overlapping the shot's span with each element's own in/out, so
+ * the two can never disagree — a hand-maintained element list would drift from
+ * the timings the canvas actually animates, and then the strip would describe
+ * a scene nobody is watching.
+ */
+export interface Shot {
+  id: string;
+  index: number;
+  startAt: number;
+  endAt: number;
+  /** What the shot is doing, e.g. "Establish the burden". */
+  label: string;
+  /** How the cut INTO this shot is made. */
+  transitionIn: string;
+  /** The words spoken during this shot — its slice of the scene's narration. */
+  narrationFragment: string;
+  /** What happens visually across the shot, in prose. */
+  visualStory: string;
+}
+
 export interface Scene {
   id: string;
   number: number;
@@ -96,4 +125,6 @@ export interface Scene {
   citations?: SceneCitation[];
   /** Per-element in/out and transitions. Drives the generation placeholders. */
   timings?: ElementTiming[];
+  /** The beats within the scene. Element membership is derived, not stored. */
+  shots?: Shot[];
 }

@@ -67,6 +67,7 @@ import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claim
 import { CommentsModal, ElementActionBar, ELEMENT_LABELS, type SceneComment } from "@/features/workspace/scene-comments";
 import { MediaPlaceholder } from "@/features/workspace/media-placeholder";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
+import { ShotCards } from "@/features/workspace/shot-cards";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -2127,21 +2128,57 @@ export function StudioScreen() {
                           0:{Math.floor(sceneCurrentTime).toString().padStart(2, "0")} / 0:{selectedScene.duration}s
                         </span>
 
-                        {/* Single Scene Scrubber Bar */}
-                        <div
-                          onClick={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const pct = (e.clientX - rect.left) / rect.width;
-                            setSceneCurrentTime(+(pct * (selectedScene.duration || 10)).toFixed(1));
-                          }}
-                          className="relative flex-1 h-3 bg-white/20 rounded-full cursor-pointer overflow-hidden flex items-center"
-                        >
-                          <div
-                            style={{
-                              width: `${(sceneCurrentTime / (selectedScene.duration || 10)) * 100}%`,
-                            }}
-                            className="h-full bg-brand rounded-full transition-all duration-75"
-                          />
+                        {/**
+                         * The scrubber, grouped by shot rather than one
+                         * continuous track. Shots are not a step of their own —
+                         * they are the structure OF this scene, so they belong
+                         * in the scene's own timeline, where the gaps say where
+                         * one beat ends and the next begins.
+                         */}
+                        <div className="flex flex-1 items-center gap-1">
+                          {(selectedScene.shots ?? []).length === 0 ? (
+                            <div
+                              onClick={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const pct = (e.clientX - rect.left) / rect.width;
+                                setSceneCurrentTime(+(pct * (selectedScene.duration || 10)).toFixed(1));
+                              }}
+                              className="relative flex h-3 flex-1 cursor-pointer items-center overflow-hidden rounded-full bg-white/20"
+                            >
+                              <div
+                                style={{ width: `${(sceneCurrentTime / (selectedScene.duration || 10)) * 100}%` }}
+                                className="h-full rounded-full bg-brand transition-all duration-75"
+                              />
+                            </div>
+                          ) : (
+                            (selectedScene.shots ?? []).map((shot) => {
+                              const span = Math.max(0.1, shot.endAt - shot.startAt);
+                              // How far the playhead has moved through THIS shot.
+                              const filled = Math.min(1, Math.max(0, (sceneCurrentTime - shot.startAt) / span));
+                              const active = sceneCurrentTime >= shot.startAt && sceneCurrentTime < shot.endAt;
+                              return (
+                                <div
+                                  key={shot.id}
+                                  onClick={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const pct = (e.clientX - rect.left) / rect.width;
+                                    setSceneCurrentTime(+(shot.startAt + pct * span).toFixed(1));
+                                  }}
+                                  title={`Shot ${shot.index} · ${shot.label} · ${shot.startAt.toFixed(1)}s–${shot.endAt.toFixed(1)}s`}
+                                  style={{ flexGrow: span, flexBasis: 0 }}
+                                  className={cn(
+                                    "relative flex h-3 cursor-pointer items-center overflow-hidden rounded-full transition-colors",
+                                    active ? "bg-white/30 ring-1 ring-white/40" : "bg-white/20 hover:bg-white/25"
+                                  )}
+                                >
+                                  <div
+                                    style={{ width: `${filled * 100}%` }}
+                                    className="h-full rounded-full bg-brand transition-all duration-75"
+                                  />
+                                </div>
+                              );
+                            })
+                          )}
                         </div>
 
                         <span className="text-caption text-white/60 font-bold hidden sm:inline shrink-0">
@@ -2151,6 +2188,7 @@ export function StudioScreen() {
                     </div>
                   </div>
                 </div>
+
 
                 {/* ── Multi-Layer Production Timeline Bar (Collapsible) ── */}
                 <div className="border-t border-hair bg-canvas text-ink shrink-0">
@@ -3000,6 +3038,48 @@ export function StudioScreen() {
                       className="w-full rounded-control border border-hair-2 bg-[#fbfcfb] focus:bg-card p-2.5 text-body font-medium resize-none focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 shadow-2xs transition-all"
                     />
                   </div>
+
+                  {/* Shots, between the scene's own copy above and the
+                      scene-wide prompts below — a shot is smaller than the
+                      scene and larger than one field. */}
+                  <ShotCards
+                    scene={selectedScene}
+                    currentTime={sceneCurrentTime}
+                    onScrub={(seconds) => {
+                      setSceneCurrentTime(seconds);
+                      setScenePlaying(false);
+                    }}
+                    onAddToChat={(shot) => {
+                      setActiveTab("assistant");
+                      setAttachedContexts((prev) => [
+                        ...prev.filter((c) => c.type !== "element"),
+                        {
+                          id: `shot-${shot.id}`,
+                          type: "element" as const,
+                          label: `Scene ${selectedScene.number} · Shot ${shot.index}`,
+                          detail: `${shot.startAt.toFixed(1)}s–${shot.endAt.toFixed(1)}s · ${shot.label}`,
+                        },
+                      ]);
+                      setDirectorInput(`In shot ${shot.index} of scene ${selectedScene.number}, `);
+                    }}
+                    onReplaceMedia={(shot, elementId, kind) => {
+                      setActiveTab("assistant");
+                      setAttachedContexts((prev) => [
+                        ...prev.filter((c) => c.type !== "element"),
+                        {
+                          id: `shot-media-${shot.id}-${elementId}`,
+                          type: "element" as const,
+                          label: `Scene ${selectedScene.number} · Shot ${shot.index} · ${kind === "video" ? "Video Clip" : "Image Asset"}`,
+                          detail: selectedScene.mediaLabel || "Scene media",
+                        },
+                      ]);
+                      setDirectorInput(
+                        kind === "video"
+                          ? `Swap the video clip in shot ${shot.index} for `
+                          : `Replace the image in shot ${shot.index} with `
+                      );
+                    }}
+                  />
 
                   {/* 3. Visual Prompt */}
                   <div>

@@ -45,6 +45,11 @@ export const creativeDirections: CreativeDirection[] = [
 export const scenes: Scene[] = [
   {
     id: "scene-1",
+    shots: [
+      { id: "s1-a", index: 1, startAt: 0,   endAt: 3.2, label: "Establish the patient",   transitionIn: "Open on black", narrationFragment: 'For adults living with moderate-to-severe plaque psoriasis,', visualStory: 'Opens on a restrained clinical portrait; the headline fades up over a still frame before any motion begins.' },
+      { id: "s1-b", index: 2, startAt: 3.2, endAt: 7.2, label: "Widen to the burden",     transitionIn: "Slow push in 4%", narrationFragment: 'visible symptoms can be only part of the burden.', visualStory: 'The camera pushes in slowly as the portrait gives way to an abstract skin-barrier landscape behind the copy.' },
+      { id: "s1-c", index: 3, startAt: 7.2, endAt: 8.0, label: "Hold before the turn",    transitionIn: "Fade out 240ms", narrationFragment: '', visualStory: 'Copy clears and the frame holds empty for a beat, setting up the cut to mechanism.' },
+    ],
     timings: [
       { elementId: "headline",  inAt: 0.4, outAt: 7.2, transitionIn: "Fade up 320ms", transitionOut: "Fade out 240ms" },
       { elementId: "narration", inAt: 0.8, outAt: 8.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
@@ -63,6 +68,12 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-2",
+    shots: [
+      { id: "s2-a", index: 1, startAt: 0,   endAt: 2.0, label: "Name the target",        transitionIn: "Cut", narrationFragment: 'DERMORA binds selectively at the intended receptor,', visualStory: 'Title lands on a clean plate with no media behind it.' },
+      { id: "s2-b", index: 2, startAt: 2.0, endAt: 4.5, label: "Bring in the pathway",   transitionIn: "Scale up 4% ease-out", narrationFragment: 'blocking the downstream signal', visualStory: 'The pathway clip scales up into frame behind the copy as the receptor is named.' },
+      { id: "s2-c", index: 3, startAt: 4.5, endAt: 9.4, label: "Hold on the mechanism",  transitionIn: "Fade out 200ms", narrationFragment: 'that drives plaque formation.', visualStory: 'Title drops away and the clip carries the frame alone while the mechanism resolves.' },
+      { id: "s2-d", index: 4, startAt: 9.4, endAt: 10.0, label: "Clear to outro",        transitionIn: "Cross dissolve 360ms", narrationFragment: '', visualStory: 'Clip dissolves out, clearing to the evidence scene.' },
+    ],
     timings: [
       { elementId: "headline",   inAt: 0.3, outAt: 4.5, transitionIn: "Fade up 280ms", transitionOut: "Fade out 200ms" },
       { elementId: "narration",  inAt: 0.6, outAt: 10.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
@@ -84,6 +95,13 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-3",
+    shots: [
+      { id: "s3-a", index: 1, startAt: 0,    endAt: 1.2,  label: "Title on clean plate",   transitionIn: "Cut", narrationFragment: 'In the pivotal CLEARSKIN study,', visualStory: 'Title on a clean plate; no media yet, so the claim reads before anything moves.' },
+      { id: "s3-b", index: 2, startAt: 1.2,  endAt: 5.0,  label: "Bring in the still",     transitionIn: "Cross dissolve 400ms", narrationFragment: 'a greater proportion of patients', visualStory: 'The anatomical still cross-dissolves in beside the copy as the population is described.' },
+      { id: "s3-c", index: 3, startAt: 5.0,  endAt: 6.4,  label: "Drop the title",         transitionIn: "Fade out 200ms", narrationFragment: 'achieved the primary endpoint', visualStory: 'Title fades out, leaving the still to hold the frame through the endpoint line.' },
+      { id: "s3-d", index: 4, startAt: 6.4,  endAt: 8.6,  label: "Wipe in the chart",      transitionIn: "Wipe from right 420ms", narrationFragment: 'at Week 16.', visualStory: 'The comparative chart wipes in from the right while the still is still on screen — both media overlap here.' },
+      { id: "s3-e", index: 5, startAt: 8.6,  endAt: 14.0, label: "Chart carries the read", transitionIn: "Fade out 300ms", narrationFragment: '', visualStory: 'Still fades out and the chart carries the read-out alone to the end of the scene.' },
+    ],
     timings: [
       { elementId: "headline",   inAt: 0.3, outAt: 5.0, transitionIn: "Fade up 280ms", transitionOut: "Fade out 200ms" },
       { elementId: "narration",  inAt: 0.7, outAt: 14.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
@@ -107,6 +125,12 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-4",
+    shots: [
+      { id: "s4-a", index: 1, startAt: 0,   endAt: 1.5,  label: "State the regimen",     transitionIn: "Cut", narrationFragment: 'One tablet daily,', visualStory: 'Regimen stated over a clean frame.' },
+      { id: "s4-b", index: 2, startAt: 1.5, endAt: 4.2,  label: "Show the pack",         transitionIn: "Cross dissolve 400ms", narrationFragment: 'with no titration required,', visualStory: 'Packshot cross-dissolves in as the titration point is made.' },
+      { id: "s4-c", index: 3, startAt: 4.2, endAt: 9.0,  label: "Hold on practice",      transitionIn: "Fade out 200ms", narrationFragment: 'supports a straightforward conversation about starting treatment.', visualStory: 'Title clears; the packshot holds while the practice line plays.' },
+      { id: "s4-d", index: 4, startAt: 9.0, endAt: 10.0, label: "Clear the frame",       transitionIn: "Fade out 300ms", narrationFragment: '', visualStory: 'Packshot fades out, clearing the frame for the outro.' },
+    ],
     timings: [
       { elementId: "headline",  inAt: 0.3, outAt: 4.2, transitionIn: "Fade up 280ms", transitionOut: "Fade out 200ms" },
       { elementId: "narration", inAt: 0.6, outAt: 10.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
@@ -128,6 +152,10 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-5",
+    shots: [
+      { id: "s5-a", index: 1, startAt: 0,   endAt: 6.4, label: "The next step",     transitionIn: "Cut", narrationFragment: 'Review the full Prescribing Information,', visualStory: 'Closing copy on a quiet frame with no media behind it.' },
+      { id: "s5-b", index: 2, startAt: 6.4, endAt: 8.0, label: "Fade to fair balance", transitionIn: "Fade out 400ms", narrationFragment: 'then consider whether DERMORA is appropriate for your patients.', visualStory: 'Everything fades toward black behind the fair-balance line.' },
+    ],
     timings: [
       { elementId: "headline",  inAt: 0.4, outAt: 6.4, transitionIn: "Fade up 320ms", transitionOut: "Fade out 400ms" },
       { elementId: "narration", inAt: 0.8, outAt: 8.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
