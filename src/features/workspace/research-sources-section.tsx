@@ -119,11 +119,11 @@ export function ResearchSourcesContent({
     {
       name: `${brandName} India HCP Clinical Dossier`,
       molecule,
-      market: "India · CDSCO",
+      market: "India · Regulatory",
       sections: 16,
       claims: 186,
       documents: [
-        { name: "CDSCO Approved Package Insert & Product Monograph", citations: 96 },
+        { name: "Approved Package Insert & Product Monograph", citations: 96 },
         { name: "India Multi-Center Clinical Evaluation Sub-study", citations: 58 },
         { name: "National Formulary Clinical Summary", citations: 32 },
       ],
@@ -131,7 +131,7 @@ export function ResearchSourcesContent({
         {
           category: "Clinical Evaluation",
           claim: "Clinically validated in adult populations across 14 tertiary care multi-speciality centers.",
-          citation: "CDSCO Approved Monograph §7.2 Clinical Safety",
+          citation: "Approved Monograph §7.2 Clinical Safety",
         },
         {
           category: "Long-term Tolerability",
@@ -141,7 +141,7 @@ export function ResearchSourcesContent({
         {
           category: "Administration & Packaging",
           claim: "Standardized once-daily regimen with blister strip packaging for tropical stability.",
-          citation: "CDSCO Package Insert §4 Dosage Guidelines",
+          citation: "Package Insert §4 Dosage Guidelines",
         },
       ],
     },
