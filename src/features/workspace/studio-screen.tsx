@@ -348,6 +348,23 @@ export function StudioScreen() {
   const [editingSceneIds, setEditingSceneIds] = useState<string[]>([]);
   /** Cards being rewritten right now. Drives the shimmer. */
   const [pendingSceneIds, setPendingSceneIds] = useState<string[]>([]);
+  /**
+   * The credit story, which is a budget against an actual — not one number.
+   *
+   * The modal used to say "2,500 Credits deducted", which is the BUDGET agreed
+   * at the start. By the time you reach it you have already spent credits
+   * generating partials and re-running scenes, and the final render costs more
+   * on top. Three different numbers were being shown as one, so the only
+   * figure a user could act on — how much more this will cost — was missing.
+   */
+  const [creditsUsed, setCreditsUsed] = useState(0);
+  const creditBudget = selectedQuality === "cinematic" ? 7500 : 2500;
+  /** What the final render costs on top of what has already been spent. */
+  const finalRenderCost = selectedQuality === "cinematic" ? 3000 : 1000;
+  const creditsOverBudget = Math.max(0, creditsUsed - creditBudget);
+  const creditsTotal = creditsUsed + finalRenderCost;
+  const teamBalance = 50000;
+
   /** The claim a citation's Details action jumped to. Clears itself after 2s. */
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
 
@@ -715,6 +732,9 @@ export function StudioScreen() {
      * tens of seconds of work, and pretending otherwise would design the UI
      * around a wait that does not exist.
      */
+    // Generating the partials is what the agreed budget buys.
+    setCreditsUsed(creditBudget);
+
     const STRUCTURE_BY = 10_000;
     const MEDIA_FIRST = 20_000;
     const MEDIA_LAST = 50_000;
@@ -1031,6 +1051,9 @@ export function StudioScreen() {
             })
           );
           setPendingSceneIds([]);
+          // Re-running a scene costs credits, which is how a project goes over
+          // the budget it was quoted: 400 per scene touched.
+          setCreditsUsed((prev) => prev + changedIds.length * 400);
           addChatMessage({
             role: "swishx",
             text: `Updated ${changedIds.length} scene${changedIds.length > 1 ? "s" : ""}. Every line resolves to an approved source — open the source pill under a line to see which.`,
@@ -3139,37 +3162,67 @@ export function StudioScreen() {
               <div className="p-6 space-y-5">
                 {/* Cost & Spec Card */}
                 <div className="rounded-panel bg-[#121614] border border-white/10 p-5 text-white shadow-md">
-                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-white/10">
                     <div>
+                      {/* What has ALREADY gone, which is the number the old
+                          card was missing entirely. */}
                       <div className="text-label font-extrabold uppercase tracking-wider text-white/60">
-                        Credits Deducted
+                        Used so far
                       </div>
-                      <div className="text-display font-[900] text-white mt-0.5">
-                        ⚡ {selectedQuality === "cinematic" ? "7,500" : "2,500"} Credits
+                      <div className="mt-0.5 text-display font-[900] text-white tabular-nums">
+                        ⚡ {creditsUsed.toLocaleString()} Credits
+                      </div>
+                      <div className="mt-1 text-caption text-white/55">
+                        Partial generation and edits
                       </div>
                     </div>
-                    <span className="rounded-chip bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
+                    <span className="shrink-0 rounded-chip bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
                       {selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-3 text-label text-white/75">
+                  {/* Budget against actual, stated as a difference rather than
+                      left for the reader to subtract. */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 py-3 text-label">
+                    <span className="text-white/55">
+                      Budget agreed at the start
+                      <strong className="ml-2 text-white tabular-nums">{creditBudget.toLocaleString()}</strong>
+                    </span>
+                    {creditsOverBudget > 0 ? (
+                      <span className="rounded-glyph bg-warn-bg/15 border border-warn-line/40 px-2 py-0.5 text-caption font-bold text-warn-on-dark tabular-nums">
+                        {creditsOverBudget.toLocaleString()} over budget
+                      </span>
+                    ) : (
+                      <span className="rounded-glyph bg-ok/15 border border-ok/30 px-2 py-0.5 text-caption font-bold text-ok-on-dark tabular-nums">
+                        {(creditBudget - creditsUsed).toLocaleString()} of budget left
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 py-3 text-label">
+                    <span className="text-white/55">Final generation needs</span>
+                    <strong className="text-white tabular-nums">
+                      + {finalRenderCost.toLocaleString()} Credits
+                    </strong>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-3 text-label text-white/75">
                     <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Duration &amp; Scenes</span>
-                      <strong className="text-white">{totalDurationSeconds}s · 5 Scenes</strong>
+                      <span className="block text-caption font-bold uppercase text-white/50">Duration &amp; Scenes</span>
+                      <strong className="text-white">{totalDurationSeconds}s · {sceneList.length} Scenes</strong>
                     </div>
                     <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Estimated Render Time</span>
+                      <span className="block text-caption font-bold uppercase text-white/50">Estimated Render Time</span>
                       <strong className="text-white">~{selectedQuality === "cinematic" ? "12–14 min" : "7–9 min"}</strong>
                     </div>
                     <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Team Balance</span>
-                      <strong className="text-ok-on-dark">50,000 Credits</strong>
+                      <span className="block text-caption font-bold uppercase text-white/50">Total for this asset</span>
+                      <strong className="text-white tabular-nums">{creditsTotal.toLocaleString()} Credits</strong>
                     </div>
                     <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Balance Remaining</span>
-                      <strong className="text-white">
-                        {(50000 - (selectedQuality === "cinematic" ? 7500 : 2500)).toLocaleString()} Credits
+                      <span className="block text-caption font-bold uppercase text-white/50">Balance after</span>
+                      <strong className="text-ok-on-dark tabular-nums">
+                        {(teamBalance - creditsTotal).toLocaleString()} of {teamBalance.toLocaleString()}
                       </strong>
                     </div>
                   </div>
@@ -3255,7 +3308,12 @@ export function StudioScreen() {
                       )}
                     >
                       <LogoMark size={14} />
-                      <span>Confirm &amp; Generate Video</span>
+                      <span className="flex flex-col items-start leading-tight">
+                        <span>Confirm &amp; Generate Video</span>
+                        <span className="text-caption font-bold text-white/80 tabular-nums">
+                          {finalRenderCost.toLocaleString()} more credits needed
+                        </span>
+                      </span>
                     </Button>
                   </div>
                 </div>
