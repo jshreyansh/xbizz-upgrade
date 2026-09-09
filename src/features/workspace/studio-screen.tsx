@@ -293,6 +293,11 @@ export function StudioScreen() {
    */
   const motionImage = elementMotion(timingFor(selectedScene, "image"), sceneCurrentTime);
   const motionVideoClip = elementMotion(timingFor(selectedScene, "video-clip"), sceneCurrentTime);
+  // The text follows the timeline too: the headline leaves when its window
+  // closes rather than sitting over the whole scene, which is what made the
+  // declared timings decorative for everything except the media.
+  const motionHeadline = elementMotion(timingFor(selectedScene, "headline"), sceneCurrentTime);
+  const motionNarration = elementMotion(timingFor(selectedScene, "narration"), sceneCurrentTime);
   const canvasVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Sync canvas video element playback with scenePlaying
@@ -1905,7 +1910,16 @@ export function StudioScreen() {
                         onMouseEnter={() => setHoveredCanvasElementId("headline")}
                         onMouseLeave={() => setHoveredCanvasElementId(null)}
                         style={{
-                          transform: `translate(${elementOffsets["headline"]?.x || 0}px, ${elementOffsets["headline"]?.y || 0}px)`,
+                          /* Drag offset composed with the element's timing
+                             motion — both write transform, so they are joined
+                             rather than one overwriting the other. */
+                          transform: [
+                            `translate(${elementOffsets["headline"]?.x || 0}px, ${elementOffsets["headline"]?.y || 0}px)`,
+                            motionHeadline.transform,
+                          ].filter(Boolean).join(" "),
+                          opacity: motionHeadline.opacity,
+                          pointerEvents: motionHeadline.onScreen ? undefined : "none",
+                          ...motionTransition(motionHeadline.durationMs),
                         }}
                         className={cn(
                           "pointer-events-auto relative p-2.5 rounded-control transition-shadow cursor-grab active:cursor-grabbing",
@@ -1980,7 +1994,16 @@ export function StudioScreen() {
                         onMouseEnter={() => setHoveredCanvasElementId("narration")}
                         onMouseLeave={() => setHoveredCanvasElementId(null)}
                         style={{
-                          transform: `translate(${elementOffsets["narration"]?.x || 0}px, ${elementOffsets["narration"]?.y || 0}px)`,
+                          /* Drag offset composed with the element's timing
+                             motion — both write transform, so they are joined
+                             rather than one overwriting the other. */
+                          transform: [
+                            `translate(${elementOffsets["narration"]?.x || 0}px, ${elementOffsets["narration"]?.y || 0}px)`,
+                            motionNarration.transform,
+                          ].filter(Boolean).join(" "),
+                          opacity: motionNarration.opacity,
+                          pointerEvents: motionNarration.onScreen ? undefined : "none",
+                          ...motionTransition(motionNarration.durationMs),
                         }}
                         className={cn(
                           "pointer-events-auto relative p-2.5 rounded-panel transition-all cursor-grab active:cursor-grabbing select-none backdrop-blur-md",
