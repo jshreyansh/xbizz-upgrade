@@ -3181,29 +3181,41 @@ export function StudioScreen() {
                     </span>
                   </div>
 
-                  {/* Budget against actual, stated as a difference rather than
-                      left for the reader to subtract. */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 py-3 text-label">
-                    <span className="text-white/55">
-                      Budget agreed at the start
-                      <strong className="ml-2 text-white tabular-nums">{creditBudget.toLocaleString()}</strong>
-                    </span>
-                    {creditsOverBudget > 0 ? (
-                      <span className="rounded-glyph bg-warn-bg/15 border border-warn-line/40 px-2 py-0.5 text-caption font-bold text-warn-on-dark tabular-nums">
-                        {creditsOverBudget.toLocaleString()} over budget
-                      </span>
-                    ) : (
-                      <span className="rounded-glyph bg-ok/15 border border-ok/30 px-2 py-0.5 text-caption font-bold text-ok-on-dark tabular-nums">
-                        {(creditBudget - creditsUsed).toLocaleString()} of budget left
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 py-3 text-label">
+                  {/* What confirming costs comes FIRST, because it is the
+                      decision; the adjusted total follows as the consequence
+                      of the two figures above it. */}
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 py-3 text-label">
                     <span className="text-white/55">Final generation needs</span>
                     <strong className="text-white tabular-nums">
                       + {finalRenderCost.toLocaleString()} Credits
                     </strong>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3">
+                    <span className="text-label text-white/55">
+                      Adjusted budget
+                      {/* The arithmetic is shown rather than left implied: this
+                          figure is the sum of the two rows above it, and a
+                          total nobody can reconcile is the defect this card
+                          had in the first place. */}
+                      <span className="ml-2 text-caption tabular-nums text-white/40">
+                        {creditsUsed.toLocaleString()} used + {finalRenderCost.toLocaleString()} to render
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <strong className="text-body-lg font-[850] text-white tabular-nums">
+                        {creditsTotal.toLocaleString()} Credits
+                      </strong>
+                      {creditsTotal > creditBudget ? (
+                        <span className="rounded-glyph border border-warn-line/40 bg-warn-bg/15 px-2 py-0.5 text-caption font-bold tabular-nums text-warn-on-dark">
+                          {(creditsTotal - creditBudget).toLocaleString()} over the {creditBudget.toLocaleString()} agreed
+                        </span>
+                      ) : (
+                        <span className="rounded-glyph border border-ok/30 bg-ok/15 px-2 py-0.5 text-caption font-bold tabular-nums text-ok-on-dark">
+                          within the {creditBudget.toLocaleString()} agreed
+                        </span>
+                      )}
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-3 text-label text-white/75">
@@ -3214,10 +3226,6 @@ export function StudioScreen() {
                     <div>
                       <span className="block text-caption font-bold uppercase text-white/50">Estimated Render Time</span>
                       <strong className="text-white">~{selectedQuality === "cinematic" ? "12–14 min" : "7–9 min"}</strong>
-                    </div>
-                    <div>
-                      <span className="block text-caption font-bold uppercase text-white/50">Total for this asset</span>
-                      <strong className="text-white tabular-nums">{creditsTotal.toLocaleString()} Credits</strong>
                     </div>
                     <div>
                       <span className="block text-caption font-bold uppercase text-white/50">Balance after</span>
@@ -3311,7 +3319,7 @@ export function StudioScreen() {
                       <span className="flex flex-col items-start leading-tight">
                         <span>Confirm &amp; Generate Video</span>
                         <span className="text-caption font-bold text-white/80 tabular-nums">
-                          {finalRenderCost.toLocaleString()} more credits needed
+                          {finalRenderCost.toLocaleString()} Credits
                         </span>
                       </span>
                     </Button>
