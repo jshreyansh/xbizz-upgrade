@@ -66,6 +66,7 @@ import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { CommentsModal, ElementActionBar, ELEMENT_LABELS, type SceneComment } from "@/features/workspace/scene-comments";
 import { MediaPlaceholder } from "@/features/workspace/media-placeholder";
+import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -244,6 +245,7 @@ export function StudioScreen() {
   const timingFor = (scene: Scene, elementId: string) =>
     scene.timings?.find((entry) => entry.elementId === elementId);
 
+
   const phaseOf = (sceneId: string) => scenePhase[sceneId] ?? 0;
   /**
    * Editing opens when every scene has its structure, not when everything has
@@ -284,6 +286,13 @@ export function StudioScreen() {
 
   const [scenePlaying, setScenePlaying] = useState(false);
   const [sceneCurrentTime, setSceneCurrentTime] = useState(2.4);
+  /**
+   * The in/out motion for the two media slots, shared by the generating
+   * placeholder and the finished asset. One slot, two renderings — so the
+   * transition the placeholder shows is the transition the asset performs.
+   */
+  const motionImage = elementMotion(timingFor(selectedScene, "image"), sceneCurrentTime);
+  const motionVideoClip = elementMotion(timingFor(selectedScene, "video-clip"), sceneCurrentTime);
   const canvasVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Sync canvas video element playback with scenePlaying
@@ -1685,7 +1694,21 @@ export function StudioScreen() {
                               onMouseEnter={() => setHoveredCanvasElementId("image")}
                               onMouseLeave={() => setHoveredCanvasElementId(null)}
                               style={{
-                                transform: `translate(${elementOffsets["image"]?.x || 0}px, ${elementOffsets["image"]?.y || 0}px)`,
+                                /**
+                                 * The drag offset composed with the element's
+                                 * timing motion. Both write transform, so they
+                                 * have to be composed rather than one winning —
+                                 * and the timing has to be here at all, or the
+                                 * asset ignores the window its own placeholder
+                                 * just advertised and sits in frame start to end.
+                                 */
+                                transform: [
+                                  `translate(${elementOffsets["image"]?.x || 0}px, ${elementOffsets["image"]?.y || 0}px)`,
+                                  motionImage.transform,
+                                ].filter(Boolean).join(" "),
+                                opacity: motionImage.opacity,
+                                pointerEvents: motionImage.onScreen ? undefined : "none",
+                                ...motionTransition(motionImage.durationMs),
                               }}
                               className={cn(
                                 "pointer-events-auto relative flex-1 rounded-panel p-3 bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none flex items-center gap-3",
@@ -1773,7 +1796,21 @@ export function StudioScreen() {
                               onMouseEnter={() => setHoveredCanvasElementId("video-clip")}
                               onMouseLeave={() => setHoveredCanvasElementId(null)}
                               style={{
-                                transform: `translate(${elementOffsets["video-clip"]?.x || 0}px, ${elementOffsets["video-clip"]?.y || 0}px)`,
+                                /**
+                                 * The drag offset composed with the element's
+                                 * timing motion. Both write transform, so they
+                                 * have to be composed rather than one winning —
+                                 * and the timing has to be here at all, or the
+                                 * asset ignores the window its own placeholder
+                                 * just advertised and sits in frame start to end.
+                                 */
+                                transform: [
+                                  `translate(${elementOffsets["video-clip"]?.x || 0}px, ${elementOffsets["video-clip"]?.y || 0}px)`,
+                                  motionVideoClip.transform,
+                                ].filter(Boolean).join(" "),
+                                opacity: motionVideoClip.opacity,
+                                pointerEvents: motionVideoClip.onScreen ? undefined : "none",
+                                ...motionTransition(motionVideoClip.durationMs),
                               }}
                               className={cn(
                                 "pointer-events-auto relative flex-1 rounded-panel bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none overflow-hidden",

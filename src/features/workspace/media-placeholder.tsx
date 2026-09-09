@@ -3,28 +3,7 @@
 import { Clock, ImageIcon, Layers, Video } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { ElementTiming } from "@/types/content";
-
-/**
- * Motion for a transition, derived from the words it is written in.
- *
- * The transition is authored as a human string ("Wipe from right 420ms")
- * because that is what the strip and the placeholder display. Keyword matching
- * turns it into motion so a slot can DEMONSTRATE its entrance before the asset
- * exists. If transitions ever become user-editable this wants to be a
- * structured field with the label derived from it, rather than the reverse.
- */
-function motionFor(transition: string | undefined) {
-  const text = (transition ?? "").toLowerCase();
-  const ms = Number(text.match(/(\d+)\s*ms/)?.[1] ?? 320);
-  if (text.includes("cut")) return { ms: 0, hidden: {} as React.CSSProperties };
-  if (text.includes("wipe from right")) return { ms, hidden: { opacity: 0, transform: "translateX(14%)" } };
-  if (text.includes("wipe")) return { ms, hidden: { opacity: 0, transform: "translateX(-14%)" } };
-  if (text.includes("scale up")) return { ms, hidden: { opacity: 0, transform: "scale(0.94)" } };
-  if (text.includes("push in")) return { ms, hidden: { opacity: 0, transform: "scale(1.06)" } };
-  if (text.includes("fade up")) return { ms, hidden: { opacity: 0, transform: "translateY(10px)" } };
-  // Cross dissolve, fade, and anything unrecognised.
-  return { ms, hidden: { opacity: 0 } };
-}
+import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 
 /**
  * A media asset that has not arrived yet.
@@ -80,25 +59,16 @@ export function MediaPlaceholder({
   const Icon = kind === "video" ? Video : kind === "image" ? ImageIcon : Layers;
   const noun = kind === "video" ? "Video" : kind === "image" ? "Image" : "Background";
 
-  // On screen only for its own seconds. Without a playhead or a timing there
-  // is nothing to honour, so the slot simply shows.
-  const onScreen =
-    currentTime === undefined || !timing
-      ? true
-      : currentTime >= timing.inAt && currentTime <= timing.outAt;
-
-  // Entering uses transitionIn, leaving uses transitionOut — the two are not
-  // the same motion, and running the entrance backwards on exit looks wrong.
-  const leaving = currentTime !== undefined && timing !== undefined && currentTime > timing.outAt;
-  const motion = motionFor(leaving ? timing?.transitionOut ?? timing?.transitionIn : timing?.transitionIn);
+  // The same motion the real asset will use — see element-motion.
+  const motion = elementMotion(timing, currentTime);
+  const { onScreen } = motion;
 
   return (
     <div
       style={{
-        transitionProperty: "opacity, transform",
-        transitionDuration: `${motion.ms}ms`,
-        transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
-        ...(onScreen ? { opacity: 1, transform: "none" } : motion.hidden),
+        ...motionTransition(motion.durationMs),
+        opacity: motion.opacity,
+        transform: motion.transform || "none",
       }}
       onClick={(e) => {
         // Stops the stage's click-to-deselect from undoing the selection.
