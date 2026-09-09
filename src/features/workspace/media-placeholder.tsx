@@ -2,6 +2,7 @@
 
 import { Clock, ImageIcon, Layers, Video } from "lucide-react";
 import { cn } from "@/lib/cn";
+import type { ElementTiming } from "@/types/content";
 
 /**
  * A media asset that has not arrived yet.
@@ -19,19 +20,18 @@ import { cn } from "@/lib/cn";
 export function MediaPlaceholder({
   kind,
   label,
-  inAt,
-  outAt,
-  transition,
+  timing,
   className,
 }: {
   kind: "image" | "video" | "background";
   /** What is coming, e.g. "Cardiac & Vascular Model". */
   label: string;
-  /** Seconds into the scene at which it appears. */
-  inAt: number;
-  /** Seconds at which it leaves. */
-  outAt: number;
-  transition: string;
+  /**
+   * The element's real in/out and transition, from the scene. Optional
+   * because a scene may not declare one — and in that case the box says so
+   * rather than showing invented seconds.
+   */
+  timing?: ElementTiming;
   className?: string;
 }) {
   const Icon = kind === "video" ? Video : kind === "image" ? ImageIcon : Layers;
@@ -44,7 +44,7 @@ export function MediaPlaceholder({
         className
       )}
       aria-busy
-      aria-label={`${noun} generating — ${label}`}
+      aria-label={`${noun} generating — ${label}${timing ? ` — ${timing.inAt}s to ${timing.outAt}s, ${timing.transitionIn}` : ""}`}
     >
       {/* The sweep reads as work in progress rather than a broken asset. */}
       <span aria-hidden className="shimmer pointer-events-none absolute inset-0" />
@@ -64,12 +64,18 @@ export function MediaPlaceholder({
       <div className="relative min-w-0">
         <p className="truncate text-caption font-bold text-white/85">{label}</p>
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-micro text-white/60">
-          <span className="inline-flex items-center gap-1 tabular-nums">
-            <Clock className="size-2.5" />
-            {inAt.toFixed(1)}s – {outAt.toFixed(1)}s
-          </span>
-          <span className="text-white/30">·</span>
-          <span className="truncate">{transition}</span>
+          {timing ? (
+            <>
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <Clock className="size-2.5" />
+                {timing.inAt.toFixed(1)}s – {timing.outAt.toFixed(1)}s
+              </span>
+              <span className="text-white/30">·</span>
+              <span className="truncate">{timing.transitionIn}</span>
+            </>
+          ) : (
+            <span className="italic text-white/45">Timing not set for this element</span>
+          )}
         </div>
       </div>
     </div>

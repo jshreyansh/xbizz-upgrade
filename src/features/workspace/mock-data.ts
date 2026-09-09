@@ -45,6 +45,11 @@ export const creativeDirections: CreativeDirection[] = [
 export const scenes: Scene[] = [
   {
     id: "scene-1",
+    timings: [
+      { elementId: "headline",  inAt: 0.4, outAt: 7.2, transitionIn: "Fade up 320ms", transitionOut: "Fade out 240ms" },
+      { elementId: "narration", inAt: 0.8, outAt: 8.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
+      { elementId: "background", inAt: 0, outAt: 8.0, transitionIn: "Slow push in 4%", transitionOut: "Cross dissolve 400ms" },
+    ],
     number: 1,
     title: "The unresolved burden",
     duration: 8,
@@ -58,6 +63,12 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-2",
+    timings: [
+      { elementId: "headline",   inAt: 0.3, outAt: 4.5, transitionIn: "Fade up 280ms", transitionOut: "Fade out 200ms" },
+      { elementId: "narration",  inAt: 0.6, outAt: 10.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
+      { elementId: "video-clip", inAt: 2.0, outAt: 9.4, transitionIn: "Scale up 4% ease-out", transitionOut: "Cross dissolve 360ms" },
+      { elementId: "background", inAt: 0, outAt: 10.0, transitionIn: "Cut", transitionOut: "Cross dissolve 400ms" },
+    ],
     number: 2,
     title: "A precise target",
     duration: 10,
@@ -73,6 +84,13 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-3",
+    timings: [
+      { elementId: "headline",   inAt: 0.3, outAt: 5.0, transitionIn: "Fade up 280ms", transitionOut: "Fade out 200ms" },
+      { elementId: "narration",  inAt: 0.7, outAt: 14.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
+      { elementId: "image",      inAt: 1.2, outAt: 8.6, transitionIn: "Cross dissolve 400ms", transitionOut: "Fade out 300ms" },
+      { elementId: "video-clip", inAt: 6.4, outAt: 14.0, transitionIn: "Wipe from right 420ms", transitionOut: "Cross dissolve 360ms" },
+      { elementId: "background", inAt: 0, outAt: 14.0, transitionIn: "Cut", transitionOut: "Cross dissolve 400ms" },
+    ],
     number: 3,
     title: "Pivotal evidence",
     duration: 14,
@@ -89,6 +107,12 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-4",
+    timings: [
+      { elementId: "headline",  inAt: 0.3, outAt: 4.2, transitionIn: "Fade up 280ms", transitionOut: "Fade out 200ms" },
+      { elementId: "narration", inAt: 0.6, outAt: 10.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
+      { elementId: "image",     inAt: 1.5, outAt: 9.0, transitionIn: "Cross dissolve 400ms", transitionOut: "Fade out 300ms" },
+      { elementId: "background", inAt: 0, outAt: 10.0, transitionIn: "Cut", transitionOut: "Fade to black 500ms" },
+    ],
     number: 4,
     title: "Designed for practice",
     duration: 10,
@@ -104,6 +128,11 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-5",
+    timings: [
+      { elementId: "headline",  inAt: 0.4, outAt: 6.4, transitionIn: "Fade up 320ms", transitionOut: "Fade out 400ms" },
+      { elementId: "narration", inAt: 0.8, outAt: 8.0, transitionIn: "Word-by-word reveal", transitionOut: "Hold to cut" },
+      { elementId: "background", inAt: 0, outAt: 8.0, transitionIn: "Cut", transitionOut: "Fade to black 600ms" },
+    ],
     number: 5,
     title: "A clearer next step",
     duration: 8,

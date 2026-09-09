@@ -58,6 +58,25 @@ export interface SceneCitation {
   claimId?: string;
 }
 
+/**
+ * When one element of a scene is on screen, and how it gets there.
+ *
+ * Real data rather than a label: the media placeholder shown during generation
+ * reads these numbers, and the whole point of that placeholder is that the
+ * frame is settled before the asset exists. A guessed in/out would move the
+ * frame when the asset landed, which is the failure the two-phase generation
+ * is built to avoid.
+ */
+export interface ElementTiming {
+  /** Matches the canvas element ids: headline, narration, image, video-clip... */
+  elementId: string;
+  /** Seconds into the scene. */
+  inAt: number;
+  outAt: number;
+  transitionIn: string;
+  transitionOut?: string;
+}
+
 export interface Scene {
   id: string;
   number: number;
@@ -75,4 +94,6 @@ export interface Scene {
   mediaLabel?: string;
   /** Attached when a line is written or rewritten from approved sources. */
   citations?: SceneCitation[];
+  /** Per-element in/out and transitions. Drives the generation placeholders. */
+  timings?: ElementTiming[];
 }

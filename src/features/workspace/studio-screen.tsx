@@ -235,6 +235,15 @@ export function StudioScreen() {
     () => sceneList.find((scene) => scene.id === selectedSceneId) ?? sceneList[0] ?? scenes[0],
     [sceneList, selectedSceneId]
   );
+  /**
+   * A scene's real in/out and transition for one element. Returns undefined
+   * rather than inventing numbers — a placeholder with guessed timing would
+   * move the frame when the asset arrived, and the placeholder exists
+   * precisely so that cannot happen.
+   */
+  const timingFor = (scene: Scene, elementId: string) =>
+    scene.timings?.find((entry) => entry.elementId === elementId);
+
   const phaseOf = (sceneId: string) => scenePhase[sceneId] ?? 0;
   /**
    * Editing opens when every scene has its structure, not when everything has
@@ -743,17 +752,29 @@ export function StudioScreen() {
      * transition, so an arriving asset changes what is in the frame and
      * nothing about the frame.
      */
+    /**
+     * Structure lands across every scene inside the first ten seconds, then
+     * the media arrives in sequence between twenty and fifty. Those are real
+     * render durations rather than a demo tempo: an image or a motion asset is
+     * tens of seconds of work, and pretending otherwise would design the UI
+     * around a wait that does not exist.
+     */
+    const STRUCTURE_BY = 10_000;
+    const MEDIA_FIRST = 20_000;
+    const MEDIA_LAST = 50_000;
+    const count = sceneList.length;
+
     sceneList.forEach((sc, idx) => {
       setTimeout(() => {
         setScenePhase((prev) => ({ ...prev, [sc.id]: 1 }));
-      }, 700 + idx * 450);
+      }, Math.round(((idx + 1) / count) * STRUCTURE_BY));
     });
 
-    const structureDone = 700 + sceneList.length * 450;
+    const step = count > 1 ? (MEDIA_LAST - MEDIA_FIRST) / (count - 1) : 0;
     sceneList.forEach((sc, idx) => {
       setTimeout(() => {
         setScenePhase((prev) => ({ ...prev, [sc.id]: 2 }));
-      }, structureDone + 900 + idx * 1600);
+      }, Math.round(MEDIA_FIRST + idx * step));
     });
   };
 
@@ -1604,7 +1625,10 @@ export function StudioScreen() {
                       >
                         <span className="size-2 rounded-full bg-lime-bg" />
                         <span>{selectedScene.narrativeTag || "PIVOTAL EVIDENCE"}</span>
-                        <span className="text-micro font-bold text-white/50 lowercase ml-1">(0:00–0:{selectedScene.duration})</span>
+                        <span className="text-micro font-bold text-white/50 lowercase ml-1 tabular-nums">
+                          ({(timingFor(selectedScene, "narration")?.inAt ?? 0).toFixed(1)}s–
+                          {(timingFor(selectedScene, "narration")?.outAt ?? selectedScene.duration).toFixed(1)}s)
+                        </span>
                       </div>
 
                       {/* Right-Side Media Showcase (Draggable real Image and Video Clip Elements for ~60% of scenes) */}
@@ -1620,9 +1644,7 @@ export function StudioScreen() {
                                 <MediaPlaceholder
                                   kind="image"
                                   label={selectedScene.mediaLabel || "Clinical still"}
-                                  inAt={1}
-                                  outAt={Math.max(2, (selectedScene.duration || 10) - 1)}
-                                  transition="Cross dissolve in"
+                                  timing={timingFor(selectedScene, "image")}
                                   className="flex-1"
                                 />
                               )}
@@ -1630,9 +1652,7 @@ export function StudioScreen() {
                                 <MediaPlaceholder
                                   kind="video"
                                   label={selectedScene.visual || "Motion asset"}
-                                  inAt={2.5}
-                                  outAt={selectedScene.duration || 10}
-                                  transition="Scale up 4% · ease-out"
+                                  timing={timingFor(selectedScene, "video-clip")}
                                   className="flex-1"
                                 />
                               )}
@@ -1871,7 +1891,18 @@ export function StudioScreen() {
                                 <span className="text-white/40">|</span>
                               </>
                             )}
-                            <span className="text-ok-on-dark">⏱ 0:01 – 0:09</span>
+                            {(() => {
+                              const timing = timingFor(selectedScene, "headline");
+                              return timing ? (
+                                <>
+                                  <span className="text-ok-on-dark tabular-nums">
+                                    ⏱ {timing.inAt.toFixed(1)}s – {timing.outAt.toFixed(1)}s
+                                  </span>
+                                  <span className="text-white/40">|</span>
+                                  <span className="text-white/70">{timing.transitionIn}</span>
+                                </>
+                              ) : null;
+                            })()}
                             <span className="text-white/40">|</span>
                             <button
                               type="button"
