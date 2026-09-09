@@ -165,6 +165,25 @@ export const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: st
   { id: "Consumer", title: "Consumers", subtitle: "Public Awareness", icon: ShoppingCart },
 ];
 
+/**
+ * Which grounding an audience is allowed to use.
+ *
+ * A conversation with a prescriber, a rep, a procurement lead or a trade
+ * partner is always about a specific product — there is no such thing as a
+ * detail aid for a therapy area. Patient and consumer education genuinely can
+ * be about the condition itself ("living with psoriasis"), so those two keep
+ * the choice. Four of six are brand-only, which is why the toggle is absent
+ * rather than disabled: an absent control asks no question.
+ */
+export const GROUNDING_BY_AUDIENCE: Record<Audience, Array<"brand" | "disease">> = {
+  HCP:            ["brand"],
+  "Field team":   ["brand"],
+  Patient:        ["brand", "disease"],
+  Consumer:       ["brand", "disease"],
+  Hospital:       ["brand"],
+  Distributor:    ["brand"],
+};
+
 // ── Audience-aware Clinical Topics with Semantic Icons ──
 export const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; detail: string; icon: any }>> = {
   HCP: [

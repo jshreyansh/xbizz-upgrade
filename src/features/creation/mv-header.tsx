@@ -1,6 +1,7 @@
 "use client";
 
 import { useCreationStore } from "@/features/creation/creation-store";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 
 interface MVHeaderProps {
   currentSubStep?: 0 | 1 | 2;
@@ -9,6 +10,9 @@ interface MVHeaderProps {
 export function MVHeader({ currentSubStep }: MVHeaderProps) {
   const stage = useCreationStore((s) => s.stage);
   const setStage = useCreationStore((s) => s.setStage);
+  // Named in the New Project modal’s header. Falls back for projects started
+  // before a name was ever asked for.
+  const projectName = useWorkspaceStore((s) => s.projectName);
 
   const STEPS = [
     { title: "Format", desc: "Short video or Digital Twin" },
@@ -39,7 +43,7 @@ export function MVHeader({ currentSubStep }: MVHeaderProps) {
           </svg>
         </span>
         <div>
-          <h1 style={{ margin: "0 0 2px", fontSize: 22, fontWeight: 800, letterSpacing: "-.6px" }}>Magic Video</h1>
+          <h1 style={{ margin: "0 0 2px", fontSize: 22, fontWeight: 800, letterSpacing: "-.6px" }}>{projectName || "Magic Video"}</h1>
           <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)" }}>
             Three steps. We explain each one as you go — nothing here assumes you have done this before.
           </p>

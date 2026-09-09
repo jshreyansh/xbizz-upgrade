@@ -16,6 +16,8 @@ interface WorkspaceState {
   videoSubStage: VideoSubStage;
   assetType: AssetType;
   brief: string;
+  /** Suggested from the opening choices, editable in the modal header. */
+  projectName: string;
   audience: Audience;
   goal: string;
   topics: string[];
@@ -65,6 +67,7 @@ interface WorkspaceState {
   setVideoSubStage: (stage: VideoSubStage) => void;
   setAssetType: (assetType: AssetType) => void;
   setBrief: (brief: string) => void;
+  setProjectName: (projectName: string) => void;
   setAudience: (audience: Audience) => void;
   setGoal: (goal: string) => void;
   setTopics: (topics: string[]) => void;
@@ -109,6 +112,7 @@ const initialState = {
   sourcePayload: { dossierId: "velmora" },
   videoSubStage: "mode-select" as VideoSubStage,
   assetType: "video" as AssetType,
+  projectName: "",
   brief: "Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for DERMORA.",
   audience: "" as Audience,
   goal: "",
@@ -169,6 +173,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setVideoSubStage: (videoSubStage) => set({ videoSubStage }),
   setAssetType: (assetType) => set({ assetType }),
   setBrief: (brief) => set({ brief }),
+  setProjectName: (projectName) => set({ projectName }),
   setAudience: (audience) => set({ audience }),
   setGoal: (goal) => set({ goal }),
   setTopics: (topics) => set({ topics }),
