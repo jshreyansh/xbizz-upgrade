@@ -65,6 +65,7 @@ import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { CommentsModal, ElementActionBar, ELEMENT_LABELS, type SceneComment } from "@/features/workspace/scene-comments";
+import { MediaPlaceholder } from "@/features/workspace/media-placeholder";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -178,7 +179,21 @@ export function StudioScreen() {
     }
   }, [studioMode, activeTab]);
 
-  const [generatedSceneIds, setGeneratedSceneIds] = useState<string[]>([]);
+  /**
+   * How far each scene has been generated.
+   *
+   *   0  nothing yet — a skeleton in the rail, not openable
+   *   1  STRUCTURE: text, layout, transitions, subtitle/voiceover are real.
+   *      Editing unlocks here. Media renders as a placeholder that already
+   *      holds its position, its in/out timing and its transition.
+   *   2  MEDIA: background, image and video have arrived.
+   *
+   * Keyed by scene rather than a flat "generated" list, because the old model
+   * finished one scene entirely before starting the next — so scene 5 was
+   * untouchable for twenty seconds while scene 1 was already idle.
+   */
+  const [scenePhase, setScenePhase] = useState<Record<string, 0 | 1 | 2>>({});
+
   const [toastMessage, setToMessage] = useState<string | null>(null);
 
   const [sceneList, setSceneList] = useState<Scene[]>(() =>
@@ -220,6 +235,14 @@ export function StudioScreen() {
     () => sceneList.find((scene) => scene.id === selectedSceneId) ?? sceneList[0] ?? scenes[0],
     [sceneList, selectedSceneId]
   );
+  const phaseOf = (sceneId: string) => scenePhase[sceneId] ?? 0;
+  /**
+   * Editing opens when every scene has its structure, not when everything has
+   * finished. Waiting for the media would keep the user idle through the slow
+   * half for no reason — nothing they can do at that point moves a pixel of it.
+   */
+  const structureReady = sceneList.length > 0 && sceneList.every((sc) => phaseOf(sc.id) >= 1);
+  const selectedScenePhase = phaseOf(selectedScene.id);
 
   const isScenes = studioMode === "scenes";
   const isEditor = studioMode === "editor";
@@ -704,20 +727,33 @@ export function StudioScreen() {
   const handleStartSceneEditor = () => {
     setStudioMode("editor");
     setActiveTab("assistant");
-    setGeneratedSceneIds([]);
+    setScenePhase({});
     setToMessage(`Opening Scene Canvas Editor in ${selectedQuality === "hd" ? "HD" : "Cinematic"}...`);
     setTimeout(() => setToMessage(null), 2500);
 
-    if (sceneList[0]) {
+    /**
+     * Two passes over every scene, not one pass per scene.
+     *
+     * Pass 1 lays down structure for all of them in quick succession, which is
+     * what the user actually needs to start working: the words, where things
+     * sit, when they appear. Pass 2 fills in the heavy assets behind that.
+     *
+     * The point is that pass 2 needs no layout decisions — the placeholder
+     * already occupies the right box for the right seconds with the right
+     * transition, so an arriving asset changes what is in the frame and
+     * nothing about the frame.
+     */
+    sceneList.forEach((sc, idx) => {
       setTimeout(() => {
-        setGeneratedSceneIds((prev) => [...prev, sceneList[0].id]);
-      }, 2000);
-    }
-    sceneList.slice(1).forEach((sc, idx) => {
-      const delay = 2000 + (idx + 1) * 3500;
+        setScenePhase((prev) => ({ ...prev, [sc.id]: 1 }));
+      }, 700 + idx * 450);
+    });
+
+    const structureDone = 700 + sceneList.length * 450;
+    sceneList.forEach((sc, idx) => {
       setTimeout(() => {
-        setGeneratedSceneIds((prev) => [...prev, sc.id]);
-      }, delay);
+        setScenePhase((prev) => ({ ...prev, [sc.id]: 2 }));
+      }, structureDone + 900 + idx * 1600);
     });
   };
 
@@ -1354,11 +1390,12 @@ export function StudioScreen() {
                     : isEditor
                     ? sceneList.map((sc) => {
                         const isSelected = selectedScene.id === sc.id;
-                        const isGenerated = generatedSceneIds.includes(sc.id);
+                        const phase = phaseOf(sc.id);
                         return (
                           <button
                             key={sc.id}
                             type="button"
+                            disabled={phase === 0}
                             onClick={() => {
                               setSelectedSceneId(sc.id);
                               setSelectedCanvasElementId("headline");
@@ -1367,7 +1404,9 @@ export function StudioScreen() {
                             }}
                             className={cn(
                               "group relative flex w-full flex-col rounded-control border p-2 text-left transition-all cursor-pointer",
-                              isSelected
+                              phase === 0
+                                ? "border-hair bg-card opacity-50 cursor-not-allowed"
+                                : isSelected
                                 ? "border-brand bg-card shadow-xs ring-2 ring-brand/15"
                                 : "border-hair bg-card hover:border-hair-3"
                             )}
@@ -1377,8 +1416,13 @@ export function StudioScreen() {
                                 Scene {sc.number}
                               </span>
                               <div className="flex items-center gap-1">
-                                {isGenerated ? (
-                                  <span className="size-1.5 rounded-full bg-ok" />
+                                {/* Three states: nothing, structure, done. The
+                                    middle one is the whole point — a scene you
+                                    can already work on while its media renders. */}
+                                {phase === 2 ? (
+                                  <span className="size-1.5 rounded-full bg-ok" title="Ready" />
+                                ) : phase === 1 ? (
+                                  <span className="size-1.5 rounded-full bg-brand" title="Editable · media still rendering" />
                                 ) : (
                                   <LogoMark size={10} className="text-brand animate-spin" />
                                 )}
@@ -1566,8 +1610,37 @@ export function StudioScreen() {
                       {/* Right-Side Media Showcase (Draggable real Image and Video Clip Elements for ~60% of scenes) */}
                       {selectedScene.mediaType && selectedScene.mediaType !== "none" && (
                         <div className="absolute right-5 top-11 bottom-14 w-[40%] flex flex-col gap-3 z-20 pointer-events-none">
+                          {/* Until phase 2, the media slots hold placeholders that
+                              already know their box, their seconds and their
+                              transition — so the layout is settled and the arriving
+                              asset only changes what is inside it. */}
+                          {selectedScenePhase < 2 && (
+                            <>
+                              {(selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
+                                <MediaPlaceholder
+                                  kind="image"
+                                  label={selectedScene.mediaLabel || "Clinical still"}
+                                  inAt={1}
+                                  outAt={Math.max(2, (selectedScene.duration || 10) - 1)}
+                                  transition="Cross dissolve in"
+                                  className="flex-1"
+                                />
+                              )}
+                              {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
+                                <MediaPlaceholder
+                                  kind="video"
+                                  label={selectedScene.visual || "Motion asset"}
+                                  inAt={2.5}
+                                  outAt={selectedScene.duration || 10}
+                                  transition="Scale up 4% · ease-out"
+                                  className="flex-1"
+                                />
+                              )}
+                            </>
+                          )}
+
                           {/* Draggable Element 1: Real Anatomical Heart Image */}
-                          {(selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
+                          {selectedScenePhase >= 2 && (selectedScene.mediaType === "image" || selectedScene.mediaType === "both") && (
                             <div
                               onPointerDown={(e) => handlePointerDownElement(e, "image")}
                               onPointerMove={(e) => handlePointerMoveElement(e, "image")}
@@ -1655,7 +1728,7 @@ export function StudioScreen() {
                           )}
 
                           {/* Draggable Element 2: Real Kinematic Video Clip */}
-                          {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
+                          {selectedScenePhase >= 2 && (selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
                             <div
                               onPointerDown={(e) => handlePointerDownElement(e, "video-clip")}
                               onPointerMove={(e) => handlePointerMoveElement(e, "video-clip")}
@@ -2504,13 +2577,24 @@ export function StudioScreen() {
                           handleSendChatMessage();
                         }
                       }}
+                      /**
+                       * Held shut until every scene has its structure. There is
+                       * nothing to direct before that — an instruction about
+                       * copy or timing has no copy or timing to land on, and it
+                       * would be silently dropped by the generation that
+                       * overwrites it a second later. It opens the moment pass 1
+                       * finishes, while the media is still rendering.
+                       */
+                      disabled={isEditor && !structureReady}
                       placeholder={
-                        isReview
+                        isEditor && !structureReady
+                          ? "Generating your scenes..."
+                          : isReview
                           ? "Ask SwishX or type 'Add comment at 0:24 that...'..."
                           : "Direct SwishX to modify scenes, copy, or timing..."
                       }
                       rows={2}
-                      className="w-full resize-none text-body text-ink placeholder:text-ink-3 focus:outline-none"
+                      className="w-full resize-none text-body text-ink placeholder:text-ink-3 focus:outline-none disabled:cursor-not-allowed"
                     />
 
                     <div className="flex items-center justify-between pt-1 border-t border-hair">
