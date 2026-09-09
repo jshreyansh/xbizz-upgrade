@@ -113,7 +113,7 @@ export const demoScenarios: DemoScenario[] = [
     description: "Files were attached, but none of them hold anything a script can be grounded in.",
     expected: "Confirm refused \u00b7 offending files flagged inline \u00b7 chat asks for context or better files",
     assertions: { hasApprovedEvidence: false, hasBrandKit: false, blocked: "unusable-sources" },
-    inputs: { assetType: "video", brief: "Create an HCP launch video explaining the DERMORA mechanism and pivotal evidence.", audience: "HCP", market: "United States", intendedUse: "HCP meeting", selectedSourceIds: [], uploadedDocs: ["Q3_Marketing_Calendar.xlsx", "Team_Offsite_Photos.zip"], sourcesVerify: false },
+    inputs: { assetType: "video", brief: "Create an HCP video explaining the DERMORA mechanism of action and the pivotal trial evidence.", audience: "HCP", market: "United States", intendedUse: "HCP meeting", selectedSourceIds: [], uploadedDocs: ["Q3_Marketing_Calendar.xlsx", "Team_Offsite_Photos.zip"], sourcesVerify: false },
   },
   {
     id: "market-conflict",

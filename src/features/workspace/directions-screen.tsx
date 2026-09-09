@@ -218,8 +218,17 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   // Above the early return on purpose: below it these are conditional hooks.
   const research = usePlanResearch();
   const [useCaseDrawerOpen, setUseCaseDrawerOpen] = useState(false);
-  /** Set by a case whose attachments were checked and hold nothing usable. */
+  /**
+   * Two different things, deliberately not one.
+   *
+   * `sourcesWillFail` is a property of the attachments that nobody has looked
+   * at yet. `sourcesUnusable` is what we found when we did. Verification
+   * happens on Confirm — so until it runs, the plan must look exactly like any
+   * other plan, and the error state cannot be on screen.
+   */
+  const [sourcesWillFail, setSourcesWillFail] = useState(false);
   const [sourcesUnusable, setSourcesUnusable] = useState(false);
+  const [verifyingSources, setVerifyingSources] = useState(false);
   const [promptEditorOpen, setPromptEditorOpen] = useState(false);
   const [promptDraft, setPromptDraft] = useState("");
 
@@ -437,8 +446,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     );
     // With nothing of ours to lean on, the user's own files are all there is.
     setSourceGroundingMode(docs && docs.length > 0 ? "my-sources" : "both");
-    // Whether those files hold anything is part of the case too.
-    setSourcesUnusable(scenario.inputs.sourcesVerify === false);
+    // Whether those files hold anything is part of the case — but it is not
+    // KNOWN until Confirm runs the check, so only the latent flag is set here.
+    setSourcesWillFail(scenario.inputs.sourcesVerify === false);
+    setSourcesUnusable(false);
+    setVerifyingSources(false);
 
     setOpenSection("sources");
     setConfirmedTreatment(false);
@@ -493,6 +505,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     // with it the section set — which is the point of editing here rather
     // than walking back to the brief screen.
     setSourcesUnusable(false);
+    setSourcesWillFail(false);
     setOpenSection("sources");
     addChatMessage({ role: "user", text: next });
     addChatMessage({
@@ -646,10 +659,35 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       addChatMessage({ role: "user", text: "Confirm plan & build script" });
       addChatMessage({
         role: "swishx",
-        text: nothingToGroundIn
-          ? `I can't build a script yet — there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Add more → Edit the prompt** to give me the context in words.`
-          : `I read every attached file and found nothing a claim can be grounded in — they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Add more → Edit the prompt** to supply the context directly.`,
+        text: `I can't build a script yet — there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Add more → Edit the prompt** to give me the context in words.`,
       });
+      return;
+    }
+
+    /**
+     * The attachments are read HERE, because this is the moment the user asked
+     * for a script from them. Failing sends them back to this screen with the
+     * finding shown — it never reaches the studio, and the state that explains
+     * why only appears now, not when the plan was first laid out.
+     */
+    if (sourcesWillFail) {
+      addChatMessage({ role: "user", text: "Confirm plan & build script" });
+      setVerifyingSources(true);
+      addChatMessage({
+        role: "swishx",
+        text: `Verifying the ${uploadedDocs.length} attached source${uploadedDocs.length === 1 ? "" : "s"} before writing anything...`,
+      });
+
+      setTimeout(() => {
+        setVerifyingSources(false);
+        setSourcesUnusable(true);
+        setSourcesWillFail(false);
+        setOpenSection("sources");
+        addChatMessage({
+          role: "swishx",
+          text: `I read every attached file and found nothing a claim can be grounded in, so I've stopped before the script — they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Add more → Edit the prompt** to supply the context directly.`,
+        });
+      }, 1400);
       return;
     }
 
@@ -896,8 +934,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       uploadedDocs={uploadedDocs}
                       onSetUploadedDocs={(next) => {
                         setUploadedDocs(next);
-                        // Files the user just chose have not been rejected.
+                        // Files the user just chose have not been read yet, so
+                        // neither the finding nor the latent flag still holds.
                         setSourcesUnusable(false);
+                        setSourcesWillFail(false);
                       }}
                       onPreviewDossier={(d) => setPreviewDossier(d)}
                       onContinue={() => advanceFrom("sources")}
@@ -1630,7 +1670,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   icon={isPlanReady
                     ? <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
                     : <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />}
-                  title={isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
+                  title={verifyingSources
+                    ? "Verifying attached sources"
+                    : isPlanReady ? "Ready to generate script" : `${unresolvedCount} parameter${unresolvedCount > 1 ? "s" : ""} pending`}
                   description={isPlanReady
                     ? "Grounded against 214 approved claims"
                     : nothingToGroundIn
@@ -1645,7 +1687,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   action={
                     <Button
                       onClick={handleConfirmPlan}
-                      disabled={!isPlanReady || isGenerating}
+                      disabled={!isPlanReady || isGenerating || verifyingSources}
                       size="sm"
                       className={cn(
                         "h-9.5 px-5 rounded-control text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
