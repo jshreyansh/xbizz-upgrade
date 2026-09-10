@@ -312,6 +312,7 @@ export function StudioScreen() {
     return Math.max(0, Math.min(1, (sceneCurrentTime - timing.inAt) / span));
   })();
   const canvasVideoRef = useRef<HTMLVideoElement | null>(null);
+  const bgVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Sync canvas video element playback with scenePlaying
   useEffect(() => {
@@ -322,6 +323,17 @@ export function StudioScreen() {
       canvasVideoRef.current.pause();
     }
   }, [scenePlaying]);
+
+  /**
+   * The footage background follows the play button like every other layer.
+   * autoPlay alone left it at the browser's discretion — paused in a
+   * backgrounded tab, and ignoring the scene's own transport entirely.
+   */
+  useEffect(() => {
+    if (!bgVideoRef.current) return;
+    if (scenePlaying) bgVideoRef.current.play().catch(() => {});
+    else bgVideoRef.current.pause();
+  }, [scenePlaying, selectedScene.bgVideoSrc, selectedScenePhase]);
 
   // Sync canvas video element currentTime with scene scrubber
   useEffect(() => {
@@ -1513,41 +1525,6 @@ export function StudioScreen() {
                     data-canvas-stage
                     className="relative aspect-video w-full rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
                   >
-                    {/* Layer 0: footage background, when the scene has one.
-                        Over the gradient plate, so the plate is the fallback
-                        while the clip renders rather than the intended look. */}
-                    {selectedScene.backgroundKind === "video" && (
-                      selectedScenePhase >= 2 && selectedScene.bgVideoSrc ? (
-                        <>
-                          <video
-                            src={selectedScene.bgVideoSrc}
-                            muted
-                            loop
-                            autoPlay
-                            playsInline
-                            className="absolute inset-0 z-0 h-full w-full object-cover"
-                            style={{
-                              opacity: motionBgVideo.opacity,
-                              transform: motionBgVideo.transform || undefined,
-                              ...motionTransition(motionBgVideo.durationMs),
-                            }}
-                          />
-                          {/* Copy over footage needs a scrim a plate does not. */}
-                          <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#06100d]/85 via-[#06100d]/55 to-[#06100d]/20" />
-                        </>
-                      ) : (
-                        <div className="absolute inset-0 z-[1] grid place-items-center p-8">
-                          <MediaPlaceholder
-                            kind="background"
-                            label="Full-frame footage behind the copy"
-                            timing={timingFor(selectedScene, "bg-video")}
-                            currentTime={sceneCurrentTime}
-                            className="h-full w-full"
-                          />
-                        </div>
-                      )
-                    )}
-
                     {/* Layer 1: Background Gradient Graphic */}
                     <div
                       onClick={(e) => {
@@ -1563,6 +1540,49 @@ export function StudioScreen() {
                     >
                       <div className="absolute inset-0 bg-radial from-[#1e4d3f] via-[#173d31] to-[#0f2820]" />
                     </div>
+
+                    {/* Layer 1b: footage background, when the scene has one.
+                        A DIRECT child of the stage and after the plate — two
+                        things that both bit: nested inside the content wrapper
+                        its inset-0 resolved to that padded box instead of the
+                        frame, and placed before the plate the plate painted
+                        straight over it. z-[1] keeps it under every content
+                        layer. */}
+                    {selectedScene.backgroundKind === "video" && (
+                      selectedScenePhase >= 2 && selectedScene.bgVideoSrc ? (
+                        <>
+                          <video
+                            ref={bgVideoRef}
+                            src={selectedScene.bgVideoSrc}
+                            muted
+                            loop
+                            autoPlay
+                            playsInline
+                            className="pointer-events-none absolute inset-0 z-[1] h-full w-full object-cover"
+                            style={{
+                              opacity: motionBgVideo.opacity,
+                              transform: motionBgVideo.transform || undefined,
+                              ...motionTransition(motionBgVideo.durationMs),
+                            }}
+                          />
+                          {/* Copy over footage needs a scrim a plate does not. */}
+                          <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-[#06100d]/85 via-[#06100d]/55 to-[#06100d]/20" />
+                        </>
+                      ) : (
+                        /* End to end, because the thing generating IS the whole
+                           frame. Inset in a padded box read as one asset among
+                           several, with the plate still showing around it. */
+                        <MediaPlaceholder
+                          kind="background"
+                          label="Full-frame footage behind the copy"
+                          timing={timingFor(selectedScene, "bg-video")}
+                          currentTime={sceneCurrentTime}
+                          selected={selectedCanvasElementId === "bg-video"}
+                          onSelect={() => handleSelectCanvasElement("bg-video")}
+                          className="absolute inset-0 z-[1] rounded-none border-0"
+                        />
+                      )
+                    )}
 
                     {/* Layer 2: 3D Kinetic Anatomy / MoA Model */}
                     <div
