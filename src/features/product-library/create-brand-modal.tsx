@@ -47,7 +47,18 @@ const STEPS = [
 ] as const;
 type Step = (typeof STEPS)[number]["id"];
 
-export function CreateBrandModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CreateBrandModal({
+  open,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  /** When another flow (e.g. the Brand Dossier wizard's "Add a new brand")
+   *  embeds this modal, it wants the new brand handed back so it can select
+   *  it and carry on — not a navigation away to the brand's own page. */
+  onCreated?: (product: LibraryProduct) => void;
+}) {
   const router = useRouter();
   const addProduct = useProductLibraryStore((s) => s.addProduct);
   const products = useProductLibraryStore((s) => s.products);
@@ -131,8 +142,13 @@ export function CreateBrandModal({ open, onClose }: { open: boolean; onClose: ()
       updated: "Just now",
     };
     addProduct(product);
-    handleClose();
-    router.push(`/product-library/${id}`);
+    if (onCreated) {
+      onCreated(product);
+      reset();
+    } else {
+      handleClose();
+      router.push(`/product-library/${id}`);
+    }
   }
 
   if (!open || !mounted) return null;

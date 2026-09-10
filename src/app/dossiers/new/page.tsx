@@ -1,29 +1,29 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, ChevronDown } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
 import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore, applyProductSelection } from "@/features/dossiers/dossier-draft-store";
-import { BRAND_REGISTRY } from "@/features/dossiers/mock-dossiers";
+import { useBrandCatalog } from "@/features/dossiers/brand-catalog";
 import { DOSSIER_CATEGORIES, TARGET_AUDIENCES, OTHER_PRODUCT_ID } from "@/features/dossiers/dossier-flow-pieces";
 import { useAssistantChat, DossierAssistantPanel, isQuestion } from "@/features/dossiers/dossier-assistant-chat";
 import { PERSONA } from "@/features/workspace/mock-personas";
+import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
+import type { LibraryProduct } from "@/features/product-library/product-library-types";
 
 export default function NewDossierProductPage() {
   const router = useRouter();
   const supportingFilesRef = useRef<HTMLInputElement>(null);
+  const brandOptions = useBrandCatalog();
+  const [createBrandOpen, setCreateBrandOpen] = useState(false);
 
   const productId = useDossierDraftStore((s) => s.productId);
-  const brandName = useDossierDraftStore((s) => s.brandName);
-  const genericName = useDossierDraftStore((s) => s.genericName);
   const category = useDossierDraftStore((s) => s.category);
   const audiences = useDossierDraftStore((s) => s.audiences);
   const supportingFiles = useDossierDraftStore((s) => s.supportingFiles);
   const createdDossiers = useDossierDraftStore((s) => s.createdDossiers);
-  const setOtherBrandName = useDossierDraftStore((s) => s.setOtherBrandName);
-  const setOtherGenericName = useDossierDraftStore((s) => s.setOtherGenericName);
   const setCategory = useDossierDraftStore((s) => s.setCategory);
   const toggleAudience = useDossierDraftStore((s) => s.toggleAudience);
   const addSupportingFiles = useDossierDraftStore((s) => s.addSupportingFiles);
@@ -33,12 +33,23 @@ export default function NewDossierProductPage() {
   // post-login" since there's no backend to check real account history.
   const isFirstTime = createdDossiers.length === 0;
 
-  const isOtherProduct = productId === OTHER_PRODUCT_ID;
-  const productChosen = isOtherProduct ? brandName.trim().length > 0 : productId.length > 0;
+  const productChosen = productId.length > 0;
 
   function handleProductChange(id: string) {
-    const brand = BRAND_REGISTRY.find((b) => b.id === id);
+    // "+ Create a new brand" opens the same Create Brand flow Product
+    // Library uses, rather than this page's own bare name/generic fields —
+    // one brand-creation mechanism, not two.
+    if (id === OTHER_PRODUCT_ID) {
+      setCreateBrandOpen(true);
+      return;
+    }
+    const brand = brandOptions.find((b) => b.id === id);
     applyProductSelection(id, brand);
+  }
+
+  function handleBrandCreated(product: LibraryProduct) {
+    applyProductSelection(product.id, { name: product.name, genericName: product.genericName, regulatoryAnchor: "FDA" });
+    setCreateBrandOpen(false);
   }
 
   function handleSupportingFilesPicked(e: React.ChangeEvent<HTMLInputElement>) {
@@ -55,7 +66,7 @@ export default function NewDossierProductPage() {
 
     const notes: string[] = [];
 
-    const brandMatch = BRAND_REGISTRY.find((b) => lower.includes(b.name.toLowerCase()));
+    const brandMatch = brandOptions.find((b) => lower.includes(b.name.toLowerCase()));
     if (brandMatch) {
       handleProductChange(brandMatch.id);
       notes.push(`the product to ${brandMatch.name}`);
@@ -141,7 +152,7 @@ export default function NewDossierProductPage() {
         </p>
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Product</label>
-        <div style={{ position: "relative", marginBottom: isOtherProduct ? 16 : 22 }}>
+        <div style={{ position: "relative", marginBottom: 22 }}>
           <select
             value={productId}
             onChange={(e) => handleProductChange(e.target.value)}
@@ -160,39 +171,16 @@ export default function NewDossierProductPage() {
             <option value="" disabled>
               Choose a product…
             </option>
-            {BRAND_REGISTRY.map((b) => (
+            {brandOptions.map((b) => (
               <option key={b.id} value={b.id}>
                 {b.name} — {b.therapyArea}
                 {b.hasDossier ? " (has a dossier)" : ""}
               </option>
             ))}
-            <option value={OTHER_PRODUCT_ID}>Other / new product…</option>
+            <option value={OTHER_PRODUCT_ID}>+ Create a new brand…</option>
           </select>
           <ChevronDown size={15} style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
         </div>
-
-        {isOtherProduct && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 22 }}>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Brand name</label>
-              <input
-                value={brandName}
-                onChange={(e) => setOtherBrandName(e.target.value)}
-                placeholder="e.g. Velmora"
-                style={{ width: "100%", padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14, color: "var(--ink)" }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Generic / molecule name</label>
-              <input
-                value={genericName}
-                onChange={(e) => setOtherGenericName(e.target.value)}
-                placeholder="e.g. velmoxaban mesylate"
-                style={{ width: "100%", padding: "11px 13px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 14, color: "var(--ink)" }}
-              />
-            </div>
-          </div>
-        )}
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier category</label>
         <div style={{ position: "relative", marginBottom: 22 }}>
@@ -297,6 +285,8 @@ export default function NewDossierProductPage() {
           Next
         </button>
       </DossierFlowShell>
+
+      <CreateBrandModal open={createBrandOpen} onClose={() => setCreateBrandOpen(false)} onCreated={handleBrandCreated} />
     </AppShell>
   );
 }

@@ -3,8 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { BrandDossier, BrandOption, DossierApproval, DossierSource, DossierWizardStep, RegulatoryBody } from "@/features/dossiers/dossier-types";
-import { BRAND_REGISTRY, NEW_DOSSIER_TEMPLATE } from "@/features/dossiers/mock-dossiers";
+import { NEW_DOSSIER_TEMPLATE } from "@/features/dossiers/mock-dossiers";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
+import { useBrandCatalog } from "@/features/dossiers/brand-catalog";
+import type { LibraryProduct } from "@/features/product-library/product-library-types";
 
 import {
   DOCUMENT_TYPES,
@@ -44,6 +47,12 @@ export function DossierWizard({
   const [brandQuery, setBrandQuery] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState<string | null>(null);
   const [isNewBrand, setIsNewBrand] = useState(!initialDossier);
+  const [createBrandOpen, setCreateBrandOpen] = useState(false);
+
+  // The brand list is shared with Product Library rather than this file's
+  // own static registry — a brand created from either flow is pickable in
+  // both.
+  const brandOptions = useBrandCatalog();
 
   // Step 2: supporting documents (real files, not persisted anywhere — this is a prototype)
   const [supportingFiles, setSupportingFiles] = useState<File[]>([]);
@@ -96,8 +105,24 @@ export function DossierWizard({
   }
 
   function startNewBrand() {
-    setSelectedBrandId(null);
+    setCreateBrandOpen(true);
+  }
+
+  /** Product Library's Create Brand modal hands the finished brand back here
+   *  instead of navigating away — it's selected exactly like an existing
+   *  brand would be, then indication/regulatory anchor still need a beat to
+   *  complete since Product Library doesn't collect those. */
+  function handleBrandCreated(product: LibraryProduct) {
+    setSelectedBrandId(product.id);
     setIsNewBrand(true);
+    setActiveDossier((prev) => ({
+      ...prev,
+      brandName: product.name,
+      genericName: product.genericName,
+      gradient: product.gradient,
+      initials: product.name.slice(0, 2).toUpperCase(),
+    }));
+    setCreateBrandOpen(false);
   }
 
   function updateNewBrandField(field: "brandName" | "genericName" | "indication", value: string) {
@@ -127,7 +152,7 @@ export function DossierWizard({
     ? activeDossier.brandName.trim().length > 0 && activeDossier.genericName.trim().length > 0
     : selectedBrandId !== null;
 
-  const selectedBrandOption = BRAND_REGISTRY.find((b) => b.id === selectedBrandId) || null;
+  const selectedBrandOption = brandOptions.find((b) => b.id === selectedBrandId) || null;
 
   // Step 4: Medical Writer streaming generation simulation
   useEffect(() => {
@@ -255,7 +280,7 @@ export function DossierWizard({
               </div>
 
               <div style={{ maxHeight: 260, overflowY: "auto" }}>
-                {BRAND_REGISTRY.filter((b) => b.name.toLowerCase().includes(brandQuery.toLowerCase())).map((b) => (
+                {brandOptions.filter((b) => b.name.toLowerCase().includes(brandQuery.toLowerCase())).map((b) => (
                   <button
                     key={b.id}
                     onClick={() => selectExistingBrand(b)}
@@ -1527,6 +1552,8 @@ export function DossierWizard({
           </div>
         </div>
       )}
+
+      <CreateBrandModal open={createBrandOpen} onClose={() => setCreateBrandOpen(false)} onCreated={handleBrandCreated} />
     </div>
   );
 }
