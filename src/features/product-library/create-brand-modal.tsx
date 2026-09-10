@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { X, Check, ArrowLeft, ArrowRight, Upload, Link2, PenLine, FileText } from "lucide-react";
+import { X, Check, ArrowRight, Upload, Link2, PenLine, FileText, ImagePlus, Layers } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
@@ -40,12 +40,17 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const STEPS = [
-  { id: "basics", label: "Basics" },
-  { id: "sources", label: "Sources" },
-  { id: "review", label: "Review" },
-] as const;
-type Step = (typeof STEPS)[number]["id"];
+/** Section heading used throughout the one-page layout below — every part
+ *  of the brief is visible at once, not gated behind a step. */
+function SectionHeading({ eyebrow, title, hint }: { eyebrow: string; title: string; hint?: string }) {
+  return (
+    <div className="space-y-1">
+      <span className="text-label font-extrabold uppercase tracking-[.08em] text-brand-deep">{eyebrow}</span>
+      <h3 className="text-title font-extrabold tracking-tight text-ink">{title}</h3>
+      {hint && <p className="text-body text-ink-3">{hint}</p>}
+    </div>
+  );
+}
 
 export function CreateBrandModal({
   open,
@@ -63,23 +68,22 @@ export function CreateBrandModal({
   const addProduct = useProductLibraryStore((s) => s.addProduct);
   const products = useProductLibraryStore((s) => s.products);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Portalled to document.body below: an ancestor further up the tree has an
   // active transform/animation, which turns `position: fixed` here into
-  // something positioned relative to that ancestor instead of the viewport
-  // — invisible for a short modal, but this one scrolls, so it surfaced as
-  // the dialog rendering far down the page instead of centered on screen.
+  // something positioned relative to that ancestor instead of the viewport.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- deliberate: portal target (document.body) only exists once mounted on the client.
     setMounted(true);
   }, []);
 
-  const [step, setStep] = useState<Step>("basics");
   const [name, setName] = useState("");
   const [genericName, setGenericName] = useState("");
   const [type, setType] = useState<ProductType>("Tablet");
   const [themeId, setThemeId] = useState(GRADIENT_THEMES[0].id);
+  const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
 
   const [market, setMarket] = useState(MARKETS[0]);
   const [tags, setTags] = useState<string[]>([]);
@@ -90,8 +94,12 @@ export function CreateBrandModal({
 
   const gradient = GRADIENT_THEMES.find((g) => g.id === themeId)?.gradient ?? GRADIENT_THEMES[0].gradient;
   const idPreview = useMemo(() => slugify(name), [name]);
-  const canContinue = name.trim().length > 1 && genericName.trim().length > 1;
+  const canCreate = name.trim().length > 1 && genericName.trim().length > 1;
   const sourcesCount = files.length + (link.trim() ? 1 : 0) + (notes.trim() ? 1 : 0) + tags.length;
+  // Not revoked on change/unmount: once a brand is created, this exact URL
+  // is what the library card and Front-angle photo point at — revoking it
+  // would blank out the image the moment the modal closes.
+  const referenceImageUrl = useMemo(() => (referenceImageFile ? URL.createObjectURL(referenceImageFile) : null), [referenceImageFile]);
 
   function toggleTag(tag: string) {
     setTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
@@ -107,12 +115,18 @@ export function CreateBrandModal({
     setFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function handleImageSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = e.target.files?.[0];
+    if (picked) setReferenceImageFile(picked);
+    e.target.value = "";
+  }
+
   function reset() {
-    setStep("basics");
     setName("");
     setGenericName("");
     setType("Tablet");
     setThemeId(GRADIENT_THEMES[0].id);
+    setReferenceImageFile(null);
     setMarket(MARKETS[0]);
     setTags([]);
     setFiles([]);
@@ -127,6 +141,7 @@ export function CreateBrandModal({
   }
 
   function handleCreate() {
+    if (!canCreate) return;
     const takenIds = new Set(products.map((p) => p.id));
     const id = takenIds.has(idPreview) ? `${idPreview}-${Date.now().toString().slice(-4)}` : idPreview;
     const product: LibraryProduct = {
@@ -140,6 +155,7 @@ export function CreateBrandModal({
       claimsApproved: 0,
       views: 0,
       updated: "Just now",
+      referenceImageUrl: referenceImageUrl ?? undefined,
     };
     addProduct(product);
     if (onCreated) {
@@ -155,86 +171,71 @@ export function CreateBrandModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] grid place-items-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm animate-in fade-in duration-200 sm:p-6"
       style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, width: "100vw", height: "100vh" }}
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="flex max-h-[88vh] w-full max-w-[620px] flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
+        className="relative flex h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Ambient glow wash, matching the premium background language used elsewhere in the app */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <span className="absolute rounded-full" style={{ width: 460, height: 460, left: "-8%", top: "-14%", background: "radial-gradient(circle,rgba(255,122,61,.1),transparent 70%)" }} />
+          <span className="absolute rounded-full" style={{ width: 420, height: 420, right: "18%", bottom: "-16%", background: "radial-gradient(circle,rgba(61,107,255,.07),transparent 70%)" }} />
+        </div>
+
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-hair px-5 py-4">
+        <div className="relative flex shrink-0 items-center justify-between border-b border-hair px-7 py-5">
           <div>
-            <span className="block text-title font-extrabold tracking-tight text-ink">Create brand</span>
-            <span className="text-body text-ink-3">
-              {step === "basics" && "Tell us what this brand is."}
-              {step === "sources" && "Anything you already have makes it far more yours — all optional."}
-              {step === "review" && "Confirm before it's added to your library."}
-            </span>
+            <span className="block text-display font-extrabold tracking-tight text-ink">Create a new brand</span>
+            <span className="text-body-lg text-ink-3">Everything in one place — fill in what you know, skip the rest.</span>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="grid size-8 shrink-0 place-items-center rounded-control text-ink-3 transition-colors hover:bg-subtle hover:text-ink"
+            className="grid size-9 shrink-0 place-items-center rounded-control text-ink-3 transition-colors hover:bg-subtle hover:text-ink"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Step progress */}
-        <div className="flex shrink-0 items-center gap-2.5 px-5 pt-4">
-          {STEPS.map((s, i) => {
-            const stepOrder = STEPS.findIndex((x) => x.id === step);
-            const done = i < stepOrder;
-            const current = s.id === step;
-            return (
-              <div key={s.id} className="flex flex-1 items-center gap-2.5">
-                <div
-                  className={cn(
-                    "grid size-5.5 shrink-0 place-items-center rounded-full text-micro font-extrabold transition-colors",
-                    done ? "bg-ok-bg text-ok" : current ? "bg-brand text-white" : "bg-subtle text-ink-4"
-                  )}
-                >
-                  {done ? <Check size={11} /> : i + 1}
+        {/* Body: form (scrollable) + live preview rail (sticky) */}
+        <div className="relative flex min-h-0 flex-1 flex-col lg:flex-row">
+          <div className="min-h-0 flex-1 space-y-10 overflow-y-auto px-7 py-8">
+            {/* Identity */}
+            <div className="space-y-4">
+              <SectionHeading eyebrow="01 · Identity" title="Name the brand" />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="text-label font-bold text-ink-2">Brand name</label>
+                  <input
+                    autoFocus
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Velmora"
+                    className="w-full rounded-control border border-hair-2 bg-card px-3.5 py-2.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
+                  />
                 </div>
-                <span className={cn("text-body font-bold", current ? "text-ink" : "text-ink-4")}>{s.label}</span>
-                {i < STEPS.length - 1 && <span className="h-px flex-1 bg-hair" />}
+                <div className="space-y-1.5">
+                  <label className="text-label font-bold text-ink-2">Generic / molecule name</label>
+                  <input
+                    value={genericName}
+                    onChange={(e) => setGenericName(e.target.value)}
+                    placeholder="e.g. Velmoxaban mesylate"
+                    className="w-full rounded-control border border-hair-2 bg-card px-3.5 py-2.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
+                  />
+                </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
 
-        {/* Body */}
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
-          {step === "basics" && (
-            <>
-              <div className="space-y-1.5">
-                <label className="text-label font-bold text-ink-2">Brand name</label>
-                <input
-                  autoFocus
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Velmora"
-                  className="w-full rounded-control border border-hair-2 bg-card px-3.5 py-2.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-label font-bold text-ink-2">Generic / molecule name</label>
-                <input
-                  value={genericName}
-                  onChange={(e) => setGenericName(e.target.value)}
-                  placeholder="e.g. Velmoxaban mesylate"
-                  className="w-full rounded-control border border-hair-2 bg-card px-3.5 py-2.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-label font-bold text-ink-2">Presentation</label>
-                <div className="grid grid-cols-5 gap-2">
+            {/* Presentation + reference image */}
+            <div className="space-y-4">
+              <SectionHeading eyebrow="02 · Presentation" title="What does it look like?" />
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_260px]">
+                <div className="grid grid-cols-5 gap-2.5">
                   {TYPE_OPTIONS.map((opt) => {
                     const isSel = type === opt.id;
                     return (
@@ -244,11 +245,11 @@ export function CreateBrandModal({
                         onClick={() => setType(opt.id)}
                         title={opt.hint}
                         className={cn(
-                          "flex flex-col items-center gap-1.5 rounded-panel border p-2.5 text-center transition-all",
+                          "flex flex-col items-center gap-2 rounded-panel border p-3 text-center transition-all",
                           isSel ? "border-brand bg-tint shadow-brand-soft" : "border-hair bg-card hover:border-hair-3"
                         )}
                       >
-                        <div className="size-8" style={{ filter: isSel ? undefined : "grayscale(.4) opacity(.75)" }}>
+                        <div className="size-10" style={{ filter: isSel ? undefined : "grayscale(.4) opacity(.75)" }}>
                           <ProductArtwork kind={opt.id} className="h-full w-full" />
                         </div>
                         <span className={cn("text-caption font-bold", isSel ? "text-brand-deep" : "text-ink-3")}>{opt.id}</span>
@@ -256,265 +257,282 @@ export function CreateBrandModal({
                     );
                   })}
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-label font-bold text-ink-2">Color theme</label>
-                <div className="flex gap-2">
-                  {GRADIENT_THEMES.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setThemeId(t.id)}
-                      className={cn(
-                        "size-8 shrink-0 rounded-full transition-transform hover:scale-110",
-                        themeId === t.id && "ring-2 ring-brand ring-offset-2 ring-offset-card"
-                      )}
-                      style={{ background: t.gradient }}
-                      aria-label={`${t.id} theme`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === "sources" && (
-            <>
-              <div className="space-y-2">
-                <label className="text-label font-bold text-ink-2">Market</label>
-                <p className="text-caption text-ink-4">Every claim is checked against this market&rsquo;s label and guidance.</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {MARKETS.map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setMarket(m)}
-                      className={cn(
-                        "rounded-chip px-3 py-1.5 text-body font-bold transition-colors",
-                        market === m ? "bg-ink text-white" : "bg-subtle text-ink-3 hover:bg-tint-2"
-                      )}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-label font-bold text-ink-2">Add anything you already have</label>
-                  <span className="rounded-chip bg-subtle px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
-                </div>
-                <p className="text-caption text-ink-4">
-                  I already write from trusted public sources, so you can skip this — but files, links, or a few typed lines make the brand far more yours.
-                </p>
-
-                <div className="flex flex-wrap gap-1.5">
-                  {SUGGESTED_TAGS.map((tag) => {
-                    const sel = tags.includes(tag);
-                    return (
+                {/* Reference image upload */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-label font-bold text-ink-2">Reference image</span>
+                    <span className="rounded-chip bg-subtle px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
+                  </div>
+                  <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelected} />
+                  {referenceImageUrl ? (
+                    <div className="relative overflow-hidden rounded-panel border border-hair" style={{ height: 96 }}>
+                      <img src={referenceImageUrl} alt="" className="h-full w-full object-cover" />
                       <button
-                        key={tag}
                         type="button"
-                        onClick={() => toggleTag(tag)}
-                        className={cn(
-                          "rounded-chip border px-2.5 py-1 text-caption font-bold transition-colors",
-                          sel ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
-                        )}
+                        onClick={() => setReferenceImageFile(null)}
+                        className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+                        style={{ background: "rgba(0,0,0,.4)" }}
                       >
-                        {tag}
+                        <X size={12} />
                       </button>
-                    );
-                  })}
-                </div>
-
-                {/* Drop zone */}
-                <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFilesSelected} />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full flex-col items-center gap-1.5 rounded-panel border border-dashed border-tint-line bg-tint-2 py-6 text-center transition-colors hover:border-brand hover:bg-tint"
-                >
-                  <span
-                    className="grid size-9 place-items-center rounded-full text-white"
-                    style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand))", boxShadow: "0 8px 16px -8px rgba(253,72,22,.5)" }}
-                  >
-                    <Upload size={16} />
-                  </span>
-                  <span className="text-body-lg font-bold text-ink">Drop files here, or browse</span>
-                  <span className="text-caption text-ink-4">PDF, PPT, DOC, XLS, images — as many as you like.</span>
-                </button>
-
-                {files.length > 0 && (
-                  <div className="space-y-1.5">
-                    {files.map((f, i) => (
-                      <div key={`${f.name}-${i}`} className="flex items-center gap-2.5 rounded-control border border-ok-line bg-ok-bg px-3 py-2">
-                        <Check size={13} className="shrink-0 text-ok" />
-                        <span className="min-w-0 flex-1 truncate text-body font-semibold text-ink">{f.name}</span>
-                        <span className="shrink-0 text-caption text-ink-4">{formatBytes(f.size)}</span>
-                        <button type="button" onClick={() => removeFile(i)} className="shrink-0 text-ink-4 transition-colors hover:text-danger">
-                          <X size={13} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Alternative: paste a link, or type it out */}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSourceMode(sourceMode === "link" ? "none" : "link")}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-body font-bold transition-colors",
-                      sourceMode === "link" ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
-                    )}
-                  >
-                    <Link2 size={13} /> Paste a link instead
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSourceMode(sourceMode === "text" ? "none" : "text")}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-body font-bold transition-colors",
-                      sourceMode === "text" ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
-                    )}
-                  >
-                    <PenLine size={13} /> Type it out
-                  </button>
-                </div>
-
-                {sourceMode === "link" && (
-                  <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-card px-3 py-2 focus-within:border-brand">
-                    <Link2 size={14} className="shrink-0 text-ink-4" />
-                    <input
-                      autoFocus
-                      value={link}
-                      onChange={(e) => setLink(e.target.value)}
-                      placeholder="https://…"
-                      className="w-full border-none bg-transparent text-body-lg text-ink outline-none placeholder:text-ink-4"
-                    />
-                  </div>
-                )}
-
-                {sourceMode === "text" && (
-                  <div
-                    className="relative overflow-hidden rounded-panel border border-tint-line"
-                    style={{ background: "linear-gradient(160deg,var(--tint) 0%,#fff 55%,var(--tint-2) 100%)" }}
-                  >
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute -right-6 -top-10 h-32 w-32 rounded-full"
-                      style={{ background: "radial-gradient(circle,rgba(253,72,22,.16),transparent 70%)" }}
-                    />
-                    <div className="relative flex items-center gap-2 border-b border-tint-line/70 px-3.5 py-2.5">
-                      <span
-                        className="grid size-6 shrink-0 place-items-center rounded-control text-white"
-                        style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand))" }}
-                      >
-                        <FileText size={12} />
-                      </span>
-                      <span className="text-label font-bold text-ink-2">Notes for this brand</span>
                     </div>
-                    <textarea
-                      autoFocus
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      rows={4}
-                      placeholder="e.g. Positioned as the once-daily alternative to twice-daily dosing. Key competitor is already in market with a stronger safety claim…"
-                      className="relative w-full resize-none bg-transparent px-3.5 py-3 text-body-lg leading-relaxed text-ink outline-none placeholder:text-ink-4"
-                    />
-                  </div>
-                )}
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      className="flex w-full flex-col items-center justify-center gap-1 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:bg-tint-2 hover:text-brand-deep"
+                      style={{ height: 96 }}
+                    >
+                      <ImagePlus size={16} />
+                      <span className="text-caption font-bold">Upload a photo</span>
+                    </button>
+                  )}
+                  <p className="text-micro leading-snug text-ink-4">Real product photography replaces the generated art on this brand&rsquo;s card.</p>
+                </div>
               </div>
-            </>
-          )}
+            </div>
 
-          {step === "review" && (
-            <>
-              {/* Live preview — exactly what will land in the grid */}
-              <div className="mx-auto max-w-[240px] overflow-hidden rounded-card border border-hair bg-card shadow-soft">
-                <div className="relative overflow-hidden" style={{ background: gradient, height: 120 }}>
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute rounded-full"
-                    style={{ width: "70%", height: "70%", right: "-15%", top: "-15%", background: "radial-gradient(circle,rgba(255,255,255,.28),transparent 70%)" }}
+            {/* Color theme */}
+            <div className="space-y-3">
+              <SectionHeading eyebrow="03 · Color theme" title="Pick an accent" />
+              <div className="flex gap-2.5">
+                {GRADIENT_THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setThemeId(t.id)}
+                    className={cn(
+                      "size-9 shrink-0 rounded-full transition-transform hover:scale-110",
+                      themeId === t.id && "ring-2 ring-brand ring-offset-2 ring-offset-card"
+                    )}
+                    style={{ background: t.gradient }}
+                    aria-label={`${t.id} theme`}
                   />
-                  <span
-                    className="absolute left-3 top-2.5 rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90"
-                    style={{ background: "rgba(0,0,0,.22)" }}
-                  >
-                    {type}
-                  </span>
-                  <div className="absolute -bottom-3 right-[-6%] h-[85%] w-3/5">
-                    <ProductArtwork kind={type} className="h-full w-full" />
-                  </div>
-                  <span
-                    className="absolute bottom-2.5 left-3 grid size-8 place-items-center rounded-control text-body font-extrabold text-white"
-                    style={{ background: "rgba(0,0,0,.24)" }}
-                  >
-                    {(name || "??").slice(0, 2).toUpperCase()}
-                  </span>
-                </div>
-                <div className="p-3.5">
-                  <b className="block truncate text-body-lg font-extrabold text-ink">{name || "Untitled brand"}</b>
-                  <span className="block truncate text-caption italic text-ink-3">{genericName || "Generic name"}</span>
-                  <span className="mt-2 block text-caption text-ink-4">0 dossiers · 0 claims · 0 views</span>
-                </div>
+                ))}
               </div>
+            </div>
 
-              <p className="text-center text-body text-ink-3">
-                Starts with all 6 dossier types ready to fill in, a placeholder photography set for every angle, and no approved claims yet — replace or add to any of it from the brand&rsquo;s own page.
+            {/* Market */}
+            <div className="space-y-3">
+              <SectionHeading eyebrow="04 · Market" title="Where is this sold?" hint="Every claim is checked against this market's label and guidance." />
+              <div className="flex flex-wrap gap-1.5">
+                {MARKETS.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMarket(m)}
+                    className={cn(
+                      "rounded-chip px-3.5 py-1.5 text-body font-bold transition-colors",
+                      market === m ? "bg-ink text-white" : "bg-subtle text-ink-3 hover:bg-tint-2"
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sources */}
+            <div className="space-y-3 pb-2">
+              <div className="flex items-center gap-2">
+                <SectionHeading eyebrow="05 · Sources" title="Add anything you already have" />
+                <span className="rounded-chip bg-subtle px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
+              </div>
+              <p className="text-body text-ink-3">
+                I already write from trusted public sources, so you can skip this — but files, links, or a few typed lines make the brand far more yours.
               </p>
 
-              <div className="mx-auto flex max-w-[400px] flex-wrap items-center justify-center gap-1.5 text-caption text-ink-4">
-                <span className="rounded-chip bg-subtle px-2 py-1 font-bold text-ink-3">{market}</span>
-                {sourcesCount > 0 ? (
-                  <span>
-                    · {sourcesCount} source{sourcesCount === 1 ? "" : "s"} attached, grounding it beyond public label data
-                  </span>
-                ) : (
-                  <span>· No extra sources — I&rsquo;ll write this one from trusted public sources</span>
-                )}
+              <div className="flex flex-wrap gap-1.5">
+                {SUGGESTED_TAGS.map((tag) => {
+                  const sel = tags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={cn(
+                        "rounded-chip border px-2.5 py-1 text-caption font-bold transition-colors",
+                        sel ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
+                      )}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
               </div>
-            </>
-          )}
-        </div>
 
-        {/* Footer */}
-        <div className="flex shrink-0 items-center justify-between border-t border-hair px-5 py-4">
-          {step === "basics" && <span className="text-caption text-ink-4">{name ? `/product-library/${idPreview}` : " "}</span>}
-          {step !== "basics" && (
-            <button
-              type="button"
-              onClick={() => setStep(step === "review" ? "sources" : "basics")}
-              className="inline-flex items-center gap-1.5 text-body-lg font-bold text-ink-3 transition-colors hover:text-ink"
-            >
-              <ArrowLeft size={14} /> Back
-            </button>
-          )}
+              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFilesSelected} />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex w-full flex-col items-center gap-1.5 rounded-panel border border-dashed border-tint-line bg-tint-2 py-6 text-center transition-colors hover:border-brand hover:bg-tint"
+              >
+                <span
+                  className="grid size-9 place-items-center rounded-full text-white"
+                  style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand))", boxShadow: "0 8px 16px -8px rgba(253,72,22,.5)" }}
+                >
+                  <Upload size={16} />
+                </span>
+                <span className="text-body-lg font-bold text-ink">Drop files here, or browse</span>
+                <span className="text-caption text-ink-4">PDF, PPT, DOC, XLS, images — as many as you like.</span>
+              </button>
 
-          {step !== "review" ? (
+              {files.length > 0 && (
+                <div className="space-y-1.5">
+                  {files.map((f, i) => (
+                    <div key={`${f.name}-${i}`} className="flex items-center gap-2.5 rounded-control border border-ok-line bg-ok-bg px-3 py-2">
+                      <Check size={13} className="shrink-0 text-ok" />
+                      <span className="min-w-0 flex-1 truncate text-body font-semibold text-ink">{f.name}</span>
+                      <span className="shrink-0 text-caption text-ink-4">{formatBytes(f.size)}</span>
+                      <button type="button" onClick={() => removeFile(i)} className="shrink-0 text-ink-4 transition-colors hover:text-danger">
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSourceMode(sourceMode === "link" ? "none" : "link")}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-body font-bold transition-colors",
+                    sourceMode === "link" ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
+                  )}
+                >
+                  <Link2 size={13} /> Paste a link instead
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSourceMode(sourceMode === "text" ? "none" : "text")}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-control border px-3 py-1.5 text-body font-bold transition-colors",
+                    sourceMode === "text" ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
+                  )}
+                >
+                  <PenLine size={13} /> Type it out
+                </button>
+              </div>
+
+              {sourceMode === "link" && (
+                <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-card px-3 py-2 focus-within:border-brand">
+                  <Link2 size={14} className="shrink-0 text-ink-4" />
+                  <input
+                    autoFocus
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="https://…"
+                    className="w-full border-none bg-transparent text-body-lg text-ink outline-none placeholder:text-ink-4"
+                  />
+                </div>
+              )}
+
+              {sourceMode === "text" && (
+                <div
+                  className="relative overflow-hidden rounded-panel border border-tint-line"
+                  style={{ background: "linear-gradient(160deg,var(--tint) 0%,#fff 55%,var(--tint-2) 100%)" }}
+                >
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute -right-6 -top-10 h-32 w-32 rounded-full"
+                    style={{ background: "radial-gradient(circle,rgba(253,72,22,.16),transparent 70%)" }}
+                  />
+                  <div className="relative flex items-center gap-2 border-b border-tint-line/70 px-3.5 py-2.5">
+                    <span
+                      className="grid size-6 shrink-0 place-items-center rounded-control text-white"
+                      style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand))" }}
+                    >
+                      <FileText size={12} />
+                    </span>
+                    <span className="text-label font-bold text-ink-2">Notes for this brand</span>
+                  </div>
+                  <textarea
+                    autoFocus
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={4}
+                    placeholder="e.g. Positioned as the once-daily alternative to twice-daily dosing. Key competitor is already in market with a stronger safety claim…"
+                    className="relative w-full resize-none bg-transparent px-3.5 py-3 text-body-lg leading-relaxed text-ink outline-none placeholder:text-ink-4"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Live preview rail — always visible, updates as the form is filled in */}
+          <div className="relative flex w-full shrink-0 flex-col border-t border-hair bg-subtle/60 px-7 py-7 lg:w-[360px] lg:border-l lg:border-t-0">
+            <span className="mb-4 inline-flex items-center gap-1.5 text-label font-extrabold uppercase tracking-[.08em] text-ink-4">
+              <Layers size={12} /> Live preview
+            </span>
+
+            <div className="overflow-hidden rounded-card border border-hair bg-card shadow-soft">
+              <div className="relative overflow-hidden" style={{ background: gradient, height: 150 }}>
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute rounded-full"
+                  style={{ width: "70%", height: "70%", right: "-15%", top: "-15%", background: "radial-gradient(circle,rgba(255,255,255,.28),transparent 70%)" }}
+                />
+                <span
+                  className="absolute left-3 top-2.5 rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90"
+                  style={{ background: "rgba(0,0,0,.22)" }}
+                >
+                  {type}
+                </span>
+                <div className="absolute -bottom-3 right-[-6%] h-[85%] w-3/5">
+                  {referenceImageUrl ? (
+                    <img src={referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
+                  ) : (
+                    <ProductArtwork kind={type} className="h-full w-full" />
+                  )}
+                </div>
+                <span
+                  className="absolute bottom-2.5 left-3 grid size-9 place-items-center rounded-control text-body font-extrabold text-white"
+                  style={{ background: "rgba(0,0,0,.24)" }}
+                >
+                  {(name || "??").slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+              <div className="p-3.5">
+                <b className="block truncate text-body-lg font-extrabold text-ink">{name || "Untitled brand"}</b>
+                <span className="block truncate text-caption italic text-ink-3">{genericName || "Generic name"}</span>
+                <span className="mt-2 block text-caption text-ink-4">0 dossiers · 0 claims · 0 views</span>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2.5 text-body text-ink-3">
+              <div className="flex items-center justify-between">
+                <span className="text-ink-4">Market</span>
+                <span className="font-bold text-ink">{market}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-ink-4">Sources</span>
+                <span className="font-bold text-ink">{sourcesCount > 0 ? `${sourcesCount} attached` : "None — public data only"}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-ink-4">Photography</span>
+                <span className="font-bold text-ink">{referenceImageUrl ? "Your upload" : "Generated placeholder"}</span>
+              </div>
+            </div>
+
+            <p className="mt-5 text-caption leading-relaxed text-ink-4">
+              Starts with all 6 dossier types ready to fill in — nothing here is final, every field stays editable from the brand&rsquo;s own page.
+            </p>
+
+            <div className="flex-1" />
+
             <button
               type="button"
-              disabled={step === "basics" && !canContinue}
-              onClick={() => setStep(step === "basics" ? "sources" : "review")}
-              className="inline-flex items-center gap-1.5 rounded-control px-4 py-2 text-body-lg font-bold text-white transition-all enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
-              style={{ background: "linear-gradient(180deg,#ff5b2d,var(--brand))", boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)" }}
-            >
-              {step === "basics" ? "Continue" : "Review"} <ArrowRight size={14} />
-            </button>
-          ) : (
-            <button
-              type="button"
+              disabled={!canCreate}
               onClick={handleCreate}
-              className="inline-flex items-center gap-1.5 rounded-control px-4 py-2 text-body-lg font-bold text-white transition-all hover:-translate-y-0.5"
-              style={{ background: "linear-gradient(180deg,#ff5b2d,var(--brand))", boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)" }}
+              className="mt-6 inline-flex w-full items-center justify-center gap-1.5 rounded-control px-4 py-3 text-body-lg font-bold text-white transition-all enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+              style={{ background: "linear-gradient(180deg,#ff5b2d,var(--brand))", boxShadow: "0 14px 28px -14px rgba(253,72,22,.9)" }}
             >
-              Create brand <ArrowRight size={14} />
+              Create brand <ArrowRight size={15} />
             </button>
-          )}
+            {!canCreate && <span className="mt-2 text-center text-caption text-ink-4">Name and generic name are needed to continue.</span>}
+          </div>
         </div>
       </div>
     </div>,

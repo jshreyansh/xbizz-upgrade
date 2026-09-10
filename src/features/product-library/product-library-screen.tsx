@@ -203,12 +203,20 @@ export function ProductLibraryScreen() {
               </span>
               {view === "list" ? (
                 <div className="absolute inset-0 flex items-center justify-center p-2">
-                  <ProductArtwork kind={p.type} className="h-full w-full drop-shadow-sm" />
+                  {p.referenceImageUrl ? (
+                    <img src={p.referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-sm" />
+                  ) : (
+                    <ProductArtwork kind={p.type} className="h-full w-full drop-shadow-sm" />
+                  )}
                 </div>
               ) : (
                 <>
                   <div className="absolute -bottom-3 right-[-8%] h-[85%] w-3/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
-                    <ProductArtwork kind={p.type} className="h-full w-full" />
+                    {p.referenceImageUrl ? (
+                      <img src={p.referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
+                    ) : (
+                      <ProductArtwork kind={p.type} className="h-full w-full" />
+                    )}
                   </div>
                   <span
                     className="absolute bottom-3 left-3 grid size-9 place-items-center rounded-control text-body font-extrabold text-white backdrop-blur-sm"

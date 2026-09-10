@@ -283,7 +283,11 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
                     className="absolute inset-0 p-3 transition-transform duration-300 group-hover:scale-[1.04]"
                     style={{ transform: ANGLE_TRANSFORM[img.angle] }}
                   >
-                    <ProductArtwork kind={artworkFor(img.angle, product.type)} className="h-full w-full" />
+                    {img.imageUrl ? (
+                      <img src={img.imageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
+                    ) : (
+                      <ProductArtwork kind={artworkFor(img.angle, product.type)} className="h-full w-full" />
+                    )}
                   </div>
 
                   {/* Hover toolbar — Replace / Delete */}

@@ -68,12 +68,13 @@ function statusFor(index: number, verified: number, total: number): DossierEntry
   return "not started";
 }
 
-function buildImages(productId: string, variationId: string, gradient: string): ProductImage[] {
+function buildImages(productId: string, variationId: string, gradient: string, heroImageUrl?: string): ProductImage[] {
   return IMAGE_ANGLES.map((angle, i) => ({
     id: `${productId}-${variationId}-img-${i}`,
     label: `${angle} shot`,
     angle,
     gradient,
+    imageUrl: angle === "Front" ? heroImageUrl : undefined,
   }));
 }
 
@@ -112,7 +113,11 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
 
   const variations: ProductVariation[] = VARIATION_LABELS[product.type].map((label, i) => {
     const id = `${product.id}-var-${i}`;
-    return { id, label, images: buildImages(product.id, id, product.gradient) };
+    // The uploaded reference photo, if any, stands in for the default
+    // variation's Front angle only — every other angle/variation still
+    // gets the generated packshot art.
+    const heroImageUrl = i === 0 ? product.referenceImageUrl : undefined;
+    return { id, label, images: buildImages(product.id, id, product.gradient, heroImageUrl) };
   });
 
   const documents: ProductDocument[] = DOCUMENT_TEMPLATES.map((tpl, i) => ({

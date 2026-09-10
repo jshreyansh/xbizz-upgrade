@@ -11,6 +11,11 @@ export interface LibraryProduct {
   claimsApproved: number;
   views: number;
   updated: string;
+  /** An actual uploaded reference photo, shown in place of the generated
+   *  packshot art wherever this brand's single hero image appears (library
+   *  cards, its default Front angle) — a local object URL, so it only
+   *  lasts the browser session rather than surviving a reload. */
+  referenceImageUrl?: string;
 }
 
 /** The six standard dossier types every product is tracked against. */
@@ -46,6 +51,9 @@ export interface ProductImage {
   label: string;
   angle: ProductImageAngle;
   gradient: string;
+  /** Set only for the Front angle of the default variation when the brand
+   *  was created with an uploaded reference photo. */
+  imageUrl?: string;
 }
 
 /** A pack size, strength, or presentation of the product — each keeps its
