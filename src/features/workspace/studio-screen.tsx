@@ -71,6 +71,7 @@ import { AudioGeneratingPill, MediaPlaceholder } from "@/features/workspace/medi
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { ShotCards } from "@/features/workspace/shot-cards";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
+import { SubtitleStrip, SubtitleSyncPanel } from "@/features/workspace/subtitle-sync";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -1993,7 +1994,11 @@ export function StudioScreen() {
                         )}
                       </div>
 
-                      {/* Subtitle / Narration Script Overlay (Word-by-Word Voiceover Sync) */}
+                      {/* The burned-in subtitle: a strip at the foot of the
+                          frame, not a panel in the middle of it. A block
+                          holding the whole paragraph is a script being
+                          displayed rather than a video being subtitled — the
+                          full track now lives under the player. */}
                       <div
                         onPointerDown={(e) => handlePointerDownElement(e, "narration")}
                         onPointerMove={(e) => handlePointerMoveElement(e, "narration")}
@@ -2001,9 +2006,6 @@ export function StudioScreen() {
                         onMouseEnter={() => setHoveredCanvasElementId("narration")}
                         onMouseLeave={() => setHoveredCanvasElementId(null)}
                         style={{
-                          /* Drag offset composed with the element's timing
-                             motion — both write transform, so they are joined
-                             rather than one overwriting the other. */
                           transform: [
                             `translate(${elementOffsets["narration"]?.x || 0}px, ${elementOffsets["narration"]?.y || 0}px)`,
                             motionNarration.transform,
@@ -2013,90 +2015,21 @@ export function StudioScreen() {
                           ...motionTransition(motionNarration.durationMs),
                         }}
                         className={cn(
-                          "pointer-events-auto relative p-2.5 rounded-panel transition-all cursor-grab active:cursor-grabbing select-none backdrop-blur-md",
-                          selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[56%]" : "max-w-[80%]",
-                          selectedCanvasElementId === "narration"
-                            ? "border-2 border-dashed border-brand bg-black/60 ring-4 ring-brand/20 shadow-2xl"
-                            : hoveredCanvasElementId === "narration"
-                            ? "border border-dashed border-white/60 bg-black/40"
-                            : "border border-white/15 bg-black/30 hover:border-white/30"
+                          "pointer-events-auto absolute inset-x-0 bottom-14 z-20 flex cursor-grab justify-center active:cursor-grabbing",
                         )}
                       >
-                        {/* Subtitle Sync Indicator Header */}
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-glyph bg-brand/25 border border-brand/20 text-micro font-extrabold uppercase tracking-wider text-brand-light">
-                            <Mic2 className="size-2.5" /> Subtitle · Voiceover Sync
-                          </span>
-                          {scenePlaying && (
-                            <span className="flex items-center gap-1 text-micro font-mono text-ok-on-dark">
-                              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                              Live Track
-                            </span>
+                        <SubtitleStrip
+                          scene={selectedScene}
+                          currentTime={sceneCurrentTime}
+                          className={cn(
+                            "rounded-control transition-all",
+                            selectedCanvasElementId === "narration"
+                              ? "ring-2 ring-brand"
+                              : hoveredCanvasElementId === "narration"
+                              ? "ring-1 ring-white/50"
+                              : ""
                           )}
-                        </div>
-
-                        {/* Text-by-Text Word Karaoke Subtitle Display */}
-                        <p className="text-body-lg sm:text-body-lg font-normal leading-relaxed text-white drop-shadow-sm">
-                          {(() => {
-                            const words = (selectedScene.narration || "").trim().split(/\s+/);
-                            const totalWords = words.length;
-                            const dur = selectedScene.duration || 10;
-                            // Scale active progress from 0.2s to dur - 0.6s
-                            const activeProgress = Math.max(0, Math.min(1, (sceneCurrentTime - 0.2) / Math.max(0.1, dur - 0.8)));
-                            const currentWordIndex = Math.min(
-                              totalWords - 1,
-                              Math.floor(activeProgress * totalWords)
-                            );
-
-                            return words.map((word, idx) => {
-                              const isPast = idx < currentWordIndex;
-                              const isCurrent = idx === currentWordIndex;
-
-                              return (
-                                <span
-                                  key={`${word}-${idx}`}
-                                  className={cn(
-                                    "inline-block mr-1 transition-all duration-150 rounded-glyph px-0.5",
-                                    isCurrent
-                                      ? "text-brand-light font-bold scale-105 bg-brand/20 shadow-xs ring-2 ring-brand/15 -translate-y-0.5"
-                                      : isPast
-                                      ? "text-white font-medium opacity-100"
-                                      : "text-white/35 font-normal"
-                                  )}
-                                >
-                                  {word}
-                                </span>
-                              );
-                            });
-                          })()}
-                        </p>
-
-                        {selectedCanvasElementId === "narration" && (
-                          <div className="absolute -top-8 left-0 z-30 flex items-center gap-1.5 rounded-chip bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
-                            <Mic2 className="size-3 text-brand" />
-                            <span>Voiceover Sync</span>
-                            <span className="text-white/40">|</span>
-                            {elementOffsets["narration"] && (
-                              <>
-                                <span className="text-warn-on-dark font-mono text-micro">
-                                  X:{elementOffsets["narration"].x > 0 ? `+${elementOffsets["narration"].x}` : elementOffsets["narration"].x} Y:{elementOffsets["narration"].y > 0 ? `+${elementOffsets["narration"].y}` : elementOffsets["narration"].y}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResetElementPosition("narration");
-                                  }}
-                                  className="text-white/70 hover:text-white flex items-center gap-0.5 cursor-pointer ml-0.5"
-                                >
-                                  <RotateCcw className="size-2.5" /> Reset
-                                </button>
-                                <span className="text-white/40">|</span>
-                              </>
-                            )}
-                            <span className="text-ok-on-dark">⏱ 0:01 – 0:13</span>
-                          </div>
-                        )}
+                        />
                       </div>
 
                       {/* Bottom Grounding Badge */}
@@ -2193,6 +2126,18 @@ export function StudioScreen() {
                       </div>
                     </div>
                   </div>
+
+                  {/* The voiceover track, under the player: it describes what
+                      is playing rather than being part of the picture, the
+                      same reason a transcript sits beside a video and not on
+                      top of it. */}
+                  <SubtitleSyncPanel
+                    scene={selectedScene}
+                    currentTime={sceneCurrentTime}
+                    playing={scenePlaying}
+                    selected={selectedCanvasElementId === "narration"}
+                    onSelect={() => handleSelectCanvasElement("narration")}
+                  />
 
                   {/* Audio renders after the visuals, so it is still in flight
                       when the frame is already workable. Gone once the take
