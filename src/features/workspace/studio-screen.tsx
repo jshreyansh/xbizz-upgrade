@@ -600,7 +600,18 @@ export function StudioScreen() {
       startX: currentOffset.x,
       startY: currentOffset.y,
     };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    /**
+     * Capture keeps the drag alive when the cursor outruns the element, but it
+     * THROWS when the pointer id is not an active pointer — a released
+     * pointer, or a synthetic pointerdown, which is how this surfaced. It is
+     * an enhancement, not a requirement: the move and up handlers already
+     * carry the drag, so a failure here must not take the interaction with it.
+     */
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // No active pointer to capture. Drag proceeds without it.
+    }
   };
 
   const handlePointerMoveElement = (e: React.PointerEvent, elementId: string) => {
