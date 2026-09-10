@@ -315,6 +315,24 @@ export function StudioScreen() {
   const canvasVideoRef = useRef<HTMLVideoElement | null>(null);
   const bgVideoRef = useRef<HTMLVideoElement | null>(null);
 
+  /**
+   * Which version of the editor this is.
+   *
+   * Version 1 is not a different editor — it is this one with capabilities
+   * removed, which is why it is a flag over one component tree rather than a
+   * second screen. Two trees would drift within a week and every addition
+   * would have to be built twice.
+   *
+   * What V1 subtracts is one rule, not two features: you cannot manipulate
+   * the canvas directly. Dragging goes, and so does the strip above a
+   * selected element — most of which existed to serve dragging anyway (its
+   * X/Y readout and Reset). What is left is review-and-direct: select a
+   * thing, then say what should change.
+   */
+  const [editorVersion, setEditorVersion] = useState<"v1" | "future">("v1");
+  const canDragElements = editorVersion === "future";
+  const showElementToolbar = editorVersion === "future";
+
   // Sync canvas video element playback with scenePlaying
   useEffect(() => {
     if (!canvasVideoRef.current) return;
@@ -571,6 +589,9 @@ export function StudioScreen() {
   const handlePointerDownElement = (e: React.PointerEvent, elementId: string) => {
     e.stopPropagation();
     handleSelectCanvasElement(elementId);
+    // V1 selects but does not move: the element actions still open, so the
+    // element is still reachable — it just cannot be dragged.
+    if (!canDragElements) return;
     setDraggingElementId(elementId);
     const currentOffset = elementOffsets[elementId] || { x: 0, y: 0 };
     dragStartRef.current = {
@@ -1165,6 +1186,38 @@ export function StudioScreen() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Version. Defaults to Version 1 because that is what ships;
+                Future is the opt-in preview of what it grows into. Editor
+                only — a reviewer on a shared link is not choosing an editor. */}
+            {isEditor && (
+              <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-0.5 sm:flex">
+                {([
+                  { id: "v1" as const, label: "Version 1" },
+                  { id: "future" as const, label: "Future" },
+                ]).map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setEditorVersion(option.id)}
+                    aria-pressed={editorVersion === option.id}
+                    title={
+                      option.id === "v1"
+                        ? "Ships today: select and direct, no direct manipulation"
+                        : "Preview: drag elements and use the inline element toolbar"
+                    }
+                    className={cn(
+                      "rounded-glyph px-2.5 py-1 text-caption font-bold transition-colors cursor-pointer",
+                      editorVersion === option.id
+                        ? "bg-brand text-white"
+                        : "text-ink-3 hover:text-ink"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Owner-only. A reviewer on the shared link reads comments in
                 the Comments tab, which is scoped to what they may see — the
                 My/Team split behind this counter is the owner's view of the
@@ -1724,7 +1777,8 @@ export function StudioScreen() {
                                 ...motionTransition(motionImage.durationMs),
                               }}
                               className={cn(
-                                "pointer-events-auto relative flex-1 rounded-panel p-3 bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none flex items-center gap-3",
+                                "pointer-events-auto relative flex-1 rounded-panel p-3 bg-black/70 backdrop-blur-md border transition-shadow shadow-xl select-none flex items-center gap-3",
+                                canDragElements && "cursor-grab active:cursor-grabbing",
                                 selectedCanvasElementId === "image"
                                   ? "border-2 border-dashed border-brand ring-4 ring-brand/20 bg-black/85 shadow-2xl"
                                   : hoveredCanvasElementId === "image"
@@ -1746,9 +1800,11 @@ export function StudioScreen() {
                                   <span className="font-extrabold text-lime-ink text-micro uppercase tracking-wider bg-lime-bg/15 px-1.5 py-0.5 rounded-glyph border border-lime-line/30">
                                     🫀 Image Asset
                                   </span>
-                                  <span className="text-white/60 text-micro font-semibold flex items-center gap-0.5">
-                                    <Move className="size-2.5" /> Draggable
-                                  </span>
+                                  {canDragElements && (
+                                    <span className="text-white/60 text-micro font-semibold flex items-center gap-0.5">
+                                      <Move className="size-2.5" /> Draggable
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="text-label font-bold text-white leading-tight">
                                   {selectedScene.mediaLabel || "Cardiac & Vascular Structure"}
@@ -1758,8 +1814,8 @@ export function StudioScreen() {
                                 </div>
                               </div>
 
-                              {/* Floating Formatting Pill when selected */}
-                              {selectedCanvasElementId === "image" && (
+                              {/* Floating Formatting Pill — future only. */}
+                              {showElementToolbar && selectedCanvasElementId === "image" && (
                                 <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-chip bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
                                   <ImageIcon className="size-3 text-brand" />
                                   <span>Image Layer</span>
@@ -1826,7 +1882,8 @@ export function StudioScreen() {
                                 ...motionTransition(motionVideoClip.durationMs),
                               }}
                               className={cn(
-                                "pointer-events-auto relative flex-1 rounded-panel bg-black/70 backdrop-blur-md border transition-shadow cursor-grab active:cursor-grabbing shadow-xl select-none overflow-hidden",
+                                "pointer-events-auto relative flex-1 rounded-panel bg-black/70 backdrop-blur-md border transition-shadow shadow-xl select-none overflow-hidden",
+                                canDragElements && "cursor-grab active:cursor-grabbing",
                                 selectedCanvasElementId === "video-clip"
                                   ? "border-2 border-dashed border-brand ring-4 ring-brand/20 shadow-2xl"
                                   : hoveredCanvasElementId === "video-clip"
@@ -1848,9 +1905,11 @@ export function StudioScreen() {
                                 <span className="text-micro font-extrabold text-info-on-dark uppercase tracking-wide bg-black/70 px-1.5 py-0.5 rounded-glyph border border-sky-400/40">
                                   🎬 Video Clip
                                 </span>
-                                <span className="text-micro text-white/80 bg-black/60 px-1 py-0.5 rounded-glyph flex items-center gap-0.5">
-                                  <Move className="size-2" /> Draggable
-                                </span>
+                                {canDragElements && (
+                                  <span className="text-micro text-white/80 bg-black/60 px-1 py-0.5 rounded-glyph flex items-center gap-0.5">
+                                    <Move className="size-2" /> Draggable
+                                  </span>
+                                )}
                               </div>
 
                               <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 pt-4">
@@ -1859,8 +1918,8 @@ export function StudioScreen() {
                                 </div>
                               </div>
 
-                              {/* Floating Formatting Pill when selected */}
-                              {selectedCanvasElementId === "video-clip" && (
+                              {/* Floating Formatting Pill — future only. */}
+                              {showElementToolbar && selectedCanvasElementId === "video-clip" && (
                                 <div className="absolute -top-8 right-0 z-30 flex items-center gap-1.5 rounded-chip bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
                                   <Film className="size-3 text-brand" />
                                   <span>Video Clip</span>
@@ -1930,7 +1989,8 @@ export function StudioScreen() {
                           ...motionTransition(motionHeadline.durationMs),
                         }}
                         className={cn(
-                          "pointer-events-auto relative p-2.5 rounded-control transition-shadow cursor-grab active:cursor-grabbing",
+                          "pointer-events-auto relative p-2.5 rounded-control transition-shadow",
+                          canDragElements && "cursor-grab active:cursor-grabbing",
                           selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[54%]" : "max-w-[80%]",
                           selectedCanvasElementId === "headline"
                             ? "border-2 border-dashed border-brand bg-black/40 ring-4 ring-brand/20"
@@ -1943,8 +2003,8 @@ export function StudioScreen() {
                           {selectedScene.title}
                         </h3>
 
-                        {/* Floating Inline Formatting Pill */}
-                        {selectedCanvasElementId === "headline" && (
+                        {/* Floating Inline Formatting Pill — future only. */}
+                        {showElementToolbar && selectedCanvasElementId === "headline" && (
                           <div className="absolute -top-9 left-0 z-30 flex items-center gap-1.5 rounded-chip bg-ink border border-white/20 px-2.5 py-1 text-caption font-bold text-white shadow-xl whitespace-nowrap">
                             <Type className="size-3 text-brand" />
                             <span>Title Layer</span>
@@ -2015,7 +2075,8 @@ export function StudioScreen() {
                           ...motionTransition(motionNarration.durationMs),
                         }}
                         className={cn(
-                          "pointer-events-auto absolute inset-x-0 bottom-14 z-20 flex cursor-grab justify-center active:cursor-grabbing",
+                          "pointer-events-auto absolute inset-x-0 bottom-14 z-20 flex justify-center",
+                          canDragElements && "cursor-grab active:cursor-grabbing",
                         )}
                       >
                         <SubtitleStrip

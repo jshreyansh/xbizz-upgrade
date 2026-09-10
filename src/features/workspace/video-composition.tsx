@@ -229,7 +229,6 @@ export function DynamicSceneComposition({
                 >
                   🫀 Image Asset
                 </div>
-                <span style={{ fontSize: 9, color: "rgba(255,255,255,0.6)", marginLeft: 6 }}>Draggable</span>
                 <div style={{ fontSize: 13, fontWeight: 800, color: "white", marginTop: 4 }}>
                   {scene.mediaLabel || "Anatomical Cardiac Structure"}
                 </div>
