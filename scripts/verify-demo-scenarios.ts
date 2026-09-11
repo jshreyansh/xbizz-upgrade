@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { deriveContentPlan, isRequestSpecific } from "../src/features/workspace/content-plan";
+import { copyOverflow, deriveContentPlan, isRequestSpecific } from "../src/features/workspace/content-plan";
 import { demoScenarios } from "../src/features/workspace/demo-scenarios";
 
 for (const scenario of demoScenarios) {
@@ -22,8 +22,15 @@ for (const scenario of demoScenarios) {
     // screen derives it, so the assertion cannot drift from the behaviour.
     const docs = scenario.inputs.uploadedDocs ?? [];
     const verified = scenario.inputs.sourcesVerify ?? true;
+    // Fit is a block of its own, and not about sources at all: the evidence
+    // can be perfect and still not go on the page you asked for.
+    const overflow = expected.archetypeId
+      ? copyOverflow(scenario.inputs.brief, expected.archetypeId, expected.pages ?? 1)
+      : null;
     const reason = plan.hasApprovedEvidence
-      ? null
+      ? overflow
+        ? "copy-overflow"
+        : null
       : docs.length === 0
       ? "no-context"
       : verified

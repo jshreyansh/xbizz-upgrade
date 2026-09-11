@@ -25,8 +25,17 @@ export interface DemoScenario {
     hasBrandKit?: boolean;
     followsSuppliedScript?: boolean;
     sourceConflict?: boolean;
-    /** The plan screen must refuse to build a script, for this reason. */
-    blocked?: "no-context" | "unusable-sources";
+    /** Pages the deck should come out at — the image flow's own axis. */
+    pages?: number;
+    /** The layout family the plan should land on. */
+    archetypeId?: string;
+    /**
+     * The plan screen must refuse to continue, for this reason.
+     * "copy-overflow" is the image flow's own: the approved copy does not fit
+     * the boxes the chosen archetype has, and a clipped safety block is a
+     * regulatory failure rather than a cosmetic one.
+     */
+    blocked?: "no-context" | "unusable-sources" | "copy-overflow";
   };
   inputs: {
     assetType: AssetType;
@@ -130,8 +139,53 @@ export const demoScenarios: DemoScenario[] = [
     category: "Happy paths",
     description: "The image flow\u2019s happy path \u2014 a congress infographic explaining a pathway.",
     expected: "Process hierarchy · landscape · detailed · no voice or music",
-    assertions: { treatmentId: "process", format: "Landscape", length: "Detailed" },
+    assertions: { treatmentId: "process", format: "Landscape", length: "Detailed", pages: 1, archetypeId: "moa-scroll" },
     inputs: { assetType: "infographic", brief: "Create an infographic explaining the DERMORA mechanism as a clear step-by-step process.", audience: "HCP", market: "United States", intendedUse: "Congress / event", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
+  },
+  {
+    id: "stat-leavebehind",
+    label: "Efficacy leave-behind",
+    category: "Happy paths",
+    description: "One number carries the page — the commonest thing a field team asks for.",
+    expected: "Stat hero · A4 print · 1 page · headline endpoint leads",
+    assertions: { treatmentId: "comparison", pages: 1, archetypeId: "stat-hero", hasApprovedEvidence: true, hasBrandKit: true },
+    inputs: { assetType: "infographic", brief: "A one-page HCP leave-behind led by the PASI 90 primary endpoint, with the comparator and the p-value beside it.", audience: "HCP", market: "United States", intendedUse: "HCP meeting", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
+  },
+  {
+    id: "patient-explainer-sheet",
+    label: "Patient explainer sheet",
+    category: "Dynamic branches",
+    description: "A patient audience — the one that may ground on a therapy area rather than a brand, and needs plainer language and larger type.",
+    expected: "Burden of disease · 3:4 tablet · plain language · no comparator claims",
+    assertions: { treatmentId: "guided", pages: 1, archetypeId: "burden-disease" },
+    inputs: { assetType: "infographic", brief: "A plain-language sheet for patients starting treatment: what the condition is, what to expect week by week, and when to call the clinic.", audience: "Patient", market: "United States", intendedUse: "Patient support", selectedSourceIds: ["dermora-core"] },
+  },
+  {
+    id: "field-detail-aid",
+    label: "Three-page detail aid",
+    category: "Dynamic branches",
+    description: "Page count becomes the question — the axis the video flow does not have.",
+    expected: "Trial summary · 16:9 · 3 pages · one job per page",
+    assertions: { treatmentId: "guided", pages: 3, archetypeId: "trial-summary" },
+    inputs: { assetType: "infographic", brief: "A three-page iPad detail aid for the field team: clinical need, pivotal evidence, then dosing and safety.", audience: "Field team", market: "United States", intendedUse: "Field detailing", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
+  },
+  {
+    id: "copy-overflow",
+    label: "Copy will not fit",
+    category: "Blocked",
+    description: "The approved safety copy is longer than the chosen archetype has room for.",
+    expected: "Refuses to continue — a clipped safety block is a regulatory failure, not a layout preference",
+    assertions: { blocked: "copy-overflow", archetypeId: "stat-hero", pages: 1 },
+    inputs: { assetType: "infographic", brief: "Put the full Important Safety Information and the prescribing cut-offs on the same single stat-hero page as the efficacy headline.", audience: "HCP", market: "United States", intendedUse: "HCP meeting", selectedSourceIds: ["dermora-core", "dermora-claims"] },
+  },
+  {
+    id: "image-market-conflict",
+    label: "Two markets, one poster",
+    category: "Source and market",
+    description: "Sources from two markets whose labels do not agree, on an asset that will be printed.",
+    expected: "Asks which market governs before the layout is fixed",
+    assertions: { sourceConflict: true, pages: 1 },
+    inputs: { assetType: "infographic", brief: "A congress poster using both the US and India label data for DERMORA.", audience: "HCP", market: "United States", intendedUse: "Congress / event", selectedSourceIds: ["dermora-core", "dermora-india"] },
   },
 ];
 

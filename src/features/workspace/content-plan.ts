@@ -212,3 +212,81 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
 function unique(values: string[]) {
   return [...new Set(values)];
 }
+
+/* ────────────────────────── does the copy fit the page? ──────────────────────
+ *
+ * The image flow has a constraint the video flow does not: a page is a fixed
+ * box. A video that runs long is a video that runs long; a page whose safety
+ * block does not fit is a page that clips it, and a clipped Important Safety
+ * Information block is a regulatory failure rather than a layout preference.
+ *
+ * So fit is computed, not eyeballed, and the plan screen refuses on it. The
+ * numbers below are each archetype's real slot count — a stat hero has no
+ * longform box at all, which is exactly why full ISI cannot go on one.
+ */
+
+export interface ArchetypeCapacity {
+  /** Short blocks: a stat, a step row, a callout. */
+  bodyBlocks: number;
+  /** Blocks that hold a paragraph — full ISI, a prescribing summary. */
+  longformBlocks: number;
+}
+
+export const ARCHETYPE_CAPACITY: Record<string, ArchetypeCapacity> = {
+  "stat-hero": { bodyBlocks: 3, longformBlocks: 0 },
+  "trial-summary": { bodyBlocks: 4, longformBlocks: 1 },
+  "bench-data": { bodyBlocks: 4, longformBlocks: 1 },
+  "moa-scroll": { bodyBlocks: 5, longformBlocks: 1 },
+  "burden-disease": { bodyBlocks: 3, longformBlocks: 1 },
+};
+
+/** What the brief is asking to put on the page. */
+export function requiredBlocks(brief: string): { body: number; longform: number } {
+  const b = brief.toLowerCase();
+  const jobs = [
+    /effica|endpoint|pasi|response rate|readout/,
+    /mechanis|pathway|kinase|cascade|moa/,
+    /dosing|administration|titration|cut-off|cutoff|threshold/,
+    /safety|adverse|tolerab|contraindicat/,
+    /patient profile|indication|comorbid|eligib/,
+  ].filter((re) => re.test(b)).length;
+
+  // "Full" or "complete" safety text is a paragraph, not a callout — that is
+  // the distinction that decides whether a stat hero can carry it.
+  const longform = /(full|complete|entire)\s+(important safety information|isi|prescribing)/.test(b)
+    || /full prescribing information/.test(b)
+    ? 1
+    : 0;
+
+  return { body: Math.max(1, jobs), longform };
+}
+
+/**
+ * Whether a brief's copy fits an archetype, and what overflows if not.
+ * Returns null when it fits — so the caller can treat a value as the problem.
+ */
+export function copyOverflow(
+  brief: string,
+  archetypeId: string,
+  pages = 1
+): { reason: string; needs: number; has: number } | null {
+  const capacity = ARCHETYPE_CAPACITY[archetypeId];
+  if (!capacity) return null;
+  const needed = requiredBlocks(brief);
+
+  if (needed.longform > capacity.longformBlocks * pages) {
+    return {
+      reason: "This archetype has no block that holds a paragraph, and the request puts full safety text on the page.",
+      needs: needed.longform,
+      has: capacity.longformBlocks * pages,
+    };
+  }
+  if (needed.body > capacity.bodyBlocks * pages) {
+    return {
+      reason: `The request covers ${needed.body} subjects and this archetype has room for ${capacity.bodyBlocks * pages}.`,
+      needs: needed.body,
+      has: capacity.bodyBlocks * pages,
+    };
+  }
+  return null;
+}

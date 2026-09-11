@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   BookOpenCheck,
@@ -49,6 +50,9 @@ import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
+import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
+import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
+import { copyOverflow } from "@/features/workspace/content-plan";
 
 type InfographicSubStep = "brief" | "content";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
@@ -327,6 +331,11 @@ export function InfographicDirectionsScreen() {
     setInfographicLogoPlacement,
     setTopics,
     setBrief,
+    setMarket,
+    setIntendedUse,
+    setSelectedSourceIds,
+    demoScenarioId,
+    setDemoScenarioId,
     setView,
     setVideoSubStage,
     copilotPanelOpen,
@@ -339,6 +348,36 @@ export function InfographicDirectionsScreen() {
   const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
 
   const [currentStep, setCurrentStep] = useState<InfographicSubStep>("brief");
+
+  /* ── The use case is the whole context, not a label ──────────────────────
+     Same switcher as the video plan, filtered to image cases. Changing it
+     swaps brief, audience, market, intended use, sources, page shape and
+     archetype, because the plan is derived from those. */
+  const [useCaseDrawerOpen, setUseCaseDrawerOpen] = useState(false);
+  /* Only image cases count here. demoScenarioId is shared with the video flow,
+     so matching the whole library made this button announce "HCP launch video"
+     on a deck — a label that is simply untrue. Unmatched reads as unchosen. */
+  const imageScenarios = demoScenarios.filter((sc) => sc.inputs.assetType === "infographic");
+  const activeScenario = imageScenarios.find((sc) => sc.id === demoScenarioId) ?? null;
+
+  /* Sections the user has actually worked through. A status is a fact about
+     what happened, not a decoration — which is why it has to survive a bounce
+     back from a failed Confirm. */
+  const [confirmedSections, setConfirmedSections] = useState<PlanSectionId[]>([]);
+
+  /* Whether the attachments will fail verification is known to the case from
+     the start, but it is not KNOWN to the user until Confirm runs the check.
+     Two flags, because showing the failure early gives away an answer the
+     screen has not earned yet. */
+  const [sourcesWillFail, setSourcesWillFail] = useState(false);
+  const [sourcesUnusable, setSourcesUnusable] = useState(false);
+  const [verifyingSources, setVerifyingSources] = useState(false);
+  const [blockedSections, setBlockedSections] = useState<PlanSectionId[]>([]);
+  /* What the check FOUND, as opposed to what it would find. The latent block
+     is derived and always knowable; showing it before Confirm runs gives away
+     an answer the screen has not earned, and the pill sat there reading as a
+     failure on a plan nobody had submitted. */
+  const [foundBlock, setFoundBlock] = useState<{ section: PlanSectionId; title: string; detail: string } | null>(null);
   const [openSection, setOpenSection] = useState<PlanSectionId | null>("sources");
   const research = usePlanResearch();
 
@@ -350,9 +389,78 @@ export function InfographicDirectionsScreen() {
   const sectionOrder: PlanSectionId[] = ["sources", "format", "audience", "design", "objective", "assets"];
 
   const advanceFrom = (section: PlanSectionId) => {
+    // Working a section through is what confirms it; the status then reads as
+    // a record rather than a recommendation.
+    setConfirmedSections((prev) => (prev.includes(section) ? prev : [...prev, section]));
+    setBlockedSections((prev) => prev.filter((b) => b !== section));
+    setFoundBlock((prev) => (prev?.section === section ? null : prev));
     const i = sectionOrder.indexOf(section);
     setOpenSection(i >= 0 && i < sectionOrder.length - 1 ? sectionOrder[i + 1] : null);
   };
+
+  /**
+   * What a section's chip says.
+   *
+   * Confirmed beats everything, including a bounce back — a section the user
+   * settled does not become "Recommended" again because a later one failed.
+   * That was the specific complaint: the good answers lost their standing on
+   * the way back.
+   */
+  /**
+   * Switching the use case swaps the context the plan is derived from.
+   *
+   * Page shape and archetype come across too, which the video flow has no
+   * equivalent of — they are the image flow's own axes, and a case that says
+   * "three-page detail aid" is not being honoured if the plan stays on one.
+   */
+  const loadUseCase = (scenario: DemoScenario) => {
+    setBrief(scenario.inputs.brief);
+    setAudience(scenario.inputs.audience);
+    setMarket(scenario.inputs.market);
+    setIntendedUse(scenario.inputs.intendedUse);
+    setSelectedSourceIds(scenario.inputs.selectedSourceIds);
+    setDemoScenarioId(scenario.id);
+    setUseCaseDrawerOpen(false);
+
+    if (scenario.assertions.archetypeId) {
+      setInfographicTemplate(scenario.assertions.archetypeId as never);
+    }
+    if (scenario.assertions.pages) {
+      setInfographicPages(String(scenario.assertions.pages) as never);
+    }
+
+    // What the user has attached is part of the case, not a constant.
+    const docs = scenario.inputs.uploadedDocs;
+    setUploadedDocs(
+      docs
+        ? docs.map((name) => ({ name, size: "1.2 MB", date: "Today" }))
+        : [
+            { name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`, size: "3.6 MB", date: "Today" },
+            { name: `${brandName}_Visual_Claims_Master.docx`, size: "720 KB", date: "Today" },
+          ]
+    );
+    setSourceGroundingMode(docs && docs.length > 0 ? "my-sources" : "both");
+
+    // Latent, not found: the check runs on Confirm.
+    setSourcesWillFail(scenario.inputs.sourcesVerify === false);
+    setSourcesUnusable(false);
+    setVerifyingSources(false);
+
+    // The plan is being rebuilt around a different job, so the worked-through
+    // state goes back to the top rather than pretending the old answers hold.
+    setOpenSection("sources");
+    setConfirmedSections([]);
+    setBlockedSections([]);
+    setFoundBlock(null);
+    setChatMessages([]);
+  };
+
+  const statusFor = (section: PlanSectionId, fallback: string) =>
+    blockedSections.includes(section)
+      ? "Needs a fix"
+      : confirmedSections.includes(section)
+        ? "Confirmed"
+        : fallback;
   const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
   const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>([
     { name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`, size: "3.6 MB", date: "Today" },
@@ -360,6 +468,68 @@ export function InfographicDirectionsScreen() {
   ]);
   const [previewDossier, setPreviewDossier] = useState<DossierPreviewData | null>(null);
   const docUploadRef = useRef<HTMLInputElement>(null);
+
+  /**
+   * Why the plan cannot be confirmed, or null.
+   *
+   * Three reasons, and the third is the image flow's own. A page is a fixed
+   * box: copy that does not fit is copy that gets clipped, and a clipped
+   * safety block is a regulatory failure rather than a layout preference. So
+   * fit blocks, the same as having nothing to ground on.
+   */
+  const overflow = copyOverflow(brief, infographicTemplate, Number(infographicPages) || 1);
+  const hasGrounding = (sourcePayload?.dossierId ?? "").length > 0 || uploadedDocs.length > 0;
+
+  const planBlock: { section: PlanSectionId; title: string; detail: string } | null = !hasGrounding
+    ? {
+        section: "sources",
+        title: "Nothing to ground this on",
+        detail: "Attach a document or choose a dossier. A creative with no source cannot carry a claim.",
+      }
+    : sourcesUnusable
+      ? {
+          section: "sources",
+          title: "Those attachments hold nothing usable",
+          detail: "The files verified as having no approved claim text. Attach the label or the study readout, or edit the request to something they can support.",
+        }
+      : overflow
+        ? {
+            section: "design",
+            title: "The copy does not fit this archetype",
+            detail: overflow.reason,
+          }
+        : null;
+
+  /* Verification happens on Confirm, not on arrival — and a failure sends you
+     back to the offending section with everything else still Confirmed. */
+  const handleConfirmPlan = () => {
+    if (verifyingSources) return;
+    setVerifyingSources(true);
+
+    setTimeout(() => {
+      setVerifyingSources(false);
+      const unusable = sourcesWillFail;
+      if (unusable) setSourcesUnusable(true);
+
+      const block = !hasGrounding
+        ? "sources"
+        : unusable
+          ? "sources"
+          : overflow
+            ? "design"
+            : null;
+
+      if (block) {
+        setFoundBlock(planBlock);
+        setBlockedSections([block as PlanSectionId]);
+        setConfirmedSections((prev) => prev.filter((sec) => sec !== block));
+        setOpenSection(block as PlanSectionId);
+        return;
+      }
+      setCurrentStep("content");
+    }, 900);
+  };
+
 
   // Local state for brief questions
   const [selectedAudienceId, setSelectedAudienceId] = useState<string>(audience === "Patient" ? "patient" : audience === "Consumer" ? "consumer" : "hcp");
@@ -492,11 +662,23 @@ export function InfographicDirectionsScreen() {
             </div>
           </div>
 
-          {/* State Switcher in Header */}
-          <div className="ml-6 hidden items-center gap-1 sm:flex">
+          {/* The case this plan is for, changeable without walking back to
+              the brief — the same switcher the video plan has, filtered to
+              image cases. */}
+          <div className="ml-6 hidden items-center gap-1.5 sm:flex">
             <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
               {currentStep === "brief" ? "Plan View" : "Blueprint View"}
             </span>
+            <button
+              type="button"
+              onClick={() => setUseCaseDrawerOpen(true)}
+              aria-haspopup="dialog"
+              className="flex max-w-[240px] cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 py-1 text-caption font-bold text-ink-2 transition-colors hover:border-brand hover:text-brand"
+            >
+              <Layers className="size-3 shrink-0 text-brand" />
+              <span className="truncate">{activeScenario?.label ?? "Choose use case"}</span>
+              <ChevronDown className="size-3 shrink-0 opacity-60" />
+            </button>
           </div>
 
           <div className="ml-4 hidden items-center gap-0.5 lg:flex">
@@ -577,7 +759,8 @@ export function InfographicDirectionsScreen() {
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
                         : `${brandName} Approved Dossier · 214 claims`
                     }
-                    status={research.researching ? `Researching · ${research.current}/${research.total}` : "From source"}
+                    status={research.researching ? `Researching · ${research.current}/${research.total}` : statusFor("sources", "From source")}
+                    error={foundBlock?.section === "sources" ? foundBlock : null}
                     tone="done"
                     /* Open while the research runs — same as the video plan. */
                     open={research.researching || openSection === "sources"}
@@ -604,7 +787,7 @@ export function InfographicDirectionsScreen() {
                     icon={LayoutGrid}
                     title="Format & Page shape"
                     summary={`${FORMAT_OPTIONS.find((f) => f.id === pageShape)?.label || "Portrait 3:4"}`}
-                    status="From brief"
+                    status={statusFor("format", "From brief")}
                     tone="done"
                     open={openSection === "format"}
                     onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
@@ -661,7 +844,7 @@ export function InfographicDirectionsScreen() {
                     icon={Users}
                     title="Message and audience"
                     summary={`${AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.title || "Doctor / HCP"} · ${specialty} · ${language}`}
-                    status="Confirmed"
+                    status={statusFor("audience", "From brief")}
                     tone="done"
                     open={openSection === "audience"}
                     onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
@@ -760,7 +943,8 @@ export function InfographicDirectionsScreen() {
                     icon={Palette}
                     title="Design & Layout Archetype"
                     summary={`${selectedTemplate.name} · ${selectedTemplate.badge}`}
-                    status="Recommended"
+                    status={statusFor("design", "Recommended")}
+                    error={foundBlock?.section === "design" ? foundBlock : null}
                     tone="done"
                     open={openSection === "design"}
                     onToggle={() => setOpenSection(openSection === "design" ? null : "design")}
@@ -857,7 +1041,7 @@ export function InfographicDirectionsScreen() {
                     icon={Target}
                     title="What should this deck achieve? (Objective & Angle)"
                     summary={`${OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.label || "Adoption"} · ${selectedAngles.length} topics`}
-                    status="Recommended"
+                    status={statusFor("objective", "Recommended")}
                     tone="done"
                     open={openSection === "objective"}
                     onToggle={() => setOpenSection(openSection === "objective" ? null : "objective")}
@@ -946,7 +1130,7 @@ export function InfographicDirectionsScreen() {
                     icon={ImageIcon}
                     title="Product & Device Visual Assets"
                     summary={`${LOGO_PLACEMENTS.find((l) => l.id === infographicLogoPlacement)?.label || "Bottom right"} · ${infographicPages === "2" ? "2 pages" : "1 page"}`}
-                    status="Optional"
+                    status={statusFor("assets", "Optional")}
                     tone="default"
                     open={openSection === "assets"}
                     onToggle={() => setOpenSection(openSection === "assets" ? null : "assets")}
@@ -1196,13 +1380,32 @@ export function InfographicDirectionsScreen() {
                 UNIFIED FLOATING ACTION PILL AT MIDDLE BOTTOM (Exact Video Twin)
                ══════════════════════════════════════════════════════════════════ */}
             <ActionBar
-              icon={<CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />}
-              title={currentStep === "brief" ? "Ready to create creative" : "Ready to generate canvas"}
-              description="Grounded against 214 approved claims"
+              icon={
+                foundBlock && currentStep === "brief" ? (
+                  <AlertTriangle className="size-4.5 shrink-0 text-warn-on-dark" />
+                ) : (
+                  <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
+                )
+              }
+              title={
+                verifyingSources
+                  ? "Checking your sources…"
+                  : foundBlock && currentStep === "brief"
+                    ? foundBlock.title
+                    : currentStep === "brief"
+                      ? "Ready to create creative"
+                      : "Ready to generate canvas"
+              }
+              description={
+                foundBlock && currentStep === "brief" && !verifyingSources
+                  ? foundBlock.detail
+                  : "Grounded against 214 approved claims"
+              }
               action={
                 <Button
+                  disabled={verifyingSources}
                   onClick={() => {
-                    if (currentStep === "brief") setCurrentStep("content");
+                    if (currentStep === "brief") handleConfirmPlan();
                     else {
                       setView("studio");
                       setVideoSubStage("studio");
@@ -1379,6 +1582,21 @@ export function InfographicDirectionsScreen() {
       }
       overlay={
         <>
+          {useCaseDrawerOpen && (
+            <ScenarioDrawer
+              currentScenarioId={demoScenarioId}
+              assetType="infographic"
+              title="Use cases"
+              onSelect={loadUseCase}
+              onReset={() => {
+                const fallback =
+                  demoScenarios.find((sc) => sc.id === "mechanism-infographic") ??
+                  demoScenarios.find((sc) => sc.inputs.assetType === "infographic")!;
+                loadUseCase(fallback);
+              }}
+              onClose={() => setUseCaseDrawerOpen(false)}
+            />
+          )}
           {previewDossier && (
             <DossierPreviewModal
               dossier={previewDossier}
@@ -1397,6 +1615,7 @@ function CreativePlanSection({
   title,
   summary,
   status,
+  error,
   open,
   onToggle,
   tone = "default",
@@ -1406,6 +1625,8 @@ function CreativePlanSection({
   title: string;
   summary: string;
   status: string;
+  /** Set when this section is why Confirm refused. */
+  error?: { title: string; detail: string } | null;
   open: boolean;
   onToggle: () => void;
   tone?: "default" | "done" | "attention";
@@ -1489,6 +1710,18 @@ function CreativePlanSection({
 
       {open && (
         <div className="border-t border-hair px-4 pt-4 pb-5 sm:px-5 animate-in fade-in duration-200">
+          {/* The error sits with the thing that has to change, not in a banner
+              at the top of the page. A plan that bounces back should land you
+              on the decision, already open, with the reason next to it. */}
+          {error && (
+            <div className="mb-3.5 flex items-start gap-2 rounded-control border border-warn-line bg-warn-bg p-3">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warn" />
+              <div className="min-w-0">
+                <div className="text-body font-bold text-warn">{error.title}</div>
+                <p className="mt-0.5 text-label leading-snug text-ink-2">{error.detail}</p>
+              </div>
+            </div>
+          )}
           {children}
         </div>
       )}
