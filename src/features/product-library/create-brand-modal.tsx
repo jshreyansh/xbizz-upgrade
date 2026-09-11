@@ -519,12 +519,6 @@ export function CreateBrandModal({
                     <ProductArtwork kind={type} className="h-full w-full" />
                   )}
                 </div>
-                <span
-                  className="absolute bottom-2.5 left-3 grid size-9 place-items-center rounded-control text-body font-extrabold text-white"
-                  style={{ background: "rgba(0,0,0,.24)" }}
-                >
-                  {(name || "??").slice(0, 2).toUpperCase()}
-                </span>
               </div>
               <div className="p-3.5">
                 <b className="block truncate text-body-lg font-extrabold text-ink">{name || "Untitled brand"}</b>

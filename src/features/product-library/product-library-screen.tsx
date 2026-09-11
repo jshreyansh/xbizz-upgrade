@@ -210,21 +210,13 @@ export function ProductLibraryScreen() {
                   )}
                 </div>
               ) : (
-                <>
-                  <div className="absolute -bottom-3 right-[-8%] h-[85%] w-3/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
-                    {p.referenceImageUrl ? (
-                      <img src={p.referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
-                    ) : (
-                      <ProductArtwork kind={p.type} className="h-full w-full" />
-                    )}
-                  </div>
-                  <span
-                    className="absolute bottom-3 left-3 grid size-9 place-items-center rounded-control text-body font-extrabold text-white backdrop-blur-sm"
-                    style={{ background: "rgba(0,0,0,.24)" }}
-                  >
-                    {p.name.slice(0, 2).toUpperCase()}
-                  </span>
-                </>
+                <div className="absolute -bottom-3 right-[-8%] h-[85%] w-3/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
+                  {p.referenceImageUrl ? (
+                    <img src={p.referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
+                  ) : (
+                    <ProductArtwork kind={p.type} className="h-full w-full" />
+                  )}
+                </div>
               )}
             </div>
 

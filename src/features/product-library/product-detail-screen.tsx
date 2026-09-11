@@ -179,11 +179,17 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
 
       {/* Compact profile row — no full-width cover photo, just the essentials */}
       <div className="flex flex-wrap items-center gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair">
-        <span
-          className="grid size-12 shrink-0 place-items-center rounded-control text-title font-extrabold text-white"
-          style={{ background: product.gradient }}
-        >
-          {product.name.slice(0, 2).toUpperCase()}
+        <span className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-control" style={{ background: product.gradient }}>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute rounded-full"
+            style={{ width: "140%", height: "140%", right: "-30%", top: "-30%", background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
+          />
+          {product.referenceImageUrl ? (
+            <img src={product.referenceImageUrl} alt="" className="relative h-full w-full object-cover" />
+          ) : (
+            <ProductArtwork kind={product.type} className="relative h-8 w-8" />
+          )}
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
