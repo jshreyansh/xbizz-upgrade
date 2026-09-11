@@ -3,18 +3,18 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { X, Check, ArrowRight, Upload, Link2, PenLine, FileText, ImagePlus, Layers } from "lucide-react";
+import { X, Check, ArrowRight, Upload, Link2, PenLine, FileText, ImagePlus, Layers, Tag, Atom, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import type { LibraryProduct, ProductType } from "@/features/product-library/product-library-types";
 
-const TYPE_OPTIONS: { id: ProductType; hint: string }[] = [
-  { id: "Tablet", hint: "Blister-packed oral dose" },
-  { id: "Capsule", hint: "Two-tone oral dose" },
-  { id: "Syrup", hint: "Liquid oral dose" },
-  { id: "Injection", hint: "Vial or pre-filled syringe" },
-  { id: "Device", hint: "Pen, inhaler, or applicator" },
+const TYPE_OPTIONS: { id: ProductType; hint: string; short: string }[] = [
+  { id: "Tablet", hint: "Blister-packed oral dose", short: "Solid dose" },
+  { id: "Capsule", hint: "Two-tone oral dose", short: "Two-piece" },
+  { id: "Syrup", hint: "Liquid oral dose", short: "Oral solution" },
+  { id: "Injection", hint: "Vial or pre-filled syringe", short: "Parenteral" },
+  { id: "Device", hint: "Pen, inhaler, or applicator", short: "Inhaler / Device" },
 ];
 
 const GRADIENT_THEMES = [
@@ -81,6 +81,7 @@ export function CreateBrandModal({
 
   const [name, setName] = useState("");
   const [genericName, setGenericName] = useState("");
+  const [tagline, setTagline] = useState("");
   const [type, setType] = useState<ProductType>("Tablet");
   const [themeId, setThemeId] = useState(GRADIENT_THEMES[0].id);
   const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
@@ -124,6 +125,7 @@ export function CreateBrandModal({
   function reset() {
     setName("");
     setGenericName("");
+    setTagline("");
     setType("Tablet");
     setThemeId(GRADIENT_THEMES[0].id);
     setReferenceImageFile(null);
@@ -207,33 +209,51 @@ export function CreateBrandModal({
           <div className="min-h-0 flex-1 space-y-10 overflow-y-auto px-7 py-8">
             {/* Identity */}
             <div className="space-y-4">
-              <SectionHeading eyebrow="01 · Identity" title="Name the brand" />
+              <SectionHeading eyebrow="01 · Identity" title="Name the brand" hint="Enter the brand name and its generic name or molecule." />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-label font-bold text-ink-2">Brand name</label>
-                  <input
-                    autoFocus
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Velmora"
-                    className="w-full rounded-control border border-hair-2 bg-card px-3.5 py-2.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
-                  />
+                  <div className="relative">
+                    <Tag size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                    <input
+                      autoFocus
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Velmora"
+                      className="w-full rounded-control border border-hair-2 bg-card py-2.5 pl-9 pr-3.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-label font-bold text-ink-2">Generic / molecule name</label>
-                  <input
-                    value={genericName}
-                    onChange={(e) => setGenericName(e.target.value)}
-                    placeholder="e.g. Velmoxaban mesylate"
-                    className="w-full rounded-control border border-hair-2 bg-card px-3.5 py-2.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
-                  />
+                  <div className="relative">
+                    <Atom size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-4" />
+                    <input
+                      value={genericName}
+                      onChange={(e) => setGenericName(e.target.value)}
+                      placeholder="e.g. Velmoxaban mesylate"
+                      className="w-full rounded-control border border-hair-2 bg-card py-2.5 pl-9 pr-3.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
+                    />
+                  </div>
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-label font-bold text-ink-2">Tagline</label>
+                  <span className="rounded-chip bg-subtle px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
+                </div>
+                <input
+                  value={tagline}
+                  onChange={(e) => setTagline(e.target.value)}
+                  placeholder="e.g. Care today. A healthier tomorrow."
+                  className="w-full rounded-control border border-hair-2 bg-card px-3.5 py-2.5 text-body-lg text-ink outline-none transition-colors focus:border-brand"
+                />
               </div>
             </div>
 
             {/* Presentation + reference image */}
             <div className="space-y-4">
-              <SectionHeading eyebrow="02 · Presentation" title="What does it look like?" />
+              <SectionHeading eyebrow="02 · Presentation" title="What does it look like?" hint="Choose a dosage form to visualize your brand." />
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_260px]">
                 <div className="grid grid-cols-5 gap-2.5">
                   {TYPE_OPTIONS.map((opt) => {
@@ -245,14 +265,20 @@ export function CreateBrandModal({
                         onClick={() => setType(opt.id)}
                         title={opt.hint}
                         className={cn(
-                          "flex flex-col items-center gap-2 rounded-panel border p-3 text-center transition-all",
+                          "relative flex flex-col items-center gap-2 rounded-panel border p-3 text-center transition-all",
                           isSel ? "border-brand bg-tint shadow-brand-soft" : "border-hair bg-card hover:border-hair-3"
                         )}
                       >
+                        {isSel && (
+                          <span className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full text-white" style={{ background: "var(--brand)" }}>
+                            <Check size={11} strokeWidth={3} />
+                          </span>
+                        )}
                         <div className="size-10" style={{ filter: isSel ? undefined : "grayscale(.4) opacity(.75)" }}>
                           <ProductArtwork kind={opt.id} className="h-full w-full" />
                         </div>
                         <span className={cn("text-caption font-bold", isSel ? "text-brand-deep" : "text-ink-3")}>{opt.id}</span>
+                        <span className="text-micro text-ink-4">{opt.short}</span>
                       </button>
                     );
                   })}
@@ -286,6 +312,7 @@ export function CreateBrandModal({
                     >
                       <ImagePlus size={16} />
                       <span className="text-caption font-bold">Upload a photo</span>
+                      <span className="text-micro text-ink-4">or drag and drop</span>
                     </button>
                   )}
                   <p className="text-micro leading-snug text-ink-4">Real product photography replaces the generated art on this brand&rsquo;s card.</p>
@@ -295,20 +322,22 @@ export function CreateBrandModal({
 
             {/* Color theme */}
             <div className="space-y-3">
-              <SectionHeading eyebrow="03 · Color theme" title="Pick an accent" />
-              <div className="flex gap-2.5">
+              <SectionHeading eyebrow="03 · Color theme" title="Pick an accent" hint="Choose a primary accent color for your brand identity." />
+              <div className="flex gap-3">
                 {GRADIENT_THEMES.map((t) => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => setThemeId(t.id)}
                     className={cn(
-                      "size-9 shrink-0 rounded-full transition-transform hover:scale-110",
+                      "relative grid size-9 shrink-0 place-items-center rounded-full transition-transform hover:scale-110",
                       themeId === t.id && "ring-2 ring-brand ring-offset-2 ring-offset-card"
                     )}
                     style={{ background: t.gradient }}
                     aria-label={`${t.id} theme`}
-                  />
+                  >
+                    {themeId === t.id && <Check size={14} strokeWidth={3} className="text-white drop-shadow" />}
+                  </button>
                 ))}
               </div>
             </div>
@@ -480,6 +509,9 @@ export function CreateBrandModal({
                 >
                   {type}
                 </span>
+                {tagline && (
+                  <p className="absolute left-3 top-9 w-[58%] text-body-lg font-extrabold leading-tight text-white drop-shadow">{tagline}</p>
+                )}
                 <div className="absolute -bottom-3 right-[-6%] h-[85%] w-3/5">
                   {referenceImageUrl ? (
                     <img src={referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
@@ -497,6 +529,7 @@ export function CreateBrandModal({
               <div className="p-3.5">
                 <b className="block truncate text-body-lg font-extrabold text-ink">{name || "Untitled brand"}</b>
                 <span className="block truncate text-caption italic text-ink-3">{genericName || "Generic name"}</span>
+                {tagline && <p className="mt-1 truncate text-caption text-ink-3">{tagline}</p>}
                 <span className="mt-2 block text-caption text-ink-4">0 dossiers · 0 claims · 0 views</span>
               </div>
             </div>
@@ -516,9 +549,17 @@ export function CreateBrandModal({
               </div>
             </div>
 
-            <p className="mt-5 text-caption leading-relaxed text-ink-4">
-              Starts with all 6 dossier types ready to fill in — nothing here is final, every field stays editable from the brand&rsquo;s own page.
-            </p>
+            <div className="mt-5 flex items-start gap-2.5 rounded-panel border border-tint-line bg-tint-2 px-3.5 py-3">
+              <span
+                className="grid size-6 shrink-0 place-items-center rounded-full text-white"
+                style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand))" }}
+              >
+                <Lightbulb size={12} />
+              </span>
+              <p className="text-caption leading-relaxed text-ink-3">
+                Starts with all 6 dossier types ready to fill in — nothing here is final, every field stays editable from the brand&rsquo;s own page.
+              </p>
+            </div>
 
             <div className="flex-1" />
 

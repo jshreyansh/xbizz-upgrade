@@ -7,7 +7,7 @@ import {
   Image as ImageIcon,
   FileText,
   ListChecks,
-  FolderOpen,
+  Paperclip,
   CheckCircle2,
   Clock,
   Circle,
@@ -17,7 +17,9 @@ import {
   RefreshCw,
   Download,
   Layers,
+  MoreHorizontal,
 } from "lucide-react";
+import { cn } from "@/lib/cn";
 import type {
   LibraryProduct,
   ProductDetail,
@@ -49,7 +51,7 @@ const ANGLE_TRANSFORM: Record<ProductImageAngle, string> = {
   Lifestyle: "none",
 };
 
-type Tab = "images" | "dossier" | "claims" | "documents";
+type Tab = "dossier" | "claims" | "documents" | "images";
 
 const STATUS_STYLE: Record<DossierEntryStatus, { icon: typeof CheckCircle2; tone: string; bg: string; label: string }> = {
   verified: { icon: CheckCircle2, tone: "text-ok", bg: "bg-ok-bg", label: "Verified" },
@@ -83,11 +85,12 @@ function Stat({ value, label }: { value: number; label: string }) {
 
 export function ProductDetailScreen({ product, detail }: { product: LibraryProduct; detail: ProductDetail }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("images");
+  const [tab, setTab] = useState<Tab>("dossier");
   const [variations, setVariations] = useState<ProductVariation[]>(detail.variations);
   const [activeVariationId, setActiveVariationId] = useState(detail.variations[0]?.id ?? "");
   const [angleFilter, setAngleFilter] = useState<ProductImageAngle | "All">("All");
   const [documents, setDocuments] = useState<ProductDocument[]>(detail.documents);
+  const [openImageMenuId, setOpenImageMenuId] = useState<string | null>(null);
 
   const activeVariation = useMemo(
     () => variations.find((v) => v.id === activeVariationId) ?? variations[0],
@@ -102,10 +105,10 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
   const totalImages = variations.reduce((sum, v) => sum + v.images.length, 0);
 
   const TABS: { key: Tab; label: string; icon: typeof ImageIcon; count: number }[] = [
-    { key: "images", label: "Product Images", icon: ImageIcon, count: totalImages },
     { key: "dossier", label: "Dossier", icon: FileText, count: detail.dossiers.length },
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
-    { key: "documents", label: "Documents", icon: FolderOpen, count: documents.length },
+    { key: "documents", label: "Attachments", icon: Paperclip, count: documents.length },
+    { key: "images", label: "Product Images", icon: ImageIcon, count: totalImages },
   ];
 
   const UPLOADABLE_TYPES: DocumentFileType[] = ["PDF", "DOCX", "PPTX", "XLSX"];
@@ -192,29 +195,36 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
         <div className="flex items-center gap-5">
           <Stat value={product.dossiersVerified} label="Dossiers" />
           <Stat value={product.claimsApproved} label="Claims" />
-          <Stat value={product.views} label="Views" />
-          <Stat value={documents.length} label="Docs" />
+          <Stat value={documents.length} label="Attachments" />
+          <Stat value={totalImages} label="Images" />
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-hair">
-        {TABS.map((t) => {
+      {/* Tabs — one bordered strip, divided, with a gradient bar under the active tab */}
+      <div className="flex overflow-hidden rounded-panel border border-hair bg-card shadow-hair">
+        {TABS.map((t, i) => {
           const active = tab === t.key;
           return (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`group relative flex items-center gap-2 px-3.5 py-2.5 text-body-lg font-bold transition-colors ${
-                active ? "text-brand-deep" : "text-ink-3 hover:text-ink"
-              }`}
+              className={cn(
+                "relative flex flex-1 items-center justify-center gap-2 px-3.5 py-3.5 text-body-lg font-bold transition-colors",
+                i > 0 && "border-l border-hair",
+                active ? "bg-tint-2/50 text-brand-deep" : "text-ink-3 hover:text-ink"
+              )}
             >
               <t.icon size={15} />
               {t.label}
               <span className={`rounded-chip px-1.5 py-0.5 text-micro font-extrabold ${active ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4"}`}>
                 {t.count}
               </span>
-              {active && <span className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-brand" />}
+              {active && (
+                <span
+                  className="absolute inset-x-0 bottom-0 h-[3px] rounded-t-full"
+                  style={{ background: "linear-gradient(90deg,var(--brand),var(--brand-deep))" }}
+                />
+              )}
             </button>
           );
         })}
@@ -222,7 +232,22 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
 
       {/* Tab content */}
       {tab === "images" && (
-        <div className="space-y-4">
+        <div className="space-y-4" onClick={() => setOpenImageMenuId(null)}>
+          {/* Section header */}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-title font-extrabold tracking-tight text-ink">Product Images</h2>
+              <p className="text-body text-ink-3">Manage approved product visuals by variation and angle</p>
+            </div>
+            <button
+              onClick={handleUpload}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-control px-4 py-2.5 text-body-lg font-bold text-white transition-all hover:-translate-y-0.5"
+              style={{ background: "linear-gradient(180deg,#ff5b2d,var(--brand))", boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)" }}
+            >
+              <Plus size={15} /> Upload image
+            </button>
+          </div>
+
           {/* Variations */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="mr-1 inline-flex items-center gap-1.5 text-label font-bold uppercase tracking-[.06em] text-ink-4">
@@ -290,26 +315,47 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
                     )}
                   </div>
 
-                  {/* Hover toolbar — Replace / Delete */}
-                  <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                  {/* Always-visible overflow menu — Replace / Delete */}
+                  <div className="absolute right-2 top-2">
                     <button
                       type="button"
-                      title="Replace image"
-                      onClick={() => handleReplace(img.id)}
-                      className="grid size-7 place-items-center rounded-control text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+                      title="Image options"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenImageMenuId(openImageMenuId === img.id ? null : img.id);
+                      }}
+                      className="grid size-7 place-items-center rounded-full text-white backdrop-blur-sm transition-colors hover:bg-black/50"
                       style={{ background: "rgba(0,0,0,.35)" }}
                     >
-                      <RefreshCw size={13} />
+                      <MoreHorizontal size={15} />
                     </button>
-                    <button
-                      type="button"
-                      title="Delete image"
-                      onClick={() => handleDelete(img.id)}
-                      className="grid size-7 place-items-center rounded-control text-white backdrop-blur-sm transition-colors hover:bg-danger"
-                      style={{ background: "rgba(0,0,0,.35)" }}
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    {openImageMenuId === img.id && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute right-0 top-[calc(100%+6px)] z-10 w-36 overflow-hidden rounded-control border border-hair bg-card shadow-float"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleReplace(img.id);
+                            setOpenImageMenuId(null);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-body font-semibold text-ink-2 transition-colors hover:bg-subtle"
+                        >
+                          <RefreshCw size={13} /> Replace
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleDelete(img.id);
+                            setOpenImageMenuId(null);
+                          }}
+                          className="flex w-full items-center gap-2 px-3 py-2.5 text-body font-semibold text-danger transition-colors hover:bg-danger-bg"
+                        >
+                          <Trash2 size={13} /> Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="p-3">
@@ -321,10 +367,11 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
 
             <button
               onClick={handleUpload}
-              className="flex min-h-[178px] flex-col items-center justify-center gap-2 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
+              className="flex min-h-[178px] flex-col items-center justify-center gap-1.5 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
             >
               <Upload size={18} />
-              <span className="text-body font-bold">Upload</span>
+              <span className="text-body font-bold">Add product image</span>
+              <span className="text-caption text-ink-4">JPG, PNG or WebP (max 10MB)</span>
             </button>
           </div>
 
@@ -335,7 +382,12 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
       )}
 
       {tab === "dossier" && (
-        <div className="flex flex-col gap-2.5">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-title font-extrabold tracking-tight text-ink">Dossier</h2>
+            <p className="text-body text-ink-3">The six sections every claim in this brand traces back to</p>
+          </div>
+          <div className="flex flex-col gap-2.5">
           {detail.dossiers.map((d) => {
             const s = STATUS_STYLE[d.status];
             return (
@@ -356,11 +408,17 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
       {tab === "claims" && (
-        <div className="flex flex-col gap-2">
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-title font-extrabold tracking-tight text-ink">Claims</h2>
+            <p className="text-body text-ink-3">Every statement approved for use, cited back to its dossier section</p>
+          </div>
+          <div className="flex flex-col gap-2">
           {detail.claims.length === 0 && (
             <p className="py-10 text-center text-body-lg text-ink-4">No claims cited yet — dossiers for this product haven&rsquo;t started.</p>
           )}
@@ -378,17 +436,22 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
       {tab === "documents" && (
-        <div className="space-y-3">
-          <div className="flex justify-end">
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-title font-extrabold tracking-tight text-ink">Attachments</h2>
+              <p className="text-body text-ink-3">Prescribing information, decks, and anything else this brand was grounded in</p>
+            </div>
             <button
               onClick={handleUploadDocument}
-              className="inline-flex items-center gap-1.5 rounded-control border border-dashed border-hair-2 px-3 py-1.5 text-body font-bold text-ink-3 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-control border border-dashed border-hair-2 px-3 py-1.5 text-body font-bold text-ink-3 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
             >
-              <Upload size={13} /> Upload document
+              <Upload size={13} /> Upload attachment
             </button>
           </div>
           <div className="flex flex-col gap-2">
@@ -418,7 +481,7 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
             ))}
           </div>
           {documents.length === 0 && (
-            <p className="py-10 text-center text-body-lg text-ink-4">No documents yet — upload one above.</p>
+            <p className="py-10 text-center text-body-lg text-ink-4">No attachments yet — upload one above.</p>
           )}
         </div>
       )}
