@@ -283,7 +283,7 @@ export function FloatingTextToolbar({
      constant: the bar is capped below at min(92vw, 520px), so half of that is
      the largest it can ever overhang. Measuring the real width instead would
      mean a render that reads layout, and a frame at the wrong coordinates. */
-  const half = Math.min(260, window.innerWidth * 0.46);
+  const half = Math.min(310, window.innerWidth * 0.48);
   const left = Math.max(half + 8, Math.min(window.innerWidth - half - 8, centre));
 
   const size = style?.size ?? element.baseSize;
@@ -300,17 +300,19 @@ export function FloatingTextToolbar({
         left,
         transform: below ? "translateX(-50%)" : "translate(-50%, -100%)",
       }}
-      className="fixed z-[70] flex max-w-[min(92vw,520px)] items-center gap-1.5 overflow-x-auto rounded-control border border-white/12 bg-[#11161f] px-2 py-1.5 shadow-2xl"
+      className="fixed z-[70] flex max-w-[min(96vw,620px)] items-center gap-1.5 rounded-control border border-white/12 bg-[#11161f] px-2 py-1.5 shadow-2xl"
       // The bar sits over the canvas; a click inside it must not reach the
       // stage's click-to-deselect, or the bar closes the moment you use it.
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      <span className="shrink-0 pl-0.5 pr-1 text-micro font-extrabold uppercase tracking-wider text-white/45">
+      <span className="hidden shrink-0 pl-0.5 pr-1 text-micro font-extrabold uppercase tracking-wider text-white/45 min-[1180px]:inline">
         {element.label}
       </span>
 
-      <Divider dark />
+      <span className="hidden min-[1180px]:inline">
+        <Divider dark />
+      </span>
       <SizeStepper dark value={size} onChange={(next) => onStyle({ size: next })} />
 
       <IconToggle
@@ -326,8 +328,12 @@ export function FloatingTextToolbar({
         <CaseUpper className="size-4" />
       </IconToggle>
 
-      <Divider dark />
-      <AlignGroup dark value={align} onChange={(next) => onStyle({ align: next })} />
+      <span className="hidden min-[1020px]:inline">
+        <Divider dark />
+      </span>
+      <span className="hidden items-center min-[1020px]:inline-flex">
+        <AlignGroup dark value={align} onChange={(next) => onStyle({ align: next })} />
+      </span>
 
       <Divider dark />
       <button
@@ -336,7 +342,7 @@ export function FloatingTextToolbar({
         className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip px-2 py-1 text-label font-bold text-white/80 transition hover:bg-white/12 hover:text-white"
       >
         <Type className="size-3.5" />
-        Edit text
+        <span className="hidden min-[880px]:inline">Edit text</span>
       </button>
 
       {onComment && (
@@ -352,7 +358,7 @@ export function FloatingTextToolbar({
         className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip bg-brand px-2 py-1 text-label font-bold text-white transition hover:bg-brand-deep"
       >
         <Sparkles className="size-3.5" />
-        Ask agent
+        <span className="hidden min-[820px]:inline">Ask agent</span>
       </button>
 
       {hasOverrides(style) && (
@@ -409,7 +415,7 @@ export function FormatRibbon({
   const live = !!element;
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto border-b border-hair bg-canvas px-3 py-1.5 sm:px-4">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hair bg-canvas px-3 py-1.5 sm:px-4">
       {/* What the controls will act on. Naming it is the difference between a
           ribbon and a row of mystery buttons. */}
       <div className="flex min-w-0 shrink-0 items-center gap-1.5">
@@ -429,7 +435,7 @@ export function FormatRibbon({
 
       <Divider />
 
-      <div className={cn("flex items-center gap-1.5", !live && "pointer-events-none opacity-40")}>
+      <div className={cn("flex flex-wrap items-center gap-x-1.5 gap-y-1.5", !live && "pointer-events-none opacity-40")}>
         <SizeStepper value={size} onChange={(next) => onStyle({ size: next })} />
 
         <select

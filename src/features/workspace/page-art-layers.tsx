@@ -6,69 +6,26 @@ import { cn } from "@/lib/cn";
 /**
  * The art on a page, before and after it exists.
  *
- * Layers are absolutely placed in percentages of the page box and painted in
- * z-order, so the layout pass can settle every position while the art is still
- * rendering. That is the whole point of splitting the two passes: an arriving
- * render changes what is inside a box, never where the box is — so a page you
- * are editing at twenty seconds does not jump at forty.
+ * Art occupies a slot the layout reserves for it, not a floating box over the
+ * page. The first version placed layers absolutely at percentages of the page
+ * and they landed on top of the copy — a packshot across the headline, a chart
+ * across the stat. Percentages are only meaningful against a composition, and
+ * the composition is exactly what changes when the page shape does.
  *
- * Percentages rather than pixels because the page is zoomed by the studio
- * control and can be A4, 16:9 or 3:4. A pixel box would be right at 100% on
- * one shape and wrong everywhere else.
+ * So the layout reserves the space and the art fills it. That keeps the
+ * property the two-pass generation depends on — the box is settled before the
+ * art exists, so an arriving render never reflows the page — and it makes the
+ * box a real part of the composition rather than a guess laid over it.
  */
 export interface ArtLayerView {
   id: string;
   label: string;
   kind: "image" | "graph" | "background";
-  box: { x: number; y: number; w: number; h: number };
+  /** Which block reserves room for it. */
+  slot: "header" | "heroStat" | "moa" | "chart" | "page";
   z: number;
+  /** Milliseconds from the start of generation when this art lands. */
   readyAt: number;
-}
-
-export function PageArtLayers({
-  layers,
-  elapsed,
-  selectedId,
-  onSelect,
-  interactive,
-}: {
-  layers: ArtLayerView[];
-  /** Milliseconds since generation began. */
-  elapsed: number;
-  selectedId?: string | null;
-  onSelect?: (id: string) => void;
-  /** Review mode is a finished asset: nothing on it is selectable. */
-  interactive?: boolean;
-}) {
-  return (
-    <div aria-hidden={false} className="pointer-events-none absolute inset-0">
-      {[...layers]
-        .sort((a, b) => a.z - b.z)
-        .map((layer) => {
-          const ready = elapsed >= layer.readyAt;
-          const selected = selectedId === layer.id;
-          return (
-            <div
-              key={layer.id}
-              style={{
-                left: `${layer.box.x}%`,
-                top: `${layer.box.y}%`,
-                width: `${layer.box.w}%`,
-                height: `${layer.box.h}%`,
-                zIndex: layer.z,
-              }}
-              className={cn("absolute", interactive && "pointer-events-auto")}
-            >
-              {ready ? (
-                <FinishedArt layer={layer} selected={selected} onSelect={onSelect} interactive={interactive} />
-              ) : (
-                <PendingArt layer={layer} elapsed={elapsed} selected={selected} onSelect={onSelect} interactive={interactive} />
-              )}
-            </div>
-          );
-        })}
-    </div>
-  );
 }
 
 /** The glyph for a layer kind, as a component rather than a local binding:
@@ -81,114 +38,89 @@ function KindGlyph({ kind, className }: { kind: ArtLayerView["kind"]; className?
 }
 
 /**
- * A slot whose art has not arrived.
+ * One reserved slot, filling whatever the layout gave it.
  *
- * Solid rather than translucent, and carrying its own label and countdown,
- * for the same reason the video flow's placeholder does: a see-through box
- * reads as a rendering fault, where a filled panel reads as a slot that is
- * reserved. The seconds are the real schedule, not a guess — a wrong number
- * here is worse than none.
+ * Solid rather than translucent while it waits, and carrying its own label and
+ * countdown, for the same reason the video flow's placeholder does: a
+ * see-through box reads as a rendering fault, where a filled panel reads as a
+ * slot that is reserved. The seconds are the real schedule — a wrong number
+ * here would be worse than none.
  */
-function PendingArt({
+export function ArtSlot({
   layer,
   elapsed,
   selected,
   onSelect,
   interactive,
+  className,
 }: {
   layer: ArtLayerView;
+  /** Milliseconds since generation began. */
   elapsed: number;
   selected?: boolean;
   onSelect?: (id: string) => void;
+  /** Review mode is a finished asset: nothing on it is selectable. */
   interactive?: boolean;
+  className?: string;
 }) {
+  const ready = elapsed >= layer.readyAt;
   const secondsLeft = Math.max(0, Math.ceil((layer.readyAt - elapsed) / 1000));
-  const background = layer.kind === "background";
 
   return (
     <div
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
-      aria-busy
-      aria-label={`${layer.label} generating — ${secondsLeft}s`}
+      aria-busy={!ready}
+      aria-label={ready ? layer.label : `${layer.label} generating — ${secondsLeft}s`}
       onClick={(e) => {
         if (!interactive) return;
         e.stopPropagation();
         onSelect?.(layer.id);
       }}
       className={cn(
-        "relative flex h-full w-full flex-col items-center justify-center gap-1 overflow-hidden border",
-        background ? "rounded-none bg-[#0d1521]/[0.04]" : "rounded-control bg-[#0e1a16]",
+        "relative flex min-w-0 items-center justify-center overflow-hidden rounded-control border transition",
         interactive && "cursor-pointer",
-        selected ? "border-brand ring-2 ring-brand/25" : background ? "border-transparent" : "border-white/12"
+        ready
+          ? layer.kind === "graph"
+            ? "border-info-line bg-[linear-gradient(180deg,#f4f8ff_0%,#e7efff_100%)]"
+            : "border-tint-line bg-[linear-gradient(160deg,#1a2740_0%,#2b1a12_100%)]"
+          : "border-white/12 bg-[#0e1a16]",
+        selected && "border-brand ring-2 ring-brand/25",
+        className
       )}
     >
-      <span aria-hidden className="shimmer pointer-events-none absolute inset-0" />
-      {!background && (
-        <>
-          <span className="relative grid size-7 place-items-center rounded-chip border border-white/12 bg-white/8">
-            <KindGlyph kind={layer.kind} className="size-3.5 text-white/80" />
-          </span>
-          <span className="dot-cycle relative inline-flex items-baseline text-micro font-bold text-white/60">
-            Generating
-            <span aria-hidden>.</span>
-            <span aria-hidden>.</span>
-            <span aria-hidden>.</span>
-          </span>
-          <span className="relative line-clamp-2 max-w-[90%] px-2 text-center text-micro leading-snug text-white/45">
-            {layer.label}
-          </span>
-          <span className="relative text-micro font-bold tabular-nums text-white/70">{secondsLeft}s</span>
-        </>
-      )}
+      {ready ? <FinishedArt layer={layer} /> : <PendingArt layer={layer} secondsLeft={secondsLeft} />}
     </div>
   );
 }
 
-/** The art, once it has landed. Same box, same z — only the contents changed. */
-function FinishedArt({
-  layer,
-  selected,
-  onSelect,
-  interactive,
-}: {
-  layer: ArtLayerView;
-  selected?: boolean;
-  onSelect?: (id: string) => void;
-  interactive?: boolean;
-}) {
-  if (layer.kind === "background") {
-    return (
-      <div
-        aria-label={layer.label}
-        className="h-full w-full bg-[radial-gradient(120%_90%_at_82%_-10%,rgba(253,72,22,0.07),transparent_58%),radial-gradient(100%_80%_at_-10%_110%,rgba(29,78,216,0.07),transparent_55%)]"
-      />
-    );
-  }
-
+function PendingArt({ layer, secondsLeft }: { layer: ArtLayerView; secondsLeft: number }) {
   return (
-    <div
-      role={interactive ? "button" : undefined}
-      tabIndex={interactive ? 0 : undefined}
-      aria-label={layer.label}
-      onClick={(e) => {
-        if (!interactive) return;
-        e.stopPropagation();
-        onSelect?.(layer.id);
-      }}
-      className={cn(
-        "relative flex h-full w-full items-end overflow-hidden rounded-control border shadow-2xs transition",
-        layer.kind === "graph"
-          ? "border-info-line bg-[linear-gradient(180deg,#f4f8ff_0%,#e7efff_100%)]"
-          : "border-tint-line bg-[linear-gradient(160deg,#1a2740_0%,#2b1a12_100%)]",
-        interactive && "cursor-pointer",
-        selected && "border-brand ring-2 ring-brand/25"
-      )}
-    >
-      {/* Enough of a suggestion of the render to read as art rather than as an
-          empty panel, without pretending to be the finished asset. */}
+    <>
+      <span aria-hidden className="shimmer pointer-events-none absolute inset-0" />
+      <div className="relative flex min-w-0 flex-col items-center gap-0.5 px-2 py-1.5 text-center">
+        <span className="grid size-6 place-items-center rounded-chip border border-white/12 bg-white/8">
+          <KindGlyph kind={layer.kind} className="size-3 text-white/80" />
+        </span>
+        <span className="dot-cycle inline-flex items-baseline text-micro font-bold text-white/60">
+          Generating
+          <span aria-hidden>.</span>
+          <span aria-hidden>.</span>
+          <span aria-hidden>.</span>
+        </span>
+        <span className="line-clamp-1 max-w-full text-micro leading-snug text-white/45">{layer.label}</span>
+        <span className="text-micro font-bold tabular-nums text-white/70">{secondsLeft}s</span>
+      </div>
+    </>
+  );
+}
+
+/** The art, once it has landed. Same slot, same size — only the contents. */
+function FinishedArt({ layer }: { layer: ArtLayerView }) {
+  return (
+    <>
       {layer.kind === "graph" ? (
-        <div className="flex h-full w-full items-end gap-[6%] px-[8%] pb-[14%]">
+        <div className="absolute inset-0 flex items-end gap-[6%] px-[8%] pb-[12%]">
           {[38, 62, 81, 74, 90].map((h, i) => (
             <span
               key={i}
@@ -203,13 +135,37 @@ function FinishedArt({
 
       <span
         className={cn(
-          "relative m-1.5 inline-flex items-center gap-1 rounded-glyph px-1.5 py-0.5 text-micro font-bold",
+          "absolute bottom-1 left-1 inline-flex max-w-[calc(100%-0.5rem)] items-center gap-1 rounded-glyph px-1.5 py-0.5 text-micro font-bold",
           layer.kind === "graph" ? "bg-card/85 text-ink-2" : "bg-black/45 text-white/85"
         )}
       >
-        <KindGlyph kind={layer.kind} className="size-2.5" />
-        {layer.label}
+        <KindGlyph kind={layer.kind} className="size-2.5 shrink-0" />
+        <span className="truncate">{layer.label}</span>
       </span>
+    </>
+  );
+}
+
+/**
+ * The page's background wash — the one layer that genuinely is an overlay,
+ * because it sits behind everything rather than taking space from anything.
+ */
+export function PageBackgroundArt({
+  layer,
+  elapsed,
+}: {
+  layer: ArtLayerView | undefined;
+  elapsed: number;
+}) {
+  if (!layer) return null;
+  const ready = elapsed >= layer.readyAt;
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
+      {ready ? (
+        <div className="h-full w-full bg-[radial-gradient(120%_90%_at_82%_-10%,rgba(253,72,22,0.07),transparent_58%),radial-gradient(100%_80%_at_-10%_110%,rgba(29,78,216,0.07),transparent_55%)]" />
+      ) : (
+        <span className="shimmer absolute inset-0 bg-[#0d1521]/[0.04]" />
+      )}
     </div>
   );
 }

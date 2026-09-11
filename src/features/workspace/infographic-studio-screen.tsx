@@ -40,7 +40,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  CommentCard,
+  CommentsModal,
+  ElementActionBar,
   ELEMENT_LABELS,
   commentStats,
   pageAnchor,
@@ -63,7 +64,7 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 import { PreflightPanel } from "@/features/workspace/preflight-panel";
-import { PageArtLayers } from "@/features/workspace/page-art-layers";
+import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 
 export type CreativeStudioMode = "editor" | "generating" | "review";
 
@@ -79,12 +80,29 @@ interface PageArtLayer {
   id: string;
   label: string;
   kind: "image" | "graph" | "background";
-  /** Percentages of the page box, so the layer survives zoom and page shape. */
-  box: { x: number; y: number; w: number; h: number };
+  /** Which block reserves room for it — see page-art-layers. */
+  slot: "header" | "heroStat" | "moa" | "chart" | "page";
   z: number;
   /** Milliseconds from the start of generation when this art lands. */
   readyAt: number;
 }
+
+/**
+ * The page's real dimensions, per shape.
+ *
+ * A page was being drawn at one width with `aspect-video` bolted on, so a
+ * landscape page was a short letterbox with a tall column of blocks inside it
+ * and `overflow-hidden` quietly eating the bottom half. The shape has to
+ * decide the size AND the composition: a landscape page puts its body in two
+ * columns because that is the only way a wide short box holds this much.
+ */
+const PAGE_GEOMETRY: Record<string, { width: number; height: number; columns: 1 | 2; label: string }> = {
+  "16:9": { width: 1040, height: 585, columns: 2, label: "16:9 Landscape" },
+  "9:16": { width: 520, height: 924, columns: 1, label: "9:16 Portrait" },
+  "1:1": { width: 780, height: 780, columns: 1, label: "1:1 Square" },
+  "3:4": { width: 720, height: 960, columns: 1, label: "3:4 Tablet" },
+  A4: { width: 700, height: 990, columns: 1, label: "A4 Print" },
+};
 
 /* Layout first, across every page; then the art, one piece at a time. The
    same shape as the video flow's two passes, and the same reason — you can
@@ -140,10 +158,10 @@ interface InfographicPageData {
 }
 
 const PAGE_1_ART: PageArtLayer[] = [
-  { id: "p1-bg", label: "Dermal tissue wash", kind: "background", box: { x: 0, y: 0, w: 100, h: 100 }, z: 0, readyAt: 0 },
-  { id: "p1-moa", label: "Cellular cascade render", kind: "image", box: { x: 6, y: 40, w: 40, h: 18 }, z: 2, readyAt: 0 },
-  { id: "p1-chart", label: "EMBRACE-3 response curve", kind: "graph", box: { x: 52, y: 40, w: 42, h: 18 }, z: 2, readyAt: 0 },
-  { id: "p1-pack", label: "200mg pack shot", kind: "image", box: { x: 70, y: 12, w: 24, h: 16 }, z: 3, readyAt: 0 },
+  { id: "p1-bg", label: "Dermal tissue wash", kind: "background", slot: "page", z: 0, readyAt: 0 },
+  { id: "p1-moa", label: "Cellular cascade render", kind: "image", slot: "moa", z: 2, readyAt: 0 },
+  { id: "p1-chart", label: "EMBRACE-3 response curve", kind: "graph", slot: "chart", z: 2, readyAt: 0 },
+  { id: "p1-pack", label: "200mg pack shot", kind: "image", slot: "header", z: 3, readyAt: 0 },
 ];
 
 const DEFAULT_PAGE_1: InfographicPageData = {
@@ -185,9 +203,9 @@ const DEFAULT_PAGE_1: InfographicPageData = {
 };
 
 const PAGE_2_ART: PageArtLayer[] = [
-  { id: "p2-bg", label: "Clinical gradient field", kind: "background", box: { x: 0, y: 0, w: 100, h: 100 }, z: 0, readyAt: 0 },
-  { id: "p2-durability", label: "52-week durability curve", kind: "graph", box: { x: 6, y: 38, w: 44, h: 20 }, z: 2, readyAt: 0 },
-  { id: "p2-renal", label: "Renal clearance schematic", kind: "image", box: { x: 54, y: 38, w: 40, h: 20 }, z: 2, readyAt: 0 },
+  { id: "p2-bg", label: "Clinical gradient field", kind: "background", slot: "page", z: 0, readyAt: 0 },
+  { id: "p2-durability", label: "52-week durability curve", kind: "graph", slot: "chart", z: 2, readyAt: 0 },
+  { id: "p2-renal", label: "Renal clearance schematic", kind: "image", slot: "moa", z: 2, readyAt: 0 },
 ];
 
 const DEFAULT_PAGE_2: InfographicPageData = {
@@ -304,6 +322,44 @@ export function InfographicStudioScreen() {
   const blockLanded = (id: (typeof BLOCK_ORDER)[number]) => BLOCK_ORDER.indexOf(id) < blocksLanded;
   const layoutDone = blocksLanded >= BLOCK_ORDER.length;
   const [selectedArtId, setSelectedArtId] = useState<string | null>(null);
+
+  /* The page is drawn at its true size and scaled to the room available, so
+     the mat measures itself rather than the page guessing. */
+  const canvasAreaRef = useRef<HTMLElement | null>(null);
+  const [canvasWidth, setCanvasWidth] = useState(0);
+
+  useEffect(() => {
+    const node = canvasAreaRef.current;
+    if (!node) return;
+    // The observer fires on observe, so there is no need to seed the width
+    // from the effect body — which would be a synchronous setState in an
+    // effect, and a cascading render.
+    const observer = new ResizeObserver(() => setCanvasWidth(node.clientWidth));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  /* ── The composition fits the page, always ─────────────────────────────────
+     A page is a fixed canvas, so a composition taller than the canvas is not
+     a scrolling page — it is a clipped one, and the bottom of a clipped page
+     is where fair balance lives. The copy deck's fit chips keep blocks inside
+     their own boxes; this is the guard for everything they cannot know about,
+     like a shape change that turns a tall page into a wide one.
+
+     Measured height is the natural height: a transform does not change layout,
+     so scaling the composition cannot feed back into what is being measured.
+     Width stays at 100%, so a scaled composition sits inset from the page
+     edges rather than off-centre — which reads as a margin, not a fault. */
+  const compositionRef = useRef<HTMLDivElement | null>(null);
+  const [compositionHeight, setCompositionHeight] = useState(0);
+
+  useEffect(() => {
+    const node = compositionRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setCompositionHeight(node.scrollHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
   const [selectedBlockId, setSelectedBlockId] = useState<"header" | "heroStat" | "moa" | "chart" | "isi">("heroStat");
 
   /* ── Element-level selection ──────────────────────────────────────────────
@@ -396,10 +452,11 @@ export function InfographicStudioScreen() {
       sentToChat: false,
     },
   ]);
-  /** The comment being closed, and the note that has to come with it. */
-  const [closingComment, setClosingComment] = useState<{ id: string; as: "resolved" | "rejected" } | null>(null);
-  const [closeReason, setCloseReason] = useState("");
-  const [newCommentText, setNewCommentText] = useState("");
+  const [commentsModalOpen, setCommentsModalOpen] = useState(false);
+  /** Where the in-place composer is anchored — a note about a run is written
+   *  next to the run, the same as on the video canvas. */
+  const [commentComposerAt, setCommentComposerAt] = useState<{ x: number; y: number } | null>(null);
+  const commentSeq = useRef(0);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -433,6 +490,20 @@ export function InfographicStudioScreen() {
   };
 
   // Update current page field
+  /** The art reserved for one block, or nothing if this page has none there. */
+  const artFor = (slot: PageArtLayer["slot"]) => currentPage.art.find((a) => a.slot === slot);
+
+  const pageGeometry = PAGE_GEOMETRY[pageShape] ?? PAGE_GEOMETRY["3:4"];
+  /* Never scaled up past its true size — a 520px portrait page blown up to
+     fill a wide mat would be a lie about how big the asset is. */
+  const pageFitScale = canvasWidth > 0
+    ? Math.min(1, (canvasWidth - 72) / pageGeometry.width)
+    : 1;
+  const pageScale = (zoomLevel / 100) * pageFitScale;
+  const compositionFit = compositionHeight > pageGeometry.height
+    ? pageGeometry.height / compositionHeight
+    : 1;
+
   const updateCurrentPage = (updater: (prev: InfographicPageData) => InfographicPageData) => {
     setPagesList((prev) =>
       prev.map((p) => (p.id === activePageId ? updater(p) : p))
@@ -686,27 +757,40 @@ export function InfographicStudioScreen() {
     }, 2300);
   };
 
-  const handleAddComment = () => {
-    if (!newCommentText.trim()) return;
+  /**
+   * A comment on the selected run, composed in place.
+   *
+   * Anchored to (page, element) like every other comment, so the list can say
+   * where it lives and take you to it. "Send to chat" is one gesture rather
+   * than two because the commonest thing after writing a note about your own
+   * work is asking for the change.
+   */
+  const addElementComment = (text: string, alsoSendToChat: boolean) => {
+    // A counter rather than a timestamp: the id is needed straight away to
+    // hand the comment to the agent, and a clock read is an impure call the
+    // component body has no business making.
+    commentSeq.current += 1;
+    const id = `c-mine-${commentSeq.current}`;
     setComments((prev) => [
       {
-        id: `c-${Date.now()}`,
+        id,
         ...pageAnchor(activePageId),
         elementId: selectedElementId ?? "page",
         elementLabel: selectedElement?.label ?? ELEMENT_LABELS.page,
-        author: "Maya Kapoor (Lead Author)",
+        author: "You",
         role: "Creative Author",
         avatar: "MK",
-        text: newCommentText.trim(),
+        text,
         at: "Just now",
-        source: "team",
+        source: "mine",
         status: "open",
         sentToChat: false,
       },
       ...prev,
     ]);
-    setNewCommentText("");
-    showToast("Comment added");
+    setCommentComposerAt(null);
+    if (alsoSendToChat) setTimeout(() => sendCommentToAgent(id), 60);
+    else showToast("Comment added");
   };
 
   /* Closing a comment. A team comment cannot close without a note — the
@@ -799,7 +883,7 @@ export function InfographicStudioScreen() {
                 </span>
               </div>
               <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
-                Saved just now · Canvas Studio · {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} ({pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"})
+                Saved just now · Canvas Studio · {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} ({pageGeometry.label})
               </div>
             </div>
 
@@ -879,6 +963,29 @@ export function InfographicStudioScreen() {
               </Button>
             )}
 
+            {/* The owner's way into comments, in the same place and the same
+                shape as the video editor's. Hidden in review, where the
+                reviewer's panel is the whole of what they see — a header
+                counter there would offer the owner's My/Team view to someone
+                who is not the owner. */}
+            {studioMode !== "review" && (
+              <button
+                type="button"
+                onClick={() => setCommentsModalOpen(true)}
+                title="Comments"
+                aria-label={`Comments — ${commentStats(comments).open} open`}
+                className={cn(
+                  "flex h-8 cursor-pointer items-center gap-1.5 rounded-chip border px-2.5 transition-colors",
+                  commentStats(comments).open > 0
+                    ? "border-brand/25 bg-tint text-brand-deep hover:bg-tint-strong"
+                    : "border-hair-2 bg-card text-ink-3 shadow-2xs hover:border-brand hover:text-ink"
+                )}
+              >
+                <MessageSquare className="size-3.5" />
+                <span className="text-caption font-bold tabular-nums">{commentStats(comments).open}</span>
+              </button>
+            )}
+
             {studioMode === "review" && (
               <Button
                 size="sm"
@@ -909,7 +1016,7 @@ export function InfographicStudioScreen() {
       }
       rail={
         studioMode !== "generating" ? (
-            <aside className="w-56 sm:w-60 border-r border-hair bg-[#f8f9f7] flex flex-col shrink-0 overflow-y-auto">
+            <aside className="flex w-56 min-h-0 shrink-0 flex-col overflow-y-auto border-r border-hair bg-[#f8f9f7] sm:w-60">
               {/* Pages Strip Header */}
               <div className="p-3 border-b border-hair bg-card flex items-center justify-between">
                 <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3">
@@ -947,7 +1054,10 @@ export function InfographicStudioScreen() {
                         <span className="text-label font-bold text-ink truncate">{pg.name}</span>
                         {isActive && <span className="size-2 rounded-full bg-brand" />}
                       </div>
-                      <div className="aspect-[3/4] w-full rounded-chip bg-card border border-hair-2 p-2 flex flex-col justify-between overflow-hidden shadow-inner-xs">
+                      <div
+                        style={{ aspectRatio: `${pageGeometry.width} / ${pageGeometry.height}` }}
+                        className="flex w-full flex-col justify-between overflow-hidden rounded-chip border border-hair-2 bg-card p-2 shadow-inner-xs"
+                      >
                         <div className={cn("h-2 w-14 rounded-glyph", pg.id === 1 ? "bg-[#14233c]" : "bg-info-strong")} />
                         <div className="h-4 w-full bg-brand/20 rounded-glyph" />
                         <div className="h-6 w-full bg-black/5 rounded-glyph" />
@@ -1088,7 +1198,7 @@ export function InfographicStudioScreen() {
               </div>
             </div>
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {/* What is still arriving, and what you can already do. The page
                 below is editable throughout — the strip is a status line, not
                 a gate. */}
@@ -1154,34 +1264,51 @@ export function InfographicStudioScreen() {
               </div>
             )}
           <main
+            ref={canvasAreaRef}
             onPointerDown={(e) => {
               // Only the mat itself deselects. Without the target check, any
               // click that bubbles out of the page would clear the selection
               // the moment you used a control inside it.
               if (e.target === e.currentTarget) clearElementSelection();
             }}
-            className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 bg-[#e5e8e4] flex justify-center items-start"
+            className="flex flex-1 items-start justify-center overflow-auto bg-[#e5e8e4] p-4 sm:p-6 lg:p-8"
           >
-            <div className="w-full max-w-[720px] flex justify-center py-4 my-auto">
+            {/* The page is drawn at its true size for the chosen shape and
+                then scaled to the room available, so a 16:9 page is a wide
+                short page rather than a tall column with its bottom clipped.
+                The zoom control multiplies that fit rather than replacing it. */}
+            {/* A sizer at the SCALED dimensions, with the page transformed
+                inside it. A transform does not change the layout box, so
+                without this the mat reserved the page's full unscaled width
+                and scrolled sideways past the edge of the screen. */}
+            <div
+              style={{
+                width: pageGeometry.width * pageScale,
+                height: pageGeometry.height * pageScale,
+              }}
+              className="relative shrink-0"
+            >
               <div
-                style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "center top" }}
-                className={cn(
-                  "relative w-full max-w-[700px] rounded-card bg-card shadow-2xl border border-hair-2 overflow-hidden text-left transition-transform duration-150 flex flex-col select-none",
-                  pageShape === "16:9" ? "aspect-video" : "min-h-[880px]"
-                )}
+                style={{
+                  width: pageGeometry.width,
+                  height: pageGeometry.height,
+                  transform: `scale(${pageScale})`,
+                  transformOrigin: "top left",
+                }}
+                className="absolute left-0 top-0 flex select-none flex-col overflow-hidden rounded-card border border-hair-2 bg-card text-left shadow-2xl transition-transform duration-150"
               >
-                {/* Art, in the boxes the layout pass settled. Background sits
-                    at z 0 behind the copy; the rest paints over it. */}
-                <PageArtLayers
-                  layers={currentPage.art}
-                  elapsed={genElapsed}
-                  selectedId={selectedArtId}
-                  onSelect={(id) => {
-                    setSelectedArtId(id);
-                    clearElementSelection();
+                {/* The one true overlay: it sits behind everything rather than
+                    taking space from anything. */}
+                <PageBackgroundArt layer={artFor("page")} elapsed={genElapsed} />
+
+                <div
+                  ref={compositionRef}
+                  style={{
+                    transform: compositionFit < 1 ? `scale(${compositionFit})` : undefined,
+                    transformOrigin: "top center",
                   }}
-                  interactive={studioMode === "editor"}
-                />
+                  className="relative z-[1] flex min-h-0 flex-1 flex-col"
+                >
 
                 {/* 1. Header Band */}
                 <div
@@ -1194,16 +1321,43 @@ export function InfographicStudioScreen() {
                       : "hover:brightness-105"
                   )}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    {run("header.badge", "rounded-chip bg-white/15 px-2.5 py-0.5 text-micro font-extrabold uppercase tracking-wider text-white border border-white/20")}
-                    {run("header.approvalTag", "text-caption font-mono text-white/70")}
+                  {!blockLanded("header") && (
+                    <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
+                  )}
+                  <div className="flex items-start gap-4">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        {run("header.badge", "rounded-chip bg-white/15 px-2.5 py-0.5 text-micro font-extrabold uppercase tracking-wider text-white border border-white/20")}
+                        {run("header.approvalTag", "text-caption font-mono text-white/70")}
+                      </div>
+                      {run("header.title", "text-display-lg font-[850] text-white tracking-tight leading-tight", "h1")}
+                      {run("header.subtitle", "text-body text-white/80 font-medium mt-1 block", "p")}
+                    </div>
+
+                    {/* Reserved before the render exists, which is why the
+                        headline never has to move when it arrives. */}
+                    {artFor("header") && (
+                      <ArtSlot
+                        layer={artFor("header")!}
+                        elapsed={genElapsed}
+                        selected={selectedArtId === artFor("header")!.id}
+                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
+                        interactive={studioMode === "editor"}
+                        className="h-[74px] w-[108px] shrink-0"
+                      />
+                    )}
                   </div>
-                  {run("header.title", "text-display-lg font-[850] text-white tracking-tight leading-tight", "h1")}
-                  {run("header.subtitle", "text-body text-white/80 font-medium mt-1 block", "p")}
                 </div>
 
                 {/* Infographic Body Blocks */}
-                <div className="relative z-[1] p-6 space-y-4 flex-1 flex flex-col">
+                <div
+                  className={cn(
+                    "relative z-[1] min-h-0 flex-1 gap-3 p-5",
+                    pageGeometry.columns === 2
+                      ? "grid grid-cols-2 content-start"
+                      : "flex flex-col"
+                  )}
+                >
                   {/* 2. Stat Hero */}
                   <div
                     onClick={() => studioMode === "editor" && handleSelectBlock("heroStat")}
@@ -1219,12 +1373,6 @@ export function InfographicStudioScreen() {
                       it lands the frame is already correct underneath — the
                       sheet only covers copy that has not arrived. */}
                   {!blockLanded("heroStat") && (
-                    <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
-                  )}
-                  {/* The layout pass is what settles this block's place. Until
-                      it lands the frame is already correct underneath — the
-                      sheet only covers copy that has not arrived. */}
-                  {!blockLanded("header") && (
                     <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
                   )}
                     <div className="flex items-center justify-between mb-1">
@@ -1259,14 +1407,26 @@ export function InfographicStudioScreen() {
                     <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
                   )}
                     {run("moa.title", "text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-1")}
-                    {run("moa.detail", "text-body text-ink-2 leading-relaxed mb-3 block", "p")}
+                    {run("moa.detail", "text-body text-ink-2 leading-relaxed mb-2.5 block", "p")}
+
+                    {artFor("moa") && (
+                      <ArtSlot
+                        layer={artFor("moa")!}
+                        elapsed={genElapsed}
+                        selected={selectedArtId === artFor("moa")!.id}
+                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
+                        interactive={studioMode === "editor"}
+                        className="mb-2.5 h-[96px] w-full"
+                      />
+                    )}
+
                     <div className="grid grid-cols-3 gap-2">
                       {currentPage.moa.steps.map((step, idx) => (
                         <div
                           key={idx}
-                          className="p-2 rounded-control bg-card border border-hair shadow-2xs text-center"
+                          className="rounded-control border border-hair bg-card p-1.5 text-center shadow-2xs"
                         >
-                          <span className="block text-label font-extrabold text-ink">{step}</span>
+                          <span className="block text-label font-extrabold leading-tight text-ink">{step}</span>
                           <span className="block text-micro text-ink-3">Cellular Target</span>
                         </div>
                       ))}
@@ -1290,12 +1450,26 @@ export function InfographicStudioScreen() {
                   {!blockLanded("chart") && (
                     <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
                   )}
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-body font-bold text-ink">{currentPage.chart.title}</span>
-                      <span className="text-caption font-mono text-ink-3">
+                    <div className="mb-2.5 flex items-center justify-between gap-2">
+                      <span className="truncate text-body font-bold text-ink">{currentPage.chart.title}</span>
+                      <span className="shrink-0 text-caption font-mono text-ink-3">
                         {currentPage.chart.cohort}
                       </span>
                     </div>
+
+                    {/* The rendered figure sits above the bars rather than
+                        replacing them: the bars are the numbers, the render is
+                        the picture, and a reviewer wants both. */}
+                    {artFor("chart") && (
+                      <ArtSlot
+                        layer={artFor("chart")!}
+                        elapsed={genElapsed}
+                        selected={selectedArtId === artFor("chart")!.id}
+                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
+                        interactive={studioMode === "editor"}
+                        className="mb-2.5 h-[96px] w-full"
+                      />
+                    )}
 
                     <div className="space-y-2">
                       <div>
@@ -1350,6 +1524,7 @@ export function InfographicStudioScreen() {
                     {run("isi.content", "text-caption text-ink-3 leading-normal block", "p")}
                   </div>
                 </div>
+                </div>
               </div>
             </div>
           </main>
@@ -1391,6 +1566,7 @@ export function InfographicStudioScreen() {
                   </button>
                 )}
 
+                  {studioMode === "review" && (
                   <button
                     type="button"
                     onClick={() => setActiveTab("comments")}
@@ -1406,6 +1582,7 @@ export function InfographicStudioScreen() {
                       {commentStats(comments).open}
                     </span>
                   </button>
+                  )}
 
                 <button
                   type="button"
@@ -1693,89 +1870,6 @@ export function InfographicStudioScreen() {
               </div>
             )}
 
-            {/* ── TAB 2a: COMMENTS (In Editor Mode) ── */}
-            {/* The editor half the creative studio never had. Same records as
-                the reviewer sees, same card, same closing note — the author
-                is just on the other side of them. */}
-            {activeTab === "comments" && studioMode === "editor" && (
-              <div className="flex min-h-0 flex-1 flex-col">
-                <div className="shrink-0 space-y-2 border-b border-hair bg-canvas p-3.5">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-control border border-hair bg-card px-3 py-2 text-caption">
-                    {[
-                      { label: "open", value: commentStats(comments).open, tone: "text-brand" },
-                      { label: "resolved", value: commentStats(comments).resolved, tone: "text-ok" },
-                      { label: "discarded", value: commentStats(comments).rejected, tone: "text-ink-3" },
-                    ].map((stat) => (
-                      <span key={stat.label} className="inline-flex items-baseline gap-1">
-                        <span className={cn("text-body font-[850] tabular-nums", stat.tone)}>{stat.value}</span>
-                        <span className="text-ink-3">{stat.label}</span>
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="flex items-center gap-1.5 text-label font-bold text-ink">
-                      <span>Add a comment</span>
-                      <span className="rounded-glyph bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">
-                        {selectedElement ? selectedElement.label : `Page ${activePageId}`}
-                      </span>
-                    </label>
-                    <textarea
-                      value={newCommentText}
-                      onChange={(e) => setNewCommentText(e.target.value)}
-                      rows={2}
-                      placeholder={
-                        selectedElement
-                          ? `A note on the ${selectedElement.label.toLowerCase()}…`
-                          : "Select an element on the page, or comment on the whole page…"
-                      }
-                      className="w-full resize-none rounded-control border border-hair-2 p-2.5 text-body text-ink outline-none focus:border-brand"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={handleAddComment}
-                      disabled={!newCommentText.trim()}
-                      className="h-8.5 w-full cursor-pointer rounded-control bg-brand text-label font-bold text-white hover:bg-brand-deep disabled:opacity-40"
-                    >
-                      Add comment
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="min-h-0 flex-1 overflow-y-auto p-3.5">
-                  {comments.length === 0 ? (
-                    <div className="rounded-panel border border-dashed border-hair-2 bg-canvas px-4 py-10 text-center">
-                      <p className="text-body font-bold text-ink-2">No comments yet</p>
-                      <p className="mt-0.5 text-label text-ink-4">
-                        Select any element on the page and leave a note.
-                      </p>
-                    </div>
-                  ) : (
-                    <ul className="space-y-2.5">
-                      {comments.map((c) => (
-                        <CommentCard
-                          key={c.id}
-                          comment={c}
-                          closing={closingComment?.id === c.id ? closingComment.as : null}
-                          reason={closeReason}
-                          onReason={setCloseReason}
-                          onBeginClose={(as) => { setClosingComment({ id: c.id, as }); setCloseReason(""); }}
-                          onCancelClose={() => { setClosingComment(null); setCloseReason(""); }}
-                          onConfirmClose={(as, note) => {
-                            closeComment(c.id, as, note);
-                            setClosingComment(null);
-                            setCloseReason("");
-                          }}
-                          onSendToChat={() => sendCommentToAgent(c.id)}
-                          onJump={() => jumpToComment(c)}
-                        />
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* ── TAB 2: REVIEWER COMMENTS (In Review Mode) ── */}
             {/* The video studio's reviewer panel, unchanged: review gates
                 first, then the stats, then Open and Closed groups where a
@@ -1789,7 +1883,6 @@ export function InfographicStudioScreen() {
                 medicalReviewDone={mlrCheckResolved}
                 regulatoryReviewDone={qaCheckResolved}
                 onPost={(text) => {
-                  setNewCommentText(text);
                   setComments((prev) => [
                     {
                       id: `c-${Date.now()}`,
@@ -1807,7 +1900,6 @@ export function InfographicStudioScreen() {
                     },
                     ...prev,
                   ]);
-                  setNewCommentText("");
                   showToast("Review comment posted");
                 }}
               />
@@ -2001,7 +2093,7 @@ export function InfographicStudioScreen() {
                     <div>
                       <span className="text-white/50 block text-caption uppercase font-bold">Pages &amp; Format</span>
                       <strong className="text-white">
-                        {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} · {pageShape === "16:9" ? "16:9 Landscape" : pageShape === "A4" ? "A4 Print" : "3:4 Tablet"}
+                        {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} · {pageGeometry.label}
                       </strong>
                     </div>
                     <div>
@@ -2114,6 +2206,40 @@ export function InfographicStudioScreen() {
           </div>
         )}
 
+        {/* ── IN-PLACE COMMENT COMPOSER ── */}
+        {studioMode === "editor" && commentComposerAt && selectedElement && (
+          <ElementActionBar
+            at={commentComposerAt}
+            elementLabel={selectedElement.label}
+            onAddToChat={() => {
+              addElementToChat();
+              setCommentComposerAt(null);
+            }}
+            onComment={addElementComment}
+            onDismiss={() => setCommentComposerAt(null)}
+          />
+        )}
+
+        {/* ── COMMENTS ── */}
+        {/* The same modal the video editor opens, on the same records. Two
+            different presentations of one conversation was the whole problem:
+            a reviewer and an author were looking at the same comment through
+            differently-shaped windows. */}
+        {commentsModalOpen && (
+          <CommentsModal
+            comments={comments}
+            teamUnlocked={studioMode === "review" || comments.some((c) => c.source === "team")}
+            onResolve={(id, reason) => closeComment(id, "resolved", reason)}
+            onReject={(id, reason) => closeComment(id, "rejected", reason)}
+            onSendToChat={sendCommentToAgent}
+            onJump={(comment) => {
+              jumpToComment(comment);
+              setCommentsModalOpen(false);
+            }}
+            onClose={() => setCommentsModalOpen(false)}
+          />
+        )}
+
         {/* ── FLOATING TEXT TOOLBAR (the PowerPoint position) ── */}
         {studioMode === "editor" && selectedElement && !editingElementId && (
           <FloatingTextToolbar
@@ -2124,7 +2250,13 @@ export function InfographicStudioScreen() {
             onReset={resetElementStyle}
             onAddToChat={addElementToChat}
             onEdit={() => setEditingElementId(selectedElement.id)}
-            onComment={() => setActiveTab("comments")}
+            onComment={() =>
+              setCommentComposerAt(
+                elementRect
+                  ? { x: elementRect.left + elementRect.width / 2, y: elementRect.top + elementRect.height }
+                  : null
+              )
+            }
           />
         )}
 
