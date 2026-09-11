@@ -65,6 +65,7 @@ import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
+import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import {
   CommentsModal,
   ElementActionBar,
@@ -3059,44 +3060,7 @@ export function StudioScreen() {
             )}
 
             {/* ── TAB 3: CLAIMS & EVIDENCE LIBRARY ── */}
-            {activeTab === "evidence" && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                <div className="flex items-center justify-between border-b border-hair pb-2.5">
-                  <div>
-                    <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">
-                      Compliance Grounding
-                    </div>
-                    <h2 className="mt-0.5 text-body-lg font-[800] text-ink">{APPROVED_CLAIMS.length} Approved Claims</h2>
-                  </div>
-                  <span className="rounded-chip bg-ok-bg text-ok border border-ok-line px-2.5 py-0.5 text-micro font-bold">
-                    ✓ PromoMats Verified
-                  </span>
-                </div>
-
-                <div className="space-y-2.5">
-                  {APPROVED_CLAIMS.map((c) => (
-                    <div
-                      key={c.id}
-                      className={cn(
-                        "rounded-control border p-3 text-left transition-all duration-300",
-                        highlightedClaimId === c.id
-                          ? "border-brand bg-tint ring-2 ring-brand/25 shadow-sm"
-                          : "border-hair bg-canvas hover:border-brand/20"
-                      )}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-micro font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-glyph">
-                          {c.tag}
-                        </span>
-                        <span className="text-caption font-bold text-ok">✓ {c.status}</span>
-                      </div>
-                      <h4 className="text-body font-bold text-ink">{c.title}</h4>
-                      <p className="text-caption text-ink-3 leading-relaxed mt-1">{c.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {activeTab === "evidence" && <ClaimsPanel highlightedClaimId={highlightedClaimId} />}
           </div>
         </>
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, FileText, ShieldCheck, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, FileText, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { CopyDeckCard, type CopyBlock } from "@/features/workspace/copy-deck-card";
@@ -28,11 +28,11 @@ export function CopyDeckScreen({
   claimSummary,
   leftOut,
   onChangeBlock,
-  onBack,
   onContinue,
-  onAsk,
   scope,
   onScopeChange,
+  pendingIds,
+  onCitationDetails,
 }: {
   blocks: CopyBlock[];
   pages: number[];
@@ -44,18 +44,17 @@ export function CopyDeckScreen({
    *  blueprint carried that a list of copy blocks cannot. */
   leftOut: string;
   onChangeBlock: (id: string, text: string) => void;
-  onBack: () => void;
   onContinue: () => void;
-  /** Ask the agent to rewrite whatever is in scope. */
-  onAsk: (instruction: string, scopeIds: string[]) => void;
   /** Blocks the chat's next instruction applies to. */
   scope: string[];
   onScopeChange: (ids: string[]) => void;
+  /** Being rewritten right now — content is withheld rather than half-shown. */
+  pendingIds: string[];
+  /** Jump to the approved claim behind a citation. */
+  onCitationDetails?: (claimId: string) => void;
 }) {
   const [activePage, setActivePage] = useState(pages[0] ?? 1);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [pendingIds, setPendingIds] = useState<string[]>([]);
-  const [instruction, setInstruction] = useState("");
 
   const onPage = blocks.filter((b) => b.pageNumber === activePage);
 
@@ -74,37 +73,17 @@ export function CopyDeckScreen({
   const toggleScope = (id: string) =>
     onScopeChange(scope.includes(id) ? scope.filter((s) => s !== id) : [...scope, id]);
 
-  const send = () => {
-    const text = instruction.trim();
-    if (!text || scope.length === 0) return;
-    setPendingIds(scope);
-    onAsk(text, scope);
-    setInstruction("");
-    // The rewrite lands on the blocks that were in scope; they are withheld
-    // until it does rather than shown half-changed.
-    setTimeout(() => setPendingIds([]), 1600);
-  };
-
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#f4f6f3]">
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col border-r border-hair bg-[#f4f6f3]">
       {/* ── Where you are, and what still needs a hand ── */}
-      <header className="flex flex-wrap items-center gap-2 border-b border-hair bg-card px-3 py-2 sm:px-4">
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="Back to the blueprint"
-          className="focus-ring grid size-8 shrink-0 cursor-pointer place-items-center rounded-chip text-ink-3 hover:bg-black/5 hover:text-ink"
-        >
-          <ArrowLeft className="size-4" />
-        </button>
-
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-hair bg-card px-3 py-2 sm:px-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <FileText className="size-3.5 shrink-0 text-brand" />
             <span className="truncate text-body-lg font-[850] tracking-tight text-ink">Copy deck</span>
           </div>
           <p className="mt-0.5 text-micro text-ink-3">
-            Read the words before the art is made. Every block shows how much of its box it uses.
+            Read the words before the art is made. Tick a block to aim the chat at it, or edit it here.
           </p>
         </div>
 
@@ -192,73 +171,36 @@ export function CopyDeckScreen({
               onToggleSelect={() => toggleScope(block.id)}
               onToggleEdit={() => setEditingId(editingId === block.id ? null : block.id)}
               onChange={(text) => onChangeBlock(block.id, text)}
+              onCitationDetails={onCitationDetails}
             />
           ))}
         </div>
       </div>
 
-      {/* ── Ask the agent, scoped to what is ticked ── */}
-      <div className="border-t border-hair bg-card px-3 py-2.5 sm:px-4">
-        <div className="mx-auto flex max-w-[760px] flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-label font-bold text-ink-2">
-              {scope.length === 0
-                ? "Tick the blocks an instruction should apply to"
-                : `${scope.length} ${scope.length === 1 ? "block" : "blocks"} in scope`}
-            </span>
-            {scope.length > 0 && (
-              <button
-                type="button"
-                onClick={() => onScopeChange([])}
-                className="cursor-pointer text-label font-bold text-brand hover:underline"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-end gap-2">
-            <textarea
-              value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  send();
-                }
-              }}
-              rows={2}
-              placeholder="e.g. Cut this to one sentence and keep the p-value."
-              className="flex-1 resize-none rounded-control border border-hair-2 bg-canvas p-2.5 text-body text-ink outline-none focus:border-brand focus:bg-card"
-            />
-            <Button
-              size="sm"
-              onClick={send}
-              disabled={!instruction.trim() || scope.length === 0}
-              className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-4 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
-            >
-              <Sparkles className="size-3.5" />
-              Rewrite
-            </Button>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-            <span className="text-micro text-ink-3">
-              {overflowing.length > 0
-                ? "Blocks that overflow have to be shortened before the art is made — a clipped safety block cannot ship."
-                : "Nothing overflows. The art can be generated against these boxes."}
-            </span>
-            <Button
-              onClick={onContinue}
-              disabled={overflowing.length > 0}
-              className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
-            >
-              Approve copy & open studio
-              <ArrowRight className="size-3.5" />
-            </Button>
-          </div>
+      {/* ── Where you are, and the way on ──
+          No composer here: the chat panel beside this screen is the composer,
+          the same as the script stage. Ticking cards is how an instruction is
+          aimed, so a second input on the canvas would be a second way to say
+          the same thing. */}
+      <div className="shrink-0 border-t border-hair bg-card px-3 py-2.5 sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="min-w-0 text-micro text-ink-3">
+            {overflowing.length > 0
+              ? "Blocks that overflow have to be shortened before the art is made — a clipped safety block cannot ship."
+              : scope.length > 0
+                ? `${scope.length} ${scope.length === 1 ? "block" : "blocks"} in the chat\u2019s scope — ask for a change in the panel.`
+                : "Tick any block to aim the chat at it, or click Edit to retype it yourself."}
+          </span>
+          <Button
+            onClick={onContinue}
+            disabled={overflowing.length > 0}
+            className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
+          >
+            Approve copy &amp; open studio
+            <ArrowRight className="size-3.5" />
+          </Button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

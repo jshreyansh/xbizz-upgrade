@@ -99,7 +99,7 @@ export function CopyDeckCard({
           {block.label}
         </span>
 
-        <FitChip fit={fit} />
+        {fit.state !== "fits" && <FitChip fit={fit} />}
 
         <button
           type="button"
@@ -147,25 +147,18 @@ export function CopyDeckCard({
         )}
       </div>
 
-      {/* ── How much of the box is gone ── */}
-      <div className="flex items-center gap-2">
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-black/[0.07]">
-          <div
-            style={{ width: `${Math.min(100, fit.used * 100)}%` }}
-            className={cn(
-              "h-full rounded-full transition-[width] duration-200",
-              fit.state === "overflows" ? "bg-warn" : fit.state === "tight" ? "bg-brand-2" : "bg-ok"
-            )}
-          />
-        </div>
-        <span className="shrink-0 text-micro tabular-nums text-ink-4">
-          {block.text.trim().length}/{fit.capacity}
-        </span>
-      </div>
     </article>
   );
 }
 
+/**
+ * Shown only when the copy does not comfortably fit.
+ *
+ * Every card used to carry a green "Fits" and a 18/34 counter, which is a
+ * progress bar for a thing nobody is trying to fill — and a status that is
+ * always present is not a status. What is left is the exception: too long, or
+ * about to be.
+ */
 function FitChip({ fit }: { fit: ReturnType<typeof copyFit> }) {
   return (
     <span
@@ -173,12 +166,10 @@ function FitChip({ fit }: { fit: ReturnType<typeof copyFit> }) {
         "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-1.5 py-0.5 text-micro font-bold",
         fit.state === "overflows"
           ? "border-warn-line bg-warn-bg text-warn"
-          : fit.state === "tight"
-            ? "border-tint-line bg-tint text-brand-deep"
-            : "border-ok-line bg-ok-bg text-ok"
+          : "border-tint-line bg-tint text-brand-deep"
       )}
     >
-      {fit.state === "overflows" ? <AlertTriangle className="size-2.5" /> : <Check className="size-2.5" />}
+      <AlertTriangle className="size-2.5" />
       {fit.label}
     </span>
   );
