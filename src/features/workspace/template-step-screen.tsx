@@ -1,21 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Layers,
-  Search,
-  ShieldCheck,
-  X,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, Layers, Search, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { TEMPLATE_ARCHETYPES, type TemplateArchetype } from "@/features/workspace/template-archetypes";
 import {
-  DEFAULT_TEMPLATE_FILTERS,
   ELEMENT_LABELS,
   FAMILY_LABELS,
   TEMPLATE_LIBRARY,
@@ -25,7 +15,6 @@ import {
   type Template,
   type TemplateElement,
   type TemplateFamily,
-  type TemplateFilters,
   type TemplateShape,
 } from "@/features/workspace/template-library";
 
@@ -33,13 +22,14 @@ import {
  * Choosing the layout, as its own step.
  *
  * It was an accordion inside the plan, which put a decision about the page's
- * whole composition beside decisions about audience and sources — and left no
- * room at all for the twelve hundred variants behind the five families.
+ * whole composition beside decisions about audience and sources, and left no
+ * room for the twelve hundred variants behind the five families.
  *
- * The five stay in front, because that is what a person chooses from. The
- * library sits behind one button, defaulted to the templates that can
- * actually carry this brief at this page shape, and brand-approved only,
- * because in pharma an unapproved layout is not a choice.
+ * Browsing happens on this screen rather than in a modal over it. The step
+ * exists precisely to choose a layout, so putting the catalogue behind a
+ * dialog meant two places to look and one of them covering the other. The
+ * five families become the categories, and the recommended row stays in front
+ * because five is what a person starts from.
  */
 export function TemplateStepScreen({
   brief,
@@ -56,14 +46,32 @@ export function TemplateStepScreen({
   pageShape: TemplateShape;
   pages: number;
   selectedId: TemplateArchetype["id"];
-  /** Set when the choice came out of the library rather than the shortlist. */
+  /** Set when the choice came out of the catalogue rather than the shortlist. */
   libraryTemplateId: string | null;
   onSelectArchetype: (id: TemplateArchetype["id"]) => void;
   onSelectTemplate: (template: Template) => void;
   onBack: () => void;
   onContinue: () => void;
 }) {
-  const [browsing, setBrowsing] = useState(false);
+  const [search, setSearch] = useState("");
+  const [family, setFamily] = useState<TemplateFamily | "all">("all");
+  const [shape, setShape] = useState<TemplateShape | "all">("all");
+  const [statSlots, setStatSlots] = useState(0);
+  const [contains, setContains] = useState<TemplateElement[]>([]);
+  const [approvedOnly, setApprovedOnly] = useState(true);
+  const [matchesBrief, setMatchesBrief] = useState(true);
+  const [shown, setShown] = useState(24);
+
+  const results = useMemo(
+    () =>
+      filterTemplates(
+        { matchesBrief, family, shape, statSlots, contains, approvedOnly, search },
+        brief,
+        pages,
+        pageShape
+      ),
+    [matchesBrief, family, shape, statSlots, contains, approvedOnly, search, brief, pages, pageShape]
+  );
 
   const matching = useMemo(() => matchingCount(brief, pages, pageShape), [brief, pages, pageShape]);
   const chosen = libraryTemplateId
@@ -71,100 +79,238 @@ export function TemplateStepScreen({
     : null;
 
   /* Fit blocks here, which is where the decision is. It used to block on the
-     plan screen, before a layout had been chosen at all — refusing a choice
-     nobody had made yet. A clipped safety block is still a regulatory
-     failure, so this is a block and not a warning. */
-  const chosenCost = chosen
-    ? templateCost(chosen, brief, pages)
-    : costForFamily(selectedId, brief, pages);
+     plan screen, before a layout had been chosen at all. */
+  const chosenCost = chosen ? templateCost(chosen, brief, pages) : costForFamily(selectedId, brief, pages);
   const blocked = chosenCost?.severe ?? false;
 
+  /* The recommended row is the shortlist, and it only makes sense while you
+     are not already looking for something specific. */
+  const browsing = search.trim().length > 0 || family !== "all" || shape !== "all" || statSlots > 0 || contains.length > 0;
+
+  const toggleContains = (element: TemplateElement) =>
+    setContains((prev) => (prev.includes(element) ? prev.filter((e) => e !== element) : [...prev, element]));
+
+  const resetFilters = () => {
+    setSearch("");
+    setFamily("all");
+    setShape("all");
+    setStatSlots(0);
+    setContains([]);
+  };
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#f4f6f3]">
-      <header className="flex flex-wrap items-center gap-2 border-b border-hair bg-card px-3 py-2 sm:px-4">
-        <button
-          type="button"
-          onClick={onBack}
-          aria-label="Back to the plan"
-          className="focus-ring grid size-8 shrink-0 cursor-pointer place-items-center rounded-chip text-ink-3 hover:bg-black/5 hover:text-ink"
-        >
-          <ArrowLeft className="size-4" />
-        </button>
-
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Layers className="size-3.5 shrink-0 text-brand" />
-            <span className="truncate text-body-lg font-[850] tracking-tight text-ink">
-              Design &amp; layout
-            </span>
-          </div>
-          <p className="mt-0.5 text-micro text-ink-3">
-            The archetype decides the composition — which blocks exist, and how much each one holds.
-          </p>
-        </div>
-
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-chip border border-hair-2 bg-canvas px-2.5 py-1 text-caption font-bold text-ink-2">
-            {matching.toLocaleString()} of {TEMPLATE_LIBRARY.length.toLocaleString()} templates match this brief
-          </span>
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col border-r border-hair bg-[#eef1ed]">
+      {/* ── What this step is, and the way into the catalogue ── */}
+      <header className="shrink-0 border-b border-hair bg-card px-3 py-2.5 sm:px-4">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setBrowsing(true)}
-            className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 py-1 text-caption font-bold text-ink-2 transition hover:border-brand hover:text-brand"
+            onClick={onBack}
+            aria-label="Back to the plan"
+            className="focus-ring grid size-8 shrink-0 cursor-pointer place-items-center rounded-chip text-ink-3 hover:bg-black/5 hover:text-ink"
           >
-            <Search className="size-3" />
-            Browse all templates
+            <ArrowLeft className="size-4" />
           </button>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Layers className="size-3.5 shrink-0 text-brand" />
+              <span className="truncate text-body-lg font-[850] tracking-tight text-ink">
+                Design &amp; layout
+              </span>
+            </div>
+            <p className="mt-0.5 text-micro text-ink-3">
+              The archetype decides the composition — which blocks exist, and how much each one holds.
+            </p>
+          </div>
+
+          <label className="relative ml-auto flex min-w-[180px] max-w-[320px] flex-1 items-center">
+            <Search className="absolute left-2.5 size-3.5 text-ink-4" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setShown(24);
+              }}
+              placeholder="Search layouts…"
+              className="w-full rounded-control border border-hair-2 bg-canvas py-1.5 pl-8 pr-2.5 text-body text-ink outline-none focus:border-brand focus:bg-card"
+            />
+          </label>
+        </div>
+
+        {/* Scope, first: it is the difference between a usable list and a
+            thousand thumbnails. */}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {[
+            { id: true, label: "Matches this brief", count: matching },
+            { id: false, label: "All templates", count: TEMPLATE_LIBRARY.length },
+          ].map((scope) => (
+            <button
+              key={String(scope.id)}
+              type="button"
+              onClick={() => {
+                setMatchesBrief(scope.id);
+                setShown(24);
+              }}
+              className={cn(
+                "cursor-pointer rounded-chip px-2.5 py-1 text-caption font-bold transition",
+                matchesBrief === scope.id
+                  ? "bg-brand text-white shadow-xs"
+                  : "border border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
+              )}
+            >
+              {scope.label}
+              <span className="ml-1.5 tabular-nums opacity-70">{scope.count.toLocaleString()}</span>
+            </button>
+          ))}
+
+          <label className="ml-auto flex cursor-pointer items-center gap-1.5 text-label font-bold text-ink-2">
+            <input
+              type="checkbox"
+              checked={approvedOnly}
+              onChange={(e) => setApprovedOnly(e.target.checked)}
+              className="size-3.5 accent-[#fd4816]"
+            />
+            <ShieldCheck className="size-3.5 text-ok" />
+            Brand-approved only
+          </label>
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5">
-        <div className="mx-auto max-w-[1040px]">
-          {chosen && (
-            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-panel border border-brand/25 bg-tint px-3 py-2">
-              <span className="rounded-glyph bg-brand px-1.5 py-0.5 text-micro font-bold text-white">
-                From library
-              </span>
-              <span className="text-body font-bold text-ink">{chosen.name}</span>
-              <span className="text-label text-ink-3">
-                {FAMILY_LABELS[chosen.family]} · {chosen.shape} · {chosen.statSlots} figure
-                {chosen.statSlots === 1 ? "" : "s"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setBrowsing(true)}
-                className="ml-auto cursor-pointer text-label font-bold text-brand hover:underline"
-              >
-                Change
-              </button>
-            </div>
-          )}
+      {/* ── Categories, then the narrower cuts ── */}
+      <div className="shrink-0 space-y-1.5 border-b border-hair bg-canvas px-3 py-2 sm:px-4">
+        <div className="flex flex-wrap items-center gap-1">
+          <Chip active={family === "all"} onClick={() => { setFamily("all"); setShown(24); }}>
+            All categories
+          </Chip>
+          {(Object.keys(FAMILY_LABELS) as TemplateFamily[]).map((id) => (
+            <Chip
+              key={id}
+              active={family === id}
+              onClick={() => { setFamily(id); setShown(24); }}
+            >
+              {FAMILY_LABELS[id]}
+            </Chip>
+          ))}
+        </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {TEMPLATE_ARCHETYPES.map((archetype) => (
-              <ArchetypeCard
-                key={archetype.id}
-                archetype={archetype}
-                selected={selectedId === archetype.id && !chosen}
-                cost={costForFamily(archetype.id, brief, pages)}
-                onSelect={() => onSelectArchetype(archetype.id)}
-              />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <FilterRow label="Shape">
+            <Chip small active={shape === "all"} onClick={() => setShape("all")}>Any</Chip>
+            {(["16:9", "9:16", "1:1", "3:4", "A4"] as TemplateShape[]).map((s) => (
+              <Chip key={s} small active={shape === s} onClick={() => setShape(s)}>{s}</Chip>
             ))}
-          </div>
+          </FilterRow>
+
+          <FilterRow label="Figures">
+            <Chip small active={statSlots === 0} onClick={() => setStatSlots(0)}>Any</Chip>
+            {[1, 2, 3, 4].map((n) => (
+              <Chip key={n} small active={statSlots === n} onClick={() => setStatSlots(n)}>{n}</Chip>
+            ))}
+          </FilterRow>
+
+          <FilterRow label="Contains">
+            {(Object.keys(ELEMENT_LABELS) as TemplateElement[]).map((element) => (
+              <Chip
+                key={element}
+                small
+                active={contains.includes(element)}
+                onClick={() => toggleContains(element)}
+              >
+                {ELEMENT_LABELS[element]}
+              </Chip>
+            ))}
+          </FilterRow>
+
+          {browsing && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="ml-auto shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="border-t border-hair bg-card px-3 py-2.5 sm:px-4">
-        <div className="mx-auto flex max-w-[1040px] flex-wrap items-center justify-between gap-2">
-          <span
-            className={cn(
-              "min-w-0 text-micro",
-              blocked ? "font-bold text-warn" : "text-ink-3"
+      {/* ── The catalogue ── */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
+        {chosen && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-panel border border-brand/25 bg-tint px-3 py-2">
+            <span className="rounded-glyph bg-brand px-1.5 py-0.5 text-micro font-bold text-white">Chosen</span>
+            <span className="text-body font-bold text-ink">{chosen.name}</span>
+            <span className="text-label text-ink-3">
+              {FAMILY_LABELS[chosen.family]} · {chosen.shape} · {chosen.statSlots} figure
+              {chosen.statSlots === 1 ? "" : "s"}
+            </span>
+          </div>
+        )}
+
+        {!browsing && (
+          <>
+            <SectionLabel>Recommended for this brief</SectionLabel>
+            <div className="mb-5 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+              {TEMPLATE_ARCHETYPES.map((archetype) => (
+                <ArchetypeCard
+                  key={archetype.id}
+                  archetype={archetype}
+                  selected={selectedId === archetype.id && !chosen}
+                  cost={costForFamily(archetype.id, brief, pages)}
+                  onSelect={() => onSelectArchetype(archetype.id)}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        <SectionLabel>
+          {results.length.toLocaleString()} {results.length === 1 ? "layout" : "layouts"} · best fit first
+        </SectionLabel>
+
+        {results.length === 0 ? (
+          <div className="rounded-panel border border-dashed border-hair-2 bg-canvas px-4 py-12 text-center">
+            <p className="text-body font-bold text-ink-2">Nothing matches those filters</p>
+            <p className="mt-0.5 text-label text-ink-4">
+              Widen the scope to all templates, or clear a filter.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {results.slice(0, shown).map((template) => (
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  selected={chosen?.id === template.id}
+                  cost={templateCost(template, brief, pages)}
+                  onPick={() => onSelectTemplate(template)}
+                />
+              ))}
+            </div>
+
+            {results.length > shown && (
+              <div className="mt-3 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setShown((n) => n + 24)}
+                  className="focus-ring cursor-pointer rounded-control border border-hair-2 bg-card px-4 py-2 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand"
+                >
+                  Show 24 more · {(results.length - shown).toLocaleString()} left
+                </button>
+              </div>
             )}
-          >
+          </>
+        )}
+      </div>
+
+      <div className="shrink-0 border-t border-hair bg-card px-3 py-2.5 sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className={cn("min-w-0 text-micro", blocked ? "font-bold text-warn" : "text-ink-3")}>
             {blocked
               ? `${chosenCost?.label} — choose a layout that can carry this brief, or shorten the request.`
-              : "You can swap a single page\u2019s layout later in the studio — this sets the deck."}
+              : "You can swap a single page’s layout later in the studio — this sets the deck."}
           </span>
           <Button
             onClick={onContinue}
@@ -176,27 +322,69 @@ export function TemplateStepScreen({
           </Button>
         </div>
       </div>
+    </section>
+  );
+}
 
-      {browsing && (
-        <TemplateLibraryModal
-          brief={brief}
-          pages={pages}
-          pageShape={pageShape}
-          onPick={(template) => {
-            onSelectTemplate(template);
-            setBrowsing(false);
-          }}
-          onClose={() => setBrowsing(false)}
-        />
-      )}
+/**
+ * A family's cost against this brief, taken from its most capable layout.
+ *
+ * Its FIRST layout was being used, which happened to be a one-figure variant
+ * in every family — so all five cards carried the same "one figure only"
+ * warning and the row said nothing. A family's cost is what its best member
+ * can do, because that is what choosing the family lets you reach.
+ */
+function costForFamily(family: TemplateFamily, brief: string, pages: number) {
+  const members = TEMPLATE_LIBRARY.filter((t) => t.family === family);
+  if (members.length === 0) return null;
+  const best = members.reduce((a, b) => (b.statSlots > a.statSlots ? b : a));
+  return templateCost(best, brief, pages);
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-2 text-caption font-extrabold uppercase tracking-wider text-ink-3">{children}</div>
+  );
+}
+
+function FilterRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-1">
+      <span className="mr-0.5 shrink-0 text-micro font-extrabold uppercase tracking-wider text-ink-4">
+        {label}
+      </span>
+      {children}
     </div>
   );
 }
 
-/** The shortlist card's own cost, computed the same way the library's is. */
-function costForFamily(family: TemplateFamily, brief: string, pages: number) {
-  const representative = TEMPLATE_LIBRARY.find((t) => t.family === family);
-  return representative ? templateCost(representative, brief, pages) : null;
+function Chip({
+  active,
+  small,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  small?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "cursor-pointer rounded-chip border font-bold transition",
+        small ? "px-1.5 py-0.5 text-micro" : "px-2.5 py-1 text-label",
+        active
+          ? "border-brand bg-tint text-brand-deep"
+          : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
+      )}
+    >
+      {children}
+    </button>
+  );
 }
 
 function ArchetypeCard({
@@ -235,10 +423,7 @@ function ArchetypeCard({
 
       {/* A sample carrying the real typography and figures, so the choice is
           made against something rather than a name. */}
-      <div
-        style={{ background: archetype.previewBg }}
-        className="mx-3 flex flex-col gap-1 rounded-panel p-3"
-      >
+      <div style={{ background: archetype.previewBg }} className="mx-3 flex flex-col gap-1 rounded-panel p-3">
         <span className="w-fit rounded-glyph bg-black/25 px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wider text-white/90">
           {archetype.badge}
         </span>
@@ -246,14 +431,6 @@ function ArchetypeCard({
           {archetype.metric}
         </span>
         <span className="text-caption text-white/70">{archetype.metricSub}</span>
-        <ul className="mt-1 space-y-0.5">
-          {archetype.points.slice(0, 2).map((point) => (
-            <li key={point} className="flex items-start gap-1.5 text-micro text-white/75">
-              <span className="mt-1 size-1 shrink-0 rounded-full bg-white/60" />
-              <span className="line-clamp-1">{point}</span>
-            </li>
-          ))}
-        </ul>
       </div>
 
       {cost && (
@@ -288,262 +465,14 @@ function ArchetypeCard({
   );
 }
 
-/* ─────────────────────────────── the library ─────────────────────────────── */
-
-const SHAPE_OPTIONS: TemplateShape[] = ["16:9", "9:16", "1:1", "3:4", "A4"];
-const ELEMENT_OPTIONS: TemplateElement[] = ["chart", "packshot", "table", "isi", "moa-diagram", "photo"];
-
-/**
- * Browsing the catalogue.
- *
- * The control that matters is the scope toggle, defaulted to the narrow side:
- * you land on a number you can actually work through, and the whole library
- * is one click away. Filters cut before the grid renders, because a grid of a
- * thousand thumbnails is how you lose the five that would have worked.
- */
-function TemplateLibraryModal({
-  brief,
-  pages,
-  pageShape,
-  onPick,
-  onClose,
-}: {
-  brief: string;
-  pages: number;
-  pageShape: TemplateShape;
-  onPick: (template: Template) => void;
-  onClose: () => void;
-}) {
-  const [filters, setFilters] = useState<TemplateFilters>(DEFAULT_TEMPLATE_FILTERS);
-
-  const results = useMemo(
-    () => filterTemplates(filters, brief, pages, pageShape),
-    [filters, brief, pages, pageShape]
-  );
-  const matching = useMemo(() => matchingCount(brief, pages, pageShape), [brief, pages, pageShape]);
-
-  const set = <K extends keyof TemplateFilters>(key: K, value: TemplateFilters[K]) =>
-    setFilters((prev) => ({ ...prev, [key]: value }));
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Template library"
-      className="fixed inset-0 z-[9999] grid place-items-center bg-ink/50 p-4 backdrop-blur-sm"
-    >
-      <div className="rise-in flex h-[86vh] w-full max-w-[1080px] flex-col overflow-hidden rounded-card border border-hair-2 bg-card shadow-float">
-        <div className="flex items-start justify-between gap-3 border-b border-hair-2 bg-canvas px-5 py-3.5">
-          <div className="min-w-0">
-            <div className="text-caption font-extrabold uppercase tracking-[0.14em] text-brand">Library</div>
-            <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">Templates</h2>
-          </div>
-
-          <div className="flex min-w-0 flex-1 items-center gap-2 pt-1">
-            <label className="relative flex min-w-0 flex-1 items-center">
-              <Search className="absolute left-2.5 size-3.5 text-ink-4" />
-              <input
-                type="search"
-                value={filters.search}
-                onChange={(e) => set("search", e.target.value)}
-                placeholder="Search layouts…"
-                className="w-full rounded-control border border-hair-2 bg-card py-1.5 pl-8 pr-2.5 text-body text-ink outline-none focus:border-brand"
-              />
-            </label>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition-colors hover:bg-black/5 hover:text-ink"
-          >
-            <X className="size-4.5" />
-          </button>
-        </div>
-
-        {/* Scope, first and largest: it is the difference between a usable
-            list and a thousand thumbnails. */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-hair px-5 py-2.5">
-          {[
-            { id: true, label: "Matches this brief", count: matching },
-            { id: false, label: "All templates", count: TEMPLATE_LIBRARY.length },
-          ].map((scope) => (
-            <button
-              key={String(scope.id)}
-              type="button"
-              onClick={() => set("matchesBrief", scope.id)}
-              className={cn(
-                "cursor-pointer rounded-chip px-3 py-1.5 text-body font-bold transition",
-                filters.matchesBrief === scope.id
-                  ? "bg-brand text-white shadow-xs"
-                  : "border border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
-              )}
-            >
-              {scope.label}
-              <span className="ml-1.5 tabular-nums opacity-70">{scope.count.toLocaleString()}</span>
-            </button>
-          ))}
-
-          <label className="ml-auto flex cursor-pointer items-center gap-1.5 text-label font-bold text-ink-2">
-            <input
-              type="checkbox"
-              checked={filters.approvedOnly}
-              onChange={(e) => set("approvedOnly", e.target.checked)}
-              className="size-3.5 accent-[#fd4816]"
-            />
-            <ShieldCheck className="size-3.5 text-ok" />
-            Brand-approved only
-          </label>
-        </div>
-
-        <div className="flex min-h-0 flex-1">
-          {/* ── filters ── */}
-          <aside className="hidden w-52 shrink-0 flex-col gap-3.5 overflow-y-auto border-r border-hair bg-canvas p-3.5 sm:flex">
-            <FilterGroup label="Family">
-              <FilterChip active={filters.family === "all"} onClick={() => set("family", "all")}>
-                Any
-              </FilterChip>
-              {(Object.keys(FAMILY_LABELS) as TemplateFamily[]).map((family) => (
-                <FilterChip
-                  key={family}
-                  active={filters.family === family}
-                  onClick={() => set("family", family)}
-                >
-                  {FAMILY_LABELS[family]}
-                </FilterChip>
-              ))}
-            </FilterGroup>
-
-            <FilterGroup label="Page shape">
-              <FilterChip active={filters.shape === "all"} onClick={() => set("shape", "all")}>
-                Any
-              </FilterChip>
-              {SHAPE_OPTIONS.map((shape) => (
-                <FilterChip key={shape} active={filters.shape === shape} onClick={() => set("shape", shape)}>
-                  {shape}
-                </FilterChip>
-              ))}
-            </FilterGroup>
-
-            <FilterGroup label="Figures">
-              <FilterChip active={filters.statSlots === 0} onClick={() => set("statSlots", 0)}>
-                Any
-              </FilterChip>
-              {[1, 2, 3, 4].map((n) => (
-                <FilterChip key={n} active={filters.statSlots === n} onClick={() => set("statSlots", n)}>
-                  {n}
-                </FilterChip>
-              ))}
-            </FilterGroup>
-
-            <FilterGroup label="Contains">
-              {ELEMENT_OPTIONS.map((element) => (
-                <FilterChip
-                  key={element}
-                  active={filters.contains.includes(element)}
-                  onClick={() =>
-                    set(
-                      "contains",
-                      filters.contains.includes(element)
-                        ? filters.contains.filter((e) => e !== element)
-                        : [...filters.contains, element]
-                    )
-                  }
-                >
-                  {ELEMENT_LABELS[element]}
-                </FilterChip>
-              ))}
-            </FilterGroup>
-
-            <button
-              type="button"
-              onClick={() => setFilters(DEFAULT_TEMPLATE_FILTERS)}
-              className="mt-auto cursor-pointer text-label font-bold text-brand hover:underline"
-            >
-              Reset filters
-            </button>
-          </aside>
-
-          {/* ── results ── */}
-          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-3.5">
-            <p className="mb-2.5 text-label text-ink-3">
-              {results.length.toLocaleString()} {results.length === 1 ? "layout" : "layouts"}, best fit first
-            </p>
-
-            {results.length === 0 ? (
-              <div className="rounded-panel border border-dashed border-hair-2 bg-canvas px-4 py-12 text-center">
-                <p className="text-body font-bold text-ink-2">Nothing matches those filters</p>
-                <p className="mt-0.5 text-label text-ink-4">
-                  Widen the scope to all templates, or clear a filter.
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                {results.slice(0, 60).map((template) => (
-                  <TemplateCard
-                    key={template.id}
-                    template={template}
-                    cost={templateCost(template, brief, pages)}
-                    onPick={() => onPick(template)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {results.length > 60 && (
-              <p className="mt-3 text-center text-label text-ink-4">
-                Showing the 60 best-fitting of {results.length.toLocaleString()}. Narrow the filters to see more.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="mb-1.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">{label}</div>
-      <div className="flex flex-wrap gap-1">{children}</div>
-    </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "cursor-pointer rounded-chip border px-2 py-0.5 text-label font-bold transition",
-        active
-          ? "border-brand bg-tint text-brand-deep"
-          : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 function TemplateCard({
   template,
+  selected,
   cost,
   onPick,
 }: {
   template: Template;
+  selected: boolean;
   cost: { label: string; severe: boolean } | null;
   onPick: () => void;
 }) {
@@ -551,29 +480,36 @@ function TemplateCard({
     <button
       type="button"
       onClick={onPick}
-      className="group flex cursor-pointer flex-col gap-2 rounded-panel border border-hair bg-card p-2.5 text-left shadow-2xs transition hover:border-brand hover:shadow-xs"
+      aria-pressed={selected}
+      className={cn(
+        "group flex cursor-pointer flex-col gap-2 rounded-panel border bg-card p-2.5 text-left transition",
+        selected
+          ? "border-brand ring-2 ring-brand/15 shadow-sm"
+          : "border-hair shadow-2xs hover:border-brand hover:shadow-xs"
+      )}
     >
       {/* A wireframe rather than a fake screenshot: it shows the skeleton the
           layout actually has, which is the thing being chosen. */}
       <div
-        style={{ aspectRatio: template.shape.replace(":", " / ").replace("A4", "1 / 1.414") }}
+        style={{ aspectRatio: template.shape === "A4" ? "1 / 1.414" : template.shape.replace(":", " / ") }}
         className="flex w-full flex-col gap-1 overflow-hidden rounded-control border border-hair-2 bg-canvas p-1.5"
       >
         <div className="h-2 w-2/3 shrink-0 rounded-glyph bg-ink/70" />
-        <div className="flex flex-1 gap-1">
-          <div className="flex flex-1 flex-col gap-1">
+        <div className="flex min-h-0 flex-1 gap-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             {Array.from({ length: template.statSlots }).map((_, i) => (
-              <div key={i} className="h-3 shrink-0 rounded-glyph bg-brand/30" />
+              <div key={i} className="h-2.5 shrink-0 rounded-glyph bg-brand/30" />
             ))}
-            <div className="flex-1 rounded-glyph bg-black/[0.06]" />
+            <div className="min-h-0 flex-1 rounded-glyph bg-black/[0.06]" />
           </div>
           {template.elements.includes("chart") && (
             <div className="w-1/3 shrink-0 rounded-glyph bg-info-strong/20" />
           )}
+          {template.elements.includes("moa-diagram") && (
+            <div className="w-1/4 shrink-0 rounded-glyph bg-accent-violet/20" />
+          )}
         </div>
-        {template.elements.includes("isi") && (
-          <div className="h-1.5 shrink-0 rounded-glyph bg-black/10" />
-        )}
+        {template.elements.includes("isi") && <div className="h-1.5 shrink-0 rounded-glyph bg-black/10" />}
       </div>
 
       <div className="min-w-0">
@@ -581,7 +517,9 @@ function TemplateCard({
           <span className="truncate text-body font-bold text-ink group-hover:text-brand">
             {template.name}
           </span>
-          {template.approved && <ShieldCheck aria-label="Brand-approved" className="size-3 shrink-0 text-ok" />}
+          {template.approved && (
+            <ShieldCheck aria-label="Brand-approved" className="size-3 shrink-0 text-ok" />
+          )}
         </div>
         <p className="truncate text-micro text-ink-3">
           {FAMILY_LABELS[template.family]} · {template.shape} ·{" "}
@@ -596,12 +534,12 @@ function TemplateCard({
             cost.severe ? "border-warn-line bg-warn-bg text-warn" : "border-hair-2 bg-canvas text-ink-3"
           )}
         >
-          <AlertTriangle className="size-2.5" />
+          <AlertTriangle className="size-2.5 shrink-0" />
           {cost.label}
         </span>
       ) : (
         <span className="inline-flex w-fit items-center gap-1 rounded-glyph border border-ok-line bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">
-          <Check className="size-2.5" />
+          <Check className="size-2.5 shrink-0" />
           Carries this brief
         </span>
       )}

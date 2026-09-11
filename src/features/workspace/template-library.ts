@@ -148,15 +148,7 @@ export interface TemplateFilters {
   search: string;
 }
 
-export const DEFAULT_TEMPLATE_FILTERS: TemplateFilters = {
-  matchesBrief: true,
-  family: "all",
-  shape: "all",
-  statSlots: 0,
-  contains: [],
-  approvedOnly: true,
-  search: "",
-};
+
 
 /**
  * What a template costs this brief, or null when it carries it cleanly.
@@ -188,7 +180,7 @@ export function templateCost(
 }
 
 /** Fit first, then what the team actually reaches for. */
-export function rankTemplates(
+function rankTemplates(
   templates: Template[],
   brief: string,
   pages: number

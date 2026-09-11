@@ -489,31 +489,6 @@ export function InfographicDirectionsScreen() {
    * An early return higher up would unmount the hooks beneath it — the same
    * trap the asset-type branch at the top of this file already sets.
    */
-  if (currentStep === "template") {
-    return (
-      <TemplateStepScreen
-        brief={brief}
-        pageShape={pageShape}
-        pages={Number(infographicPages) || 1}
-        selectedId={infographicTemplate}
-        libraryTemplateId={libraryTemplateId}
-        onSelectArchetype={(id) => {
-          setInfographicTemplate(id);
-          setLibraryTemplateId(null);
-        }}
-        onSelectTemplate={(template) => {
-          // A library pick sets the family too, because the family is what
-          // decides which blocks exist — the variant only arranges them.
-          setInfographicTemplate(template.family);
-          setLibraryTemplateId(template.id);
-          setPageShape(template.shape as never);
-        }}
-        onBack={() => setCurrentStep("brief")}
-        onContinue={openCopyDeck}
-      />
-    );
-  }
-
   if (currentStep === "copy") {
     return (
       <CopyDeckScreen
@@ -588,7 +563,7 @@ export function InfographicDirectionsScreen() {
               image cases. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
             <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-              Plan View
+              {currentStep === "template" ? "Layout View" : "Plan View"}
             </span>
             <button
               type="button"
@@ -634,6 +609,28 @@ export function InfographicDirectionsScreen() {
         </ScreenHeader>
       }
       main={
+        currentStep === "template" ? (
+          <TemplateStepScreen
+            brief={brief}
+            pageShape={pageShape}
+            pages={Number(infographicPages) || 1}
+            selectedId={infographicTemplate}
+            libraryTemplateId={libraryTemplateId}
+            onSelectArchetype={(id) => {
+              setInfographicTemplate(id);
+              setLibraryTemplateId(null);
+            }}
+            onSelectTemplate={(template) => {
+              // A library pick sets the family too, because the family is what
+              // decides which blocks exist — the variant only arranges them.
+              setInfographicTemplate(template.family);
+              setLibraryTemplateId(template.id);
+              setPageShape(template.shape as never);
+            }}
+            onBack={() => setCurrentStep("brief")}
+            onContinue={openCopyDeck}
+          />
+        ) : (
           <section
             className="flex flex-1 min-w-0 flex-col min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4 relative"
           >
@@ -1143,6 +1140,7 @@ export function InfographicDirectionsScreen() {
               }
             />
           </section>
+        )
       }
       panel={
         <>
