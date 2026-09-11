@@ -38,6 +38,14 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  EditableCanvasText,
+  FloatingTextToolbar,
+  FormatRibbon,
+  EMPTY_STYLE,
+  type CanvasTextElement,
+  type TextStyle,
+} from "@/features/workspace/canvas-text-toolbar";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
@@ -207,6 +215,18 @@ export function InfographicStudioScreen() {
   // Zoom & UI state
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [selectedBlockId, setSelectedBlockId] = useState<"header" | "heroStat" | "moa" | "chart" | "isi">("heroStat");
+
+  /* ── Element-level selection ──────────────────────────────────────────────
+     A block is a container; the text inside it is what people actually mean
+     when they say "make that bigger". Selecting a run keeps the block
+     selected too, so the inspector and the layer rail stay truthful. */
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
+  const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const [elementRect, setElementRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [elementStyles, setElementStyles] = useState<Record<string, TextStyle>>({});
+  /* Runs whose words were retyped after they were grounded. The claim is not
+     wrong — it is unverified, which is a different and recoverable state. */
+  const [reverifyElements, setReverifyElements] = useState<string[]>([]);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
@@ -312,6 +332,124 @@ export function InfographicStudioScreen() {
       prev.map((p) => (p.id === activePageId ? updater(p) : p))
     );
   };
+
+  /* Every text run on the page, with the size the template gives it so the
+     stepper starts from the truth rather than from a round number. Citations
+     come from the page data, not a literal, so the claim badge is real. */
+  const textElements: Record<string, CanvasTextElement> = useMemo(
+    () => ({
+      "header.badge": { id: "header.badge", blockId: "header", label: "Eyebrow", baseSize: 9, baseWeight: 800 },
+      "header.approvalTag": { id: "header.approvalTag", blockId: "header", label: "Reference", baseSize: 10, baseWeight: 400, citation: currentPage.header.approvalTag },
+      "header.title": { id: "header.title", blockId: "header", label: "Headline", baseSize: 24, baseWeight: 850 },
+      "header.subtitle": { id: "header.subtitle", blockId: "header", label: "Subhead", baseSize: 12, baseWeight: 500, multiline: true },
+      "heroStat.category": { id: "heroStat.category", blockId: "heroStat", label: "Stat label", baseSize: 10, baseWeight: 800 },
+      "heroStat.metric": { id: "heroStat.metric", blockId: "heroStat", label: "Hero metric", baseSize: 30, baseWeight: 900, citation: currentPage.heroStat.citation },
+      "heroStat.comparison": { id: "heroStat.comparison", blockId: "heroStat", label: "Comparator", baseSize: 13, baseWeight: 700, citation: currentPage.heroStat.citation },
+      "heroStat.detail": { id: "heroStat.detail", blockId: "heroStat", label: "Supporting copy", baseSize: 12, baseWeight: 500, multiline: true },
+      "moa.title": { id: "moa.title", blockId: "moa", label: "Section title", baseSize: 13, baseWeight: 850 },
+      "moa.detail": { id: "moa.detail", blockId: "moa", label: "Section copy", baseSize: 12, baseWeight: 500, multiline: true },
+      "isi.title": { id: "isi.title", blockId: "isi", label: "Safety heading", baseSize: 11, baseWeight: 800 },
+      "isi.content": { id: "isi.content", blockId: "isi", label: "Safety copy", baseSize: 10, baseWeight: 400, multiline: true, citation: currentPage.isi.citation },
+    }),
+    [currentPage]
+  );
+
+  const selectedElement = selectedElementId ? textElements[selectedElementId] ?? null : null;
+
+  const BLOCK_LABELS: Record<string, string> = {
+    header: "Header band",
+    heroStat: "Stat hero",
+    moa: "Mechanism",
+    chart: "Chart",
+    isi: "Safety",
+  };
+
+  const handleSelectElement = (id: string, rect: DOMRect | { top: number; left: number; width: number; height: number }) => {
+    setSelectedElementId(id);
+    setElementRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
+    const el = textElements[id];
+    if (el) setSelectedBlockId(el.blockId as never);
+    if (editingElementId && editingElementId !== id) setEditingElementId(null);
+  };
+
+  const clearElementSelection = () => {
+    setSelectedElementId(null);
+    setEditingElementId(null);
+    setElementRect(null);
+  };
+
+  const patchElementStyle = (patch: Partial<TextStyle>) => {
+    if (!selectedElementId) return;
+    setElementStyles((prev) => ({
+      ...prev,
+      [selectedElementId]: { ...EMPTY_STYLE, ...prev[selectedElementId], ...patch },
+    }));
+  };
+
+  const resetElementStyle = () => {
+    if (!selectedElementId) return;
+    setElementStyles((prev) => {
+      const next = { ...prev };
+      delete next[selectedElementId];
+      return next;
+    });
+    showToast("Formatting reset to the template");
+  };
+
+  /* Writing a run back into the page. Formatting is cosmetic, but words are
+     not: a grounded run that changes text loses its verification, and the
+     asset has to say so rather than quietly keeping the green tick. */
+  const commitElementText = (id: string, next: string) => {
+    const [blockId, field] = id.split(".");
+    updateCurrentPage((prev) => {
+      const block = (prev as unknown as Record<string, Record<string, unknown>>)[blockId];
+      if (!block || block[field] === next) return prev;
+      return { ...prev, [blockId]: { ...block, [field]: next } } as InfographicPageData;
+    });
+    setEditingElementId(null);
+
+    const el = textElements[id];
+    const before = ((currentPage as unknown as Record<string, Record<string, string>>)[blockId] ?? {})[field];
+    if (el?.citation && before !== next) {
+      setReverifyElements((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      showToast(`${el.label} edited — claim sent back for verification`);
+    }
+  };
+
+  const addElementToChat = () => {
+    if (!selectedElement) return;
+    setActiveTab("assistant");
+    const [blockId, field] = selectedElement.id.split(".");
+    const value = ((currentPage as unknown as Record<string, Record<string, string>>)[blockId] ?? {})[field];
+    setChatInput(`Rewrite the ${selectedElement.label.toLowerCase()} ("${value}") `);
+    showToast(`${selectedElement.label} attached to chat`);
+  };
+
+  /* One text run on the page. The value is read from the page by the run's own
+     id rather than passed in, so a run cannot be wired to the wrong field —
+     the id is the single place the binding is stated. */
+  const runValue = (id: string): string => {
+    const [blockId, field] = id.split(".");
+    const block = (currentPage as unknown as Record<string, Record<string, unknown>>)[blockId] ?? {};
+    return String(block[field] ?? "");
+  };
+
+  const run = (id: string, className: string, as: "span" | "h1" | "p" | "div" = "span") => (
+    <EditableCanvasText
+      as={as}
+      element={textElements[id]}
+      value={runValue(id)}
+      style={elementStyles[id]}
+      className={className}
+      locked={studioMode !== "editor"}
+      selected={selectedElementId === id}
+      editing={editingElementId === id}
+      onSelect={(r) => handleSelectElement(id, r)}
+      onStartEdit={() => setEditingElementId(id)}
+      onCommit={(next) => commitElementText(id, next)}
+      onCancelEdit={() => setEditingElementId(null)}
+    />
+  );
 
   // Chat message handler connected directly to Workspace Store
   const [chatInput, setChatInput] = useState("");
@@ -745,7 +883,51 @@ export function InfographicStudioScreen() {
               </div>
             </div>
         ) : (
-          <main className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 bg-[#e5e8e4] flex justify-center items-start">
+          <div className="flex min-h-0 flex-1 flex-col">
+            {studioMode === "editor" && (
+              <FormatRibbon
+                element={selectedElement}
+                style={selectedElementId ? elementStyles[selectedElementId] : undefined}
+                blockLabel={selectedElement ? BLOCK_LABELS[selectedElement.blockId] ?? "" : ""}
+                onStyle={patchElementStyle}
+                onReset={resetElementStyle}
+                onEdit={() => selectedElementId && setEditingElementId(selectedElementId)}
+              />
+            )}
+
+            {/* Retyping a grounded run does not make it false — it makes it
+                unverified. Saying which runs, and offering the re-check, is
+                the whole difference between a warning and a dead end. */}
+            {studioMode === "editor" && reverifyElements.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-b border-warn-line bg-warn-bg px-3 py-1.5 sm:px-4">
+                <AlertTriangle className="size-3.5 shrink-0 text-warn" />
+                <span className="text-label font-bold text-warn">
+                  {reverifyElements.length} edited {reverifyElements.length === 1 ? "claim needs" : "claims need"} re-verification
+                </span>
+                <span className="truncate text-label text-ink-3">
+                  {reverifyElements.map((id) => textElements[id]?.label ?? id).join(", ")}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReverifyElements([]);
+                    showToast("Edited claims re-checked against the dossier");
+                  }}
+                  className="focus-ring ml-auto shrink-0 cursor-pointer rounded-chip bg-warn px-2.5 py-1 text-label font-bold text-white transition hover:brightness-110"
+                >
+                  Re-verify now
+                </button>
+              </div>
+            )}
+          <main
+            onPointerDown={(e) => {
+              // Only the mat itself deselects. Without the target check, any
+              // click that bubbles out of the page would clear the selection
+              // the moment you used a control inside it.
+              if (e.target === e.currentTarget) clearElementSelection();
+            }}
+            className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-10 bg-[#e5e8e4] flex justify-center items-start"
+          >
             <div className="w-full max-w-[720px] flex justify-center py-4 my-auto">
               <div
                 style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "center top" }}
@@ -766,17 +948,11 @@ export function InfographicStudioScreen() {
                   )}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="rounded-chip bg-white/15 px-2.5 py-0.5 text-micro font-extrabold uppercase tracking-wider text-white border border-white/20">
-                      {currentPage.header.badge}
-                    </span>
-                    <span className="text-caption font-mono text-white/70">{currentPage.header.approvalTag}</span>
+                    {run("header.badge", "rounded-chip bg-white/15 px-2.5 py-0.5 text-micro font-extrabold uppercase tracking-wider text-white border border-white/20")}
+                    {run("header.approvalTag", "text-caption font-mono text-white/70")}
                   </div>
-                  <h1 className="text-display-lg font-[850] text-white tracking-tight leading-tight">
-                    {currentPage.header.title}
-                  </h1>
-                  <p className="text-body text-white/80 font-medium mt-1">
-                    {currentPage.header.subtitle}
-                  </p>
+                  {run("header.title", "text-display-lg font-[850] text-white tracking-tight leading-tight", "h1")}
+                  {run("header.subtitle", "text-body text-white/80 font-medium mt-1 block", "p")}
                 </div>
 
                 {/* Infographic Body Blocks */}
@@ -793,25 +969,17 @@ export function InfographicStudioScreen() {
                     )}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-caption font-extrabold uppercase tracking-wider text-brand-deep">
-                        {currentPage.heroStat.category}
-                      </span>
+                      {run("heroStat.category", "text-caption font-extrabold uppercase tracking-wider text-brand-deep")}
                       <span className="inline-flex items-center gap-1 rounded-glyph bg-ok-bg text-ok px-1.5 py-0.2 text-micro font-bold">
                         <Check className="size-2.5 stroke-[3]" />
                         {currentPage.heroStat.citation}
                       </span>
                     </div>
                     <div className="flex items-baseline gap-2.5">
-                      <div className="text-hero font-[900] leading-tight tracking-tight text-brand">
-                        {currentPage.heroStat.metric}
-                      </div>
-                      <span className="text-body-lg font-bold text-ink-2">
-                        {currentPage.heroStat.comparison}
-                      </span>
+                      {run("heroStat.metric", "text-hero font-[900] leading-tight tracking-tight text-brand", "div")}
+                      {run("heroStat.comparison", "text-body-lg font-bold text-ink-2")}
                     </div>
-                    <p className="text-body text-ink-2 font-medium mt-0.5 leading-relaxed">
-                      {currentPage.heroStat.detail}
-                    </p>
+                    {run("heroStat.detail", "text-body text-ink-2 font-medium mt-0.5 leading-relaxed block", "p")}
                   </div>
 
                   {/* 3. MoA Pathway */}
@@ -825,12 +993,8 @@ export function InfographicStudioScreen() {
                         : "hover:border-hair-3"
                     )}
                   >
-                    <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-1">
-                      {currentPage.moa.title}
-                    </span>
-                    <p className="text-body text-ink-2 leading-relaxed mb-3">
-                      {currentPage.moa.detail}
-                    </p>
+                    {run("moa.title", "text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-1")}
+                    {run("moa.detail", "text-body text-ink-2 leading-relaxed mb-3 block", "p")}
                     <div className="grid grid-cols-3 gap-2">
                       {currentPage.moa.steps.map((step, idx) => (
                         <div
@@ -902,17 +1066,17 @@ export function InfographicStudioScreen() {
                         : "hover:border-hair-3"
                     )}
                   >
-                    <div className="text-micro font-bold text-ink-3 mb-1">
-                      {currentPage.isi.title}:
+                    <div className="mb-1 flex items-baseline text-micro font-bold text-ink-3">
+                      {run("isi.title", "text-micro font-bold text-ink-3")}
+                      <span>:</span>
                     </div>
-                    <p className="text-caption text-ink-3 leading-normal">
-                      {currentPage.isi.content}
-                    </p>
+                    {run("isi.content", "text-caption text-ink-3 leading-normal block", "p")}
                   </div>
                 </div>
               </div>
             </div>
           </main>
+          </div>
         )
       }
       panel={
@@ -1619,6 +1783,19 @@ export function InfographicStudioScreen() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ── FLOATING TEXT TOOLBAR (the PowerPoint position) ── */}
+        {studioMode === "editor" && selectedElement && !editingElementId && (
+          <FloatingTextToolbar
+            element={selectedElement}
+            style={elementStyles[selectedElement.id]}
+            anchorRect={elementRect}
+            onStyle={patchElementStyle}
+            onReset={resetElementStyle}
+            onAddToChat={addElementToChat}
+            onEdit={() => setEditingElementId(selectedElement.id)}
+          />
         )}
 
         {/* ── TOAST NOTIFICATION ── */}
