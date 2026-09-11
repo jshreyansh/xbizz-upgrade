@@ -1,41 +1,26 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
 import {
-  AlertCircle,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
-  BookOpenCheck,
   Check,
   CheckCircle2,
   ChevronDown,
-  ExternalLink,
-  Eye,
-  FileCheck2,
-  FileText,
-  Globe2,
   History,
   Image as ImageIcon,
-  Info,
   Layers,
   LayoutGrid,
-  MoreHorizontal,
-  Palette,
   PanelRight,
-  Paperclip,
   Plus,
   Redo2,
-  RotateCcw,
   Send,
   ShieldCheck,
   Target,
   Undo2,
   Upload,
   Users,
-  X,
-  ChevronUp,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,11 +37,11 @@ import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
-import { copyOverflow } from "@/features/workspace/content-plan";
 import { CopyDeckScreen } from "@/features/workspace/copy-deck-screen";
 import type { CopyBlock } from "@/features/workspace/copy-deck-card";
+import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
 
-type InfographicSubStep = "brief" | "content" | "copy";
+type InfographicSubStep = "brief" | "template" | "copy";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
 
 interface AudienceOption {
@@ -116,208 +101,16 @@ const LOGO_PLACEMENTS = [
   { id: "none", label: "No logo", desc: "Leave every page unbranded" },
 ];
 
-interface TemplateArchetype {
-  id: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease";
-  name: string;
-  tagline: string;
-  accent: string;
-  previewBg: string;
-  badge: string;
-  metric: string;
-  metricSub: string;
-  points: string[];
-}
 
-const TEMPLATE_ARCHETYPES: TemplateArchetype[] = [
-  {
-    id: "stat-hero",
-    name: "Stat Hero",
-    tagline: "A dark hero band, then two oversized headline figures, an icon grid and one chart. Suits a single result read from across a room.",
-    accent: "#fd4816",
-    previewBg: "linear-gradient(135deg, #111827 0%, #1f2937 100%)",
-    badge: "PASI 90 Primary Readout",
-    metric: "52% PASI 90",
-    metricSub: "vs 18% Placebo (p < 0.001)",
-    points: ["Over 50% skin clearance at Week 16", "Maintained through Week 52 extension", "Single daily oral administration"],
-  },
-  {
-    id: "trial-summary",
-    name: "Trial Summary",
-    tagline: "Light and airy: pulled-out highlights box, credential bullets and time-course chart. For a single trial told properly.",
-    accent: "#0284c7",
-    previewBg: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
-    badge: "EMBRACE-3 Pivotal Study",
-    metric: "N=613 Patients",
-    metricSub: "Multi-Center Randomized Trial",
-    points: ["Dual kinase blockade mechanism", "FDA §2.1 label indication partition", "Zero microvascular adverse accumulation"],
-  },
-  {
-    id: "bench-data",
-    name: "Bench Data",
-    tagline: "Circular callouts around measured values, with horizontal bar comparisons under them. Suits a head-to-head on key metrics.",
-    accent: "#059669",
-    previewBg: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
-    badge: "Pharmacokinetic Profile",
-    metric: "eGFR ≥25",
-    metricSub: "Prescribing Cut-Off Threshold",
-    points: ["Clear therapeutic window boundary", "Predictable systemic clearance", "Validated in renal impairment cohorts"],
-  },
-  {
-    id: "moa-scroll",
-    name: "Anatomy & MoA Scroll",
-    tagline: "3D cellular pathways with dual kinase cascade diagram and tissue uptake markers.",
-    accent: "#7c3aed",
-    previewBg: "linear-gradient(135deg, #1e1035 0%, #2e1852 100%)",
-    badge: "3D Cellular Cascade",
-    metric: "Dual Kinase Block",
-    metricSub: "Receptor Selectivity >350x",
-    points: ["Selectively suppresses inflammatory cytokines", "Preserves peripheral vascular perfusion", "Fast receptor binding in dermis"],
-  },
-  {
-    id: "burden-disease",
-    name: "Burden of Disease",
-    tagline: "Population epidemiology hero chart with prevalence curves and unmet need callouts.",
-    accent: "#d97706",
-    previewBg: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-    badge: "Epidemiological Need",
-    metric: "8.2M Patients",
-    metricSub: "Moderate-to-Severe Psoriasis",
-    points: ["High flare recurrence under topical-only", "Substantial quality of life disruption", "Urgent requirement for targeted oral options"],
-  },
-];
 
-interface SectionCitationItem {
-  doc: string;
-  quote: string;
-  claimId: string;
-  mlrRef: string;
-}
 
-interface ContentPlanSection {
-  num: number;
-  title: string;
-  role: string;
-  body: string;
-  citations: SectionCitationItem[];
-}
 
-const CONTENT_PLAN_SECTIONS: ContentPlanSection[] = [
-  {
-    num: 1,
-    title: "One molecule, three organ systems",
-    role: "opens the artefact — core molecule introduction",
-    body: "The opening line orients the reader: Velmora is a single once-daily oral dual kinase inhibitor whose approved licence spans moderate-to-severe plaque psoriasis, psoriatic arthritis, and systemic clinical clearance.",
-    citations: [
-      {
-        doc: "VELMORA™ Approved Prescribing Information §1.1",
-        quote: "Velmora (tirzelamide) 200mg is a selective dual kinase inhibitor indicated for moderate-to-severe plaque psoriasis and multi-organ inflammatory management.",
-        claimId: "Claim #104",
-        mlrRef: "Package Insert §1.1 · Approved 2026",
-      },
-    ],
-  },
-  {
-    num: 2,
-    title: "Approved in India for three indications",
-    role: "how it is used · a partition across domains",
-    body: "The FDA-approved uses, side by side: moderate-to-severe plaque psoriasis in adults 18+ to achieve rapid skin clearance; active psoriatic arthritis; and sustained reduction of flare recurrence risk.",
-    citations: [
-      {
-        doc: "FDA Prescribing Information §1.1 · Indication Scope",
-        quote: "Indicated for the treatment of moderate-to-severe plaque psoriasis in adult patients who are candidates for systemic therapy or phototherapy.",
-        claimId: "Claim #112",
-        mlrRef: "FDA Approval §1.1",
-      },
-      {
-        doc: "FDA Prescribing Information §1.2 · Arthritis Indication",
-        quote: "Approved for active psoriatic arthritis in adults with inadequate response or intolerance to conventional DMARD therapy.",
-        claimId: "Claim #113",
-        mlrRef: "FDA Approval §1.2",
-      },
-      {
-        doc: "Prescribing Information §1.4 · Recurrence Prevention",
-        quote: "Significantly lowers the rate of annual cutaneous flare recurrence in sustained maintenance cohorts.",
-        claimId: "Claim #115",
-        mlrRef: "FDA Efficacy Readout §1.4",
-      },
-    ],
-  },
-  {
-    num: 3,
-    title: "Where the license stops: eGFR ≥25",
-    role: "how it is used · a comparison at one moment",
-    body: "The one threshold a prescriber has to know at a first meeting: for chronic management, initiation is not recommended below eGFR 25 mL/min/1.73m². Patients already on treatment may continue 10 mg once daily under monitoring.",
-    citations: [
-      {
-        doc: "Dosing & Administration §2.1 (Renal Impairment Threshold)",
-        quote: "Initiation of Velmora is not recommended in patients with an estimated glomerular filtration rate (eGFR) below 25 mL/min/1.73 m².",
-        claimId: "Claim #128",
-        mlrRef: "FDA Dosing Guidance §2.1",
-      },
-    ],
-  },
-  {
-    num: 4,
-    title: "Dual Mechanism of Action",
-    role: "how it works · a causal chain",
-    body: "Dual-action cellular kinase blockade selectively suppresses inflammatory phosphorylation cascades, lowering tissue cytokines while preserving peripheral microvascular perfusion.",
-    citations: [
-      {
-        doc: "Lancet Dermatology 2024; 42:118-129 · MoA Characterization",
-        quote: "Tirzelamide selectively inhibits kinase phosphorylation cascades with >350-fold selectivity, suppressing IL-23 and IL-17 cytokine output without microvascular accumulation.",
-        claimId: "Claim #142",
-        mlrRef: "Lancet Derm 2024; 42:118",
-      },
-      {
-        doc: "Cellular Immunology Journal §3.4",
-        quote: "Selective target occupancy in dermal tissue confirms localized anti-inflammatory suppression with rapid systemic clearance.",
-        claimId: "Claim #144",
-        mlrRef: "Cellular Imm §3.4",
-      },
-    ],
-  },
-  {
-    num: 5,
-    title: "Primary Efficacy Endpoint: 52% PASI 90",
-    role: "clinical proof · pivotal trial results",
-    body: "In the pivotal EMBRACE-3 study (N=613), 52% of patients achieved PASI 90 clear skin at Week 16 vs 18% in placebo (p < 0.001), maintained through Week 52.",
-    citations: [
-      {
-        doc: "EMBRACE-3 Pivotal Phase III Study Readout Table 2.4",
-        quote: "52.4% of patients receiving Velmora 200mg achieved PASI 90 at Week 16 compared with 18.1% receiving placebo (p < 0.001; 95% CI: 26.8%–41.8%).",
-        claimId: "Claim #214",
-        mlrRef: "EMBRACE-3 Readout Table 2.4",
-      },
-      {
-        doc: "EMBRACE-3 Long-Term Extension Cohort §4.2",
-        quote: "84.6% of Week 16 PASI 90 responders maintained clear or almost clear skin through Week 52 open-label extension.",
-        claimId: "Claim #216",
-        mlrRef: "EMBRACE-3 52-Week Data",
-      },
-    ],
-  },
-  {
-    num: 6,
-    title: "Important Safety Information (ISI) & Tolerability",
-    role: "mandatory fair balance · compliance grounding",
-    body: "Contraindicated in patients with severe hepatic impairment. Most common adverse events include transient mild headache (5.1%) and nausea (4.2%). Full prescribing guidance provided.",
-    citations: [
-      {
-        doc: "FDA Safety Section §5.2 · Adverse Reactions & Contraindications",
-        quote: "Contraindicated in patients with severe hepatic impairment (Child-Pugh Class C). Most common adverse events were mild headache (5.1%) and nausea (4.2%).",
-        claimId: "Claim #290",
-        mlrRef: "FDA Safety §5.2",
-      },
-    ],
-  },
-];
+
 
 export function InfographicDirectionsScreen() {
-  const router = useRouter();
   const {
     brief,
     audience,
-    topics,
     pageShape,
     infographicPages,
     infographicTemplate,
@@ -331,7 +124,6 @@ export function InfographicDirectionsScreen() {
     setInfographicPages,
     setInfographicTemplate,
     setInfographicLogoPlacement,
-    setTopics,
     setBrief,
     setMarket,
     setIntendedUse,
@@ -360,6 +152,8 @@ export function InfographicDirectionsScreen() {
      stage is to read and cut, not to type from nothing. */
   const [copyBlocks, setCopyBlocks] = useState<CopyBlock[]>([]);
   const [copyScope, setCopyScope] = useState<string[]>([]);
+  /** Set when the layout came from the library rather than the five. */
+  const [libraryTemplateId, setLibraryTemplateId] = useState<string | null>(null);
 
   const [useCaseDrawerOpen, setUseCaseDrawerOpen] = useState(false);
   /* Only image cases count here. demoScenarioId is shared with the video flow,
@@ -394,7 +188,10 @@ export function InfographicDirectionsScreen() {
    * so the canvas is worked top to bottom by clicking rather than by hunting
    * for whichever tile still needs attention.
    */
-  const sectionOrder: PlanSectionId[] = ["sources", "format", "audience", "design", "objective", "assets"];
+  /* No "design" here: the layout archetype became its own step, because it
+     decides the page's whole composition and because the twelve hundred
+     variants behind the five families need room the accordion never had. */
+  const sectionOrder: PlanSectionId[] = ["sources", "format", "audience", "objective", "assets"];
 
   const advanceFrom = (section: PlanSectionId) => {
     // Working a section through is what confirms it; the status then reads as
@@ -475,7 +272,6 @@ export function InfographicDirectionsScreen() {
     { name: `${brandName}_Visual_Claims_Master.docx`, size: "720 KB", date: "Today" },
   ]);
   const [previewDossier, setPreviewDossier] = useState<DossierPreviewData | null>(null);
-  const docUploadRef = useRef<HTMLInputElement>(null);
 
   /**
    * Why the plan cannot be confirmed, or null.
@@ -485,7 +281,6 @@ export function InfographicDirectionsScreen() {
    * safety block is a regulatory failure rather than a layout preference. So
    * fit blocks, the same as having nothing to ground on.
    */
-  const overflow = copyOverflow(brief, infographicTemplate, Number(infographicPages) || 1);
   const hasGrounding = (sourcePayload?.dossierId ?? "").length > 0 || uploadedDocs.length > 0;
 
   const planBlock: { section: PlanSectionId; title: string; detail: string } | null = !hasGrounding
@@ -500,13 +295,7 @@ export function InfographicDirectionsScreen() {
           title: "Those attachments hold nothing usable",
           detail: "The files verified as having no approved claim text. Attach the label or the study readout, or edit the request to something they can support.",
         }
-      : overflow
-        ? {
-            section: "design",
-            title: "The copy does not fit this archetype",
-            detail: overflow.reason,
-          }
-        : null;
+      : null;
 
   /* Verification happens on Confirm, not on arrival — and a failure sends you
      back to the offending section with everything else still Confirmed. */
@@ -519,13 +308,7 @@ export function InfographicDirectionsScreen() {
       const unusable = sourcesWillFail;
       if (unusable) setSourcesUnusable(true);
 
-      const block = !hasGrounding
-        ? "sources"
-        : unusable
-          ? "sources"
-          : overflow
-            ? "design"
-            : null;
+      const block = !hasGrounding || unusable ? "sources" : null;
 
       if (block) {
         setFoundBlock(planBlock);
@@ -534,7 +317,8 @@ export function InfographicDirectionsScreen() {
         setOpenSection(block as PlanSectionId);
         return;
       }
-      setCurrentStep("content");
+      // The plan settles the brief; the layout is the next decision.
+      setCurrentStep("template");
     }, 900);
   };
 
@@ -591,6 +375,10 @@ export function InfographicDirectionsScreen() {
     return out;
   };
 
+  const openTemplateStep = () => {
+    setCurrentStep("template");
+  };
+
   const openCopyDeck = () => {
     setCopyBlocks((prev) => (prev.length > 0 ? prev : seedCopyBlocks()));
     setCopyScope([]);
@@ -628,7 +416,7 @@ export function InfographicDirectionsScreen() {
   const [language, setLanguage] = useState<string>("English");
   const [objective, setObjective] = useState<string>("adoption");
   const [selectedAngles, setSelectedAngles] = useState<string[]>(["Product Introduction", "Mechanism of Action", "Indications"]);
-  const [packshots, setPackshots] = useState<Array<{ id: string; name: string; url: string }>>([
+  const [packshots] = useState<Array<{ id: string; name: string; url: string }>>([
     {
       id: "packshot-1",
       name: `${brandName}_Autoinjector_3D_Packshot.png`,
@@ -637,17 +425,7 @@ export function InfographicDirectionsScreen() {
   ]);
 
   // Expanded citations state in Content step
-  const [expandedCitations, setExpandedCitations] = useState<Record<number, boolean>>({
-    2: true, // Expand section 2 by default for discovery
-    5: true,
-  });
 
-  const toggleCitation = (secNum: number) => {
-    setExpandedCitations((prev) => ({
-      ...prev,
-      [secNum]: !prev[secNum],
-    }));
-  };
 
   // Chat state
   const [chatInput, setChatInput] = useState("");
@@ -705,17 +483,44 @@ export function InfographicDirectionsScreen() {
     }, 450);
   };
 
-  const selectedTemplate = TEMPLATE_ARCHETYPES.find((t) => t.id === infographicTemplate) || TEMPLATE_ARCHETYPES[0];
 
   /**
    * The copy deck is its own stage, returned after every hook above has run.
    * An early return higher up would unmount the hooks beneath it — the same
    * trap the asset-type branch at the top of this file already sets.
    */
+  if (currentStep === "template") {
+    return (
+      <TemplateStepScreen
+        brief={brief}
+        pageShape={pageShape}
+        pages={Number(infographicPages) || 1}
+        selectedId={infographicTemplate}
+        libraryTemplateId={libraryTemplateId}
+        onSelectArchetype={(id) => {
+          setInfographicTemplate(id);
+          setLibraryTemplateId(null);
+        }}
+        onSelectTemplate={(template) => {
+          // A library pick sets the family too, because the family is what
+          // decides which blocks exist — the variant only arranges them.
+          setInfographicTemplate(template.family);
+          setLibraryTemplateId(template.id);
+          setPageShape(template.shape as never);
+        }}
+        onBack={() => setCurrentStep("brief")}
+        onContinue={openCopyDeck}
+      />
+    );
+  }
+
   if (currentStep === "copy") {
     return (
       <CopyDeckScreen
         blocks={copyBlocks}
+        title={`One tablet, three approved jobs: ${brandName} (tirzelamide) in moderate-to-severe plaque psoriasis`}
+        claimSummary={`${copyBlocks.length} blocks on ${infographicPages === "2" ? "2 pages" : "1 page"} · 13 verified claims grounded in the FDA dossier`}
+        leftOut="The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved FDA primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1."
         pages={Array.from({ length: Number(infographicPages) || 1 }, (_, i) => i + 1)}
         scope={copyScope}
         onScopeChange={setCopyScope}
@@ -723,7 +528,7 @@ export function InfographicDirectionsScreen() {
           setCopyBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, text } : b)))
         }
         onAsk={rewriteCopy}
-        onBack={() => setCurrentStep("content")}
+        onBack={() => setCurrentStep("template")}
         onContinue={() => {
           setView("studio");
           setVideoSubStage("studio");
@@ -749,8 +554,8 @@ export function InfographicDirectionsScreen() {
           <button
             type="button"
             onClick={() => {
-              if (currentStep === "content") setCurrentStep("brief");
-              else {
+              {
+
                 setVideoSubStage("intake");
                 setView("create");
               }
@@ -783,7 +588,7 @@ export function InfographicDirectionsScreen() {
               image cases. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
             <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-              {currentStep === "brief" ? "Plan View" : "Blueprint View"}
+              Plan View
             </span>
             <button
               type="button"
@@ -1054,104 +859,10 @@ export function InfographicDirectionsScreen() {
                     <PlanSectionContinue onClick={() => advanceFrom("audience")} />
                   </CreativePlanSection>
 
-                  {/* 3. Design & Layout Archetype */}
-                  <CreativePlanSection
-                    icon={Palette}
-                    title="Design & Layout Archetype"
-                    summary={`${selectedTemplate.name} · ${selectedTemplate.badge}`}
-                    status={statusFor("design", "Recommended")}
-                    error={foundBlock?.section === "design" ? foundBlock : null}
-                    tone="done"
-                    open={openSection === "design"}
-                    onToggle={() => setOpenSection(openSection === "design" ? null : "design")}
-                  >
-                    <div className="space-y-4">
-                      <div className="rounded-control bg-subtle p-3 border border-hair">
-                        <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
-                          Visual layout structure
-                        </div>
-                        <p className="text-body text-ink-2">
-                          The deck is built from one of these archetypes. Each sample carries the typography, charts, and layout elements the creative will use.
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
-                        {TEMPLATE_ARCHETYPES.map((tpl) => {
-                          const isSelected = infographicTemplate === tpl.id;
-                          return (
-                            <div
-                              key={tpl.id}
-                              onClick={() => setInfographicTemplate(tpl.id)}
-                              className={cn(
-                                "rounded-control border bg-card p-3.5 transition-all duration-200 flex flex-col justify-between cursor-pointer relative shadow-2xs hover:shadow-md",
-                                isSelected
-                                  ? "border-brand bg-card shadow-xs ring-2 ring-brand/15"
-                                  : "border-hair-2 hover:border-hair-3 hover:bg-canvas"
-                              )}
-                            >
-                              <div>
-                                <div className="flex items-center justify-between mb-1">
-                                  <h3 className="text-subhead font-bold text-ink">{tpl.name}</h3>
-                                  {isSelected ? (
-                                    <span className="size-4.5 rounded-full bg-brand text-white grid place-items-center text-caption font-black">
-                                      ✓
-                                    </span>
-                                  ) : (
-                                    <span className="size-4.5 rounded-full border-2 border-hair-3 shrink-0" />
-                                  )}
-                                </div>
-                                <p className="text-label text-ink-3 leading-snug mb-2.5 line-clamp-2">{tpl.tagline}</p>
-
-                                <div
-                                  style={{ background: tpl.previewBg }}
-                                  className="rounded-control p-3 text-white mb-2.5 shadow-inner min-h-[115px] flex flex-col justify-between"
-                                >
-                                  <div>
-                                    <span className="inline-block px-1.5 py-0.5 rounded-glyph bg-white/20 text-micro font-extrabold uppercase tracking-wide">
-                                      {tpl.badge}
-                                    </span>
-                                    <div className="text-title font-black tracking-tight mt-1 leading-none">
-                                      {tpl.metric}
-                                    </div>
-                                    <div className="text-micro text-white/70 mt-0.5">{tpl.metricSub}</div>
-                                  </div>
-
-                                  <div className="space-y-0.5 pt-1.5 border-t border-white/15">
-                                    {tpl.points.slice(0, 2).map((pt, i) => (
-                                      <div key={i} className="text-micro text-white/85 flex items-center gap-1 truncate">
-                                        <span className="size-1 rounded-full bg-white/60 shrink-0" />
-                                        <span>{pt}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <Button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setInfographicTemplate(tpl.id);
-                                }}
-                                variant={isSelected ? "primary" : "secondary"}
-                                size="sm"
-                                className={cn(
-                                  "w-full h-8 rounded-control text-label font-bold transition cursor-pointer",
-                                  isSelected
-                                    ? "bg-brand hover:bg-brand-deep text-white"
-                                    : "border-hair-2 hover:border-brand text-ink"
-                                )}
-                              >
-                                {isSelected ? `Using ${tpl.name}` : `Use ${tpl.name}`}
-                              </Button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <PlanSectionContinue onClick={() => advanceFrom("design")} />
-                  </CreativePlanSection>
-
+                  {/* The layout archetype used to sit here. It became its own
+                      step: it decides the page's whole composition, and the
+                      twelve hundred variants behind the five families need
+                      room an accordion never had. */}
                   {/* 4. What should this deck achieve? (Objective & Angle) */}
                   <CreativePlanSection
                     icon={Target}
@@ -1383,114 +1094,7 @@ export function InfographicDirectionsScreen() {
             {/* ══════════════════════════════════════════════════════════════════
                 STAGE 2: CONTENT BLUEPRINT / PLAN (Expandable Citations)
                ══════════════════════════════════════════════════════════════════ */}
-            {currentStep === "content" && (
-              <div className="space-y-4 max-w-[880px] mx-auto w-full">
-                {/* Header Box */}
-                <div className="bg-card p-5 rounded-panel border border-hair-2 shadow-2xs">
-                  <div className="text-label font-extrabold uppercase tracking-wider text-brand mb-1">
-                    Content Blueprint &amp; Claim Partition
-                  </div>
-                  <h2 className="text-display font-black tracking-tight text-ink">
-                    One tablet, three approved jobs: {brandName} (tirzelamide) in moderate-to-severe plaque psoriasis
-                  </h2>
-                  <p className="text-body text-ink-3 mt-1">
-                    8 sections on {infographicPages === "2" ? "2 pages" : "1 page"} · 13 verified claims grounded in FDA / FDA dossier
-                  </p>
-                </div>
-
-                {/* Transparent "Left Out" Box (MLR Discipline) */}
-                <div className="rounded-panel border border-warn-line/80 bg-warn-bg/70 p-4 shadow-2xs">
-                  <div className="flex items-center gap-2 text-warn font-bold text-body mb-1.5">
-                    <ShieldCheck className="size-4 text-warn shrink-0" />
-                    <span>Left out deliberately for MLR Compliance</span>
-                  </div>
-                  <p className="text-label text-warn/90 leading-relaxed">
-                    The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved FDA primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1.
-                  </p>
-                </div>
-
-                {/* Numbered Sections List with Interactive Expandable Citations */}
-                <div className="space-y-3">
-                  {CONTENT_PLAN_SECTIONS.map((sec) => {
-                    const isExpanded = expandedCitations[sec.num];
-                    return (
-                      <div
-                        key={sec.num}
-                        className="bg-card p-4.5 rounded-panel border border-hair-2 shadow-2xs hover:border-hair-3 transition-all duration-200"
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className="size-6.5 rounded-full bg-tint text-brand-deep font-black text-body grid place-items-center shrink-0 mt-0.5">
-                            {sec.num}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-bold text-subhead text-ink">{sec.title}</h4>
-                              <span className="text-caption text-ink-3 font-normal italic">
-                                ({sec.role})
-                              </span>
-                            </div>
-                            <p className="text-body text-ink-2 mt-1.5 leading-relaxed">{sec.body}</p>
-
-                            {/* Expandable Citation Button */}
-                            <div className="mt-2.5">
-                              <button
-                                type="button"
-                                onClick={() => toggleCitation(sec.num)}
-                                className={cn(
-                                  "text-label font-bold px-2.5 py-1 rounded-chip inline-flex items-center gap-1.5 border transition cursor-pointer",
-                                  isExpanded
-                                    ? "bg-ok-bg/80 text-ok border-ok-line ring-2 ring-ok/20"
-                                    : "bg-ok-bg text-ok border-ok-line hover:bg-ok-bg/60"
-                                )}
-                              >
-                                <CheckCircle2 className="size-3.5 text-ok shrink-0" />
-                                <span>{sec.citations.length} {sec.citations.length === 1 ? "citation" : "citations"} · Grounded in label</span>
-                                <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
-                              </button>
-
-                              {/* Rich Expanded Citations Drawer */}
-                              {isExpanded && (
-                                <div className="mt-2.5 space-y-2 rounded-control bg-[#f7faf8] p-3 border border-ok-line/80 text-label animate-in fade-in slide-in-from-top-1 duration-200">
-                                  <div className="text-caption font-extrabold uppercase tracking-wider text-ok flex items-center gap-1">
-                                    <FileCheck2 className="size-3 text-ok" />
-                                    <span>Verified Dossier Citations &amp; Label Grounding</span>
-                                  </div>
-
-                                  {sec.citations.map((cit, cIdx) => (
-                                    <div
-                                      key={cIdx}
-                                      className="p-2.5 rounded-chip bg-card border border-ok-line shadow-2xs space-y-1"
-                                    >
-                                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                                        <div className="font-bold text-body text-ink flex items-center gap-1.5">
-                                          <span className="size-1.5 rounded-full bg-ok shrink-0" />
-                                          <span>{cit.doc}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="text-micro font-extrabold text-brand-deep bg-tint px-1.5 py-0.5 rounded-glyph border border-tint-line">
-                                            {cit.claimId}
-                                          </span>
-                                          <span className="text-micro text-ok bg-ok-bg px-1.5 py-0.5 rounded-glyph border border-ok-line">
-                                            {cit.mlrRef}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <p className="text-label text-ink-3 italic leading-relaxed pl-3 border-l-2 border-ok-line">
-                                        &ldquo;{cit.quote}&rdquo;
-                                      </p>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            
 
             {/* ══════════════════════════════════════════════════════════════════
                 UNIFIED FLOATING ACTION PILL AT MIDDLE BOTTOM (Exact Video Twin)
@@ -1531,8 +1135,8 @@ export function InfographicDirectionsScreen() {
                 >
                   <span>
                     {currentStep === "brief"
-                      ? "Confirm Plan & Review Blueprint"
-                      : "Approve Blueprint & Write Copy"}
+                      ? "Confirm Plan & Choose Layout"
+                      : "Choose Layout"}
                   </span>
                   <ArrowRight className="size-3.5 ml-1.5" />
                 </Button>
@@ -1628,46 +1232,18 @@ export function InfographicDirectionsScreen() {
                 </div>
                 <Button
                   type="button"
-                  onClick={() => setCurrentStep("content")}
+                  onClick={openTemplateStep}
                   size="sm"
                   className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                 >
-                  <span>Review Blueprint</span>
+                  <span>Choose Layout</span>
                   <ArrowRight className="size-3 ml-1" />
                 </Button>
               </div>
             )}
 
             {/* ── Sub-step 2 Action Bar ── */}
-            {currentStep === "content" && (
-              <div className="rounded-panel border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2 shadow-2xs flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="size-6 rounded-full bg-ok text-white grid place-items-center shrink-0">
-                    <LogoMark size={14} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-label font-bold text-ink truncate">
-                      Content plan approved
-                    </div>
-                    <div className="text-micro text-ink-3 truncate">
-                      8 sections · 13 citations
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  // Same route as the action bar. A shortcut that skipped the
-                  // copy stage would be a way to reach the studio with copy
-                  // nobody had read.
-                  onClick={openCopyDeck}
-                  size="sm"
-                  className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
-                >
-                  <span>Write Copy</span>
-                  <ArrowRight className="size-3 ml-1" />
-                </Button>
-              </div>
-            )}
+            
 
             {/* Input Bar */}
             <div className="relative">

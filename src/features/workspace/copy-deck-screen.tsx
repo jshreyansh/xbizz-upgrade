@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, FileText, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, FileText, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { CopyDeckCard, type CopyBlock } from "@/features/workspace/copy-deck-card";
@@ -24,6 +24,9 @@ import { copyFit } from "@/features/workspace/copy-fit";
 export function CopyDeckScreen({
   blocks,
   pages,
+  title,
+  claimSummary,
+  leftOut,
   onChangeBlock,
   onBack,
   onContinue,
@@ -33,6 +36,13 @@ export function CopyDeckScreen({
 }: {
   blocks: CopyBlock[];
   pages: number[];
+  /** What this deck is, in one line. */
+  title: string;
+  /** Sections and verified claims — what the blueprint used to say on its own. */
+  claimSummary: string;
+  /** What was deliberately not said, and why. The one thing the separate
+   *  blueprint carried that a list of copy blocks cannot. */
+  leftOut: string;
   onChangeBlock: (id: string, text: string) => void;
   onBack: () => void;
   onContinue: () => void;
@@ -117,6 +127,30 @@ export function CopyDeckScreen({
           )}
         </div>
       </header>
+
+      {/* ── What this deck says, and what it deliberately does not ──
+          The blueprint was a second screen showing the same words in a
+          different shape. Its counts and its MLR note live here, where the
+          words themselves are — the rest of it was a duplicate. */}
+      <div className="border-b border-hair bg-canvas px-3 py-3 sm:px-4">
+        <div className="mx-auto max-w-[760px] space-y-2.5">
+          <div className="rounded-panel border border-hair-2 bg-card p-3.5 shadow-2xs">
+            <div className="mb-1 text-label font-extrabold uppercase tracking-wider text-brand">
+              Content &amp; claim partition
+            </div>
+            <h2 className="text-body-lg font-[850] leading-snug tracking-tight text-ink">{title}</h2>
+            <p className="mt-1 text-label text-ink-3">{claimSummary}</p>
+          </div>
+
+          <div className="rounded-panel border border-warn-line/80 bg-warn-bg/70 p-3.5 shadow-2xs">
+            <div className="mb-1 flex items-center gap-2 text-body font-bold text-warn">
+              <ShieldCheck className="size-4 shrink-0 text-warn" />
+              <span>Left out deliberately for MLR compliance</span>
+            </div>
+            <p className="text-label leading-relaxed text-warn/90">{leftOut}</p>
+          </div>
+        </div>
+      </div>
 
       {/* ── Pages ── */}
       {pages.length > 1 && (
