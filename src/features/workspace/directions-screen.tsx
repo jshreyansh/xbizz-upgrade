@@ -25,6 +25,7 @@ import {
   Music2,
   MonitorPlay,
   PackageCheck,
+  Stamp,
   PanelRight,
   PanelRightClose,
   PanelRightOpen,
@@ -62,10 +63,11 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
+import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 
-type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets";
+type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets" | "logo";
 
 const audienceOptions: Audience[] = ["HCP", "Patient", "Field team", "Hospital", "Distributor", "Consumer"];
 const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
@@ -242,6 +244,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    * blocker asks.
    */
   const [confirmedSections, setConfirmedSections] = useState<PlanSectionId[]>([]);
+  /* Above the early return, unlike most of this file's hooks — a new one
+     added below it would be a new instance of the bug, not a continuation of
+     the old one. */
+  const logoUploadRef = useRef<HTMLInputElement>(null);
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -294,6 +300,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setCopilotPanelWidth,
     setCopilotPanelOpen,
     toggleCopilotPanel,
+    logoMark,
+    setLogoMark,
   } = useWorkspaceStore();
 
   // Keyboard shortcut: ⌘\ or Ctrl+\ to toggle right panel
@@ -638,6 +646,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     "sources",
     isMagicAvatar ? "voice" : "treatment",
     ...(isProductFocus ? (["product-assets"] as PlanSectionId[]) : []),
+    // Every video carries a mark, so this is not folded into product assets —
+    // that section only appears when the brief is product-focused. It sits
+    // where it renders: an order that disagrees with the markup sends Save &
+    // Continue jumping back up the page.
+    "logo",
     "message",
     "delivery",
     // Visual-only has nothing to voice, and avatar mode already voiced it in
@@ -1245,6 +1258,126 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         <PlanSectionContinue onClick={() => advanceFrom("treatment")} />
                       )}
                     </PlanSection>
+                  )}
+
+                  {/* Brand mark — one corner, every scene */}
+                  {shows("logo") && (
+                  <PlanSection
+                    icon={Stamp}
+                    title="Brand mark"
+                    summary={
+                      logoMark.position === "none"
+                        ? "No logo — the asset ships unbranded"
+                        : `${LOGO_CORNERS.find((c) => c.id === logoMark.position)?.label} · ${logoMark.name}`
+                    }
+                    status={logoMark.source === "brand-kit" ? "From brand kit" : "Replaced"}
+                    tone="done"
+                    open={openSection === "logo"}
+                    onToggle={() => setOpenSection(openSection === "logo" ? null : "logo")}
+                  >
+                    <div className="space-y-4">
+                      {/* The artwork, and the one thing you can do to it */}
+                      <div className="flex flex-wrap items-center gap-3 rounded-control border border-hair bg-subtle p-3">
+                        <span className="grid h-11 w-[112px] shrink-0 place-items-center rounded-control border border-hair-2 bg-card">
+                          <span className="inline-flex items-center gap-1.5">
+                            <span aria-hidden className="size-4 rounded-[3px] bg-[linear-gradient(135deg,#fd4816_0%,#b82f0c_100%)]" />
+                            <span className="text-body font-[850] tracking-tight text-ink">Meridian</span>
+                          </span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-body font-bold text-ink">{logoMark.name}</div>
+                          <p className="mt-0.5 text-label text-ink-3">
+                            {logoMark.source === "brand-kit"
+                              ? "Pulled from your brand kit. Size and clear space follow the kit's rule — shown, not set."
+                              : "Uploaded for this project. Check it against the brand kit before publishing."}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => logoUploadRef.current?.click()}
+                          className="focus-ring shrink-0 cursor-pointer rounded-chip border border-hair-2 bg-card px-3 py-1.5 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand"
+                        >
+                          Replace
+                        </button>
+                        {logoMark.source === "custom" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setLogoMark({ source: "brand-kit", name: "Meridian Therapeutics · primary mark" })
+                            }
+                            className="shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
+                          >
+                            Use brand kit
+                          </button>
+                        )}
+                        <input
+                          ref={logoUploadRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setLogoMark({ source: "custom", name: file.name });
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <div className="mb-1 text-label font-extrabold uppercase tracking-wider text-brand-deep">
+                          Placement
+                        </div>
+                        <p className="mb-2 text-body text-ink-2">
+                          Every scene keeps this corner clear, and the mark is placed into it. Nothing else is
+                          laid out there, so the logo can never end up over a claim or its citation.
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                          {LOGO_CORNERS.map((corner) => {
+                            const active = logoMark.position === corner.id;
+                            return (
+                              <button
+                                key={corner.id}
+                                type="button"
+                                onClick={() => setLogoMark({ position: corner.id })}
+                                className={cn(
+                                  "flex cursor-pointer items-start gap-2 rounded-control border p-2.5 text-left transition",
+                                  active
+                                    ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
+                                    : "border-hair-2 bg-card hover:border-hair-3"
+                                )}
+                              >
+                                {/* A frame with the mark in the corner it means */}
+                                <span className="relative mt-0.5 h-8 w-[52px] shrink-0 overflow-hidden rounded-[4px] border border-hair-2 bg-[#101826]">
+                                  {corner.id !== "none" && (
+                                    <span
+                                      aria-hidden
+                                      className={cn(
+                                        "absolute h-1.5 w-4 rounded-[2px] bg-white/85",
+                                        corner.id === "top-left" && "left-1 top-1",
+                                        corner.id === "top-right" && "right-1 top-1",
+                                        corner.id === "bottom-left" && "bottom-1 left-1",
+                                        corner.id === "bottom-right" && "bottom-1 right-1"
+                                      )}
+                                    />
+                                  )}
+                                </span>
+                                <span className="min-w-0">
+                                  <span className="block text-body font-bold text-ink">{corner.label}</span>
+                                  <span className="mt-0.5 block text-label leading-snug text-ink-3">
+                                    {corner.hint}
+                                  </span>
+                                </span>
+                                {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <PlanSectionContinue onClick={() => advanceFrom("logo")} />
+                    </div>
+                  </PlanSection>
                   )}
 
                   {/* 2. Elevated Product Packshot & Visual Assets */}

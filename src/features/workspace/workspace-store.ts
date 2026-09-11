@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { creativeDirections } from "@/features/workspace/mock-data";
-import type { AppView, AssetType, Audience, AuthView, InspectorTab, OnboardingBeat, PresentationMode } from "@/types/content";
+import type { AppView, AssetType, Audience, AuthView, InspectorTab, LogoMark, OnboardingBeat, PresentationMode } from "@/types/content";
 
 export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
@@ -50,6 +50,8 @@ interface WorkspaceState {
   copilotPanelWidth: number;
   /** True only mid-drag, so width transitions can be suspended. */
   copilotPanelResizing: boolean;
+  /** The brand mark, across every scene and page — see LogoMark. */
+  logoMark: LogoMark;
   // Infographic / Creative specific states
   pageShape: "3:4" | "16:9" | "A4";
   infographicPages: "1" | "2" | "3" | string;
@@ -101,6 +103,7 @@ interface WorkspaceState {
   setInfographicPages: (pages: "1" | "2" | "3" | string) => void;
   setInfographicTemplate: (template: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease") => void;
   setInfographicLogoPlacement: (placement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none") => void;
+  setLogoMark: (patch: Partial<LogoMark>) => void;
   setInfographicActivePage: (page: number) => void;
   reset: () => void;
 }
@@ -145,6 +148,14 @@ const initialState = {
   infographicPages: "1" as "1" | "2",
   infographicTemplate: "stat-hero" as "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease",
   infographicLogoPlacement: "bottom-right" as "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none",
+  /* Bottom right by default because that is where the job code goes, and the
+     mark is normally set beside it. */
+  logoMark: {
+    source: "brand-kit",
+    name: "Meridian Therapeutics · primary mark",
+    position: "bottom-right",
+    scale: 0.085,
+  } as LogoMark,
   infographicActivePage: 1 as 1 | 2,
 };
 
@@ -212,6 +223,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setInfographicPages: (infographicPages) => set({ infographicPages }),
   setInfographicTemplate: (infographicTemplate) => set({ infographicTemplate }),
   setInfographicLogoPlacement: (infographicLogoPlacement) => set({ infographicLogoPlacement }),
+  setLogoMark: (patch) => set((state) => ({ logoMark: { ...state.logoMark, ...patch } })),
   setInfographicActivePage: (infographicActivePage) => set({ infographicActivePage }),
   reset: () => set(initialState),
 }));

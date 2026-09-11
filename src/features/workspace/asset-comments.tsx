@@ -93,6 +93,8 @@ export const ELEMENT_LABELS: Record<string, string> = {
   sfx: "Sound effects",
   "bg-video": "Background footage",
   graph: "Chart",
+  avatar: "Presenter",
+  logo: "Brand mark",
   // Creative surface
   "header.badge": "Eyebrow",
   "header.title": "Headline",

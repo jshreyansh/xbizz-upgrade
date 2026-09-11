@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { LogoWatermark } from "@/features/workspace/logo-watermark";
+import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import type { Scene } from "@/types/content";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
@@ -32,6 +35,22 @@ export function DynamicSceneComposition({
   const currentTheme = sceneThemeColors[((scene.number || 1) - 1) % sceneThemeColors.length];
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const bgVideoRef = React.useRef<HTMLVideoElement>(null);
+
+  /* The mark and the presenter are drawn by the same components the editor
+     uses, against this frame's real height. Two renderers would eventually
+     draw them differently, and the first anyone would hear of it is a
+     reviewer asking why the share link does not match what was approved. */
+  const logoMark = useWorkspaceStore((state) => state.logoMark);
+  const frameRef = React.useRef<HTMLDivElement>(null);
+  const [frameHeight, setFrameHeight] = React.useState(0);
+
+  React.useEffect(() => {
+    const node = frameRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setFrameHeight(node.clientHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   /**
    * The element timings, applied here as well as on the editor canvas.
@@ -80,6 +99,7 @@ export function DynamicSceneComposition({
 
   return (
     <div
+      ref={frameRef}
       style={{
         position: "absolute",
         inset: 0,
@@ -90,6 +110,21 @@ export function DynamicSceneComposition({
         userSelect: "none",
       }}
     >
+      {/* The presenter, on the scenes that have one — same component, same
+          timings, so the published take matches the editor frame for frame. */}
+      {scene.avatar && (
+        <SceneAvatarLayer
+          avatar={scene.avatar}
+          timing={scene.timings?.find((t) => t.elementId === "avatar")}
+          currentTime={sceneTime}
+          frameHeight={frameHeight}
+          ready
+        />
+      )}
+
+      {/* The brand mark, over every scene. */}
+      <LogoWatermark logo={logoMark} frameHeight={frameHeight} />
+
       {/* Background with Ambient Radial Glow */}
       <div
         style={{

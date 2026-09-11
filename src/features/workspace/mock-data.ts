@@ -45,6 +45,7 @@ export const creativeDirections: CreativeDirection[] = [
 export const scenes: Scene[] = [
   {
     id: "scene-1",
+    avatar: { name: "Dr. Maya Chen · clinical and warm", role: "Consultant Dermatologist", position: "bottom-left", scale: 0.62 },
     backgroundKind: "video",
     bgVideoSrc: "/133898-758336558_medium.mp4",
     shots: [
@@ -58,6 +59,7 @@ export const scenes: Scene[] = [
       { elementId: "background", inAt: 0, outAt: 8.0, transitionIn: "Slow push in 4%", transitionOut: "Cross dissolve 400ms" },
       { elementId: "voiceover", inAt: 0.8, outAt: 8.0, transitionIn: "Fade in 200ms", transitionOut: "Fade out 400ms" },
       { elementId: "sfx", inAt: 0, outAt: 1.6, transitionIn: "Cut in", transitionOut: "Duck under VO" },
+      { elementId: "avatar", inAt: 0.6, outAt: 7.2, transitionIn: "Fade up 320ms", transitionOut: "Fade out 240ms" },
       { elementId: "bg-video", inAt: 0, outAt: 8.0, transitionIn: "Fade up from black 600ms", transitionOut: "Cross dissolve 400ms" },
     ],
     number: 1,
@@ -175,6 +177,7 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-5",
+    avatar: { name: "Dr. Maya Chen · clinical and warm", role: "Consultant Dermatologist", position: "bottom-left", scale: 0.58 },
     shots: [
       { id: "s5-a", index: 1, startAt: 0,   endAt: 6.4, label: "The next step",     transitionIn: "Cut", narrationFragment: 'Review the full Prescribing Information,', visualStory: 'Closing copy on a quiet frame with no media behind it.' },
       { id: "s5-b", index: 2, startAt: 6.4, endAt: 8.0, label: "Fade to fair balance", transitionIn: "Fade out 400ms", narrationFragment: 'then consider whether DERMORA is appropriate for your patients.', visualStory: 'Everything fades toward black behind the fair-balance line.' },
@@ -185,6 +188,7 @@ export const scenes: Scene[] = [
       { elementId: "background", inAt: 0, outAt: 8.0, transitionIn: "Cut", transitionOut: "Fade to black 600ms" },
       { elementId: "voiceover", inAt: 0.8, outAt: 8.0, transitionIn: "Fade in 200ms", transitionOut: "Fade out 600ms" },
       { elementId: "sfx", inAt: 6.4, outAt: 8.0, transitionIn: "Swell in 400ms", transitionOut: "Fade to silence" },
+      { elementId: "avatar", inAt: 0.4, outAt: 8.0, transitionIn: "Fade up 320ms", transitionOut: "Fade to black 600ms" },
     ],
     number: 5,
     title: "A clearer next step",

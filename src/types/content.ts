@@ -140,6 +140,51 @@ export interface Scene {
   bgVideoSrc?: string;
   /** An animated chart layer, element id "graph". Also generated. */
   graph?: SceneGraph;
+  /**
+   * A presenter rendered into this scene, element id "avatar".
+   *
+   * Per scene, unlike the logo: most scenes do not want a person in them, and
+   * a presenter who appears in every shot stops being a presenter and becomes
+   * furniture. Generated like any other asset, so it has a timing entry and a
+   * placeholder while it renders.
+   */
+  avatar?: SceneAvatar;
+}
+
+/** The presenter in one scene. */
+export interface SceneAvatar {
+  /** "Dr. Maya Chen · clinical and warm" — the take being rendered. */
+  name: string;
+  role: string;
+  /** Which corner the cut-out sits in. */
+  position: LogoCorner;
+  /** Fraction of frame height, so the cut-out survives a shape change. */
+  scale: number;
+}
+
+export type LogoCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+/**
+ * The brand mark on the asset.
+ *
+ * A project property, not a scene one. It is approved artwork that already
+ * exists, so unlike every other layer it is present from the first frame
+ * rather than generated — and it sits in one corner for the whole asset,
+ * because a mark that moves between scenes is a mistake rather than a
+ * design. Editing it anywhere edits it everywhere.
+ */
+export interface LogoMark {
+  /** Where the file came from — the brand kit, or something uploaded here. */
+  source: "brand-kit" | "custom";
+  name: string;
+  /** "none" means the asset ships unbranded, which preflight notes. */
+  position: LogoCorner | "none";
+  /**
+   * Fraction of frame height. Not a user control: brand kits specify a
+   * minimum size and clear space, and a draggable handle is a way to breach
+   * it. Shown, not set.
+   */
+  scale: number;
 }
 
 /**

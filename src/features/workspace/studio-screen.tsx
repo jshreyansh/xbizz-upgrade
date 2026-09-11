@@ -18,6 +18,8 @@ import {
   History,
   Image as ImageIcon,
   Layers,
+  Stamp,
+  UserRound,
   LayoutPanelTop,
   Maximize2,
   MessageSquare,
@@ -66,6 +68,8 @@ import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
+import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
+import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
   CommentsModal,
   ElementActionBar,
@@ -162,6 +166,8 @@ export function StudioScreen() {
     setCopilotPanelResizing,
     setCopilotPanelOpen,
     toggleCopilotPanel,
+    logoMark,
+    setLogoMark,
   } = useWorkspaceStore();
 
   const [studioMode, setStudioMode] = useState<"scenes" | "editor" | "generating" | "review">("scenes");
@@ -295,6 +301,20 @@ export function StudioScreen() {
       };
     });
   }, [sceneList]);
+
+  /* The brand mark and the presenter are both a fraction of the frame, so the
+     stage has to say how tall it actually is — a fixed px size would be right
+     at one zoom and wrong at every other. */
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [stageHeight, setStageHeight] = useState(0);
+
+  useEffect(() => {
+    const node = stageRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(() => setStageHeight(node.clientHeight));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [studioMode]);
 
   const [scenePlaying, setScenePlaying] = useState(false);
   const [sceneCurrentTime, setSceneCurrentTime] = useState(2.4);
@@ -1598,8 +1618,38 @@ export function StudioScreen() {
                       if (e.target === e.currentTarget) setSelectedCanvasElementId(null);
                     }}
                     data-canvas-stage
+                    ref={stageRef}
                     className="relative aspect-video w-full rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
                   >
+                    {/* The presenter, when this scene has one. A generated
+                        layer like the rest, so it carries the scene's own in
+                        and out — and only the scenes that want a person in
+                        frame have one. */}
+                    {selectedScene.avatar && (
+                      <SceneAvatarLayer
+                        avatar={selectedScene.avatar}
+                        timing={timingFor(selectedScene, "avatar")}
+                        currentTime={sceneCurrentTime}
+                        frameHeight={stageHeight}
+                        ready={selectedScenePhase >= 2}
+                        selected={selectedCanvasElementId === "avatar"}
+                        onSelect={() => handleSelectCanvasElement("avatar")}
+                      />
+                    )}
+
+                    {/* The brand mark, over every scene and every shot. No
+                        generating state: it is approved artwork that already
+                        exists, so it is here in the first frame while
+                        everything else is still a placeholder. Selecting it
+                        edits the project, not this scene — which is why there
+                        is one control for it and no per-scene drift. */}
+                    <LogoWatermark
+                      logo={logoMark}
+                      frameHeight={stageHeight}
+                      selected={selectedCanvasElementId === "logo"}
+                      onSelect={() => handleSelectCanvasElement("logo")}
+                    />
+
                     {/* Layer 1: Background Gradient Graphic */}
                     <div
                       onClick={(e) => {
@@ -2390,6 +2440,55 @@ export function StudioScreen() {
                             </div>
                           </div>
                         </div>
+
+                        {/* The presenter, when this scene has one. A generated
+                            track like the media, with its own in and out. */}
+                        {selectedScene.avatar && (
+                          <div
+                            onClick={() => handleSelectCanvasElement("avatar")}
+                            className={cn(
+                              "flex h-8 cursor-pointer items-center transition-colors",
+                              selectedCanvasElementId === "avatar" ? "bg-tint/40" : "bg-canvas hover:bg-card"
+                            )}
+                          >
+                            <div className="flex h-full w-[160px] shrink-0 items-center gap-2 border-r border-hair bg-card px-3 text-caption font-bold">
+                              <UserRound className="size-3.5 text-brand" />
+                              <span className="truncate">7. Presenter</span>
+                            </div>
+                            <div className="h-full flex-1 p-1">
+                              <div className="flex h-full items-center truncate rounded-glyph border border-tint-line bg-tint px-2 text-micro font-bold text-brand-deep">
+                                {selectedScene.avatar.name.split(" · ")[0]}
+                                {(() => {
+                                  const t = timingFor(selectedScene, "avatar");
+                                  return t ? ` [${t.inAt}s – ${t.outAt}s]` : "";
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* The brand mark. It spans the scene because it spans
+                            the asset — there is nothing to schedule, which is
+                            exactly what the full-width bar says. */}
+                        <div
+                          onClick={() => handleSelectCanvasElement("logo")}
+                          className={cn(
+                            "flex h-8 cursor-pointer items-center transition-colors",
+                            selectedCanvasElementId === "logo" ? "bg-tint/40" : "bg-canvas hover:bg-card"
+                          )}
+                        >
+                          <div className="flex h-full w-[160px] shrink-0 items-center gap-2 border-r border-hair bg-card px-3 text-caption font-bold">
+                            <Stamp className="size-3.5 text-ink-2" />
+                            <span className="truncate">Brand mark</span>
+                          </div>
+                          <div className="h-full flex-1 p-1">
+                            <div className="flex h-full items-center truncate rounded-glyph border border-hair-2 bg-subtle px-2 text-micro font-bold text-ink-3">
+                              {logoMark.position === "none"
+                                ? "No logo on this asset"
+                                : `${logoMark.name} · every scene, no render needed`}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -2971,6 +3070,47 @@ export function StudioScreen() {
                     ({selectedScene.narrativeTag || "Evidence"})
                   </span>
                 </div>
+
+                {/**
+                 * The brand mark, when it is what you have selected.
+                 *
+                 * A placement setting rather than content, which is why it is
+                 * still editable here while the copy is not — and why changing
+                 * it changes the project rather than this scene. There is one
+                 * mark on the asset, so there is one control for it.
+                 */}
+                {selectedCanvasElementId === "logo" && (
+                  <div className="space-y-2.5 rounded-panel border border-hair-2 bg-canvas p-3">
+                    <div className="flex items-center gap-2">
+                      <Stamp className="size-3.5 shrink-0 text-brand" />
+                      <span className="text-body font-bold text-ink">Brand mark</span>
+                      <span className="ml-auto rounded-glyph bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">
+                        Every scene
+                      </span>
+                    </div>
+                    <p className="text-label leading-snug text-ink-3">
+                      {logoMark.name}. Size follows the brand kit&rsquo;s clear-space rule, so it is shown
+                      rather than set. Its corner is kept clear on every scene.
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {LOGO_CORNERS.map((corner) => (
+                        <button
+                          key={corner.id}
+                          type="button"
+                          onClick={() => setLogoMark({ position: corner.id })}
+                          className={cn(
+                            "cursor-pointer rounded-control border px-2 py-1.5 text-left text-label font-bold transition",
+                            logoMark.position === corner.id
+                              ? "border-brand bg-tint text-brand-deep"
+                              : "border-hair-2 bg-card text-ink-2 hover:border-hair-3"
+                          )}
+                        >
+                          {corner.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3.5">
                   {/**
