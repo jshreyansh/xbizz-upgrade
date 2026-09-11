@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import {
   AlertTriangle,
+  FileText,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -16,6 +17,7 @@ import {
   Plus,
   Redo2,
   Send,
+  X,
   ShieldCheck,
   Target,
   Undo2,
@@ -1333,6 +1335,37 @@ export function InfographicDirectionsScreen() {
 
             {/* Input Bar */}
             <div className="relative">
+              {/* What the next instruction is aimed at.
+                  The canvas ticks and this list are one thing, the same as the
+                  script stage's scene scope — so a block can be dropped from
+                  scope here or there, and both surfaces agree. */}
+              {currentStep === "copy" && copyScope.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5 rounded-control border border-hair bg-subtle p-1.5">
+                  {copyScope.map((id) => {
+                    const block = copyBlocks.find((b) => b.id === id);
+                    if (!block) return null;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1.5 rounded-chip border border-brand/20 bg-card px-2 py-0.5 text-label font-bold text-brand-deep shadow-2xs"
+                      >
+                        <FileText className="size-3 shrink-0 text-brand" />
+                        <span className="max-w-[180px] truncate">
+                          <strong>{block.label}:</strong> {block.text}
+                        </span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${block.label} from scope`}
+                          onClick={() => setCopyScope((prev) => prev.filter((s) => s !== id))}
+                          className="flex size-3.5 cursor-pointer items-center justify-center rounded-full text-ink-4 hover:bg-black/10 hover:text-black"
+                        >
+                          <X className="size-2.5" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
               <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                 <Plus className="size-3.5 text-ink-3 shrink-0" />
                 <input

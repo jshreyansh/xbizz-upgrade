@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ActionBar } from "@/components/patterns/action-bar";
 import { cn } from "@/lib/cn";
 import { CopyDeckCard, type CopyBlock } from "@/features/workspace/copy-deck-card";
 import { copyFit } from "@/features/workspace/copy-fit";
@@ -176,33 +177,45 @@ export function CopyDeckScreen({
             />
           ))}
           </div>
+
+          {/* The same floating pill the plan view ends on, so every stage in
+              this flow is finished the same way. */}
+          <ActionBar
+            icon={
+              overflowing.length > 0 ? (
+                <AlertTriangle className="size-4.5 shrink-0 text-warn-on-dark" />
+              ) : (
+                <CheckCircle2 className="size-4.5 shrink-0 text-ok-on-dark" />
+              )
+            }
+            title={
+              overflowing.length > 0
+                ? `${overflowing.length} ${overflowing.length === 1 ? "block overflows" : "blocks overflow"}`
+                : scope.length > 0
+                  ? `${scope.length} ${scope.length === 1 ? "block" : "blocks"} in the chat\u2019s scope`
+                  : "Copy is ready"
+            }
+            description={
+              overflowing.length > 0
+                ? "A clipped safety block cannot ship — shorten it before the art is made."
+                : scope.length > 0
+                  ? "Ask for a change in the panel, or click Edit to retype it yourself."
+                  : "Tick any block to aim the chat at it, or click Edit to retype it yourself."
+            }
+            action={
+              <Button
+                onClick={onContinue}
+                disabled={overflowing.length > 0}
+                className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
+              >
+                Approve plan &amp; open studio
+                <ArrowRight className="size-3.5" />
+              </Button>
+            }
+          />
         </div>
       </div>
 
-      {/* ── Where you are, and the way on ──
-          No composer here: the chat panel beside this screen is the composer,
-          the same as the script stage. Ticking cards is how an instruction is
-          aimed, so a second input on the canvas would be a second way to say
-          the same thing. */}
-      <div className="shrink-0 border-t border-hair bg-card px-3 py-2.5 sm:px-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="min-w-0 text-micro text-ink-3">
-            {overflowing.length > 0
-              ? "Blocks that overflow have to be shortened before the art is made — a clipped safety block cannot ship."
-              : scope.length > 0
-                ? `${scope.length} ${scope.length === 1 ? "block" : "blocks"} in the chat\u2019s scope — ask for a change in the panel.`
-                : "Tick any block to aim the chat at it, or click Edit to retype it yourself."}
-          </span>
-          <Button
-            onClick={onContinue}
-            disabled={overflowing.length > 0}
-            className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
-          >
-            Approve plan &amp; open studio
-            <ArrowRight className="size-3.5" />
-          </Button>
-        </div>
-      </div>
     </section>
   );
 }

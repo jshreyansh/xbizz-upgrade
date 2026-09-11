@@ -5,11 +5,13 @@ import {
   AlertTriangle,
   ArrowRight,
   Check,
+  CheckCircle2,
   Search,
   ShieldCheck,
   SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ActionBar } from "@/components/patterns/action-bar";
 import { cn } from "@/lib/cn";
 import { TEMPLATE_ARCHETYPES, type TemplateArchetype } from "@/features/workspace/template-archetypes";
 import {
@@ -320,25 +322,37 @@ export function TemplateStepScreen({
             )}
           </>
         )}
+
+        {/* The same floating pill the plan view ends on, so every stage in
+            this flow is finished the same way. Sticky inside the scroller
+            rather than a bar under it — the canvas keeps running behind. */}
+        <ActionBar
+          icon={
+            blocked ? (
+              <AlertTriangle className="size-4.5 shrink-0 text-warn-on-dark" />
+            ) : (
+              <CheckCircle2 className="size-4.5 shrink-0 text-ok-on-dark" />
+            )
+          }
+          title={blocked ? (chosenCost?.label ?? "This layout cannot carry the brief") : "Layout chosen"}
+          description={
+            blocked
+              ? "Choose a layout that can carry this brief, or shorten the request."
+              : "You can swap a single page\u2019s layout later in the studio — this sets the deck."
+          }
+          action={
+            <Button
+              onClick={onContinue}
+              disabled={blocked}
+              className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
+            >
+              Continue to content plan
+              <ArrowRight className="size-3.5" />
+            </Button>
+          }
+        />
       </div>
 
-      <div className="shrink-0 border-t border-hair bg-card px-3 py-2.5 sm:px-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className={cn("min-w-0 text-micro", blocked ? "font-bold text-warn" : "text-ink-3")}>
-            {blocked
-              ? `${chosenCost?.label} — choose a layout that can carry this brief, or shorten the request.`
-              : "You can swap a single page’s layout later in the studio — this sets the deck."}
-          </span>
-          <Button
-            onClick={onContinue}
-            disabled={blocked}
-            className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
-          >
-            Continue to content plan
-            <ArrowRight className="size-3.5" />
-          </Button>
-        </div>
-      </div>
     </section>
   );
 }
