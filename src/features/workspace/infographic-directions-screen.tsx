@@ -529,11 +529,15 @@ export function InfographicDirectionsScreen() {
           <button
             type="button"
             onClick={() => {
-              {
-
-                setVideoSubStage("intake");
-                setView("create");
+              // The shell's back button is the only one. The layout step had
+              // grown its own, two arrows apart, which is a choice between
+              // two things that should be one.
+              if (currentStep === "template") {
+                setCurrentStep("brief");
+                return;
               }
+              setVideoSubStage("intake");
+              setView("create");
             }}
             className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5 cursor-pointer"
             aria-label="Back"
@@ -627,7 +631,6 @@ export function InfographicDirectionsScreen() {
               setLibraryTemplateId(template.id);
               setPageShape(template.shape as never);
             }}
-            onBack={() => setCurrentStep("brief")}
             onContinue={openCopyDeck}
           />
         ) : (

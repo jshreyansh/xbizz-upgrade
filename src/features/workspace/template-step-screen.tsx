@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, Layers, Search, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  Layers,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { TEMPLATE_ARCHETYPES, type TemplateArchetype } from "@/features/workspace/template-archetypes";
@@ -17,6 +25,7 @@ import {
   type TemplateFamily,
   type TemplateShape,
 } from "@/features/workspace/template-library";
+
 
 /**
  * Choosing the layout, as its own step.
@@ -39,7 +48,6 @@ export function TemplateStepScreen({
   libraryTemplateId,
   onSelectArchetype,
   onSelectTemplate,
-  onBack,
   onContinue,
 }: {
   brief: string;
@@ -50,27 +58,32 @@ export function TemplateStepScreen({
   libraryTemplateId: string | null;
   onSelectArchetype: (id: TemplateArchetype["id"]) => void;
   onSelectTemplate: (template: Template) => void;
-  onBack: () => void;
   onContinue: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [family, setFamily] = useState<TemplateFamily | "all">("all");
-  const [shape, setShape] = useState<TemplateShape | "all">("all");
   const [statSlots, setStatSlots] = useState(0);
   const [contains, setContains] = useState<TemplateElement[]>([]);
   const [approvedOnly, setApprovedOnly] = useState(true);
   const [matchesBrief, setMatchesBrief] = useState(true);
   const [shown, setShown] = useState(24);
+  /* Everything past categories is folded away. Twenty-six controls at rest
+     is not a filter panel, it is a wall — and two of those rows answered
+     questions the project has already answered for itself. */
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const results = useMemo(
     () =>
       filterTemplates(
-        { matchesBrief, family, shape, statSlots, contains, approvedOnly, search },
+        // Shape is not offered: the project already has one, and the scope
+        // toggle pins results to it. A shape picker here would only ever be
+        // a way to choose a layout for a page you are not making.
+        { matchesBrief, family, shape: "all", statSlots, contains, approvedOnly, search },
         brief,
         pages,
         pageShape
       ),
-    [matchesBrief, family, shape, statSlots, contains, approvedOnly, search, brief, pages, pageShape]
+    [matchesBrief, family, statSlots, contains, approvedOnly, search, brief, pages, pageShape]
   );
 
   const matching = useMemo(() => matchingCount(brief, pages, pageShape), [brief, pages, pageShape]);
@@ -85,7 +98,8 @@ export function TemplateStepScreen({
 
   /* The recommended row is the shortlist, and it only makes sense while you
      are not already looking for something specific. */
-  const browsing = search.trim().length > 0 || family !== "all" || shape !== "all" || statSlots > 0 || contains.length > 0;
+  const browsing = search.trim().length > 0 || family !== "all" || statSlots > 0 || contains.length > 0;
+  const extraFilters = (statSlots > 0 ? 1 : 0) + contains.length;
 
   const toggleContains = (element: TemplateElement) =>
     setContains((prev) => (prev.includes(element) ? prev.filter((e) => e !== element) : [...prev, element]));
@@ -93,7 +107,6 @@ export function TemplateStepScreen({
   const resetFilters = () => {
     setSearch("");
     setFamily("all");
-    setShape("all");
     setStatSlots(0);
     setContains([]);
   };
@@ -103,15 +116,6 @@ export function TemplateStepScreen({
       {/* ── What this step is, and the way into the catalogue ── */}
       <header className="shrink-0 border-b border-hair bg-card px-3 py-2.5 sm:px-4">
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label="Back to the plan"
-            className="focus-ring grid size-8 shrink-0 cursor-pointer place-items-center rounded-chip text-ink-3 hover:bg-black/5 hover:text-ink"
-          >
-            <ArrowLeft className="size-4" />
-          </button>
-
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <Layers className="size-3.5 shrink-0 text-brand" />
@@ -139,8 +143,8 @@ export function TemplateStepScreen({
           </label>
         </div>
 
-        {/* Scope, first: it is the difference between a usable list and a
-            thousand thumbnails. */}
+        {/* Scope, kept prominent: it is the difference between a usable list
+            and a thousand thumbnails. */}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {[
             { id: true, label: "Matches this brief", count: matching },
@@ -178,61 +182,72 @@ export function TemplateStepScreen({
         </div>
       </header>
 
-      {/* ── Categories, then the narrower cuts ── */}
-      <div className="shrink-0 space-y-1.5 border-b border-hair bg-canvas px-3 py-2 sm:px-4">
-        <div className="flex flex-wrap items-center gap-1">
+      {/* ── Categories, and one door to everything narrower ── */}
+      <div className="shrink-0 border-b border-hair bg-canvas px-3 py-2 sm:px-4">
+        <div className="flex flex-wrap items-center gap-1.5">
           <Chip active={family === "all"} onClick={() => { setFamily("all"); setShown(24); }}>
             All categories
           </Chip>
           {(Object.keys(FAMILY_LABELS) as TemplateFamily[]).map((id) => (
-            <Chip
-              key={id}
-              active={family === id}
-              onClick={() => { setFamily(id); setShown(24); }}
-            >
+            <Chip key={id} active={family === id} onClick={() => { setFamily(id); setShown(24); }}>
               {FAMILY_LABELS[id]}
             </Chip>
           ))}
-        </div>
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <FilterRow label="Shape">
-            <Chip small active={shape === "all"} onClick={() => setShape("all")}>Any</Chip>
-            {(["16:9", "9:16", "1:1", "3:4", "A4"] as TemplateShape[]).map((s) => (
-              <Chip key={s} small active={shape === s} onClick={() => setShape(s)}>{s}</Chip>
-            ))}
-          </FilterRow>
-
-          <FilterRow label="Figures">
-            <Chip small active={statSlots === 0} onClick={() => setStatSlots(0)}>Any</Chip>
-            {[1, 2, 3, 4].map((n) => (
-              <Chip key={n} small active={statSlots === n} onClick={() => setStatSlots(n)}>{n}</Chip>
-            ))}
-          </FilterRow>
-
-          <FilterRow label="Contains">
-            {(Object.keys(ELEMENT_LABELS) as TemplateElement[]).map((element) => (
-              <Chip
-                key={element}
-                small
-                active={contains.includes(element)}
-                onClick={() => toggleContains(element)}
-              >
-                {ELEMENT_LABELS[element]}
-              </Chip>
-            ))}
-          </FilterRow>
+          <button
+            type="button"
+            onClick={() => setMoreOpen((open) => !open)}
+            aria-expanded={moreOpen}
+            className={cn(
+              "ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border px-2.5 py-1 text-label font-bold transition",
+              extraFilters > 0 || moreOpen
+                ? "border-brand bg-tint text-brand-deep"
+                : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
+            )}
+          >
+            <SlidersHorizontal className="size-3" />
+            More filters
+            {extraFilters > 0 && (
+              <span className="rounded-full bg-brand px-1.5 text-micro font-bold text-white tabular-nums">
+                {extraFilters}
+              </span>
+            )}
+          </button>
 
           {browsing && (
             <button
               type="button"
               onClick={resetFilters}
-              className="ml-auto shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
+              className="shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
             >
-              Clear filters
+              Clear
             </button>
           )}
         </div>
+
+        {moreOpen && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-hair pt-2">
+            <FilterRow label="Figures">
+              <Chip small active={statSlots === 0} onClick={() => setStatSlots(0)}>Any</Chip>
+              {[1, 2, 3, 4].map((n) => (
+                <Chip key={n} small active={statSlots === n} onClick={() => setStatSlots(n)}>{n}</Chip>
+              ))}
+            </FilterRow>
+
+            <FilterRow label="Contains">
+              {(Object.keys(ELEMENT_LABELS) as TemplateElement[]).map((element) => (
+                <Chip
+                  key={element}
+                  small
+                  active={contains.includes(element)}
+                  onClick={() => toggleContains(element)}
+                >
+                  {ELEMENT_LABELS[element]}
+                </Chip>
+              ))}
+            </FilterRow>
+          </div>
+        )}
       </div>
 
       {/* ── The catalogue ── */}
