@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
+  BarChart3,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -62,13 +63,49 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 import { PreflightPanel } from "@/features/workspace/preflight-panel";
+import { PageArtLayers } from "@/features/workspace/page-art-layers";
 
 export type CreativeStudioMode = "editor" | "generating" | "review";
+
+/**
+ * One piece of art on a page.
+ *
+ * The box and the z-order are declared before the art exists, which is what
+ * makes the two-pass generation safe: the layout pass settles where everything
+ * sits, and the art pass only changes what is inside a box that has already
+ * been placed. An arriving render cannot reflow the page.
+ */
+interface PageArtLayer {
+  id: string;
+  label: string;
+  kind: "image" | "graph" | "background";
+  /** Percentages of the page box, so the layer survives zoom and page shape. */
+  box: { x: number; y: number; w: number; h: number };
+  z: number;
+  /** Milliseconds from the start of generation when this art lands. */
+  readyAt: number;
+}
+
+/* Layout first, across every page; then the art, one piece at a time. The
+   same shape as the video flow's two passes, and the same reason — you can
+   keep working on a composed page while the expensive part arrives. */
+const LAYOUT_BY = 10_000;
+const ART_FIRST = 20_000;
+const ART_LAST = 50_000;
+
+/** Art lands spread evenly between the first and last slot. */
+function artSchedule(count: number): number[] {
+  if (count <= 1) return [ART_FIRST];
+  const step = (ART_LAST - ART_FIRST) / (count - 1);
+  return Array.from({ length: count }, (_, i) => Math.round(ART_FIRST + i * step));
+}
 
 interface InfographicPageData {
   id: number;
   name: string;
   subtitle: string;
+  /** Art layers, back to front. */
+  art: PageArtLayer[];
   header: {
     title: string;
     subtitle: string;
@@ -102,9 +139,17 @@ interface InfographicPageData {
   };
 }
 
+const PAGE_1_ART: PageArtLayer[] = [
+  { id: "p1-bg", label: "Dermal tissue wash", kind: "background", box: { x: 0, y: 0, w: 100, h: 100 }, z: 0, readyAt: 0 },
+  { id: "p1-moa", label: "Cellular cascade render", kind: "image", box: { x: 6, y: 40, w: 40, h: 18 }, z: 2, readyAt: 0 },
+  { id: "p1-chart", label: "EMBRACE-3 response curve", kind: "graph", box: { x: 52, y: 40, w: 42, h: 18 }, z: 2, readyAt: 0 },
+  { id: "p1-pack", label: "200mg pack shot", kind: "image", box: { x: 70, y: 12, w: 24, h: 16 }, z: 3, readyAt: 0 },
+];
+
 const DEFAULT_PAGE_1: InfographicPageData = {
   id: 1,
   name: "Page 1: Front Summary",
+  art: PAGE_1_ART.map((layer, i) => ({ ...layer, readyAt: artSchedule(PAGE_1_ART.length)[i] })),
   subtitle: "Executive Readout & MoA",
   header: {
     title: "VELMORA™ (tirzelamide) · 200mg",
@@ -139,9 +184,16 @@ const DEFAULT_PAGE_1: InfographicPageData = {
   },
 };
 
+const PAGE_2_ART: PageArtLayer[] = [
+  { id: "p2-bg", label: "Clinical gradient field", kind: "background", box: { x: 0, y: 0, w: 100, h: 100 }, z: 0, readyAt: 0 },
+  { id: "p2-durability", label: "52-week durability curve", kind: "graph", box: { x: 6, y: 38, w: 44, h: 20 }, z: 2, readyAt: 0 },
+  { id: "p2-renal", label: "Renal clearance schematic", kind: "image", box: { x: 54, y: 38, w: 40, h: 20 }, z: 2, readyAt: 0 },
+];
+
 const DEFAULT_PAGE_2: InfographicPageData = {
   id: 2,
   name: "Page 2: Evidence & Tolerability",
+  art: PAGE_2_ART.map((layer, i) => ({ ...layer, readyAt: artSchedule(PAGE_2_ART.length)[i] })),
   subtitle: "52-Week Durability & Renal Boundary",
   header: {
     title: "VELMORA™ · Clinical Evidence & Safety",
@@ -222,6 +274,36 @@ export function InfographicStudioScreen() {
 
   // Zoom & UI state
   const [zoomLevel, setZoomLevel] = useState<number>(100);
+
+  /* ── Two-pass generation ──────────────────────────────────────────────────
+     The studio opens on a page that is being built, not on a spinner. Blocks
+     land through the layout pass, art fills the boxes they declared, and the
+     page is editable the whole way — which is only safe because the boxes are
+     settled before any art arrives. */
+  // Stamped in the effect, not during render: Date.now() in a render body is
+  // an impure read, and the clock should start when the studio mounts anyway.
+  const genStartRef = useRef(0);
+  const [genElapsed, setGenElapsed] = useState(0);
+
+  useEffect(() => {
+    genStartRef.current = Date.now();
+    const tick = setInterval(() => {
+      const elapsed = Date.now() - genStartRef.current;
+      setGenElapsed(elapsed);
+      if (elapsed >= ART_LAST) clearInterval(tick);
+    }, 200);
+    return () => clearInterval(tick);
+  }, []);
+
+  /* Blocks arrive in reading order, all of them inside the layout pass. */
+  const BLOCK_ORDER = ["header", "heroStat", "moa", "chart", "isi"] as const;
+  const blocksLanded = Math.min(
+    BLOCK_ORDER.length,
+    Math.floor(genElapsed / (LAYOUT_BY / BLOCK_ORDER.length))
+  );
+  const blockLanded = (id: (typeof BLOCK_ORDER)[number]) => BLOCK_ORDER.indexOf(id) < blocksLanded;
+  const layoutDone = blocksLanded >= BLOCK_ORDER.length;
+  const [selectedArtId, setSelectedArtId] = useState<string | null>(null);
   const [selectedBlockId, setSelectedBlockId] = useState<"header" | "heroStat" | "moa" | "chart" | "isi">("heroStat");
 
   /* ── Element-level selection ──────────────────────────────────────────────
@@ -905,9 +987,57 @@ export function InfographicStudioScreen() {
                           <Layers className="size-3 text-ink-3 shrink-0" />
                           <span className="truncate">{layer.label}</span>
                         </div>
-                        {selectedBlockId === layer.id && <span className="size-1.5 rounded-full bg-brand" />}
+                        {!blockLanded(layer.id as (typeof BLOCK_ORDER)[number]) ? (
+                          <span className="shrink-0 text-micro font-bold italic text-ink-4">laying out</span>
+                        ) : (
+                          selectedBlockId === layer.id && <span className="size-1.5 rounded-full bg-brand" />
+                        )}
                       </button>
                     ))}
+                  </div>
+
+                  {/* Art is its own list because it arrives on its own clock.
+                      Folding it into the block list would suggest a block is
+                      unfinished when only its art is still rendering. */}
+                  <span className="mt-4 mb-2 block text-caption font-extrabold uppercase tracking-wider text-ink-3">
+                    Art Layers
+                  </span>
+                  <div className="space-y-1">
+                    {[...currentPage.art]
+                      .sort((a, b) => b.z - a.z)
+                      .map((layer) => {
+                        const ready = genElapsed >= layer.readyAt;
+                        const secondsLeft = Math.max(0, Math.ceil((layer.readyAt - genElapsed) / 1000));
+                        return (
+                          <button
+                            key={layer.id}
+                            type="button"
+                            onClick={() => { setSelectedArtId(layer.id); clearElementSelection(); }}
+                            className={cn(
+                              "flex w-full cursor-pointer items-center justify-between gap-2 rounded-chip p-2 text-left text-label font-medium transition",
+                              selectedArtId === layer.id
+                                ? "border border-brand/20 bg-tint font-bold text-brand-deep shadow-2xs"
+                                : "text-ink hover:bg-black/5"
+                            )}
+                          >
+                            <div className="flex min-w-0 items-center gap-2">
+                              {layer.kind === "graph" ? (
+                                <BarChart3 className="size-3 shrink-0 text-ink-3" />
+                              ) : layer.kind === "background" ? (
+                                <Layers className="size-3 shrink-0 text-ink-3" />
+                              ) : (
+                                <ImageIcon className="size-3 shrink-0 text-ink-3" />
+                              )}
+                              <span className="truncate">{layer.label}</span>
+                            </div>
+                            {ready ? (
+                              <span className="shrink-0 text-micro font-bold tabular-nums text-ink-4">z{layer.z}</span>
+                            ) : (
+                              <span className="shrink-0 text-micro font-bold tabular-nums text-brand">{secondsLeft}s</span>
+                            )}
+                          </button>
+                        );
+                      })}
                   </div>
                 </div>
               )}
@@ -959,6 +1089,35 @@ export function InfographicStudioScreen() {
             </div>
         ) : (
           <div className="flex min-h-0 flex-1 flex-col">
+            {/* What is still arriving, and what you can already do. The page
+                below is editable throughout — the strip is a status line, not
+                a gate. */}
+            {studioMode === "editor" && genElapsed < ART_LAST && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-tint-line bg-tint px-3 py-1.5 sm:px-4">
+                <span className="inline-flex shrink-0 items-center gap-1.5 text-label font-bold text-brand-deep">
+                  <LogoMark size={12} className="animate-spin text-brand" />
+                  {layoutDone ? "Rendering art" : "Composing layout"}
+                </span>
+
+                <span className="text-label text-ink-2">
+                  {layoutDone
+                    ? `${currentPage.art.filter((a) => genElapsed >= a.readyAt).length} of ${currentPage.art.length} layers placed`
+                    : `${blocksLanded} of ${BLOCK_ORDER.length} blocks`}
+                </span>
+
+                <div className="h-1.5 min-w-[90px] flex-1 overflow-hidden rounded-full bg-card/70">
+                  <div
+                    style={{ width: `${Math.min(100, (genElapsed / ART_LAST) * 100)}%` }}
+                    className="h-full rounded-full bg-brand transition-[width] duration-200"
+                  />
+                </div>
+
+                <span className="shrink-0 text-label font-semibold text-ink-3">
+                  Keep editing — the boxes are already final
+                </span>
+              </div>
+            )}
+
             {studioMode === "editor" && (
               <FormatRibbon
                 element={selectedElement}
@@ -1007,15 +1166,28 @@ export function InfographicStudioScreen() {
               <div
                 style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: "center top" }}
                 className={cn(
-                  "w-full max-w-[700px] rounded-card bg-card shadow-2xl border border-hair-2 overflow-hidden text-left transition-transform duration-150 flex flex-col select-none",
+                  "relative w-full max-w-[700px] rounded-card bg-card shadow-2xl border border-hair-2 overflow-hidden text-left transition-transform duration-150 flex flex-col select-none",
                   pageShape === "16:9" ? "aspect-video" : "min-h-[880px]"
                 )}
               >
+                {/* Art, in the boxes the layout pass settled. Background sits
+                    at z 0 behind the copy; the rest paints over it. */}
+                <PageArtLayers
+                  layers={currentPage.art}
+                  elapsed={genElapsed}
+                  selectedId={selectedArtId}
+                  onSelect={(id) => {
+                    setSelectedArtId(id);
+                    clearElementSelection();
+                  }}
+                  interactive={studioMode === "editor"}
+                />
+
                 {/* 1. Header Band */}
                 <div
                   onClick={() => studioMode === "editor" && handleSelectBlock("header")}
                   className={cn(
-                    "p-6 pb-5 bg-gradient-to-r from-[#0c1524] via-[#14233c] to-[#1e3458] text-white relative transition group",
+                    "relative z-[1] p-6 pb-5 bg-gradient-to-r from-[#0c1524] via-[#14233c] to-[#1e3458] text-white transition group",
                     studioMode === "editor" && "cursor-pointer",
                     selectedBlockId === "header" && studioMode === "editor"
                       ? "ring-3 ring-inset ring-brand shadow-inner"
@@ -1031,7 +1203,7 @@ export function InfographicStudioScreen() {
                 </div>
 
                 {/* Infographic Body Blocks */}
-                <div className="p-6 space-y-4 flex-1 flex flex-col">
+                <div className="relative z-[1] p-6 space-y-4 flex-1 flex flex-col">
                   {/* 2. Stat Hero */}
                   <div
                     onClick={() => studioMode === "editor" && handleSelectBlock("heroStat")}
@@ -1043,6 +1215,18 @@ export function InfographicStudioScreen() {
                         : "hover:border-brand"
                     )}
                   >
+                  {/* The layout pass is what settles this block's place. Until
+                      it lands the frame is already correct underneath — the
+                      sheet only covers copy that has not arrived. */}
+                  {!blockLanded("heroStat") && (
+                    <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
+                  )}
+                  {/* The layout pass is what settles this block's place. Until
+                      it lands the frame is already correct underneath — the
+                      sheet only covers copy that has not arrived. */}
+                  {!blockLanded("header") && (
+                    <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
+                  )}
                     <div className="flex items-center justify-between mb-1">
                       {run("heroStat.category", "text-caption font-extrabold uppercase tracking-wider text-brand-deep")}
                       <span className="inline-flex items-center gap-1 rounded-glyph bg-ok-bg text-ok px-1.5 py-0.2 text-micro font-bold">
@@ -1068,6 +1252,12 @@ export function InfographicStudioScreen() {
                         : "hover:border-hair-3"
                     )}
                   >
+                  {/* The layout pass is what settles this block's place. Until
+                      it lands the frame is already correct underneath — the
+                      sheet only covers copy that has not arrived. */}
+                  {!blockLanded("moa") && (
+                    <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
+                  )}
                     {run("moa.title", "text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-1")}
                     {run("moa.detail", "text-body text-ink-2 leading-relaxed mb-3 block", "p")}
                     <div className="grid grid-cols-3 gap-2">
@@ -1094,6 +1284,12 @@ export function InfographicStudioScreen() {
                         : "hover:border-hair-3"
                     )}
                   >
+                  {/* The layout pass is what settles this block's place. Until
+                      it lands the frame is already correct underneath — the
+                      sheet only covers copy that has not arrived. */}
+                  {!blockLanded("chart") && (
+                    <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
+                  )}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-body font-bold text-ink">{currentPage.chart.title}</span>
                       <span className="text-caption font-mono text-ink-3">
@@ -1141,6 +1337,12 @@ export function InfographicStudioScreen() {
                         : "hover:border-hair-3"
                     )}
                   >
+                  {/* The layout pass is what settles this block's place. Until
+                      it lands the frame is already correct underneath — the
+                      sheet only covers copy that has not arrived. */}
+                  {!blockLanded("isi") && (
+                    <span aria-hidden className="shimmer absolute inset-0 z-[2] rounded-[inherit] bg-[#0e1a16]/[0.06]" />
+                  )}
                     <div className="mb-1 flex items-baseline text-micro font-bold text-ink-3">
                       {run("isi.title", "text-micro font-bold text-ink-3")}
                       <span>:</span>

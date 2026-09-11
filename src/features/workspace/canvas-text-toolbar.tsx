@@ -279,8 +279,12 @@ export function FloatingTextToolbar({
   const below = anchorRect.top < 150;
   const top = below ? anchorRect.top + anchorRect.height + 10 : anchorRect.top - 10;
   const centre = anchorRect.left + anchorRect.width / 2;
-  // Half of the bar at its widest, so a run near either edge stays reachable.
-  const left = Math.max(232, Math.min(window.innerWidth - 232, centre));
+  /* Clamped by half the bar's *widest possible* size rather than a guessed
+     constant: the bar is capped below at min(92vw, 520px), so half of that is
+     the largest it can ever overhang. Measuring the real width instead would
+     mean a render that reads layout, and a frame at the wrong coordinates. */
+  const half = Math.min(260, window.innerWidth * 0.46);
+  const left = Math.max(half + 8, Math.min(window.innerWidth - half - 8, centre));
 
   const size = style?.size ?? element.baseSize;
   const weight = style?.weight ?? element.baseWeight;
@@ -296,7 +300,7 @@ export function FloatingTextToolbar({
         left,
         transform: below ? "translateX(-50%)" : "translate(-50%, -100%)",
       }}
-      className="fixed z-[70] flex max-w-[92vw] items-center gap-1.5 overflow-x-auto rounded-control border border-white/12 bg-[#11161f] px-2 py-1.5 shadow-2xl"
+      className="fixed z-[70] flex max-w-[min(92vw,520px)] items-center gap-1.5 overflow-x-auto rounded-control border border-white/12 bg-[#11161f] px-2 py-1.5 shadow-2xl"
       // The bar sits over the canvas; a click inside it must not reach the
       // stage's click-to-deselect, or the bar closes the moment you use it.
       onPointerDown={(e) => e.stopPropagation()}
@@ -556,16 +560,24 @@ export function EditableCanvasText({
   const Tag = as;
   const ref = useRef<HTMLElement | null>(null);
 
-  // Keep the toolbars pinned to the run as the canvas scrolls or zooms.
+  /* Keep the toolbars pinned to the run.
+   *
+   * Scroll and resize are not enough: the studio's zoom control rescales the
+   * whole page, which moves every run without firing either event, and the
+   * bar would sit where the text used to be. A ResizeObserver on the element
+   * catches that, because a scaled box is a resized box. */
   useEffect(() => {
     if (!selected || !ref.current) return;
     const node = ref.current;
     const report = () => onSelect(node.getBoundingClientRect());
     window.addEventListener("scroll", report, true);
     window.addEventListener("resize", report);
+    const observer = new ResizeObserver(report);
+    observer.observe(node);
     return () => {
       window.removeEventListener("scroll", report, true);
       window.removeEventListener("resize", report);
+      observer.disconnect();
     };
   }, [selected, onSelect]);
 
