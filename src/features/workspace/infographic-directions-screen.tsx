@@ -53,8 +53,10 @@ import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { copyOverflow } from "@/features/workspace/content-plan";
+import { CopyDeckScreen } from "@/features/workspace/copy-deck-screen";
+import type { CopyBlock } from "@/features/workspace/copy-deck-card";
 
-type InfographicSubStep = "brief" | "content";
+type InfographicSubStep = "brief" | "content" | "copy";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
 
 interface AudienceOption {
@@ -353,6 +355,12 @@ export function InfographicDirectionsScreen() {
      Same switcher as the video plan, filtered to image cases. Changing it
      swaps brief, audience, market, intended use, sources, page shape and
      archetype, because the plan is derived from those. */
+  /* The copy the deck will carry, block by block. Seeded from the plan so the
+     stage opens on real words rather than an empty form — the point of the
+     stage is to read and cut, not to type from nothing. */
+  const [copyBlocks, setCopyBlocks] = useState<CopyBlock[]>([]);
+  const [copyScope, setCopyScope] = useState<string[]>([]);
+
   const [useCaseDrawerOpen, setUseCaseDrawerOpen] = useState(false);
   /* Only image cases count here. demoScenarioId is shared with the video flow,
      so matching the whole library made this button announce "HCP launch video"
@@ -530,6 +538,89 @@ export function InfographicDirectionsScreen() {
     }, 900);
   };
 
+  /**
+   * The copy deck's starting words.
+   *
+   * Built from the plan rather than typed, and one block per real slot on the
+   * page, so the fit chips mean something the moment the stage opens. The
+   * safety block is deliberately over its box on a single-page deck — that is
+   * the case the stage exists to catch, and catching it here costs nothing
+   * where catching it after generation costs the render.
+   */
+  const seedCopyBlocks = (): CopyBlock[] => {
+    const pageCount = Number(infographicPages) || 1;
+    const out: CopyBlock[] = [];
+    for (let page = 1; page <= pageCount; page++) {
+      const first = page === 1;
+      out.push(
+        { id: `p${page}-eyebrow`, pageNumber: page, label: "Eyebrow", kind: "eyebrow", text: first ? "HCP Clinical Brief" : "Clinical Evidence Spread" },
+        {
+          id: `p${page}-headline`, pageNumber: page, label: "Headline", kind: "headline",
+          text: first ? `${brandName}™ (tirzelamide) · 200mg` : `${brandName}™ · Clinical Evidence & Safety`,
+        },
+        {
+          id: `p${page}-subhead`, pageNumber: page, label: "Subhead", kind: "subhead",
+          text: first
+            ? "First-in-Class Dual Mechanism Kinase Inhibitor for Moderate-to-Severe Plaque Psoriasis"
+            : "Long-Term Extension Cohorts, Organ Safety & Prescribing Thresholds",
+        },
+        {
+          id: `p${page}-metric`, pageNumber: page, label: "Hero metric", kind: "metric",
+          text: first ? "52% PASI 90" : "84.6% Durability",
+          citations: [{ id: `p${page}-cit-1`, claimId: "claim-2", source: "EMBRACE-3", title: "Table 2.4 · primary endpoint", date: "2024", anchor: 0 }],
+        },
+        {
+          id: `p${page}-body`, pageNumber: page, label: "Supporting copy", kind: "body",
+          text: first
+            ? "Over half of patients achieved clear or almost clear skin by Week 16, against 18% in the placebo cohort. Response was maintained through the 52-week open-label extension."
+            : "Clearance profile validated across mild-to-moderate renal impairment cohorts without dosage adjustment above eGFR 25.",
+          citations: [{ id: `p${page}-cit-2`, claimId: "claim-4", source: "EMBRACE-3", title: "Long-term extension §4.2", date: "2024", anchor: 1 }],
+        }
+      );
+    }
+    // One safety block for the deck, on the last page, as fair balance is.
+    out.push({
+      id: "safety",
+      pageNumber: pageCount,
+      label: "Safety copy",
+      kind: "safety",
+      text:
+        "Contraindicated in patients with severe hepatic impairment (Child-Pugh Class C). Initiation is not recommended below eGFR 25 mL/min/1.73m². Most common adverse events were mild headache (5.1%) and nausea (4.2%). Co-administration with strong CYP3A4 inhibitors should be monitored. Please review the full Prescribing Information before administration.",
+      citations: [{ id: "safety-cit", claimId: "claim-5", source: "Prescribing Information", title: "§5.2 · Safety", date: "2026", anchor: 0 }],
+    });
+    return out;
+  };
+
+  const openCopyDeck = () => {
+    setCopyBlocks((prev) => (prev.length > 0 ? prev : seedCopyBlocks()));
+    setCopyScope([]);
+    setCurrentStep("copy");
+  };
+
+  /* The agent rewriting what is in scope. It shortens, because that is what
+     the stage is for — an instruction that lengthens a block it was asked to
+     fix would be the one thing the fit chip cannot forgive. */
+  const rewriteCopy = (instruction: string, scopeIds: string[]) => {
+    addChatMessage({ role: "user", text: `[Copy deck · ${scopeIds.length} blocks] ${instruction}` });
+    setTimeout(() => {
+      setCopyBlocks((prev) =>
+        prev.map((block) => {
+          if (!scopeIds.includes(block.id)) return block;
+          const trimmed = block.text
+            .split(/(?<=[.!?])\s+/)
+            .slice(0, 1)
+            .join(" ")
+            .trim();
+          return { ...block, text: trimmed.length > 0 ? trimmed : block.text };
+        })
+      );
+      addChatMessage({
+        role: "swishx",
+        text: `Cut ${scopeIds.length === 1 ? "that block" : `those ${scopeIds.length} blocks`} back to the leading sentence and kept the citations attached. Check the fit chips — anything still amber needs another pass.`,
+      });
+    }, 1500);
+  };
+
 
   // Local state for brief questions
   const [selectedAudienceId, setSelectedAudienceId] = useState<string>(audience === "Patient" ? "patient" : audience === "Consumer" ? "consumer" : "hcp");
@@ -615,6 +706,31 @@ export function InfographicDirectionsScreen() {
   };
 
   const selectedTemplate = TEMPLATE_ARCHETYPES.find((t) => t.id === infographicTemplate) || TEMPLATE_ARCHETYPES[0];
+
+  /**
+   * The copy deck is its own stage, returned after every hook above has run.
+   * An early return higher up would unmount the hooks beneath it — the same
+   * trap the asset-type branch at the top of this file already sets.
+   */
+  if (currentStep === "copy") {
+    return (
+      <CopyDeckScreen
+        blocks={copyBlocks}
+        pages={Array.from({ length: Number(infographicPages) || 1 }, (_, i) => i + 1)}
+        scope={copyScope}
+        onScopeChange={setCopyScope}
+        onChangeBlock={(id, text) =>
+          setCopyBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, text } : b)))
+        }
+        onAsk={rewriteCopy}
+        onBack={() => setCurrentStep("content")}
+        onContinue={() => {
+          setView("studio");
+          setVideoSubStage("studio");
+        }}
+      />
+    );
+  }
 
   return (
     <SplitLayout
@@ -1406,17 +1522,17 @@ export function InfographicDirectionsScreen() {
                   disabled={verifyingSources}
                   onClick={() => {
                     if (currentStep === "brief") handleConfirmPlan();
-                    else {
-                      setView("studio");
-                      setVideoSubStage("studio");
-                    }
+                    // The blueprint approves the structure; the words come
+                    // next. Going straight to the studio meant the first read
+                    // of the copy happened after the art was paid for.
+                    else openCopyDeck();
                   }}
                   className="h-9 px-5 rounded-control text-body font-bold shadow-sm transition-all duration-200 shrink-0 bg-brand hover:bg-brand-deep text-white cursor-pointer hover:-translate-y-0.5"
                 >
                   <span>
                     {currentStep === "brief"
                       ? "Confirm Plan & Review Blueprint"
-                      : "Approve Plan & Open Canvas Studio"}
+                      : "Approve Blueprint & Write Copy"}
                   </span>
                   <ArrowRight className="size-3.5 ml-1.5" />
                 </Button>
@@ -1540,14 +1656,14 @@ export function InfographicDirectionsScreen() {
                 </div>
                 <Button
                   type="button"
-                  onClick={() => {
-                    setView("studio");
-                    setVideoSubStage("studio");
-                  }}
+                  // Same route as the action bar. A shortcut that skipped the
+                  // copy stage would be a way to reach the studio with copy
+                  // nobody had read.
+                  onClick={openCopyDeck}
                   size="sm"
                   className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                 >
-                  <span>Open Studio</span>
+                  <span>Write Copy</span>
                   <ArrowRight className="size-3 ml-1" />
                 </Button>
               </div>
