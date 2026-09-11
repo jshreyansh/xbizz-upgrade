@@ -760,8 +760,13 @@ export function StudioScreen() {
      * tens of seconds of work, and pretending otherwise would design the UI
      * around a wait that does not exist.
      */
-    // Generating the partials is what the agreed budget buys.
-    setCreditsUsed(creditBudget);
+    /**
+     * Generating the partials spends the budget MINUS the render reserve, so a
+     * project with no edits lands exactly on its quote. Spending the whole
+     * budget here made every project open "over budget" the moment the render
+     * cost was added, and a warning that is always on says nothing.
+     */
+    setCreditsUsed(creditBudget - finalRenderCost);
 
     const STRUCTURE_BY = 10_000;
     const MEDIA_FIRST = 20_000;

@@ -55,7 +55,7 @@ const CHART_SAMPLES: CreativeSample[] = [
     metric: "eGFR ≥25",
     metricLabel: "mL/min/1.73m² Threshold",
     caption: "Approved indication cut-off with once-daily oral dosing protocol across all three organ domains.",
-    citation: "CDSCO Prescribing Information §2.1",
+    citation: "FDA Prescribing Information §2.1",
     bgGradient: "linear-gradient(135deg, #24142e 0%, #3a204b 60%, #542e6d 100%)",
   },
 ];
@@ -96,7 +96,7 @@ const DECK_SAMPLES: CreativeSample[] = [
 const CHART_FEATURES = [
   "Pivotal Phase III clinical endpoints & leave-behinds",
   "3D Mechanism of Action (MoA) flows & cellular cascades",
-  "Automated on-label citations from FDA / CDSCO label",
+  "Automated on-label citations from the FDA label",
   "1-Page & 2-Page print-ready A4, 3:4 tablet & 16:9 canvas",
 ];
 

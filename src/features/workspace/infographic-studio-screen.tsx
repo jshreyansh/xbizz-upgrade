@@ -94,7 +94,7 @@ const DEFAULT_PAGE_1: InfographicPageData = {
     title: "VELMORA™ (tirzelamide) · 200mg",
     subtitle: "First-in-Class Dual Mechanism Kinase Inhibitor for Moderate-to-Severe Plaque Psoriasis",
     badge: "HCP Clinical Brief",
-    approvalTag: "CDSCO Approved · 2026",
+    approvalTag: "FDA Approved · 2026",
   },
   heroStat: {
     category: "Primary Efficacy Endpoint · Week 16",
@@ -119,7 +119,7 @@ const DEFAULT_PAGE_1: InfographicPageData = {
   isi: {
     title: "Important Safety Information (ISI)",
     content: "Contraindicated in patients with severe hepatic impairment. Most common adverse events include mild nausea (6.2%) and headache (5.1%). Please review full Prescribing Information before administration.",
-    citation: "CDSCO Prescribing Information §5.2",
+    citation: "FDA Prescribing Information §5.2",
   },
 };
 
@@ -131,7 +131,7 @@ const DEFAULT_PAGE_2: InfographicPageData = {
     title: "VELMORA™ · Clinical Evidence & Safety",
     subtitle: "Long-Term Extension Cohorts, Organ Safety & Prescribing Thresholds",
     badge: "Clinical Evidence Spread",
-    approvalTag: "CDSCO Section 2.1 & 5.2",
+    approvalTag: "FDA Label §2.1 & §5.2",
   },
   heroStat: {
     category: "52-Week Open-Label Extension",
@@ -155,8 +155,8 @@ const DEFAULT_PAGE_2: InfographicPageData = {
   },
   isi: {
     title: "Important Safety Information & Precautions",
-    content: "Initiation is not recommended in patients with eGFR < 25 mL/min/1.73m². Co-administration with strong CYP3A4 inhibitors should be monitored. Consult full CDSCO Package Insert.",
-    citation: "CDSCO Package Insert §2.1 & §5.2",
+    content: "Initiation is not recommended in patients with eGFR < 25 mL/min/1.73m². Co-administration with strong CYP3A4 inhibitors should be monitored. Consult the full Prescribing Information.",
+    citation: "Package Insert §2.1 & §5.2",
   },
 };
 
@@ -165,7 +165,7 @@ const CLAIMS_LIST = [
   { id: "claim-2", tag: "Claim §2.4 · Efficacy (52% PASI 90)", desc: "Statistically significant skin clearance vs 18% in placebo (p < 0.001)", source: "EMBRACE-3 readout Table 2.4" },
   { id: "claim-3", tag: "Claim §3.1 · Mechanism (Dual Kinase)", desc: "Selective cellular kinase receptor binding and downstream cytokine inhibition", source: "Lancet Derm 2024; 42:118" },
   { id: "claim-4", tag: "Claim §4.2 · Durability (Week 52)", desc: "Clearance maintained through 52-week open-label extension cohort", source: "EMBRACE-3 Long-Term Study" },
-  { id: "claim-5", tag: "Claim §5.2 · Tolerability & Safety", desc: "Contraindicated in severe hepatic impairment. Transient mild headache (<6%)", source: "CDSCO Safety Section §5.2" },
+  { id: "claim-5", tag: "Claim §5.2 · Tolerability & Safety", desc: "Contraindicated in severe hepatic impairment. Transient mild headache (<6%)", source: "FDA Label §5.2 Safety" },
   { id: "claim-6", tag: "Claim §6.1 · Prescribing Cut-Off", desc: "Recommended for eGFR ≥25 mL/min/1.73m² with once-daily oral dosing", source: "Dosing & Administration §2.1" },
 ];
 
@@ -209,11 +209,32 @@ export function InfographicStudioScreen() {
   const [selectedBlockId, setSelectedBlockId] = useState<"header" | "heroStat" | "moa" | "chart" | "isi">("heroStat");
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+
   const [confirmGenerateModalOpen, setConfirmGenerateModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Multi-page management
+  /**
+   * Laying out the first page spends its share of the quote, holding back the
+   * render reserve — so a creative with no edits lands exactly on budget and
+   * the over-budget warning only appears when something actually went over.
+   */
+  const pagesListInitialCost = 300 - 120;
   const [pagesList, setPagesList] = useState<InfographicPageData[]>([DEFAULT_PAGE_1]);
+  /**
+   * Credits as a budget against an actual, not a single deducted figure.
+   *
+   * The card said "Credits Deducted: pages x 300", which is the BUDGET agreed
+   * at the start. By the time you reach it you have already spent credits
+   * generating pages and re-running layers, and the final render costs more on
+   * top — so the only figure a user can act on was the one missing.
+   */
+  const [creditsUsed, setCreditsUsed] = useState(() => pagesListInitialCost);
+  const creditBudget = pagesList.length * 300;
+  /** What rendering the final artwork costs on top of what is already spent. */
+  const finalRenderCost = pagesList.length * 120;
+  const creditsTotal = creditsUsed + finalRenderCost;
+  const teamBalance = 50000;
   const activePageId = infographicActivePage || 1;
 
   // Sync with store pages
@@ -247,7 +268,7 @@ export function InfographicStudioScreen() {
       role: "MLR Officer",
       avatar: "DV",
       page: 1,
-      text: "Grounded accurately in CDSCO §2.1. The eGFR ≥25 cut-off warning in the footer meets fair balance standards.",
+      text: "Grounded accurately in FDA §2.1. The eGFR ≥25 cut-off warning in the footer meets fair balance standards.",
       time: "18m ago",
       resolved: true,
     },
@@ -272,6 +293,8 @@ export function InfographicStudioScreen() {
       name: `Page ${newPageNum}: Clinical Evidence & Tolerability`,
     };
     setPagesList((prev) => [...prev, newPage]);
+    // A page added after the quote is work that was not quoted for.
+    setCreditsUsed((prev) => prev + 300);
     setInfographicPages(String(newPageNum) as any);
     setInfographicActivePage(newPageNum);
     showToast(`Added Page ${newPageNum}`);
@@ -395,10 +418,12 @@ export function InfographicStudioScreen() {
         }));
         reply = "Updated the primary efficacy hero card to PASI 90 clear skin with full 52-week extension grounding.";
       } else {
-        reply = `Applied direction for "${text}". The infographic layout, styling, and verified FDA/CDSCO citations remain 100% compliant.`;
+        reply = `Applied direction for "${text}". The infographic layout, styling, and verified FDA citations remain 100% compliant.`;
       }
 
       addChatMessage({ role: "swishx", text: reply });
+      // Re-running a page through the agent costs, as a scene rewrite does.
+      setCreditsUsed((prev) => prev + 400);
     }, 500);
   };
 
@@ -683,7 +708,7 @@ export function InfographicStudioScreen() {
                       <span>MLR Clearance Grounded</span>
                     </div>
                     <p className="text-caption text-ok leading-snug">
-                      Passed label verification against CDSCO §1.1, §2.1 and §5.2.
+                      Passed label verification against FDA §1.1, §2.1 and §5.2.
                     </p>
                   </div>
                 </div>
@@ -1436,21 +1461,50 @@ export function InfographicStudioScreen() {
               <div className="p-6 space-y-5">
                 {/* Cost & Spec Card */}
                 <div className="rounded-panel bg-[#121614] border border-white/10 p-5 text-white shadow-md">
-                  <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-white/10">
                     <div>
                       <div className="text-label font-extrabold uppercase tracking-wider text-white/60">
-                        Credits Deducted
+                        Used so far
                       </div>
-                      <div className="text-display font-[900] text-white mt-0.5">
-                        ⚡ {(pagesList.length * 300).toLocaleString()} Credits
+                      <div className="mt-0.5 text-display font-[900] text-white tabular-nums">
+                        ⚡ {creditsUsed.toLocaleString()} Credits
                       </div>
+                      <div className="mt-1 text-caption text-white/55">Page generation and edits</div>
                     </div>
-                    <span className="rounded-chip bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
+                    <span className="shrink-0 rounded-chip bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
                       Vector 300 DPI
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-3 text-label text-white/75">
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 py-3 text-label">
+                    <span className="text-white/55">Final render needs</span>
+                    <strong className="text-white tabular-nums">+ {finalRenderCost.toLocaleString()} Credits</strong>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3">
+                    <span className="text-label text-white/55">
+                      Adjusted budget
+                      <span className="ml-2 text-caption tabular-nums text-white/40">
+                        {creditsUsed.toLocaleString()} used + {finalRenderCost.toLocaleString()} to render
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <strong className="text-body-lg font-[850] text-white tabular-nums">
+                        {creditsTotal.toLocaleString()} Credits
+                      </strong>
+                      {creditsTotal > creditBudget ? (
+                        <span className="rounded-glyph border border-warn-line/40 bg-warn-bg/15 px-2 py-0.5 text-caption font-bold tabular-nums text-warn-on-dark">
+                          {(creditsTotal - creditBudget).toLocaleString()} over the {creditBudget.toLocaleString()} agreed
+                        </span>
+                      ) : (
+                        <span className="rounded-glyph border border-ok/30 bg-ok/15 px-2 py-0.5 text-caption font-bold tabular-nums text-ok-on-dark">
+                          within the {creditBudget.toLocaleString()} agreed
+                        </span>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-3 text-label text-white/75">
                     <div>
                       <span className="text-white/50 block text-caption uppercase font-bold">Pages &amp; Format</span>
                       <strong className="text-white">
@@ -1463,12 +1517,12 @@ export function InfographicStudioScreen() {
                     </div>
                     <div>
                       <span className="text-white/50 block text-caption uppercase font-bold">Team Balance</span>
-                      <strong className="text-ok-on-dark">50,000 Credits</strong>
+                      <strong className="text-ok-on-dark tabular-nums">{teamBalance.toLocaleString()} Credits</strong>
                     </div>
                     <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Balance Remaining</span>
-                      <strong className="text-white">
-                        {(50000 - pagesList.length * 300).toLocaleString()} Credits
+                      <span className="text-white/50 block text-caption uppercase font-bold">Balance After</span>
+                      <strong className="text-white tabular-nums">
+                        {(teamBalance - creditsTotal).toLocaleString()} Credits
                       </strong>
                     </div>
                   </div>

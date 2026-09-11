@@ -143,7 +143,7 @@ const TEMPLATE_ARCHETYPES: TemplateArchetype[] = [
     badge: "EMBRACE-3 Pivotal Study",
     metric: "N=613 Patients",
     metricSub: "Multi-Center Randomized Trial",
-    points: ["Dual kinase blockade mechanism", "CDSCO §2.1 label indication partition", "Zero microvascular adverse accumulation"],
+    points: ["Dual kinase blockade mechanism", "FDA §2.1 label indication partition", "Zero microvascular adverse accumulation"],
   },
   {
     id: "bench-data",
@@ -206,7 +206,7 @@ const CONTENT_PLAN_SECTIONS: ContentPlanSection[] = [
         doc: "VELMORA™ Approved Prescribing Information §1.1",
         quote: "Velmora (tirzelamide) 200mg is a selective dual kinase inhibitor indicated for moderate-to-severe plaque psoriasis and multi-organ inflammatory management.",
         claimId: "Claim #104",
-        mlrRef: "CDSCO Package Insert §1.1 · Approved 2026",
+        mlrRef: "Package Insert §1.1 · Approved 2026",
       },
     ],
   },
@@ -214,25 +214,25 @@ const CONTENT_PLAN_SECTIONS: ContentPlanSection[] = [
     num: 2,
     title: "Approved in India for three indications",
     role: "how it is used · a partition across domains",
-    body: "The CDSCO-approved uses, side by side: moderate-to-severe plaque psoriasis in adults 18+ to achieve rapid skin clearance; active psoriatic arthritis; and sustained reduction of flare recurrence risk.",
+    body: "The FDA-approved uses, side by side: moderate-to-severe plaque psoriasis in adults 18+ to achieve rapid skin clearance; active psoriatic arthritis; and sustained reduction of flare recurrence risk.",
     citations: [
       {
-        doc: "CDSCO Prescribing Information §1.1 · Indication Scope",
+        doc: "FDA Prescribing Information §1.1 · Indication Scope",
         quote: "Indicated for the treatment of moderate-to-severe plaque psoriasis in adult patients who are candidates for systemic therapy or phototherapy.",
         claimId: "Claim #112",
-        mlrRef: "CDSCO Approval §1.1",
+        mlrRef: "FDA Approval §1.1",
       },
       {
-        doc: "CDSCO Prescribing Information §1.2 · Arthritis Indication",
+        doc: "FDA Prescribing Information §1.2 · Arthritis Indication",
         quote: "Approved for active psoriatic arthritis in adults with inadequate response or intolerance to conventional DMARD therapy.",
         claimId: "Claim #113",
-        mlrRef: "CDSCO Approval §1.2",
+        mlrRef: "FDA Approval §1.2",
       },
       {
         doc: "Prescribing Information §1.4 · Recurrence Prevention",
         quote: "Significantly lowers the rate of annual cutaneous flare recurrence in sustained maintenance cohorts.",
         claimId: "Claim #115",
-        mlrRef: "CDSCO Efficacy Readout §1.4",
+        mlrRef: "FDA Efficacy Readout §1.4",
       },
     ],
   },
@@ -246,7 +246,7 @@ const CONTENT_PLAN_SECTIONS: ContentPlanSection[] = [
         doc: "Dosing & Administration §2.1 (Renal Impairment Threshold)",
         quote: "Initiation of Velmora is not recommended in patients with an estimated glomerular filtration rate (eGFR) below 25 mL/min/1.73 m².",
         claimId: "Claim #128",
-        mlrRef: "CDSCO Dosing Guidance §2.1",
+        mlrRef: "FDA Dosing Guidance §2.1",
       },
     ],
   },
@@ -297,10 +297,10 @@ const CONTENT_PLAN_SECTIONS: ContentPlanSection[] = [
     body: "Contraindicated in patients with severe hepatic impairment. Most common adverse events include transient mild headache (5.1%) and nausea (4.2%). Full prescribing guidance provided.",
     citations: [
       {
-        doc: "CDSCO Safety Section §5.2 · Adverse Reactions & Contraindications",
+        doc: "FDA Safety Section §5.2 · Adverse Reactions & Contraindications",
         quote: "Contraindicated in patients with severe hepatic impairment (Child-Pugh Class C). Most common adverse events were mild headache (5.1%) and nausea (4.2%).",
         claimId: "Claim #290",
-        mlrRef: "CDSCO Safety §5.2",
+        mlrRef: "FDA Safety §5.2",
       },
     ],
   },
@@ -1094,7 +1094,7 @@ export function InfographicDirectionsScreen() {
                     One tablet, three approved jobs: {brandName} (tirzelamide) in moderate-to-severe plaque psoriasis
                   </h2>
                   <p className="text-body text-ink-3 mt-1">
-                    8 sections on {infographicPages === "2" ? "2 pages" : "1 page"} · 13 verified claims grounded in CDSCO / FDA dossier
+                    8 sections on {infographicPages === "2" ? "2 pages" : "1 page"} · 13 verified claims grounded in FDA / FDA dossier
                   </p>
                 </div>
 
@@ -1105,7 +1105,7 @@ export function InfographicDirectionsScreen() {
                     <span>Left out deliberately for MLR Compliance</span>
                   </div>
                   <p className="text-label text-warn/90 leading-relaxed">
-                    The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved CDSCO primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1.
+                    The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved FDA primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1.
                   </p>
                 </div>
 
