@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Clock, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
-import type { SceneComment } from "@/features/workspace/scene-comments";
+import type { AssetComment } from "@/features/workspace/asset-comments";
 
 /**
  * The comments surface a reviewer sees on a published link.
@@ -17,14 +17,15 @@ import type { SceneComment } from "@/features/workspace/scene-comments";
  */
 export function ReviewComments({
   comments,
-  currentTimeLabel,
+  stampLabel,
   medicalReviewDone,
   regulatoryReviewDone,
   onPost,
 }: {
-  comments: SceneComment[];
-  /** The playhead, so a new comment is stamped where the reviewer is. */
-  currentTimeLabel: string;
+  comments: AssetComment[];
+  /** Where the reviewer is — the playhead on a video, the page on a deck —
+   *  so a new comment is stamped with its own location. */
+  stampLabel: string;
   medicalReviewDone: boolean;
   regulatoryReviewDone: boolean;
   onPost: (text: string) => void;
@@ -78,7 +79,7 @@ export function ReviewComments({
         <div className="flex items-center justify-between pt-0.5">
           <span className="text-label font-extrabold text-ink">Add Reviewer Comment</span>
           <span className="rounded-glyph border border-tint-line bg-tint px-2 py-0.5 text-caption font-bold tabular-nums text-brand-deep">
-            {currentTimeLabel}
+            {stampLabel}
           </span>
         </div>
         <textarea
@@ -122,7 +123,7 @@ function Group({
 }: {
   title: string;
   count: number;
-  items: SceneComment[];
+  items: AssetComment[];
   emptyLabel: string;
 }) {
   return (
@@ -149,7 +150,7 @@ function Group({
               <div className="flex items-start justify-between gap-2">
                 <span className="min-w-0">
                   <span className="block text-caption font-extrabold uppercase tracking-wider text-brand">
-                    Scene {comment.sceneNumber} · {comment.elementLabel}
+                    {comment.containerLabel} · {comment.elementLabel}
                   </span>
                   <span className="mt-0.5 block text-body leading-snug text-ink">{comment.text}</span>
                   <span className="mt-1 block text-caption text-ink-4">

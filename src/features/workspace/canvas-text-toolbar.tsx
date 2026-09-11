@@ -13,6 +13,7 @@ import {
   Plus,
   RotateCcw,
   ShieldCheck,
+  Sparkles,
   Type,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -256,6 +257,7 @@ export function FloatingTextToolbar({
   onReset,
   onAddToChat,
   onEdit,
+  onComment,
 }: {
   element: CanvasTextElement;
   style: TextStyle | undefined;
@@ -265,6 +267,8 @@ export function FloatingTextToolbar({
   onReset: () => void;
   onAddToChat: () => void;
   onEdit: () => void;
+  /** Leave a note against this run instead of acting on it now. */
+  onComment?: () => void;
 }) {
   if (!anchorRect || typeof document === "undefined") return null;
 
@@ -331,13 +335,19 @@ export function FloatingTextToolbar({
         Edit text
       </button>
 
+      {onComment && (
+        <IconToggle dark onClick={onComment} title="Add a comment on this element">
+          <MessageSquare className="size-3.5" />
+        </IconToggle>
+      )}
+
       <button
         type="button"
         onClick={onAddToChat}
         title="Ask the agent to change this"
         className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip bg-brand px-2 py-1 text-label font-bold text-white transition hover:bg-brand-deep"
       >
-        <MessageSquare className="size-3.5" />
+        <Sparkles className="size-3.5" />
         Ask agent
       </button>
 

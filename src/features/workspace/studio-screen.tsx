@@ -65,7 +65,13 @@ import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
-import { CommentsModal, ElementActionBar, ELEMENT_LABELS, type SceneComment } from "@/features/workspace/scene-comments";
+import {
+  CommentsModal,
+  ElementActionBar,
+  ELEMENT_LABELS,
+  sceneAnchor,
+  type AssetComment,
+} from "@/features/workspace/asset-comments";
 import { ReviewComments } from "@/features/workspace/review-comments";
 import { AudioGeneratingPill, MediaPlaceholder } from "@/features/workspace/media-placeholder";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
@@ -410,7 +416,7 @@ export function StudioScreen() {
   /** The claim a citation's Details action jumped to. Clears itself after 2s. */
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
 
-  const [comments, setComments] = useState<SceneComment[]>([]);
+  const [comments, setComments] = useState<AssetComment[]>([]);
   /** Monotonic ids without reading the clock during render. */
   const commentSeq = useRef(0);
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -456,10 +462,9 @@ export function StudioScreen() {
   const openComments = comments.filter((c) => c.status === "open");
 
   const addComment = (elementId: string, text: string, alsoSendToChat: boolean) => {
-    const comment: SceneComment = {
+    const comment: AssetComment = {
       id: `cm-${(commentSeq.current += 1)}`,
-      sceneId: selectedScene.id,
-      sceneNumber: selectedScene.number,
+      ...sceneAnchor(selectedScene.id, selectedScene.number),
       elementId,
       elementLabel: ELEMENT_LABELS[elementId] ?? "Element",
       text,
@@ -479,11 +484,11 @@ export function StudioScreen() {
    * rejection carries its reason, or it is indistinguishable from being
    * ignored.
    */
-  const sendCommentToAgent = (comment: SceneComment) => {
+  const sendCommentToAgent = (comment: AssetComment) => {
     setComments((prev) => prev.map((c) => (c.id === comment.id ? { ...c, sentToChat: true } : c)));
     addChatMessage({
       role: "user",
-      text: `[Scene ${comment.sceneNumber} · ${comment.elementLabel}] ${comment.text}`,
+      text: `[${comment.containerLabel} · ${comment.elementLabel}] ${comment.text}`,
     });
 
     const actionable = comment.text.trim().split(/\s+/).filter(Boolean).length >= 3;
@@ -491,7 +496,7 @@ export function StudioScreen() {
       if (actionable) {
         addChatMessage({
           role: "swishx",
-          text: `Done — applied that to **Scene ${comment.sceneNumber} · ${comment.elementLabel}** and marked the comment resolved. It stays in the list with my name against it, so you can check what I changed.`,
+          text: `Done — applied that to **${comment.containerLabel} · ${comment.elementLabel}** and marked the comment resolved. It stays in the list with my name against it, so you can check what I changed.`,
         });
         setComments((prev) =>
           prev.map((c) =>
@@ -502,7 +507,7 @@ export function StudioScreen() {
                   closedBy: "agent" as const,
                   // The agent writes its own note, for the same reason the
                   // owner has to: whoever raised it may only see the link.
-                  closedReason: `Applied to Scene ${comment.sceneNumber} · ${comment.elementLabel}.`,
+                  closedReason: `Applied to ${comment.containerLabel} · ${comment.elementLabel}.`,
                 }
               : c
           )
@@ -510,7 +515,7 @@ export function StudioScreen() {
       } else {
         addChatMessage({
           role: "swishx",
-          text: `I can't act on **Scene ${comment.sceneNumber} · ${comment.elementLabel}** from that — it doesn't say what should change. I've marked it rejected rather than guess; reopen it with more detail and I'll take another run.`,
+          text: `I can't act on **${comment.containerLabel} · ${comment.elementLabel}** from that — it doesn't say what should change. I've marked it rejected rather than guess; reopen it with more detail and I'll take another run.`,
         });
         setComments((prev) =>
           prev.map((c) =>
@@ -539,9 +544,9 @@ export function StudioScreen() {
       )
     );
 
-  const jumpToComment = (comment: SceneComment) => {
+  const jumpToComment = (comment: AssetComment) => {
     setCommentsOpen(false);
-    setSelectedSceneId(comment.sceneId);
+    setSelectedSceneId(comment.containerId);
     setSelectedCanvasElementId(comment.elementId);
   };
 
@@ -878,19 +883,19 @@ export function StudioScreen() {
           prev.some((c) => c.id === "team-1") ? prev : [
           ...prev,
           {
-            id: "team-1", sceneId: sceneList[2]?.id ?? sceneList[0].id, sceneNumber: 3,
+            id: "team-1", ...sceneAnchor(sceneList[2]?.id ?? sceneList[0].id, 3),
             elementId: "narration", elementLabel: ELEMENT_LABELS.narration,
             text: "Week 16 is the primary endpoint but the voiceover says it like a secondary finding. Can it lead the line?",
             author: "Dr. Anita Rao · Medical", source: "team", at: "2 min ago", status: "open", sentToChat: false,
           },
           {
-            id: "team-2", sceneId: sceneList[3]?.id ?? sceneList[0].id, sceneNumber: 4,
+            id: "team-2", ...sceneAnchor(sceneList[3]?.id ?? sceneList[0].id, 4),
             elementId: "headline", elementLabel: ELEMENT_LABELS.headline,
             text: "\u201cDesigned for practice\u201d reads promotional to me. Suggest \u201cDosing in practice\u201d.",
             author: "Sanjay Kulkarni · Legal", source: "team", at: "5 min ago", status: "open", sentToChat: false,
           },
           {
-            id: "team-3", sceneId: sceneList[0].id, sceneNumber: 1,
+            id: "team-3", ...sceneAnchor(sceneList[0].id, 1),
             elementId: "background", elementLabel: ELEMENT_LABELS.background,
             text: "Opening background is very dark on a projector. Worth lifting.",
             author: "Priya Menon · Brand", source: "team", at: "8 min ago", status: "open", sentToChat: false,
@@ -1091,10 +1096,9 @@ export function StudioScreen() {
         const timeMatch = rawInput.match(/0:\d{2}|\d{1,2}s|\d{1,2}\s*sec/i);
         const extractedSec = timeMatch ? parseInt(timeMatch[0].replace(/[^0-9]/g, ""), 10) : Math.floor(masterCurrentTime);
         const formatted = `0:${extractedSec.toString().padStart(2, "0")}`;
-        const created: SceneComment = {
+        const created: AssetComment = {
           id: `cm-${(commentSeq.current += 1)}`,
-          sceneId: selectedScene.id,
-          sceneNumber: activeMasterChapter?.number || 1,
+          ...sceneAnchor(selectedScene.id, activeMasterChapter?.number || 1),
           elementId: "narration",
           elementLabel: ELEMENT_LABELS.narration,
           text: rawInput.replace(/add\s+(a\s+)?comment(\s+at\s+\S+)?\s*(that|to|for|:)?\s*/i, "").trim() || rawInput,
@@ -2924,7 +2928,7 @@ export function StudioScreen() {
             {activeTab === "comments" && (
               <ReviewComments
                 comments={comments}
-                currentTimeLabel={`${Math.floor(masterCurrentTime / 60)}:${Math.floor(masterCurrentTime % 60).toString().padStart(2, "0")}`}
+                stampLabel={`${Math.floor(masterCurrentTime / 60)}:${Math.floor(masterCurrentTime % 60).toString().padStart(2, "0")}`}
                 medicalReviewDone={mlrCheckResolved}
                 regulatoryReviewDone={qaCheckResolved}
                 onPost={(text) => {
@@ -2934,8 +2938,7 @@ export function StudioScreen() {
                   setComments((prev) => [
                     {
                       id: `cm-${(commentSeq.current += 1)}`,
-                      sceneId: selectedScene.id,
-                      sceneNumber: selectedScene.number,
+                      ...sceneAnchor(selectedScene.id, selectedScene.number),
                       elementId: "narration",
                       elementLabel: ELEMENT_LABELS.narration,
                       text,

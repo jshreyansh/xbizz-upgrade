@@ -39,6 +39,14 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  CommentCard,
+  ELEMENT_LABELS,
+  commentStats,
+  pageAnchor,
+  type AssetComment,
+} from "@/features/workspace/asset-comments";
+import { ReviewComments } from "@/features/workspace/review-comments";
+import {
   EditableCanvasText,
   FloatingTextToolbar,
   FormatRibbon,
@@ -271,28 +279,44 @@ export function InfographicStudioScreen() {
   const isReview = studioMode === "review";
 
   // Reviewer Comments State
-  const [commentsList, setCommentsList] = useState([
+  /* The same records the video studio uses. Anchored to (surface, page,
+     element), so a note about the hero metric is a note about the hero metric
+     and the list can say where it lives. */
+  const [comments, setComments] = useState<AssetComment[]>([
     {
       id: "c-1",
+      ...pageAnchor(1),
+      elementId: "heroStat.metric",
+      elementLabel: ELEMENT_LABELS["heroStat.metric"],
       author: "Sarah Lin (Medical Director)",
       role: "Medical Reviewer",
       avatar: "SL",
-      page: 1,
       text: "Ensure the EMBRACE-3 PASI 90 p-value (p < 0.001) is clearly displayed alongside the Week 16 primary endpoint.",
-      time: "10m ago",
-      resolved: false,
+      at: "10m ago",
+      source: "team",
+      status: "open",
+      sentToChat: false,
     },
     {
       id: "c-2",
+      ...pageAnchor(1),
+      elementId: "isi.content",
+      elementLabel: ELEMENT_LABELS["isi.content"],
       author: "David Vance (Regulatory Lead)",
       role: "MLR Officer",
       avatar: "DV",
-      page: 1,
       text: "Grounded accurately in FDA §2.1. The eGFR ≥25 cut-off warning in the footer meets fair balance standards.",
-      time: "18m ago",
-      resolved: true,
+      at: "18m ago",
+      source: "team",
+      status: "resolved",
+      closedBy: "user",
+      closedReason: "No change needed — the cut-off already sits in the fair balance block.",
+      sentToChat: false,
     },
   ]);
+  /** The comment being closed, and the note that has to come with it. */
+  const [closingComment, setClosingComment] = useState<{ id: string; as: "resolved" | "rejected" } | null>(null);
+  const [closeReason, setCloseReason] = useState("");
   const [newCommentText, setNewCommentText] = useState("");
 
   const showToast = (msg: string) => {
@@ -582,19 +606,70 @@ export function InfographicStudioScreen() {
 
   const handleAddComment = () => {
     if (!newCommentText.trim()) return;
-    const newC = {
-      id: `c-${Date.now()}`,
-      author: "Maya Kapoor (Lead Author)",
-      role: "Creative Author",
-      avatar: "MK",
-      page: activePageId,
-      text: newCommentText.trim(),
-      time: "Just now",
-      resolved: false,
-    };
-    setCommentsList((prev) => [newC, ...prev]);
+    setComments((prev) => [
+      {
+        id: `c-${Date.now()}`,
+        ...pageAnchor(activePageId),
+        elementId: selectedElementId ?? "page",
+        elementLabel: selectedElement?.label ?? ELEMENT_LABELS.page,
+        author: "Maya Kapoor (Lead Author)",
+        role: "Creative Author",
+        avatar: "MK",
+        text: newCommentText.trim(),
+        at: "Just now",
+        source: "team",
+        status: "open",
+        sentToChat: false,
+      },
+      ...prev,
+    ]);
     setNewCommentText("");
-    showToast("Review comment posted");
+    showToast("Comment added");
+  };
+
+  /* Closing a comment. A team comment cannot close without a note — the
+     person who wrote it only ever sees the share link, so "Resolved" with
+     nothing attached reads as being ignored. The gate lives in the card;
+     this only records what came back. */
+  const closeComment = (id: string, as: "resolved" | "rejected", note: string) => {
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === id ? { ...c, status: as, closedBy: "user" as const, closedReason: note || undefined } : c
+      )
+    );
+    showToast(as === "resolved" ? "Comment resolved" : "Comment discarded");
+  };
+
+  /* Team comments arrive from outside. Nothing here is acted on by itself —
+     it reaches the agent only when the author sends it, which is this. */
+  const sendCommentToAgent = (id: string) => {
+    const comment = comments.find((c) => c.id === id);
+    if (!comment) return;
+    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, sentToChat: true } : c)));
+    setActiveTab("assistant");
+    addChatMessage({
+      role: "user",
+      text: `[${comment.containerLabel} · ${comment.elementLabel}] ${comment.text}`,
+    });
+    setTimeout(() => {
+      addChatMessage({
+        role: "swishx",
+        text: `Picked that up against **${comment.containerLabel} · ${comment.elementLabel}**. Tell me to apply it and I will make the change, then you can close the comment with a note back to ${comment.author.split(" (")[0]}.`,
+      });
+    }, 700);
+  };
+
+  const jumpToComment = (comment: AssetComment) => {
+    setInfographicActivePage(comment.containerNumber);
+    if (textElements[comment.elementId]) {
+      const node = document.querySelector(`[data-canvas-text="${comment.elementId}"]`);
+      if (node) {
+        node.scrollIntoView({ behavior: "smooth", block: "center" });
+        handleSelectElement(comment.elementId, node.getBoundingClientRect());
+        return;
+      }
+    }
+    showToast(`${comment.containerLabel} · ${comment.elementLabel}`);
   };
 
   return (
@@ -1099,7 +1174,7 @@ export function InfographicStudioScreen() {
                   <span>Chat</span>
                 </button>
 
-                {studioMode === "editor" ? (
+                {studioMode === "editor" && (
                   <button
                     type="button"
                     onClick={() => setActiveTab("edit")}
@@ -1112,7 +1187,8 @@ export function InfographicStudioScreen() {
                   >
                     Edit
                   </button>
-                ) : (
+                )}
+
                   <button
                     type="button"
                     onClick={() => setActiveTab("comments")}
@@ -1125,10 +1201,9 @@ export function InfographicStudioScreen() {
                   >
                     <span>Comments</span>
                     <span className="size-4 rounded-full bg-tint text-brand-deep text-caption font-black grid place-items-center">
-                      {commentsList.length}
+                      {commentStats(comments).open}
                     </span>
                   </button>
-                )}
 
                 <button
                   type="button"
@@ -1416,72 +1491,124 @@ export function InfographicStudioScreen() {
               </div>
             )}
 
-            {/* ── TAB 2: REVIEWER COMMENTS (In Review Mode) ── */}
-            {activeTab === "comments" && studioMode === "review" && (
-              <div className="flex-1 flex flex-col min-h-0">
-                <div className="p-3.5 border-b border-hair bg-canvas space-y-2 shrink-0">
-                  <div className="flex items-center justify-between text-label font-bold text-ink">
-                    <span>Add Reviewer Comment</span>
-                    <span className="text-caption text-ok bg-ok-bg px-2 py-0.5 rounded-glyph border border-ok-line">
-                      Page {activePageId}
-                    </span>
+            {/* ── TAB 2a: COMMENTS (In Editor Mode) ── */}
+            {/* The editor half the creative studio never had. Same records as
+                the reviewer sees, same card, same closing note — the author
+                is just on the other side of them. */}
+            {activeTab === "comments" && studioMode === "editor" && (
+              <div className="flex min-h-0 flex-1 flex-col">
+                <div className="shrink-0 space-y-2 border-b border-hair bg-canvas p-3.5">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-control border border-hair bg-card px-3 py-2 text-caption">
+                    {[
+                      { label: "open", value: commentStats(comments).open, tone: "text-brand" },
+                      { label: "resolved", value: commentStats(comments).resolved, tone: "text-ok" },
+                      { label: "discarded", value: commentStats(comments).rejected, tone: "text-ink-3" },
+                    ].map((stat) => (
+                      <span key={stat.label} className="inline-flex items-baseline gap-1">
+                        <span className={cn("text-body font-[850] tabular-nums", stat.tone)}>{stat.value}</span>
+                        <span className="text-ink-3">{stat.label}</span>
+                      </span>
+                    ))}
                   </div>
-                  <textarea
-                    value={newCommentText}
-                    onChange={(e) => setNewCommentText(e.target.value)}
-                    rows={2}
-                    placeholder="Provide compliance or marketing feedback on this page..."
-                    className="w-full rounded-control border border-hair-2 p-2.5 text-body text-ink resize-none outline-none focus:border-brand"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleAddComment}
-                    disabled={!newCommentText.trim()}
-                    className="w-full h-8.5 rounded-control bg-brand hover:bg-brand-deep text-white text-label font-bold cursor-pointer disabled:opacity-40"
-                  >
-                    Post Comment
-                  </Button>
+
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-1.5 text-label font-bold text-ink">
+                      <span>Add a comment</span>
+                      <span className="rounded-glyph bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">
+                        {selectedElement ? selectedElement.label : `Page ${activePageId}`}
+                      </span>
+                    </label>
+                    <textarea
+                      value={newCommentText}
+                      onChange={(e) => setNewCommentText(e.target.value)}
+                      rows={2}
+                      placeholder={
+                        selectedElement
+                          ? `A note on the ${selectedElement.label.toLowerCase()}…`
+                          : "Select an element on the page, or comment on the whole page…"
+                      }
+                      className="w-full resize-none rounded-control border border-hair-2 p-2.5 text-body text-ink outline-none focus:border-brand"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleAddComment}
+                      disabled={!newCommentText.trim()}
+                      className="h-8.5 w-full cursor-pointer rounded-control bg-brand text-label font-bold text-white hover:bg-brand-deep disabled:opacity-40"
+                    >
+                      Add comment
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
-                  {commentsList.map((c) => (
-                    <div
-                      key={c.id}
-                      className="p-3 rounded-control border border-hair bg-card shadow-2xs space-y-1.5 text-left"
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="size-6 rounded-full bg-tint text-brand-deep font-extrabold text-caption grid place-items-center">
-                            {c.avatar}
-                          </span>
-                          <span className="font-bold text-body text-ink truncate">{c.author}</span>
-                        </div>
-                        <span className="text-caption text-ink-3">{c.time}</span>
-                      </div>
-                      <p className="text-label text-ink-2 leading-relaxed pl-7">{c.text}</p>
-                      <div className="pl-7 pt-1 flex items-center justify-between text-caption">
-                        <span className="text-brand font-bold cursor-pointer hover:underline">Reply</span>
-                        {c.resolved ? (
-                          <span className="text-ok font-bold">✓ Resolved</span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCommentsList((prev) =>
-                                prev.map((item) => (item.id === c.id ? { ...item, resolved: true } : item))
-                              );
-                              showToast("Comment marked as resolved");
-                            }}
-                            className="text-ink-3 hover:text-ink cursor-pointer"
-                          >
-                            Mark as resolved
-                          </button>
-                        )}
-                      </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-3.5">
+                  {comments.length === 0 ? (
+                    <div className="rounded-panel border border-dashed border-hair-2 bg-canvas px-4 py-10 text-center">
+                      <p className="text-body font-bold text-ink-2">No comments yet</p>
+                      <p className="mt-0.5 text-label text-ink-4">
+                        Select any element on the page and leave a note.
+                      </p>
                     </div>
-                  ))}
+                  ) : (
+                    <ul className="space-y-2.5">
+                      {comments.map((c) => (
+                        <CommentCard
+                          key={c.id}
+                          comment={c}
+                          closing={closingComment?.id === c.id ? closingComment.as : null}
+                          reason={closeReason}
+                          onReason={setCloseReason}
+                          onBeginClose={(as) => { setClosingComment({ id: c.id, as }); setCloseReason(""); }}
+                          onCancelClose={() => { setClosingComment(null); setCloseReason(""); }}
+                          onConfirmClose={(as, note) => {
+                            closeComment(c.id, as, note);
+                            setClosingComment(null);
+                            setCloseReason("");
+                          }}
+                          onSendToChat={() => sendCommentToAgent(c.id)}
+                          onJump={() => jumpToComment(c)}
+                        />
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
+            )}
+
+            {/* ── TAB 2: REVIEWER COMMENTS (In Review Mode) ── */}
+            {/* The video studio's reviewer panel, unchanged: review gates
+                first, then the stats, then Open and Closed groups where a
+                closed comment carries the reason it was closed. A reviewer on
+                a share link sees only this, so "Resolved" alone is not an
+                answer to them. */}
+            {activeTab === "comments" && studioMode === "review" && (
+              <ReviewComments
+                comments={comments}
+                stampLabel={`Page ${activePageId}`}
+                medicalReviewDone={mlrCheckResolved}
+                regulatoryReviewDone={qaCheckResolved}
+                onPost={(text) => {
+                  setNewCommentText(text);
+                  setComments((prev) => [
+                    {
+                      id: `c-${Date.now()}`,
+                      ...pageAnchor(activePageId),
+                      elementId: "page",
+                      elementLabel: ELEMENT_LABELS.page,
+                      author: "Sarah Lin (Medical Director)",
+                      role: "Medical Reviewer",
+                      avatar: "SL",
+                      text,
+                      at: "Just now",
+                      source: "team",
+                      status: "open",
+                      sentToChat: false,
+                    },
+                    ...prev,
+                  ]);
+                  setNewCommentText("");
+                  showToast("Review comment posted");
+                }}
+              />
             )}
 
             {/* ── TAB 3: CLAIMS & EVIDENCE LIBRARY ── */}
@@ -1795,6 +1922,7 @@ export function InfographicStudioScreen() {
             onReset={resetElementStyle}
             onAddToChat={addElementToChat}
             onEdit={() => setEditingElementId(selectedElement.id)}
+            onComment={() => setActiveTab("comments")}
           />
         )}
 
