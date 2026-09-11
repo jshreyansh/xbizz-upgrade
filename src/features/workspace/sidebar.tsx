@@ -2,7 +2,22 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useRef, type ReactNode } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  Home,
+  Clapperboard,
+  Video,
+  FileImage,
+  Globe,
+  FileText,
+  Library,
+  Package,
+  ClipboardCheck,
+  ShieldCheck,
+  BarChart3,
+  Settings,
+} from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -78,99 +93,24 @@ const ASSET_GROUPS: NavGroup[] = [
   },
 ];
 
+/** A refined, single-family icon set (Lucide, 1.75 stroke) replacing the
+ *  earlier hand-rolled SVGs — consistent geometry and weight across every
+ *  row instead of each glyph being its own one-off shape. */
 function NavIcon({ name }: { name: string }): ReactNode {
-  // Inherits from the row, which owns the active colour. One source, so the
-  // glyph can never be white on an inactive row or ink on a solid one.
-  const color = "currentColor";
   const icons: Record<string, ReactNode> = {
-    home: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M3 10.5L12 3l9 7.5" />
-        <path d="M5 9.5V21h14V9.5" />
-      </svg>
-    ),
-    studio: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" />
-        <path d="M19 2l.8 2.2L22 5l-2.2.8L19 8l-.8-2.2L16 5l2.2-.8L19 2z" />
-      </svg>
-    ),
-    studioFilled: (
-      <svg viewBox="0 0 24 24" className="size-4">
-        <path
-          d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z"
-          fill={color}
-        />
-        <path
-          d="M19 2l.8 2.2L22 5l-2.2.8L19 8l-.8-2.2L16 5l2.2-.8L19 2z"
-          fill={color}
-        />
-      </svg>
-    ),
-    video: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <rect x="2" y="5" width="15" height="14" rx="3" />
-        <path d="M17 9.5l5-3.5v12l-5-3.5z" />
-      </svg>
-    ),
-    image: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <rect x="3" y="3" width="18" height="18" rx="3.5" />
-        <circle cx="8.5" cy="8.5" r="1.5" />
-        <path d="M21 15l-5-5L5 21" />
-      </svg>
-    ),
-    globe: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="2" y1="12" x2="22" y2="12" />
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-      </svg>
-    ),
-    dossier: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      </svg>
-    ),
-    library: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M4 6h16M4 12h16M4 18h7" />
-      </svg>
-    ),
-    package: (
-      <svg viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M21 8l-9-5-9 5 9 5 9-5z" />
-        <path d="M3 8v8l9 5 9-5V8" />
-        <path d="M12 13v8" />
-      </svg>
-    ),
-    claims: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <path d="m9 15 2 2 4-4" />
-      </svg>
-    ),
-    shield: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        <path d="m9 12 2 2 4-4" />
-      </svg>
-    ),
-    chart: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
-      </svg>
-    ),
-    settings: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="size-4">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 14.1a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.6-2.4l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 10 3.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z" />
-      </svg>
-    ),
+    home: <Home size={16} strokeWidth={1.75} />,
+    studio: <Clapperboard size={16} strokeWidth={1.75} />,
+    studioFilled: <Clapperboard size={16} strokeWidth={1.75} fill="currentColor" fillOpacity={0.18} />,
+    video: <Video size={16} strokeWidth={1.75} />,
+    image: <FileImage size={16} strokeWidth={1.75} />,
+    globe: <Globe size={16} strokeWidth={1.75} />,
+    dossier: <FileText size={16} strokeWidth={1.75} />,
+    library: <Library size={16} strokeWidth={1.75} />,
+    package: <Package size={16} strokeWidth={1.75} />,
+    claims: <ClipboardCheck size={16} strokeWidth={1.75} />,
+    shield: <ShieldCheck size={16} strokeWidth={1.75} />,
+    chart: <BarChart3 size={16} strokeWidth={1.75} />,
+    settings: <Settings size={16} strokeWidth={1.75} />,
   };
   return <span className="flex shrink-0 items-center justify-center">{icons[name] ?? icons.home}</span>;
 }
