@@ -342,7 +342,7 @@ export function InfographicStudioScreen() {
   /* ── The composition fits the page, always ─────────────────────────────────
      A page is a fixed canvas, so a composition taller than the canvas is not
      a scrolling page — it is a clipped one, and the bottom of a clipped page
-     is where fair balance lives. The copy deck's fit chips keep blocks inside
+     is where fair balance lives. The content plan's fit chips keep blocks inside
      their own boxes; this is the guard for everything they cannot know about,
      like a shape change that turns a tall page into a wide one.
 

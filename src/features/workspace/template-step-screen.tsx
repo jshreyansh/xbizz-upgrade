@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   ArrowRight,
   Check,
-  Layers,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -113,145 +112,148 @@ export function TemplateStepScreen({
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col border-r border-hair bg-[#eef1ed]">
-      {/* ── What this step is, and the way into the catalogue ── */}
-      <header className="shrink-0 border-b border-hair bg-card px-3 py-2.5 sm:px-4">
-        <div className="flex flex-wrap items-center gap-2">
+      {/* ── The catalogue, heading and all ──
+          No stage header bar. The app header is the header; a second
+          edge-to-edge bar under it only competes with it. The title is a
+          heading inside the canvas, exactly as the plan view does it, and the
+          controls sit under it and stick while the grid scrolls. */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
+        {/* Heading, in the canvas */}
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <Layers className="size-3.5 shrink-0 text-brand" />
-              <span className="truncate text-body-lg font-[850] tracking-tight text-ink">
+              <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
                 Design &amp; layout
               </span>
+              <span className="rounded-chip border border-hair-2 bg-card px-2 py-0.5 text-caption font-bold text-ink-3">
+                {pageShape}
+              </span>
             </div>
-            <p className="mt-0.5 text-micro text-ink-3">
+            <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
+              Choose the layout this deck is built from
+            </h2>
+            <p className="mt-0.5 text-body text-ink-3">
               The archetype decides the composition — which blocks exist, and how much each one holds.
             </p>
           </div>
 
-          <label className="relative ml-auto flex min-w-[180px] max-w-[320px] flex-1 items-center">
-            <Search className="absolute left-2.5 size-3.5 text-ink-4" />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setShown(24);
-              }}
-              placeholder="Search layouts…"
-              className="w-full rounded-control border border-hair-2 bg-canvas py-1.5 pl-8 pr-2.5 text-body text-ink outline-none focus:border-brand focus:bg-card"
-            />
-          </label>
+          <span className="shrink-0 rounded-chip border border-ok-line bg-ok-bg px-3 py-1 text-caption font-bold text-ok">
+            ✓ {matching.toLocaleString()} of {TEMPLATE_LIBRARY.length.toLocaleString()} match this brief
+          </span>
         </div>
 
-        {/* Scope, kept prominent: it is the difference between a usable list
-            and a thousand thumbnails. */}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          {[
-            { id: true, label: "Matches this brief", count: matching },
-            { id: false, label: "All templates", count: TEMPLATE_LIBRARY.length },
-          ].map((scope) => (
+        {/* Controls, stuck to the top of the scroller so the grid can run */}
+        <div className="sticky top-0 z-[2] mb-4 space-y-2 rounded-panel border border-hair-2 bg-card/95 p-2.5 shadow-2xs backdrop-blur">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="relative flex min-w-[180px] flex-1 items-center">
+              <Search className="absolute left-2.5 size-3.5 text-ink-4" />
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setShown(24); }}
+                placeholder="Search layouts…"
+                className="w-full rounded-control border border-hair-2 bg-canvas py-1.5 pl-8 pr-2.5 text-body text-ink outline-none focus:border-brand focus:bg-card"
+              />
+            </label>
+
+            {[
+              { id: true, label: "Matches this brief", count: matching },
+              { id: false, label: "All templates", count: TEMPLATE_LIBRARY.length },
+            ].map((scope) => (
+              <button
+                key={String(scope.id)}
+                type="button"
+                onClick={() => { setMatchesBrief(scope.id); setShown(24); }}
+                className={cn(
+                  "shrink-0 cursor-pointer rounded-chip px-2.5 py-1 text-caption font-bold transition",
+                  matchesBrief === scope.id
+                    ? "bg-brand text-white shadow-xs"
+                    : "border border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
+                )}
+              >
+                {scope.label}
+                <span className="ml-1.5 tabular-nums opacity-70">{scope.count.toLocaleString()}</span>
+              </button>
+            ))}
+
+            <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-label font-bold text-ink-2">
+              <input
+                type="checkbox"
+                checked={approvedOnly}
+                onChange={(e) => setApprovedOnly(e.target.checked)}
+                className="size-3.5 accent-[#fd4816]"
+              />
+              <ShieldCheck className="size-3.5 text-ok" />
+              Brand-approved only
+            </label>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-hair pt-2">
+            <Chip active={family === "all"} onClick={() => { setFamily("all"); setShown(24); }}>
+              All categories
+            </Chip>
+            {(Object.keys(FAMILY_LABELS) as TemplateFamily[]).map((id) => (
+              <Chip key={id} active={family === id} onClick={() => { setFamily(id); setShown(24); }}>
+                {FAMILY_LABELS[id]}
+              </Chip>
+            ))}
+
             <button
-              key={String(scope.id)}
               type="button"
-              onClick={() => {
-                setMatchesBrief(scope.id);
-                setShown(24);
-              }}
+              onClick={() => setMoreOpen((open) => !open)}
+              aria-expanded={moreOpen}
               className={cn(
-                "cursor-pointer rounded-chip px-2.5 py-1 text-caption font-bold transition",
-                matchesBrief === scope.id
-                  ? "bg-brand text-white shadow-xs"
-                  : "border border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
+                "ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border px-2.5 py-1 text-label font-bold transition",
+                extraFilters > 0 || moreOpen
+                  ? "border-brand bg-tint text-brand-deep"
+                  : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
               )}
             >
-              {scope.label}
-              <span className="ml-1.5 tabular-nums opacity-70">{scope.count.toLocaleString()}</span>
+              <SlidersHorizontal className="size-3" />
+              More filters
+              {extraFilters > 0 && (
+                <span className="rounded-full bg-brand px-1.5 text-micro font-bold text-white tabular-nums">
+                  {extraFilters}
+                </span>
+              )}
             </button>
-          ))}
 
-          <label className="ml-auto flex cursor-pointer items-center gap-1.5 text-label font-bold text-ink-2">
-            <input
-              type="checkbox"
-              checked={approvedOnly}
-              onChange={(e) => setApprovedOnly(e.target.checked)}
-              className="size-3.5 accent-[#fd4816]"
-            />
-            <ShieldCheck className="size-3.5 text-ok" />
-            Brand-approved only
-          </label>
-        </div>
-      </header>
-
-      {/* ── Categories, and one door to everything narrower ── */}
-      <div className="shrink-0 border-b border-hair bg-canvas px-3 py-2 sm:px-4">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Chip active={family === "all"} onClick={() => { setFamily("all"); setShown(24); }}>
-            All categories
-          </Chip>
-          {(Object.keys(FAMILY_LABELS) as TemplateFamily[]).map((id) => (
-            <Chip key={id} active={family === id} onClick={() => { setFamily(id); setShown(24); }}>
-              {FAMILY_LABELS[id]}
-            </Chip>
-          ))}
-
-          <button
-            type="button"
-            onClick={() => setMoreOpen((open) => !open)}
-            aria-expanded={moreOpen}
-            className={cn(
-              "ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border px-2.5 py-1 text-label font-bold transition",
-              extraFilters > 0 || moreOpen
-                ? "border-brand bg-tint text-brand-deep"
-                : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
+            {browsing && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
+              >
+                Clear
+              </button>
             )}
-          >
-            <SlidersHorizontal className="size-3" />
-            More filters
-            {extraFilters > 0 && (
-              <span className="rounded-full bg-brand px-1.5 text-micro font-bold text-white tabular-nums">
-                {extraFilters}
-              </span>
-            )}
-          </button>
+          </div>
 
-          {browsing && (
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
-            >
-              Clear
-            </button>
+          {moreOpen && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-hair pt-2">
+              <FilterRow label="Figures">
+                <Chip small active={statSlots === 0} onClick={() => setStatSlots(0)}>Any</Chip>
+                {[1, 2, 3, 4].map((n) => (
+                  <Chip key={n} small active={statSlots === n} onClick={() => setStatSlots(n)}>{n}</Chip>
+                ))}
+              </FilterRow>
+
+              <FilterRow label="Contains">
+                {(Object.keys(ELEMENT_LABELS) as TemplateElement[]).map((element) => (
+                  <Chip
+                    key={element}
+                    small
+                    active={contains.includes(element)}
+                    onClick={() => toggleContains(element)}
+                  >
+                    {ELEMENT_LABELS[element]}
+                  </Chip>
+                ))}
+              </FilterRow>
+            </div>
           )}
         </div>
 
-        {moreOpen && (
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-hair pt-2">
-            <FilterRow label="Figures">
-              <Chip small active={statSlots === 0} onClick={() => setStatSlots(0)}>Any</Chip>
-              {[1, 2, 3, 4].map((n) => (
-                <Chip key={n} small active={statSlots === n} onClick={() => setStatSlots(n)}>{n}</Chip>
-              ))}
-            </FilterRow>
-
-            <FilterRow label="Contains">
-              {(Object.keys(ELEMENT_LABELS) as TemplateElement[]).map((element) => (
-                <Chip
-                  key={element}
-                  small
-                  active={contains.includes(element)}
-                  onClick={() => toggleContains(element)}
-                >
-                  {ELEMENT_LABELS[element]}
-                </Chip>
-              ))}
-            </FilterRow>
-          </div>
-        )}
-      </div>
-
-      {/* ── The catalogue ── */}
-      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
         {chosen && (
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded-panel border border-brand/25 bg-tint px-3 py-2">
             <span className="rounded-glyph bg-brand px-1.5 py-0.5 text-micro font-bold text-white">Chosen</span>
@@ -332,7 +334,7 @@ export function TemplateStepScreen({
             disabled={blocked}
             className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
           >
-            Continue to copy
+            Continue to content plan
             <ArrowRight className="size-3.5" />
           </Button>
         </div>
@@ -415,9 +417,21 @@ function ArchetypeCard({
 }) {
   return (
     <article
+      role="button"
+      tabIndex={0}
+      aria-pressed={selected}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={cn(
-        "flex flex-col overflow-hidden rounded-card border bg-card transition",
-        selected ? "border-brand ring-2 ring-brand/15 shadow-sm" : "border-hair shadow-2xs"
+        "flex cursor-pointer flex-col overflow-hidden rounded-card border bg-card transition",
+        selected
+          ? "border-brand shadow-sm ring-2 ring-brand/15"
+          : "border-hair shadow-2xs hover:border-brand hover:shadow-xs"
       )}
     >
       <div className="flex items-start gap-2 p-3 pb-2">
@@ -462,19 +476,17 @@ function ArchetypeCard({
         </div>
       )}
 
+      {/* A label on the card, not a second target: the card itself is the
+          control, and this says which state it is in. */}
       <div className="p-3 pt-2">
-        <button
-          type="button"
-          onClick={onSelect}
+        <div
           className={cn(
-            "focus-ring h-8 w-full cursor-pointer rounded-control text-label font-bold transition",
-            selected
-              ? "bg-brand text-white"
-              : "border border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
+            "grid h-8 w-full place-items-center rounded-control text-label font-bold transition",
+            selected ? "bg-brand text-white" : "border border-hair-2 bg-canvas text-ink-3"
           )}
         >
           {selected ? `Using ${archetype.name}` : `Use ${archetype.name}`}
-        </button>
+        </div>
       </div>
     </article>
   );

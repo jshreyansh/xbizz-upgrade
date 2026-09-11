@@ -158,7 +158,7 @@ export function InfographicDirectionsScreen() {
   const [libraryTemplateId, setLibraryTemplateId] = useState<string | null>(null);
   /** Blocks the agent is rewriting right now. */
   const [pendingCopyIds, setPendingCopyIds] = useState<string[]>([]);
-  /* The panel is a two-tab inspector on the copy deck, the same as the video
+  /* The panel is a two-tab inspector on the content plan, the same as the video
      script stage: what you are writing, and what you are allowed to say. */
   const [panelTab, setPanelTab] = useState<"chat" | "claims">("chat");
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
@@ -331,13 +331,13 @@ export function InfographicDirectionsScreen() {
   };
 
   /**
-   * The copy deck's starting words.
+   * The content plan's starting words.
    *
    * Built from the plan rather than typed, and one block per real slot on the
-   * page, so the fit chips mean something the moment the stage opens. The
-   * safety block is deliberately over its box on a single-page deck — that is
-   * the case the stage exists to catch, and catching it here costs nothing
-   * where catching it after generation costs the render.
+   * page. It arrives finished and inside its boxes: this stage is where you
+   * read the final copy, so opening it with a block already broken would be
+   * showing work rather than showing a result. Overflow is a thing editing
+   * can cause, and the chips are there for when it does.
    */
   const seedCopyBlocks = (): CopyBlock[] => {
     const pageCount = Number(infographicPages) || 1;
@@ -377,7 +377,7 @@ export function InfographicDirectionsScreen() {
       label: "Safety copy",
       kind: "safety",
       text:
-        "Contraindicated in patients with severe hepatic impairment (Child-Pugh Class C). Initiation is not recommended below eGFR 25 mL/min/1.73m². Most common adverse events were mild headache (5.1%) and nausea (4.2%). Co-administration with strong CYP3A4 inhibitors should be monitored. Please review the full Prescribing Information before administration.",
+        "Contraindicated in severe hepatic impairment (Child-Pugh C). Not recommended below eGFR 25 mL/min/1.73m². Most common adverse events were mild headache (5.1%) and nausea (4.2%). Review the full Prescribing Information before administration.",
       citations: [{ id: "safety-cit", claimId: "c21", source: "FDA §5.2", title: "Hepatic monitoring requirement", date: "2026", anchor: 0 }],
     });
     return out;
@@ -387,7 +387,7 @@ export function InfographicDirectionsScreen() {
     setCurrentStep("template");
   };
 
-  const openCopyDeck = () => {
+  const openContentPlan = () => {
     setCopyBlocks((prev) => (prev.length > 0 ? prev : seedCopyBlocks()));
     setCopyScope([]);
     setCurrentStep("copy");
@@ -397,7 +397,7 @@ export function InfographicDirectionsScreen() {
      the stage is for — an instruction that lengthens a block it was asked to
      fix would be the one thing the fit chip cannot forgive. */
   /**
-   * The chat rewriting whatever is ticked on the copy deck.
+   * The chat rewriting whatever is ticked on the content plan.
    *
    * Selection is how an instruction is aimed, exactly as scene selection aims
    * one in the script stage — so this is driven from the chat's own send
@@ -471,7 +471,7 @@ export function InfographicDirectionsScreen() {
     });
     if (!directText) setChatInput("");
 
-    // On the copy deck an instruction applies to what is ticked. Nothing
+    // On the content plan an instruction applies to what is ticked. Nothing
     // ticked means nothing aimed at, so the agent says so rather than
     // rewriting the whole deck on a guess.
     if (currentStep === "copy") {
@@ -524,7 +524,7 @@ export function InfographicDirectionsScreen() {
 
 
   /**
-   * The copy deck is its own stage, returned after every hook above has run.
+   * The content plan is its own stage, returned after every hook above has run.
    * An early return higher up would unmount the hooks beneath it — the same
    * trap the asset-type branch at the top of this file already sets.
    */
@@ -548,7 +548,7 @@ export function InfographicDirectionsScreen() {
               // The shell's back button is the only one. The layout step had
               // grown its own, two arrows apart, which is a choice between
               // two things that should be one.
-              // One step at a time. Back from the copy deck was falling
+              // One step at a time. Back from the content plan was falling
               // through to the prompt screen, skipping the layout step and
               // losing the two decisions in between.
               if (currentStep === "copy") {
@@ -590,7 +590,11 @@ export function InfographicDirectionsScreen() {
               image cases. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
             <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-              {currentStep === "template" ? "Layout View" : "Plan View"}
+              {currentStep === "template"
+                ? "Layout View"
+                : currentStep === "copy"
+                  ? "Content Plan"
+                  : "Plan View"}
             </span>
             <button
               type="button"
@@ -679,7 +683,7 @@ export function InfographicDirectionsScreen() {
               setLibraryTemplateId(template.id);
               setPageShape(template.shape as never);
             }}
-            onContinue={openCopyDeck}
+            onContinue={openContentPlan}
           />
         ) : (
           <section
@@ -1177,7 +1181,7 @@ export function InfographicDirectionsScreen() {
                     // The blueprint approves the structure; the words come
                     // next. Going straight to the studio meant the first read
                     // of the copy happened after the art was paid for.
-                    else openCopyDeck();
+                    else openContentPlan();
                   }}
                   className="h-9 px-5 rounded-control text-body font-bold shadow-sm transition-all duration-200 shrink-0 bg-brand hover:bg-brand-deep text-white cursor-pointer hover:-translate-y-0.5"
                 >

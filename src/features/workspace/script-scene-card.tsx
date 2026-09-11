@@ -20,7 +20,7 @@ import { splitSegments } from "@/features/workspace/script-claims";
  * the narration the card exists to show — so the pill carries the first
  * source's name and a count, and paging happens in the popover.
  */
-/** Shared with the copy deck: the same inline badge, so a citation behaves
+/** Shared with the content plan: the same inline badge, so a citation behaves
  *  identically whether it sits in a narration line or a page block. */
 export function CitationPill({ citations, onDetails }: { citations: SceneCitation[]; onDetails?: (claimId: string) => void }) {
   const [open, setOpen] = useState(false);

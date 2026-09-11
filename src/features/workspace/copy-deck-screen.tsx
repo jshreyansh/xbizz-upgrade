@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, FileText, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { CopyDeckCard, type CopyBlock } from "@/features/workspace/copy-deck-card";
 import { copyFit } from "@/features/workspace/copy-fit";
 
 /**
- * The copy deck.
+ * The content plan — the stage the image flow was missing.
  *
  * The stage the image flow was missing. The video flow reviews its words
  * before it spends anything on media; the image flow went from a blueprint
@@ -75,65 +75,13 @@ export function CopyDeckScreen({
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col border-r border-hair bg-[#f4f6f3]">
-      {/* ── Where you are, and what still needs a hand ── */}
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-hair bg-card px-3 py-2 sm:px-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <FileText className="size-3.5 shrink-0 text-brand" />
-            <span className="truncate text-body-lg font-[850] tracking-tight text-ink">Copy deck</span>
-          </div>
-          <p className="mt-0.5 text-micro text-ink-3">
-            Read the words before the art is made. Tick a block to aim the chat at it, or edit it here.
-          </p>
-        </div>
-
-        <div className="ml-auto flex flex-wrap items-center gap-1.5">
-          {overflowing.length > 0 ? (
-            <span className="inline-flex items-center gap-1.5 rounded-chip border border-warn-line bg-warn-bg px-2.5 py-1 text-caption font-bold text-warn">
-              <AlertTriangle className="size-3" />
-              {overflowing.length} {overflowing.length === 1 ? "block overflows" : "blocks overflow"}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-chip border border-ok-line bg-ok-bg px-2.5 py-1 text-caption font-bold text-ok">
-              <Check className="size-3" />
-              Every block fits
-            </span>
-          )}
-          {tight.length > 0 && (
-            <span className="inline-flex items-center gap-1.5 rounded-chip border border-tint-line bg-tint px-2.5 py-1 text-caption font-bold text-brand-deep">
-              {tight.length} tight
-            </span>
-          )}
-        </div>
-      </header>
-
-      {/* ── What this deck says, and what it deliberately does not ──
-          The blueprint was a second screen showing the same words in a
-          different shape. Its counts and its MLR note live here, where the
-          words themselves are — the rest of it was a duplicate. */}
-      <div className="border-b border-hair bg-canvas px-3 py-3 sm:px-4">
-        <div className="mx-auto max-w-[760px] space-y-2.5">
-          <div className="rounded-panel border border-hair-2 bg-card p-3.5 shadow-2xs">
-            <div className="mb-1 text-label font-extrabold uppercase tracking-wider text-brand">
-              Content &amp; claim partition
-            </div>
-            <h2 className="text-body-lg font-[850] leading-snug tracking-tight text-ink">{title}</h2>
-            <p className="mt-1 text-label text-ink-3">{claimSummary}</p>
-          </div>
-
-          <div className="rounded-panel border border-warn-line/80 bg-warn-bg/70 p-3.5 shadow-2xs">
-            <div className="mb-1 flex items-center gap-2 text-body font-bold text-warn">
-              <ShieldCheck className="size-4 shrink-0 text-warn" />
-              <span>Left out deliberately for MLR compliance</span>
-            </div>
-            <p className="text-label leading-relaxed text-warn/90">{leftOut}</p>
-          </div>
-        </div>
-      </div>
-
+      {/* ── The plan, heading and all ──
+          No stage header bar: the app header is the header, and a second
+          edge-to-edge bar under it only competes with it. The title is a
+          heading inside the canvas, the same shape the plan view uses. */}
       {/* ── Pages ── */}
       {pages.length > 1 && (
-        <div className="flex gap-1 border-b border-hair bg-canvas px-3 pt-2 sm:px-4">
+        <div className="flex shrink-0 gap-1 border-b border-hair bg-canvas px-4 pt-2 sm:px-6 lg:px-7">
           {pages.map((page) => {
             const bad = blocks.some(
               (b) => b.pageNumber === page && copyFit(b.text, b.kind).state === "overflows"
@@ -158,9 +106,62 @@ export function CopyDeckScreen({
         </div>
       )}
 
-      {/* ── The blocks ── */}
-      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
-        <div className="mx-auto flex max-w-[760px] flex-col gap-2.5">
+      {/* ── The plan ── */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
+        <div className="mx-auto flex max-w-[820px] flex-col gap-4">
+          {/* Heading, in the canvas */}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
+                  Content plan
+                </span>
+                <span className="rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok">
+                  Grounded
+                </span>
+              </div>
+              <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
+                The final copy, ready to read
+              </h2>
+              <p className="mt-0.5 text-body text-ink-3">
+                Tick a block to aim the chat at it, or edit it here. Citations stay attached either way.
+              </p>
+            </div>
+
+            {overflowing.length > 0 && (
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-chip border border-warn-line bg-warn-bg px-3 py-1 text-caption font-bold text-warn">
+                <AlertTriangle className="size-3" />
+                {overflowing.length} {overflowing.length === 1 ? "block overflows" : "blocks overflow"}
+              </span>
+            )}
+            {overflowing.length === 0 && tight.length > 0 && (
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-chip border border-tint-line bg-tint px-3 py-1 text-caption font-bold text-brand-deep">
+                {tight.length} tight
+              </span>
+            )}
+          </div>
+
+          {/* What this deck says, and what it deliberately does not. The
+              blueprint was a second screen showing the same words in a
+              different shape; its counts and its MLR note live here, with the
+              words themselves. */}
+          <div className="rounded-panel border border-hair-2 bg-card p-3.5 shadow-2xs">
+            <div className="mb-1 text-label font-extrabold uppercase tracking-wider text-brand">
+              Content &amp; claim partition
+            </div>
+            <h3 className="text-body-lg font-[850] leading-snug tracking-tight text-ink">{title}</h3>
+            <p className="mt-1 text-label text-ink-3">{claimSummary}</p>
+          </div>
+
+          <div className="rounded-panel border border-warn-line/80 bg-warn-bg/70 p-3.5 shadow-2xs">
+            <div className="mb-1 flex items-center gap-2 text-body font-bold text-warn">
+              <ShieldCheck className="size-4 shrink-0 text-warn" />
+              <span>Left out deliberately for MLR compliance</span>
+            </div>
+            <p className="text-label leading-relaxed text-warn/90">{leftOut}</p>
+          </div>
+
+          <div className="flex flex-col gap-2.5">
           {onPage.map((block) => (
             <CopyDeckCard
               key={block.id}
@@ -174,6 +175,7 @@ export function CopyDeckScreen({
               onCitationDetails={onCitationDetails}
             />
           ))}
+          </div>
         </div>
       </div>
 
@@ -196,7 +198,7 @@ export function CopyDeckScreen({
             disabled={overflowing.length > 0}
             className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
           >
-            Approve copy &amp; open studio
+            Approve plan &amp; open studio
             <ArrowRight className="size-3.5" />
           </Button>
         </div>

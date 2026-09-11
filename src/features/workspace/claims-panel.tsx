@@ -6,7 +6,7 @@ import { APPROVED_CLAIMS } from "@/features/workspace/script-claims";
 /**
  * The approved claims, beside whatever is being written.
  *
- * Shared by the video script stage and the creative copy deck, because it is
+ * Shared by the video script stage and the creative content plan, because it is
  * the same list answering the same question: what am I allowed to say. A
  * citation badge in either stage jumps here and highlights its claim, which
  * only works if both stages are looking at one panel rather than two copies
