@@ -346,7 +346,7 @@ export function TemplateStepScreen({
               disabled={blocked}
               className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
             >
-              Continue to content plan
+              Open canvas studio
               <ArrowRight className="size-3.5" />
             </Button>
           }

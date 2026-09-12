@@ -10,7 +10,6 @@ import {
   Edit3,
   Lock,
   Search,
-  Square,
   Target,
   X,
   Plus,
@@ -92,7 +91,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [customSpecialityInput, setCustomSpecialityInput] = useState("");
   const [showCustomSpecialityBox, setShowCustomSpecialityBox] = useState(false);
 
-  // 3. Format Shape (Landscape, Portrait, Square)
+  // 3. Format Shape (Landscape, Portrait)
   const [selectedShape, setSelectedShape] = useState<OutputShape>("landscape");
 
   // 4. Focus Topics
@@ -273,13 +272,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setTopicsStore(selectedTopics);
     setProjectNameStore(nameValue.trim() || suggestedName);
     
-    // Map the 3 shapes to the target store format
+    // Two shapes, mapped to what each flow calls them.
     if (assetType === "infographic") {
-      const pageShape = selectedShape === "portrait" ? "3:4" : selectedShape === "square" ? "3:4" : "16:9";
-      setPageShapeStore(pageShape);
+      setPageShapeStore(selectedShape === "portrait" ? "3:4" : "16:9");
     } else {
-      const format = selectedShape === "portrait" ? "9:16" : selectedShape === "square" ? "1:1" : "16:9";
-      setFormatStore(format);
+      setFormatStore(selectedShape === "portrait" ? "9:16" : "16:9");
     }
     
     setView("create");
@@ -738,7 +735,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           ) : (
             <div className="space-y-4 animate-in fade-in duration-200">
               
-              {/* 3. Output Shape (ONLY 3: Landscape, Portrait, Square with Clean Geometric Icons) */}
+              {/* 3. Output Shape — landscape or portrait */}
               <div className="rounded-panel border border-hair bg-card p-4 space-y-2.5 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -754,7 +751,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {SHAPE_OPTIONS.map((opt) => {
                     const isSel = selectedShape === opt.id;
                     return (

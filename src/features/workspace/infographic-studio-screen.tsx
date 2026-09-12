@@ -278,6 +278,13 @@ export function InfographicStudioScreen() {
   // Zoom & UI state
   const [zoomLevel, setZoomLevel] = useState<number>(100);
 
+  /* Version 1 is what ships: select an element and direct it, with no
+     formatting bar. Future is the opt-in preview where type can be set on the
+     canvas. Default v1, the same as the video editor — the toggle is a
+     statement about what is real, so the real one is what opens. */
+  const [editorVersion, setEditorVersion] = useState<"v1" | "future">("v1");
+  const showFormatRibbon = editorVersion === "future";
+
   /* ── Two-pass generation ──────────────────────────────────────────────────
      The studio opens on a page that is being built, not on a spinner. Blocks
      land through the layout pass, art fills the boxes they declared, and the
@@ -888,6 +895,36 @@ export function InfographicStudioScreen() {
                   Canvas Editor
                 </span>
               )}
+
+              {/* Version 1 is what ships today; Future is the opt-in preview
+                  of what it grows into. Editor only — a reviewer on a shared
+                  link is not choosing an editor. */}
+              {studioMode === "editor" && (
+                <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-0.5 sm:flex">
+                  {([
+                    { id: "v1" as const, label: "Version 1" },
+                    { id: "future" as const, label: "Future" },
+                  ]).map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setEditorVersion(option.id)}
+                      aria-pressed={editorVersion === option.id}
+                      title={
+                        option.id === "v1"
+                          ? "Ships today: select and direct, no formatting bar"
+                          : "Preview: set type on the canvas from the formatting bar"
+                      }
+                      className={cn(
+                        "cursor-pointer rounded-glyph px-2.5 py-1 text-caption font-bold transition-colors",
+                        editorVersion === option.id ? "bg-brand text-white" : "text-ink-3 hover:text-ink"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
               {studioMode === "generating" && (
                 <span className="inline-flex items-center gap-1.5 rounded-chip bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse">
                   <LogoMark size={12} className="text-brand-deep animate-spin" />
@@ -1225,7 +1262,7 @@ export function InfographicStudioScreen() {
             {/* One bar, two control sets: what is selected decides which. A
                 toolbar that only knows about type says "select any text" at an
                 image and leaves you nothing to press. */}
-            {studioMode === "editor" && selectedArt ? (
+            {studioMode === "editor" && showFormatRibbon && selectedArt ? (
               <ArtRibbon
                 label={selectedArt.label}
                 kind={selectedArt.kind}
@@ -1237,7 +1274,7 @@ export function InfographicStudioScreen() {
                 onReplace={() => artUploadRef.current?.click()}
                 onAddToChat={() => addArtToChat(selectedArt.id)}
               />
-            ) : studioMode === "editor" ? (
+            ) : studioMode === "editor" && showFormatRibbon ? (
               <FormatRibbon
                 element={selectedElement}
                 style={selectedElementId ? elementStyles[selectedElementId] : undefined}

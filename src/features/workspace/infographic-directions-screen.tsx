@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import {
   AlertTriangle,
-  FileText,
   ArrowLeft,
   ArrowRight,
   Check,
@@ -17,7 +16,6 @@ import {
   Plus,
   Redo2,
   Send,
-  X,
   ShieldCheck,
   Target,
   Undo2,
@@ -39,13 +37,9 @@ import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
-import { CopyDeckScreen } from "@/features/workspace/copy-deck-screen";
-import type { CopyBlock } from "@/features/workspace/copy-deck-card";
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
-import { ClaimsPanel } from "@/features/workspace/claims-panel";
-import { APPROVED_CLAIMS } from "@/features/workspace/script-claims";
 
-type InfographicSubStep = "brief" | "template" | "copy";
+type InfographicSubStep = "brief" | "template";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
 
 interface AudienceOption {
@@ -151,19 +145,8 @@ export function InfographicDirectionsScreen() {
      Same switcher as the video plan, filtered to image cases. Changing it
      swaps brief, audience, market, intended use, sources, page shape and
      archetype, because the plan is derived from those. */
-  /* The copy the deck will carry, block by block. Seeded from the plan so the
-     stage opens on real words rather than an empty form — the point of the
-     stage is to read and cut, not to type from nothing. */
-  const [copyBlocks, setCopyBlocks] = useState<CopyBlock[]>([]);
-  const [copyScope, setCopyScope] = useState<string[]>([]);
   /** Set when the layout came from the library rather than the five. */
   const [libraryTemplateId, setLibraryTemplateId] = useState<string | null>(null);
-  /** Blocks the agent is rewriting right now. */
-  const [pendingCopyIds, setPendingCopyIds] = useState<string[]>([]);
-  /* The panel is a two-tab inspector on the content plan, the same as the video
-     script stage: what you are writing, and what you are allowed to say. */
-  const [panelTab, setPanelTab] = useState<"chat" | "claims">("chat");
-  const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
 
   const [useCaseDrawerOpen, setUseCaseDrawerOpen] = useState(false);
   /* Only image cases count here. demoScenarioId is shared with the video flow,
@@ -332,101 +315,6 @@ export function InfographicDirectionsScreen() {
     }, 900);
   };
 
-  /**
-   * The content plan's starting words.
-   *
-   * Built from the plan rather than typed, and one block per real slot on the
-   * page. It arrives finished and inside its boxes: this stage is where you
-   * read the final copy, so opening it with a block already broken would be
-   * showing work rather than showing a result. Overflow is a thing editing
-   * can cause, and the chips are there for when it does.
-   */
-  const seedCopyBlocks = (): CopyBlock[] => {
-    const pageCount = Number(infographicPages) || 1;
-    const out: CopyBlock[] = [];
-    for (let page = 1; page <= pageCount; page++) {
-      const first = page === 1;
-      out.push(
-        { id: `p${page}-eyebrow`, pageNumber: page, label: "Eyebrow", kind: "eyebrow", text: first ? "HCP Clinical Brief" : "Clinical Evidence Spread" },
-        {
-          id: `p${page}-headline`, pageNumber: page, label: "Headline", kind: "headline",
-          text: first ? `${brandName}™ (tirzelamide) · 200mg` : `${brandName}™ · Clinical Evidence & Safety`,
-        },
-        {
-          id: `p${page}-subhead`, pageNumber: page, label: "Subhead", kind: "subhead",
-          text: first
-            ? "First-in-Class Dual Mechanism Kinase Inhibitor for Moderate-to-Severe Plaque Psoriasis"
-            : "Long-Term Extension Cohorts, Organ Safety & Prescribing Thresholds",
-        },
-        {
-          id: `p${page}-metric`, pageNumber: page, label: "Hero metric", kind: "metric",
-          text: first ? "52% PASI 90" : "84.6% Durability",
-          citations: [{ id: `p${page}-cit-1`, claimId: "c13", source: "EMBRACE-3", title: "Table 2.4 · primary endpoint", date: "2024", anchor: 0 }],
-        },
-        {
-          id: `p${page}-body`, pageNumber: page, label: "Supporting copy", kind: "body",
-          text: first
-            ? "Over half of patients achieved clear or almost clear skin by Week 16, against 18% in the placebo cohort. Response was maintained through the 52-week open-label extension."
-            : "Clearance profile validated across mild-to-moderate renal impairment cohorts without dosage adjustment above eGFR 25.",
-          citations: [{ id: `p${page}-cit-2`, claimId: "c11", source: "CLEARSKIN-3", title: "Week 24 durability", date: "2024", anchor: 1 }],
-        }
-      );
-    }
-    // One safety block for the deck, on the last page, as fair balance is.
-    out.push({
-      id: "safety",
-      pageNumber: pageCount,
-      label: "Safety copy",
-      kind: "safety",
-      text:
-        "Contraindicated in severe hepatic impairment (Child-Pugh C). Not recommended below eGFR 25 mL/min/1.73m². Most common adverse events were mild headache (5.1%) and nausea (4.2%). Review the full Prescribing Information before administration.",
-      citations: [{ id: "safety-cit", claimId: "c21", source: "FDA §5.2", title: "Hepatic monitoring requirement", date: "2026", anchor: 0 }],
-    });
-    return out;
-  };
-
-  const openTemplateStep = () => {
-    setCurrentStep("template");
-  };
-
-  const openContentPlan = () => {
-    setCopyBlocks((prev) => (prev.length > 0 ? prev : seedCopyBlocks()));
-    setCopyScope([]);
-    setCurrentStep("copy");
-  };
-
-  /* The agent rewriting what is in scope. It shortens, because that is what
-     the stage is for — an instruction that lengthens a block it was asked to
-     fix would be the one thing the fit chip cannot forgive. */
-  /**
-   * The chat rewriting whatever is ticked on the content plan.
-   *
-   * Selection is how an instruction is aimed, exactly as scene selection aims
-   * one in the script stage — so this is driven from the chat's own send
-   * rather than a second composer on the canvas.
-   */
-  const rewriteCopy = (instruction: string, scopeIds: string[]) => {
-    setPendingCopyIds(scopeIds);
-    setTimeout(() => {
-      setCopyBlocks((prev) =>
-        prev.map((block) => {
-          if (!scopeIds.includes(block.id)) return block;
-          const trimmed = block.text
-            .split(/(?<=[.!?])\s+/)
-            .slice(0, 1)
-            .join(" ")
-            .trim();
-          return { ...block, text: trimmed.length > 0 ? trimmed : block.text };
-        })
-      );
-      setPendingCopyIds([]);
-      addChatMessage({
-        role: "swishx",
-        text: `Cut ${scopeIds.length === 1 ? "that block" : `those ${scopeIds.length} blocks`} back to the leading sentence and kept the citations attached. Anything still flagged needs another pass.`,
-      });
-    }, 1500);
-  };
-
 
   // Local state for brief questions
   const [selectedAudienceId, setSelectedAudienceId] = useState<string>(audience === "Patient" ? "patient" : audience === "Consumer" ? "consumer" : "hcp");
@@ -464,31 +352,8 @@ export function InfographicDirectionsScreen() {
     const text = directText || chatInput.trim();
     if (!text) return;
 
-    addChatMessage({
-      role: "user",
-      text:
-        currentStep === "copy" && copyScope.length > 0
-          ? `[${copyScope.length} ${copyScope.length === 1 ? "block" : "blocks"}] ${text}`
-          : text,
-    });
+    addChatMessage({ role: "user", text });
     if (!directText) setChatInput("");
-
-    // On the content plan an instruction applies to what is ticked. Nothing
-    // ticked means nothing aimed at, so the agent says so rather than
-    // rewriting the whole deck on a guess.
-    if (currentStep === "copy") {
-      if (copyScope.length === 0) {
-        setTimeout(() => {
-          addChatMessage({
-            role: "swishx",
-            text: "Tick the blocks you want changed first — then tell me what to do and I will apply it to those.",
-          });
-        }, 400);
-        return;
-      }
-      rewriteCopy(text, copyScope);
-      return;
-    }
 
     setTimeout(() => {
       const lower = text.toLowerCase();
@@ -525,11 +390,6 @@ export function InfographicDirectionsScreen() {
   };
 
 
-  /**
-   * The content plan is its own stage, returned after every hook above has run.
-   * An early return higher up would unmount the hooks beneath it — the same
-   * trap the asset-type branch at the top of this file already sets.
-   */
   return (
     <SplitLayout
       className="bg-[#eef1ed] text-left"
@@ -550,13 +410,7 @@ export function InfographicDirectionsScreen() {
               // The shell's back button is the only one. The layout step had
               // grown its own, two arrows apart, which is a choice between
               // two things that should be one.
-              // One step at a time. Back from the content plan was falling
-              // through to the prompt screen, skipping the layout step and
-              // losing the two decisions in between.
-              if (currentStep === "copy") {
-                setCurrentStep("template");
-                return;
-              }
+              // One step at a time, rather than dropping out of the flow.
               if (currentStep === "template") {
                 setCurrentStep("brief");
                 return;
@@ -592,11 +446,7 @@ export function InfographicDirectionsScreen() {
               image cases. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
             <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-              {currentStep === "template"
-                ? "Layout View"
-                : currentStep === "copy"
-                  ? "Content Plan"
-                  : "Plan View"}
+              {currentStep === "template" ? "Layout View" : "Plan View"}
             </span>
             <button
               type="button"
@@ -642,32 +492,7 @@ export function InfographicDirectionsScreen() {
         </ScreenHeader>
       }
       main={
-        currentStep === "copy" ? (
-          <CopyDeckScreen
-            blocks={copyBlocks}
-            pages={Array.from({ length: Number(infographicPages) || 1 }, (_, i) => i + 1)}
-            title={`One tablet, three approved jobs: ${brandName} (tirzelamide) in moderate-to-severe plaque psoriasis`}
-            claimSummary={`${copyBlocks.length} blocks on ${infographicPages === "2" ? "2 pages" : "1 page"} · 13 verified claims grounded in the FDA dossier`}
-            leftOut="The dossier contains no head-to-head comparator study against biologic X — no comparative superiority claim is made. Only approved FDA primary endpoints (52% PASI 90 at Week 16) are cited. Left out deliberately: (a) non-approved indication claims, (b) unverified exploratory endpoints, (c) uncalibrated dosing titration outside §2.1."
-            scope={copyScope}
-            onScopeChange={setCopyScope}
-            pendingIds={pendingCopyIds}
-            onChangeBlock={(id, text) =>
-              setCopyBlocks((prev) => prev.map((b) => (b.id === id ? { ...b, text } : b)))
-            }
-            onCitationDetails={(claimId) => {
-              // The same gesture as the script stage: a citation takes you to
-              // its claim and holds it lit long enough to read.
-              setPanelTab("claims");
-              setHighlightedClaimId(claimId);
-              setTimeout(() => setHighlightedClaimId(null), 2000);
-            }}
-            onContinue={() => {
-              setView("studio");
-              setVideoSubStage("studio");
-            }}
-          />
-        ) : currentStep === "template" ? (
+        currentStep === "template" ? (
           <TemplateStepScreen
             brief={brief}
             pageShape={pageShape}
@@ -685,7 +510,10 @@ export function InfographicDirectionsScreen() {
               setLibraryTemplateId(template.id);
               setPageShape(template.shape as never);
             }}
-            onContinue={openContentPlan}
+            onContinue={() => {
+              setView("studio");
+              setVideoSubStage("studio");
+            }}
           />
         ) : (
           <section
@@ -1183,7 +1011,10 @@ export function InfographicDirectionsScreen() {
                     // The blueprint approves the structure; the words come
                     // next. Going straight to the studio meant the first read
                     // of the copy happened after the art was paid for.
-                    else openContentPlan();
+                    else {
+                      setView("studio");
+                      setVideoSubStage("studio");
+                    }
                   }}
                   className="h-9 px-5 rounded-control text-body font-bold shadow-sm transition-all duration-200 shrink-0 bg-brand hover:bg-brand-deep text-white cursor-pointer hover:-translate-y-0.5"
                 >
@@ -1213,40 +1044,8 @@ export function InfographicDirectionsScreen() {
               </span>
             </div>
 
-            {/* Writing copy is the one stage that needs the claims beside it,
-                which is why the script stage has exactly these two tabs. */}
-            {currentStep === "copy" && (
-              <div className="mt-2.5 grid grid-cols-2 gap-1 rounded-panel border border-hair bg-[#e6ebe6] p-1 shadow-inner-xs">
-                {([
-                  { id: "chat" as const, label: "Chat" },
-                  { id: "claims" as const, label: "Claims" },
-                ]).map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setPanelTab(tab.id)}
-                    className={cn(
-                      "flex items-center justify-center gap-1.5 rounded-chip py-1.5 text-label font-bold transition cursor-pointer",
-                      panelTab === tab.id ? "bg-card text-ink shadow-2xs" : "text-ink-3 hover:text-ink"
-                    )}
-                  >
-                    {tab.id === "chat" && <span className="size-1.5 shrink-0 rounded-full bg-ok" />}
-                    <span>{tab.label}</span>
-                    {tab.id === "claims" && (
-                      <span className="text-micro font-black tabular-nums text-ink-4">
-                        {APPROVED_CLAIMS.length}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {currentStep === "copy" && panelTab === "claims" ? (
-            <ClaimsPanel highlightedClaimId={highlightedClaimId} />
-          ) : (
-          <>
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-3.5 space-y-3">
             {chatMessages.map((msg, idx) => (
@@ -1320,7 +1119,7 @@ export function InfographicDirectionsScreen() {
                 </div>
                 <Button
                   type="button"
-                  onClick={openTemplateStep}
+                  onClick={() => setCurrentStep("template")}
                   size="sm"
                   className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                 >
@@ -1335,37 +1134,6 @@ export function InfographicDirectionsScreen() {
 
             {/* Input Bar */}
             <div className="relative">
-              {/* What the next instruction is aimed at.
-                  The canvas ticks and this list are one thing, the same as the
-                  script stage's scene scope — so a block can be dropped from
-                  scope here or there, and both surfaces agree. */}
-              {currentStep === "copy" && copyScope.length > 0 && (
-                <div className="mb-2 flex flex-wrap gap-1.5 rounded-control border border-hair bg-subtle p-1.5">
-                  {copyScope.map((id) => {
-                    const block = copyBlocks.find((b) => b.id === id);
-                    if (!block) return null;
-                    return (
-                      <span
-                        key={id}
-                        className="inline-flex items-center gap-1.5 rounded-chip border border-brand/20 bg-card px-2 py-0.5 text-label font-bold text-brand-deep shadow-2xs"
-                      >
-                        <FileText className="size-3 shrink-0 text-brand" />
-                        <span className="max-w-[180px] truncate">
-                          <strong>{block.label}:</strong> {block.text}
-                        </span>
-                        <button
-                          type="button"
-                          aria-label={`Remove ${block.label} from scope`}
-                          onClick={() => setCopyScope((prev) => prev.filter((s) => s !== id))}
-                          className="flex size-3.5 cursor-pointer items-center justify-center rounded-full text-ink-4 hover:bg-black/10 hover:text-black"
-                        >
-                          <X className="size-2.5" />
-                        </button>
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
               <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                 <Plus className="size-3.5 text-ink-3 shrink-0" />
                 <input
@@ -1375,13 +1143,7 @@ export function InfographicDirectionsScreen() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleSendChat();
                   }}
-                  placeholder={
-                    currentStep === "copy"
-                      ? copyScope.length > 0
-                        ? `Change ${copyScope.length} selected ${copyScope.length === 1 ? "block" : "blocks"}…`
-                        : "Tick blocks on the left, then ask…"
-                      : "Ask or request changes..."
-                  }
+                  placeholder="Ask or request changes..."
                   className="flex-1 bg-transparent text-body outline-none text-ink placeholder:text-ink-3"
                 />
                 <button
@@ -1395,8 +1157,6 @@ export function InfographicDirectionsScreen() {
               </div>
             </div>
           </div>
-          </>
-          )}
         </>
       }
       overlay={

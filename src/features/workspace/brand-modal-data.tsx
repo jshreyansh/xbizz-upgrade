@@ -236,8 +236,8 @@ export const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: str
   ],
 };
 
-// ── ONLY 3 Precise Geometric Aspect Ratio Options: Landscape, Portrait, Square ──
-export type OutputShape = "landscape" | "portrait" | "square";
+// ── Two shapes: landscape and portrait ──
+export type OutputShape = "landscape" | "portrait";
 
 export const SHAPE_OPTIONS = [
   {
@@ -255,15 +255,6 @@ export const SHAPE_OPTIONS = [
     renderIcon: (isSel: boolean) => (
       <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-ink-3")} viewBox="0 0 14 20" fill="none" stroke="currentColor" strokeWidth="1.8">
         <rect x="1.5" y="1.5" width="11" height="17" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
-      </svg>
-    ),
-  },
-  {
-    id: "square" as OutputShape,
-    label: "Square",
-    renderIcon: (isSel: boolean) => (
-      <svg className={cn("size-4.5 shrink-0 transition-colors", isSel ? "text-brand" : "text-ink-3")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="1.5" y="1.5" width="13" height="13" rx="2" fill={isSel ? "currentColor" : "none"} fillOpacity={isSel ? 0.18 : 0} />
       </svg>
     ),
   },
