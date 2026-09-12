@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { Check, MessageSquarePlus, Send, X, CornerDownRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
@@ -167,7 +168,8 @@ export function ElementActionBar({
             onClick={onAddToChat}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-control px-2.5 py-1.5 text-body font-bold text-ink transition hover:bg-tint hover:text-brand-deep cursor-pointer"
           >
-            <CornerDownRight className="size-3.5 text-brand" />
+            {/* The agent's own mark on the action that reaches the agent. */}
+            <LogoMark size={13} className="shrink-0 text-brand" />
             <span>Add to chat</span>
           </button>
           <button

@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef } from "react";
 import {
   AlignCenter,
+  ArrowDown,
+  ArrowUp,
+  BarChart3,
+  ImageIcon,
+  Layers,
+  Upload,
   AlignLeft,
   AlignRight,
   Bold,
   CaseUpper,
-  MessageSquare,
   Minus,
   Plus,
   RotateCcw,
-  ShieldCheck,
-  Sparkles,
   Type,
 } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 
 /**
@@ -239,151 +242,6 @@ function AlignGroup({
   );
 }
 
-/* ───────────────────────────── the floating bar ───────────────────────────── */
-
-/**
- * Appears directly above the selected run, like PowerPoint's mini toolbar.
- *
- * Positioned against the live rect rather than the element's box in the
- * document, because the canvas is scaled by the zoom control — a toolbar
- * placed with CSS inside a scaled container would be scaled with it, which is
- * how these bars end up at 70% size and blurry.
- */
-export function FloatingTextToolbar({
-  element,
-  style,
-  anchorRect,
-  onStyle,
-  onReset,
-  onAddToChat,
-  onEdit,
-  onComment,
-}: {
-  element: CanvasTextElement;
-  style: TextStyle | undefined;
-  /** Viewport rect of the selected run. */
-  anchorRect: { top: number; left: number; width: number; height: number } | null;
-  onStyle: (patch: Partial<TextStyle>) => void;
-  onReset: () => void;
-  onAddToChat: () => void;
-  onEdit: () => void;
-  /** Leave a note against this run instead of acting on it now. */
-  onComment?: () => void;
-}) {
-  if (!anchorRect || typeof document === "undefined") return null;
-
-  /* Placed from the anchor alone, during render. Measuring the bar first and
-     storing the result in state would mean a frame where it sits at the wrong
-     coordinates — visible as a jump every time you select a run. Above by
-     default; under the run when the top chrome would clip it. */
-  const below = anchorRect.top < 150;
-  const top = below ? anchorRect.top + anchorRect.height + 10 : anchorRect.top - 10;
-  const centre = anchorRect.left + anchorRect.width / 2;
-  /* Clamped by half the bar's *widest possible* size rather than a guessed
-     constant: the bar is capped below at min(92vw, 520px), so half of that is
-     the largest it can ever overhang. Measuring the real width instead would
-     mean a render that reads layout, and a frame at the wrong coordinates. */
-  const half = Math.min(310, window.innerWidth * 0.48);
-  const left = Math.max(half + 8, Math.min(window.innerWidth - half - 8, centre));
-
-  const size = style?.size ?? element.baseSize;
-  const weight = style?.weight ?? element.baseWeight;
-  const align = style?.align ?? "left";
-  const upper = style?.uppercase ?? false;
-
-  return createPortal(
-    <div
-      role="toolbar"
-      aria-label={`Format ${element.label}`}
-      style={{
-        top,
-        left,
-        transform: below ? "translateX(-50%)" : "translate(-50%, -100%)",
-      }}
-      className="fixed z-[70] flex max-w-[min(96vw,620px)] items-center gap-1.5 rounded-control border border-white/12 bg-[#11161f] px-2 py-1.5 shadow-2xl"
-      // The bar sits over the canvas; a click inside it must not reach the
-      // stage's click-to-deselect, or the bar closes the moment you use it.
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <span className="hidden shrink-0 pl-0.5 pr-1 text-micro font-extrabold uppercase tracking-wider text-white/45 min-[1180px]:inline">
-        {element.label}
-      </span>
-
-      <span className="hidden min-[1180px]:inline">
-        <Divider dark />
-      </span>
-      <SizeStepper dark value={size} onChange={(next) => onStyle({ size: next })} />
-
-      <IconToggle
-        dark
-        active={weight >= 700}
-        onClick={() => onStyle({ weight: weight >= 700 ? 400 : 850 })}
-        title="Bold"
-      >
-        <Bold className="size-3.5" />
-      </IconToggle>
-
-      <IconToggle dark active={upper} onClick={() => onStyle({ uppercase: !upper })} title="Uppercase">
-        <CaseUpper className="size-4" />
-      </IconToggle>
-
-      <span className="hidden min-[1020px]:inline">
-        <Divider dark />
-      </span>
-      <span className="hidden items-center min-[1020px]:inline-flex">
-        <AlignGroup dark value={align} onChange={(next) => onStyle({ align: next })} />
-      </span>
-
-      <Divider dark />
-      <button
-        type="button"
-        onClick={onEdit}
-        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip px-2 py-1 text-label font-bold text-white/80 transition hover:bg-white/12 hover:text-white"
-      >
-        <Type className="size-3.5" />
-        <span className="hidden min-[880px]:inline">Edit text</span>
-      </button>
-
-      {onComment && (
-        <IconToggle dark onClick={onComment} title="Add a comment on this element">
-          <MessageSquare className="size-3.5" />
-        </IconToggle>
-      )}
-
-      <button
-        type="button"
-        onClick={onAddToChat}
-        title="Ask the agent to change this"
-        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip bg-brand px-2 py-1 text-label font-bold text-white transition hover:bg-brand-deep"
-      >
-        <Sparkles className="size-3.5" />
-        <span className="hidden min-[820px]:inline">Ask agent</span>
-      </button>
-
-      {hasOverrides(style) && (
-        <>
-          <Divider dark />
-          <IconToggle dark onClick={onReset} title="Reset to template">
-            <RotateCcw className="size-3.5" />
-          </IconToggle>
-        </>
-      )}
-
-      {element.citation && (
-        <span
-          title={`Grounded in ${element.citation} — retyping this run sends the claim back for verification`}
-          className="ml-0.5 inline-flex shrink-0 items-center gap-1 rounded-chip bg-ok/18 px-1.5 py-0.5 text-micro font-bold text-ok-on-dark"
-        >
-          <ShieldCheck className="size-3" />
-          Claim
-        </span>
-      )}
-    </div>,
-    document.body
-  );
-}
-
 /* ──────────────────────────────── the ribbon ──────────────────────────────── */
 
 /**
@@ -399,14 +257,12 @@ export function FormatRibbon({
   blockLabel,
   onStyle,
   onReset,
-  onEdit,
 }: {
   element: CanvasTextElement | null;
   style: TextStyle | undefined;
   blockLabel: string;
   onStyle: (patch: Partial<TextStyle>) => void;
   onReset: () => void;
-  onEdit: () => void;
 }) {
   const size = style?.size ?? element?.baseSize ?? 12;
   const weight = style?.weight ?? element?.baseWeight ?? 400;
@@ -499,15 +355,6 @@ export function FormatRibbon({
         <Divider />
         <button
           type="button"
-          onClick={onEdit}
-          className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border border-hair-2 bg-card px-2 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand"
-        >
-          <Type className="size-3.5" />
-          Edit text
-        </button>
-
-        <button
-          type="button"
           onClick={onReset}
           disabled={!hasOverrides(style)}
           className={cn(
@@ -528,12 +375,12 @@ export function FormatRibbon({
 /* ───────────────────────────── the editable run ───────────────────────────── */
 
 /**
- * One selectable, retypable run of text on the canvas.
+ * One selectable run of text on the canvas.
  *
- * Single click selects — which is what brings up the toolbars. Double click
- * starts editing in place. That split matters: if a single click began editing,
- * selecting a run to restyle it would put a caret in the middle of an approved
- * claim, and the commonest gesture on the page would be the riskiest one.
+ * Selectable, not editable. There is no caret here: formatting is the ribbon's
+ * job and wording goes through the chat, which is the same split the video
+ * canvas makes. An inline caret would have been a third way to change approved
+ * claim text, and the one reached by the commonest gesture on the page.
  */
 export function EditableCanvasText({
   element,
@@ -542,12 +389,8 @@ export function EditableCanvasText({
   as = "span",
   className,
   selected,
-  editing,
   locked,
   onSelect,
-  onStartEdit,
-  onCommit,
-  onCancelEdit,
 }: {
   element: CanvasTextElement;
   value: string;
@@ -555,13 +398,9 @@ export function EditableCanvasText({
   as?: "span" | "h1" | "h2" | "p" | "div";
   className?: string;
   selected: boolean;
-  editing: boolean;
   /** Review mode: the page is a finished asset, so nothing is selectable. */
   locked?: boolean;
   onSelect: (rect: DOMRect) => void;
-  onStartEdit: () => void;
-  onCommit: (next: string) => void;
-  onCancelEdit: () => void;
 }) {
   const Tag = as;
   const ref = useRef<HTMLElement | null>(null);
@@ -595,20 +434,6 @@ export function EditableCanvasText({
     );
   }
 
-  if (editing) {
-    return (
-      <InlineEditor
-        as={as}
-        element={element}
-        initialValue={value}
-        style={style}
-        className={className}
-        onCommit={onCommit}
-        onCancelEdit={onCancelEdit}
-      />
-    );
-  }
-
   return (
     <Tag
       ref={ref as never}
@@ -626,16 +451,10 @@ export function EditableCanvasText({
         e.stopPropagation();
         onSelect(e.currentTarget.getBoundingClientRect());
       }}
-      onDoubleClick={(e: React.MouseEvent<HTMLElement>) => {
-        e.stopPropagation();
-        onSelect(e.currentTarget.getBoundingClientRect());
-        onStartEdit();
-      }}
       onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onSelect(e.currentTarget.getBoundingClientRect());
-          onStartEdit();
         }
       }}
       className={cn(
@@ -651,83 +470,104 @@ export function EditableCanvasText({
   );
 }
 
+/* ─────────────────────────── the ribbon, for art ─────────────────────────── */
+
 /**
- * The caret half of an editable run, mounted only while editing.
+ * The same bar when what is selected is not text.
  *
- * Its own component so the starting text arrives as a prop and is frozen in
- * state on mount. That is what lets the contentEditable subtree render once:
- * React never sees its children change, so it never overwrites what has been
- * typed, and Escape has something true to restore.
+ * A toolbar that only knows about type says "select any text" at an image and
+ * leaves you with nothing to press. Art has its own small set — which layer,
+ * where it sits in the stack, and the two things you can ask for — so the bar
+ * changes its controls rather than going blank.
  */
-function InlineEditor({
-  as,
-  element,
-  initialValue,
-  style,
-  className,
-  onCommit,
-  onCancelEdit,
+export function ArtRibbon({
+  label,
+  kind,
+  z,
+  ready,
+  onSendBack,
+  onBringForward,
+  onRegenerate,
+  onReplace,
+  onAddToChat,
 }: {
-  as: "span" | "h1" | "h2" | "p" | "div";
-  element: CanvasTextElement;
-  initialValue: string;
-  style?: TextStyle;
-  className?: string;
-  onCommit: (next: string) => void;
-  onCancelEdit: () => void;
+  label: string;
+  kind: "image" | "graph" | "background";
+  z: number;
+  /** False while the render is still in flight. */
+  ready: boolean;
+  onSendBack: () => void;
+  onBringForward: () => void;
+  onRegenerate: () => void;
+  onReplace: () => void;
+  onAddToChat: () => void;
 }) {
-  const Tag = as;
-  const ref = useRef<HTMLElement | null>(null);
-  const [frozen] = useState(initialValue);
-
-  // Take the caret on open, and put it at the end rather than at character
-  // zero, which is where a fresh contentEditable would land it.
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    node.focus();
-    const range = document.createRange();
-    range.selectNodeContents(node);
-    range.collapse(false);
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
-  }, []);
-
   return (
-    <Tag
-      ref={ref as never}
-      contentEditable
-      suppressContentEditableWarning
-      role="textbox"
-      aria-label={`Edit ${element.label}`}
-      spellCheck
-      style={textStyleCss(style)}
-      onBlur={(e: React.FocusEvent<HTMLElement>) => {
-        const next = (e.currentTarget.textContent ?? "").trim();
-        onCommit(next.length ? next : frozen);
-      }}
-      onKeyDown={(e: React.KeyboardEvent<HTMLElement>) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.currentTarget.textContent = frozen;
-          onCancelEdit();
-          return;
-        }
-        // Enter commits a single-line run; a multiline run keeps its newlines
-        // and commits on blur, as a paragraph field should.
-        if (e.key === "Enter" && !element.multiline) {
-          e.preventDefault();
-          e.currentTarget.blur();
-        }
-      }}
-      onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
-      className={cn(
-        className,
-        "cursor-text rounded-[3px] outline-none ring-2 ring-brand ring-offset-1 ring-offset-transparent"
-      )}
-    >
-      {frozen}
-    </Tag>
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hair bg-canvas px-3 py-1.5 sm:px-4">
+      <div className="flex min-w-0 shrink-0 items-center gap-1.5">
+        {kind === "graph" ? (
+          <BarChart3 className="size-3.5 shrink-0 text-brand" />
+        ) : kind === "background" ? (
+          <Layers className="size-3.5 shrink-0 text-brand" />
+        ) : (
+          <ImageIcon className="size-3.5 shrink-0 text-brand" />
+        )}
+        <span className="truncate text-label font-bold text-ink">{label}</span>
+        {!ready && (
+          <span className="shrink-0 rounded-glyph bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">
+            Rendering
+          </span>
+        )}
+      </div>
+
+      <Divider />
+
+      {/* Stacking order, which is the one spatial property art has here —
+          position and size come from the slot the layout reserved. */}
+      <div className="flex shrink-0 items-center gap-0.5">
+        <IconToggle onClick={onSendBack} title="Send backward">
+          <ArrowDown className="size-3.5" />
+        </IconToggle>
+        <span className="min-w-[22px] text-center text-label font-bold tabular-nums text-ink-2">z{z}</span>
+        <IconToggle onClick={onBringForward} title="Bring forward">
+          <ArrowUp className="size-3.5" />
+        </IconToggle>
+      </div>
+
+      <Divider />
+
+      <button
+        type="button"
+        onClick={onRegenerate}
+        disabled={!ready}
+        className={cn(
+          "inline-flex shrink-0 items-center gap-1 rounded-chip border px-2 py-1 text-label font-bold transition",
+          ready
+            ? "cursor-pointer border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
+            : "cursor-not-allowed border-hair-2 bg-card text-ink-4"
+        )}
+      >
+        <RotateCcw className="size-3.5" />
+        Regenerate
+      </button>
+
+      <button
+        type="button"
+        onClick={onReplace}
+        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border border-hair-2 bg-card px-2 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand"
+      >
+        <Upload className="size-3.5" />
+        Replace
+      </button>
+
+      <button
+        type="button"
+        onClick={onAddToChat}
+        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip bg-brand px-2 py-1 text-label font-bold text-white transition hover:bg-brand-deep"
+      >
+        <LogoMark size={13} className="shrink-0" />
+        Add to chat
+      </button>
+    </div>
   );
 }

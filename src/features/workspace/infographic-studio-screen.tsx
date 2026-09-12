@@ -6,37 +6,21 @@ import {
   AlertTriangle,
   BarChart3,
   ArrowLeft,
-  ArrowRight,
   Check,
   CheckCircle2,
-  ChevronDown,
   Download,
-  FileCheck2,
-  FileText,
   Image as ImageIcon,
   Layers,
-  LayoutGrid,
-  Maximize2,
   MessageSquare,
-  MoreHorizontal,
-  Move,
-  Palette,
   PanelRight,
-  Paperclip,
   Pencil,
   Plus,
-  RotateCcw,
   Send,
   Share2,
   ShieldCheck,
-  Type,
-  Undo2,
   ZoomIn,
   ZoomOut,
   X,
-  Trash2,
-  Copy,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,8 +33,8 @@ import {
 } from "@/features/workspace/asset-comments";
 import { ReviewComments } from "@/features/workspace/review-comments";
 import {
+  ArtRibbon,
   EditableCanvasText,
-  FloatingTextToolbar,
   FormatRibbon,
   EMPTY_STYLE,
   type CanvasTextElement,
@@ -64,6 +48,7 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 import { PreflightPanel } from "@/features/workspace/preflight-panel";
+import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 
 export type CreativeStudioMode = "editor" | "generating" | "review";
@@ -322,6 +307,7 @@ export function InfographicStudioScreen() {
   const blockLanded = (id: (typeof BLOCK_ORDER)[number]) => BLOCK_ORDER.indexOf(id) < blocksLanded;
   const layoutDone = blocksLanded >= BLOCK_ORDER.length;
   const [selectedArtId, setSelectedArtId] = useState<string | null>(null);
+  const artUploadRef = useRef<HTMLInputElement>(null);
 
   /* The page is drawn at its true size and scaled to the room available, so
      the mat measures itself rather than the page guessing. */
@@ -367,8 +353,6 @@ export function InfographicStudioScreen() {
      when they say "make that bigger". Selecting a run keeps the block
      selected too, so the inspector and the layer rail stay truthful. */
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
-  const [editingElementId, setEditingElementId] = useState<string | null>(null);
-  const [elementRect, setElementRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const [elementStyles, setElementStyles] = useState<Record<string, TextStyle>>({});
   /* Runs whose words were retyped after they were grounded. The claim is not
      wrong — it is unverified, which is a different and recoverable state. */
@@ -492,6 +476,40 @@ export function InfographicStudioScreen() {
   // Update current page field
   /** The art reserved for one block, or nothing if this page has none there. */
   const artFor = (slot: PageArtLayer["slot"]) => currentPage.art.find((a) => a.slot === slot);
+  const selectedArt = selectedArtId ? currentPage.art.find((a) => a.id === selectedArtId) ?? null : null;
+  const anyModalOpen = confirmGenerateModalOpen || commentsModalOpen || shareModalOpen || exportModalOpen;
+
+  /* Stacking order is the one spatial property art has here — where it sits
+     and how big it is come from the slot the layout reserved for it. */
+  const nudgeArtOrder = (id: string, delta: number) => {
+    updateCurrentPage((prev) => ({
+      ...prev,
+      art: prev.art.map((layer) =>
+        layer.id === id ? { ...layer, z: Math.max(0, Math.min(9, layer.z + delta)) } : layer
+      ),
+    }));
+  };
+
+  /* Re-rendering one layer costs what generating it cost, and it lands back
+     on the same clock — the box it occupies never moves. */
+  const regenerateArt = (id: string) => {
+    const layer = currentPage.art.find((a) => a.id === id);
+    if (!layer) return;
+    updateCurrentPage((prev) => ({
+      ...prev,
+      art: prev.art.map((a) => (a.id === id ? { ...a, readyAt: genElapsed + 12_000 } : a)),
+    }));
+    setCreditsUsed((prev) => prev + 120);
+    showToast(`Re-rendering ${layer.label}`);
+  };
+
+  const addArtToChat = (id: string) => {
+    const layer = currentPage.art.find((a) => a.id === id);
+    if (!layer) return;
+    setActiveTab("assistant");
+    setChatInput(`Change the ${layer.label.toLowerCase()} so that `);
+    showToast(`${layer.label} attached to chat`);
+  };
 
   const pageGeometry = PAGE_GEOMETRY[pageShape] ?? PAGE_GEOMETRY["3:4"];
   /* Never scaled up past its true size — a 520px portrait page blown up to
@@ -543,16 +561,16 @@ export function InfographicStudioScreen() {
 
   const handleSelectElement = (id: string, rect: DOMRect | { top: number; left: number; width: number; height: number }) => {
     setSelectedElementId(id);
-    setElementRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
     const el = textElements[id];
     if (el) setSelectedBlockId(el.blockId as never);
-    if (editingElementId && editingElementId !== id) setEditingElementId(null);
+    // The action bar opens with the selection, the same as on the video canvas.
+    setSelectedArtId(null);
+    setCommentComposerAt({ x: rect.left + rect.width / 2, y: rect.top + rect.height });
   };
 
   const clearElementSelection = () => {
     setSelectedElementId(null);
-    setEditingElementId(null);
-    setElementRect(null);
+    setCommentComposerAt(null);
   };
 
   const patchElementStyle = (patch: Partial<TextStyle>) => {
@@ -571,26 +589,6 @@ export function InfographicStudioScreen() {
       return next;
     });
     showToast("Formatting reset to the template");
-  };
-
-  /* Writing a run back into the page. Formatting is cosmetic, but words are
-     not: a grounded run that changes text loses its verification, and the
-     asset has to say so rather than quietly keeping the green tick. */
-  const commitElementText = (id: string, next: string) => {
-    const [blockId, field] = id.split(".");
-    updateCurrentPage((prev) => {
-      const block = (prev as unknown as Record<string, Record<string, unknown>>)[blockId];
-      if (!block || block[field] === next) return prev;
-      return { ...prev, [blockId]: { ...block, [field]: next } } as InfographicPageData;
-    });
-    setEditingElementId(null);
-
-    const el = textElements[id];
-    const before = ((currentPage as unknown as Record<string, Record<string, string>>)[blockId] ?? {})[field];
-    if (el?.citation && before !== next) {
-      setReverifyElements((prev) => (prev.includes(id) ? prev : [...prev, id]));
-      showToast(`${el.label} edited — claim sent back for verification`);
-    }
   };
 
   const addElementToChat = () => {
@@ -620,11 +618,7 @@ export function InfographicStudioScreen() {
       className={className}
       locked={studioMode !== "editor"}
       selected={selectedElementId === id}
-      editing={editingElementId === id}
       onSelect={(r) => handleSelectElement(id, r)}
-      onStartEdit={() => setEditingElementId(id)}
-      onCommit={(next) => commitElementText(id, next)}
-      onCancelEdit={() => setEditingElementId(null)}
     />
   );
 
@@ -1228,17 +1222,49 @@ export function InfographicStudioScreen() {
               </div>
             )}
 
-            {studioMode === "editor" && (
+            {/* One bar, two control sets: what is selected decides which. A
+                toolbar that only knows about type says "select any text" at an
+                image and leaves you nothing to press. */}
+            {studioMode === "editor" && selectedArt ? (
+              <ArtRibbon
+                label={selectedArt.label}
+                kind={selectedArt.kind}
+                z={selectedArt.z}
+                ready={genElapsed >= selectedArt.readyAt}
+                onSendBack={() => nudgeArtOrder(selectedArt.id, -1)}
+                onBringForward={() => nudgeArtOrder(selectedArt.id, 1)}
+                onRegenerate={() => regenerateArt(selectedArt.id)}
+                onReplace={() => artUploadRef.current?.click()}
+                onAddToChat={() => addArtToChat(selectedArt.id)}
+              />
+            ) : studioMode === "editor" ? (
               <FormatRibbon
                 element={selectedElement}
                 style={selectedElementId ? elementStyles[selectedElementId] : undefined}
                 blockLabel={selectedElement ? BLOCK_LABELS[selectedElement.blockId] ?? "" : ""}
                 onStyle={patchElementStyle}
                 onReset={resetElementStyle}
-                onEdit={() => selectedElementId && setEditingElementId(selectedElementId)}
               />
-            )}
+            ) : null}
 
+            <input
+              ref={artUploadRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file || !selectedArt) return;
+                updateCurrentPage((prev) => ({
+                  ...prev,
+                  art: prev.art.map((a) =>
+                    a.id === selectedArt.id ? { ...a, label: file.name, readyAt: 0 } : a
+                  ),
+                }));
+                showToast(`${file.name} placed in the ${selectedArt.label} slot`);
+                e.target.value = "";
+              }}
+            />
             {/* Retyping a grounded run does not make it false — it makes it
                 unverified. Saying which runs, and offering the re-check, is
                 the whole difference between a warning and a dead end. */}
@@ -1686,189 +1712,125 @@ export function InfographicStudioScreen() {
               </div>
             )}
 
-            {/* ── TAB 2: EDIT CANVAS PROPERTIES (In Editor Mode) ── */}
+            {/* ── TAB 2: THE SELECTED ELEMENT (In Editor Mode) ── */}
+            {/*
+              * Read-only, like the video editor's.
+              *
+              * This tab stopped being a form. The page's copy is shown so you
+              * can see what is there, and changing it goes through the chat —
+              * one route to a change rather than a form and a conversation
+              * that can disagree about which won. What stays editable is
+              * placement and stacking, because those are settings rather than
+              * claims.
+              */}
             {activeTab === "edit" && studioMode === "editor" && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-hair">
-                  <span className="text-body font-bold text-ink flex items-center gap-1.5">
-                    <Pencil className="size-3.5 text-brand" />
-                    Editing {selectedBlockId.toUpperCase()} Component
-                  </span>
+              <div className="flex-1 space-y-3.5 overflow-y-auto p-4">
+                <div className="flex items-center justify-between border-b border-hair pb-2.5">
+                  <div className="min-w-0">
+                    <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">
+                      Page inspector
+                    </div>
+                    <h3 className="mt-0.5 truncate text-subhead font-[850] text-ink">
+                      {selectedArt
+                        ? selectedArt.label
+                        : selectedElement
+                          ? `${BLOCK_LABELS[selectedElement.blockId] ?? ""} · ${selectedElement.label}`
+                          : BLOCK_LABELS[selectedBlockId] ?? "Page"}
+                    </h3>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setActiveTab("assistant")}
-                    className="text-label font-bold text-brand hover:underline cursor-pointer"
+                    className="shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
                   >
                     Close
                   </button>
                 </div>
 
-                {selectedBlockId === "header" && (
-                  <div className="space-y-3 text-body">
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">Headline Title</label>
-                      <input
-                        type="text"
-                        value={currentPage.header.title}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            header: { ...prev.header, title: e.target.value },
-                          }))
-                        }
-                        className="w-full rounded-control border border-hair-2 p-2 text-body font-semibold text-ink"
-                      />
+                {selectedArt ? (
+                  <div className="space-y-2.5">
+                    <div className="rounded-control border border-hair-2 bg-canvas p-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-label font-bold text-ink-2">
+                          {selectedArt.kind === "graph" ? "Chart layer" : selectedArt.kind === "background" ? "Background layer" : "Image layer"}
+                        </span>
+                        <span className="text-caption text-ink-4">
+                          z{selectedArt.z} · {genElapsed >= selectedArt.readyAt ? "rendered" : "rendering"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-body font-medium leading-relaxed text-ink">{selectedArt.label}</p>
+                      <div className="mt-2 flex justify-end border-t border-hair pt-2">
+                        <button
+                          type="button"
+                          onClick={() => addArtToChat(selectedArt.id)}
+                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"
+                        >
+                          <MessageSquare className="size-3" />
+                          <span>Add to chat</span>
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">Subtitle / Mechanism Tagline</label>
-                      <textarea
-                        value={currentPage.header.subtitle}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            header: { ...prev.header, subtitle: e.target.value },
-                          }))
-                        }
-                        rows={2}
-                        className="w-full rounded-control border border-hair-2 p-2 text-body text-ink resize-none"
-                      />
-                    </div>
-                  </div>
-                )}
 
-                {selectedBlockId === "heroStat" && (
-                  <div className="space-y-3 text-body">
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">Hero Metric</label>
-                      <input
-                        type="text"
-                        value={currentPage.heroStat.metric}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            heroStat: { ...prev.heroStat, metric: e.target.value },
-                          }))
-                        }
-                        className="w-full rounded-control border border-hair-2 p-2 text-body-lg font-bold text-ink"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">Comparison Label</label>
-                      <input
-                        type="text"
-                        value={currentPage.heroStat.comparison}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            heroStat: { ...prev.heroStat, comparison: e.target.value },
-                          }))
-                        }
-                        className="w-full rounded-control border border-hair-2 p-2 text-body text-ink"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">Clinical Detail</label>
-                      <textarea
-                        value={currentPage.heroStat.detail}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            heroStat: { ...prev.heroStat, detail: e.target.value },
-                          }))
-                        }
-                        rows={3}
-                        className="w-full rounded-control border border-hair-2 p-2 text-body text-ink resize-none"
-                      />
-                    </div>
+                    <p className="text-label leading-snug text-ink-3">
+                      Where it sits and how big it is come from the slot the layout reserved — the art fills
+                      the box, it does not choose one.
+                    </p>
                   </div>
-                )}
-
-                {selectedBlockId === "moa" && (
-                  <div className="space-y-3 text-body">
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">MoA Section Title</label>
-                      <input
-                        type="text"
-                        value={currentPage.moa.title}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            moa: { ...prev.moa, title: e.target.value },
-                          }))
-                        }
-                        className="w-full rounded-control border border-hair-2 p-2 text-body font-semibold text-ink"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">Cellular Description</label>
-                      <textarea
-                        value={currentPage.moa.detail}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            moa: { ...prev.moa, detail: e.target.value },
-                          }))
-                        }
-                        rows={3}
-                        className="w-full rounded-control border border-hair-2 p-2 text-body text-ink resize-none"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {selectedBlockId === "chart" && (
-                  <div className="space-y-3 text-body">
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">Arm 1 Value (%)</label>
-                      <input
-                        type="number"
-                        value={currentPage.chart.arm1Val}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            chart: { ...prev.chart, arm1Val: Number(e.target.value) },
-                          }))
-                        }
-                        className="w-full rounded-control border border-hair-2 p-2 text-body-lg font-bold text-ink"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">Arm 2 (Placebo) Value (%)</label>
-                      <input
-                        type="number"
-                        value={currentPage.chart.arm2Val}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            chart: { ...prev.chart, arm2Val: Number(e.target.value) },
-                          }))
-                        }
-                        className="w-full rounded-control border border-hair-2 p-2 text-body-lg font-bold text-ink"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {selectedBlockId === "isi" && (
-                  <div className="space-y-3 text-body">
-                    <div>
-                      <label className="block text-label font-bold text-ink-2 mb-1">ISI Content (Fair Balance)</label>
-                      <textarea
-                        value={currentPage.isi.content}
-                        onChange={(e) =>
-                          updateCurrentPage((prev) => ({
-                            ...prev,
-                            isi: { ...prev.isi, content: e.target.value },
-                          }))
-                        }
-                        rows={5}
-                        className="w-full rounded-control border border-hair-2 p-2 text-label text-ink resize-none"
-                      />
-                    </div>
+                ) : (
+                  <div className="space-y-3.5">
+                    {Object.values(textElements)
+                      .filter((el) => el.blockId === selectedBlockId)
+                      .map((el) => (
+                        <div key={el.id}>
+                          <div className="mb-1 flex items-center justify-between gap-2">
+                            <span className="text-label font-bold text-ink-2">{el.label}</span>
+                            {el.citation && (
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-glyph bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">
+                                <ShieldCheck className="size-2.5" />
+                                Grounded
+                              </span>
+                            )}
+                          </div>
+                          <div
+                            className={cn(
+                              "rounded-control border bg-canvas p-2.5 transition",
+                              selectedElementId === el.id ? "border-brand ring-2 ring-brand/15" : "border-hair-2"
+                            )}
+                          >
+                            <p className="text-body font-medium leading-relaxed text-ink">{runValue(el.id)}</p>
+                            <div className="mt-2 flex items-center justify-between gap-2 border-t border-hair pt-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const node = document.querySelector(`[data-canvas-text="${el.id}"]`);
+                                  if (node) handleSelectElement(el.id, node.getBoundingClientRect());
+                                }}
+                                className="cursor-pointer text-caption font-bold text-ink-3 transition-colors hover:text-ink"
+                              >
+                                Select on page
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedElementId(el.id);
+                                  setActiveTab("assistant");
+                                  setChatInput(`Rewrite the ${el.label.toLowerCase()} ("${runValue(el.id)}") `);
+                                  showToast(`${el.label} attached to chat`);
+                                }}
+                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"
+                              >
+                                <MessageSquare className="size-3" />
+                                <span>Add to chat</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 )}
               </div>
             )}
+
 
             {/* ── TAB 2: REVIEWER COMMENTS (In Review Mode) ── */}
             {/* The video studio's reviewer panel, unchanged: review gates
@@ -2023,7 +1985,7 @@ export function InfographicStudioScreen() {
             aria-modal="true"
             aria-label="Confirm Creative Generation"
           >
-            <div className="rise-in w-full max-w-[560px] overflow-hidden rounded-card border border-white/50 bg-card shadow-float text-left">
+            <div className="rise-in flex max-h-[86vh] w-full max-w-[560px] flex-col overflow-hidden rounded-card border border-white/50 bg-card text-left shadow-float">
               <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
                 <div>
                   <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
@@ -2043,75 +2005,20 @@ export function InfographicStudioScreen() {
                 </Button>
               </div>
 
-              <div className="p-6 space-y-5">
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
                 {/* Cost & Spec Card */}
-                <div className="rounded-panel bg-[#121614] border border-white/10 p-5 text-white shadow-md">
-                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-white/10">
-                    <div>
-                      <div className="text-label font-extrabold uppercase tracking-wider text-white/60">
-                        Used so far
-                      </div>
-                      <div className="mt-0.5 text-display font-[900] text-white tabular-nums">
-                        ⚡ {creditsUsed.toLocaleString()} Credits
-                      </div>
-                      <div className="mt-1 text-caption text-white/55">Page generation and edits</div>
-                    </div>
-                    <span className="shrink-0 rounded-chip bg-brand/20 border border-brand px-3 py-1 text-label font-bold text-brand">
-                      Vector 300 DPI
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 border-b border-white/10 py-3 text-label">
-                    <span className="text-white/55">Final render needs</span>
-                    <strong className="text-white tabular-nums">+ {finalRenderCost.toLocaleString()} Credits</strong>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3">
-                    <span className="text-label text-white/55">
-                      Adjusted budget
-                      <span className="ml-2 text-caption tabular-nums text-white/40">
-                        {creditsUsed.toLocaleString()} used + {finalRenderCost.toLocaleString()} to render
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <strong className="text-body-lg font-[850] text-white tabular-nums">
-                        {creditsTotal.toLocaleString()} Credits
-                      </strong>
-                      {creditsTotal > creditBudget ? (
-                        <span className="rounded-glyph border border-warn-line/40 bg-warn-bg/15 px-2 py-0.5 text-caption font-bold tabular-nums text-warn-on-dark">
-                          {(creditsTotal - creditBudget).toLocaleString()} over the {creditBudget.toLocaleString()} agreed
-                        </span>
-                      ) : (
-                        <span className="rounded-glyph border border-ok/30 bg-ok/15 px-2 py-0.5 text-caption font-bold tabular-nums text-ok-on-dark">
-                          within the {creditBudget.toLocaleString()} agreed
-                        </span>
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-3 text-label text-white/75">
-                    <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Pages &amp; Format</span>
-                      <strong className="text-white">
-                        {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} · {pageGeometry.label}
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Estimated Render Time</span>
-                      <strong className="text-white">~30–45 sec</strong>
-                    </div>
-                    <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Team Balance</span>
-                      <strong className="text-ok-on-dark tabular-nums">{teamBalance.toLocaleString()} Credits</strong>
-                    </div>
-                    <div>
-                      <span className="text-white/50 block text-caption uppercase font-bold">Balance After</span>
-                      <strong className="text-white tabular-nums">
-                        {(teamBalance - creditsTotal).toLocaleString()} Credits
-                      </strong>
-                    </div>
-                  </div>
-                </div>
+                <GenerationCostCard
+                  used={creditsUsed}
+                  usedLabel="Page generation and edits"
+                  renderCost={finalRenderCost}
+                  budget={creditBudget}
+                  qualityLabel={"Vector 300 DPI"}
+                  facts={[
+                    { label: "Format", value: `${pagesList.length} ${pagesList.length === 1 ? "Page" : "Pages"} · ${pageGeometry.label}` },
+                    { label: "Render", value: "~30–45 sec" },
+                    { label: "Balance after", value: `${(teamBalance - creditsTotal).toLocaleString()} of ${teamBalance.toLocaleString()}`, tone: "ok" as const },
+                  ]}
+                />
 
                 {/* Automated Quality & MLR Pre-Flight Verification */}
                 <PreflightPanel
@@ -2206,8 +2113,15 @@ export function InfographicStudioScreen() {
           </div>
         )}
 
-        {/* ── IN-PLACE COMMENT COMPOSER ── */}
-        {studioMode === "editor" && commentComposerAt && selectedElement && (
+        {/* ── WHAT YOU CAN DO TO THE SELECTED ELEMENT ──
+            The same bar the video canvas puts under a selected element, and
+            the same two things: hand it to the agent, or leave a note on it.
+            Formatting is the ribbon's job, and the words go through the chat —
+            so there is nothing else for this bar to offer. */}
+        {/* Not while a dialog is open: the bar belongs to the canvas, and
+            the canvas is behind the dialog — painting it over one is the
+            element bar arguing with the thing that took over the screen. */}
+        {studioMode === "editor" && commentComposerAt && selectedElement && !anyModalOpen && (
           <ElementActionBar
             at={commentComposerAt}
             elementLabel={selectedElement.label}
@@ -2237,26 +2151,6 @@ export function InfographicStudioScreen() {
               setCommentsModalOpen(false);
             }}
             onClose={() => setCommentsModalOpen(false)}
-          />
-        )}
-
-        {/* ── FLOATING TEXT TOOLBAR (the PowerPoint position) ── */}
-        {studioMode === "editor" && selectedElement && !editingElementId && (
-          <FloatingTextToolbar
-            element={selectedElement}
-            style={elementStyles[selectedElement.id]}
-            anchorRect={elementRect}
-            onStyle={patchElementStyle}
-            onReset={resetElementStyle}
-            onAddToChat={addElementToChat}
-            onEdit={() => setEditingElementId(selectedElement.id)}
-            onComment={() =>
-              setCommentComposerAt(
-                elementRect
-                  ? { x: elementRect.left + elementRect.width / 2, y: elementRect.top + elementRect.height }
-                  : null
-              )
-            }
           />
         )}
 
