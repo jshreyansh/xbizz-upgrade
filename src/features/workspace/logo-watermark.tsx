@@ -64,7 +64,9 @@ export function LogoWatermark({
       }}
       style={{ height }}
       className={cn(
-        "absolute z-[40] flex items-center",
+        // Over the copy, because a mark sits on top of the picture — but
+        // under the player's chrome, because the chrome is not the picture.
+        "absolute z-[30] flex items-center",
         CORNER_CLASS[logo.position],
         onSelect ? "cursor-pointer" : "pointer-events-none",
         selected && "rounded-chip ring-2 ring-brand ring-offset-2 ring-offset-transparent",

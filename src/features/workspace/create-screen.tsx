@@ -433,6 +433,63 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
           {/* ── Prominently Wide AI Chat Input Box ── */}
           <div className="w-full max-w-[940px] rounded-card border border-hair bg-card shadow-float focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
+            {/* ── What this prompt is already grounded in ──
+                Above the box, not under it. These are the answers the start
+                modal already took — the dossier, the audience, the topics —
+                and they qualify what you are about to type. Under the input
+                they read as a footnote about the page; over it they read as
+                what they are, the context the next sentence is written into. */}
+            <div className="border-b border-hair px-4 py-2.5">
+  <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setDossierModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-chip bg-tint px-3 py-1 text-label font-bold text-brand-deep border border-tint-line shadow-2xs hover:bg-tint/80 transition-colors cursor-pointer"
+              >
+                <ShieldCheck className="size-3.5 text-brand" />
+                <span>{sourceDisplayName}</span>
+                <ChevronDown className="size-2.5 opacity-60" />
+              </button>
+              {audience && (
+                <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
+                  <Users className="size-3.5 text-brand" />
+                  {audience}
+                </span>
+              )}
+              {topics.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
+                  <Layers className="size-3.5 text-brand" />
+                  {topics.length} {topics.length === 1 ? "topic" : "topics"}
+                </span>
+              )}
+              {/* Engine context chip */}
+              <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
+                <Film className="size-3.5 text-brand" />
+                {modeDisplayName}
+              </span>
+              {selectedSources.map((source) => {
+                const dynamicSource = {
+                  ...source,
+                  name: source.name.replace(/DERMORA/g, currentBrandName),
+                };
+                return (
+                  <SourceChip key={source.id} source={dynamicSource} onRemove={() => toggleSource(source.id)} />
+                );
+              })}
+              {localFiles.map((file) => (
+                <AttachmentChip
+                  key={file}
+                  label={file}
+                  onRemove={() => setLocalFiles((prev) => prev.filter((f) => f !== file))}
+                />
+              ))}
+              <span className="inline-flex items-center gap-1 text-label font-bold text-ok bg-ok-bg border border-ok-line px-2.5 py-1 rounded-chip ml-1">
+                <span className="size-1.5 rounded-full bg-ok animate-pulse" />
+                Grounding Locked
+              </span>
+            </div>
+            </div>
+
             <div className="p-6 pb-3">
               <textarea
                 value={brief}
@@ -812,56 +869,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               </div>
             </div>
           )}
-
-          {/* ── Compact Grounding Strip ── */}
-          <div className="flex flex-wrap items-center justify-center gap-2 max-w-[840px]">
-            <button
-              type="button"
-              onClick={() => setDossierModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-chip bg-tint px-3 py-1 text-label font-bold text-brand-deep border border-tint-line shadow-2xs hover:bg-tint/80 transition-colors cursor-pointer"
-            >
-              <ShieldCheck className="size-3.5 text-brand" />
-              <span>{sourceDisplayName}</span>
-              <ChevronDown className="size-2.5 opacity-60" />
-            </button>
-            {audience && (
-              <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
-                <Users className="size-3.5 text-brand" />
-                {audience}
-              </span>
-            )}
-            {topics.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
-                <Layers className="size-3.5 text-brand" />
-                {topics.length} {topics.length === 1 ? "topic" : "topics"}
-              </span>
-            )}
-            {/* Engine context chip */}
-            <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
-              <Film className="size-3.5 text-brand" />
-              {modeDisplayName}
-            </span>
-            {selectedSources.map((source) => {
-              const dynamicSource = {
-                ...source,
-                name: source.name.replace(/DERMORA/g, currentBrandName),
-              };
-              return (
-                <SourceChip key={source.id} source={dynamicSource} onRemove={() => toggleSource(source.id)} />
-              );
-            })}
-            {localFiles.map((file) => (
-              <AttachmentChip
-                key={file}
-                label={file}
-                onRemove={() => setLocalFiles((prev) => prev.filter((f) => f !== file))}
-              />
-            ))}
-            <span className="inline-flex items-center gap-1 text-label font-bold text-ok bg-ok-bg border border-ok-line px-2.5 py-1 rounded-chip ml-1">
-              <span className="size-1.5 rounded-full bg-ok animate-pulse" />
-              Grounding Locked
-            </span>
-          </div>
 
           {/* ── Example Prompts — BELOW the input ── */}
           <div className="w-full max-w-[940px] flex flex-col gap-3 pt-2">

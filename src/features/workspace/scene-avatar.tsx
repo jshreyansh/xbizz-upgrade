@@ -67,7 +67,11 @@ export function SceneAvatarLayer({
         width: Math.round(height * 0.62),
       }}
       className={cn(
-        "absolute z-[30] flex flex-col items-center justify-end overflow-hidden rounded-t-[999px] border",
+        // In the scene, not over it: above the background, under the copy, and
+        // well under the player's own chrome. A presenter who covers the
+        // headline is not a presenter, and one who covers the scrubber is a
+        // bug.
+        "absolute z-[5] flex flex-col items-center justify-end overflow-hidden rounded-t-[999px] border",
         CORNER_CLASS[avatar.position],
         ready
           ? "border-white/15 bg-[linear-gradient(180deg,#2b3550_0%,#151c2b_100%)]"

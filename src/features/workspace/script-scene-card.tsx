@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  Clapperboard,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -166,6 +167,7 @@ export interface ScriptSceneCardProps {
   onCitationDetails?: (claimId: string) => void;
   onTitleChange: (value: string) => void;
   onNarrationChange: (value: string) => void;
+  onVisualChange: (value: string) => void;
 }
 
 /**
@@ -180,7 +182,7 @@ export interface ScriptSceneCardProps {
 export function ScriptSceneCard({
   scene,
   selected, onToggleSelect, editing, onToggleEdit, pending, onCitationDetails,
-  onTitleChange, onNarrationChange,
+  onTitleChange, onNarrationChange, onVisualChange,
 }: ScriptSceneCardProps) {
   const words = scene.narration ? scene.narration.split(" ").filter(Boolean).length : 0;
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
@@ -339,6 +341,52 @@ export function ScriptSceneCard({
             </span>
             <CitationPill citations={unanchored} onDetails={onCitationDetails} />
           </div>
+        )}
+      </div>
+
+      {/* ── What the scene looks like ──
+          The script stage was words only, so the visual half of every scene
+          was invented later in the studio with nobody having read it. A rough
+          description here is what makes this a plan rather than a transcript —
+          and it is the half a reviewer can still change cheaply, because
+          nothing has been rendered against it yet. */}
+      <div className="rounded-panel border border-hair bg-canvas p-2.5">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">
+            <Clapperboard className="size-3 text-ink-4" />
+            Visual
+          </span>
+          {scene.mediaLabel && (
+            <span className="truncate text-caption text-ink-4">{scene.mediaLabel}</span>
+          )}
+        </div>
+
+        {pending ? (
+          <div className="space-y-2" aria-busy>
+            <div className="shimmer h-3.5 w-full rounded-glyph bg-hair" />
+            <div className="shimmer h-3.5 w-[70%] rounded-glyph bg-hair" />
+          </div>
+        ) : editing ? (
+          <textarea
+            value={scene.visual}
+            onChange={(e) => onVisualChange(e.target.value)}
+            onClick={stop}
+            placeholder="Describe roughly what this scene shows…"
+            rows={2}
+            className="w-full resize-none bg-transparent text-body leading-relaxed text-ink-2 focus:outline-none"
+          />
+        ) : (
+          <p className="text-body leading-relaxed text-ink-2">
+            {scene.visual || <span className="text-ink-4">No visual direction yet.</span>}
+          </p>
+        )}
+
+        {/* What must NOT be in frame is part of the direction, and the one
+            half a generator will otherwise get wrong silently. */}
+        {!pending && !editing && scene.negativeVisual && (
+          <p className="mt-1.5 border-t border-hair pt-1.5 text-caption leading-snug text-ink-4">
+            <span className="font-bold text-ink-3">Avoid:</span> {scene.negativeVisual}
+          </p>
         )}
       </div>
 

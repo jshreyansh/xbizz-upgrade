@@ -967,6 +967,13 @@ export function StudioScreen() {
     setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, title: nextTitle } : s)));
   };
 
+  /* The visual direction carries no claim, so it needs no re-grounding when
+     it changes — which is the whole reason it can be edited freely here while
+     the narration recomputes its citations on every keystroke. */
+  const handleUpdateSceneVisual = (id: string, nextVisual: string) => {
+    setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, visual: nextVisual } : s)));
+  };
+
   const handleUpdateSceneNarration = (id: string, nextNarration: string) => {
     // Anchors are sentence indices, so editing the text can strand them past
     // the end of the line. Recomputed on every edit rather than left to rot.
@@ -1521,6 +1528,7 @@ export function StudioScreen() {
                             onCitationDetails={handleCitationDetails}
                             onTitleChange={(v) => handleUpdateSceneTitle(sc.id, v)}
                             onNarrationChange={(v) => handleUpdateSceneNarration(sc.id, v)}
+                            onVisualChange={(v) => handleUpdateSceneVisual(sc.id, v)}
                           />
                         ))}
 
@@ -2184,7 +2192,7 @@ export function StudioScreen() {
                     </div>
 
                     {/* ── Mini Scene Playback Controls & Scrubber (Scoped strictly to this scene) ── */}
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6 z-20">
+                    <div className="absolute inset-x-0 bottom-0 z-[50] bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6">
                       <div className="flex items-center gap-3 text-white">
                         {/* Play/Pause Button */}
                         <button
