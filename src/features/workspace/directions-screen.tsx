@@ -66,8 +66,21 @@ import { PlanSectionContinue } from "@/features/workspace/plan-section-continue"
 import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
+import { PlanProgress, PlanStatusChip, planState, type PlanState } from "@/features/workspace/plan-status";
 
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets" | "logo";
+
+/** One name per section, so the progress bar and the tiles agree. */
+const SECTION_TITLES: Record<PlanSectionId, string> = {
+  sources: "Research and Sources",
+  treatment: "Creative treatment",
+  logo: "Brand mark",
+  "product-assets": "Product & Device Visual Assets",
+  message: "Message and audience",
+  delivery: "Delivery & Cost",
+  voice: "Voice and sound",
+  story: "Story structure",
+};
 
 const audienceOptions: Audience[] = ["HCP", "Patient", "Field team", "Hospital", "Distributor", "Consumer"];
 const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
@@ -374,7 +387,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     brief.toLowerCase().includes("pen") ||
     brief.toLowerCase().includes("autoinjector");
 
-  const [openSection, setOpenSection] = useState<PlanSectionId | null>("sources");
+  /* Undefined means "nobody has chosen yet", which is different from null
+     meaning "everything is closed" — and it is what lets the opening section
+     be derived from the plan rather than synced to it by an effect. */
+  const [openOverride, setOpenOverride] = useState<PlanSectionId | null | undefined>(undefined);
+  const setOpenSection = setOpenOverride;
   const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
   const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>(
     () => defaultUploadedDocs(brandName)
@@ -667,12 +684,73 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    */
   const shows = (section: PlanSectionId) => sectionOrder.includes(section);
 
+  /**
+   * Whether a section is still asking something of you.
+   *
+   * One definition, used by the chip, the progress bar, what opens on arrival
+   * and where Continue goes — so those four can never disagree about which
+   * sections are outstanding, which is exactly the kind of drift a plan
+   * screen cannot afford.
+   */
+  const sectionNeedsYou = (section: PlanSectionId) => {
+    switch (section) {
+      case "sources":
+        return groundingBlocked;
+      case "treatment":
+        return !confirmedTreatment;
+      case "voice":
+        return needsPresenter && !presenter;
+      case "product-assets":
+        return needsProductAssets;
+      default:
+        /* Everything else arrives with an answer inferred from the brief.
+           Not having looked at it yet is not the same as it asking you
+           something — treating the two alike marked five settled sections as
+           outstanding and made the count meaningless. "Needs you" is reserved
+           for what is actually missing or blocked. */
+        return false;
+    }
+  };
+
+  /** Product assets are genuinely skippable unless the brief is product-led. */
+  const sectionOptional = (section: PlanSectionId) =>
+    section === "product-assets" && !isProductFocus;
+
+  const planSections = sectionOrder.map((id) => ({
+    id,
+    title: SECTION_TITLES[id] ?? id,
+    state: planState(sectionNeedsYou(id), sectionOptional(id)),
+  }));
+
+  /* Arrive on the first thing that actually needs an answer. Opening
+     "Research and Sources" every time means the one blocking section sits
+     several clicks away on a plan that is otherwise fine. Derived, so it
+     cannot fight what the user then opens. */
+  const openSection =
+    openOverride === undefined
+      ? ((planSections.find((entry) => entry.state === "needs-you")?.id as PlanSectionId | undefined) ??
+        "sources")
+      : openOverride;
+
   const advanceFrom = (section: PlanSectionId) => {
     setEditingDecision(null);
     // Pressing Continue on a section is the confirmation of it.
-    setConfirmedSections((prev) => (prev.includes(section) ? prev : [...prev, section]));
-    const i = sectionOrder.indexOf(section);
-    setOpenSection(i >= 0 && i < sectionOrder.length - 1 ? sectionOrder[i + 1] : null);
+    const settled = confirmedSections.includes(section)
+      ? confirmedSections
+      : [...confirmedSections, section];
+    setConfirmedSections(settled);
+
+    /* Continue goes to the next thing that still needs an answer, not to the
+       literal next tile. Walking someone through four settled sections to
+       reach the one blocking them is the accordion wasting their time on its
+       own ordering. */
+    const from = sectionOrder.indexOf(section);
+    const rest = sectionOrder.slice(from + 1);
+    const next =
+      rest.find((id) => sectionNeedsYou(id)) ??
+      rest.find((id) => !settled.includes(id)) ??
+      null;
+    setOpenSection(next);
   };
 
   const selectTreatment = (id: string) => {
@@ -981,6 +1059,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   </div>
                 </div>
 
+                {/* The shape of the work, before you go looking for it. A
+                    column of accordions cannot say how much is left — you
+                    find that out by opening all of them. */}
+                <PlanProgress sections={planSections} onJump={(id) => setOpenSection(id as PlanSectionId)} />
+
                 {requestTooVague && (
                   /* Above the accordions, because it is not a parameter — the
                      parameters below it are inferred from a request that does
@@ -1019,14 +1102,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
                         : `${brandName} Approved Dossier · 214 claims`
                     }
-                    status={
+                    state={planState(sectionNeedsYou("sources"))}
+                    source={
                       research.researching
-                        ? `Researching · ${research.current}/${research.total}`
-                        : groundingBlocked
-                        ? "Needs you"
-                        : confirmedSections.includes("sources")
-                        ? "Confirmed"
-                        : "From source"
+                        ? `researching ${research.current}/${research.total}`
+                        : "from source"
                     }
                     /* Open while the research runs — the progress plays inside
                        the dossier tray, so there is something to watch. */
@@ -1034,7 +1114,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     onToggle={() => { if (!research.researching) toggleSection("sources"); }}
                     /* Sources is the one section that can BE the blocker, so
                        it is the one whose tone can turn. */
-                    tone={groundingBlocked ? "attention" : "done"}
                   >
                     <ResearchSourcesContent
                       brandName={brandName || "Velmora"}
@@ -1065,10 +1144,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       icon={Mic2}
                       title="Presenter, voice and sound"
                       summary={`${presenter || "Dr. Maya Kapoor"} · ${language} · ${music}`}
-                      status={presenter ? "Confirmed" : "Needs you"}
+                      state={planState(!presenter)}
                       open={openSection === "voice"}
                       onToggle={() => toggleSection("voice")}
-                      tone={presenter ? "done" : "attention"}
                     >
                       <div className="mb-4">
                         <div className="text-body-lg font-semibold text-ink-3 mb-2.5">
@@ -1191,10 +1269,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       icon={Film}
                       title="Creative treatment"
                       summary={confirmedTreatment ? selectedTreatment.label : `${profile.recommendation} · needs confirmation`}
-                      status={confirmedTreatment ? "Confirmed" : "Needs you"}
+                      state={planState(!confirmedTreatment)}
                       open={openSection === "treatment"}
                       onToggle={() => toggleSection("treatment")}
-                      tone={confirmedTreatment ? "done" : "attention"}
                     >
                       <div className="squircle rounded-panel bg-subtle px-4 py-3.5">
                         <div className="text-body-lg font-semibold text-brand">Why this fits</div>
@@ -1243,20 +1320,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           );
                         })}
                       </div>
-                      {!confirmedTreatment && (
-                        <Button
-                          onClick={() => {
-                            setConfirmedTreatment(true);
-                            advanceFrom("treatment");
-                          }}
-                          className="mt-3 bg-brand text-white"
-                        >
-                          Use recommendation <ArrowRight className="size-4" />
-                        </Button>
-                      )}
-                      {confirmedTreatment && (
-                        <PlanSectionContinue onClick={() => advanceFrom("treatment")} />
-                      )}
+                      <PlanSectionContinue
+                        onClick={() => {
+                          setConfirmedTreatment(true);
+                          advanceFrom("treatment");
+                        }}
+                      />
                     </PlanSection>
                   )}
 
@@ -1270,8 +1339,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         ? "No logo — the asset ships unbranded"
                         : `${LOGO_CORNERS.find((c) => c.id === logoMark.position)?.label} · ${logoMark.name}`
                     }
-                    status={logoMark.source === "brand-kit" ? "From brand kit" : "Replaced"}
-                    tone="done"
+                    state={planState(sectionNeedsYou("logo"))}
+                    source={logoMark.source === "brand-kit" ? "from brand kit" : "replaced"}
                     open={openSection === "logo"}
                     onToggle={() => setOpenSection(openSection === "logo" ? null : "logo")}
                   >
@@ -1392,16 +1461,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         ? "Required for Product Introduction · Please attach product photos/videos"
                         : "Optional product packshots & 3D device renders"
                     }
-                    status={
-                      isProductFocus
-                        ? productMediaList.length > 0
-                          ? "Attached"
-                          : "Needs Assets"
-                        : "Optional"
-                    }
+                    state={planState(sectionNeedsYou("product-assets"), sectionOptional("product-assets"))}
+                    source={productMediaList.length > 0 ? `${productMediaList.length} attached` : undefined}
                     open={openSection === "product-assets"}
                     onToggle={() => toggleSection("product-assets")}
-                    tone={productMediaList.length > 0 ? "done" : isProductFocus ? "attention" : "default"}
                   >
                     <div className="space-y-3.5">
                       <div className="rounded-control bg-canvas border border-hair p-3.5 text-body text-ink-2 leading-relaxed">
@@ -1508,7 +1571,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     icon={Target}
                     title="Message and audience"
                     summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
-                    status={confirmedSections.includes("message") ? "Confirmed" : "From brief"}
+                    state={planState(sectionNeedsYou("message"))}
+                    source="from brief"
                     open={openSection === "message"}
                     onToggle={() => toggleSection("message")}
                   >
@@ -1591,12 +1655,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     icon={MonitorPlay}
                     title="Delivery & Cost"
                     summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration} · ${selectedQuality === "cinematic" ? "Cinematic" : "HD"} (⚡ ${estimatedCredits.toLocaleString()} credits)`}
-                    status={
-                      confirmedSections.includes("delivery")
-                        ? "Confirmed"
-                        : `${estimatedCredits.toLocaleString()} credits`
-                    }
-                    tone="done"
+                    state={planState(sectionNeedsYou("delivery"))}
+                    source={`${estimatedCredits.toLocaleString()} credits`}
                     open={openSection === "delivery"}
                     onToggle={() => toggleSection("delivery")}
                   >
@@ -1763,22 +1823,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           ? `${presenter || "Choose presenter"} · ${language} · ${music}`
                           : `${voice} · ${language} · ${music}`
                       }
-                      status={
-                        needsPresenter && !presenter
-                          ? "Needs you"
-                          : confirmedSections.includes("voice")
-                          ? "Confirmed"
-                          : "Recommended"
-                      }
+                      state={planState(sectionNeedsYou("voice"))}
+                      source={presenter ?? undefined}
                       open={openSection === "voice"}
                       onToggle={() => toggleSection("voice")}
-                      tone={
-                        needsPresenter && !presenter
-                          ? "attention"
-                          : confirmedSections.includes("voice")
-                          ? "done"
-                          : "default"
-                      }
                     >
                       {needsPresenter && (
                         <div className="mb-4">
@@ -1895,13 +1943,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     icon={LayoutList}
                     title="Story structure"
                     summary={`${storyStructure} · ${profile.units.length} ${assetType === "video" ? "scenes" : "sections"}`}
-                    status={
-                      derivedPlan.followsSuppliedScript
-                        ? "From script"
-                        : confirmedSections.includes("story")
-                        ? "Confirmed"
-                        : "Recommended"
-                    }
+                    state={planState(sectionNeedsYou("story"))}
+                    source={derivedPlan.followsSuppliedScript ? "from your script" : "recommended"}
                     open={openSection === "story"}
                     onToggle={() => toggleSection("story")}
                   >
@@ -2242,21 +2285,25 @@ function PlanSection({
   icon: Icon,
   title,
   summary,
-  status,
+  source,
+  state,
   open,
   onToggle,
-  tone = "default",
   children,
 }: {
   icon: LucideIcon;
   title: string;
   summary: string;
-  status: string;
+  /** Where the answer came from — background, shown muted beside the summary. */
+  source?: string;
+  state: PlanState;
   open: boolean;
   onToggle: () => void;
-  tone?: "default" | "done" | "attention";
   children: React.ReactNode;
 }) {
+  // The glyph follows the state, so the icon square and the chip cannot
+  // disagree about whether this section is settled.
+  const tone = state === "needs-you" ? "attention" : state === "answered" ? "done" : "default";
   return (
     <section
       className={cn(
@@ -2308,22 +2355,11 @@ function PlanSection({
             )}
           >
             {summary}
+            {source && <span className="ml-1.5 text-ink-4">· {source}</span>}
           </span>
         </span>
 
-        <span
-          className={cn(
-            "hidden rounded-full font-bold sm:inline border",
-            open ? "px-2.5 py-1 text-label" : "px-2 py-0.5 text-micro",
-            tone === "attention"
-              ? "bg-warn-bg text-warn border-warn-line"
-              : tone === "done"
-              ? "bg-tint text-brand-deep border-tint-line"
-              : "bg-ok-bg text-ink-3 border-hair"
-          )}
-        >
-          {status}
-        </span>
+        <PlanStatusChip state={state} open={open} />
 
         <div
           className={cn(

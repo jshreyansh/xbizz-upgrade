@@ -38,9 +38,19 @@ import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
+import { PlanProgress, PlanStatusChip, planState, type PlanState } from "@/features/workspace/plan-status";
 
 type InfographicSubStep = "brief" | "template";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
+
+/** One name per section, so the progress bar and the tiles agree. */
+const SECTION_TITLES: Record<string, string> = {
+  sources: "Research and Sources",
+  format: "Format & Page shape",
+  audience: "Message and audience",
+  objective: "Objective & Angle",
+  assets: "Product & Device Visual Assets",
+};
 
 interface AudienceOption {
   id: string;
@@ -155,11 +165,6 @@ export function InfographicDirectionsScreen() {
   const imageScenarios = demoScenarios.filter((sc) => sc.inputs.assetType === "infographic");
   const activeScenario = imageScenarios.find((sc) => sc.id === demoScenarioId) ?? null;
 
-  /* Sections the user has actually worked through. A status is a fact about
-     what happened, not a decoration — which is why it has to survive a bounce
-     back from a failed Confirm. */
-  const [confirmedSections, setConfirmedSections] = useState<PlanSectionId[]>([]);
-
   /* Whether the attachments will fail verification is known to the case from
      the start, but it is not KNOWN to the user until Confirm runs the check.
      Two flags, because showing the failure early gives away an answer the
@@ -167,7 +172,6 @@ export function InfographicDirectionsScreen() {
   const [sourcesWillFail, setSourcesWillFail] = useState(false);
   const [sourcesUnusable, setSourcesUnusable] = useState(false);
   const [verifyingSources, setVerifyingSources] = useState(false);
-  const [blockedSections, setBlockedSections] = useState<PlanSectionId[]>([]);
   /* What the check FOUND, as opposed to what it would find. The latent block
      is derived and always knowable; showing it before Confirm runs gives away
      an answer the screen has not earned, and the pill sat there reading as a
@@ -189,21 +193,16 @@ export function InfographicDirectionsScreen() {
   const advanceFrom = (section: PlanSectionId) => {
     // Working a section through is what confirms it; the status then reads as
     // a record rather than a recommendation.
-    setConfirmedSections((prev) => (prev.includes(section) ? prev : [...prev, section]));
-    setBlockedSections((prev) => prev.filter((b) => b !== section));
     setFoundBlock((prev) => (prev?.section === section ? null : prev));
-    const i = sectionOrder.indexOf(section);
-    setOpenSection(i >= 0 && i < sectionOrder.length - 1 ? sectionOrder[i + 1] : null);
+    /* Continue goes to the next thing that still needs an answer, not the
+       literal next tile — walking someone past settled sections to reach the
+       one blocking them is the accordion wasting their time on its own
+       ordering. */
+    const from = sectionOrder.indexOf(section);
+    const rest = sectionOrder.slice(from + 1);
+    setOpenSection(rest.find((id) => sectionNeedsYou(id)) ?? rest[0] ?? null);
   };
 
-  /**
-   * What a section's chip says.
-   *
-   * Confirmed beats everything, including a bounce back — a section the user
-   * settled does not become "Recommended" again because a later one failed.
-   * That was the specific complaint: the good answers lost their standing on
-   * the way back.
-   */
   /**
    * Switching the use case swaps the context the plan is derived from.
    *
@@ -247,18 +246,11 @@ export function InfographicDirectionsScreen() {
     // The plan is being rebuilt around a different job, so the worked-through
     // state goes back to the top rather than pretending the old answers hold.
     setOpenSection("sources");
-    setConfirmedSections([]);
-    setBlockedSections([]);
     setFoundBlock(null);
     setChatMessages([]);
   };
 
-  const statusFor = (section: PlanSectionId, fallback: string) =>
-    blockedSections.includes(section)
-      ? "Needs a fix"
-      : confirmedSections.includes(section)
-        ? "Confirmed"
-        : fallback;
+
   const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
   const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>([
     { name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`, size: "3.6 MB", date: "Today" },
@@ -275,6 +267,26 @@ export function InfographicDirectionsScreen() {
    * fit blocks, the same as having nothing to ground on.
    */
   const hasGrounding = (sourcePayload?.dossierId ?? "").length > 0 || uploadedDocs.length > 0;
+
+  /**
+   * Whether a section is still asking something of you.
+   *
+   * One definition behind the chip, the bar, what opens on arrival and where
+   * Continue goes — and deliberately narrow: a section filled in from the
+   * brief is answered, whether or not you have looked at it. Treating
+   * "unacknowledged" as "needs you" marks a settled plan as outstanding and
+   * makes the count say nothing.
+   */
+  const sectionNeedsYou = (section: PlanSectionId) =>
+    section === "sources" ? !hasGrounding || sourcesUnusable : false;
+
+  const sectionOptional = (section: PlanSectionId) => section === "assets";
+
+  const planSections = sectionOrder.map((id) => ({
+    id,
+    title: SECTION_TITLES[id] ?? id,
+    state: planState(sectionNeedsYou(id), sectionOptional(id)),
+  }));
 
   const planBlock: { section: PlanSectionId; title: string; detail: string } | null = !hasGrounding
     ? {
@@ -305,8 +317,6 @@ export function InfographicDirectionsScreen() {
 
       if (block) {
         setFoundBlock(planBlock);
-        setBlockedSections([block as PlanSectionId]);
-        setConfirmedSections((prev) => prev.filter((sec) => sec !== block));
         setOpenSection(block as PlanSectionId);
         return;
       }
@@ -524,6 +534,12 @@ export function InfographicDirectionsScreen() {
                ══════════════════════════════════════════════════════════════════ */}
             {currentStep === "brief" && (
               <>
+                {/* The shape of the work, before you go looking for it. */}
+                <PlanProgress
+                  sections={planSections}
+                  onJump={(id) => setOpenSection(id as PlanSectionId)}
+                />
+
                 {/* Header in Left Canvas (Identical to Video Screen) */}
                 <div className="flex items-center justify-between pb-1 shrink-0">
                   <div>
@@ -562,9 +578,9 @@ export function InfographicDirectionsScreen() {
                         ? `${uploadedDocs.length} custom files active · Dossier ignored`
                         : `${brandName} Approved Dossier · 214 claims`
                     }
-                    status={research.researching ? `Researching · ${research.current}/${research.total}` : statusFor("sources", "From source")}
+                    state={planState(sectionNeedsYou("sources"))}
+                    source={research.researching ? `researching ${research.current}/${research.total}` : "from source"}
                     error={foundBlock?.section === "sources" ? foundBlock : null}
-                    tone="done"
                     /* Open while the research runs — same as the video plan. */
                     open={research.researching || openSection === "sources"}
                     onToggle={() => { if (!research.researching) setOpenSection(openSection === "sources" ? null : "sources"); }}
@@ -590,8 +606,8 @@ export function InfographicDirectionsScreen() {
                     icon={LayoutGrid}
                     title="Format & Page shape"
                     summary={`${FORMAT_OPTIONS.find((f) => f.id === pageShape)?.label || "Portrait 3:4"}`}
-                    status={statusFor("format", "From brief")}
-                    tone="done"
+                    state={planState(sectionNeedsYou("format"), sectionOptional("format"))}
+                    source="from brief"
                     open={openSection === "format"}
                     onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
                   >
@@ -647,8 +663,8 @@ export function InfographicDirectionsScreen() {
                     icon={Users}
                     title="Message and audience"
                     summary={`${AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.title || "Doctor / HCP"} · ${specialty} · ${language}`}
-                    status={statusFor("audience", "From brief")}
-                    tone="done"
+                    state={planState(sectionNeedsYou("audience"), sectionOptional("audience"))}
+                    source="from brief"
                     open={openSection === "audience"}
                     onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
                   >
@@ -750,8 +766,8 @@ export function InfographicDirectionsScreen() {
                     icon={Target}
                     title="What should this deck achieve? (Objective & Angle)"
                     summary={`${OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.label || "Adoption"} · ${selectedAngles.length} topics`}
-                    status={statusFor("objective", "Recommended")}
-                    tone="done"
+                    state={planState(sectionNeedsYou("objective"), sectionOptional("objective"))}
+                    source="recommended"
                     open={openSection === "objective"}
                     onToggle={() => setOpenSection(openSection === "objective" ? null : "objective")}
                   >
@@ -839,8 +855,7 @@ export function InfographicDirectionsScreen() {
                     icon={ImageIcon}
                     title="Product & Device Visual Assets"
                     summary={`${LOGO_PLACEMENTS.find((l) => l.id === infographicLogoPlacement)?.label || "Bottom right"} · ${infographicPages === "2" ? "2 pages" : "1 page"}`}
-                    status={statusFor("assets", "Optional")}
-                    tone="default"
+                    state={planState(sectionNeedsYou("assets"), sectionOptional("assets"))}
                     open={openSection === "assets"}
                     onToggle={() => setOpenSection(openSection === "assets" ? null : "assets")}
                   >
@@ -1193,24 +1208,30 @@ function CreativePlanSection({
   icon: Icon,
   title,
   summary,
-  status,
+  state,
+  source,
   error,
   open,
   onToggle,
-  tone = "default",
+
   children,
 }: {
   icon: LucideIcon;
   title: string;
   summary: string;
-  status: string;
+  state: PlanState;
+  /** Where the answer came from — background, muted beside the summary. */
+  source?: string;
   /** Set when this section is why Confirm refused. */
   error?: { title: string; detail: string } | null;
   open: boolean;
   onToggle: () => void;
-  tone?: "default" | "done" | "attention";
+
   children: React.ReactNode;
 }) {
+  // The glyph follows the state, so the square and the chip cannot disagree
+  // about whether this section is settled.
+  const tone = state === "needs-you" ? "attention" : state === "answered" ? "done" : "default";
   return (
     <section
       className={cn(
@@ -1262,22 +1283,11 @@ function CreativePlanSection({
             )}
           >
             {summary}
+            {source && <span className="ml-1.5 text-ink-4">· {source}</span>}
           </span>
         </span>
 
-        <span
-          className={cn(
-            "hidden rounded-full font-bold sm:inline border",
-            open ? "px-2.5 py-1 text-label" : "px-2 py-0.5 text-micro",
-            status === "Confirmed"
-              ? "bg-tint text-brand-deep border-tint-line"
-              : status === "Optional"
-              ? "bg-[#f5f5f5] text-[#737373] border-hair"
-              : "bg-ok-bg text-ink-3 border-hair"
-          )}
-        >
-          {status}
-        </span>
+        <PlanStatusChip state={state} open={open} />
 
         <ChevronDown
           className={cn(
