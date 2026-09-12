@@ -41,6 +41,11 @@ import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import type { PlanningSource, Audience } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { AUDIENCE_OPTIONS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
+import {
+  ProjectContextModal,
+  type ContextField,
+} from "@/features/workspace/project-context-modal";
 
 const VIDEO_HEADLINES = [
   "What video would you like to create today?",
@@ -191,6 +196,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const setCreationMode = useWorkspaceStore((s) => s.setCreationMode);
   const sourceType = useWorkspaceStore((s) => s.sourceType);
   const sourcePayload = useWorkspaceStore((s) => s.sourcePayload);
+  const setSourcePayload = useWorkspaceStore((s) => s.setSourcePayload);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
 
   const toggleTopic = (topic: string) => {
@@ -231,6 +237,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   };
 
   const currentBrandName = getBrandDisplayName(sourcePayload.dossierId);
+
+  /* Which of the four context questions is open, or none. Clicking a tile
+     above the prompt opens that one; the modal keeps the other three
+     reachable so a second change does not mean a second trip. */
+  const [contextField, setContextField] = useState<ContextField | null>(null);
 
   const preparePlan = () => {
     if (!requestIsSpecific) {
@@ -277,11 +288,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setScenarioLibraryOpen(false);
   };
 
-  const modeDisplayName = isInfographic
-    ? "Image (Infographic)"
-    : creationMode === "magic-avatar"
-    ? "Video (Avatar)"
-    : "Video";
 
   const samplePrompts = useMemo(
     () => [
@@ -310,12 +316,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     [currentBrandName, isInfographic]
   );
 
-  const sourceDisplayName =
-    sourceType === "dossier"
-      ? `${currentBrandName} Dossier`
-      : sourceType === "url"
-      ? "Web / Study Link"
-      : "Custom Plain Text";
 
   const projectName =
     sourceType === "dossier"
@@ -435,38 +435,85 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           <div className="w-full max-w-[940px] rounded-card border border-hair bg-card shadow-float focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 transition-all duration-200">
             {/* ── What this prompt is already grounded in ──
                 Above the box, not under it. These are the answers the start
-                modal already took — the dossier, the audience, the topics —
-                and they qualify what you are about to type. Under the input
-                they read as a footnote about the page; over it they read as
-                what they are, the context the next sentence is written into. */}
-            <div className="border-b border-hair px-4 py-2.5">
-  <div className="flex flex-wrap items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setDossierModalOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-chip bg-tint px-3 py-1 text-label font-bold text-brand-deep border border-tint-line shadow-2xs hover:bg-tint/80 transition-colors cursor-pointer"
-              >
-                <ShieldCheck className="size-3.5 text-brand" />
-                <span>{sourceDisplayName}</span>
-                <ChevronDown className="size-2.5 opacity-60" />
-              </button>
-              {audience && (
-                <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
-                  <Users className="size-3.5 text-brand" />
-                  {audience}
-                </span>
-              )}
-              {topics.length > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
-                  <Layers className="size-3.5 text-brand" />
-                  {topics.length} {topics.length === 1 ? "topic" : "topics"}
-                </span>
-              )}
-              {/* Engine context chip */}
-              <span className="inline-flex items-center gap-1.5 rounded-chip bg-card px-3 py-1 text-label font-semibold text-ink-2 border border-hair shadow-2xs">
-                <Film className="size-3.5 text-brand" />
-                {modeDisplayName}
-              </span>
+                modal already took, and they qualify what you are about to
+                type: under the input they read as a footnote about the page;
+                over it they read as the context the next sentence is written
+                into.
+
+                Each one is a control, not a label. Clicking a tile opens the
+                same four questions the start modal asked, on the one you
+                clicked — because sending someone back through intake to change
+                an audience turns a two-second correction into a five-step
+                detour. */}
+            <div className="flex flex-wrap items-center gap-1.5 border-b border-hair px-3 py-2.5">
+              {([
+                {
+                  id: "brand" as const,
+                  icon: ShieldCheck,
+                  label: currentBrandName,
+                  sub: "Dossier",
+                  tinted: true,
+                },
+                {
+                  id: "audience" as const,
+                  icon: Users,
+                  label: AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title ?? audience ?? "Audience",
+                  sub: "Audience",
+                  tinted: false,
+                },
+                {
+                  id: "topics" as const,
+                  icon: Layers,
+                  label: `${topics.length} ${topics.length === 1 ? "topic" : "topics"}`,
+                  sub: "Focus",
+                  tinted: false,
+                },
+                {
+                  id: "frame" as const,
+                  icon: Film,
+                  label: isInfographic ? pageShape : format,
+                  sub: "Frame size",
+                  tinted: false,
+                },
+              ]).map((chip) => {
+                const Icon = chip.icon;
+                return (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => setContextField(chip.id)}
+                    title={`Change ${chip.sub.toLowerCase()}`}
+                    className={cn(
+                      "group flex cursor-pointer items-center gap-2 rounded-control border px-2.5 py-1.5 text-left transition",
+                      chip.tinted
+                        ? "border-tint-line bg-tint hover:border-brand"
+                        : "border-hair-2 bg-card hover:border-brand"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "grid size-6 shrink-0 place-items-center rounded-chip",
+                        chip.tinted ? "bg-brand/15 text-brand-deep" : "bg-subtle text-brand"
+                      )}
+                    >
+                      <Icon className="size-3.5" />
+                    </span>
+                    <span className="min-w-0">
+                      <span
+                        className={cn(
+                          "block truncate text-label font-bold leading-tight",
+                          chip.tinted ? "text-brand-deep" : "text-ink"
+                        )}
+                      >
+                        {chip.label}
+                      </span>
+                      <span className="block text-micro leading-tight text-ink-4">{chip.sub}</span>
+                    </span>
+                    <ChevronDown className="size-2.5 shrink-0 text-ink-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </button>
+                );
+              })}
+
               {selectedSources.map((source) => {
                 const dynamicSource = {
                   ...source,
@@ -483,11 +530,13 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   onRemove={() => setLocalFiles((prev) => prev.filter((f) => f !== file))}
                 />
               ))}
-              <span className="inline-flex items-center gap-1 text-label font-bold text-ok bg-ok-bg border border-ok-line px-2.5 py-1 rounded-chip ml-1">
-                <span className="size-1.5 rounded-full bg-ok animate-pulse" />
+
+              {/* A status, not a control — which is why it is the one thing
+                  here you cannot click. */}
+              <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-chip border border-ok-line bg-ok-bg px-2.5 py-1 text-label font-bold text-ok">
+                <span className="size-1.5 rounded-full bg-ok" />
                 Grounding Locked
               </span>
-            </div>
             </div>
 
             <div className="p-6 pb-3">
@@ -923,6 +972,35 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         open={dossierModalOpen}
         onClose={() => setDossierModalOpen(false)}
       />
+
+      {/* The start modal's four questions, asked again from here. Update
+          rather than Start Project, because this amends a project that
+          already exists. */}
+      {contextField && (
+        <ProjectContextModal
+          open={contextField}
+          context={{
+            brandId:
+              INITIAL_BRANDS.find(
+                (b) => b.name.toLowerCase() === currentBrandName.toLowerCase()
+              )?.id ?? INITIAL_BRANDS[0].id,
+            audience: audience ?? "HCP",
+            topics,
+            shape: (isInfographic ? pageShape === "3:4" : format === "9:16") ? "portrait" : "landscape",
+          }}
+          onClose={() => setContextField(null)}
+          onSave={(next) => {
+            const brand = INITIAL_BRANDS.find((b) => b.id === next.brandId);
+            if (brand) setSourcePayload({ dossierId: brand.id });
+            setAudience(next.audience);
+            setTopics(next.topics);
+            // Each flow calls the same two shapes by its own name.
+            if (isInfographic) setPageShape(next.shape === "portrait" ? "3:4" : "16:9");
+            else setFormat(next.shape === "portrait" ? "9:16" : "16:9");
+            setContextField(null);
+          }}
+        />
+      )}
 
       {sourceLibraryOpen && (
         <SourceLibraryModal
