@@ -431,9 +431,6 @@ export function StudioScreen() {
   const creditBudget = selectedQuality === "cinematic" ? 7500 : 2500;
   /** What the final render costs on top of what has already been spent. */
   const finalRenderCost = selectedQuality === "cinematic" ? 3000 : 1000;
-  const creditsOverBudget = Math.max(0, creditsUsed - creditBudget);
-  const creditsTotal = creditsUsed + finalRenderCost;
-  const teamBalance = 50000;
 
   /** The claim a citation's Details action jumped to. Clears itself after 2s. */
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
@@ -3280,12 +3277,10 @@ export function StudioScreen() {
                   used={creditsUsed}
                   usedLabel="Partial generation and edits"
                   renderCost={finalRenderCost}
-                  budget={creditBudget}
                   qualityLabel={selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}
                   facts={[
                     { label: "Length", value: `${totalDurationSeconds}s · ${sceneList.length} scenes` },
                     { label: "Render", value: `~${selectedQuality === "cinematic" ? "12–14 min" : "7–9 min"}` },
-                    { label: "Balance after", value: `${(teamBalance - creditsTotal).toLocaleString()} of ${teamBalance.toLocaleString()}`, tone: "ok" as const },
                   ]}
                 />
 

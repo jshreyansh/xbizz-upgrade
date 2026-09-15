@@ -10,9 +10,14 @@ import { cn } from "@/lib/cn";
  * dialog is actually for, the regulatory check, below the fold. A cost card
  * that hides the blockers has the priorities backwards.
  *
- * The arithmetic is still shown rather than implied: this total is the sum of
- * the two figures beside it, and a total nobody can reconcile was the defect
- * the card had in the first place.
+ * Two figures and their sum: what this project has spent, and what pressing
+ * the button adds. The agreed budget and the resulting team balance were also
+ * here, which put four numbers in front of a person deciding one thing — and
+ * neither of them changes that decision. Billing is where a balance belongs.
+ *
+ * The arithmetic is shown rather than implied: this total is the sum of the
+ * two figures beside it, and a total nobody can reconcile was the defect the
+ * card had in the first place.
  *
  * One component for both studios, so the video and the deck cannot start
  * telling the same story differently.
@@ -21,7 +26,6 @@ export function GenerationCostCard({
   used,
   usedLabel,
   renderCost,
-  budget,
   qualityLabel,
   facts,
 }: {
@@ -29,14 +33,11 @@ export function GenerationCostCard({
   /** What the spend so far was on, e.g. "Page generation and edits". */
   usedLabel: string;
   renderCost: number;
-  /** What was agreed at the start — the number an overrun is measured against. */
-  budget: number;
   qualityLabel: string;
-  /** Two to four short label/value pairs: format, render time, balance. */
+  /** Two or three short label/value pairs: format, render time. */
   facts: { label: string; value: string; tone?: "ok" | "plain" }[];
 }) {
   const total = used + renderCost;
-  const over = total > budget;
 
   return (
     <div className="rounded-panel border border-white/10 bg-[#121614] p-3.5 text-white shadow-md">
@@ -63,20 +64,6 @@ export function GenerationCostCard({
         <strong className="text-subhead font-[900] tabular-nums text-white">
           {total.toLocaleString()} Credits
         </strong>
-
-        <span
-          className={cn(
-            "rounded-glyph border px-2 py-0.5 text-caption font-bold tabular-nums",
-            over
-              ? "border-warn-line/40 bg-warn-bg/15 text-warn-on-dark"
-              : "border-ok/30 bg-ok/15 text-ok-on-dark"
-          )}
-        >
-          {over
-            ? `${(total - budget).toLocaleString()} over the ${budget.toLocaleString()} agreed`
-            : `within the ${budget.toLocaleString()} agreed`}
-        </span>
-
       </div>
 
       <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 pt-2.5 text-caption">

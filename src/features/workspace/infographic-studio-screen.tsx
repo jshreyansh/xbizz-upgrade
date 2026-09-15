@@ -387,11 +387,8 @@ export function InfographicStudioScreen() {
    * top — so the only figure a user can act on was the one missing.
    */
   const [creditsUsed, setCreditsUsed] = useState(() => pagesListInitialCost);
-  const creditBudget = pagesList.length * 300;
   /** What rendering the final artwork costs on top of what is already spent. */
   const finalRenderCost = pagesList.length * 120;
-  const creditsTotal = creditsUsed + finalRenderCost;
-  const teamBalance = 50000;
   const activePageId = infographicActivePage || 1;
 
   // Sync with store pages
@@ -2048,12 +2045,10 @@ export function InfographicStudioScreen() {
                   used={creditsUsed}
                   usedLabel="Page generation and edits"
                   renderCost={finalRenderCost}
-                  budget={creditBudget}
                   qualityLabel={"Vector 300 DPI"}
                   facts={[
                     { label: "Format", value: `${pagesList.length} ${pagesList.length === 1 ? "Page" : "Pages"} · ${pageGeometry.label}` },
                     { label: "Render", value: "~30–45 sec" },
-                    { label: "Balance after", value: `${(teamBalance - creditsTotal).toLocaleString()} of ${teamBalance.toLocaleString()}`, tone: "ok" as const },
                   ]}
                 />
 
