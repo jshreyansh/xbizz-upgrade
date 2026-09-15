@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Grid3x3, List, Plus, ShieldCheck, Eye, Star, Package } from "lucide-react";
+import { Search, Grid3x3, List, Plus, ShieldCheck, Eye, Star, Package, MoreHorizontal } from "lucide-react";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
@@ -13,6 +13,7 @@ export function ProductLibraryScreen() {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [createOpen, setCreateOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const STATS = useMemo(
     () => [
@@ -31,7 +32,7 @@ export function ProductLibraryScreen() {
   }, [products, query]);
 
   return (
-    <div className="page-enter space-y-6">
+    <div className="page-enter space-y-6" onClick={() => setOpenMenuId(null)}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
@@ -171,11 +172,14 @@ export function ProductLibraryScreen() {
                 flexShrink: 0,
               }}
             >
+              {/* Soft pastel wash — lightens the brand gradient into the airy,
+                  photography-forward card tone rather than a saturated block. */}
+              <span aria-hidden className="pointer-events-none absolute inset-0 bg-white/60" />
               {/* Ambient glow behind the artwork — gives the packshot a lit, studio feel */}
               <span
                 aria-hidden
                 className="pointer-events-none absolute rounded-full"
-                style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.28),transparent 70%)" }}
+                style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.5),transparent 70%)" }}
               />
               <span
                 className="pointer-events-none absolute inset-y-0 left-0 w-1/2 opacity-0 group-hover:opacity-100 group-hover:[animation:shimmer-sweep_1.1s_ease-out]"
@@ -193,14 +197,50 @@ export function ProductLibraryScreen() {
                   fontWeight: 800,
                   textTransform: "uppercase",
                   letterSpacing: ".04em",
-                  color: "rgba(255,255,255,.85)",
-                  background: "rgba(0,0,0,.22)",
+                  color: "rgba(255,255,255,.9)",
+                  background: "rgba(20,20,25,.45)",
                   padding: "3px 8px",
                   borderRadius: 99,
                 }}
               >
                 {p.type}
               </span>
+
+              {/* Overflow menu — visual parity with the reference design's
+                  per-card "…" affordance (Duplicate / Archive placeholders). */}
+              {view !== "list" && (
+                <div className="absolute right-2 top-2 z-20">
+                  <button
+                    type="button"
+                    title="More options"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(openMenuId === p.id ? null : p.id);
+                    }}
+                    className="grid size-6 place-items-center rounded-full text-ink-2 backdrop-blur-sm transition-colors hover:bg-card"
+                    style={{ background: "rgba(255,255,255,.75)" }}
+                  >
+                    <MoreHorizontal size={14} />
+                  </button>
+                  {openMenuId === p.id && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute right-0 top-[calc(100%+6px)] w-36 overflow-hidden rounded-control border border-hair bg-card py-1 shadow-float"
+                    >
+                      {["Duplicate", "Archive"].map((action) => (
+                        <button
+                          key={action}
+                          type="button"
+                          onClick={() => setOpenMenuId(null)}
+                          className="flex w-full items-center px-3 py-1.5 text-left text-body font-medium text-ink-2 hover:bg-black/[0.04]"
+                        >
+                          {action}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {view === "list" ? (
                 <div className="absolute inset-0 flex items-center justify-center p-2">
                   {p.referenceImageUrl ? (

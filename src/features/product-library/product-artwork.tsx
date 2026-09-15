@@ -207,7 +207,36 @@ const ARTWORK: Record<ArtworkKind, () => ReactElement> = {
   Lifestyle: LifestyleArt,
 };
 
+/** Real packshot photography, one representative shot per presentation
+ *  type — swapped in for the vector line art wherever a product doesn't
+ *  have its own uploaded reference photo, so the library reads as an
+ *  actual product catalogue rather than a set of icons. */
+const PHOTO: Partial<Record<ArtworkKind, string>> = {
+  Tablet: "/products/tablet.jpg",
+  Capsule: "/products/capsule.jpg",
+  Syrup: "/products/syrup.jpg",
+  Injection: "/products/injection.jpg",
+  Device: "/products/device.jpg",
+};
+
 export function ProductArtwork({ kind, className }: { kind: ArtworkKind; className?: string }) {
+  const photo = PHOTO[kind];
+  if (photo) {
+    return (
+      <div className={className}>
+        <div className="relative h-full w-full overflow-hidden rounded-[22%] shadow-[0_10px_22px_-10px_rgba(10,13,20,.55)] ring-1 ring-white/50">
+          <img src={photo} alt="" className="h-full w-full object-cover" />
+          {/* Diagonal glass sheen — keeps the photo tile in the same premium
+              register as the rest of the app's gradient badges. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{ background: "linear-gradient(155deg,rgba(255,255,255,.32),transparent 45%)" }}
+          />
+        </div>
+      </div>
+    );
+  }
   const Art = ARTWORK[kind];
   return (
     <div className={className}>
