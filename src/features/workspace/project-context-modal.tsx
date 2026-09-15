@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { useBrandCatalogue, filterBrands } from "@/features/workspace/brand-catalogue";
 import type { Audience } from "@/types/content";
 import {
   AUDIENCE_OPTIONS,
@@ -59,17 +60,18 @@ export function ProjectContextModal({
   const [brandQuery, setBrandQuery] = useState("");
 
   const topicOptions = TOPICS_BY_AUDIENCE[draft.audience] ?? TOPICS_BY_AUDIENCE.HCP;
-  const brand = INITIAL_BRANDS.find((b) => b.id === draft.brandId) ?? INITIAL_BRANDS[0];
+  // The same merged catalogue the start modal searches, so a brand added
+  // there is here too.
+  const brandCatalogue = useBrandCatalogue();
+  const brand =
+    brandCatalogue.find((b) => b.id === draft.brandId) ?? brandCatalogue[0] ?? INITIAL_BRANDS[0];
 
   /* Search-only, like the start modal: the catalogue is thousands of brands,
      so a list shown before a query is a list nobody reads. */
-  const brandResults = useMemo(() => {
-    const q = brandQuery.trim().toLowerCase();
-    if (!q) return [];
-    return INITIAL_BRANDS.filter(
-      (b) => b.name.toLowerCase().includes(q) || b.genericName.toLowerCase().includes(q)
-    ).slice(0, 6);
-  }, [brandQuery]);
+  const brandResults = useMemo(
+    () => filterBrands(brandCatalogue, brandQuery).slice(0, 6),
+    [brandCatalogue, brandQuery]
+  );
 
   const summary: Record<ContextField, string> = {
     brand: brand.name,

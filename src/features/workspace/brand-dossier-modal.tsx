@@ -18,6 +18,9 @@ import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { cn } from "@/lib/cn";
+import { useBrandCatalogue, filterBrands } from "@/features/workspace/brand-catalogue";
+import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
+import type { LibraryProduct } from "@/features/product-library/product-library-types";
 import type { Audience } from "@/types/content";
 export {
   INITIAL_BRANDS,
@@ -30,7 +33,6 @@ export type {
   OutputShape,
 } from "@/features/workspace/brand-modal-data";
 import {
-  INITIAL_BRANDS,
   DOSSIERS,
   INITIAL_DISEASE_OPTIONS,
   INITIAL_HCP_SPECIALITIES,
@@ -148,16 +150,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     }
   }, [audience]);
 
-  const selectedBrand = useMemo(() => INITIAL_BRANDS.find((b) => b.id === selectedBrandId) || null, [selectedBrandId]);
+  const brandCatalogue = useBrandCatalogue();
+  // Carries the query that opened it, and a stamp so each opening remounts
+  // the dialog with that query seeded rather than syncing it in an effect.
+  const [createBrand, setCreateBrand] = useState<{ at: number; name: string } | null>(null);
+  const selectedBrand = useMemo(
+    () => brandCatalogue.find((b) => b.id === selectedBrandId) || null,
+    [brandCatalogue, selectedBrandId]
+  );
 
   // Search-only. A real catalogue runs to a few thousand products, so an
   // unfiltered list is a scroll-bar, not a choice — nothing renders until
   // there is a query. Therapy areas stay browsable: that list is finite.
-  const filteredBrands = useMemo(() => {
-    const q = brandSearch.toLowerCase().trim();
-    if (!q) return [];
-    return INITIAL_BRANDS.filter((b) => b.name.toLowerCase().includes(q) || b.genericName.toLowerCase().includes(q) || b.therapyAreas.some((t) => t.toLowerCase().includes(q)));
-  }, [brandSearch]);
+  const filteredBrands = useMemo(
+    () => filterBrands(brandCatalogue, brandSearch),
+    [brandCatalogue, brandSearch]
+  );
 
   const allDiseases = useMemo(() => [...INITIAL_DISEASE_OPTIONS, ...customDiseases], [customDiseases]);
 
@@ -242,6 +250,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedSpecialities((prev) => [...prev, trimmed]);
     setCustomSpecialityInput("");
     setShowCustomSpecialityBox(false);
+  };
+
+  /* Create Brand hands the finished product back rather than navigating to
+     it, so the flow resumes exactly where it broke off: the new brand is in
+     the catalogue, selected, and the step advances as any pick would. */
+  const handleBrandCreated = (product: LibraryProduct) => {
+    setCreateBrand(null);
+    setSelectedBrandId(product.id);
+    setBrandSearch(product.name);
+    setStage("details");
   };
 
   const handleSelectBrand = (brand: BrandItem) => {
@@ -661,8 +679,23 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             );
                           })}
                           {filteredBrands.length === 0 && (
-                            <div className="py-6 text-center text-body text-ink-4">
-                              No brands matching &quot;{brandSearch}&quot;
+                            /* A search that finds nothing is where a brand gets
+                               added, not where the flow stops. */
+                            <div className="px-4 py-6 text-center">
+                              <p className="text-body font-bold text-ink-2">
+                                No brand matching &quot;{brandSearch}&quot;
+                              </p>
+                              <p className="mt-0.5 text-label text-ink-4">
+                                Add it to your product library and carry on from here.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setCreateBrand({ at: Date.now(), name: brandSearch.trim() })}
+                                className="focus-ring mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-control bg-brand px-3.5 py-2 text-label font-bold text-white shadow-xs transition hover:bg-brand-deep"
+                              >
+                                <Plus className="size-3.5" />
+                                <span>Add &quot;{brandSearch.trim()}&quot; as a brand</span>
+                              </button>
                             </div>
                           )}
                         </div>
@@ -879,6 +912,19 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           </div>
         </div>
       </div>
+
+      {/* Portals itself to the body, so it lands over this dialog rather than
+          inside its scroll region. This one stays mounted underneath — that is
+          what keeps the audience answer and the typed query intact. */}
+      {createBrand && (
+        <CreateBrandModal
+          key={createBrand.at}
+          open
+          onClose={() => setCreateBrand(null)}
+          onCreated={handleBrandCreated}
+          initialName={createBrand.name}
+        />
+      )}
     </div>,
     document.body
   );

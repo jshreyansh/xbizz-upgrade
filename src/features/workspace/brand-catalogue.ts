@@ -1,0 +1,65 @@
+"use client";
+
+import { useMemo } from "react";
+import { INITIAL_BRANDS, type BrandItem } from "@/features/workspace/brand-modal-data";
+import { useProductLibraryStore } from "@/features/product-library/product-library-store";
+import type { LibraryProduct } from "@/features/product-library/product-library-types";
+
+/**
+ * One catalogue of brands, for the studio and the Product Library alike.
+ *
+ * They were two lists that had already drifted apart: the Product Library held
+ * Affolmy and Abdec, which could not be found when starting a project, and the
+ * Start Project modal held Cardioxa, PulmoVax and the 3D family, which did not
+ * exist in the library. Six brands overlapped out of fourteen.
+ *
+ * That gap is also what stopped "add a brand from here" from working at all —
+ * Create Brand writes to the library, so a brand made mid-flow would never
+ * come back into the search that sent you there.
+ *
+ * The library is the live half: it is a store, and it is what Create Brand
+ * writes to. The studio-only entries are folded in behind it, so a newly
+ * created brand sorts to the top where the person who just made it will look.
+ */
+
+function fromProduct(product: LibraryProduct): BrandItem {
+  return {
+    id: product.id,
+    name: product.name,
+    genericName: product.genericName,
+    therapyAreas: product.therapyAreas ?? [],
+    // A dossier is a separate act; a brand record on its own has none.
+    hasDossier: product.dossiersVerified > 0,
+  };
+}
+
+/** Every brand, library first, deduped by id. */
+export function useBrandCatalogue(): BrandItem[] {
+  const products = useProductLibraryStore((s) => s.products);
+  return useMemo(() => {
+    const merged: BrandItem[] = products.map(fromProduct);
+    const seen = new Set(merged.map((b) => b.id));
+    for (const brand of INITIAL_BRANDS) {
+      if (seen.has(brand.id)) continue;
+      merged.push(brand);
+      seen.add(brand.id);
+    }
+    // The studio-seeded records carry dossier ids the library rows do not, so
+    // where both exist the studio's detail wins over the library's stub.
+    return merged.map((brand) => {
+      const seeded = INITIAL_BRANDS.find((b) => b.id === brand.id);
+      return seeded ? { ...brand, ...seeded } : brand;
+    });
+  }, [products]);
+}
+
+export function filterBrands(brands: BrandItem[], query: string): BrandItem[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return brands.filter(
+    (b) =>
+      b.name.toLowerCase().includes(q) ||
+      b.genericName.toLowerCase().includes(q) ||
+      b.therapyAreas.some((t) => t.toLowerCase().includes(q))
+  );
+}

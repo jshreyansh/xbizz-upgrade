@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { X, Check, ArrowRight, Upload, Link2, PenLine, FileText, ImagePlus, Layers, Tag, Atom, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { INITIAL_DISEASE_OPTIONS } from "@/features/workspace/brand-modal-data";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import type { LibraryProduct, ProductType } from "@/features/product-library/product-library-types";
@@ -27,6 +28,10 @@ const GRADIENT_THEMES = [
 ];
 
 const MARKETS = ["India", "US", "UK", "EU", "Japan"];
+
+/* The same vocabulary the studio's brand search matches on, so a brand added
+   here is findable by therapy area the moment it exists. */
+const THERAPY_AREAS = INITIAL_DISEASE_OPTIONS.map((d) => d.label);
 
 const SUGGESTED_TAGS = ["Prescribing Information", "Approved Brand Deck", "Clinical Study PDFs", "Market Research", "Competitor Claims", "MLR-Approved Copy"];
 
@@ -56,6 +61,7 @@ export function CreateBrandModal({
   open,
   onClose,
   onCreated,
+  initialName,
 }: {
   open: boolean;
   onClose: () => void;
@@ -63,6 +69,9 @@ export function CreateBrandModal({
    *  embeds this modal, it wants the new brand handed back so it can select
    *  it and carry on — not a navigation away to the brand's own page. */
   onCreated?: (product: LibraryProduct) => void;
+  /** What the caller's search was typed as, when a fruitless search is what
+   *  opened this — retyping the name you just typed is busywork. */
+  initialName?: string;
 }) {
   const router = useRouter();
   const addProduct = useProductLibraryStore((s) => s.addProduct);
@@ -79,7 +88,9 @@ export function CreateBrandModal({
     setMounted(true);
   }, []);
 
-  const [name, setName] = useState("");
+  // Seeded, not synced: callers that pass a name remount this with a key, so
+  // each opening starts from whatever they were searching for.
+  const [name, setName] = useState(initialName ?? "");
   const [genericName, setGenericName] = useState("");
   const [tagline, setTagline] = useState("");
   const [type, setType] = useState<ProductType>("Tablet");
@@ -87,6 +98,7 @@ export function CreateBrandModal({
   const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
 
   const [market, setMarket] = useState(MARKETS[0]);
+  const [therapyAreas, setTherapyAreas] = useState<string[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [sourceMode, setSourceMode] = useState<"none" | "link" | "text">("none");
@@ -130,6 +142,7 @@ export function CreateBrandModal({
     setThemeId(GRADIENT_THEMES[0].id);
     setReferenceImageFile(null);
     setMarket(MARKETS[0]);
+    setTherapyAreas([]);
     setTags([]);
     setFiles([]);
     setSourceMode("none");
@@ -148,6 +161,7 @@ export function CreateBrandModal({
     const id = takenIds.has(idPreview) ? `${idPreview}-${Date.now().toString().slice(-4)}` : idPreview;
     const product: LibraryProduct = {
       id,
+      therapyAreas,
       name: name.trim(),
       genericName: genericName.trim(),
       type,
@@ -342,9 +356,42 @@ export function CreateBrandModal({
               </div>
             </div>
 
+            {/* Therapy areas */}
+            <div className="space-y-3">
+              <SectionHeading
+                eyebrow="04 · Therapy area"
+                title="What does it treat?"
+                hint="This is what the studio's brand search matches on, alongside the name and molecule."
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {THERAPY_AREAS.map((area) => {
+                  const sel = therapyAreas.includes(area);
+                  return (
+                    <button
+                      key={area}
+                      type="button"
+                      onClick={() =>
+                        setTherapyAreas((prev) =>
+                          prev.includes(area) ? prev.filter((a) => a !== area) : [...prev, area]
+                        )
+                      }
+                      className={cn(
+                        "rounded-chip border px-2.5 py-1 text-caption font-bold transition-colors cursor-pointer",
+                        sel
+                          ? "border-brand bg-tint text-brand-deep"
+                          : "border-hair-2 bg-card text-ink-3 hover:border-hair-3"
+                      )}
+                    >
+                      {area}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Market */}
             <div className="space-y-3">
-              <SectionHeading eyebrow="04 · Market" title="Where is this sold?" hint="Every claim is checked against this market's label and guidance." />
+              <SectionHeading eyebrow="05 · Market" title="Where is this sold?" hint="Every claim is checked against this market's label and guidance." />
               <div className="flex flex-wrap gap-1.5">
                 {MARKETS.map((m) => (
                   <button
@@ -365,7 +412,7 @@ export function CreateBrandModal({
             {/* Sources */}
             <div className="space-y-3 pb-2">
               <div className="flex items-center gap-2">
-                <SectionHeading eyebrow="05 · Sources" title="Add anything you already have" />
+                <SectionHeading eyebrow="06 · Sources" title="Add anything you already have" />
                 <span className="rounded-chip bg-subtle px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
               </div>
               <p className="text-body text-ink-3">

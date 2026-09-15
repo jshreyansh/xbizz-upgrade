@@ -16,6 +16,10 @@ export interface LibraryProduct {
    *  cards, its default Front angle) — a local object URL, so it only
    *  lasts the browser session rather than surviving a reload. */
   referenceImageUrl?: string;
+  /** Therapy areas this brand belongs to. The studio's brand search matches on
+   *  them, so a brand created without any is findable by name and molecule
+   *  only — which is why Create Brand asks. */
+  therapyAreas?: string[];
 }
 
 /** The six standard dossier types every product is tracked against. */
