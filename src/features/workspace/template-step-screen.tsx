@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  Eye,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -14,6 +15,10 @@ import { Button } from "@/components/ui/button";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { cn } from "@/lib/cn";
 import { TEMPLATE_ARCHETYPES, type TemplateArchetype } from "@/features/workspace/template-archetypes";
+import {
+  TemplatePreviewModal,
+  type TemplatePreviewSpec,
+} from "@/features/workspace/template-preview-modal";
 import {
   ELEMENT_LABELS,
   FAMILY_LABELS,
@@ -67,6 +72,7 @@ export function TemplateStepScreen({
   const [contains, setContains] = useState<TemplateElement[]>([]);
   const [approvedOnly, setApprovedOnly] = useState(true);
   const [matchesBrief, setMatchesBrief] = useState(true);
+  const [preview, setPreview] = useState<{ spec: TemplatePreviewSpec; use: () => void; selected: boolean } | null>(null);
   const [shown, setShown] = useState(24);
   /* Everything past categories is folded away. Twenty-six controls at rest
      is not a filter panel, it is a wall — and two of those rows answered
@@ -278,6 +284,13 @@ export function TemplateStepScreen({
                   selected={selectedId === archetype.id && !chosen}
                   cost={costForFamily(archetype.id, brief, pages)}
                   onSelect={() => onSelectArchetype(archetype.id)}
+                  onPreview={() =>
+                    setPreview({
+                      spec: archetypeSpec(archetype),
+                      use: () => onSelectArchetype(archetype.id),
+                      selected: selectedId === archetype.id && !chosen,
+                    })
+                  }
                 />
               ))}
             </div>
@@ -305,6 +318,13 @@ export function TemplateStepScreen({
                   selected={chosen?.id === template.id}
                   cost={templateCost(template, brief, pages)}
                   onPick={() => onSelectTemplate(template)}
+                  onPreview={() =>
+                    setPreview({
+                      spec: templateSpec(template),
+                      use: () => onSelectTemplate(template),
+                      selected: chosen?.id === template.id,
+                    })
+                  }
                 />
               ))}
             </div>
@@ -353,8 +373,53 @@ export function TemplateStepScreen({
         />
       </div>
 
+      {preview && (
+        <TemplatePreviewModal
+          spec={preview.spec}
+          selected={preview.selected}
+          onUse={() => {
+            preview.use();
+            setPreview(null);
+          }}
+          onClose={() => setPreview(null)}
+        />
+      )}
     </section>
   );
+}
+
+/* One preview spec per card, so the modal does not care which of the two
+   kinds of card opened it. */
+function archetypeSpec(archetype: TemplateArchetype): TemplatePreviewSpec {
+  const members = TEMPLATE_LIBRARY.filter((t) => t.family === archetype.id);
+  return {
+    name: archetype.name,
+    meta: `${FAMILY_LABELS[archetype.id]} · ${members.length.toLocaleString()} layouts in this family`,
+    shape: "16:9",
+    accent: archetype.accent,
+    previewBg: archetype.previewBg,
+    badge: archetype.badge,
+    metric: archetype.metric,
+    metricSub: archetype.metricSub,
+    points: archetype.points,
+  };
+}
+
+function templateSpec(template: Template): TemplatePreviewSpec {
+  const family = TEMPLATE_ARCHETYPES.find((a) => a.id === template.family);
+  return {
+    name: template.name,
+    meta: `${FAMILY_LABELS[template.family]} · ${template.shape} · ${template.elements
+      .map((e) => ELEMENT_LABELS[e])
+      .join(", ")}`,
+    shape: template.shape,
+    accent: family?.accent ?? "#fd4816",
+    previewBg: family?.previewBg ?? "linear-gradient(135deg, #111827 0%, #1f2937 100%)",
+    badge: family?.badge ?? template.name,
+    metric: family?.metric ?? "52% PASI 90",
+    metricSub: family?.metricSub ?? "vs 18% Placebo (p < 0.001)",
+    points: family?.points ?? [],
+  };
 }
 
 /**
@@ -423,11 +488,13 @@ function ArchetypeCard({
   selected,
   cost,
   onSelect,
+  onPreview,
 }: {
   archetype: TemplateArchetype;
   selected: boolean;
   cost: { label: string; severe: boolean } | null;
   onSelect: () => void;
+  onPreview: () => void;
 }) {
   return (
     <article
@@ -479,7 +546,7 @@ function ArchetypeCard({
       {cost && (
         <div
           className={cn(
-            "mx-3 mt-2 flex items-start gap-1.5 rounded-control border px-2 py-1.5",
+            "mx-3 mt-auto pt-2 flex items-start gap-1.5 rounded-control border px-2 py-1.5",
             cost.severe ? "border-warn-line bg-warn-bg" : "border-hair-2 bg-canvas"
           )}
         >
@@ -490,19 +557,42 @@ function ArchetypeCard({
         </div>
       )}
 
-      {/* A label on the card, not a second target: the card itself is the
-          control, and this says which state it is in. */}
-      <div className="p-3 pt-2">
+      {/* Pinned to the bottom, so the row of cards agrees on where its
+          controls are however long the taglines run. The state label is not a
+          second target — the card is the control. Preview is, which is why it
+          stops the click from reaching the card. */}
+      <div className={cn("flex items-center gap-1.5 p-3 pt-2", !cost && "mt-auto")}>
         <div
           className={cn(
-            "grid h-8 w-full place-items-center rounded-control text-label font-bold transition",
+            "grid h-8 min-w-0 flex-1 place-items-center rounded-control px-2 text-label font-bold transition",
             selected ? "bg-brand text-white" : "border border-hair-2 bg-canvas text-ink-3"
           )}
         >
-          {selected ? `Using ${archetype.name}` : `Use ${archetype.name}`}
+          <span className="truncate">
+            {selected ? `Using ${archetype.name}` : `Use ${archetype.name}`}
+          </span>
         </div>
+        <PreviewButton label={archetype.name} onClick={onPreview} />
       </div>
     </article>
+  );
+}
+
+/** Opening the pages is a different act from choosing the layout. */
+function PreviewButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      aria-label={`Preview ${label}`}
+      title="Preview pages"
+      className="focus-ring grid h-8 shrink-0 cursor-pointer place-items-center gap-1 rounded-control border border-hair-2 bg-canvas px-2.5 text-label font-bold text-ink-3 transition hover:border-brand hover:text-brand"
+    >
+      <Eye className="size-3.5" />
+    </button>
   );
 }
 
@@ -511,16 +601,27 @@ function TemplateCard({
   selected,
   cost,
   onPick,
+  onPreview,
 }: {
   template: Template;
   selected: boolean;
   cost: { label: string; severe: boolean } | null;
   onPick: () => void;
+  onPreview: () => void;
 }) {
   return (
-    <button
-      type="button"
+    // An article rather than a button: the card carries a preview control of
+    // its own, and a button cannot contain one.
+    <article
+      role="button"
+      tabIndex={0}
       onClick={onPick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPick();
+        }
+      }}
       aria-pressed={selected}
       className={cn(
         "group flex cursor-pointer flex-col gap-2 rounded-panel border bg-card p-2.5 text-left transition",
@@ -568,22 +669,38 @@ function TemplateCard({
         </p>
       </div>
 
-      {cost ? (
-        <span
-          className={cn(
-            "inline-flex w-fit items-center gap-1 rounded-glyph border px-1.5 py-0.5 text-micro font-bold",
-            cost.severe ? "border-warn-line bg-warn-bg text-warn" : "border-hair-2 bg-canvas text-ink-3"
-          )}
+      {/* mt-auto: the fit chip and preview sit on the card's floor, so the
+          grid's rows line up however long a template name wraps. */}
+      <div className="mt-auto flex items-center justify-between gap-2">
+        {cost ? (
+          <span
+            className={cn(
+              "inline-flex min-w-0 items-center gap-1 rounded-glyph border px-1.5 py-0.5 text-micro font-bold",
+              cost.severe ? "border-warn-line bg-warn-bg text-warn" : "border-hair-2 bg-canvas text-ink-3"
+            )}
+          >
+            <AlertTriangle className="size-2.5 shrink-0" />
+            <span className="truncate">{cost.label}</span>
+          </span>
+        ) : (
+          <span className="inline-flex min-w-0 items-center gap-1 rounded-glyph border border-ok-line bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">
+            <Check className="size-2.5 shrink-0" />
+            <span className="truncate">Carries this brief</span>
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onPreview();
+          }}
+          aria-label={`Preview ${template.name}`}
+          title="Preview pages"
+          className="focus-ring grid size-6 shrink-0 cursor-pointer place-items-center rounded-glyph border border-hair-2 bg-canvas text-ink-3 transition hover:border-brand hover:text-brand"
         >
-          <AlertTriangle className="size-2.5 shrink-0" />
-          {cost.label}
-        </span>
-      ) : (
-        <span className="inline-flex w-fit items-center gap-1 rounded-glyph border border-ok-line bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">
-          <Check className="size-2.5 shrink-0" />
-          Carries this brief
-        </span>
-      )}
-    </button>
+          <Eye className="size-3" />
+        </button>
+      </div>
+    </article>
   );
 }
