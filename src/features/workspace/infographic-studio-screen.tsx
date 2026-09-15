@@ -310,7 +310,15 @@ export function InfographicStudioScreen() {
   const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
 
   // Studio Mode: Editor -> Generating -> Shared Review View
-  const [studioMode, setStudioMode] = useState<CreativeStudioMode>("opening");
+  /* Arriving from the Content Library means the asset is already published:
+     it opens on its shared review rather than composing a canvas again. */
+  const openedForReview = useWorkspaceStore.getState().studioEntry === "review";
+  // As in the video studio: a published asset opens under its own title.
+  const storedProjectName = useWorkspaceStore((s) => s.projectName);
+  const creativeTitle = storedProjectName.trim() || `${brandName} HCP Infographic`;
+  const [studioMode, setStudioMode] = useState<CreativeStudioMode>(
+    openedForReview ? "review" : "opening"
+  );
 
   // Tab State in Review/Editor right panel
   const [activeTab, setActiveTab] = useState<"assistant" | "edit" | "comments" | "evidence">(
@@ -925,7 +933,7 @@ export function InfographicStudioScreen() {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="truncate text-body-lg font-[850] text-ink tracking-tight">
-                  {brandName} HCP Infographic
+                  {creativeTitle}
                 </span>
                 <span className="hidden rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
                   Draft v1
@@ -1990,7 +1998,7 @@ export function InfographicStudioScreen() {
           open={shareModalOpen}
           onClose={() => setShareModalOpen(false)}
           assetType="infographic"
-          assetTitle={`${brandName} HCP Infographic`}
+          assetTitle={creativeTitle}
           brandName={brandName}
           onExportDirect={() => {
             setExportModalOpen(true);

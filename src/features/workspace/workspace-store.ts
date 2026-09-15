@@ -6,6 +6,7 @@ import type { AppView, AssetType, Audience, AuthView, InspectorTab, LogoMark, On
 export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
 export type VideoSubStage = "mode-select" | "source-select" | "intake" | "directions" | "studio";
+export type StudioEntry = "create" | "review";
 
 interface WorkspaceState {
   view: AppView;
@@ -31,6 +32,12 @@ interface WorkspaceState {
   music: string;
   selectedSourceIds: string[];
   demoScenarioId: string;
+  /**
+   * How the studio was arrived at. "create" is the flow; "review" is the
+   * Content Library opening something already published, which lands on the
+   * shared review rather than walking the whole wizard to reach it.
+   */
+  studioEntry: StudioEntry;
   directionId: string;
   selectedSceneId: string;
   inspectorTab: InspectorTab;
@@ -104,6 +111,7 @@ interface WorkspaceState {
   setInfographicTemplate: (template: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease") => void;
   setInfographicLogoPlacement: (placement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none") => void;
   setLogoMark: (patch: Partial<LogoMark>) => void;
+  setStudioEntry: (entry: StudioEntry) => void;
   setInfographicActivePage: (page: number) => void;
   reset: () => void;
 }
@@ -130,6 +138,7 @@ const initialState = {
   music: "No music",
   selectedSourceIds: [],
   demoScenarioId: "hcp-launch",
+  studioEntry: "create" as StudioEntry,
   directionId: creativeDirections[0].id,
   selectedSceneId: "scene-3",
   inspectorTab: "edit" as InspectorTab,
@@ -205,6 +214,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   toggleSource: (sourceId) => set((state) => ({ selectedSourceIds: state.selectedSourceIds.includes(sourceId) ? state.selectedSourceIds.filter((id) => id !== sourceId) : [...state.selectedSourceIds, sourceId] })),
   setSelectedSourceIds: (selectedSourceIds) => set({ selectedSourceIds }),
   setDemoScenarioId: (demoScenarioId) => set({ demoScenarioId }),
+  setStudioEntry: (studioEntry) => set({ studioEntry }),
   setDirectionId: (directionId) => set({ directionId }),
   setSelectedSceneId: (selectedSceneId) => set({ selectedSceneId }),
   setInspectorTab: (inspectorTab) => set({ inspectorTab }),

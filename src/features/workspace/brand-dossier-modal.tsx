@@ -278,6 +278,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   };
 
   const handleStartProject = () => {
+    // A fresh project walks the flow, whatever the last thing opened was — the
+    // Content Library sets this to "review" and nothing else would clear it.
+    useWorkspaceStore.getState().setStudioEntry("create");
     setSourceType("dossier");
     if (sourceMode === "brand") {
       const primaryDossier = selectedBrand?.dossierIds?.[0] || selectedBrandId;

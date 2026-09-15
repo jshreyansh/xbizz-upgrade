@@ -211,8 +211,16 @@ export function StudioScreen() {
     setLogoMark,
   } = useWorkspaceStore();
 
-  const [studioMode, setStudioMode] = useState<"scenes" | "opening-editor" | "editor" | "generating" | "review">("scenes");
-  const [activeTab, setActiveTab] = useState<"assistant" | "edit" | "comments" | "evidence">("assistant");
+  /* Arriving from the Content Library means the asset is already published:
+     it opens on its shared review, on the comments its reviewers left, with
+     no walk through the wizard to get there. */
+  const openedForReview = useWorkspaceStore.getState().studioEntry === "review";
+  const [studioMode, setStudioMode] = useState<"scenes" | "opening-editor" | "editor" | "generating" | "review">(
+    openedForReview ? "review" : "scenes"
+  );
+  const [activeTab, setActiveTab] = useState<"assistant" | "edit" | "comments" | "evidence">(
+    openedForReview ? "comments" : "assistant"
+  );
 
   const [generateVideoModalOpen, setGenerateVideoModalOpen] = useState(false);
   const [preflightOpen, setPreflightOpen] = useState(false);
@@ -326,7 +334,11 @@ export function StudioScreen() {
   const isReview = studioMode === "review";
 
   const brandName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
-  const projectTitle = `${brandName} HCP launch`;
+  /* The name the project was given wins over one derived from its brand —
+     the Content Library opens published assets under the title they were
+     published with, and the start modal lets you type one. */
+  const storedProjectName = useWorkspaceStore((s) => s.projectName);
+  const projectTitle = storedProjectName.trim() || `${brandName} HCP launch`;
 
   const totalDurationSeconds = useMemo(
     () => sceneList.reduce((acc, sc) => acc + (sc.duration || 10), 0),
@@ -492,7 +504,9 @@ export function StudioScreen() {
    */
   const [elementMenuAt, setElementMenuAt] = useState<{ x: number; y: number } | null>(null);
   /** Team comments only exist after a version has been published. */
-  const [teamCommentsUnlocked, setTeamCommentsUnlocked] = useState(false);
+  // A published asset already has a shared link, so its team comments are real
+  // from the first frame — the same reason publishing unlocks them.
+  const [teamCommentsUnlocked, setTeamCommentsUnlocked] = useState(openedForReview);
 
   /**
    * Where the element actions should appear.
@@ -932,16 +946,20 @@ export function StudioScreen() {
   };
 
   const handleMasterRendered = () => {
-        handleEnterReviewView();
-        /**
-         * Publishing is what creates a shared link, and a shared link is what
-         * creates team comments — so the Team tab only becomes real here.
-         * These arrive as somebody else's words: they are listed and can be
-         * handed to the agent with Add to chat, but nothing acts on them by
-         * itself. Anyone with the link would otherwise be able to drive the
-         * generator.
-         */
-        setTeamCommentsUnlocked(true);
+    handleEnterReviewView();
+    setTeamCommentsUnlocked(true);
+    seedTeamComments();
+  };
+
+  /**
+   * Publishing is what creates a shared link, and a shared link is what creates
+   * team comments — so they are real from the moment one exists, whether this
+   * session just published it or the Content Library reopened one that already
+   * was. They arrive as somebody else's words: listed, and handed to the agent
+   * only with Add to chat. Anyone with the link would otherwise be able to
+   * drive the generator.
+   */
+  const seedTeamComments = () => {
         setComments((prev) =>
           // Idempotent: handleEnterReviewView runs from more than one path, and
           // these ids are fixed, so appending unconditionally duplicated
@@ -969,6 +987,17 @@ export function StudioScreen() {
         ]
         );
   };
+
+  // Opened from the Content Library: the asset already has a link, so its
+  // reviewers' comments are already on it.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!openedForReview || seededRef.current) return;
+    seededRef.current = true;
+    seedTeamComments();
+    // Seeding once on mount; sceneList is settled by then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openedForReview]);
 
   const handleEnterReviewView = () => {
     setStudioMode("review");
@@ -1249,7 +1278,7 @@ export function StudioScreen() {
           <div className="mx-3 h-5 w-px bg-hair" />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="truncate text-body font-[800] text-ink">{sourcePayload?.dossierId ? `${dossierNames[sourcePayload.dossierId] || "Velmora"} HCP launch` : "DERMORA HCP launch"}</span>
+              <span className="truncate text-body font-[800] text-ink">{projectTitle}</span>
               <span className="hidden rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">Draft v1</span>
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
