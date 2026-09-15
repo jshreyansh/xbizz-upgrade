@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Eye, Play } from "lucide-react";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
@@ -189,22 +189,41 @@ export function ContentLibraryScreen() {
                 alignItems: view === "list" ? "center" : undefined,
               }}
             >
-              {/* The frame, at the asset's own aspect. A still is the one thing
-                  that says which of these is the film you are looking for. */}
+              {/* The asset itself, not a coloured rectangle standing in for it.
+                  A film plays its own reel and a deck shows the figure it leads
+                  on — which is the only thing that tells two of these apart at
+                  a glance. */}
               <div
                 className="relative overflow-hidden"
                 style={{
                   background: a.gradient,
-                  height: view === "list" ? 64 : 150,
+                  height: view === "list" ? 64 : 168,
                   width: view === "list" ? 104 : "100%",
                   flexShrink: 0,
                 }}
               >
+                {a.videoSrc && <AssetVideo src={a.videoSrc} />}
                 <span
                   aria-hidden
                   className="pointer-events-none absolute rounded-full"
                   style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.22),transparent 70%)" }}
                 />
+
+                {/* A deck's own composition, at card size. */}
+                {!a.videoSrc && a.metric && view !== "list" && (
+                  <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col justify-end p-3.5">
+                    <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "rgba(255,255,255,.62)" }}>
+                      {a.badge}
+                    </span>
+                    <span style={{ fontSize: 21, fontWeight: 900, letterSpacing: "-.6px", lineHeight: 1.1, color: "#fff", marginTop: 2 }}>
+                      {a.metric}
+                    </span>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,.66)", marginTop: 3 }}>
+                      {a.metricLabel}
+                    </span>
+                  </div>
+                )}
+
                 <span
                   style={{
                     position: "absolute",
@@ -219,7 +238,8 @@ export function ContentLibraryScreen() {
                     textTransform: "uppercase",
                     letterSpacing: ".04em",
                     color: "rgba(255,255,255,.9)",
-                    background: "rgba(0,0,0,.28)",
+                    background: "rgba(0,0,0,.4)",
+                    backdropFilter: "blur(6px)",
                     padding: "3px 8px",
                     borderRadius: 99,
                   }}
@@ -228,11 +248,29 @@ export function ContentLibraryScreen() {
                   {a.kind === "video" ? "Video" : "Doc / image"}
                 </span>
 
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 10,
+                    right: 12,
+                    zIndex: 2,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    color: "var(--ink)",
+                    background: "rgba(255,255,255,.9)",
+                    padding: "3px 8px",
+                    borderRadius: 99,
+                    display: view === "list" ? "none" : "block",
+                  }}
+                >
+                  {a.spec}
+                </span>
+
                 {/* Preview is the whole point of the card, so the affordance
                     sits on the frame rather than in a menu. */}
                 <span
-                  className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                  style={{ background: "rgba(0,0,0,.28)" }}
+                  className="pointer-events-none absolute inset-0 z-[3] grid place-items-center opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                  style={{ background: "rgba(0,0,0,.34)" }}
                 >
                   <span
                     style={{
@@ -278,9 +316,13 @@ export function ContentLibraryScreen() {
                   <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: status.bg, color: status.fg, border: `1px solid ${status.line}` }}>
                     {a.status}
                   </span>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "var(--surface-subtle)", color: "var(--ink-3)", border: "1px solid var(--hair)" }}>
-                    {a.spec}
-                  </span>
+                  {/* In grid the spec rides on the frame; here is where it
+                      lives when there is no frame to ride on. */}
+                  {view === "list" && (
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "var(--surface-subtle)", color: "var(--ink-3)", border: "1px solid var(--hair)" }}>
+                      {a.spec}
+                    </span>
+                  )}
                 </div>
 
                 {view !== "list" && <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />}
@@ -316,5 +358,44 @@ export function ContentLibraryScreen() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * A still that moves when you point at it.
+ *
+ * Eight reels looping at once is a noisy wall and a lot of decoding for a
+ * screen people scan — and the browser pauses background video anyway, so the
+ * motion was never dependable. The first frame is what identifies the asset;
+ * the motion is what confirms it, and that is worth exactly the moment you
+ * hover.
+ */
+function AssetVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+
+  // The hover lives on a wrapper, not on the video: the Preview scrim sits
+  // over the frame, and a pointer that lands on it is still a pointer on this
+  // card.
+  return (
+    <span
+      className="absolute inset-0"
+      onMouseEnter={() => void ref.current?.play().catch(() => {})}
+      onMouseLeave={() => ref.current?.pause()}
+    >
+      <video
+        ref={ref}
+        src={src}
+        loop
+        muted
+        playsInline
+        preload="auto"
+        // Nudged off zero so a frame is decoded and painted: a video parked at
+        // 0 with no poster renders as an empty box in some browsers.
+        onLoadedData={(e) => {
+          if (e.currentTarget.currentTime === 0) e.currentTarget.currentTime = 0.1;
+        }}
+        className="pointer-events-none h-full w-full object-cover opacity-85"
+      />
+    </span>
   );
 }

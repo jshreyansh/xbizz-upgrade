@@ -24,6 +24,13 @@ export interface LibraryAsset {
   views: number;
   comments: number;
   gradient: string;
+  /** Video assets show the reel itself — the same files the studio plays. */
+  videoSrc?: string;
+  /** Doc & image assets show their own composition instead: the badge they
+   *  carry and the figure they lead on, which is what tells two decks apart. */
+  badge?: string;
+  metric?: string;
+  metricLabel?: string;
 }
 
 export const LIBRARY_ASSETS: LibraryAsset[] = [
@@ -40,6 +47,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     views: 412,
     comments: 3,
     gradient: "linear-gradient(150deg,#0f2d22,#14532d 55%,#1f7a4d)",
+    videoSrc: "/reel-moa.mp4",
   },
   {
     id: "velmora-leave-behind",
@@ -54,6 +62,9 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     views: 288,
     comments: 1,
     gradient: "linear-gradient(150deg,#111827,#1f2937 55%,#334155)",
+    badge: "Cellular Pathway",
+    metric: "Dual Kinase Block",
+    metricLabel: "Targeted cytokine clearance",
   },
   {
     id: "velmora-patient-explainer",
@@ -68,6 +79,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     views: 96,
     comments: 5,
     gradient: "linear-gradient(150deg,#3b1d5e,#5b21b6 55%,#7c3aed)",
+    videoSrc: "/27019-361107952_medium.mp4",
   },
   {
     id: "onkavia-kol-briefing",
@@ -82,6 +94,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     views: 173,
     comments: 0,
     gradient: "linear-gradient(150deg,#0c2740,#0e4f6e 55%,#1d7fa8)",
+    videoSrc: "/avatar-showcase.mp4",
   },
   {
     id: "onkavia-congress-poster",
@@ -96,6 +109,9 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     views: 134,
     comments: 2,
     gradient: "linear-gradient(150deg,#3a1414,#7f1d1d 55%,#b91c1c)",
+    badge: "Clinical Infographic",
+    metric: "52% PASI 90",
+    metricLabel: "vs 18% Placebo (p < 0.001)",
   },
   {
     id: "nirvexa-field-aid",
@@ -110,6 +126,9 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     views: 61,
     comments: 4,
     gradient: "linear-gradient(150deg,#12303a,#155e75 55%,#0891b2)",
+    badge: "Interactive Detail Aid",
+    metric: "N=613 Patients",
+    metricLabel: "Multi-centre randomised trial",
   },
   {
     id: "nirvexa-silent-social",
@@ -124,6 +143,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     views: 502,
     comments: 0,
     gradient: "linear-gradient(150deg,#1c1917,#44403c 55%,#78716c)",
+    videoSrc: "/40781-426939561_medium.mp4",
   },
   {
     id: "cardioxa-burden",
@@ -138,5 +158,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     views: 219,
     comments: 1,
     gradient: "linear-gradient(150deg,#422006,#854d0e 55%,#ca8a04)",
+    badge: "Burden of Disease",
+    metric: "1 in 4 adults",
+    metricLabel: "Living with the condition untreated",
   },
 ];
