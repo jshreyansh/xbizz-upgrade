@@ -4,7 +4,6 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   BookOpenCheck,
   Check,
   CheckCircle2,
@@ -66,6 +65,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
+import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
@@ -150,6 +150,23 @@ function FormattedMessageText({ text }: { text: string }) {
   );
 }
 
+/* Production Plan → Video Editor. */
+const EDITOR_OPEN_STEPS: GenerationStep[] = [
+  { label: "Parsed scene timing & narration", seconds: 1.2 },
+  { label: "Allocated on-screen copy and element boxes", seconds: 1.6 },
+  { label: "Placed avatar, brand mark & fair balance", seconds: 1.4 },
+  { label: "Queued art and motion for background render", seconds: 1.3 },
+];
+
+/* Video Editor → Share & Review. */
+const MASTER_RENDER_STEPS: GenerationStep[] = [
+  { label: "Parsed storyboard scenes & timing", seconds: 1.2 },
+  { label: "Synthesized 3D visual kinematics & lighting", seconds: 1.6 },
+  { label: "Synced clinical voiceover narration", seconds: 1.5 },
+  { label: "Linked citations to FDA label §5.1", seconds: 1.2 },
+  { label: "Final cloud master render", seconds: 2.2 },
+];
+
 export function StudioScreen() {
   const {
     selectedSceneId,
@@ -171,7 +188,7 @@ export function StudioScreen() {
     setLogoMark,
   } = useWorkspaceStore();
 
-  const [studioMode, setStudioMode] = useState<"scenes" | "editor" | "generating" | "review">("scenes");
+  const [studioMode, setStudioMode] = useState<"scenes" | "opening-editor" | "editor" | "generating" | "review">("scenes");
   const [activeTab, setActiveTab] = useState<"assistant" | "edit" | "comments" | "evidence">("assistant");
 
   const [generateVideoModalOpen, setGenerateVideoModalOpen] = useState(false);
@@ -277,6 +294,7 @@ export function StudioScreen() {
   const isScenes = studioMode === "scenes";
   const isEditor = studioMode === "editor";
   const isGenerating = studioMode === "generating";
+  const isOpeningEditor = studioMode === "opening-editor";
   const isReview = studioMode === "review";
 
   const brandName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
@@ -758,11 +776,18 @@ export function StudioScreen() {
 
 
 
+  /* The wait stands in front of the editor rather than inside it: the canvas
+     used to open while it was still assembling itself. */
   const handleStartSceneEditor = () => {
-    setStudioMode("editor");
+    setStudioMode("opening-editor");
     setActiveTab("assistant");
     setScenePhase({});
-    setToMessage(`Opening Scene Canvas Editor in ${selectedQuality === "hd" ? "HD" : "Cinematic"}...`);
+  };
+
+  const handleEditorReady = () => {
+    setStudioMode("editor");
+    setActiveTab("assistant");
+    setToMessage(`Video editor ready in ${selectedQuality === "hd" ? "HD" : "Cinematic"}`);
     setTimeout(() => setToMessage(null), 2500);
 
     /**
@@ -811,7 +836,6 @@ export function StudioScreen() {
     });
   };
 
-  const [videoGenStep, setVideoGenStep] = useState(1);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [mlrCheckResolved, setMlrCheckResolved] = useState(false);
   const [qaCheckResolved, setQaCheckResolved] = useState(false);
@@ -870,7 +894,6 @@ export function StudioScreen() {
     setGenerateVideoModalOpen(false);
     setStudioMode("generating");
     setActiveTab("assistant");
-    setVideoGenStep(1);
     const creditsDeducted = selectedQuality === "cinematic" ? "7,500" : "2,500";
     addChatMessage({
       role: "swishx",
@@ -878,13 +901,9 @@ export function StudioScreen() {
     });
     setToMessage(`Video generation queued · ${creditsDeducted} credits deducted`);
     setTimeout(() => setToMessage(null), 3500);
+  };
 
-    setTimeout(() => setVideoGenStep(2), 1200);
-    setTimeout(() => setVideoGenStep(3), 2400);
-    setTimeout(() => setVideoGenStep(4), 3800);
-    setTimeout(() => {
-      setVideoGenStep(5);
-      setTimeout(() => {
+  const handleMasterRendered = () => {
         handleEnterReviewView();
         /**
          * Publishing is what creates a shared link, and a shared link is what
@@ -921,8 +940,6 @@ export function StudioScreen() {
           },
         ]
         );
-      }, 1600);
-    }, 5200);
   };
 
   const handleEnterReviewView = () => {
@@ -1218,13 +1235,13 @@ export function StudioScreen() {
                   <FileText className="size-3.5 text-brand" /> <span>Production Plan</span>
                 </button>
                 <span className="text-ink-3">/</span>
-                <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">Canvas Editor</span>
+                <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">Video Editor</span>
               </div>
             )}
             {studioMode === "generating" && <span className="inline-flex items-center gap-1.5 rounded-chip bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse"><span>Generating High-Res Video...</span></span>}
             {studioMode === "review" && (
               <div className="flex items-center gap-1.5">
-                <button onClick={handleReturnToEditor} className="focus-ring flex items-center gap-1.5 rounded-chip border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"><Pencil className="size-3 text-brand" /> <span>Editor</span></button>
+                <button onClick={handleReturnToEditor} className="focus-ring flex items-center gap-1.5 rounded-chip border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"><Pencil className="size-3 text-brand" /> <span>Video Editor</span></button>
                 <span className="text-ink-3">/</span>
                 <span className="rounded-chip bg-ok-bg px-3 py-0.5 text-caption font-extrabold text-ok border border-ok-line">Shared Review View · Final Master ({totalDurationSeconds}s)</span>
               </div>
@@ -1333,61 +1350,25 @@ export function StudioScreen() {
               isGenerating ? "bg-[#eef1ed] p-4 sm:p-6 lg:p-7" : isReview ? "bg-canvas" : isEditor ? "bg-[#f8f9f7]" : "bg-[#eef1ed] p-4 sm:p-6 lg:p-7"
             )}
           >
-            {isGenerating ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
-                <div className="size-20 rounded-card bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-                  <LogoMark size={40} className="text-brand animate-pulse" />
-                </div>
-
-                <h3 className="text-display font-extrabold text-ink tracking-tight">
-                  Generating High-Resolution Video Master...
-                </h3>
-                <p className="text-body-lg text-ink-3 mt-1.5 max-w-[460px]">
-                  Synthesizing kinematic 3D scene models, rendering voiceover audio sync, and verifying fair balance across all {sceneList.length} scenes.
-                </p>
-
-                <div className="mt-8 w-full max-w-[380px] space-y-2.5 text-left text-body">
-                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", videoGenStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                    <Check className={cn("size-4.5 shrink-0", videoGenStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                    <span className="font-semibold">Parsed {sceneList.length} storyboard scenes &amp; timing</span>
-                  </div>
-                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", videoGenStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                    <Check className={cn("size-4.5 shrink-0", videoGenStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                    <span className="font-semibold">Synthesized 3D visual kinematics &amp; lighting</span>
-                  </div>
-                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", videoGenStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                    <Check className={cn("size-4.5 shrink-0", videoGenStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                    <span className="font-semibold">Synced clinical voiceover narration</span>
-                  </div>
-                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", videoGenStep >= 4 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                    <Check className={cn("size-4.5 shrink-0", videoGenStep >= 4 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                    <span className="font-semibold">Linking citations to FDA label §5.1</span>
-                  </div>
-                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", videoGenStep >= 5 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40 bg-white/50 border-hair")}>
-                    {videoGenStep >= 5 ? (
-                      <Check className="size-4.5 shrink-0 text-ok" strokeWidth={2.5} />
-                    ) : (
-                      <LogoMark size={18} className="shrink-0 text-brand animate-spin" />
-                    )}
-                    <span className="font-semibold">Final cloud master render ({selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"})</span>
-                  </div>
-                </div>
-
-                <div className="mt-8 flex items-center gap-4 text-body text-ink-3">
+            {isOpeningEditor ? (
+              <GenerationProgress
+                title="Opening the video editor..."
+                subtitle={`Laying out ${sceneList.length} scenes, their timing and their on-screen copy, before the media starts arriving.`}
+                steps={EDITOR_OPEN_STEPS}
+                onDone={handleEditorReady}
+              />
+            ) : isGenerating ? (
+              <GenerationProgress
+                title="Generating high-resolution video master..."
+                subtitle={`Synthesizing kinematic 3D scene models, rendering voiceover audio sync, and verifying fair balance across all ${sceneList.length} scenes.`}
+                steps={MASTER_RENDER_STEPS}
+                onDone={handleMasterRendered}
+                footer={
                   <span className="flex items-center gap-1.5 font-medium">
-                    <span>✉ Email notification queued</span>
+                    <span>✉ Email notification queued — you can close this tab</span>
                   </span>
-                  <span>•</span>
-                  <button
-                    type="button"
-                    onClick={handleEnterReviewView}
-                    className="font-bold text-brand hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Preview Master Video</span>
-                    <ArrowRight className="size-3.5" />
-                  </button>
-                </div>
-              </div>
+                }
+              />
             ) : (
               <>
                 {isReview ? (

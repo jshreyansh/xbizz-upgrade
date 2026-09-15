@@ -49,9 +49,26 @@ import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 import { PreflightPanel } from "@/features/workspace/preflight-panel";
 import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
+import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 
-export type CreativeStudioMode = "editor" | "generating" | "review";
+/* Layout → Canvas Editor. */
+const CANVAS_OPEN_STEPS: GenerationStep[] = [
+  { label: "Applied the chosen layout to the page", seconds: 1.2 },
+  { label: "Fitted headline, stat and body copy to their blocks", seconds: 1.6 },
+  { label: "Reserved space for art, charts and fair balance", seconds: 1.4 },
+  { label: "Queued art layers for background render", seconds: 1.2 },
+];
+
+/* Canvas Editor → Share & Review. */
+const PROOF_RENDER_STEPS: GenerationStep[] = [
+  { label: "Validated 214 FDA dossier claims", seconds: 1.3 },
+  { label: "Synthesized high-res vectors & layout", seconds: 1.7 },
+  { label: "Rendered art layers at 300 DPI", seconds: 1.5 },
+  { label: "Grounded ISI fair balance & leave-behind", seconds: 1.3 },
+];
+
+export type CreativeStudioMode = "opening" | "editor" | "generating" | "review";
 
 /**
  * One piece of art on a page.
@@ -267,8 +284,7 @@ export function InfographicStudioScreen() {
   const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
 
   // Studio Mode: Editor -> Generating -> Shared Review View
-  const [studioMode, setStudioMode] = useState<CreativeStudioMode>("editor");
-  const [generationStep, setGenerationStep] = useState<number>(1);
+  const [studioMode, setStudioMode] = useState<CreativeStudioMode>("opening");
 
   // Tab State in Review/Editor right panel
   const [activeTab, setActiveTab] = useState<"assistant" | "edit" | "comments" | "evidence">(
@@ -296,6 +312,7 @@ export function InfographicStudioScreen() {
   const [genElapsed, setGenElapsed] = useState(0);
 
   useEffect(() => {
+    if (studioMode === "opening") return;
     genStartRef.current = Date.now();
     const tick = setInterval(() => {
       const elapsed = Date.now() - genStartRef.current;
@@ -303,7 +320,9 @@ export function InfographicStudioScreen() {
       if (elapsed >= ART_LAST) clearInterval(tick);
     }, 200);
     return () => clearInterval(tick);
-  }, []);
+    // Starts once, when the canvas first opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studioMode === "opening"]);
 
   /* Blocks arrive in reading order, all of them inside the layout pass. */
   const BLOCK_ORDER = ["header", "heroStat", "moa", "chart", "isi"] as const;
@@ -740,19 +759,17 @@ export function InfographicStudioScreen() {
     }, 500);
   };
 
-  // Generate Creative & Open Shared Review
+  // Generate Creative & Open Shared Review. The wait owns its own clock and
+  // calls handleProofsRendered when it runs out.
   const handlePublishCreative = () => {
     setStudioMode("generating");
-    setGenerationStep(1);
+  };
 
-    setTimeout(() => setGenerationStep(2), 700);
-    setTimeout(() => setGenerationStep(3), 1500);
-    setTimeout(() => {
-      setStudioMode("review");
-      setActiveTab("comments");
-      if (!copilotPanelOpen) toggleCopilotPanel();
-      showToast("Creative published · Opened Shared Review View");
-    }, 2300);
+  const handleProofsRendered = () => {
+    setStudioMode("review");
+    setActiveTab("comments");
+    if (!copilotPanelOpen) toggleCopilotPanel();
+    showToast("Creative published · Opened Shared Review View");
   };
 
   /**
@@ -1198,33 +1215,25 @@ export function InfographicStudioScreen() {
         ) : undefined
       }
       main={
-        studioMode === "generating" ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-subtle animate-in fade-in duration-300">
-              <div className="size-20 rounded-card bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-                <LogoMark size={40} className="text-brand animate-pulse" />
-              </div>
-              <h3 className="text-display font-extrabold text-ink tracking-tight">
-                Generating High-Resolution Creative &amp; Proofs...
-              </h3>
-              <p className="text-body-lg text-ink-3 mt-1.5 max-w-[440px]">
-                Synthesizing publication-grade vectors, clinical PASI 90 stat heroes, and PromoMats-verified claim links.
-              </p>
-
-              <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
-                <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Validated 214 FDA dossier claims</span>
-                </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Synthesized high-res vectors &amp; layout</span>
-                </div>
-                <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                  <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                  <span className="font-semibold">Grounded ISI fair balance tables &amp; leave-behind</span>
-                </div>
-              </div>
-            </div>
+        studioMode === "opening" ? (
+            <GenerationProgress
+              title="Opening the canvas editor..."
+              subtitle="Applying the chosen layout and fitting the approved copy into it, before the art starts arriving."
+              steps={CANVAS_OPEN_STEPS}
+              onDone={() => setStudioMode("editor")}
+            />
+        ) : studioMode === "generating" ? (
+            <GenerationProgress
+              title="Generating high-resolution creative & proofs..."
+              subtitle="Synthesizing publication-grade vectors, clinical PASI 90 stat heroes, and PromoMats-verified claim links."
+              steps={PROOF_RENDER_STEPS}
+              onDone={handleProofsRendered}
+              footer={
+                <span className="flex items-center gap-1.5 font-medium">
+                  <span>✉ Email notification queued — you can close this tab</span>
+                </span>
+              }
+            />
         ) : (
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {/* What is still arriving, and what you can already do. The page

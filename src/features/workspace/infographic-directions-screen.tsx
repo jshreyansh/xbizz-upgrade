@@ -456,7 +456,7 @@ export function InfographicDirectionsScreen() {
               image cases. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
             <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-              {currentStep === "template" ? "Layout View" : "Plan View"}
+              {currentStep === "template" ? "Layout View" : "Need your input"}
             </span>
             <button
               type="button"

@@ -61,6 +61,7 @@ import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
+import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
@@ -227,6 +228,15 @@ function sizeForFile(name: string): string {
     : ext === "pptx" ? "6.1 MB"
     : "1.2 MB";
 }
+
+/* Plan → Production Plan. */
+const SCRIPT_BUILD_STEPS: GenerationStep[] = [
+  { label: "Parsed campaign brief & focus topics", seconds: 1.2 },
+  { label: "Read the approved dossier & claims library", seconds: 1.6 },
+  { label: "Synthesized 5-scene clinical narrative", seconds: 2.2 },
+  { label: "Wrote scene narration & visual direction", seconds: 1.8 },
+  { label: "Linked citations to FDA label §5.1", seconds: 1.4 },
+];
 
 export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
@@ -620,7 +630,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   // ── Generation Loading State on Left Panel ──
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationStep, setGenerationStep] = useState(0);
 
   // ── Chat Input in Right Panel ──
   const [chatInput, setChatInput] = useState("");
@@ -844,7 +853,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     }
 
     setIsGenerating(true);
-    setGenerationStep(1);
 
     addChatMessage({
       role: "user",
@@ -855,23 +863,16 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       role: "swishx",
       text: `Confirmed plan parameters for **${brandName}**. Structuring 5-scene clinical script and grounding against FDA approved claims...`,
     });
+  };
 
-    setTimeout(() => {
-      setGenerationStep(2);
-    }, 600);
-
-    setTimeout(() => {
-      setGenerationStep(3);
-    }, 1200);
-
-    setTimeout(() => {
-      addChatMessage({
-        role: "swishx",
-        text: `Script & storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`,
-      });
-      setVideoSubStage("studio");
-      setView("studio");
-    }, 1800);
+  /* The wait owns its own clock now, and calls this when it runs out. */
+  const handleScriptBuilt = () => {
+    addChatMessage({
+      role: "swishx",
+      text: `Script & storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`,
+    });
+    setVideoSubStage("studio");
+    setView("studio");
   };
 
   const handleSendChatMessage = (textToSend?: string) => {
@@ -951,7 +952,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               and lets you change it without walking back to the brief. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
             <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-              Plan View
+              Need your input
             </span>
             <button
               type="button"
@@ -1006,32 +1007,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             className="flex flex-1 min-w-0 flex-col min-h-0 border-r border-hair bg-[#eef1ed] overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-4"
           >
             {isGenerating ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in fade-in duration-300 my-auto">
-                <div className="size-20 rounded-card bg-tint border border-tint-line flex items-center justify-center mb-6 shadow-sm">
-                  <LogoMark size={40} className="text-brand animate-pulse" />
-                </div>
-                <h3 className="text-display font-extrabold text-ink tracking-tight">
-                  Generating Clinical Script &amp; Storyboard...
-                </h3>
-                <p className="text-body-lg text-ink-3 mt-1.5 max-w-[440px]">
-                  Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims.
-                </p>
-
-                <div className="mt-8 w-full max-w-[360px] space-y-2.5 text-left text-body">
-                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 1 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                    <Check className={cn("size-4.5 shrink-0", generationStep >= 1 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                    <span className="font-semibold">Parsed campaign brief &amp; focus topics</span>
-                  </div>
-                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 2 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                    <Check className={cn("size-4.5 shrink-0", generationStep >= 2 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                    <span className="font-semibold">Synthesized 5-scene clinical narrative &amp; script</span>
-                  </div>
-                  <div className={cn("flex items-center gap-3 p-3 rounded-control border transition", generationStep >= 3 ? "bg-card border-hair-2 text-ink shadow-2xs" : "opacity-40")}>
-                    <Check className={cn("size-4.5 shrink-0", generationStep >= 3 ? "text-ok" : "text-black/30")} strokeWidth={2.5} />
-                    <span className="font-semibold">Linking citations to FDA label §5.1</span>
-                  </div>
-                </div>
-              </div>
+              <GenerationProgress
+                title="Building the production plan..."
+                subtitle="Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims."
+                steps={SCRIPT_BUILD_STEPS}
+                onDone={handleScriptBuilt}
+              />
             ) : (
               <>
                 {/* Header in Left Canvas */}
