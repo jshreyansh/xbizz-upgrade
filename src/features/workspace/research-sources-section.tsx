@@ -182,7 +182,7 @@ export function ResearchSourcesContent({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {nothingToGroundIn && (
         /* Stated plainly and at the top: there is no combination of these
            controls that produces a grounded script, so the user needs to
@@ -261,75 +261,61 @@ export function ResearchSourcesContent({
         </div>
       )}
 
-      {/* 3 Grounding Options */}
-      <div className="space-y-2">
-        <span className="text-label font-bold uppercase tracking-wider text-ink-3">
-          Select Grounding Source Mode
-        </span>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          {[
-            {
-              id: "both" as const,
-              title: "Both SwishX dossiers and My attachments",
-              desc: "Combines verified regulatory label data with your uploaded attachments.",
-              missing: "Needs both an approved dossier and at least one attachment",
-            },
-            {
-              id: "my-sources" as const,
-              title: "Only My sources & attachments",
-              desc: "Strictly uses your files; ignores the prebuilt regulatory dossier.",
-              missing: "Attach a file to use this",
-            },
-            {
-              id: "swishx-only" as const,
-              title: "Only SwishX approved dossiers",
-              desc: "Strictly uses verified prescribing label and regulatory dossier packages.",
-              missing: "No approved dossier exists for this request",
-            },
-          ].map((opt) => {
-            const isSelected = sourceGroundingMode === opt.id;
-            const available = modeAvailable[opt.id];
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={!available}
-                title={available ? undefined : opt.missing}
-                onClick={() => onSetSourceGroundingMode(opt.id)}
-                className={cn(
-                  "p-3.5 rounded-panel border text-left transition flex flex-col justify-between min-h-[90px]",
-                  !available
-                    ? "border-hair bg-canvas opacity-45 cursor-not-allowed"
-                    : isSelected
-                    ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15 cursor-pointer"
-                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas cursor-pointer"
-                )}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="font-bold text-body-lg leading-snug">{opt.title}</div>
-                  <div
-                    className={cn(
-                      "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
-                      isSelected
-                        ? "border-brand bg-brand text-white"
-                        : "border-hair-3"
-                    )}
-                  >
-                    {isSelected && <Check className="size-3 stroke-[3]" />}
-                  </div>
-                </div>
-                <div className="text-label text-ink-3 mt-1.5 leading-snug">
-                  {available ? opt.desc : opt.missing}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      {/* Where the claims come from.
+          Three mutually exclusive options that between them fit on one line,
+          so they are one row of segments rather than three cards. The cards
+          carried a sentence of description each, which is three sentences
+          restating three titles that already say it — and about a fifth of
+          this accordion's height. An option that cannot be honoured keeps its
+          reason in the tooltip, and the empty states below say it in full. */}
+      <div className="flex w-full gap-1.5 rounded-control border border-hair-2 bg-canvas p-1">
+        {[
+          { id: "both" as const, title: "Dossiers + my files", missing: "Needs both an approved dossier and at least one attachment" },
+          { id: "my-sources" as const, title: "Only my files", missing: "Attach a file to use this" },
+          { id: "swishx-only" as const, title: "Only SwishX dossiers", missing: "No approved dossier exists for this request" },
+        ].map((opt) => {
+          const isSelected = sourceGroundingMode === opt.id;
+          const available = modeAvailable[opt.id];
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              disabled={!available}
+              aria-pressed={isSelected}
+              title={available ? undefined : opt.missing}
+              onClick={() => onSetSourceGroundingMode(opt.id)}
+              className={cn(
+                "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-glyph px-2.5 py-1.5 text-label font-bold transition",
+                !available
+                  ? "cursor-not-allowed text-ink-4 opacity-55"
+                  : isSelected
+                  ? "cursor-pointer bg-card text-brand-deep shadow-2xs ring-1 ring-brand/30"
+                  : "cursor-pointer text-ink-2 hover:bg-card/70 hover:text-ink"
+              )}
+            >
+              {isSelected && <Check className="size-3 shrink-0 stroke-[3] text-brand" />}
+              <span className="truncate">{opt.title}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Verified dossiers. Reference material, not a decision, so it sits
-          BELOW the choice and starts collapsed — except while the grounding
-          research runs, which plays out inside it. */}
+      {/* With nothing found there is nothing to disclose, so the tray becomes
+          the one line it would have contained. A collapsible that opens onto
+          an empty state is two clicks to learn there is no news. */}
+      {!hasDossiers && !researching ? (
+        <p className="flex items-center gap-2 rounded-panel border border-hair bg-[#f4f6f3] px-3 py-2 text-label text-ink-3">
+          <ShieldCheck className="size-3.5 shrink-0 text-ink-4" />
+          <span className="min-w-0">
+            No approved {brandName || "brand"} dossier is cleared for this market and audience —
+            your own files are the grounding.
+          </span>
+        </p>
+      ) : (
+
+      /* Verified dossiers. Reference material, not a decision, so it sits
+         BELOW the choice and starts collapsed — except while the grounding
+         research runs, which plays out inside it. */
       <div className="rounded-panel bg-[#f4f6f3] border border-hair">
         <button
           type="button"
@@ -337,14 +323,14 @@ export function ResearchSourcesContent({
           aria-expanded={trayOpen}
           aria-busy={researching || undefined}
           className={cn(
-            "flex w-full items-center justify-between gap-2 p-4 text-left",
+            "flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left",
             researching ? "cursor-default" : "cursor-pointer",
           )}
         >
           <div className="flex min-w-0 items-center gap-2">
-            <ShieldCheck className="size-4 shrink-0 text-ok" />
-            <span className="text-body font-extrabold text-ink truncate">
-              Verified SwishX Regulatory Dossiers ({brandName || "Brand"})
+            <ShieldCheck className="size-3.5 shrink-0 text-ok" />
+            <span className="truncate text-body font-extrabold text-ink">
+              Verified dossiers · {brandName || "Brand"}
             </span>
             {/* The count is the point when it is zero: "we looked and there
                 are none" is information, where a missing tray reads as a
@@ -355,24 +341,16 @@ export function ResearchSourcesContent({
             )}>
               {hasDossiers ? prebuiltDossiers.length : 0} sourced
             </span>
-            {researching ? (
-              <span className="shrink-0 text-caption font-bold text-brand bg-tint border border-brand/20 px-2 py-0.2 rounded-chip">
+            {researching && (
+              <span className="shrink-0 rounded-chip border border-brand/20 bg-tint px-2 py-0.2 text-caption font-bold text-brand">
                 Researching
-              </span>
-            ) : (
-              <span className="shrink-0 text-caption font-bold text-ok bg-ok-bg/70 border border-ok-line px-2 py-0.2 rounded-chip">
-                Label &amp; Claims Active
               </span>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span className="hidden text-label text-ink-3 sm:inline tabular-nums">
-              {researching
-                ? `${research?.progress ?? 0}%`
-                : trayOpen
-                ? "Click View to inspect full claims & sources"
-                : `${prebuiltDossiers.length} verified dossiers`}
-            </span>
+            {researching && (
+              <span className="text-label tabular-nums text-ink-3">{research?.progress ?? 0}%</span>
+            )}
             {!researching && (
               <ChevronDown className={cn("size-4 text-ink-3 transition-transform duration-200", trayOpen && "rotate-180")} />
             )}
@@ -380,7 +358,7 @@ export function ResearchSourcesContent({
         </button>
 
         {trayOpen && (
-          <div className="px-4 pb-4 animate-in fade-in duration-150">
+          <div className="px-3 pb-3 animate-in fade-in duration-150">
           {researching && (
             <div className="mb-3 space-y-2">
               <div className="flex items-center gap-2">
@@ -399,11 +377,10 @@ export function ResearchSourcesContent({
             </div>
           )}
           {!hasDossiers && (
-            <div className="rounded-control border border-dashed border-hair-2 bg-card px-4 py-6 text-center">
-              <p className="text-body font-bold text-ink-2">No approved dossier for this request</p>
-              <p className="mt-0.5 text-label text-ink-4">
-                We searched the {brandName || "brand"} library and found nothing cleared for this
-                market and audience. Your own sources are the only grounding available.
+            <div className="rounded-control border border-dashed border-hair-2 bg-card px-3 py-3 text-center">
+              <p className="text-label text-ink-3">
+                Nothing in the {brandName || "brand"} library is cleared for this market and
+                audience — your own files are the grounding.
               </p>
             </div>
           )}
@@ -465,13 +442,14 @@ export function ResearchSourcesContent({
           </div>
         )}
       </div>
+      )}
 
       {/* Uploaded Documents Context */}
       {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources" || nothingToGroundIn || sourcesUnusable) && (
-        <div className="space-y-2 pt-2 border-t border-hair animate-in fade-in duration-150">
+        <div className="space-y-1.5 border-t border-hair pt-2.5 animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
             <span className="text-label font-bold uppercase tracking-wider text-ink-3">
-              My Uploaded Documents &amp; Briefs ({uploadedDocs.length})
+              My files ({uploadedDocs.length})
             </span>
             {/* "Add more" rather than "Add more files": attaching a file is
                 only one of the two ways to supply what is missing, and the
@@ -547,14 +525,14 @@ export function ResearchSourcesContent({
               <div
                 key={idx}
                 className={cn(
-                  "flex items-center justify-between gap-2 p-2.5 rounded-control text-body border",
+                  "flex items-center justify-between gap-2 rounded-control border px-2.5 py-1.5 text-body",
                   // The file that failed verification is marked where the file
                   // is, not only in a banner above it.
                   sourcesUnusable ? "border-danger-line bg-danger-bg" : "bg-card border-hair-2"
                 )}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileText className={cn("size-4 shrink-0", sourcesUnusable ? "text-danger" : "text-brand")} />
+                  <FileText className={cn("size-3.5 shrink-0", sourcesUnusable ? "text-danger" : "text-brand")} />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold text-ink">{doc.name}</span>
                     {sourcesUnusable && (
@@ -580,7 +558,7 @@ export function ResearchSourcesContent({
       )}
 
       {/* Continue action */}
-      <div className="pt-2 flex justify-end">
+      <div className="flex justify-end pt-0.5">
         <Button
           size="sm"
           variant="secondary"
