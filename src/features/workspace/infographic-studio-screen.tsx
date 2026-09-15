@@ -52,21 +52,47 @@ import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 
-/* Layout → Canvas Editor. */
-const CANVAS_OPEN_STEPS: GenerationStep[] = [
-  { label: "Applied the chosen layout to the page", seconds: 1.2 },
-  { label: "Fitted headline, stat and body copy to their blocks", seconds: 1.6 },
-  { label: "Reserved space for art, charts and fair balance", seconds: 1.4 },
-  { label: "Queued art layers for background render", seconds: 1.2 },
-];
+/* Layout → Canvas Editor, reported per page and per block. */
+function canvasOpenSteps(pageCount: number, blockCount: number): GenerationStep[] {
+  const perPage: GenerationStep[] = [];
+  for (let p = 1; p <= pageCount; p += 1) {
+    for (let b = 1; b <= blockCount; b += 1) {
+      perPage.push({ label: `Page ${p} — composed block ${b} of ${blockCount}`, seconds: 0.3 });
+    }
+  }
+  return [
+    { label: "Applied the chosen layout", seconds: 0.5 },
+    { label: "Resolved page shape and print margins", seconds: 0.4 },
+    { label: "Fitted the approved copy to the composition", seconds: 0.55 },
+    ...perPage,
+    { label: "Reserved space for charts and figures", seconds: 0.45 },
+    { label: "Placed the brand mark & fair balance band", seconds: 0.45 },
+    { label: "Queued art layers for background render", seconds: 0.5 },
+  ];
+}
 
-/* Canvas Editor → Share & Review. */
-const PROOF_RENDER_STEPS: GenerationStep[] = [
-  { label: "Validated 214 FDA dossier claims", seconds: 1.3 },
-  { label: "Synthesized high-res vectors & layout", seconds: 1.7 },
-  { label: "Rendered art layers at 300 DPI", seconds: 1.5 },
-  { label: "Grounded ISI fair balance & leave-behind", seconds: 1.3 },
-];
+/* Canvas Editor → Share & Review, reported per page and per art layer. */
+function proofRenderSteps(pageCount: number, artCount: number): GenerationStep[] {
+  const perArt: GenerationStep[] = [];
+  for (let i = 1; i <= artCount; i += 1) {
+    perArt.push({ label: `Rendered art layer ${i} at 300 DPI`, seconds: 0.34 });
+  }
+  const perPage: GenerationStep[] = [];
+  for (let p = 1; p <= pageCount; p += 1) {
+    perPage.push({ label: `Page ${p} — flattened vectors & type`, seconds: 0.36 });
+    perPage.push({ label: `Page ${p} — proofed colour for print`, seconds: 0.3 });
+  }
+  return [
+    { label: "Validated 214 approved dossier claims", seconds: 0.55 },
+    { label: "Checked every figure against its source", seconds: 0.5 },
+    ...perArt,
+    { label: "Synthesized publication-grade vectors", seconds: 0.6 },
+    ...perPage,
+    { label: "Grounded the ISI fair balance table", seconds: 0.5 },
+    { label: "Embedded fonts & citation footnotes", seconds: 0.45 },
+    { label: "Wrote the print-ready master", seconds: 0.7 },
+  ];
+}
 
 export type CreativeStudioMode = "opening" | "editor" | "generating" | "review";
 
@@ -422,6 +448,14 @@ export function InfographicStudioScreen() {
   }, [pagesList, activePageId]);
 
   const isReview = studioMode === "review";
+  const canvasOpenStepList = useMemo(
+    () => canvasOpenSteps(pagesList.length, BLOCK_ORDER.length),
+    [pagesList.length]
+  );
+  const proofRenderStepList = useMemo(
+    () => proofRenderSteps(pagesList.length, currentPage.art.length),
+    [pagesList.length, currentPage.art.length]
+  );
 
   // Reviewer Comments State
   /* The same records the video studio uses. Anchored to (surface, page,
@@ -1219,14 +1253,14 @@ export function InfographicStudioScreen() {
             <GenerationProgress
               title="Opening the canvas editor..."
               subtitle="Applying the chosen layout and fitting the approved copy into it, before the art starts arriving."
-              steps={CANVAS_OPEN_STEPS}
+              steps={canvasOpenStepList}
               onDone={() => setStudioMode("editor")}
             />
         ) : studioMode === "generating" ? (
             <GenerationProgress
               title="Generating high-resolution creative & proofs..."
               subtitle="Synthesizing publication-grade vectors, clinical PASI 90 stat heroes, and PromoMats-verified claim links."
-              steps={PROOF_RENDER_STEPS}
+              steps={proofRenderStepList}
               onDone={handleProofsRendered}
               footer={
                 <span className="flex items-center gap-1.5 font-medium">

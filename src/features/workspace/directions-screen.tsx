@@ -229,14 +229,30 @@ function sizeForFile(name: string): string {
     : "1.2 MB";
 }
 
-/* Plan → Production Plan. */
-const SCRIPT_BUILD_STEPS: GenerationStep[] = [
-  { label: "Parsed campaign brief & focus topics", seconds: 1.2 },
-  { label: "Read the approved dossier & claims library", seconds: 1.6 },
-  { label: "Synthesized 5-scene clinical narrative", seconds: 2.2 },
-  { label: "Wrote scene narration & visual direction", seconds: 1.8 },
-  { label: "Linked citations to FDA label §5.1", seconds: 1.4 },
-];
+/* Plan → Production Plan. Reported at the granularity the work actually
+   happens at — per scene, per section — rather than as a tidy five. */
+function scriptBuildSteps(sceneCount: number): GenerationStep[] {
+  const scenes: GenerationStep[] = [];
+  for (let i = 1; i <= sceneCount; i += 1) {
+    scenes.push({ label: `Wrote scene ${i} narration`, seconds: 0.34 });
+    scenes.push({ label: `Set scene ${i} visual direction & avoid list`, seconds: 0.28 });
+  }
+  return [
+    { label: "Parsed campaign brief & focus topics", seconds: 0.5 },
+    { label: "Resolved audience, market and intended use", seconds: 0.4 },
+    { label: "Opened the approved dossier", seconds: 0.5 },
+    { label: "Indexed 214 approved claims", seconds: 0.6 },
+    { label: "Read attached files for supporting evidence", seconds: 0.5 },
+    { label: "Chose the narrative arc for this audience", seconds: 0.6 },
+    { label: `Allocated ${sceneCount} scenes against the topic list`, seconds: 0.5 },
+    ...scenes,
+    { label: "Balanced scene timing to the target duration", seconds: 0.45 },
+    { label: "Matched every statement to an approved claim", seconds: 0.6 },
+    { label: "Linked citations to FDA label §5.1", seconds: 0.5 },
+    { label: "Checked fair balance coverage", seconds: 0.45 },
+    { label: "Assembled the production plan", seconds: 0.5 },
+  ];
+}
 
 export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
@@ -271,6 +287,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
      added below it would be a new instance of the bug, not a continuation of
      the old one. */
   const logoUploadRef = useRef<HTMLInputElement>(null);
+  const scriptBuildStepList = useMemo(() => scriptBuildSteps(5), []);
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -1010,7 +1027,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               <GenerationProgress
                 title="Building the production plan..."
                 subtitle="Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims."
-                steps={SCRIPT_BUILD_STEPS}
+                steps={scriptBuildStepList}
                 onDone={handleScriptBuilt}
               />
             ) : (

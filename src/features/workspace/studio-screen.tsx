@@ -150,22 +150,45 @@ function FormattedMessageText({ text }: { text: string }) {
   );
 }
 
-/* Production Plan → Video Editor. */
-const EDITOR_OPEN_STEPS: GenerationStep[] = [
-  { label: "Parsed scene timing & narration", seconds: 1.2 },
-  { label: "Allocated on-screen copy and element boxes", seconds: 1.6 },
-  { label: "Placed avatar, brand mark & fair balance", seconds: 1.4 },
-  { label: "Queued art and motion for background render", seconds: 1.3 },
-];
+/* Production Plan → Video Editor, reported per scene. */
+function editorOpenSteps(sceneCount: number): GenerationStep[] {
+  const perScene: GenerationStep[] = [];
+  for (let i = 1; i <= sceneCount; i += 1) {
+    perScene.push({ label: `Laid out scene ${i} copy & element boxes`, seconds: 0.36 });
+    perScene.push({ label: `Timed scene ${i} entrances and exits`, seconds: 0.26 });
+  }
+  return [
+    { label: "Parsed the production plan", seconds: 0.5 },
+    { label: "Resolved frame size and safe areas", seconds: 0.4 },
+    ...perScene,
+    { label: "Placed the presenter avatar", seconds: 0.45 },
+    { label: "Placed the brand mark & watermark", seconds: 0.4 },
+    { label: "Reserved the fair balance band", seconds: 0.4 },
+    { label: "Queued art layers for background render", seconds: 0.5 },
+    { label: "Queued motion and voiceover jobs", seconds: 0.45 },
+  ];
+}
 
-/* Video Editor → Share & Review. */
-const MASTER_RENDER_STEPS: GenerationStep[] = [
-  { label: "Parsed storyboard scenes & timing", seconds: 1.2 },
-  { label: "Synthesized 3D visual kinematics & lighting", seconds: 1.6 },
-  { label: "Synced clinical voiceover narration", seconds: 1.5 },
-  { label: "Linked citations to FDA label §5.1", seconds: 1.2 },
-  { label: "Final cloud master render", seconds: 2.2 },
-];
+/* Video Editor → Share & Review, reported per scene. */
+function masterRenderSteps(sceneCount: number, cinematic: boolean): GenerationStep[] {
+  const perScene: GenerationStep[] = [];
+  for (let i = 1; i <= sceneCount; i += 1) {
+    perScene.push({ label: `Rendered scene ${i} visual kinematics`, seconds: 0.32 });
+    perScene.push({ label: `Synced scene ${i} voiceover to frame`, seconds: 0.24 });
+  }
+  return [
+    { label: "Parsed storyboard scenes & timing", seconds: 0.5 },
+    { label: "Allocated cloud render workers", seconds: 0.45 },
+    { label: `Set output profile — ${cinematic ? "Cinematic 4K" : "HD Motion"}`, seconds: 0.4 },
+    ...perScene,
+    { label: "Built 3D lighting and camera passes", seconds: 0.6 },
+    { label: "Mixed the voiceover bed", seconds: 0.45 },
+    { label: "Burned in subtitles & on-screen copy", seconds: 0.5 },
+    { label: "Linked citations to FDA label §5.1", seconds: 0.45 },
+    { label: "Verified fair balance across every scene", seconds: 0.5 },
+    { label: "Encoded the final master", seconds: 0.8 },
+  ];
+}
 
 export function StudioScreen() {
   const {
@@ -295,6 +318,11 @@ export function StudioScreen() {
   const isEditor = studioMode === "editor";
   const isGenerating = studioMode === "generating";
   const isOpeningEditor = studioMode === "opening-editor";
+  const editorOpenStepList = useMemo(() => editorOpenSteps(sceneList.length), [sceneList.length]);
+  const masterRenderStepList = useMemo(
+    () => masterRenderSteps(sceneList.length, selectedQuality === "cinematic"),
+    [sceneList.length, selectedQuality]
+  );
   const isReview = studioMode === "review";
 
   const brandName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
@@ -1354,14 +1382,14 @@ export function StudioScreen() {
               <GenerationProgress
                 title="Opening the video editor..."
                 subtitle={`Laying out ${sceneList.length} scenes, their timing and their on-screen copy, before the media starts arriving.`}
-                steps={EDITOR_OPEN_STEPS}
+                steps={editorOpenStepList}
                 onDone={handleEditorReady}
               />
             ) : isGenerating ? (
               <GenerationProgress
                 title="Generating high-resolution video master..."
                 subtitle={`Synthesizing kinematic 3D scene models, rendering voiceover audio sync, and verifying fair balance across all ${sceneList.length} scenes.`}
-                steps={MASTER_RENDER_STEPS}
+                steps={masterRenderStepList}
                 onDone={handleMasterRendered}
                 footer={
                   <span className="flex items-center gap-1.5 font-medium">
