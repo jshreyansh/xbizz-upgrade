@@ -65,7 +65,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
-import { ScriptSceneCard } from "@/features/workspace/script-scene-card";
+import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
@@ -1211,11 +1211,11 @@ export function StudioScreen() {
           </div>
 
           <div className="ml-6 hidden items-center gap-1 sm:flex">
-            {studioMode === "scenes" && <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">Script View</span>}
+            {studioMode === "scenes" && <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">Production Plan</span>}
             {studioMode === "editor" && (
               <div className="flex items-center gap-1.5">
                 <button onClick={handleReturnToScript} className="focus-ring flex items-center gap-1.5 rounded-chip border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer">
-                  <FileText className="size-3.5 text-brand" /> <span>Script View</span>
+                  <FileText className="size-3.5 text-brand" /> <span>Production Plan</span>
                 </button>
                 <span className="text-ink-3">/</span>
                 <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">Canvas Editor</span>
@@ -1403,21 +1403,23 @@ export function StudioScreen() {
                   <div className="flex items-center justify-between pb-4 shrink-0">
                     <div>
                       <h2 className="text-display font-[850] text-ink tracking-tight">
-                        Script
+                        Production Plan
                       </h2>
                       <p className="text-body text-ink-3 mt-0.5">
-                        Review and shape the clinical narrative before generating the full visual canvas.
+                        Review the clinical narrative before generating the full visual canvas.
                       </p>
                     </div>
-                    <Button
-                      type="button"
-                      onClick={handleAddDirectScriptScene}
-                      size="sm"
-                      className="bg-card border border-hair text-ink hover:border-brand hover:bg-tint hover:text-brand-deep font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
-                    >
-                      <Plus className="size-3.5 text-brand" />
-                      <span>Add Script Scene</span>
-                    </Button>
+                    {SCRIPT_EDITING_ENABLED && (
+                      <Button
+                        type="button"
+                        onClick={handleAddDirectScriptScene}
+                        size="sm"
+                        className="bg-card border border-hair text-ink hover:border-brand hover:bg-tint hover:text-brand-deep font-bold shadow-2xs transition-all gap-1.5 cursor-pointer shrink-0"
+                      >
+                        <Plus className="size-3.5 text-brand" />
+                        <span>Add Script Scene</span>
+                      </Button>
+                    )}
                   </div>
                 )}
 
@@ -1529,14 +1531,16 @@ export function StudioScreen() {
                           />
                         ))}
 
-                        <button
-                          type="button"
-                          onClick={handleAddDirectScriptScene}
-                          className="flex w-full items-center justify-center gap-2 rounded-panel border-2 border-dashed border-hair-2 p-4 text-body font-bold text-ink-2 hover:border-brand hover:bg-tint/50 hover:text-brand-deep transition-all cursor-pointer shadow-2xs"
-                        >
-                          <Plus className="size-4 text-brand" />
-                          <span>Add Script Scene</span>
-                        </button>
+                        {SCRIPT_EDITING_ENABLED && (
+                          <button
+                            type="button"
+                            onClick={handleAddDirectScriptScene}
+                            className="flex w-full items-center justify-center gap-2 rounded-panel border-2 border-dashed border-hair-2 p-4 text-body font-bold text-ink-2 hover:border-brand hover:bg-tint/50 hover:text-brand-deep transition-all cursor-pointer shadow-2xs"
+                          >
+                            <Plus className="size-4 text-brand" />
+                            <span>Add Script Scene</span>
+                          </button>
+                        )}
                       </>
                     )}
                 </div>

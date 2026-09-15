@@ -154,6 +154,18 @@ export function CitationPill({ citations, onDetails }: { citations: SceneCitatio
   );
 }
 
+/**
+ * Editing a scene in place is off until the step is finished.
+ *
+ * Adding and rewriting a scene here has to reconcile with the claims bound to
+ * it, the timing of the scenes around it, and what the chat already knows
+ * about the plan — none of which is wired yet. A control that half-works is
+ * worse than one that is not there, so both the per-scene Edit and the two
+ * "Add Script Scene" buttons are hidden behind this one flag. Flip it to true
+ * to bring all three back.
+ */
+export const SCRIPT_EDITING_ENABLED = false;
+
 export interface ScriptSceneCardProps {
   scene: Scene;
   /** In the chat's scope, so the next instruction applies to it. */
@@ -284,20 +296,22 @@ export function ScriptSceneCard({
           </span>
           <div className="flex items-center gap-2">
             <span className="text-caption font-semibold tabular-nums text-ink-4">{words} words</span>
-            <button
-              type="button"
-              onClick={(e) => { stop(e); onToggleEdit(); }}
-              disabled={pending}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-glyph px-2 py-0.5 text-caption font-bold transition-colors cursor-pointer disabled:pointer-events-none disabled:opacity-40",
-                editing
-                  ? "bg-brand text-white hover:bg-brand-deep"
-                  : "text-ink-3 hover:bg-tint hover:text-brand"
-              )}
-            >
-              {editing ? <Check className="size-3" /> : <Pencil className="size-3" />}
-              <span>{editing ? "Save" : "Edit"}</span>
-            </button>
+            {SCRIPT_EDITING_ENABLED && (
+              <button
+                type="button"
+                onClick={(e) => { stop(e); onToggleEdit(); }}
+                disabled={pending}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-glyph px-2 py-0.5 text-caption font-bold transition-colors cursor-pointer disabled:pointer-events-none disabled:opacity-40",
+                  editing
+                    ? "bg-brand text-white hover:bg-brand-deep"
+                    : "text-ink-3 hover:bg-tint hover:text-brand"
+                )}
+              >
+                {editing ? <Check className="size-3" /> : <Pencil className="size-3" />}
+                <span>{editing ? "Save" : "Edit"}</span>
+              </button>
+            )}
           </div>
         </div>
 
