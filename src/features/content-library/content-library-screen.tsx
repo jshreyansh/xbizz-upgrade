@@ -323,25 +323,30 @@ export function ContentLibraryScreen() {
                       {a.spec}
                     </span>
                   )}
-                </div>
-
-                {view !== "list" && <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />}
-
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 12, color: "var(--ink-4)" }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 10, whiteSpace: "nowrap" }}>
+                  {/* Counts sit with the chips rather than in the footer: the
+                      footer has a date and an action in it, and three things
+                      on one card-width line is what pushed the action out. */}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 9, fontSize: 12, color: "var(--ink-4)", paddingLeft: 2 }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
                       <Eye size={12} /> {a.views}
                     </span>
                     {a.comments > 0 && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--brand)" , fontWeight: 700 }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--brand)", fontWeight: 700 }}>
                         <MessageSquare size={12} /> {a.comments}
                       </span>
                     )}
-                    {view !== "list" && <span>{a.updated}</span>}
+                  </span>
+                </div>
+
+                {view !== "list" && <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />}
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 12, color: "var(--ink-4)", minWidth: 0 }}>
+                  <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {a.updated}
                   </span>
                   <span
                     className="group-hover:gap-2"
-                    style={{ color: "var(--brand)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4, transition: "gap .2s var(--e)", whiteSpace: "nowrap" }}
+                    style={{ color: "var(--brand)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4, transition: "gap .2s var(--e)", whiteSpace: "nowrap", flexShrink: 0 }}
                   >
                     Open review →
                   </span>
