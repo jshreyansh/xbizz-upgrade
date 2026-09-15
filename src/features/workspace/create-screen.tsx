@@ -4,9 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
-  Check,
   ChevronDown,
-  ChevronRight,
   FileText,
   Film,
   FlaskConical,
@@ -14,11 +12,9 @@ import {
   Image as ImageIcon,
   Info,
   Layers,
-  Monitor,
+  Maximize2,
   MoreHorizontal,
-  Palette,
   Paperclip,
-  Plus,
   Redo2,
   Search,
   ShieldCheck,
@@ -39,13 +35,28 @@ import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
-import type { PlanningSource, Audience } from "@/types/content";
+import type { PlanningSource } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { AUDIENCE_OPTIONS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
 import {
   ProjectContextModal,
   type ContextField,
 } from "@/features/workspace/project-context-modal";
+
+type AttachmentKind = "image" | "video" | "doc";
+
+interface LocalAttachment {
+  id: string;
+  name: string;
+  kind: AttachmentKind;
+  previewUrl?: string;
+}
+
+function attachmentKind(file: File): AttachmentKind {
+  if (file.type.startsWith("image/")) return "image";
+  if (file.type.startsWith("video/")) return "video";
+  return "doc";
+}
 
 const VIDEO_HEADLINES = [
   "What video would you like to create today?",
@@ -112,8 +123,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     topics,
     format,
     pageShape,
-    infographicPages,
-    infographicTemplate,
     selectedSourceIds,
     demoScenarioId,
     setBrief,
@@ -122,8 +131,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setIntendedUse,
     setFormat,
     setPageShape,
-    setInfographicPages,
-    setInfographicTemplate,
     setTopics,
     setDuration,
     setLanguage,
@@ -147,13 +154,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const [scenarioLibraryOpen, setScenarioLibraryOpen] = useState(false);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
   const [activePopover, setActivePopover] = useState<"engine" | "aspect" | "pageshape" | "audience" | "topics" | "character" | "pages" | "template" | null>(null);
-  const [plusMenuOpen, setPlusMenuOpen] = useState(false);
-  const [activeTier2, setActiveTier2] = useState<"engine" | "aspect" | "audience" | "topics" | "character" | "template" | null>(null);
   const [selectedPresenterId, setSelectedPresenterId] = useState<string>("maya");
   const selectedPresenter = PRESENTERS.find((p) => p.id === selectedPresenterId) || PRESENTERS[0];
   const [sourceQuery, setSourceQuery] = useState("");
   const [clarificationOpen, setClarificationOpen] = useState(false);
-  const [localFiles, setLocalFiles] = useState<string[]>([]);
+  const [localFiles, setLocalFiles] = useState<LocalAttachment[]>([]);
+  const [previewFile, setPreviewFile] = useState<LocalAttachment | null>(null);
 
   // ── Typewriter Animated Switching Headline Hook ──
   const [headlineIndex, setHeadlineIndex] = useState(0);
@@ -199,13 +205,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const setSourcePayload = useWorkspaceStore((s) => s.setSourcePayload);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
 
-  const toggleTopic = (topic: string) => {
-    if (topics.includes(topic)) {
-      setTopics(topics.filter((t) => t !== topic));
-    } else {
-      setTopics([...topics, topic]);
-    }
-  };
 
   const selectedSources = planningSources.filter((source) => selectedSourceIds.includes(source.id));
   const requestIsSpecific = isRequestSpecific(brief);
@@ -214,15 +213,46 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     return query ? planningSources.filter((source) => `${source.name} ${source.detail}`.toLowerCase().includes(query)) : planningSources;
   }, [sourceQuery]);
 
-  const removeAttachment = (target: string) => {
-    setLocalFiles((current) => current.filter((file) => file !== target));
+  // Attachments live only as long as this screen; free their URLs with it.
+  const localFilesRef = useRef<LocalAttachment[]>([]);
+  useEffect(() => {
+    localFilesRef.current = localFiles;
+  }, [localFiles]);
+  useEffect(
+    () => () => {
+      localFilesRef.current.forEach((file) => {
+        if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+      });
+    },
+    []
+  );
+
+  const removeAttachment = (target: LocalAttachment) => {
+    // The object URL is ours; nothing else can free it.
+    if (target.previewUrl) URL.revokeObjectURL(target.previewUrl);
+    setPreviewFile((open) => (open?.id === target.id ? null : open));
+    setLocalFiles((current) => current.filter((file) => file.id !== target.id));
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
-    const names = files.map((file) => file.name);
-    setLocalFiles((current) => [...current, ...names.filter((name) => !current.includes(name))]);
+    setLocalFiles((current) => {
+      const known = new Set(current.map((file) => file.name));
+      const added = files
+        .filter((file) => !known.has(file.name))
+        .map((file) => {
+          const kind = attachmentKind(file);
+          return {
+            id: `${file.name}-${file.size}-${file.lastModified}`,
+            name: file.name,
+            kind,
+            // Only media earns a URL — a docx preview is just its name.
+            previewUrl: kind === "doc" ? undefined : URL.createObjectURL(file),
+          } satisfies LocalAttachment;
+        });
+      return [...current, ...added];
+    });
     event.target.value = "";
   };
 
@@ -525,18 +555,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               })}
               {localFiles.map((file) => (
                 <AttachmentChip
-                  key={file}
-                  label={file}
-                  onRemove={() => setLocalFiles((prev) => prev.filter((f) => f !== file))}
+                  key={file.id}
+                  file={file}
+                  onOpen={file.kind === "doc" ? undefined : () => setPreviewFile(file)}
+                  onRemove={() => removeAttachment(file)}
                 />
               ))}
-
-              {/* A status, not a control — which is why it is the one thing
-                  here you cannot click. */}
-              <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-chip border border-ok-line bg-ok-bg px-2.5 py-1 text-label font-bold text-ok">
-                <span className="size-1.5 rounded-full bg-ok" />
-                Grounding Locked
-              </span>
             </div>
 
             <div className="p-6 pb-3">
@@ -552,332 +576,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               />
             </div>
 
-            {/* Attached local files preview if any */}
-            {localFiles.length > 0 && (
-              <div className="px-6 pb-2.5 flex flex-wrap gap-1.5">
-                {localFiles.map((file) => (
-                  <span key={file} className="inline-flex items-center gap-1.5 rounded-chip bg-[#edf1f4] px-2.5 py-1 text-label font-medium text-ink-3 border border-hair">
-                    <Paperclip className="size-3" />
-                    <span className="max-w-[160px] truncate">{file}</span>
-                    <button onClick={() => removeAttachment(file)} className="hover:text-black cursor-pointer"><X className="size-3" /></button>
-                  </span>
-                ))}
-              </div>
-            )}
-
             {/* Bottom Toolbar */}
             <div
               className="relative flex items-center justify-between gap-2 border-t border-hair bg-canvas/95 px-3.5 py-2.5 rounded-b-[26px]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-2">
-                {/* + Plus Button — Files, Audience, Aspect Ratio, Clinical Topics only */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPlusMenuOpen(!plusMenuOpen);
-                      setActiveTier2(activeTier2 || "audience");
-                    }}
-                    title="Configure audience, topics & aspect ratio"
-                    aria-label="Add options"
-                    className={cn(
-                      "grid size-8 place-items-center rounded-control border transition-all cursor-pointer shadow-2xs shrink-0",
-                      plusMenuOpen
-                        ? "border-brand bg-brand text-white ring-2 ring-brand/15 shadow-xs"
-                        : "border-hair-2 bg-card text-ink-3 hover:text-brand hover:border-brand hover:bg-card"
-                    )}
-                  >
-                    <Plus className={cn("size-4 transition-transform duration-200", plusMenuOpen && "rotate-45")} />
-                  </button>
-
-                  {plusMenuOpen && (
-                    <div className="absolute bottom-full left-0 mb-2.5 z-50 w-56 rounded-panel border border-hair-2 bg-card p-1.5 shadow-float space-y-0.5">
-                      {/* 1. Attach Files */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPlusMenuOpen(false);
-                          fileInputRef.current?.click();
-                        }}
-                        className="flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-body font-medium text-ink hover:bg-black/5 text-left cursor-pointer transition-colors"
-                      >
-                        <Paperclip className="size-4 text-brand shrink-0" />
-                        <span className="flex-1">Add files or briefs</span>
-                      </button>
-
-                      <div className="h-px w-full bg-black/6 my-1" />
-
-                      {/* 2. Target Audience */}
-                      <button
-                        type="button"
-                        onMouseEnter={() => setActiveTier2("audience")}
-                        onClick={() => setActiveTier2(activeTier2 === "audience" ? null : "audience")}
-                        className={cn(
-                          "flex w-full items-center justify-between rounded-control px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
-                          activeTier2 === "audience"
-                            ? "bg-tint text-brand-deep font-bold shadow-2xs"
-                            : "text-ink hover:bg-black/5"
-                        )}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Users className="size-4 text-brand shrink-0" />
-                          <span>Target Audience</span>
-                        </div>
-                        <ChevronRight className="size-3.5 opacity-60" />
-                      </button>
-
-                      {/* 3. Output Size & Aspect */}
-                      <button
-                        type="button"
-                        onMouseEnter={() => setActiveTier2("aspect")}
-                        onClick={() => setActiveTier2(activeTier2 === "aspect" ? null : "aspect")}
-                        className={cn(
-                          "flex w-full items-center justify-between rounded-control px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
-                          activeTier2 === "aspect"
-                            ? "bg-tint text-brand-deep font-bold shadow-2xs"
-                            : "text-ink hover:bg-black/5"
-                        )}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Monitor className="size-4 text-brand shrink-0" />
-                          <span>Size &amp; Aspect Ratio</span>
-                        </div>
-                        <ChevronRight className="size-3.5 opacity-60" />
-                      </button>
-
-                      {/* 4. Clinical Focus Topics */}
-                      <button
-                        type="button"
-                        onMouseEnter={() => setActiveTier2("topics")}
-                        onClick={() => setActiveTier2(activeTier2 === "topics" ? null : "topics")}
-                        className={cn(
-                          "flex w-full items-center justify-between rounded-control px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
-                          activeTier2 === "topics"
-                            ? "bg-tint text-brand-deep font-bold shadow-2xs"
-                            : "text-ink hover:bg-black/5"
-                        )}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Layers className="size-4 text-brand shrink-0" />
-                          <span>Clinical Topics</span>
-                        </div>
-                        <ChevronRight className="size-3.5 opacity-60" />
-                      </button>
-
-                      {/* Infographic Layout / Templates */}
-                      {isInfographic && (
-                        <button
-                          type="button"
-                          onMouseEnter={() => setActiveTier2("template")}
-                          onClick={() => setActiveTier2(activeTier2 === "template" ? null : "template")}
-                          className={cn(
-                            "flex w-full items-center justify-between rounded-control px-2.5 py-2 text-body font-medium transition-colors text-left cursor-pointer",
-                            activeTier2 === "template"
-                              ? "bg-tint text-brand-deep font-bold shadow-2xs"
-                              : "text-ink hover:bg-black/5"
-                          )}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Palette className="size-4 text-brand shrink-0" />
-                            <span>Design &amp; Layout</span>
-                          </div>
-                          <ChevronRight className="size-3.5 opacity-60" />
-                        </button>
-                      )}
-
-                      {/* Tier 2 submenu */}
-                      {activeTier2 && (
-                        <div className="absolute left-full bottom-0 ml-2 w-[310px] rounded-panel border border-hair-2 bg-card p-2.5 shadow-float flex flex-col justify-start before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3">
-                          {activeTier2 === "audience" && (
-                            <div className="space-y-1">
-                              <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
-                                <span>Target Audience</span>
-                                <span className="text-ok font-bold uppercase">{audience}</span>
-                              </div>
-                              {[
-                                { id: "HCP", label: "HCP", desc: "Doctors, Specialists, Key Opinion Leaders" },
-                                { id: "Patient", label: "Patients", desc: "Treatment understanding, adherence" },
-                                { id: "Field team", label: "Field Force", desc: "Detailing aids & objection handling" },
-                                { id: "Hospital", label: "Hospital Procurement", desc: "Formulary decisions, HEOR, budget impact" },
-                                { id: "Distributor", label: "Distributors", desc: "Trade, supply chain, market access" },
-                                { id: "Consumer", label: "Consumers", desc: "General public & symptom awareness" },
-                              ].map((item) => {
-                                const isSelected = audience === item.id;
-                                return (
-                                  <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setAudience(item.id as Audience);
-                                    }}
-                                    className={cn(
-                                      "flex w-full items-center justify-between p-2 rounded-control text-left transition-colors cursor-pointer",
-                                      isSelected
-                                        ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
-                                        : "hover:bg-black/5 text-ink border border-transparent"
-                                    )}
-                                  >
-                                    <div>
-                                      <div className="text-body font-bold">{item.label}</div>
-                                      <div className="text-caption text-ink-3 font-normal">{item.desc}</div>
-                                    </div>
-                                    {isSelected && <Check className="size-3.5 text-brand stroke-[3]" />}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {activeTier2 === "aspect" && (
-                            <div className="space-y-1">
-                              <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
-                                <span>{isInfographic ? "Infographic Shape" : "Video Aspect Ratio"}</span>
-                                <span className="text-ok font-bold uppercase">
-                                  {isInfographic ? pageShape : format || "16:9"}
-                                </span>
-                              </div>
-                              {(isInfographic
-                                ? [
-                                    { id: "3:4", label: "3:4 Tablet Detailer", desc: "Held upright & iPad friendly" },
-                                    { id: "16:9", label: "16:9 Landscape Slide", desc: "Screens & presentations" },
-                                    { id: "A4", label: "A4 Print Document", desc: "Print leave-behind standard" },
-                                  ]
-                                : [
-                                    { id: "16:9", label: "16:9 Landscape", desc: "Widescreen HCP meetings & CLM" },
-                                    { id: "9:16", label: "9:16 Vertical", desc: "Instagram Reels & mobile feed" },
-                                    { id: "1:1", label: "1:1 Square", desc: "LinkedIn & social engagement" },
-                                  ]
-                              ).map((item) => {
-                                const isSelected = isInfographic ? pageShape === item.id : format === item.id;
-                                return (
-                                  <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => {
-                                      if (isInfographic) setPageShape(item.id as any);
-                                      else setFormat(item.id);
-                                    }}
-                                    className={cn(
-                                      "flex w-full items-center justify-between p-2 rounded-control text-left transition-colors cursor-pointer",
-                                      isSelected
-                                        ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
-                                        : "hover:bg-black/5 text-ink border border-transparent"
-                                    )}
-                                  >
-                                    <div>
-                                      <div className="text-body font-bold">{item.label}</div>
-                                      <div className="text-caption text-ink-3 font-normal">{item.desc}</div>
-                                    </div>
-                                    {isSelected && <Check className="size-3.5 text-brand stroke-[3]" />}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {activeTier2 === "topics" && (
-                            <div className="space-y-1">
-                              <div className="px-2 py-1 text-caption font-extrabold uppercase tracking-wider text-ink-3 flex items-center justify-between">
-                                <span>Clinical Topics</span>
-                                <span className="text-ok font-bold">{topics.length} selected</span>
-                              </div>
-                              {[
-                                "Mechanism of Action",
-                                "Pivotal Trial Data",
-                                "Dosing & Safety",
-                                "Fair Balance & ISI",
-                                "Patient Profile",
-                                "Competitive Context",
-                              ].map((topic) => {
-                                const isSelected = topics.includes(topic);
-                                return (
-                                  <button
-                                    key={topic}
-                                    type="button"
-                                    onClick={() => toggleTopic(topic)}
-                                    className={cn(
-                                      "flex w-full items-center justify-between p-2 rounded-control text-left transition-colors cursor-pointer",
-                                      isSelected
-                                        ? "bg-tint font-bold text-brand-deep border border-tint-line shadow-2xs"
-                                        : "hover:bg-black/5 text-ink border border-transparent"
-                                    )}
-                                  >
-                                    <span className="text-body">{topic}</span>
-                                    {isSelected && <Check className="size-3.5 text-brand stroke-[3]" />}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {activeTier2 === "template" && isInfographic && (
-                            <div className="space-y-2">
-                              <div className="space-y-1">
-                                <div className="px-2 py-0.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">
-                                  Pages Count
-                                </div>
-                                <div className="grid grid-cols-2 gap-1.5">
-                                  {[
-                                    { id: "1", label: "1 Page" },
-                                    { id: "2", label: "2 Pages" },
-                                  ].map((item) => (
-                                    <button
-                                      key={item.id}
-                                      type="button"
-                                      onClick={() => setInfographicPages(item.id as "1" | "2")}
-                                      className={cn(
-                                        "p-2 rounded-control text-center text-label font-bold border transition-colors cursor-pointer",
-                                        infographicPages === item.id
-                                          ? "border-brand bg-tint text-brand-deep"
-                                          : "border-hair-2 bg-card hover:bg-black/5 text-ink"
-                                      )}
-                                    >
-                                      {item.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="space-y-1 pt-1 border-t border-hair">
-                                <div className="px-2 py-0.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">
-                                  Design Template
-                                </div>
-                                {[
-                                  { id: "stat-hero", label: "Stat Hero" },
-                                  { id: "trial-summary", label: "Trial Summary" },
-                                  { id: "bench-data", label: "Bench Data" },
-                                  { id: "moa-scroll", label: "Anatomy & MoA" },
-                                ].map((item) => (
-                                  <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => setInfographicTemplate(item.id as any)}
-                                    className={cn(
-                                      "flex w-full items-center justify-between p-1.5 px-2.5 rounded-chip text-left text-label transition-colors cursor-pointer",
-                                      infographicTemplate === item.id
-                                        ? "bg-tint font-bold text-brand-deep"
-                                        : "hover:bg-black/5 text-ink"
-                                    )}
-                                  >
-                                    <span>{item.label}</span>
-                                    {infographicTemplate === item.id && <Check className="size-3 text-brand stroke-[3]" />}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
                 {/* Attach file button shortcut */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-chip px-2.5 py-1.5 text-label font-medium text-ink-3 hover:text-brand hover:bg-tint transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 rounded-chip px-2.5 py-1.5 text-label font-medium text-ink-3 hover:text-brand hover:bg-tint transition-colors cursor-pointer"
                 >
                   <Paperclip className="size-3.5" />
                   <span>Attach</span>
@@ -886,10 +595,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
               {/* Far Right Bottom Action: Send Arrow CTA */}
               <div className="flex items-center gap-2.5 ml-auto shrink-0 pl-2">
-                <span className="hidden sm:inline text-caption font-mono text-ink-3">
-                  {brief.length > 0 ? `${brief.length} chars · ⌘↵` : "⌘↵ to send"}
-                </span>
-
                 <button
                   type="button"
                   onClick={preparePlan}
@@ -921,13 +626,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
           {/* ── Example Prompts — BELOW the input ── */}
           <div className="w-full max-w-[940px] flex flex-col gap-3 pt-2">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3">
-                Example Prompts
-              </span>
-              <span className="text-caption text-ink-3">Click any prompt to load into brief</span>
-            </div>
-
             {samplePrompts.map((sample) => {
               const isSelected = brief.trim() === sample.prompt.trim();
               return (
@@ -966,6 +664,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       </main>
 
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
+
+      {previewFile && <AttachmentPreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />}
 
       {/* Brand & Dossier Selection Pop-up Modal */}
       <BrandDossierModal
@@ -1045,15 +745,93 @@ function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: ()
   );
 }
 
-function AttachmentChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+function AttachmentChip({
+  file,
+  onOpen,
+  onRemove,
+}: {
+  file: LocalAttachment;
+  onOpen?: () => void;
+  onRemove: () => void;
+}) {
+  const isMedia = file.kind !== "doc" && Boolean(file.previewUrl);
   return (
-    <span className="flex min-h-9 items-center gap-2 rounded-chip bg-[#edf1f4] px-2.5 text-body font-medium text-ink-3 border border-hair">
-      <Paperclip className="size-3.5 opacity-75" />
-      <span className="max-w-[180px] truncate">{label}</span>
-      <button onClick={onRemove} className="grid size-5 place-items-center rounded-full opacity-60 hover:bg-white/70 hover:opacity-100 transition" aria-label={`Remove ${label}`}>
+    <span className="flex min-h-9 items-center gap-2 rounded-chip border border-hair bg-[#edf1f4] py-1 pl-1 pr-1.5 text-body font-medium text-ink-3">
+      {isMedia ? (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="focus-ring group relative grid size-7 shrink-0 place-items-center overflow-hidden rounded-glyph border border-hair bg-canvas cursor-pointer"
+          aria-label={`Preview ${file.name}`}
+        >
+          {file.kind === "image" ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={file.previewUrl} alt="" className="size-full object-cover" />
+          ) : (
+            <video src={file.previewUrl} muted playsInline className="size-full object-cover" />
+          )}
+          <span className="absolute inset-0 grid place-items-center bg-ink/40 opacity-0 transition-opacity group-hover:opacity-100">
+            <Maximize2 className="size-3 text-white" />
+          </span>
+        </button>
+      ) : (
+        <span className="grid size-7 shrink-0 place-items-center rounded-glyph border border-hair bg-canvas">
+          <Paperclip className="size-3.5 opacity-75" />
+        </span>
+      )}
+      <span className="max-w-[180px] truncate">{file.name}</span>
+      <button
+        onClick={onRemove}
+        className="grid size-5 shrink-0 place-items-center rounded-full opacity-60 transition hover:bg-white/70 hover:opacity-100 cursor-pointer"
+        aria-label={`Remove ${file.name}`}
+      >
         <X className="size-3" />
       </button>
     </span>
+  );
+}
+
+function AttachmentPreviewModal({ file, onClose }: { file: LocalAttachment; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-6 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+      aria-label={file.name}
+      onClick={onClose}
+    >
+      <div
+        className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-hair px-4 py-2.5">
+          <span className="truncate text-body font-semibold text-ink">{file.name}</span>
+          <button
+            onClick={onClose}
+            className="grid size-7 shrink-0 place-items-center rounded-control text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
+            aria-label="Close preview"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+        <div className="grid min-h-0 place-items-center bg-canvas p-4">
+          {file.kind === "image" ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={file.previewUrl} alt={file.name} className="max-h-[70vh] max-w-full object-contain" />
+          ) : (
+            <video src={file.previewUrl} controls autoPlay className="max-h-[70vh] max-w-full" />
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
