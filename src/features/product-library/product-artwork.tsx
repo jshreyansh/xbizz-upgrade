@@ -219,7 +219,40 @@ const PHOTO: Partial<Record<ArtworkKind, string>> = {
   Device: "/products/device.jpg",
 };
 
-export function ProductArtwork({ kind, className }: { kind: ArtworkKind; className?: string }) {
+/** Tighter, single-subject crops of the same photography — for small
+ *  selector chips (the Create Brand dosage-form picker) where a full-bleed
+ *  hero crop reads as a texture rather than a recognizable object. */
+const PHOTO_ICON: Partial<Record<ArtworkKind, string>> = {
+  Tablet: "/products/icons/tablet.jpg",
+  Capsule: "/products/icons/capsule.jpg",
+  Syrup: "/products/icons/syrup.jpg",
+  Injection: "/products/icons/injection.jpg",
+  Device: "/products/icons/device.jpg",
+};
+
+export function ProductArtwork({
+  kind,
+  className,
+  variant = "hero",
+}: {
+  kind: ArtworkKind;
+  className?: string;
+  /** "hero" — the full-bleed floating photo tile used on product cards and
+   *  banners. "icon" — a plain, contained thumbnail for small selector
+   *  chips, sitting flush with whatever card already surrounds it. */
+  variant?: "hero" | "icon";
+}) {
+  if (variant === "icon") {
+    const iconPhoto = PHOTO_ICON[kind];
+    if (iconPhoto) {
+      return (
+        <div className={className}>
+          <img src={iconPhoto} alt="" className="h-full w-full rounded-chip object-cover" />
+        </div>
+      );
+    }
+  }
+
   const photo = PHOTO[kind];
   if (photo) {
     return (

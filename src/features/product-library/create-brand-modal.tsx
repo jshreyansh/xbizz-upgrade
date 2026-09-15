@@ -289,7 +289,7 @@ export function CreateBrandModal({
                           </span>
                         )}
                         <div className="size-10" style={{ filter: isSel ? undefined : "grayscale(.4) opacity(.75)" }}>
-                          <ProductArtwork kind={opt.id} className="h-full w-full" />
+                          <ProductArtwork kind={opt.id} variant="icon" className="h-full w-full" />
                         </div>
                         <span className={cn("text-caption font-bold", isSel ? "text-brand-deep" : "text-ink-3")}>{opt.id}</span>
                         <span className="text-micro text-ink-4">{opt.short}</span>
