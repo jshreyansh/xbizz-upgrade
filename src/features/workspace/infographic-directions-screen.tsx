@@ -18,9 +18,7 @@ import {
   Target,
   Upload,
   Users,
-  X,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
@@ -40,7 +38,7 @@ import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
-import { PlanProgress, PlanStatusChip, planState, type PlanState } from "@/features/workspace/plan-status";
+import { PlanProgress, PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
 import {
@@ -1300,155 +1298,6 @@ export function InfographicDirectionsScreen() {
   );
 }
 
-// ── CreativePlanSection with Zoom & Dimming Focus Animations (Matching Video Flow) ──
-function CreativePlanSection({
-  icon: Icon,
-  title,
-  summary,
-  state,
-  source,
-  error,
-  open,
-  onToggle,
+/** The same shell the video plan uses — this was a second copy of it. */
+const CreativePlanSection = PlanSectionShell;
 
-  children,
-}: {
-  icon: LucideIcon;
-  title: string;
-  summary: string;
-  state: PlanState;
-  /** Where the answer came from — background, muted beside the summary. */
-  source?: string;
-  /** Set when this section is why Confirm refused. */
-  error?: { title: string; detail: string } | null;
-  open: boolean;
-  onToggle: () => void;
-
-  children: React.ReactNode;
-}) {
-  // The glyph follows the state, so the square and the chip cannot disagree
-  // about whether this section is settled.
-  const tone = state === "needs-you" ? "attention" : state === "answered" ? "done" : "default";
-  const needsAttention = state === "needs-you";
-  return (
-    <section
-      className={cn(
-        "squircle-card relative transition-all duration-300 ease-entrance",
-        open
-          ? "z-20 w-full scale-100 border shadow-brand-soft rounded-card my-3.5"
-          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] hover:shadow-xs border rounded-control my-1",
-        /* The tile carries the state, not just the chip on the end of it.
-           A column of identical rows makes you read every chip to find the one
-           that wants something.
-
-           The signal is the edge, not a wash. The canvas behind these rows is
-           already off-white, so a pale tint sits BEHIND plain white and the
-           section asking for attention ends up the quietest thing on screen —
-           which is what the first attempt at this did. White keeps it forward;
-           a saturated border, a ring and a rail make it unmistakable. */
-        /* The rail is the left border itself rather than a bar laid over one.
-           An overlay cannot follow the corner radius — it ran straight past
-           the curve at both ends — where a border is clipped to the shape by
-           definition. */
-        needsAttention
-          ? "border-danger/45 border-l-[3px] border-l-danger bg-card ring-2 ring-danger/10 shadow-[0_6px_22px_-10px_rgba(159,58,56,.45)]"
-          : open
-            ? "border-hair bg-card"
-            : "border-hair bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:border-hair-3"
-      )}
-    >
-      <button
-        onClick={onToggle}
-        className={cn(
-          "focus-ring group flex w-full items-center gap-3 text-left transition-all duration-200 cursor-pointer",
-          open ? "min-h-[70px] px-4 sm:px-5" : "min-h-[44px] py-1.5 px-3 sm:px-3.5"
-        )}
-        aria-expanded={open}
-      >
-        {/* The icon is which section this is; the colour is what state it is
-            in. This square keyed off `open` rather than state, so ANY open
-            section showed a tick — including the one that had not been
-            answered. */}
-        <span
-          className={cn(
-            "squircle-control relative grid shrink-0 place-items-center transition-transform group-hover:scale-105",
-            open ? "size-10 rounded-control" : "size-7 rounded-chip",
-            tone === "attention"
-              ? "bg-danger-bg text-danger"
-              : tone === "done"
-              ? "bg-ok-bg text-ok"
-              : "bg-[#edf3ef] text-brand"
-          )}
-        >
-          <Icon className={cn(open ? "size-[19px]" : "size-3.5")} />
-
-          {/* Open, the state is said outright as well as coloured. Ringed in
-              the card's own background so it reads as a badge on the corner
-              rather than a smudge inside it. */}
-          {open && tone !== "default" && (
-            <span
-              aria-hidden
-              className={cn(
-                "absolute -right-1 -top-1 grid size-[15px] place-items-center rounded-full ring-2 ring-card",
-                tone === "done" ? "bg-ok text-white" : "bg-danger text-white"
-              )}
-            >
-              {tone === "done" ? (
-                <Check className="size-2.5" strokeWidth={3.5} />
-              ) : (
-                <X className="size-2.5" strokeWidth={3.5} />
-              )}
-            </span>
-          )}
-        </span>
-
-        <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              "block font-bold tracking-tight transition-colors leading-snug",
-              open ? "text-subhead text-ink" : "text-body-lg text-ink-2"
-            )}
-          >
-            {title}
-          </span>
-          <span
-            className={cn(
-              "block truncate text-ink-3",
-              open ? "mt-0.5 text-body" : "text-label max-w-[380px]"
-            )}
-          >
-            {summary}
-            {source && <span className="ml-1.5 text-ink-4">· {source}</span>}
-          </span>
-        </span>
-
-        <PlanStatusChip state={state} open={open} />
-
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 text-[#6f7c75] transition-transform duration-200",
-            open && "rotate-180 text-brand"
-          )}
-        />
-      </button>
-
-      {open && (
-        <div className="border-t border-hair px-4 pt-4 pb-5 sm:px-5 animate-in fade-in duration-200">
-          {/* The error sits with the thing that has to change, not in a banner
-              at the top of the page. A plan that bounces back should land you
-              on the decision, already open, with the reason next to it. */}
-          {error && (
-            <div className="mb-3.5 flex items-start gap-2 rounded-control border border-warn-line bg-warn-bg p-3">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warn" />
-              <div className="min-w-0">
-                <div className="text-body font-bold text-warn">{error.title}</div>
-                <p className="mt-0.5 text-label leading-snug text-ink-2">{error.detail}</p>
-              </div>
-            </div>
-          )}
-          {children}
-        </div>
-      )}
-    </section>
-  );
-}

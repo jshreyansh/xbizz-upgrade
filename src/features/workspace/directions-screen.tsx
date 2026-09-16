@@ -38,7 +38,6 @@ import {
   Volume2,
   X,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -53,7 +52,8 @@ import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
-import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
+import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
+import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import {
   buildIntakeQuestions,
@@ -75,7 +75,7 @@ import { PlanSectionContinue } from "@/features/workspace/plan-section-continue"
 import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
-import { PlanProgress, PlanStatusChip, planState, type PlanState } from "@/features/workspace/plan-status";
+import { PlanProgress, PlanSectionShell, planState } from "@/features/workspace/plan-status";
 
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets" | "logo";
 
@@ -201,10 +201,20 @@ const profiles: Record<AssetType, {
 };
 
 /** The files a plan starts with when its use case does not say otherwise. */
-function defaultUploadedDocs(brand: string) {
+function defaultUploadedDocs(brand: string): UploadedDoc[] {
   return [
-    { name: `${brand || "Brand"}_Clinical_Study_Report_Phase3.pdf`, size: "4.2 MB", date: "Today" },
-    { name: `${brand || "Brand"}_Core_Visual_Aid_Brief.docx`, size: "840 KB", date: "Today" },
+    {
+      name: `${brand || "Brand"}_Clinical_Study_Report_Phase3.pdf`,
+      size: "4.2 MB",
+      date: "Today",
+      note: "Primary endpoint tables — ground the efficacy claims in these",
+    },
+    {
+      name: `${brand || "Brand"}_Core_Visual_Aid_Brief.docx`,
+      size: "840 KB",
+      date: "Today",
+      note: "Approved wording and tone for HCP-facing copy",
+    },
   ];
 }
 
@@ -293,6 +303,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
      answered "Velmora" for every brand it had not heard of. Hoisted with the
      other hooks, above the early return. */
   const resolvedBrandName = useBrandName(useWorkspaceStore((st) => st.sourcePayload?.dossierId));
+  /* A packshot picked but not yet attached — waiting on what it is for.
+     Hoisted with the other hooks, above the early return at the top. */
+  const [pendingMedia, setPendingMedia] = useState<
+    Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string }>
+  >([]);
+  const [editingMedia, setEditingMedia] = useState<{ id: string; name: string; note: string } | null>(null);
   const [intakeIndex, setIntakeIndex] = useState(0);
   const [intakeAnswers, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
   const flowSteps = useVideoSteps({});
@@ -404,7 +420,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   // Dynamic Product Media Assets: Starts EMPTY by default
   const [productMediaList, setProductMediaList] = useState<
-    Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string }>
+    Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string; note?: string }>
   >([]);
 
   const isProductFocus =
@@ -421,7 +437,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const [openOverride, setOpenOverride] = useState<PlanSectionId | null | undefined>(undefined);
   const setOpenSection = setOpenOverride;
   const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
-  const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>(
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>(
     () => defaultUploadedDocs(brandName)
   );
   const [previewDossier, setPreviewDossier] = useState<DossierPreviewData | null>(null);
@@ -503,7 +519,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     const docs = scenario.inputs.uploadedDocs;
     setUploadedDocs(
       docs
-        ? docs.map((name) => ({ name, size: sizeForFile(name), date: "Today" }))
+        ? docs.map((name) => ({
+            name,
+            size: sizeForFile(name),
+            date: "Today",
+            note: "Attached with the brief",
+          }))
         // A case that says nothing about attachments means the user has their
         // normal working files — not whichever files the last case left behind.
         : defaultUploadedDocs(brandName)
@@ -837,8 +858,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       addChatMessage({
         role: "swishx",
         text: requestTooVague
-          ? `Before I write anything: this request doesn't say what the asset has to do. Tell me the communication job — who it is for and what it has to land — with **Add more → Edit the prompt**.`
-          : `I can't build a script yet — there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Add more → Edit the prompt** to give me the context in words.`,
+          ? `Before I write anything: this request doesn't say what the asset has to do. Tell me the communication job — who it is for and what it has to land — with **Edit the prompt**, in Research and Sources.`
+          : `I can't build a script yet — there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Edit the prompt** in Research and Sources to give me the context in words.`,
       });
       return;
     }
@@ -864,7 +885,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         setOpenSection("sources");
         addChatMessage({
           role: "swishx",
-          text: `I read every attached file and found nothing a claim can be grounded in, so I've stopped before the script — they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Add more → Edit the prompt** to supply the context directly.`,
+          text: `I read every attached file and found nothing a claim can be grounded in, so I've stopped before the script — they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Edit the prompt** in Research and Sources to supply the context directly.`,
         });
       }, 1400);
       return;
@@ -1579,7 +1600,26 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               <span className="block truncate text-body font-bold text-ink">
                                 {media.name}
                               </span>
-                              <span className="text-caption text-ink-3 block mt-0.5 font-medium">
+                              {/* What you said it is for, on the asset itself. */}
+                              {media.note && (
+                                <span className="mt-0.5 flex items-start gap-1 text-caption text-ink-3">
+                                  <span className="line-clamp-2 min-w-0 flex-1" title={media.note}>
+                                    {media.note}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setEditingMedia({ id: media.id, name: media.name, note: media.note ?? "" })
+                                    }
+                                    aria-label={`Edit note on ${media.name}`}
+                                    title="Edit note"
+                                    className="grid size-4 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-brand"
+                                  >
+                                    <Pencil className="size-2.5" />
+                                  </button>
+                                </span>
+                              )}
+                              <span className="text-caption text-ink-4 block mt-0.5 font-medium">
                                 {media.size} · Uploaded
                               </span>
                             </div>
@@ -1589,14 +1629,18 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         <button
                           type="button"
                           onClick={() => {
-                            const sampleItem = {
-                              id: `media-${Date.now()}`,
-                              name: "Velmora_Autoinjector_3D_Packshot.png",
-                              type: "image" as const,
-                              preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
-                              size: "4.2 MB",
-                            };
-                            setProductMediaList((prev) => [...prev, sampleItem]);
+                            /* Held, not attached: what the packshot is for is
+                               asked before it joins the plan, the same as a
+                               source file. */
+                            setPendingMedia([
+                              {
+                                id: `media-${Date.now()}`,
+                                name: `${brandName}_Autoinjector_3D_Packshot.png`,
+                                type: "image" as const,
+                                preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                                size: "4.2 MB",
+                              },
+                            ]);
                           }}
                           className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-control border-2 border-dashed border-brand/20 bg-card p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
                         >
@@ -1627,10 +1671,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           setProductMediaList([
                             {
                               id: `media-${Date.now()}`,
-                              name: "Velmora_Autoinjector_3D_Packshot.png",
+                              name: `${brandName}_Autoinjector_3D_Packshot.png`,
                               type: "image",
                               preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
                               size: "4.2 MB",
+                              note: "Hero packshot — the pack as it should appear in product scenes",
                             },
                           ]);
                         }
@@ -2255,6 +2300,40 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       overlay={
         <>
           {/* ── Modals & Drawers ── */}
+          {pendingMedia.length > 0 && (
+            <FileNoteDialog
+              files={pendingMedia.map((m) => ({ id: m.id, name: m.name, kind: "media" as const }))}
+              title="What is this asset for?"
+              prompt="A note travels with each asset, so it is placed where you meant it rather than wherever it fits."
+              placeholder="e.g. the hero packshot — front of pack, use it in the opening scene"
+              onCancel={() => setPendingMedia([])}
+              onConfirm={(notes) => {
+                setProductMediaList((prev) => [
+                  ...prev,
+                  ...pendingMedia.map((m) => ({ ...m, note: notes[m.id].trim() })),
+                ]);
+                setPendingMedia([]);
+              }}
+            />
+          )}
+
+          {editingMedia && (
+            <FileNoteDialog
+              files={[{ id: editingMedia.id, name: editingMedia.name, kind: "media", note: editingMedia.note }]}
+              title="What is this asset for?"
+              prompt="The note travels with the asset wherever the plan places it."
+              placeholder="e.g. the hero packshot — front of pack, use it in the opening scene"
+              onCancel={() => setEditingMedia(null)}
+              onConfirm={(notes) => {
+                const next = notes[editingMedia.id].trim();
+                setProductMediaList((prev) =>
+                  prev.map((m) => (m.id === editingMedia.id ? { ...m, note: next } : m))
+                );
+                setEditingMedia(null);
+              }}
+            />
+          )}
+
           {promptEditorOpen && (
             /* The prompt from the previous screen, editable here. Supplying
                the missing context in words is the alternative to attaching a
@@ -2366,152 +2445,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   );
 }
 
-// ── High Fidelity PlanSection with Smooth Zoom & Focus Animations ──
-function PlanSection({
-  icon: Icon,
-  title,
-  summary,
-  source,
-  state,
-  open,
-  onToggle,
-  children,
-}: {
-  icon: LucideIcon;
-  title: string;
-  summary: string;
-  /** Where the answer came from — background, shown muted beside the summary. */
-  source?: string;
-  state: PlanState;
-  open: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  // The glyph follows the state, so the icon square and the chip cannot
-  // disagree about whether this section is settled.
-  const tone = state === "needs-you" ? "attention" : state === "answered" ? "done" : "default";
-  const needsAttention = state === "needs-you";
-  return (
-    <section
-      className={cn(
-        "squircle-card relative transition-all duration-300 ease-entrance",
-        open
-          ? "z-20 w-full scale-100 border shadow-brand-soft rounded-card my-3.5"
-          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] hover:shadow-xs border rounded-control my-1",
-        /* The tile carries the state, not just the chip on the end of it.
-           A column of identical rows makes you read every chip to find the one
-           that wants something.
-
-           The signal is the edge, not a wash. The canvas behind these rows is
-           already off-white, so a pale tint sits BEHIND plain white and the
-           section asking for attention ends up the quietest thing on screen —
-           which is what the first attempt at this did. White keeps it forward;
-           a saturated border, a ring and a rail make it unmistakable. */
-        /* The rail is the left border itself rather than a bar laid over one.
-           An overlay cannot follow the corner radius — it ran straight past
-           the curve at both ends — where a border is clipped to the shape by
-           definition. */
-        needsAttention
-          ? "border-danger/45 border-l-[3px] border-l-danger bg-card ring-2 ring-danger/10 shadow-[0_6px_22px_-10px_rgba(159,58,56,.45)]"
-          : open
-            ? "border-hair bg-card"
-            : "border-hair bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:border-hair-3"
-      )}
-    >
-      <button
-        onClick={onToggle}
-        className={cn(
-          "focus-ring group flex w-full items-center gap-3 text-left transition-all duration-200 cursor-pointer",
-          open ? "min-h-[70px] px-4 sm:px-5" : "min-h-[44px] py-1.5 px-3 sm:px-3.5"
-        )}
-        aria-expanded={open}
-      >
-        {/* The icon is which section this is; the colour is what state it is
-            in. Swapping the icon for a tick when a section was answered threw
-            away the one mark that tells the rows apart — and a solid orange
-            square made the settled sections the loudest things in a column
-            whose point is the one that is not. */}
-        <span
-          className={cn(
-            "squircle-control relative grid shrink-0 place-items-center transition-transform group-hover:scale-105",
-            open ? "size-10 rounded-control" : "size-7 rounded-chip",
-            tone === "attention"
-              ? "bg-danger-bg text-danger"
-              : tone === "done"
-              ? "bg-ok-bg text-ok"
-              : "bg-[#edf3ef] text-brand"
-          )}
-        >
-          <Icon className={cn(open ? "size-[19px]" : "size-3.5")} />
-
-          {/* Open, the state is said outright as well as coloured. Ringed in
-              the card's own background so it reads as a badge on the corner
-              rather than a smudge inside it. */}
-          {open && tone !== "default" && (
-            <span
-              aria-hidden
-              className={cn(
-                "absolute -right-1 -top-1 grid size-[15px] place-items-center rounded-full ring-2 ring-card",
-                tone === "done" ? "bg-ok text-white" : "bg-danger text-white"
-              )}
-            >
-              {tone === "done" ? (
-                <Check className="size-2.5" strokeWidth={3.5} />
-              ) : (
-                <X className="size-2.5" strokeWidth={3.5} />
-              )}
-            </span>
-          )}
-        </span>
-
-        <span className="min-w-0 flex-1">
-          <span
-            className={cn(
-              "block font-bold tracking-tight transition-colors leading-snug",
-              open ? "text-subhead text-ink" : "text-body-lg text-ink-2"
-            )}
-          >
-            {title}
-          </span>
-          <span
-            className={cn(
-              "block truncate text-ink-3",
-              open ? "mt-0.5 text-body" : "text-label max-w-[380px]"
-            )}
-          >
-            {summary}
-            {source && <span className="ml-1.5 text-ink-4">· {source}</span>}
-          </span>
-        </span>
-
-        <PlanStatusChip state={state} open={open} />
-
-        <div
-          className={cn(
-            "grid place-items-center rounded-full transition-all duration-300",
-            open
-              ? "size-7 rotate-180 bg-tint text-brand"
-              : "size-5.5 text-ink-3 group-hover:bg-black/5"
-          )}
-        >
-          <ChevronDown className={cn(open ? "size-4" : "size-3")} />
-        </div>
-      </button>
-
-      <div
-        aria-hidden={!open}
-        className={cn(
-          "grid transition-[grid-template-rows,opacity] duration-300 ease-entrance",
-          open ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
-        )}
-      >
-        <div className="overflow-hidden">
-          <div className="border-t border-hair px-4 pb-5 pt-3.5 sm:px-5 sm:pb-6">{children}</div>
-        </div>
-      </div>
-    </section>
-  );
-}
+/** The shared shell, under the name this file has always called it. */
+const PlanSection = PlanSectionShell;
 
 function DecisionRow({
   label,

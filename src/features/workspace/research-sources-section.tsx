@@ -16,6 +16,21 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
+
+/**
+ * An attached file and what it is for.
+ *
+ * The note is not decoration: a PDF called Q3_readout could be the evidence,
+ * the wording or the layout, and the three produce different assets. It is
+ * collected when the file is attached.
+ */
+export interface UploadedDoc {
+  name: string;
+  size: string;
+  date: string;
+  note?: string;
+}
 import type { DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
 import { groundingDossiers } from "@/features/workspace/grounding-dossiers";
@@ -24,8 +39,8 @@ export interface ResearchSourcesSectionProps {
   brandName: string;
   sourceGroundingMode: "both" | "my-sources" | "swishx-only";
   onSetSourceGroundingMode: (mode: "both" | "my-sources" | "swishx-only") => void;
-  uploadedDocs: Array<{ name: string; size: string; date: string }>;
-  onSetUploadedDocs: React.Dispatch<React.SetStateAction<Array<{ name: string; size: string; date: string }>>>;
+  uploadedDocs: UploadedDoc[];
+  onSetUploadedDocs: React.Dispatch<React.SetStateAction<UploadedDoc[]>>;
   onPreviewDossier: (dossier: DossierPreviewData) => void;
   onContinue: () => void;
   /** Live grounding research, if the plan has just been generated. */
@@ -57,7 +72,9 @@ export function ResearchSourcesContent({
   conflictingMarkets = [],
   onResolveConflict,
 }: ResearchSourcesSectionProps) {
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
+  /* Files picked but not yet attached — they are waiting on their note. */
+  const [pending, setPending] = useState<Array<PendingFile & { size: string }>>([]);
+  const [editing, setEditing] = useState<{ index: number; doc: UploadedDoc } | null>(null);
   const docUploadRef = useRef<HTMLInputElement>(null);
   // null = follow the research; true/false = the reader's own choice.
   // Without the null state the tray snapped shut the instant research
@@ -365,56 +382,19 @@ export function ResearchSourcesContent({
             <span className="text-label font-bold uppercase tracking-wider text-ink-3">
               My files ({uploadedDocs.length})
             </span>
-            {/* "Add more" rather than "Add more files": attaching a file is
-                only one of the two ways to supply what is missing, and the
-                other one is editing the prompt this plan was built from. */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setAddMenuOpen((v) => !v)}
-                aria-expanded={addMenuOpen}
-                aria-haspopup="menu"
-                className="inline-flex items-center gap-1.5 text-label font-bold text-brand hover:underline cursor-pointer"
-              >
-                <Plus className="size-3.5" />
-                <span>Add more</span>
-                <ChevronDown className={cn("size-3 transition-transform", addMenuOpen && "rotate-180")} />
-              </button>
-
-              {addMenuOpen && (
-                <>
-                  <button
-                    type="button"
-                    aria-label="Close menu"
-                    onClick={() => setAddMenuOpen(false)}
-                    className="fixed inset-0 z-40 cursor-default"
-                  />
-                  <div role="menu" className="absolute right-0 top-full z-50 mt-1.5 w-60 rounded-panel border border-hair-2 bg-card p-1.5 shadow-float">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => { setAddMenuOpen(false); docUploadRef.current?.click(); }}
-                      className="flex w-full items-center gap-2 rounded-control px-2.5 py-2 text-left text-body font-medium text-ink transition hover:bg-tint hover:text-brand-deep cursor-pointer"
-                    >
-                      <FileText className="size-3.5 shrink-0 text-brand" />
-                      <span>Upload files</span>
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => { setAddMenuOpen(false); onEditPrompt(); }}
-                      className="flex w-full items-start gap-2 rounded-control px-2.5 py-2 text-left transition hover:bg-tint cursor-pointer group"
-                    >
-                      <Pencil className="mt-0.5 size-3.5 shrink-0 text-brand" />
-                      <span className="min-w-0">
-                        <span className="block text-body font-medium text-ink group-hover:text-brand-deep">Edit the prompt</span>
-                        <span className="block text-caption leading-snug text-ink-3">Add the context in words instead of a file</span>
-                      </span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            {/* One button, one action. This was a two-item menu whose second
+                item — editing the prompt — is the remedy for having no file at
+                all, and it is offered where that is actually the problem: in
+                the blocked states above. A menu between you and a file picker
+                is a click spent on a choice you had already made. */}
+            <button
+              type="button"
+              onClick={() => docUploadRef.current?.click()}
+              className="inline-flex cursor-pointer items-center gap-1.5 text-label font-bold text-brand hover:underline"
+            >
+              <Plus className="size-3.5" />
+              <span>Add more</span>
+            </button>
           </div>
 
           <input
@@ -424,13 +404,19 @@ export function ResearchSourcesContent({
             className="hidden"
             onChange={(e) => {
               if (e.target.files && e.target.files.length > 0) {
-                const newFiles = Array.from(e.target.files).map((f) => ({
-                  name: f.name,
-                  size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
-                  date: "Just now",
-                }));
-                onSetUploadedDocs((prev) => [...prev, ...newFiles]);
+                /* Held, not attached. What the file is for is asked before it
+                   joins the list, because a file in the list is a file the
+                   plan claims to have understood. */
+                setPending(
+                  Array.from(e.target.files).map((f, i) => ({
+                    id: `pending-${Date.now()}-${i}`,
+                    name: f.name,
+                    kind: "doc" as const,
+                    size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
+                  }))
+                );
               }
+              e.target.value = "";
             }}
           />
 
@@ -449,13 +435,30 @@ export function ResearchSourcesContent({
                   <FileText className={cn("size-3.5 shrink-0", sourcesUnusable ? "text-danger" : "text-brand")} />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold text-ink">{doc.name}</span>
+                    {/* What you said the file is for, where the file is. */}
+                    {doc.note && (
+                      <span className="block truncate text-caption text-ink-3" title={doc.note}>
+                        {doc.note}
+                      </span>
+                    )}
                     {sourcesUnusable && (
                       <span className="block text-caption font-bold text-danger">No usable clinical content</span>
                     )}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <span className="text-caption text-ink-3">{doc.size}</span>
+                  {/* Changing a sentence should not mean losing the file and
+                      finding it on disk again. */}
+                  <button
+                    type="button"
+                    onClick={() => setEditing({ index: idx, doc })}
+                    className="grid size-5 place-items-center rounded-full text-ink-3 transition-colors hover:bg-black/5 hover:text-brand cursor-pointer"
+                    aria-label={`Edit note on ${doc.name}`}
+                    title="Edit note"
+                  >
+                    <Pencil className="size-3" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => onSetUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
@@ -469,6 +472,45 @@ export function ResearchSourcesContent({
             ))}
           </div>
         </div>
+      )}
+
+      {pending.length > 0 && (
+        <FileNoteDialog
+          files={pending}
+          title={pending.length === 1 ? "What is this file for?" : "What are these files for?"}
+          prompt="A note travels with each file, so the plan grounds it in the right thing rather than guessing."
+          placeholder="e.g. the Week 16 efficacy table — use these numbers, not the ones in the brief"
+          onCancel={() => setPending([])}
+          onConfirm={(notes) => {
+            onSetUploadedDocs((prev) => [
+              ...prev,
+              ...pending.map((f) => ({
+                name: f.name,
+                size: f.size,
+                date: "Just now",
+                note: notes[f.id].trim(),
+              })),
+            ]);
+            setPending([]);
+          }}
+        />
+      )}
+
+      {editing && (
+        <FileNoteDialog
+          files={[{ id: "edit", name: editing.doc.name, kind: "doc", note: editing.doc.note ?? "" }]}
+          title="What is this file for?"
+          prompt="The note travels with the file wherever the plan uses it."
+          placeholder="e.g. the Week 16 efficacy table — use these numbers, not the ones in the brief"
+          onCancel={() => setEditing(null)}
+          onConfirm={(notes) => {
+            const next = notes.edit.trim();
+            onSetUploadedDocs((prev) =>
+              prev.map((doc, i) => (i === editing.index ? { ...doc, note: next } : doc))
+            );
+            setEditing(null);
+          }}
+        />
       )}
 
       {/* Continue action */}
