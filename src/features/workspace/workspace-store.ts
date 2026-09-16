@@ -3,11 +3,14 @@ import { SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { creativeDirections } from "@/features/workspace/mock-data";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, LogoMark, OnboardingBeat, PresentationMode } from "@/types/content";
 import type { SuggestionSnapshot } from "@/features/workspace/suggestion-queue";
+import type { BriefAttachment } from "@/features/workspace/plan-intake";
 
 export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
 export type VideoSubStage = "mode-select" | "source-select" | "intake" | "directions" | "studio";
 export type StudioEntry = "create" | "review";
+/** The plan screen's three states — see planPhase. */
+export type PlanPhase = "research" | "intake" | "plan";
 /** Which half of the creative plan screen is showing — its own step in the
  *  trail, so the breadcrumb can send you back to it from the canvas. */
 export type CreativeStep = "brief" | "template";
@@ -58,6 +61,24 @@ interface WorkspaceState {
   /** True for the few seconds after a brief is submitted, while the plan
    *  screen shows the grounding research being assembled. */
   planResearching: boolean;
+  /**
+   * Where the plan screen is between the brief and the accordion.
+   *
+   * "research" is the wait while the request and its attachments are read,
+   * "intake" is the conversation that settles what could not be inferred, and
+   * "plan" is the filled-in accordion. Arriving from the brief starts at the
+   * top; a demo scenario supplies every answer at once and starts at "plan".
+   */
+  planPhase: PlanPhase;
+  /** What came attached to the brief, so the plan screen can ask about it. */
+  briefAttachments: BriefAttachment[];
+  /**
+   * True when the brief was loaded from the demo drawer rather than typed.
+   * A scenario supplies every answer at once, so there is nothing for the
+   * intake conversation to ask and the plan screen opens on the accordion.
+   * demoScenarioId cannot answer this — it always holds a value.
+   */
+  briefFromScenario: boolean;
   /** Right inspector width in px. Drag-resizable; persisted by <SidePanel>. */
   copilotPanelWidth: number;
   /** True only mid-drag, so width transitions can be suspended. */
@@ -107,6 +128,9 @@ interface WorkspaceState {
   setTeamDockOpen: (open: boolean) => void;
   toggleTeamDock: () => void;
   setPlanResearching: (researching: boolean) => void;
+  setPlanPhase: (phase: PlanPhase) => void;
+  setBriefAttachments: (attachments: BriefAttachment[]) => void;
+  setBriefFromScenario: (fromScenario: boolean) => void;
   setCopilotPanelOpen: (open: boolean) => void;
   toggleCopilotPanel: () => void;
   setCopilotPanelWidth: (width: number) => void;
@@ -158,6 +182,9 @@ const initialState = {
   teamDockOpen: false,
   copilotPanelOpen: true,
   planResearching: false,
+  planPhase: "plan" as PlanPhase,
+  briefAttachments: [] as BriefAttachment[],
+  briefFromScenario: false,
   copilotPanelWidth: SIDE_PANEL_DEFAULT_WIDTH,
   copilotPanelResizing: false,
   pageShape: "3:4" as "3:4" | "16:9" | "A4",
@@ -233,6 +260,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setTeamDockOpen: (teamDockOpen) => set({ teamDockOpen }),
   toggleTeamDock: () => set((state) => ({ teamDockOpen: !state.teamDockOpen })),
   setPlanResearching: (planResearching) => set({ planResearching }),
+  setPlanPhase: (planPhase) => set({ planPhase }),
+  setBriefAttachments: (briefAttachments) => set({ briefAttachments }),
+  setBriefFromScenario: (briefFromScenario) => set({ briefFromScenario }),
   setCopilotPanelOpen: (copilotPanelOpen) => set({ copilotPanelOpen }),
   toggleCopilotPanel: () => set((state) => ({ copilotPanelOpen: !state.copilotPanelOpen })),
   setCopilotPanelWidth: (copilotPanelWidth) => set({ copilotPanelWidth }),

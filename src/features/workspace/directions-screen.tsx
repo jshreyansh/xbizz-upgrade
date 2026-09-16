@@ -54,6 +54,12 @@ import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/featu
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
+import {
+  buildIntakeQuestions,
+  intakeSteps,
+  readIntakeAnswer,
+  type IntakeAnswer,
+} from "@/features/workspace/plan-intake";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
@@ -276,6 +282,14 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
      the old one. */
   const logoUploadRef = useRef<HTMLInputElement>(null);
   const scriptBuildStepList = useMemo(() => scriptBuildSteps(5), []);
+  /* The intake conversation. Above the early return with the rest of the
+     hoisted hooks — a hook added below it would be a new instance of that
+     bug rather than a continuation of the old one. */
+  const planPhase = useWorkspaceStore((st) => st.planPhase);
+  const setPlanPhase = useWorkspaceStore((st) => st.setPlanPhase);
+  const briefAttachments = useWorkspaceStore((st) => st.briefAttachments);
+  const [intakeIndex, setIntakeIndex] = useState(0);
+  const [intakeAnswers, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
   const flowSteps = useVideoSteps({});
   const backStep = previousStep(flowSteps, "plan");
 
@@ -882,12 +896,83 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setView("studio");
   };
 
+  /**
+   * What the plan still has to ask before it can be drawn — the attachments
+   * nobody explained, and the length nobody stated.
+   */
+  /* Plain values, not memos: every hook in this file has to sit above the
+     early return at the top, and these two are cheap array builders. */
+  const intakeQuestions = buildIntakeQuestions(briefAttachments, "video");
+  const currentIntake = planPhase === "intake" ? intakeQuestions[intakeIndex] : undefined;
+
+  /** The wait between the brief and the first question. */
+  const intakeStepList = intakeSteps(briefAttachments, brandName);
+
+  const askIntake = (index: number) => {
+    const question = intakeQuestions[index];
+    if (!question) return;
+    addChatMessage({ role: "swishx", text: question.prompt });
+  };
+
+  /** The wait is over: say what was read, then ask the first thing. */
+  const handleIntakeResearched = () => {
+    setPlanPhase("intake");
+    const count = briefAttachments.length;
+    addChatMessage({
+      role: "swishx",
+      text: count
+        ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out.`
+        : `I've read the brief against the **${brandName}** dossier. One thing and I can lay the plan out.`,
+    });
+    setTimeout(() => askIntake(0), 600);
+  };
+
+  /**
+   * An answer to the outstanding question. It is recorded, applied to the
+   * plan, and the next question follows — or, when there is no next one, the
+   * plan itself.
+   */
+  const answerIntake = (text: string) => {
+    const question = intakeQuestions[intakeIndex];
+    if (!question) return;
+    const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
+    const answer = readIntakeAnswer(question, text, file?.kind ?? "doc");
+    setIntakeAnswers((prev) => [...prev, answer]);
+    if (answer.kind === "duration") setDuration(answer.value);
+
+    const nextIndex = intakeIndex + 1;
+    const next = intakeQuestions[nextIndex];
+    setIntakeIndex(nextIndex);
+
+    setTimeout(() => {
+      if (next) {
+        addChatMessage({ role: "swishx", text: `${answer.reply} ${next.prompt}` });
+        return;
+      }
+      /* Everything it could not infer now has an answer, so the plan can be
+         drawn — and it is drawn from those answers, which is the whole reason
+         for asking rather than guessing. */
+      addChatMessage({
+        role: "swishx",
+        text: `${answer.reply}\n\nThat's everything I needed. I've laid the plan out on the left — grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
+      });
+      setPlanPhase("plan");
+    }, 650);
+  };
+
   const handleSendChatMessage = (textToSend?: string) => {
     const text = textToSend || chatInput.trim();
     if (!text) return;
 
     addChatMessage({ role: "user", text });
     if (!textToSend) setChatInput("");
+
+    /* While a question is outstanding, what you type is its answer — not a
+       change request against a plan that does not exist yet. */
+    if (currentIntake) {
+      answerIntake(text);
+      return;
+    }
 
     setTimeout(() => {
       const lower = text.toLowerCase();
@@ -1005,6 +1090,34 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 steps={scriptBuildStepList}
                 onDone={handleScriptBuilt}
               />
+            ) : planPhase === "research" ? (
+              /* Reading the request and whatever came with it — which is what
+                 the questions are about, so the wait explains why it asks. */
+              <GenerationProgress
+                title="Reading your request..."
+                subtitle={
+                  briefAttachments.length
+                    ? `Understanding the brief and checking what each of the ${briefAttachments.length} attached ${briefAttachments.length === 1 ? "file" : "files"} can ground.`
+                    : "Understanding the brief and checking it against the approved dossier."
+                }
+                steps={intakeStepList}
+                onDone={handleIntakeResearched}
+              />
+            ) : planPhase === "intake" ? (
+              /* Nothing to review yet. A plan drawn before the questions were
+                 answered would be a guess presented as a decision, and the
+                 accordion makes a guess look settled. */
+              <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+                <h2 className="text-display font-[850] tracking-tight text-ink">Need your input</h2>
+                <p className="mt-1.5 max-w-[42ch] text-body-lg text-ink-3">
+                  Answer in chat to help us make the best plan for you.
+                </p>
+                {intakeQuestions.length > 0 && (
+                  <p className="mt-5 text-label font-bold tabular-nums text-ink-4">
+                    {Math.min(intakeIndex + 1, intakeQuestions.length)} of {intakeQuestions.length}
+                  </p>
+                )}
+              </div>
             ) : (
               <>
                 {/* Header in Left Canvas */}
@@ -2006,7 +2119,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   )}
                 >
                   <FormattedMessageText text={msg.text} />
-                  {msg.role === "swishx" && index === 1 && !isGenerating && (
+                  {/* Under the plan, and only once there is one. Pinned to
+                      message 1 they sat under an intake question and offered
+                      changes to a plan that had not been drawn yet; pinned to
+                      the last message they are always under the thing that
+                      announced it. */}
+                  {msg.role === "swishx" &&
+                    index === chatMessages.length - 1 &&
+                    !isGenerating &&
+                    planPhase === "plan" && (
                     <div className="mt-2.5 pt-2 border-t border-hair flex flex-wrap gap-1.5">
                       {[
                         "Switch to 9:16 Portrait",
@@ -2033,7 +2154,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
           {/* Bottom Chat Input Bar with Attached Primary Confirmation Bar */}
           <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
-            {/* Attached Primary Action Bar above chat input */}
+            {/* Attached Primary Action Bar above chat input. Not while the
+                intake is still running: confirming a plan is not on offer
+                until there is one. */}
+            {planPhase === "plan" && (
             <div className="rounded-panel border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2 shadow-2xs flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <div className={cn("size-6 rounded-full grid place-items-center shrink-0", isPlanReady ? "bg-ok text-white" : "bg-black/10 text-ink-3")}>
@@ -2064,6 +2188,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 <ArrowRight className="size-3 ml-1" />
               </Button>
             </div>
+            )}
 
             <div className="relative">
               <div className="flex items-center gap-1.5 rounded-control border border-hair-2 bg-subtle px-2.5 py-1.5 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">

@@ -147,6 +147,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setView,
     setPlanResearching,
     setChatMessages,
+    setPlanPhase,
+    setBriefAttachments,
+    setBriefFromScenario,
   } = useWorkspaceStore();
 
   const isInfographic = assetType === "infographic";
@@ -289,16 +292,35 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setVoice(plan.voice);
     setMusic(plan.music);
     const bName = currentBrandName;
-    setChatMessages([
-      {
-        role: "user",
-        text: brief || `Create a concise ${bName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`,
-      },
-      {
-        role: "swishx",
-        text: `I've structured a 5-scene video plan grounded in the **${bName}** dossier and approved claims. You can review the parameters on the left canvas, or chat with me to make any adjustments.`,
-      },
-    ]);
+    /* A demo scenario is a brief with every answer already supplied, so there
+       is nothing for the intake to ask and it opens on the plan. A brief typed
+       by a person does not arrive that way. */
+    const scenarioDriven = useWorkspaceStore.getState().briefFromScenario;
+    const openingLine = {
+      role: "user" as const,
+      text: brief || `Create a concise ${bName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`,
+    };
+    /* Only the brief, otherwise. The plan screen writes the rest of this
+       conversation itself, because what it says next depends on what it has to
+       ask — and until it has asked, there is no plan to announce. */
+    setChatMessages(
+      scenarioDriven
+        ? [
+            openingLine,
+            {
+              role: "swishx" as const,
+              text: `I've structured a 5-scene video plan grounded in the **${bName}** dossier and approved claims. You can review the parameters on the left canvas, or chat with me to make any adjustments.`,
+            },
+          ]
+        : [openingLine]
+    );
+    /* The files travel with the brief. They were local state here and died on
+       navigation, so the plan screen invented a list — which is why it could
+       never ask what any of them were for. */
+    setBriefAttachments(
+      localFiles.map((file) => ({ id: file.id, name: file.name, kind: file.kind }))
+    );
+    setPlanPhase(scenarioDriven ? "plan" : "research");
     // Kick off the grounding research the plan screen shows while it settles.
     setPlanResearching(true);
     setView("directions");
@@ -322,6 +344,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setIntendedUse(scenario.inputs.intendedUse);
     setSelectedSourceIds(scenario.inputs.selectedSourceIds);
     setDemoScenarioId(scenario.id);
+    setBriefFromScenario(true);
     setClarificationOpen(false);
     setLocalFiles([]);
     setScenarioLibraryOpen(false);
@@ -557,7 +580,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <div className="p-6 pb-3">
               <textarea
                 value={brief}
-                onChange={(e) => setBrief(e.target.value)}
+                onChange={(e) => {
+                  setBrief(e.target.value);
+                  /* Typing over a loaded scenario makes it your brief, and
+                     yours has not answered anything yet. */
+                  setBriefFromScenario(false);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) preparePlan();
                 }}
