@@ -51,7 +51,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
-import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
+import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -470,8 +470,10 @@ export function InfographicStudioScreen() {
   const currentStepId: CreativeStepId = studioMode === "review" ? "review" : "canvas";
   const flowSteps = useCreativeSteps({ toCanvas: () => setStudioMode("editor") });
   const backStep = previousStep(flowSteps, currentStepId);
-  // Publishing is what creates a version; opened from the library, one exists.
-  const [hasPublished, setHasPublished] = useState(openedForReview);
+  /* How many versions have shipped, not merely whether any have — a boolean
+     cannot tell version 1 from version 3. Opened from the library, one exists. */
+  const [publishedCount, setPublishedCount] = useState(openedForReview ? 1 : 0);
+  const draftVersion = publishedCount + 1;
   const canvasOpenStepList = useMemo(
     () => canvasOpenSteps(pagesList.length, BLOCK_ORDER.length),
     [pagesList.length]
@@ -514,33 +516,16 @@ export function InfographicStudioScreen() {
       source: "team",
       status: "resolved",
       closedBy: "user",
+      closedInVersion: draftVersion,
       closedReason: "No change needed — the cut-off already sits in the fair balance block.",
       sentToChat: false,
     },
   ]);
 
-  const assetVersions: AssetVersion[] = useMemo(() => {
-    const closed = comments
-      .filter((c) => c.status !== "open")
-      .map((c) => ({
-        text: c.closedReason || c.text,
-        by: c.author,
-        rejected: c.status === "rejected",
-      }));
-    if (!hasPublished) {
-      return [{ label: "Draft v1", state: "current", at: "Saved just now", resolved: closed }];
-    }
-    /* On the review you are looking AT version 1, so it is the current entry.
-       A draft v2 only exists once you have gone back to the editor — naming
-       one while the published asset is on screen labels the wrong thing. */
-    if (isReview) {
-      return [{ label: "Version 1", state: "current", at: "Published just now", resolved: closed }];
-    }
-    return [
-      { label: "Version 1", state: "published", at: "Published earlier", resolved: closed },
-      { label: "Draft v2", state: "current", at: "Editing now" },
-    ];
-  }, [comments, hasPublished, isReview]);
+  const assetVersions = useMemo(
+    () => buildVersions(comments, publishedCount, isReview),
+    [comments, publishedCount, isReview]
+  );
   const [commentsModalOpen, setCommentsModalOpen] = useState(false);
   /** Where the in-place composer is anchored — a note about a run is written
    *  next to the run, the same as on the video canvas. */
@@ -848,7 +833,7 @@ export function InfographicStudioScreen() {
   };
 
   const handleProofsRendered = () => {
-    setHasPublished(true);
+    setPublishedCount((n) => n + 1);
     setStudioMode("review");
     setActiveTab("comments");
     if (!copilotPanelOpen) toggleCopilotPanel();
@@ -898,7 +883,9 @@ export function InfographicStudioScreen() {
   const closeComment = (id: string, as: "resolved" | "rejected", note: string) => {
     setComments((prev) =>
       prev.map((c) =>
-        c.id === id ? { ...c, status: as, closedBy: "user" as const, closedReason: note || undefined } : c
+        c.id === id
+          ? { ...c, status: as, closedBy: "user" as const, closedInVersion: draftVersion, closedReason: note || undefined }
+          : c
       )
     );
     showToast(as === "resolved" ? "Comment resolved" : "Comment discarded");

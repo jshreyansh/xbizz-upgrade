@@ -47,6 +47,13 @@ export interface AssetComment {
   /** Why it was rejected. A rejection without one is indistinguishable from
    *  being ignored, so it is required wherever status is "rejected". */
   closedReason?: string;
+  /**
+   * Which draft closed it — 1 while the first version is being built, 2 after
+   * that version ships, and so on. Without it, a comment answered in v2 reads
+   * as something v1 settled, and the trail says two different things in the
+   * editor and on the review.
+   */
+  closedInVersion?: number;
   sentToChat: boolean;
 }
 

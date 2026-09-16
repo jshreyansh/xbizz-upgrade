@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import type { AssetComment } from "@/features/workspace/asset-comments";
 
 /**
  * Which version this is, and what the ones before it settled.
@@ -25,6 +26,51 @@ export interface AssetVersion {
   at: string;
   /** What this version settled — the comments it closed. */
   resolved?: Array<{ text: string; by: string; rejected?: boolean }>;
+}
+
+/**
+ * The trail, from what each draft actually settled.
+ *
+ * A boolean "has been published" cannot tell version 1 from version 3, and
+ * comments closed after v1 shipped were being listed under v1 — so the editor
+ * and the review disagreed about what a version contained. Every close is
+ * stamped with the draft it happened in, and every version lists its own.
+ */
+export function buildVersions(
+  comments: AssetComment[],
+  publishedCount: number,
+  viewingPublished: boolean
+): AssetVersion[] {
+  const closedIn = (n: number) =>
+    comments
+      .filter((c) => c.status !== "open" && (c.closedInVersion ?? 1) === n)
+      .map((c) => ({
+        text: c.closedReason || c.text,
+        by: c.author,
+        rejected: c.status === "rejected",
+      }));
+
+  const out: AssetVersion[] = [];
+  for (let n = 1; n <= publishedCount; n += 1) {
+    out.push({
+      label: `Version ${n}`,
+      // On the review you are looking AT the newest published version, so it
+      // is the current entry rather than a step behind you.
+      state: viewingPublished && n === publishedCount ? "current" : "published",
+      at: n === publishedCount ? "Published just now" : "Published earlier",
+      resolved: closedIn(n),
+    });
+  }
+  if (!viewingPublished) {
+    const draft = publishedCount + 1;
+    out.push({
+      label: publishedCount === 0 ? "Draft v1" : `Draft v${draft}`,
+      state: "current",
+      at: publishedCount === 0 ? "Saved just now" : "Editing now",
+      resolved: closedIn(draft),
+    });
+  }
+  return out;
 }
 
 export function VersionChip({ versions }: { versions: AssetVersion[] }) {
@@ -136,8 +182,13 @@ function VersionTrailModal({
                   ))}
                 </ul>
               ) : (
+                /* Keyed off the label, not the state: on the review the
+                   published version IS the current entry, and calling it a
+                   draft there was wrong. */
                 <p className="mt-1 text-caption italic text-ink-4">
-                  {v.state === "current" ? "Nothing closed in this draft yet." : "No comments were open."}
+                  {v.label.startsWith("Draft")
+                    ? "Nothing closed in this draft yet."
+                    : "No comments were closed in this version."}
                 </p>
               )}
             </li>

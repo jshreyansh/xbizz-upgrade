@@ -65,7 +65,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
-import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
+import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
@@ -521,32 +521,16 @@ export function StudioScreen() {
   // A published asset already has a shared link, so its team comments are real
   // from the first frame — the same reason publishing unlocks them.
   const [teamCommentsUnlocked, setTeamCommentsUnlocked] = useState(openedForReview);
-  // Publishing is what creates a version; opened from the library, one exists.
-  const [hasPublished, setHasPublished] = useState(openedForReview);
+  /* How many versions have shipped, not merely whether any have — a boolean
+     cannot tell version 1 from version 3. Opened from the library, one exists. */
+  const [publishedCount, setPublishedCount] = useState(openedForReview ? 1 : 0);
+  const draftVersion = publishedCount + 1;
   /* The trail, from what has actually happened: a version exists once the
      asset has been published, and it owns the comments it closed. */
-  const assetVersions: AssetVersion[] = useMemo(() => {
-    const closed = comments
-      .filter((c) => c.status !== "open")
-      .map((c) => ({
-        text: c.closedReason || c.text,
-        by: c.author,
-        rejected: c.status === "rejected",
-      }));
-    if (!hasPublished) {
-      return [{ label: "Draft v1", state: "current", at: "Saved just now", resolved: closed }];
-    }
-    /* On the review you are looking AT version 1, so it is the current entry.
-       A draft v2 only exists once you have gone back to the editor — naming
-       one while the published asset is on screen labels the wrong thing. */
-    if (isReview) {
-      return [{ label: "Version 1", state: "current", at: "Published just now", resolved: closed }];
-    }
-    return [
-      { label: "Version 1", state: "published", at: "Published earlier", resolved: closed },
-      { label: "Draft v2", state: "current", at: "Editing now" },
-    ];
-  }, [comments, hasPublished, isReview]);
+  const assetVersions = useMemo(
+    () => buildVersions(comments, publishedCount, isReview),
+    [comments, publishedCount, isReview]
+  );
 
   /**
    * Where the element actions should appear.
@@ -624,6 +608,7 @@ export function StudioScreen() {
                   ...c,
                   status: "resolved" as const,
                   closedBy: "agent" as const,
+                  closedInVersion: draftVersion,
                   // The agent writes its own note, for the same reason the
                   // owner has to: whoever raised it may only see the link.
                   closedReason: `Applied to ${comment.containerLabel} · ${comment.elementLabel}.`,
@@ -639,7 +624,7 @@ export function StudioScreen() {
         setComments((prev) =>
           prev.map((c) =>
             c.id === comment.id
-              ? { ...c, status: "rejected" as const, closedBy: "agent" as const, closedReason: "SwishX could not tell what should change from this note." }
+              ? { ...c, status: "rejected" as const, closedBy: "agent" as const, closedInVersion: draftVersion, closedReason: "SwishX could not tell what should change from this note." }
               : c
           )
         );
@@ -655,6 +640,9 @@ export function StudioScreen() {
               ...c,
               status,
               closedBy: "user" as const,
+              // Stamped with the draft that closed it, so the version that
+              // shipped afterwards owns it and no earlier one claims it.
+              closedInVersion: draftVersion,
               // The note the modal collected. Required for a team comment,
               // because the reviewer who wrote it sees only the shared link.
               closedReason: reason || undefined,
@@ -986,7 +974,7 @@ export function StudioScreen() {
   };
 
   const handleMasterRendered = () => {
-    setHasPublished(true);
+    setPublishedCount((n) => n + 1);
     handleEnterReviewView();
     setTeamCommentsUnlocked(true);
     seedTeamComments();
