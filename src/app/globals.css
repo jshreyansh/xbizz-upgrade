@@ -56,6 +56,10 @@
   --color-danger:      #9f3a38;
   --color-danger-deep: #842e2d;   /* was inline in button.tsx's danger hover */
   --color-danger-bg: #fceae8;
+  /* border-danger-line was in use in three places with no token behind it, so
+     those borders were drawing as currentColor. Same relationship to danger
+     that ok-line has to ok. */
+  --color-danger-line: #f2c9c6;
 
   /* Status colours for dark grounds. The video canvas and its overlays are
      dark, where --color-ok (#12784a) is unreadable. Values are the Tailwind
@@ -226,6 +230,7 @@
   --warning-soft:   var(--color-warn-bg);
   --danger:         var(--color-danger);
   --danger-soft:    var(--color-danger-bg);
+  --danger-line:    var(--color-danger-line);
 
   /* NOTE: these two are not aliases — they are deliberate overrides of
      Tailwind's own scale. v4 compiles shadow-sm to var(--shadow-sm), so

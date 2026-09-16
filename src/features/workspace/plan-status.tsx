@@ -35,7 +35,7 @@ export function PlanStatusChip({ state, open }: { state: PlanState; open?: boole
         "hidden shrink-0 items-center gap-1 rounded-full border font-bold sm:inline-flex",
         open ? "px-2.5 py-1 text-label" : "px-2 py-0.5 text-micro",
         state === "needs-you"
-          ? "border-warn-line bg-warn-bg text-warn"
+          ? "border-danger-line bg-danger-bg text-danger"
           : state === "answered"
             ? "border-ok-line bg-ok-bg text-ok"
             : "border-hair bg-subtle text-ink-4"

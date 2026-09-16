@@ -2311,22 +2311,32 @@ function PlanSection({
           ? "z-20 w-full scale-100 border shadow-brand-soft rounded-card my-3.5"
           : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] hover:shadow-xs border rounded-control my-1",
         /* The tile carries the state, not just the chip on the end of it.
-           A column of identical white rows makes you read every chip to find
-           the two that want something; a tint finds them for you.
+           A column of identical rows makes you read every chip to find the one
+           that wants something.
 
-           Only the unanswered ones are tinted. Colouring the settled ones too
-           would be a wall of colour with nothing standing out — and the closed
-           rows were being dimmed to 76%, which made the sections asking for
-           attention the faintest things on the screen. */
+           The signal is the edge, not a wash. The canvas behind these rows is
+           already off-white, so a pale tint sits BEHIND plain white and the
+           section asking for attention ends up the quietest thing on screen —
+           which is what the first attempt at this did. White keeps it forward;
+           a saturated border, a ring and a rail make it unmistakable. */
         needsAttention
-          ? open
-            ? "border-warn-line bg-warn-bg/45"
-            : "border-warn-line/70 bg-warn-bg/60 hover:bg-warn-bg"
+          ? "border-danger/45 bg-card ring-2 ring-danger/10 shadow-[0_6px_22px_-10px_rgba(159,58,56,.45)]"
           : open
             ? "border-hair bg-card"
             : "border-hair bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:border-hair-3"
       )}
     >
+      {/* Reads straight down a column of rows, which a chip on the far end
+          does not. */}
+      {needsAttention && (
+        <span
+          aria-hidden
+          className={cn(
+            "absolute left-0 top-0 bottom-0 w-[3px] bg-danger",
+            open ? "rounded-l-card" : "rounded-l-control"
+          )}
+        />
+      )}
       <button
         onClick={onToggle}
         className={cn(
@@ -2340,7 +2350,7 @@ function PlanSection({
             "squircle-control grid shrink-0 place-items-center transition-transform group-hover:scale-105",
             open ? "size-10 rounded-control" : "size-7 rounded-chip",
             tone === "attention"
-              ? "bg-warn-bg text-warn"
+              ? "bg-danger-bg text-danger"
               : tone === "done"
               ? "bg-brand text-white shadow-xs"
               : "bg-[#edf3ef] text-brand"
