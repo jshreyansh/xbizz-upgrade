@@ -3,67 +3,81 @@
 import { useState } from "react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
-import { AssetVideo } from "@/features/workspace/asset-video";
+import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
 
 /**
  * Where a video starts.
  *
  * Six starting points rather than two engines. Reel or presenter is a
  * question the plan screen already asks with the brief in front of it; what
- * you actually know at this moment is what the video is for, which is what
- * each tile names. Every tile opens the same brand picker — the difference
- * between them is the work you have in mind, not a different pipeline.
+ * you know at this moment is what the video is for, which is what each tile
+ * names. Every tile opens the same brand picker — the difference between them
+ * is the work you have in mind, not a different pipeline.
  */
-interface StartingPoint {
-  id: string;
-  title: string;
-  subtitle: string;
-  videoSrc: string;
-  bg: string;
-}
+const DARK = "linear-gradient(135deg, #09101d 0%, #152238 60%, #1f3557 100%)";
+const PLUM = "linear-gradient(135deg, #180924 0%, #2e1245 60%, #4a1d6e 100%)";
+const FOREST = "linear-gradient(135deg, #0a1f18 0%, #13382c 60%, #1d5442 100%)";
+const SLATE = "linear-gradient(135deg, #162022 0%, #25373b 60%, #3a555c 100%)";
+const VIOLET = "linear-gradient(135deg, #1b1622 0%, #352b42 60%, #524266 100%)";
+const UMBER = "linear-gradient(135deg, #221a16 0%, #3b2a25 60%, #5c413a 100%)";
 
-const STARTING_POINTS: StartingPoint[] = [
+const clip = (id: string, videoSrc: string, bg: string): StartingPointExample => ({ id, videoSrc, bg });
+
+const STARTING_POINTS: { id: string; title: string; subtitle: string; examples: StartingPointExample[] }[] = [
   {
     id: "scratch",
     title: "Create from Scratch",
     subtitle: "A blank brief, your own direction",
-    videoSrc: "/reel-moa.mp4",
-    bg: "linear-gradient(135deg, #09101d 0%, #152238 60%, #1f3557 100%)",
+    examples: [
+      clip("scratch-1", "/reel-moa.mp4", DARK),
+      clip("scratch-2", "/4360-178617258_medium.mp4", VIOLET),
+      clip("scratch-3", "/326638_medium.mp4", FOREST),
+    ],
   },
   {
     id: "new-drug",
     title: "New Drug Release",
     subtitle: "Launch film for a newly approved brand",
-    videoSrc: "/21617-319452308_medium.mp4",
-    bg: "linear-gradient(135deg, #180924 0%, #2e1245 60%, #4a1d6e 100%)",
+    examples: [
+      clip("new-drug-1", "/21617-319452308_medium.mp4", PLUM),
+      clip("new-drug-2", "/133898-758336558_medium.mp4", DARK),
+    ],
   },
   {
     id: "patient-handouts",
     title: "Patient Handouts",
     subtitle: "Plain language for someone starting treatment",
-    videoSrc: "/Brevanta final draft-web.mp4",
-    bg: "linear-gradient(135deg, #162022 0%, #25373b 60%, #3a555c 100%)",
+    examples: [
+      clip("patient-1", "/Brevanta final draft-web.mp4", SLATE),
+      clip("patient-2", "/6973-197914400_medium.mp4", FOREST),
+    ],
   },
   {
     id: "clinical-results",
     title: "Clinical Results",
     subtitle: "Pivotal readout, endpoint by endpoint",
-    videoSrc: "/27019-361107952_medium.mp4",
-    bg: "linear-gradient(135deg, #0a1f18 0%, #13382c 60%, #1d5442 100%)",
+    examples: [
+      clip("results-1", "/27019-361107952_medium.mp4", FOREST),
+      clip("results-2", "/46621-448480587_medium.mp4", DARK),
+    ],
   },
   {
     id: "drug-explainer",
     title: "Drug Explainer",
     subtitle: "How the mechanism works, in sequence",
-    videoSrc: "/40781-426939561_medium.mp4",
-    bg: "linear-gradient(135deg, #1b1622 0%, #352b42 60%, #524266 100%)",
+    examples: [
+      clip("explainer-1", "/40781-426939561_medium.mp4", VIOLET),
+      clip("explainer-2", "/133900-758336565_medium.mp4", PLUM),
+    ],
   },
   {
     id: "field-rep-training",
     title: "Field Rep Training",
     subtitle: "Brief the field team before a launch",
-    videoSrc: "/tecentriq-reel.mp4",
-    bg: "linear-gradient(135deg, #221a16 0%, #3b2a25 60%, #5c413a 100%)",
+    examples: [
+      clip("field-1", "/tecentriq-reel.mp4", UMBER),
+      clip("field-2", "/avatar-showcase.mp4", VIOLET),
+    ],
   },
 ];
 
@@ -89,21 +103,14 @@ export function MagicVideoModeScreen() {
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
         {STARTING_POINTS.map((point, i) => (
-          <button
+          <StartingPointCard
             key={point.id}
-            type="button"
-            onClick={() => handleSelect("magic-reel")}
-            className="rise-in-stagger group overflow-hidden rounded-card border border-hair bg-card text-left shadow-soft transition-all duration-200 hover:-translate-y-1"
-            style={{ animationDelay: `${80 + i * 45}ms` }}
-          >
-            <div className="relative aspect-video overflow-hidden" style={{ background: point.bg }}>
-              <AssetVideo src={point.videoSrc} />
-            </div>
-            <div className="p-3.5">
-              <h3 className="text-body-lg font-[800] text-ink">{point.title}</h3>
-              <p className="mt-0.5 text-label text-ink-3">{point.subtitle}</p>
-            </div>
-          </button>
+            title={point.title}
+            subtitle={point.subtitle}
+            examples={point.examples}
+            delayMs={80 + i * 45}
+            onSelect={() => handleSelect("magic-reel")}
+          />
         ))}
       </div>
 
