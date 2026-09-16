@@ -38,7 +38,7 @@ import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
-import { PlanProgress, PlanSectionShell, planState } from "@/features/workspace/plan-status";
+import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
 import {
@@ -52,14 +52,6 @@ type InfographicSubStep = "brief" | "template";
 type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
 
 /** One name per section, so the progress bar and the tiles agree. */
-const SECTION_TITLES: Record<string, string> = {
-  sources: "Research and Sources",
-  format: "Format & Page shape",
-  audience: "Message and audience",
-  objective: "Objective & Angle",
-  assets: "Product & Device Visual Assets",
-};
-
 interface AudienceOption {
   id: string;
   title: string;
@@ -300,12 +292,6 @@ export function InfographicDirectionsScreen() {
     section === "sources" ? !hasGrounding || sourcesUnusable : false;
 
   const sectionOptional = (section: PlanSectionId) => section === "assets";
-
-  const planSections = sectionOrder.map((id) => ({
-    id,
-    title: SECTION_TITLES[id] ?? id,
-    state: planState(sectionNeedsYou(id), sectionOptional(id)),
-  }));
 
   const planBlock: { section: PlanSectionId; title: string; detail: string } | null = !hasGrounding
     ? {
@@ -649,10 +635,8 @@ export function InfographicDirectionsScreen() {
                   </div>
                 </div>
 
-                <PlanProgress
-                  sections={planSections}
-                  onJump={(id) => setOpenSection(id as PlanSectionId)}
-                />
+                {/* No progress bar — see the video plan: the rails on the
+                    rows already say which sections want something. */}
 
                 {/* ─── Rich Accordion Sections with Distinct Icons & Zoom Animation ─── */}
                 <div className="space-y-3 min-w-0 w-full">

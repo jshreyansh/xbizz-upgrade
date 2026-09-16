@@ -3,17 +3,56 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  AudioLines,
+  BarChart3,
+  Captions,
   Clapperboard,
   Check,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Image as ImageIcon,
+  Palette,
   Pencil,
   ShieldCheck,
+  Stamp,
+  UserRound,
+  Video,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Scene, SceneCitation } from "@/types/content";
 import { splitSegments } from "@/features/workspace/script-claims";
+
+/**
+ * What will actually be in the frame, read off the scene rather than written
+ * down twice.
+ *
+ * The visual direction is a sentence about the look; this is the parts list.
+ * They answer different questions — "a restrained clinical portrait" does not
+ * tell you whether there is a chart in it — and the parts list is the half a
+ * reviewer can check at a glance across five scenes.
+ */
+function sceneElements(scene: Scene) {
+  const parts: Array<{ id: string; label: string; icon: typeof Captions }> = [];
+  parts.push(
+    scene.backgroundKind === "video"
+      ? { id: "bg-video", label: "Background video", icon: Video }
+      : { id: "bg-plate", label: "Gradient plate", icon: Palette }
+  );
+  if (scene.graph) parts.push({ id: "graph", label: "Graph", icon: BarChart3 });
+  if (scene.mediaType && scene.mediaType !== "none") {
+    parts.push({ id: "media", label: scene.mediaLabel || "Product media", icon: ImageIcon });
+  }
+  if (scene.avatar) parts.push({ id: "avatar", label: "Presenter", icon: UserRound });
+  if (scene.narration?.trim()) {
+    parts.push({ id: "vo", label: "Voice-over", icon: AudioLines });
+    parts.push({ id: "captions", label: "Captions", icon: Captions });
+  }
+  /* The mark is a project property, not a scene one — it is on every frame,
+     so it is on every scene's list. */
+  parts.push({ id: "logo", label: "Logo mark", icon: Stamp });
+  return parts;
+}
 
 /**
  * One line's sources, shown as a count rather than a list. A rewritten line
@@ -285,9 +324,15 @@ export function ScriptSceneCard({
         </div>
       </div>
 
+      {/* ── The two halves of a scene, side by side ──
+          What is said and what is seen are written against each other, so they
+          are read against each other. Stacked, the visual direction sat below
+          the fold of its own card and you scrolled between a line and the
+          picture it belongs to. */}
+      <div className="grid min-w-0 gap-2 lg:grid-cols-2">
       {/* ── Narration ── */}
       <div className={cn(
-        "rounded-control border p-3 transition-colors",
+        "flex min-w-0 flex-col rounded-control border p-3 transition-colors",
         editing ? "border-brand bg-card" : "border-hair-2 bg-canvas"
       )}>
         <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -364,15 +409,12 @@ export function ScriptSceneCard({
           description here is what makes this a plan rather than a transcript —
           and it is the half a reviewer can still change cheaply, because
           nothing has been rendered against it yet. */}
-      <div className="rounded-panel border border-hair bg-canvas p-2.5">
-        <div className="mb-1 flex items-center justify-between gap-2">
+      <div className="flex min-w-0 flex-col rounded-control border border-hair-2 bg-canvas p-3">
+        <div className="mb-1.5 flex items-center justify-between gap-2">
           <span className="inline-flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">
             <Clapperboard className="size-3 text-ink-4" />
             Visual
           </span>
-          {scene.mediaLabel && (
-            <span className="truncate text-caption text-ink-4">{scene.mediaLabel}</span>
-          )}
         </div>
 
         {pending ? (
@@ -395,6 +437,28 @@ export function ScriptSceneCard({
           </p>
         )}
 
+        {/* The parts list, under the description of the look. Not a third tile
+            of its own: it describes the visual, and a scene reads as two
+            halves — what is said, and what is seen. */}
+        {!pending && (
+          <div className="mt-auto border-t border-hair pt-2">
+            <span className="text-caption font-extrabold uppercase tracking-wider text-ink-4">
+              Scene elements
+            </span>
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {sceneElements(scene).map((part) => (
+                <span
+                  key={part.id}
+                  className="inline-flex max-w-full items-center gap-1 rounded-glyph border border-hair-2 bg-card px-1.5 py-0.5 text-micro font-bold text-ink-3"
+                >
+                  <part.icon className="size-2.5 shrink-0 text-brand" />
+                  <span className="truncate">{part.label}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       </div>
 
       {/* ── Footer ── */}

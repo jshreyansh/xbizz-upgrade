@@ -75,7 +75,7 @@ import { PlanSectionContinue } from "@/features/workspace/plan-section-continue"
 import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
-import { PlanProgress, PlanSectionShell, planState } from "@/features/workspace/plan-status";
+import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets" | "logo";
 
@@ -1154,10 +1154,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   </div>
                 </div>
 
-                {/* The shape of the work, before you go looking for it. A
-                    column of accordions cannot say how much is left — you
-                    find that out by opening all of them. */}
-                <PlanProgress sections={planSections} onJump={(id) => setOpenSection(id as PlanSectionId)} />
+                {/* No progress bar. The rows say it themselves now: a red
+                    rail is a row that wants something and a green one does
+                    not, so a segmented bar above them was the same count
+                    twice. */}
 
                 {requestTooVague && (
                   /* Above the accordions, because it is not a parameter — the

@@ -254,15 +254,16 @@ export function PlanSectionShell({
           >
             {title}
           </span>
-          <span
-            className={cn(
-              "block truncate text-ink-3",
-              open ? "mt-0.5 text-body" : "text-label max-w-[380px]"
-            )}
-          >
-            {summary}
-            {source && <span className="ml-1.5 text-ink-4">· {source}</span>}
-          </span>
+          {/* The answer only when the section is open. Closed, eight rows each
+              carrying a line of settled parameters is a wall of text you have
+              to read past to find the row that wants something — and the
+              answers are two clicks away in the row itself. */}
+          {open && (
+            <span className="mt-0.5 block truncate text-body text-ink-3">
+              {summary}
+              {source && <span className="ml-1.5 text-ink-4">· {source}</span>}
+            </span>
+          )}
         </span>
 
         <PlanStatusChip state={state} open={open} />
