@@ -280,28 +280,52 @@ export function ProjectContextModal({
                 <p className="text-label text-ink-3">Nothing matches that.</p>
               ) : (
                 <div className="grid gap-1.5">
-                  {brandResults.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => {
-                        setDraft((prev) => ({ ...prev, brandId: option.id }));
-                        setBrandQuery("");
-                      }}
-                      className="flex cursor-pointer items-center gap-2.5 rounded-control border border-hair-2 bg-card p-2.5 text-left transition hover:border-brand"
-                    >
-                      <span className="grid size-8 shrink-0 place-items-center rounded-chip bg-tint text-caption font-[850] text-brand-deep">
-                        {option.name.slice(0, 2).toUpperCase()}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block text-body font-bold text-ink">{option.name}</span>
-                        <span className="block truncate text-label text-ink-3">
-                          {option.genericName} · {option.therapyAreas.join(", ")}
+                  {brandResults.map((option) => {
+                    /* Same rule as the start modal: without a verified dossier
+                       there is nothing for a claim to trace back to, so the
+                       brand is listed but cannot be chosen. */
+                    const verified = option.hasDossier;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        disabled={!verified}
+                        title={verified ? undefined : `${option.name} has no verified dossier yet`}
+                        onClick={() => {
+                          setDraft((prev) => ({ ...prev, brandId: option.id }));
+                          setBrandQuery("");
+                        }}
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-control border p-2.5 text-left transition",
+                          verified
+                            ? "cursor-pointer border-hair-2 bg-card hover:border-brand"
+                            : "cursor-not-allowed border-hair bg-canvas/60"
+                        )}
+                      >
+                        <span className={cn(
+                          "grid size-8 shrink-0 place-items-center rounded-chip text-caption font-[850]",
+                          verified ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4"
+                        )}>
+                          {option.name.slice(0, 2).toUpperCase()}
                         </span>
-                      </span>
-                      <ChevronDown className="ml-auto size-3.5 -rotate-90 text-ink-4" />
-                    </button>
-                  ))}
+                        <span className="min-w-0">
+                          <span className={cn("block text-body font-bold", verified ? "text-ink" : "text-ink-3")}>
+                            {option.name}
+                          </span>
+                          <span className="block truncate text-label text-ink-3">
+                            {[option.genericName, option.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
+                          </span>
+                        </span>
+                        {verified ? (
+                          <ChevronDown className="ml-auto size-3.5 -rotate-90 text-ink-4" />
+                        ) : (
+                          <span className="ml-auto shrink-0 rounded-chip border border-warn-line bg-warn-bg px-2 py-0.5 text-caption font-bold text-warn">
+                            Unverified
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
