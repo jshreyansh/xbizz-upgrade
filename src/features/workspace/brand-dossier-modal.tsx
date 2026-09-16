@@ -19,8 +19,6 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { cn } from "@/lib/cn";
 import { useBrandCatalogue, filterBrands } from "@/features/workspace/brand-catalogue";
-import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
-import type { LibraryProduct } from "@/features/product-library/product-library-types";
 import type { Audience } from "@/types/content";
 export {
   INITIAL_BRANDS,
@@ -151,9 +149,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   }, [audience]);
 
   const brandCatalogue = useBrandCatalogue();
-  // Carries the query that opened it, and a stamp so each opening remounts
-  // the dialog with that query seeded rather than syncing it in an effect.
-  const [createBrand, setCreateBrand] = useState<{ at: number; name: string } | null>(null);
   const selectedBrand = useMemo(
     () => brandCatalogue.find((b) => b.id === selectedBrandId) || null,
     [brandCatalogue, selectedBrandId]
@@ -162,8 +157,18 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // Search-only. A real catalogue runs to a few thousand products, so an
   // unfiltered list is a scroll-bar, not a choice — nothing renders until
   // there is a query. Therapy areas stay browsable: that list is finite.
+  /**
+   * Verified only.
+   *
+   * An unverified brand could never be picked here — it has no approved
+   * source for a claim to trace back to, so every row was disabled. Listing
+   * rows you cannot choose, above a button that adds another one you cannot
+   * choose, made the step look like it was refusing you. A brand becomes
+   * selectable by being verified in the Product Library, which is where that
+   * work belongs.
+   */
   const filteredBrands = useMemo(
-    () => filterBrands(brandCatalogue, brandSearch),
+    () => filterBrands(brandCatalogue, brandSearch).filter((b) => b.hasDossier),
     [brandCatalogue, brandSearch]
   );
 
@@ -258,23 +263,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedSpecialities((prev) => [...prev, trimmed]);
     setCustomSpecialityInput("");
     setShowCustomSpecialityBox(false);
-  };
-
-  /**
-   * Create Brand hands the finished product back rather than navigating to it,
-   * so the flow resumes where it broke off — but it does NOT carry on.
-   *
-   * A brand that was created a second ago has no verified dossier, and an
-   * asset cannot be grounded in one that does not exist. So the search lands
-   * on the new brand, it is listed, and it is listed as Unverified: you added
-   * the brand, which is what you came here to do, and the next step waits for
-   * the thing that has to happen before any claim can trace back to it.
-   */
-  const [justAddedBrand, setJustAddedBrand] = useState<string | null>(null);
-  const handleBrandCreated = (product: LibraryProduct) => {
-    setCreateBrand(null);
-    setBrandSearch(product.name);
-    setJustAddedBrand(product.name);
   };
 
   const handleSelectBrand = (brand: BrandItem) => {
@@ -643,7 +631,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         <input
                           type="text"
                           value={brandSearch}
-                          onChange={(e) => { setBrandSearch(e.target.value); setJustAddedBrand(null); }}
+                          onChange={(e) => setBrandSearch(e.target.value)}
                           placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
                           className="w-full rounded-control border border-hair-2 bg-card pl-10 pr-4 py-2.5 text-body-lg font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
                           autoFocus
@@ -660,60 +648,28 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         </div>
                       ) : (
                         <>
-                        {justAddedBrand && (
-                          <div className="rounded-panel border border-warn-line bg-warn-bg px-3.5 py-2.5">
-                            <p className="text-body font-bold text-warn">
-                              {justAddedBrand} was added to your product library
-                            </p>
-                            <p className="mt-0.5 text-label leading-snug text-ink-2">
-                              It cannot ground an asset until its dossier is verified — every claim has to
-                              trace back to an approved source. Verify it in the Product Library, then come
-                              back and it will be selectable here.
-                            </p>
-                          </div>
-                        )}
                         <div className="rounded-panel border border-hair-2/90 bg-card shadow-2xs divide-y divide-hair max-h-[220px] overflow-y-auto">
                           {filteredBrands.map((brand) => {
                             const isSel = brand.id === selectedBrandId;
-                            /**
-                             * A brand without a verified dossier cannot ground
-                             * anything, so it cannot be chosen — every claim in
-                             * the asset has to trace back to an approved
-                             * source, and there is nothing here to trace to.
-                             * It is still listed: knowing the brand exists and
-                             * is waiting on verification is the answer to
-                             * "why can't I find it".
-                             */
-                            const verified = brand.hasDossier;
                             return (
                               <button
                                 key={brand.id}
                                 type="button"
-                                disabled={!verified}
                                 onClick={() => handleSelectBrand(brand)}
-                                title={verified ? undefined : `${brand.name} has no verified dossier yet`}
                                 className={cn(
-                                  "flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors",
-                                  !verified
-                                    ? "cursor-not-allowed bg-canvas/60 text-ink-4"
-                                    : isSel
-                                    ? "cursor-pointer bg-tint text-brand-deep font-bold"
-                                    : "cursor-pointer hover:bg-subtle text-ink-2"
+                                  "flex w-full cursor-pointer items-center justify-between px-4 py-2.5 text-left transition-colors",
+                                  isSel ? "bg-tint font-bold text-brand-deep" : "text-ink-2 hover:bg-subtle"
                                 )}
                               >
                                 <div className="flex items-center gap-3 min-w-0">
                                   <div className={cn(
                                     "grid size-7 place-items-center rounded-chip text-caption font-black border shrink-0",
-                                    !verified
-                                      ? "bg-subtle text-ink-4 border-hair-2"
-                                      : isSel
-                                      ? "bg-brand text-white border-brand"
-                                      : "bg-subtle text-ink-2 border-hair-2"
+                                    isSel ? "bg-brand text-white border-brand" : "bg-subtle text-ink-2 border-hair-2"
                                   )}>
                                     {brand.name.slice(0, 2).toUpperCase()}
                                   </div>
                                   <div className="min-w-0">
-                                    <div className={cn("text-body font-bold", !verified && "text-ink-3")}>{brand.name}</div>
+                                    <div className="text-body font-bold">{brand.name}</div>
                                     <div className="text-label text-ink-3 italic truncate">
                                       {[brand.genericName, brand.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
                                     </div>
@@ -721,42 +677,30 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                 </div>
 
                                 <div className="flex items-center gap-2 shrink-0 ml-2">
-                                  {verified ? (
-                                    <>
-                                      <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-chip border border-ok-line">
-                                        Dossier Ready
-                                      </span>
-                                      <span className="text-label font-bold text-brand flex items-center gap-0.5">
-                                        Select <ChevronRight className="size-3" />
-                                      </span>
-                                    </>
-                                  ) : (
-                                    <span className="rounded-chip border border-warn-line bg-warn-bg px-2 py-0.5 text-caption font-bold text-warn">
-                                      Unverified
-                                    </span>
-                                  )}
+                                  <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-chip border border-ok-line">
+                                    Dossier Ready
+                                  </span>
+                                  <span className="text-label font-bold text-brand flex items-center gap-0.5">
+                                    Select <ChevronRight className="size-3" />
+                                  </span>
                                 </div>
                               </button>
                             );
                           })}
                           {filteredBrands.length === 0 && (
-                            /* A search that finds nothing is where a brand gets
-                               added, not where the flow stops. */
+                            /* Naming where a brand comes from, without trying
+                               to do it here. Adding one is a Product Library
+                               job — it is not finished until the dossier is
+                               verified, and that is not a step to bury inside
+                               starting a project. */
                             <div className="px-4 py-6 text-center">
                               <p className="text-body font-bold text-ink-2">
-                                No brand matching &quot;{brandSearch}&quot;
+                                No verified brand matching &quot;{brandSearch}&quot;
                               </p>
                               <p className="mt-0.5 text-label text-ink-4">
-                                Add it to your product library and carry on from here.
+                                Only products with a verified dossier can ground an asset. Add or verify one
+                                in the Product Library, and it will appear here.
                               </p>
-                              <button
-                                type="button"
-                                onClick={() => setCreateBrand({ at: Date.now(), name: brandSearch.trim() })}
-                                className="focus-ring mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-control bg-brand px-3.5 py-2 text-label font-bold text-white shadow-xs transition hover:bg-brand-deep"
-                              >
-                                <Plus className="size-3.5" />
-                                <span>Add &quot;{brandSearch.trim()}&quot; as a brand</span>
-                              </button>
                             </div>
                           )}
                         </div>
@@ -953,18 +897,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         </div>
       </div>
 
-      {/* Portals itself to the body, so it lands over this dialog rather than
-          inside its scroll region. This one stays mounted underneath — that is
-          what keeps the audience answer and the typed query intact. */}
-      {createBrand && (
-        <CreateBrandModal
-          key={createBrand.at}
-          open
-          onClose={() => setCreateBrand(null)}
-          onCreated={handleBrandCreated}
-          initialName={createBrand.name}
-        />
-      )}
     </div>,
     document.body
   );
