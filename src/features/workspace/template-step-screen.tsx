@@ -106,7 +106,11 @@ export function TemplateStepScreen({
   /* The recommended row is the shortlist, and it only makes sense while you
      are not already looking for something specific. */
   const browsing = search.trim().length > 0 || family !== "all" || statSlots > 0 || contains.length > 0;
-  const extraFilters = (statSlots > 0 ? 1 : 0) + contains.length;
+  /* Anything at all set, including the two that no longer sit on the surface. */
+  const anyFilter = browsing || approvedOnly || !matchesBrief;
+  const extraFilters =
+    (statSlots > 0 ? 1 : 0) + contains.length + (family !== "all" ? 1 : 0) +
+    (approvedOnly ? 1 : 0) + (matchesBrief ? 0 : 1);
 
   const toggleContains = (element: TemplateElement) =>
     setContains((prev) => (prev.includes(element) ? prev.filter((e) => e !== element) : [...prev, element]));
@@ -116,6 +120,11 @@ export function TemplateStepScreen({
     setFamily("all");
     setStatSlots(0);
     setContains([]);
+    /* Clear means clear: the scope and the approval toggle live in the same
+       panel now, so leaving them set would leave a filtered grid behind a
+       control that says nothing is filtered. */
+    setApprovedOnly(false);
+    setMatchesBrief(true);
   };
 
   return (
@@ -141,12 +150,13 @@ export function TemplateStepScreen({
           </p>
         </div>
 
-        {/* Controls, stuck to the top of the scroller so the grid can run */}
+        {/* Controls, stuck to the top of the scroller so the grid can run.
+            One row: a search field and the filters behind one button. Scope,
+            category and brand-approval were seven chips and a checkbox laid
+            across two rows above a grid you had not looked at yet — the
+            filtering took more of the screen than the thing being filtered. */}
         <div className="sticky top-0 z-[2] mb-4 space-y-2 rounded-panel border border-hair-2 bg-card/95 p-2.5 shadow-2xs backdrop-blur">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="order-last shrink-0 rounded-chip border border-ok-line bg-ok-bg px-2.5 py-1 text-caption font-bold text-ok">
-              {matching.toLocaleString()} of {TEMPLATE_LIBRARY.length.toLocaleString()} match this brief · {pageShape}
-            </span>
             <label className="relative flex min-w-[180px] flex-1 items-center">
               <Search className="absolute left-2.5 size-3.5 text-ink-4" />
               <input
@@ -158,61 +168,19 @@ export function TemplateStepScreen({
               />
             </label>
 
-            {[
-              { id: true, label: "Matches this brief", count: matching },
-              { id: false, label: "All templates", count: TEMPLATE_LIBRARY.length },
-            ].map((scope) => (
-              <button
-                key={String(scope.id)}
-                type="button"
-                onClick={() => { setMatchesBrief(scope.id); setShown(24); }}
-                className={cn(
-                  "shrink-0 cursor-pointer rounded-chip px-2.5 py-1 text-caption font-bold transition",
-                  matchesBrief === scope.id
-                    ? "bg-brand text-white shadow-xs"
-                    : "border border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
-                )}
-              >
-                {scope.label}
-                <span className="ml-1.5 tabular-nums opacity-70">{scope.count.toLocaleString()}</span>
-              </button>
-            ))}
-
-            <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-label font-bold text-ink-2">
-              <input
-                type="checkbox"
-                checked={approvedOnly}
-                onChange={(e) => setApprovedOnly(e.target.checked)}
-                className="size-3.5 accent-[#fd4816]"
-              />
-              <ShieldCheck className="size-3.5 text-ok" />
-              Brand-approved only
-            </label>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5 border-t border-hair pt-2">
-            <Chip active={family === "all"} onClick={() => { setFamily("all"); setShown(24); }}>
-              All categories
-            </Chip>
-            {(Object.keys(FAMILY_LABELS) as TemplateFamily[]).map((id) => (
-              <Chip key={id} active={family === id} onClick={() => { setFamily(id); setShown(24); }}>
-                {FAMILY_LABELS[id]}
-              </Chip>
-            ))}
-
             <button
               type="button"
               onClick={() => setMoreOpen((open) => !open)}
               aria-expanded={moreOpen}
               className={cn(
-                "ml-auto inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border px-2.5 py-1 text-label font-bold transition",
+                "inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border px-2.5 py-1.5 text-label font-bold transition",
                 extraFilters > 0 || moreOpen
                   ? "border-brand bg-tint text-brand-deep"
                   : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
               )}
             >
               <SlidersHorizontal className="size-3" />
-              More filters
+              Filters
               {extraFilters > 0 && (
                 <span className="rounded-full bg-brand px-1.5 text-micro font-bold text-white tabular-nums">
                   {extraFilters}
@@ -220,7 +188,7 @@ export function TemplateStepScreen({
               )}
             </button>
 
-            {browsing && (
+            {anyFilter && (
               <button
                 type="button"
                 onClick={resetFilters}
@@ -232,7 +200,45 @@ export function TemplateStepScreen({
           </div>
 
           {moreOpen && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-hair pt-2">
+            <div className="space-y-2 border-t border-hair pt-2">
+              <FilterRow label="Showing">
+                {[
+                  { id: true, label: "Matches this brief", count: matching },
+                  { id: false, label: "All templates", count: TEMPLATE_LIBRARY.length },
+                ].map((scope) => (
+                  <Chip
+                    key={String(scope.id)}
+                    small
+                    active={matchesBrief === scope.id}
+                    onClick={() => { setMatchesBrief(scope.id); setShown(24); }}
+                  >
+                    {scope.label}
+                    <span className="ml-1 tabular-nums opacity-70">{scope.count.toLocaleString()}</span>
+                  </Chip>
+                ))}
+                <label className="ml-1 flex cursor-pointer items-center gap-1.5 text-label font-bold text-ink-2">
+                  <input
+                    type="checkbox"
+                    checked={approvedOnly}
+                    onChange={(e) => setApprovedOnly(e.target.checked)}
+                    className="size-3.5 accent-[#fd4816]"
+                  />
+                  <ShieldCheck className="size-3.5 text-ok" />
+                  Brand-approved only
+                </label>
+              </FilterRow>
+
+              <FilterRow label="Category">
+                <Chip small active={family === "all"} onClick={() => { setFamily("all"); setShown(24); }}>
+                  All
+                </Chip>
+                {(Object.keys(FAMILY_LABELS) as TemplateFamily[]).map((id) => (
+                  <Chip key={id} small active={family === id} onClick={() => { setFamily(id); setShown(24); }}>
+                    {FAMILY_LABELS[id]}
+                  </Chip>
+                ))}
+              </FilterRow>
+
               <FilterRow label="Figures">
                 <Chip small active={statSlots === 0} onClick={() => setStatSlots(0)}>Any</Chip>
                 {[1, 2, 3, 4].map((n) => (
@@ -537,35 +543,27 @@ function ArchetypeCard({
         <span className="text-caption text-white/70">{archetype.metricSub}</span>
       </div>
 
-      {cost && (
-        <div
-          className={cn(
-            "mx-3 mt-auto pt-2 flex items-start gap-1.5 rounded-control border px-2 py-1.5",
-            cost.severe ? "border-warn-line bg-warn-bg" : "border-hair-2 bg-canvas"
-          )}
-        >
-          <AlertTriangle className={cn("mt-0.5 size-3 shrink-0", cost.severe ? "text-warn" : "text-ink-4")} />
-          <span className={cn("text-micro font-bold leading-snug", cost.severe ? "text-warn" : "text-ink-3")}>
-            {cost.label}
+      {/* The same floor the layout cards have: how it fits, and a way to open
+          the pages. There was a "Use Stat Hero" button here as well, which was
+          a second target for what the card already does — and it made two
+          grids of the same choice look like two different controls. */}
+      <div className="mt-auto flex items-center justify-between gap-2 p-3 pt-2">
+        {cost ? (
+          <span
+            className={cn(
+              "inline-flex min-w-0 items-center gap-1 rounded-glyph border px-1.5 py-0.5 text-micro font-bold",
+              cost.severe ? "border-warn-line bg-warn-bg text-warn" : "border-hair-2 bg-canvas text-ink-3"
+            )}
+          >
+            <AlertTriangle className="size-2.5 shrink-0" />
+            <span className="truncate">{cost.label}</span>
           </span>
-        </div>
-      )}
-
-      {/* Pinned to the bottom, so the row of cards agrees on where its
-          controls are however long the taglines run. The state label is not a
-          second target — the card is the control. Preview is, which is why it
-          stops the click from reaching the card. */}
-      <div className={cn("flex items-center gap-1.5 p-3 pt-2", !cost && "mt-auto")}>
-        <div
-          className={cn(
-            "grid h-8 min-w-0 flex-1 place-items-center rounded-control px-2 text-label font-bold transition",
-            selected ? "bg-brand text-white" : "border border-hair-2 bg-canvas text-ink-3"
-          )}
-        >
-          <span className="truncate">
-            {selected ? `Using ${archetype.name}` : `Use ${archetype.name}`}
+        ) : (
+          <span className="inline-flex min-w-0 items-center gap-1 rounded-glyph border border-ok-line bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">
+            <Check className="size-2.5 shrink-0" />
+            <span className="truncate">Carries this brief</span>
           </span>
-        </div>
+        )}
         <PreviewButton label={archetype.name} onClick={onPreview} />
       </div>
     </article>
@@ -583,9 +581,9 @@ function PreviewButton({ label, onClick }: { label: string; onClick: () => void 
       }}
       aria-label={`Preview ${label}`}
       title="Preview pages"
-      className="focus-ring grid h-8 shrink-0 cursor-pointer place-items-center gap-1 rounded-control border border-hair-2 bg-canvas px-2.5 text-label font-bold text-ink-3 transition hover:border-brand hover:text-brand"
+      className="focus-ring grid size-6 shrink-0 cursor-pointer place-items-center rounded-glyph border border-hair-2 bg-canvas text-ink-3 transition hover:border-brand hover:text-brand"
     >
-      <Eye className="size-3.5" />
+      <Eye className="size-3" />
     </button>
   );
 }
