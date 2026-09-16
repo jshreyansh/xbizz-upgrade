@@ -567,26 +567,43 @@ export function StudioScreen() {
    * they have to be answered, which is why they are kept and counted; a note
    * you wrote about your own work needs neither.
    */
+  /**
+   * A note goes to the list above the input, and nowhere else yet.
+   *
+   * Nothing is said to the agent until you send the batch. Marking up a canvas
+   * is drafting: it should not cost a round of conversation per note, and the
+   * five lines you have written should be in one place while you write them.
+   */
   const addSuggestion = (elementId: string, text: string) => {
     const { label } = describeElement(elementId);
     setActiveTab("assistant");
-    addChatMessage({ role: "user", text: `[${label}] ${text}` });
-    const { open } = suggestionQueue.add(label, text);
+    suggestionQueue.add(label, text);
+  };
 
-    /**
-     * The agent asks before it acts.
-     *
-     * A suggestion written in five words on a canvas is rarely the whole
-     * instruction, and a batch of them is usually one change rather than four
-     * — so it reads the note back, asks the one thing it cannot infer, and
-     * offers to wait. Acting on the first sentence would mean re-editing after
-     * every note instead of once after the last.
-     */
+  /**
+   * Handing the batch over: one message with every annotation in it, and the
+   * strip empties because the list is in the chat now.
+   *
+   * The agent asks before it acts. A batch of notes is usually one change
+   * rather than four, and the thing it cannot infer — whether they hold for
+   * the other scenes — is asked once, here, rather than after every note.
+   */
+  const sendSuggestions = () => {
+    const batch = suggestionQueue.submit();
+    if (batch.length === 0) return;
+    setActiveTab("assistant");
+    addChatMessage({
+      role: "user",
+      text: batch.map((s) => `[${s.elementLabel}] ${s.text}`).join("\n"),
+    });
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `Noted on **${label}** — "${text.trim()}".\n\nShould this hold for the other scenes too, or just this one? Keep adding if you have more, and tell me to run them when you're ready.`,
-        tasks: snapshot(open),
+        text:
+          batch.length === 1
+            ? `Got it — one change to **${batch[0].elementLabel}**.\n\nShould it hold for the other scenes too, or just this one? Say the word and I'll run it.`
+            : `Got ${batch.length} — here's what I'm holding.\n\nShould these hold for the other scenes too, or just the ones they were left on? Say the word and I'll work through them.`,
+        tasks: snapshot(batch),
       });
     }, 700);
   };
@@ -601,7 +618,7 @@ export function StudioScreen() {
    * question, not an instruction to start.
    */
   const suggestionIntent = (input: string): "all" | "one" | "more" | "run" | null => {
-    if (suggestionQueue.openCount === 0) return null;
+    if (suggestionQueue.pendingCount === 0) return null;
     const t = input.toLowerCase();
     if (/\b(all|every|each|other)\b.*\bscenes?\b|\bacross all\b|\beverywhere\b/.test(t)) return "all";
     if (/\b(just|only)\b.*\b(this|that|one)\b|\bthis (scene|one) only\b/.test(t)) return "one";
@@ -1265,18 +1282,18 @@ export function StudioScreen() {
       } else if (suggestionAnswer === "more") {
         /* Holding. The whole point of asking was to apply a batch once rather
            than re-edit after every note. */
-        const open = suggestionQueue.suggestions.filter((sg) => sg.status !== "done");
+        const open = suggestionQueue.queue.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: `Holding. Keep marking up the canvas — say the word when you're done and I'll work through ${open.length > 1 ? "these" : "it"} together.`,
+          text: `Holding ${open.length > 1 ? "these" : "it"}. Keep marking up the canvas and send the next lot when you're ready — I'll run them together.`,
           tasks: snapshot(open),
         });
       } else if (suggestionAnswer === "all" || suggestionAnswer === "one") {
-        const { newest, open } = suggestionQueue.scopeNewest(suggestionAnswer);
+        const open = suggestionQueue.scopeBatch(suggestionAnswer);
         addChatMessage({
           role: "swishx",
-          text: newest
-            ? `Scoped **${newest.elementLabel}** ${suggestionAnswer === "all" ? `to all ${sceneList.length} scenes` : "to that scene only"}. Nothing is changed yet — add more, or tell me to run ${open.length > 1 ? "them" : "it"}.`
+          text: open.length
+            ? `Scoped ${open.length > 1 ? `all ${open.length}` : "it"} ${suggestionAnswer === "all" ? `to all ${sceneList.length} scenes` : "to the scene each was left on"}. Nothing is changed yet — tell me to run ${open.length > 1 ? "them" : "it"}.`
             : `Nothing queued to scope.`,
           tasks: snapshot(open),
         });
@@ -2952,7 +2969,9 @@ export function StudioScreen() {
                       Publish button used to sit. That button was already in
                       the header; this is the thing you actually need in front
                       of you while you work. */}
-                  {isEditor && <SuggestionChecklist items={suggestionQueue.suggestions} />}
+                  {isEditor && (
+                    <SuggestionChecklist items={suggestionQueue.drafts} onSend={sendSuggestions} />
+                  )}
 
                   <form
                     onSubmit={(e) => {

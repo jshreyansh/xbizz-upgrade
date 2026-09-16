@@ -785,21 +785,21 @@ export function InfographicStudioScreen() {
       if (suggestionAnswer === "more") {
         /* Holding. The point of asking was to apply a batch once rather than
            re-edit the page after every note. */
-        const open = suggestionQueue.suggestions.filter((sg) => sg.status !== "done");
+        const open = suggestionQueue.queue.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: `Holding. Keep marking up the page — say the word when you're done and I'll work through ${open.length > 1 ? "these" : "it"} together.`,
+          text: `Holding ${open.length > 1 ? "these" : "it"}. Keep marking up the page and send the next lot when you're ready — I'll run them together.`,
           tasks: snapshot(open),
         });
         return;
       }
 
       if (suggestionAnswer === "all" || suggestionAnswer === "one") {
-        const { newest, open } = suggestionQueue.scopeNewest(suggestionAnswer);
+        const open = suggestionQueue.scopeBatch(suggestionAnswer);
         addChatMessage({
           role: "swishx",
-          text: newest
-            ? `Scoped **${newest.elementLabel}** ${suggestionAnswer === "all" ? `to all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}` : "to that page only"}. Nothing is changed yet — add more, or tell me to run ${open.length > 1 ? "them" : "it"}.`
+          text: open.length
+            ? `Scoped ${open.length > 1 ? `all ${open.length}` : "it"} ${suggestionAnswer === "all" ? `to all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}` : "to the page each was left on"}. Nothing is changed yet — tell me to run ${open.length > 1 ? "them" : "it"}.`
             : "Nothing queued to scope.",
           tasks: snapshot(open),
         });
@@ -891,21 +891,39 @@ export function InfographicStudioScreen() {
    * they have to be answered, which is why they are kept and counted; a note
    * you wrote about your own work needs neither.
    */
+  /**
+   * A note goes to the list above the input, and nowhere else yet. Nothing is
+   * said to the agent until you send the batch — marking up a page should not
+   * cost a round of conversation per note.
+   */
   const addSuggestion = (text: string) => {
     const label = selectedElement?.label ?? ELEMENT_LABELS.page;
     setCommentComposerAt(null);
     setActiveTab("assistant");
-    addChatMessage({ role: "user", text: `[${label}] ${text}` });
-    const { open } = suggestionQueue.add(label, text);
+    suggestionQueue.add(label, text);
+  };
 
-    /* The agent asks before it acts. A suggestion written in five words on a
-       canvas is rarely the whole instruction, and a batch of them is usually
-       one change rather than four. */
+  /**
+   * Handing the batch over: one message with every annotation in it, and the
+   * strip empties because the list is in the chat now. The agent asks the one
+   * thing it cannot infer once, for the batch, rather than after every note.
+   */
+  const sendSuggestions = () => {
+    const batch = suggestionQueue.submit();
+    if (batch.length === 0) return;
+    setActiveTab("assistant");
+    addChatMessage({
+      role: "user",
+      text: batch.map((sg) => `[${sg.elementLabel}] ${sg.text}`).join("\n"),
+    });
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `Noted on **${label}** — "${text.trim()}".\n\nShould this hold across the other pages too, or just this one? Keep adding if you have more, and tell me to run them when you're ready.`,
-        tasks: snapshot(open),
+        text:
+          batch.length === 1
+            ? `Got it — one change to **${batch[0].elementLabel}**.\n\nShould it hold across the other pages too, or just this one? Say the word and I'll run it.`
+            : `Got ${batch.length} — here's what I'm holding.\n\nShould these hold across the other pages too, or just the ones they were left on? Say the word and I'll work through them.`,
+        tasks: snapshot(batch),
       });
     }, 700);
   };
@@ -920,7 +938,7 @@ export function InfographicStudioScreen() {
    * question, not an instruction to start.
    */
   const suggestionIntent = (input: string): "all" | "one" | "more" | "run" | null => {
-    if (suggestionQueue.openCount === 0) return null;
+    if (suggestionQueue.pendingCount === 0) return null;
     const t = input.toLowerCase();
     if (/\b(all|every|each|other)\b.*\bpages?\b|\bacross all\b|\beverywhere\b/.test(t)) return "all";
     if (/\b(just|only)\b.*\b(this|that|one)\b|\bthis (page|one) only\b/.test(t)) return "one";
@@ -1740,7 +1758,7 @@ export function InfographicStudioScreen() {
                       Publish button used to sit. That button was already in
                       the header; this is the thing you actually need in front
                       of you while you work. */}
-                  {studioMode === "editor" && <SuggestionChecklist items={suggestionQueue.suggestions} />}
+                  {studioMode === "editor" && <SuggestionChecklist items={suggestionQueue.drafts} onSend={sendSuggestions} />}
 
                   <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                     <Plus className="size-3.5 text-ink-3 shrink-0" />

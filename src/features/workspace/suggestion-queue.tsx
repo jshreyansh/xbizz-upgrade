@@ -84,20 +84,38 @@ export function ChatTaskList({ items }: { items?: SuggestionSnapshot[] }) {
   );
 }
 
-/** The same list, pinned above the chat input while anything is open. */
-export function SuggestionChecklist({ items }: { items: Suggestion[] }) {
-  const live = items.filter((i) => i.status !== "done");
-  if (live.length === 0) return null;
-  const working = live.some((i) => i.status === "working");
+/**
+ * The drafts, pinned above the chat input, with the one control that sends
+ * them. Nothing reaches the agent until this button is pressed — which is
+ * what lets you mark up a whole page before saying anything.
+ */
+export function SuggestionChecklist({
+  items,
+  onSend,
+  sendLabel = "Resolve",
+}: {
+  items: Suggestion[];
+  onSend: () => void;
+  /** "Resolve" here, so the button reads "Resolve all 3" / "Resolve it". */
+  sendLabel?: string;
+}) {
+  if (items.length === 0) return null;
   return (
     <div className="rounded-panel border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs">
-      <div className="mb-1.5 flex items-center gap-1.5">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="text-label font-extrabold text-brand-deep">
-          {working ? "Applying suggestions" : `${live.length} open suggestion${live.length > 1 ? "s" : ""}`}
+          {items.length} suggestion{items.length > 1 ? "s" : ""} to send
         </span>
+        <button
+          type="button"
+          onClick={onSend}
+          className="focus-ring shrink-0 cursor-pointer rounded-chip bg-brand px-2.5 py-1 text-label font-bold text-white shadow-2xs transition hover:bg-brand-deep"
+        >
+          {items.length > 1 ? `${sendLabel} all ${items.length}` : `${sendLabel} it`}
+        </button>
       </div>
       <ul className="max-h-28 space-y-1.5 overflow-y-auto">
-        {live.map((item) => (
+        {items.map((item) => (
           <Row key={item.id} item={snapshot([item])[0]} />
         ))}
       </ul>
@@ -109,21 +127,32 @@ export function SuggestionChecklist({ items }: { items: Suggestion[] }) {
  * The queue itself. Both studios run the same machine and differ only in
  * whether the thing being changed is a scene or a page, so the wording is a
  * parameter and the mechanics are not.
+ *
+ * Two lists, not one. Marking up a canvas is drafting — it belongs above the
+ * input where you can see what you have written and keep going. The chat is
+ * where a batch is handed over. Holding both in one list meant every note you
+ * made was also a message, so five notes became five rounds of conversation
+ * before you had finished looking at the page, and the same five lines sat on
+ * screen twice: in the agent's bubble and in the strip.
+ *
+ * So: drafts collect silently, the whole batch is sent in one act, and at
+ * that moment the strip empties because the list now lives in the chat.
  */
 export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; text: string; chips?: string[]; tasks?: SuggestionSnapshot[] }) => void) {
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  /** Written but not sent — the strip above the input. */
+  const [drafts, setDrafts] = useState<Suggestion[]>([]);
+  /** Sent, and being worked — the list the agent reprints in its replies. */
+  const [queue, setQueue] = useState<Suggestion[]>([]);
   const seq = useRef(0);
   /* The timers walk the queue after the state that started them was read, so
      they work off this rather than a captured render's value. */
-  const liveRef = useRef<Suggestion[]>([]);
-  const write = (next: Suggestion[]) => {
-    liveRef.current = next;
-    setSuggestions(next);
+  const queueRef = useRef<Suggestion[]>([]);
+  const writeQueue = (next: Suggestion[]) => {
+    queueRef.current = next;
+    setQueue(next);
   };
 
-  const openItems = () => liveRef.current.filter((s) => s.status !== "done");
-
-  /** Record a new suggestion; returns the open list as it now stands. */
+  /** Record a new suggestion. Nothing is said to the agent yet. */
   const add = (elementLabel: string, text: string) => {
     const item: Suggestion = {
       id: `sg-${(seq.current += 1)}`,
@@ -131,17 +160,28 @@ export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; te
       text: text.trim(),
       status: "open",
     };
-    write([...liveRef.current.filter((s) => s.status !== "done"), item]);
-    return { item, open: openItems() };
+    setDrafts((prev) => [...prev, item]);
+    return item;
   };
 
-  /** Answer the scope question on the newest suggestion. */
-  const scopeNewest = (scope: string) => {
-    const open = openItems();
-    const newest = open[open.length - 1];
-    if (!newest) return { newest: null, open };
-    write(liveRef.current.map((s) => (s.id === newest.id ? { ...s, scope } : s)));
-    return { newest, open: openItems() };
+  /**
+   * Hand the drafts over. Returns them so the caller can write the one
+   * message that carries them, and clears the strip in the same act — the
+   * list is in the chat now, and showing it in both places is what this
+   * change exists to stop.
+   */
+  const submit = () => {
+    const batch = drafts;
+    if (batch.length === 0) return [];
+    writeQueue(batch);
+    setDrafts([]);
+    return batch;
+  };
+
+  /** Answer the scope question, for the batch that was just sent. */
+  const scopeBatch = (scope: string) => {
+    writeQueue(queueRef.current.map((s) => (s.status === "done" ? s : { ...s, scope })));
+    return queueRef.current.filter((s) => s.status !== "done");
   };
 
   /**
@@ -157,17 +197,17 @@ export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; te
     step: (item: Suggestion, left: number) => string;
     finish: (count: number) => string;
   }) => {
-    const queue = openItems();
-    if (queue.length === 0) return;
+    const pending = queueRef.current.filter((s) => s.status !== "done");
+    if (pending.length === 0) return;
 
-    write(liveRef.current.map((s) => (s.id === queue[0].id ? { ...s, status: "working" } : s)));
-    post({ role: "swishx", text: copy.start(queue.length, queue[0]), tasks: snapshot(liveRef.current) });
+    writeQueue(queueRef.current.map((s) => (s.id === pending[0].id ? { ...s, status: "working" } : s)));
+    post({ role: "swishx", text: copy.start(pending.length, pending[0]), tasks: snapshot(queueRef.current) });
 
-    queue.forEach((item, index) => {
+    pending.forEach((item, index) => {
       window.setTimeout(() => {
-        const next = queue[index + 1];
-        write(
-          liveRef.current.map((s) =>
+        const next = pending[index + 1];
+        writeQueue(
+          queueRef.current.map((s) =>
             s.id === item.id
               ? { ...s, status: "done" as const }
               : next && s.id === next.id
@@ -175,25 +215,27 @@ export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; te
                 : s
           )
         );
-        const left = queue.length - index - 1;
+        const left = pending.length - index - 1;
         post({
           role: "swishx",
-          text: left > 0 ? copy.step(item, left) : copy.finish(queue.length),
-          tasks: snapshot(liveRef.current),
+          text: left > 0 ? copy.step(item, left) : copy.finish(pending.length),
+          tasks: snapshot(queueRef.current),
         });
-        /* The trail stays in the chat; the strip above the input only ever
-           shows what is still owed, so a finished queue clears it. */
-        if (left === 0) window.setTimeout(() => write([]), 1200);
       }, 1500 * (index + 1));
     });
   };
 
   return {
-    suggestions,
-    /** What is still owed — what the strip shows and the chips count. */
-    openCount: suggestions.filter((s) => s.status !== "done").length,
+    /** The strip's contents. */
+    drafts,
+    /** How many are waiting to be sent. */
+    draftCount: drafts.length,
+    /** What the agent is holding — sent, not yet finished. */
+    queue,
+    pendingCount: queue.filter((s) => s.status !== "done").length,
     add,
-    scopeNewest,
+    submit,
+    scopeBatch,
     resolveAll,
   };
 }
