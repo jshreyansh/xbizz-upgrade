@@ -8,18 +8,15 @@ import {
   FileText,
   Film,
   FlaskConical,
-  History,
   Image as ImageIcon,
   Info,
   Layers,
   Maximize2,
   MoreHorizontal,
   Paperclip,
-  Redo2,
   Search,
   ShieldCheck,
   Target,
-  Undo2,
   Upload,
   UserCircle2,
   Users,
@@ -37,6 +34,7 @@ import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { useVideoSteps, useCreativeSteps } from "@/features/workspace/flow-steps";
 import { AUDIENCE_OPTIONS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
@@ -59,6 +57,11 @@ function attachmentKind(file: File): AttachmentKind {
   if (file.type.startsWith("video/")) return "video";
   return "doc";
 }
+
+/* Nothing has been published yet on the way in, so the trail is one entry. */
+const DRAFT_ONLY: AssetVersion[] = [
+  { label: "Draft v1", state: "current", at: "Saved just now" },
+];
 
 const VIDEO_HEADLINES = [
   "What video would you like to create today?",
@@ -379,9 +382,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="truncate text-body font-[800] text-ink">{projectName}</span>
-            <span className="hidden rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
-              Draft v1
-            </span>
+            <VersionChip versions={DRAFT_ONLY} />
           </div>
           <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
             Saved just now · Maya Kapoor
@@ -401,19 +402,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <span>{currentBrandName}</span>
             <ChevronDown className="size-2.5" />
           </button>
-        </div>
-
-        <div className="ml-4 hidden items-center gap-0.5 lg:flex">
-          <Button variant="ghost" size="icon" aria-label="Undo">
-            <Undo2 className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Redo" disabled>
-            <Redo2 className="size-4" />
-          </Button>
-          <div className="mx-1 h-5 w-px bg-hair" />
-          <Button variant="ghost" size="sm">
-            <History className="size-3.5" /> Versions
-          </Button>
         </div>
 
         <div className="ml-auto flex items-center gap-2">

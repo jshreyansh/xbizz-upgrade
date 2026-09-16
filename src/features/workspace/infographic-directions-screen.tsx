@@ -8,17 +8,14 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
-  History,
   Image as ImageIcon,
   Layers,
   LayoutGrid,
   PanelRight,
   Plus,
-  Redo2,
   Send,
   ShieldCheck,
   Target,
-  Undo2,
   Upload,
   Users,
   X,
@@ -31,6 +28,7 @@ import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspa
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
 import { useCreativeSteps } from "@/features/workspace/flow-steps";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -117,6 +115,11 @@ const LOGO_PLACEMENTS = [
 
 
 
+
+/* Nothing has been published yet on the way in, so the trail is one entry. */
+const DRAFT_ONLY: AssetVersion[] = [
+  { label: "Draft v1", state: "current", at: "Saved just now" },
+];
 
 export function InfographicDirectionsScreen() {
   const {
@@ -447,9 +450,7 @@ export function InfographicDirectionsScreen() {
               <span className="truncate text-body font-[800] text-ink">
                 {brandName} HCP launch
               </span>
-              <span className="hidden rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
-                Draft v1
-              </span>
+              <VersionChip versions={DRAFT_ONLY} />
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
               Saved just now · Canvas Studio · MLR Ready
@@ -471,19 +472,6 @@ export function InfographicDirectionsScreen() {
               <span className="truncate">{activeScenario?.label ?? "Choose use case"}</span>
               <ChevronDown className="size-3 shrink-0 opacity-60" />
             </button>
-          </div>
-
-          <div className="ml-4 hidden items-center gap-0.5 lg:flex">
-            <Button variant="ghost" size="icon" aria-label="Undo">
-              <Undo2 className="size-4" />
-            </Button>
-            <Button variant="ghost" size="icon" aria-label="Redo" disabled>
-              <Redo2 className="size-4" />
-            </Button>
-            <div className="mx-1 h-5 w-px bg-hair" />
-            <Button variant="ghost" size="sm">
-              <History className="size-3.5" /> Versions
-            </Button>
           </div>
 
           <div className="ml-auto flex items-center gap-2">

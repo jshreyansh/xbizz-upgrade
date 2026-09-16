@@ -24,6 +24,8 @@ import {
   MessageCircle,
   PenLine,
   MessageSquareQuote,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +51,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -467,6 +470,8 @@ export function InfographicStudioScreen() {
   const currentStepId: CreativeStepId = studioMode === "review" ? "review" : "canvas";
   const flowSteps = useCreativeSteps({ toCanvas: () => setStudioMode("editor") });
   const backStep = previousStep(flowSteps, currentStepId);
+  // Publishing is what creates a version; opened from the library, one exists.
+  const [hasPublished, setHasPublished] = useState(openedForReview);
   const canvasOpenStepList = useMemo(
     () => canvasOpenSteps(pagesList.length, BLOCK_ORDER.length),
     [pagesList.length]
@@ -480,6 +485,7 @@ export function InfographicStudioScreen() {
   /* The same records the video studio uses. Anchored to (surface, page,
      element), so a note about the hero metric is a note about the hero metric
      and the list can say where it lives. */
+  /* The trail, from what this project has actually settled. */
   const [comments, setComments] = useState<AssetComment[]>([
     {
       id: "c-1",
@@ -512,6 +518,29 @@ export function InfographicStudioScreen() {
       sentToChat: false,
     },
   ]);
+
+  const assetVersions: AssetVersion[] = useMemo(() => {
+    const closed = comments
+      .filter((c) => c.status !== "open")
+      .map((c) => ({
+        text: c.closedReason || c.text,
+        by: c.author,
+        rejected: c.status === "rejected",
+      }));
+    if (!hasPublished) {
+      return [{ label: "Draft v1", state: "current", at: "Saved just now", resolved: closed }];
+    }
+    /* On the review you are looking AT version 1, so it is the current entry.
+       A draft v2 only exists once you have gone back to the editor — naming
+       one while the published asset is on screen labels the wrong thing. */
+    if (isReview) {
+      return [{ label: "Version 1", state: "current", at: "Published just now", resolved: closed }];
+    }
+    return [
+      { label: "Version 1", state: "published", at: "Published earlier", resolved: closed },
+      { label: "Draft v2", state: "current", at: "Editing now" },
+    ];
+  }, [comments, hasPublished, isReview]);
   const [commentsModalOpen, setCommentsModalOpen] = useState(false);
   /** Where the in-place composer is anchored — a note about a run is written
    *  next to the run, the same as on the video canvas. */
@@ -819,6 +848,7 @@ export function InfographicStudioScreen() {
   };
 
   const handleProofsRendered = () => {
+    setHasPublished(true);
     setStudioMode("review");
     setActiveTab("comments");
     if (!copilotPanelOpen) toggleCopilotPanel();
@@ -943,9 +973,7 @@ export function InfographicStudioScreen() {
                 <span className="truncate text-body-lg font-[850] text-ink tracking-tight">
                   {creativeTitle}
                 </span>
-                <span className="hidden rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">
-                  Draft v1
-                </span>
+                <VersionChip versions={assetVersions} />
               </div>
               <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
                 Saved just now · Canvas Studio · {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} ({pageGeometry.label})
@@ -955,6 +983,19 @@ export function InfographicStudioScreen() {
             {/* Mode Switchers */}
             <div className="ml-4 hidden items-center gap-1.5 md:flex">
               <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
+
+              {/* Editing only. There is nothing to undo on a published review,
+                  and offering it there suggests the record can be changed. */}
+              {studioMode === "editor" && (
+                <div className="hidden items-center gap-0.5 lg:flex">
+                  <Button variant="ghost" size="icon" aria-label="Undo">
+                    <Undo2 className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" aria-label="Redo" disabled>
+                    <Redo2 className="size-4" />
+                  </Button>
+                </div>
+              )}
 
               {/* Version 1 is what ships today; Future is the opt-in preview
                   of what it grows into. Editor only — a reviewer on a shared

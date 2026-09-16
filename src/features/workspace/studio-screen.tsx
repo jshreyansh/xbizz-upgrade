@@ -65,6 +65,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
@@ -338,6 +339,7 @@ export function StudioScreen() {
     toEditor: () => { setStudioMode("editor"); setActiveTab("edit"); },
   });
   const backStep = previousStep(flowSteps, currentStepId);
+
   const editorOpenStepList = useMemo(() => editorOpenSteps(sceneList.length), [sceneList.length]);
   const masterRenderStepList = useMemo(
     () => masterRenderSteps(sceneList.length, selectedQuality === "cinematic"),
@@ -519,6 +521,32 @@ export function StudioScreen() {
   // A published asset already has a shared link, so its team comments are real
   // from the first frame — the same reason publishing unlocks them.
   const [teamCommentsUnlocked, setTeamCommentsUnlocked] = useState(openedForReview);
+  // Publishing is what creates a version; opened from the library, one exists.
+  const [hasPublished, setHasPublished] = useState(openedForReview);
+  /* The trail, from what has actually happened: a version exists once the
+     asset has been published, and it owns the comments it closed. */
+  const assetVersions: AssetVersion[] = useMemo(() => {
+    const closed = comments
+      .filter((c) => c.status !== "open")
+      .map((c) => ({
+        text: c.closedReason || c.text,
+        by: c.author,
+        rejected: c.status === "rejected",
+      }));
+    if (!hasPublished) {
+      return [{ label: "Draft v1", state: "current", at: "Saved just now", resolved: closed }];
+    }
+    /* On the review you are looking AT version 1, so it is the current entry.
+       A draft v2 only exists once you have gone back to the editor — naming
+       one while the published asset is on screen labels the wrong thing. */
+    if (isReview) {
+      return [{ label: "Version 1", state: "current", at: "Published just now", resolved: closed }];
+    }
+    return [
+      { label: "Version 1", state: "published", at: "Published earlier", resolved: closed },
+      { label: "Draft v2", state: "current", at: "Editing now" },
+    ];
+  }, [comments, hasPublished, isReview]);
 
   /**
    * Where the element actions should appear.
@@ -958,6 +986,7 @@ export function StudioScreen() {
   };
 
   const handleMasterRendered = () => {
+    setHasPublished(true);
     handleEnterReviewView();
     setTeamCommentsUnlocked(true);
     seedTeamComments();
@@ -1301,7 +1330,7 @@ export function StudioScreen() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="truncate text-body font-[800] text-ink">{projectTitle}</span>
-              <span className="hidden rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 sm:inline">Draft v1</span>
+              <VersionChip versions={assetVersions} />
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
           </div>
@@ -1309,6 +1338,19 @@ export function StudioScreen() {
           <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Editing only. There is nothing to undo on a published review,
+                and offering it there suggests the record can be changed. */}
+            {isEditor && (
+              <div className="hidden items-center gap-0.5 lg:flex">
+                <Button variant="ghost" size="icon" aria-label="Undo">
+                  <Undo2 className="size-4" />
+                </Button>
+                <Button variant="ghost" size="icon" aria-label="Redo" disabled>
+                  <Redo2 className="size-4" />
+                </Button>
+                <div className="mx-1 h-5 w-px bg-hair" />
+              </div>
+            )}
             {/* Version. Defaults to Version 1 because that is what ships;
                 Future is the opt-in preview of what it grows into. Editor
                 only — a reviewer on a shared link is not choosing an editor. */}
