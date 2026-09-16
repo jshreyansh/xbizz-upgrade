@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /**
@@ -33,14 +33,16 @@ export function snapshot(items: Suggestion[]): SuggestionSnapshot[] {
   return items.map(({ id, elementLabel, text, status }) => ({ id, elementLabel, text, status }));
 }
 
+/**
+ * Two states, never three.
+ *
+ * A chat message is a record of a moment, and a spinner inside one keeps
+ * spinning long after that moment has passed — the message that said "starting
+ * with the headline" was still animating an hour later, as if the work had
+ * never finished. So a row is ticked or it is not: unticked in the message
+ * that starts it, ticked in the message that reports it done.
+ */
 function Tick({ status }: { status: SuggestionStatus }) {
-  if (status === "working") {
-    return (
-      <span className="grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-brand bg-brand text-white">
-        <Loader2 className="size-2.5 animate-spin" />
-      </span>
-    );
-  }
   if (status === "done") {
     return (
       <span className="grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-ok bg-ok text-white">
