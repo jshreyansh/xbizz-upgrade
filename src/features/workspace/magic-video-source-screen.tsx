@@ -146,7 +146,7 @@ const DOSSIERS: Record<string, DossierItem> = {
     brandId: "velmora",
     name: "Velmora HEOR & Value Evidence Dossier",
     molecule: "tirzelamide",
-    market: "🌐 Global · HEOR",
+    market: "Global · HEOR",
     sections: 14,
     claims: 128,
     heldOut: 0,
@@ -245,7 +245,7 @@ const DOSSIERS: Record<string, DossierItem> = {
     brandId: "pulmovax",
     name: "PulmoVax Sample Dossier",
     molecule: "albuterol / budesonide",
-    market: "🌐 Global · WHO",
+    market: "Global · WHO",
     sections: 21,
     claims: 230,
     heldOut: 0,
@@ -724,7 +724,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
                               className="flex items-center justify-between text-label bg-white/90 border border-hair rounded-chip px-2.5 py-1.5 shadow-2xs"
                             >
                               <span className="font-medium text-ink truncate max-w-[78%]">
-                                📄 {doc.name}
+                                {doc.name}
                               </span>
                               <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-glyph border border-ok-line shrink-0">
                                 {doc.citations} citations

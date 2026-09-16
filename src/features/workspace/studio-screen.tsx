@@ -1403,7 +1403,7 @@ export function StudioScreen() {
                 onDone={handleMasterRendered}
                 footer={
                   <span className="flex items-center gap-1.5 font-medium">
-                    <span>✉ Email notification queued — you can close this tab</span>
+                    <span>Email notification queued — you can close this tab</span>
                   </span>
                 }
               />
@@ -1898,7 +1898,7 @@ export function StudioScreen() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <span className="font-extrabold text-lime-ink text-micro uppercase tracking-wider bg-lime-bg/15 px-1.5 py-0.5 rounded-glyph border border-lime-line/30">
-                                    🫀 Image Asset
+                                    Image Asset
                                   </span>
                                   {canDragElements && (
                                     <span className="text-white/60 text-micro font-semibold flex items-center gap-0.5">
@@ -2003,7 +2003,7 @@ export function StudioScreen() {
 
                               <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
                                 <span className="text-micro font-extrabold text-info-on-dark uppercase tracking-wide bg-black/70 px-1.5 py-0.5 rounded-glyph border border-sky-400/40">
-                                  🎬 Video Clip
+                                  Video Clip
                                 </span>
                                 {canDragElements && (
                                   <span className="text-micro text-white/80 bg-black/60 px-1 py-0.5 rounded-glyph flex items-center gap-0.5">
@@ -2206,7 +2206,7 @@ export function StudioScreen() {
                       >
                         <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}® · HCP Prescribing Brief</span>
                         <span className="rounded-glyph bg-emerald-950/80 border border-emerald-400/40 text-ok-on-dark px-2 py-0.5 font-bold">
-                          🛡 {selectedScene.claim}
+                          {selectedScene.claim}
                         </span>
                       </div>
                     </div>
@@ -3046,7 +3046,7 @@ export function StudioScreen() {
                         </div>
 
                         <div className="text-caption text-ink-3">
-                          {isReview ? "💡 Ask questions or add comments via AI" : "💡 Grounded against FDA Dossier"}
+                          {isReview ? "Ask questions or add comments via AI" : "Grounded against FDA Dossier"}
                         </div>
                       </div>
 
@@ -3071,6 +3071,9 @@ export function StudioScreen() {
                 stampLabel={`${Math.floor(masterCurrentTime / 60)}:${Math.floor(masterCurrentTime % 60).toString().padStart(2, "0")}`}
                 medicalReviewDone={mlrCheckResolved}
                 regulatoryReviewDone={qaCheckResolved}
+                canClose={!isReview}
+                onResolve={(id, note) => closeComment(id, "resolved", note)}
+                onReject={(id, note) => closeComment(id, "rejected", note)}
                 onPost={(text) => {
                   /* A reviewer's comment enters the SAME list the owner works
                      in the editor. Two lists would mean the owner resolving

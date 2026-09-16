@@ -1458,7 +1458,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     <div className="space-y-3.5">
                       <div className="rounded-control bg-canvas border border-hair p-3.5 text-body text-ink-2 leading-relaxed">
                         <p className="font-bold text-ink mb-1">
-                          📸 Product Packshots &amp; Device Reference Media
+                          Product Packshots &amp; Device Reference Media
                         </p>
                         <p className="text-ink-3 text-body">
                           Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.

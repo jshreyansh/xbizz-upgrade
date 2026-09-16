@@ -21,6 +21,9 @@ export function ReviewComments({
   medicalReviewDone,
   regulatoryReviewDone,
   onPost,
+  canClose = false,
+  onResolve,
+  onReject,
 }: {
   comments: AssetComment[];
   /** Where the reviewer is — the playhead on a video, the page on a deck —
@@ -29,8 +32,19 @@ export function ReviewComments({
   medicalReviewDone: boolean;
   regulatoryReviewDone: boolean;
   onPost: (text: string) => void;
+  /**
+   * Whether this viewer may close a comment. True in the editor, where the
+   * owner works; false on the shared link, where a reviewer can raise a point
+   * but not decide it has been answered.
+   */
+  canClose?: boolean;
+  onResolve?: (id: string, note: string) => void;
+  onReject?: (id: string, note: string) => void;
 }) {
   const [draft, setDraft] = useState("");
+  /* Which card is asking for its closing note, and what it will be closed as. */
+  const [closing, setClosing] = useState<{ id: string; as: "resolved" | "rejected" } | null>(null);
+  const [reason, setReason] = useState("");
 
   const open = comments.filter((c) => c.status === "open");
   const resolved = comments.filter((c) => c.status === "resolved");
@@ -103,7 +117,24 @@ export function ReviewComments({
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3.5">
-        <Group title="Open" count={open.length} items={open} emptyLabel="Nothing open — every comment has been answered." />
+        <Group
+          title="Open"
+          count={open.length}
+          items={open}
+          emptyLabel="Nothing open — every comment has been answered."
+          canClose={canClose}
+          closing={closing}
+          reason={reason}
+          onReason={setReason}
+          onBeginClose={(id, as) => { setClosing({ id, as }); setReason(""); }}
+          onCancelClose={() => { setClosing(null); setReason(""); }}
+          onConfirmClose={(id, as, note) => {
+            if (as === "resolved") onResolve?.(id, note);
+            else onReject?.(id, note);
+            setClosing(null);
+            setReason("");
+          }}
+        />
         <Group
           title="Closed"
           count={closed.length}
@@ -120,11 +151,25 @@ function Group({
   count,
   items,
   emptyLabel,
+  canClose = false,
+  closing,
+  reason = "",
+  onReason,
+  onBeginClose,
+  onCancelClose,
+  onConfirmClose,
 }: {
   title: string;
   count: number;
   items: AssetComment[];
   emptyLabel: string;
+  canClose?: boolean;
+  closing?: { id: string; as: "resolved" | "rejected" } | null;
+  reason?: string;
+  onReason?: (next: string) => void;
+  onBeginClose?: (id: string, as: "resolved" | "rejected") => void;
+  onCancelClose?: () => void;
+  onConfirmClose?: (id: string, as: "resolved" | "rejected", note: string) => void;
 }) {
   return (
     <div className="space-y-2">
@@ -170,6 +215,84 @@ function Group({
                   {comment.status === "open" ? "Open" : rejected ? "Discarded" : "Resolved"}
                 </span>
               </div>
+
+              {/* Closing a comment is the owner's act, in the editor. On the
+                  shared link a reviewer can raise a point but not decide it
+                  has been answered — which is the whole reason the point is
+                  worth raising.
+
+                  A teammate's comment needs BOTH doors, Resolve and Discard,
+                  and a note either way: the person who wrote it sees only the
+                  shared link, and a bare "Resolved" tells them nothing about
+                  whether their point was taken. Your own comment closes in one
+                  click — you already know why — and the agent may close those
+                  too, which is what lets you ask it for a change and have the
+                  note close itself. It may never close a teammate's. */}
+              {!closed && canClose && (
+                closing?.id === comment.id ? (
+                  <div className="mt-2.5 space-y-1.5 border-t border-hair pt-2.5">
+                    <label className="block text-caption font-bold text-ink-2">
+                      {closing.as === "resolved" ? "What did you change?" : "Why is this being discarded?"}
+                      {comment.source === "team" && <span className="ml-1 text-danger">required</span>}
+                    </label>
+                    <textarea
+                      value={reason}
+                      onChange={(e) => onReason?.(e.target.value)}
+                      rows={2}
+                      autoFocus
+                      placeholder={
+                        closing.as === "resolved"
+                          ? "e.g. Reordered the line so Week 16 leads."
+                          : "e.g. The label wording cannot change without a new MLR pass."
+                      }
+                      className="w-full resize-none rounded-control border border-hair-2 bg-canvas p-2 text-body text-ink focus:border-brand focus:bg-card focus:outline-none focus:ring-2 focus:ring-brand/15"
+                    />
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={onCancelClose}
+                        className="cursor-pointer rounded-glyph px-2 py-1 text-caption font-bold text-ink-3 hover:text-ink"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={comment.source === "team" && !reason.trim()}
+                        onClick={() => onConfirmClose?.(comment.id, closing.as, reason.trim())}
+                        className="cursor-pointer rounded-glyph bg-brand px-2.5 py-1 text-caption font-bold text-white transition hover:bg-brand-deep disabled:pointer-events-none disabled:opacity-40"
+                      >
+                        {closing.as === "resolved" ? "Resolve" : "Discard"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-hair pt-2.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        comment.source === "team"
+                          ? onBeginClose?.(comment.id, "resolved")
+                          : onConfirmClose?.(comment.id, "resolved", "")
+                      }
+                      className="inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-ok-line bg-ok-bg px-2 py-1 text-caption font-bold text-ok transition hover:brightness-95"
+                    >
+                      <Check className="size-3" /> Resolve
+                    </button>
+                    {comment.source === "team" && (
+                      <button
+                        type="button"
+                        onClick={() => onBeginClose?.(comment.id, "rejected")}
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-hair-2 bg-card px-2 py-1 text-caption font-bold text-ink-3 transition hover:border-danger-line hover:text-danger"
+                      >
+                        <X className="size-3" /> Discard
+                      </button>
+                    )}
+                    <span className="ml-auto text-micro text-ink-4">
+                      {comment.source === "team" ? "Needs your decision" : "Your comment"}
+                    </span>
+                  </div>
+                )
+              )}
 
               {closed && (
                 <div className="mt-2 border-t border-hair pt-2">

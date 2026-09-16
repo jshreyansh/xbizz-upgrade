@@ -1276,7 +1276,7 @@ export function InfographicStudioScreen() {
               onDone={handleProofsRendered}
               footer={
                 <span className="flex items-center gap-1.5 font-medium">
-                  <span>✉ Email notification queued — you can close this tab</span>
+                  <span>Email notification queued — you can close this tab</span>
                 </span>
               }
             />
@@ -1914,12 +1914,18 @@ export function InfographicStudioScreen() {
                 closed comment carries the reason it was closed. A reviewer on
                 a share link sees only this, so "Resolved" alone is not an
                 answer to them. */}
-            {activeTab === "comments" && studioMode === "review" && (
+            {/* The tab is in the row in the editor too, so the panel has to
+                be here in the editor too — gated to review, clicking it showed
+                nothing. */}
+            {activeTab === "comments" && (
               <ReviewComments
                 comments={comments}
                 stampLabel={`Page ${activePageId}`}
                 medicalReviewDone={mlrCheckResolved}
                 regulatoryReviewDone={qaCheckResolved}
+                canClose={studioMode === "editor"}
+                onResolve={(id, note) => closeComment(id, "resolved", note)}
+                onReject={(id, note) => closeComment(id, "rejected", note)}
                 onPost={(text) => {
                   setComments((prev) => [
                     {

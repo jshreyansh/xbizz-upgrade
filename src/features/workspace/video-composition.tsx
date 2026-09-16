@@ -262,7 +262,7 @@ export function DynamicSceneComposition({
                     border: "1px solid rgba(216,240,93,0.25)",
                   }}
                 >
-                  🫀 Image Asset
+                  Image Asset
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 800, color: "white", marginTop: 4 }}>
                   {scene.mediaLabel || "Anatomical Cardiac Structure"}
@@ -329,7 +329,7 @@ export function DynamicSceneComposition({
                       border: "1px solid rgba(56, 189, 248, 0.4)",
                     }}
                   >
-                    🎬 Video Clip
+                    Video Clip
                   </span>
                   <span
                     style={{
