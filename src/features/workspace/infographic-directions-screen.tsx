@@ -1232,13 +1232,29 @@ function CreativePlanSection({
   // The glyph follows the state, so the square and the chip cannot disagree
   // about whether this section is settled.
   const tone = state === "needs-you" ? "attention" : state === "answered" ? "done" : "default";
+  const needsAttention = state === "needs-you";
   return (
     <section
       className={cn(
         "squircle-card relative transition-all duration-300 ease-entrance",
         open
-          ? "z-20 w-full scale-100 bg-card border border-hair shadow-brand-soft rounded-card my-3.5"
-          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:shadow-xs border border-hair hover:border-hair-3 rounded-control my-1"
+          ? "z-20 w-full scale-100 border shadow-brand-soft rounded-card my-3.5"
+          : "z-0 w-[93%] sm:w-[94%] mx-auto scale-[0.985] hover:shadow-xs border rounded-control my-1",
+        /* The tile carries the state, not just the chip on the end of it.
+           A column of identical white rows makes you read every chip to find
+           the two that want something; a tint finds them for you.
+
+           Only the unanswered ones are tinted. Colouring the settled ones too
+           would be a wall of colour with nothing standing out — and the closed
+           rows were being dimmed to 76%, which made the sections asking for
+           attention the faintest things on the screen. */
+        needsAttention
+          ? open
+            ? "border-warn-line bg-warn-bg/45"
+            : "border-warn-line/70 bg-warn-bg/60 hover:bg-warn-bg"
+          : open
+            ? "border-hair bg-card"
+            : "border-hair bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:border-hair-3"
       )}
     >
       <button
