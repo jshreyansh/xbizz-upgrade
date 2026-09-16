@@ -65,6 +65,7 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
@@ -390,6 +391,11 @@ export function StudioScreen() {
   }, [studioMode]);
 
   const [scenePlaying, setScenePlaying] = useState(false);
+  /* The shot the scrubber last landed on, so the Edit tab can show which one
+     you are looking at. Cleared when the scene changes. */
+  const [highlightedShotId, setHighlightedShotId] = useState<string | null>(null);
+  /* The editor's canvas shows one scene to edit, or the whole film to watch. */
+  const [previewMode, setPreviewMode] = useState<"scene" | "full">("scene");
   const [sceneCurrentTime, setSceneCurrentTime] = useState(2.4);
   /**
    * The in/out motion for the two media slots, shared by the generating
@@ -468,6 +474,7 @@ export function StudioScreen() {
   useEffect(() => {
     setScenePlaying(false);
     setSceneCurrentTime(0);
+    setHighlightedShotId(null);
     if (canvasVideoRef.current) {
       canvasVideoRef.current.pause();
       try {
@@ -547,6 +554,11 @@ export function StudioScreen() {
       const target = e.target as HTMLElement | null;
       // Clicking inside the actions themselves must not move them.
       if (target?.closest("[data-element-actions]")) return;
+      /* The player chrome sits INSIDE the stage, so pressing play or dragging
+         the scrubber was reading as "you selected an element" and popping Add
+         to chat over the controls. Driving the video is not selecting a thing
+         in it. */
+      if (target?.closest("[data-player-chrome]")) return;
       // Only a click on the canvas stage opens element actions. Without this
       // the listener is document-wide and selectedCanvasElementId defaults to
       // "headline", so the actions popped up on any click on any screen —
@@ -823,8 +835,6 @@ export function StudioScreen() {
   const [masterPlaying, setMasterPlaying] = useState(false);
   const [masterCurrentTime, setMasterCurrentTime] = useState(14.0);
   const [isMuted, setIsMuted] = useState(false);
-  const [hoveredChapter, setHoveredChapter] = useState<{ number: number; title: string; start: number; end: number } | null>(null);
-  const [hoveredScrubTime, setHoveredScrubTime] = useState<number | null>(null);
 
   useEffect(() => {
     if (!masterPlaying) return;
@@ -1644,12 +1654,51 @@ export function StudioScreen() {
                 {/* Sub-header */}
                 <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair-3/70 bg-white/60 px-4 backdrop-blur-sm">
                   <div className="flex items-center gap-2.5 text-label font-bold text-ink">
-                    <span className="rounded-glyph bg-card border border-hair-2 px-2 py-0.5 shadow-2xs font-extrabold">
-                      Scene {selectedScene.number} of {sceneList.length}
-                    </span>
-                    <span>{selectedScene.title}</span>
+                    {previewMode === "scene" ? (
+                      <>
+                        <span className="rounded-glyph bg-card border border-hair-2 px-2 py-0.5 shadow-2xs font-extrabold">
+                          Scene {selectedScene.number} of {sceneList.length}
+                        </span>
+                        <span>{selectedScene.title}</span>
+                      </>
+                    ) : (
+                      /* The pair only appears once you are in full preview.
+                         Editing is the editor's normal state, and a permanent
+                         two-tab switch would make it look like a choice you
+                         have to keep making. */
+                      <div className="flex items-center gap-1 rounded-control border border-hair-2 bg-[#e6ebe6] p-0.5">
+                        {([
+                          { id: "full" as const, label: "Full preview" },
+                          { id: "scene" as const, label: "Scene preview" },
+                        ]).map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setPreviewMode(opt.id)}
+                            className={cn(
+                              "cursor-pointer rounded-glyph px-2.5 py-1 text-caption font-bold transition",
+                              previewMode === opt.id
+                                ? "bg-card text-brand-deep shadow-2xs"
+                                : "text-ink-3 hover:text-ink"
+                            )}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-label">
+                    {previewMode === "scene" && (
+                      <button
+                        type="button"
+                        onClick={() => { setPreviewMode("full"); setScenePlaying(false); }}
+                        className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-glyph border border-hair-2 bg-card px-2.5 py-1 text-caption font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand"
+                      >
+                        <Play className="size-3 fill-current" />
+                        Full preview
+                      </button>
+                    )}
                     <span className="rounded-glyph bg-card border border-hair-2 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
                       Fit 16:9
                     </span>
@@ -1660,6 +1709,65 @@ export function StudioScreen() {
                 </div>
 
                 {/* ── Canva-style Interactive Scene Workspace ── */}
+                {previewMode === "full" ? (
+                  /* The whole film, from the same composition engine the
+                     published review plays — not a second renderer that could
+                     disagree with it about what the video looks like. */
+                  <div className="flex min-h-0 flex-1 items-center justify-center bg-[#0d1411] p-4 lg:p-8">
+                    <div className="relative flex aspect-video w-full max-w-[860px] flex-col justify-between overflow-hidden rounded-card bg-black shadow-on-dark ring-1 ring-white/10">
+                      <div className="absolute inset-0">
+                        <MasterVideoSequenceComposition
+                          sceneList={sceneList}
+                          activeScene={activeMasterChapter}
+                          brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
+                          isPlaying={masterPlaying}
+                          sceneTime={Math.max(0, masterCurrentTime - (activeMasterChapter?.start ?? 0))}
+                        />
+                      </div>
+
+                      <div className="relative z-10 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-4 text-label text-white">
+                        <span className="font-extrabold">
+                          {activeMasterChapter?.number}. {activeMasterChapter?.title}
+                        </span>
+                        <span className="font-semibold text-white/70">
+                          Chapter {activeMasterChapter?.number} of {chapters.length}
+                        </span>
+                      </div>
+
+                      <div
+                        data-player-chrome
+                        className="relative z-10 space-y-3 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-4 pt-8 text-white"
+                      >
+                        <ChapterScrubber
+                          chapters={chapters}
+                          currentTime={masterCurrentTime}
+                          totalDuration={totalDurationSeconds}
+                          onSeek={setMasterCurrentTime}
+                        />
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setMasterPlaying(!masterPlaying)}
+                            className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-brand text-white shadow-md transition-transform active:scale-95 hover:bg-brand-deep"
+                            aria-label={masterPlaying ? "Pause" : "Play"}
+                          >
+                            {masterPlaying ? <Pause className="size-4 fill-current" /> : <Play className="size-4 fill-current ml-0.5" />}
+                          </button>
+                          <span className="font-mono text-label font-bold tabular-nums text-white/90">
+                            0:{Math.floor(masterCurrentTime).toString().padStart(2, "0")} / 0:{totalDurationSeconds}s
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => { setPreviewMode("scene"); setMasterPlaying(false); }}
+                            className="ml-auto cursor-pointer rounded-glyph border border-white/20 px-2.5 py-1 text-caption font-bold text-white/80 transition hover:border-white/40 hover:text-white"
+                          >
+                            Back to editing
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
                 <div
                   className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden"
                 >
@@ -2242,7 +2350,10 @@ export function StudioScreen() {
                     </div>
 
                     {/* ── Mini Scene Playback Controls & Scrubber (Scoped strictly to this scene) ── */}
-                    <div className="absolute inset-x-0 bottom-0 z-[50] bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6">
+                    <div
+                      data-player-chrome
+                      className="absolute inset-x-0 bottom-0 z-[50] bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-6"
+                    >
                       <div className="flex items-center gap-3 text-white">
                         {/* Play/Pause Button */}
                         <button
@@ -2259,56 +2370,47 @@ export function StudioScreen() {
                         </span>
 
                         {/**
-                         * The scrubber, grouped by shot rather than one
-                         * continuous track. Shots are not a step of their own —
-                         * they are the structure OF this scene, so they belong
-                         * in the scene's own timeline, where the gaps say where
-                         * one beat ends and the next begins.
+                         * One continuous track with a cut at each shot
+                         * boundary, not a bar per shot.
+                         *
+                         * A shot IS a cut inside a continuous take, so a line
+                         * is the honest mark for it; the gaps this used to
+                         * draw said "separate block", which is what a chapter
+                         * is, and the chapter rail in the review keeps that
+                         * shape for exactly that reason.
                          */}
-                        <div className="flex flex-1 items-center gap-1">
-                          {(selectedScene.shots ?? []).length === 0 ? (
-                            <div
-                              onClick={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const pct = (e.clientX - rect.left) / rect.width;
-                                setSceneCurrentTime(+(pct * (selectedScene.duration || 10)).toFixed(1));
-                              }}
-                              className="relative flex h-3 flex-1 cursor-pointer items-center overflow-hidden rounded-full bg-white/20"
-                            >
-                              <div
-                                style={{ width: `${(sceneCurrentTime / (selectedScene.duration || 10)) * 100}%` }}
-                                className="h-full rounded-full bg-brand transition-all duration-75"
-                              />
-                            </div>
-                          ) : (
-                            (selectedScene.shots ?? []).map((shot) => {
-                              const span = Math.max(0.1, shot.endAt - shot.startAt);
-                              // How far the playhead has moved through THIS shot.
-                              const filled = Math.min(1, Math.max(0, (sceneCurrentTime - shot.startAt) / span));
-                              const active = sceneCurrentTime >= shot.startAt && sceneCurrentTime < shot.endAt;
-                              return (
-                                <div
-                                  key={shot.id}
-                                  onClick={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    const pct = (e.clientX - rect.left) / rect.width;
-                                    setSceneCurrentTime(+(shot.startAt + pct * span).toFixed(1));
-                                  }}
-                                  title={`Shot ${shot.index} · ${shot.label} · ${shot.startAt.toFixed(1)}s–${shot.endAt.toFixed(1)}s`}
-                                  style={{ flexGrow: span, flexBasis: 0 }}
-                                  className={cn(
-                                    "relative flex h-3 cursor-pointer items-center overflow-hidden rounded-full transition-colors",
-                                    active ? "bg-white/30 ring-1 ring-white/40" : "bg-white/20 hover:bg-white/25"
-                                  )}
-                                >
-                                  <div
-                                    style={{ width: `${filled * 100}%` }}
-                                    className="h-full rounded-full bg-brand transition-all duration-75"
-                                  />
-                                </div>
-                              );
-                            })
-                          )}
+                        <div
+                          onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const pct = (e.clientX - rect.left) / rect.width;
+                            const at = +(pct * (selectedScene.duration || 10)).toFixed(1);
+                            setSceneCurrentTime(at);
+                            setScenePlaying(false);
+                            /* Landing on a shot opens the place you can change
+                               it — the other half of a link that only ran one
+                               way, from the Edit tab out to the playhead. */
+                            const hit = (selectedScene.shots ?? []).find(
+                              (sh) => at >= sh.startAt && at < sh.endAt
+                            );
+                            if (hit) {
+                              setHighlightedShotId(hit.id);
+                              setActiveTab("edit");
+                            }
+                          }}
+                          className="relative flex h-3 flex-1 cursor-pointer items-center overflow-hidden rounded-full bg-white/20"
+                        >
+                          <div
+                            style={{ width: `${(sceneCurrentTime / (selectedScene.duration || 10)) * 100}%` }}
+                            className="h-full rounded-full bg-brand transition-all duration-75"
+                          />
+                          {(selectedScene.shots ?? []).slice(1).map((shot) => (
+                            <span
+                              key={shot.id}
+                              aria-hidden
+                              style={{ left: `${(shot.startAt / (selectedScene.duration || 10)) * 100}%` }}
+                              className="pointer-events-none absolute inset-y-0 w-px bg-black/45"
+                            />
+                          ))}
                         </div>
 
                         <span className="text-caption text-white/60 font-bold hidden sm:inline shrink-0">
@@ -2350,6 +2452,7 @@ export function StudioScreen() {
                   )}
                  </div>
                 </div>
+                )}
 
                 {/* ── Multi-Layer Production Timeline Bar (Collapsible) ── */}
                 <div className="border-t border-hair bg-canvas text-ink shrink-0">
@@ -2591,66 +2694,12 @@ export function StudioScreen() {
 
                     {/* ── Bottom Master Video Controls with YouTube-Style Segmented Chapter Scrubber ── */}
                     <div className="relative z-10 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-4 pt-8 text-white space-y-3">
-                      {/* YouTube-style Segmented Chapter Seek Bar */}
-                      <div className="relative w-full">
-                        {/* Floating Chapter Tooltip on Hover */}
-                        {hoveredChapter && (
-                          <div
-                            style={{
-                              left: `${((hoveredScrubTime || hoveredChapter.start) / totalDurationSeconds) * 100}%`,
-                            }}
-                            className="absolute -top-10 -translate-x-1/2 rounded-chip bg-[#1a2620] border border-white/20 px-3 py-1 text-caption font-bold text-white shadow-xl pointer-events-none whitespace-nowrap z-30"
-                          >
-                            <span>{hoveredScrubTime ? `0:${Math.floor(hoveredScrubTime).toString().padStart(2, "0")}` : ""}</span>
-                            <span className="text-white/40 mx-1">·</span>
-                            <span className="text-ok-on-dark">{hoveredChapter.title}</span>
-                          </div>
-                        )}
-
-                        {/* Segmented Timeline Track */}
-                        <div className="flex items-center gap-1.5 w-full h-4 py-1 cursor-pointer">
-                          {chapters.map((ch) => {
-                            const segWidthPct = (ch.duration / totalDurationSeconds) * 100;
-                            const progressInChapter = Math.max(
-                              0,
-                              Math.min(1, (masterCurrentTime - ch.start) / ch.duration)
-                            );
-
-                            return (
-                              <div
-                                key={ch.id}
-                                style={{ width: `${segWidthPct}%` }}
-                                onMouseEnter={(e) => {
-                                  setHoveredChapter(ch);
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  const pct = (e.clientX - rect.left) / rect.width;
-                                  setHoveredScrubTime(+(ch.start + pct * ch.duration).toFixed(1));
-                                }}
-                                onMouseMove={(e) => {
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  const pct = (e.clientX - rect.left) / rect.width;
-                                  setHoveredScrubTime(+(ch.start + pct * ch.duration).toFixed(1));
-                                }}
-                                onMouseLeave={() => {
-                                  setHoveredChapter(null);
-                                  setHoveredScrubTime(null);
-                                }}
-                                onClick={(e) => {
-                                  const rect = e.currentTarget.getBoundingClientRect();
-                                  const pct = (e.clientX - rect.left) / rect.width;
-                                  setMasterCurrentTime(+(ch.start + pct * ch.duration).toFixed(1));
-                                }}
-                                className="group relative h-2 rounded-full bg-white/25 hover:h-2.5 transition-all overflow-hidden"
-                              >
-                                <div
-                                  style={{ width: `${progressInChapter * 100}%` }}
-                                  className="h-full bg-brand transition-all duration-75"
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <ChapterScrubber
+                        chapters={chapters}
+                        currentTime={masterCurrentTime}
+                        totalDuration={totalDurationSeconds}
+                        onSeek={setMasterCurrentTime}
+                      />
 
                       {/* Master Playback Controls Row */}
                       <div className="flex items-center justify-between text-white text-body">
@@ -3232,6 +3281,7 @@ export function StudioScreen() {
                   <ShotCards
                     scene={selectedScene}
                     currentTime={sceneCurrentTime}
+                    highlightedShotId={highlightedShotId}
                     onScrub={(seconds) => {
                       setSceneCurrentTime(seconds);
                       setScenePlaying(false);

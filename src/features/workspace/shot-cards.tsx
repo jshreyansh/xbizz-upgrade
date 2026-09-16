@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Film, ImageIcon, Layers, MessageSquarePlus, Video } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Scene, Shot } from "@/types/content";
@@ -38,18 +39,31 @@ function mediaInShot(scene: Scene, shot: Shot) {
 export function ShotCards({
   scene,
   currentTime,
+  highlightedShotId,
   onScrub,
   onAddToChat,
   onReplaceMedia,
 }: {
   scene: Scene;
   currentTime: number;
+  /** The shot the scrubber last landed on — brought into view and marked. */
+  highlightedShotId?: string | null;
   onScrub: (seconds: number) => void;
   /** Hand this shot to the agent to change. */
   onAddToChat: (shot: Shot) => void;
   onReplaceMedia: (shot: Shot, elementId: string, kind: "image" | "video") => void;
 }) {
   const shots = scene.shots ?? [];
+
+  /* Arriving from the scrubber, the shot you clicked may be below the fold of
+     a long panel — so it is scrolled to rather than merely coloured. */
+  const highlightRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (highlightedShotId) {
+      highlightRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+  }, [highlightedShotId]);
+
   if (shots.length === 0) return null;
 
   return (
@@ -71,9 +85,14 @@ export function ShotCards({
         return (
           <div
             key={shot.id}
+            ref={shot.id === highlightedShotId ? highlightRef : undefined}
             className={cn(
               "rounded-panel border p-3 transition-colors",
-              active ? "border-brand/30 bg-tint" : "border-hair bg-canvas"
+              shot.id === highlightedShotId
+                ? "border-brand bg-tint ring-2 ring-brand/20"
+                : active
+                ? "border-brand/30 bg-tint"
+                : "border-hair bg-canvas"
             )}
           >
             <div className="flex items-start justify-between gap-2">
