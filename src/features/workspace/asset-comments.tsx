@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LogoMark } from "@/components/ui/logo-mark";
-import { Check, MessageSquarePlus, Send, X, CornerDownRight } from "lucide-react";
+import { Check, Send, X, CornerDownRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
@@ -125,32 +124,42 @@ export const ELEMENT_LABELS: Record<string, string> = {
  * for later. The composer opens in place rather than in a dialog, because a
  * note about a thing should be written next to the thing.
  */
+/**
+ * What you want changed about the thing you just clicked.
+ *
+ * This asked twice: pick "Add comment", then pick between "Send to chat & add
+ * comment" and "Add comment" — two steps and four buttons to say one sentence
+ * about one element. Now the box is simply there, with one way out of it.
+ *
+ * And what you write here is a SUGGESTION, not a comment. It goes to the
+ * workspace chat with the element attached, because it is an instruction to
+ * the agent about your own draft. Comments are what reviewers leave on a
+ * published link — somebody else's words, which have to be answered rather
+ * than acted on — and they keep their own list.
+ */
 export function ElementActionBar({
   at,
   elementLabel,
-  onAddToChat,
-  onComment,
+  onSuggest,
   onDismiss,
 }: {
   at: { x: number; y: number };
   elementLabel: string;
-  onAddToChat: () => void;
-  onComment: (text: string, alsoSendToChat: boolean) => void;
+  /** Sends the element and this instruction to the workspace chat. */
+  onSuggest: (text: string) => void;
   onDismiss: () => void;
 }) {
-  const [composing, setComposing] = useState(false);
   const [text, setText] = useState("");
 
-  const width = composing ? 320 : 232;
+  const width = 320;
   const left = Math.max(12, Math.min(at.x - width / 2, window.innerWidth - width - 12));
-  const top = Math.min(at.y + 14, window.innerHeight - (composing ? 190 : 60));
+  const top = Math.min(at.y + 14, window.innerHeight - 180);
 
-  const submit = (alsoSendToChat: boolean) => {
+  const submit = () => {
     const value = text.trim();
     if (!value) return;
-    onComment(value, alsoSendToChat);
+    onSuggest(value);
     setText("");
-    setComposing(false);
     onDismiss();
   };
 
@@ -168,59 +177,29 @@ export function ElementActionBar({
         </span>
       </div>
 
-      {!composing ? (
-        <div className="flex gap-1">
-          <button
-            type="button"
-            onClick={onAddToChat}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-control px-2.5 py-1.5 text-body font-bold text-ink transition hover:bg-tint hover:text-brand-deep cursor-pointer"
-          >
-            {/* The agent's own mark on the action that reaches the agent. */}
-            <LogoMark size={13} className="shrink-0 text-brand" />
-            <span>Add to chat</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setComposing(true)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-control px-2.5 py-1.5 text-body font-bold text-ink transition hover:bg-tint hover:text-brand-deep cursor-pointer"
-          >
-            <MessageSquarePlus className="size-3.5 text-brand" />
-            <span>Add comment</span>
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-1.5 p-1">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={3}
-            autoFocus
-            placeholder={`What should change about the ${elementLabel.toLowerCase()}?`}
-            className="w-full resize-none rounded-control border border-hair-2 bg-canvas p-2.5 text-body leading-relaxed text-ink transition focus:border-brand focus:bg-card focus:outline-none focus:ring-2 focus:ring-brand/15"
-          />
-          <div className="flex flex-col gap-1.5">
-            <Button
-              size="sm"
-              variant="primary"
-              disabled={!text.trim()}
-              onClick={() => submit(true)}
-              className="w-full gap-1.5 text-label font-bold cursor-pointer disabled:opacity-40"
-            >
-              <Send className="size-3" />
-              <span>Send to chat &amp; add comment</span>
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={!text.trim()}
-              onClick={() => submit(false)}
-              className="w-full text-label font-bold cursor-pointer disabled:opacity-40"
-            >
-              Add comment
-            </Button>
-          </div>
-        </div>
-      )}
+      <div className="space-y-1.5 p-1">
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
+          }}
+          rows={3}
+          autoFocus
+          placeholder={`What should change about the ${elementLabel.toLowerCase()}?`}
+          className="w-full resize-none rounded-control border border-hair-2 bg-canvas p-2.5 text-body leading-relaxed text-ink transition focus:border-brand focus:bg-card focus:outline-none focus:ring-2 focus:ring-brand/15"
+        />
+        <Button
+          size="sm"
+          variant="primary"
+          disabled={!text.trim()}
+          onClick={submit}
+          className="w-full gap-1.5 text-label font-bold cursor-pointer disabled:opacity-40"
+        >
+          <Send className="size-3" />
+          <span>Add suggestion</span>
+        </Button>
+      </div>
     </div>
   );
 }

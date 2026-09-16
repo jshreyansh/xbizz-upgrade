@@ -63,6 +63,7 @@ import {
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
+import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
@@ -136,24 +137,6 @@ const TAG_DEPENDENTS: Record<string, string[]> = {
   "Safety":        ["Outro"],
   "Outro":         [],
 };
-
-function FormattedMessageText({ text }: { text: string }) {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
-  return (
-    <p className="whitespace-pre-wrap">
-      {parts.map((part, i) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return (
-            <strong key={i} className="font-bold">
-              {part.slice(2, -2)}
-            </strong>
-          );
-        }
-        return part;
-      })}
-    </p>
-  );
-}
 
 /* Production Plan → Video Editor, reported per scene. */
 function editorOpenSteps(sceneCount: number): GenerationStep[] {
@@ -576,21 +559,34 @@ export function StudioScreen() {
 
   const openComments = comments.filter((c) => c.status === "open");
 
-  const addComment = (elementId: string, text: string, alsoSendToChat: boolean) => {
-    const comment: AssetComment = {
-      id: `cm-${(commentSeq.current += 1)}`,
-      ...sceneAnchor(selectedScene.id, selectedScene.number),
-      elementId,
-      elementLabel: ELEMENT_LABELS[elementId] ?? "Element",
-      text,
-      author: "You",
-      source: "mine",
-      at: "Just now",
-      status: "open",
-      sentToChat: alsoSendToChat,
-    };
-    setComments((prev) => [comment, ...prev]);
-    if (alsoSendToChat) sendCommentToAgent(comment);
+  /**
+   * A suggestion about your own draft goes to the agent, not into the comment
+   * list. It is an instruction, and the thing that carries instructions here
+   * is the chat. Comments are somebody else's words on a published link —
+   * they have to be answered, which is why they are kept and counted; a note
+   * you wrote about your own work needs neither.
+   */
+  const addSuggestion = (elementId: string, text: string) => {
+    const { label, detail } = describeElement(elementId);
+    setActiveTab("assistant");
+    addChatMessage({ role: "user", text: `[${label}] ${text}` });
+
+    /**
+     * The agent asks before it acts.
+     *
+     * A suggestion written in five words on a canvas is rarely the whole
+     * instruction, and a batch of them is usually one change rather than four
+     * — so it reads the note back, asks the one thing it cannot infer, and
+     * offers to wait. Acting on the first sentence would mean re-editing after
+     * every note instead of once after the last.
+     */
+    setTimeout(() => {
+      addChatMessage({
+        role: "swishx",
+        text: `Noted on **${label}** — "${text.trim()}".\n\nBefore I change anything: should this hold for the other scenes too, or just this one? Add any more suggestions and I'll apply them together.`,
+        chips: ["Just this scene", "Apply across all scenes", "I have more to add"],
+      });
+    }, 700);
   };
 
   /**
@@ -1230,6 +1226,21 @@ export function StudioScreen() {
         addChatMessage({
           role: "swishx",
           text: `Understood! Preserving individual scene customizations. You can continue editing in the canvas or click **Generate Video** on top right when ready.`,
+        });
+      } else if (rawInput === "I have more to add") {
+        /* Holding. The whole point of asking was to apply a batch once rather
+           than re-edit after every note. */
+        addChatMessage({
+          role: "swishx",
+          text: `Holding this one. Keep marking up the canvas — tell me when you're done and I'll apply them together.`,
+        });
+      } else if (rawInput === "Just this scene" || rawInput === "Apply across all scenes") {
+        const wide = rawInput === "Apply across all scenes";
+        addChatMessage({
+          role: "swishx",
+          text: wide
+            ? `Applying it across all ${sceneList.length} scenes. Every line still resolves to an approved source — open the source pill under a line to see which.`
+            : `Applying it to **Scene ${selectedScene.number} — ${selectedScene.title}** only. The other scenes are untouched.`,
         });
       } else if (isReview && isCommentIntent) {
         const timeMatch = rawInput.match(/0:\d{2}|\d{1,2}s|\d{1,2}\s*sec/i);
@@ -2803,6 +2814,7 @@ export function StudioScreen() {
                     Edit
                   </InspectorTabButton>
                 )}
+                {(publishedCount > 0 || isReview) && (
                 <InspectorTabButton
                   tab="comments"
                   current={activeTab}
@@ -2813,6 +2825,7 @@ export function StudioScreen() {
                 >
                   Comments
                 </InspectorTabButton>
+                )}
                 <InspectorTabButton
                   tab="evidence"
                   current={activeTab}
@@ -2864,20 +2877,7 @@ export function StudioScreen() {
                         )}
                       >
                         <FormattedMessageText text={msg.text} />
-                        {msg.chips && msg.chips.length > 0 && (
-                          <div className="mt-2.5 pt-2 border-t border-hair flex flex-wrap gap-1.5">
-                            {msg.chips.map((chip, chipIdx) => (
-                              <button
-                                key={chipIdx}
-                                type="button"
-                                onClick={() => handleSendChatMessage(chip)}
-                                className="text-label font-bold text-brand-deep bg-tint hover:bg-tint-strong border border-brand/20 px-2.5 py-1 rounded-chip transition cursor-pointer shadow-2xs hover:-translate-y-0.5"
-                              >
-                                {chip}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        <ChatChips chips={msg.chips} onPick={(chip) => handleSendChatMessage(chip)} />
                       </div>
                     </div>
                   ))}
@@ -3333,11 +3333,7 @@ export function StudioScreen() {
           <ElementActionBar
             at={elementMenuAt}
             elementLabel={ELEMENT_LABELS[selectedCanvasElementId] ?? "Element"}
-            onAddToChat={() => {
-              attachElementToChat(selectedCanvasElementId);
-              setElementMenuAt(null);
-            }}
-            onComment={(text, alsoSendToChat) => addComment(selectedCanvasElementId, text, alsoSendToChat)}
+            onSuggest={(text) => addSuggestion(selectedCanvasElementId, text)}
             onDismiss={() => setElementMenuAt(null)}
           />
         )}

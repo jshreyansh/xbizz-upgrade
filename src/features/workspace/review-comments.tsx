@@ -46,9 +46,14 @@ export function ReviewComments({
   const [closing, setClosing] = useState<{ id: string; as: "resolved" | "rejected" } | null>(null);
   const [reason, setReason] = useState("");
 
-  const open = comments.filter((c) => c.status === "open");
-  const resolved = comments.filter((c) => c.status === "resolved");
-  const discarded = comments.filter((c) => c.status === "rejected");
+  /* Reviewers only. What you write on the canvas is a suggestion and lives in
+     the chat — it is an instruction about your own draft. A comment is
+     somebody else's words on a published link, which is why this list exists:
+     to be answered, not to be a second inbox for your own notes. */
+  const fromTeam = comments.filter((c) => c.source === "team");
+  const open = fromTeam.filter((c) => c.status === "open");
+  const resolved = fromTeam.filter((c) => c.status === "resolved");
+  const discarded = fromTeam.filter((c) => c.status === "rejected");
   const closed = [...resolved, ...discarded];
 
   return (
@@ -233,7 +238,7 @@ function Group({
                   <div className="mt-2.5 space-y-1.5 border-t border-hair pt-2.5">
                     <label className="block text-caption font-bold text-ink-2">
                       {closing.as === "resolved" ? "What did you change?" : "Why is this being discarded?"}
-                      {comment.source === "team" && <span className="ml-1 text-danger">required</span>}
+                      <span className="ml-1 text-danger">required</span>
                     </label>
                     <textarea
                       value={reason}
@@ -257,7 +262,7 @@ function Group({
                       </button>
                       <button
                         type="button"
-                        disabled={comment.source === "team" && !reason.trim()}
+                        disabled={!reason.trim()}
                         onClick={() => onConfirmClose?.(comment.id, closing.as, reason.trim())}
                         className="cursor-pointer rounded-glyph bg-brand px-2.5 py-1 text-caption font-bold text-white transition hover:bg-brand-deep disabled:pointer-events-none disabled:opacity-40"
                       >
@@ -269,27 +274,19 @@ function Group({
                   <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-hair pt-2.5">
                     <button
                       type="button"
-                      onClick={() =>
-                        comment.source === "team"
-                          ? onBeginClose?.(comment.id, "resolved")
-                          : onConfirmClose?.(comment.id, "resolved", "")
-                      }
+                      onClick={() => onBeginClose?.(comment.id, "resolved")}
                       className="inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-ok-line bg-ok-bg px-2 py-1 text-caption font-bold text-ok transition hover:brightness-95"
                     >
                       <Check className="size-3" /> Resolve
                     </button>
-                    {comment.source === "team" && (
-                      <button
+                    <button
                         type="button"
                         onClick={() => onBeginClose?.(comment.id, "rejected")}
                         className="inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-hair-2 bg-card px-2 py-1 text-caption font-bold text-ink-3 transition hover:border-danger-line hover:text-danger"
                       >
                         <X className="size-3" /> Discard
                       </button>
-                    )}
-                    <span className="ml-auto text-micro text-ink-4">
-                      {comment.source === "team" ? "Needs your decision" : "Your comment"}
-                    </span>
+                    <span className="ml-auto text-micro text-ink-4">Needs your decision</span>
                   </div>
                 )
               )}

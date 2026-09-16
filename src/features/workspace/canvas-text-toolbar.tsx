@@ -391,6 +391,7 @@ export function EditableCanvasText({
   selected,
   locked,
   onSelect,
+  onReposition,
 }: {
   element: CanvasTextElement;
   value: string;
@@ -401,6 +402,14 @@ export function EditableCanvasText({
   /** Review mode: the page is a finished asset, so nothing is selectable. */
   locked?: boolean;
   onSelect: (rect: DOMRect) => void;
+  /**
+   * Where the run moved to — not the same event as "the reader picked it".
+   * Routing both through onSelect meant every re-render re-attached the
+   * observer, the observer reported once on attach, and that report re-opened
+   * an action bar the reader had just closed. Repositioning may only move a
+   * bar that is already open.
+   */
+  onReposition?: (rect: DOMRect) => void;
 }) {
   const Tag = as;
   const ref = useRef<HTMLElement | null>(null);
@@ -414,7 +423,7 @@ export function EditableCanvasText({
   useEffect(() => {
     if (!selected || !ref.current) return;
     const node = ref.current;
-    const report = () => onSelect(node.getBoundingClientRect());
+    const report = () => (onReposition ?? onSelect)(node.getBoundingClientRect());
     window.addEventListener("scroll", report, true);
     window.addEventListener("resize", report);
     const observer = new ResizeObserver(report);
@@ -424,7 +433,7 @@ export function EditableCanvasText({
       window.removeEventListener("resize", report);
       observer.disconnect();
     };
-  }, [selected, onSelect]);
+  }, [selected, onSelect, onReposition]);
 
   if (locked) {
     return (

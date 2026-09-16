@@ -49,6 +49,7 @@ import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
+import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
@@ -530,7 +531,6 @@ export function InfographicStudioScreen() {
   /** Where the in-place composer is anchored — a note about a run is written
    *  next to the run, the same as on the video canvas. */
   const [commentComposerAt, setCommentComposerAt] = useState<{ x: number; y: number } | null>(null);
-  const commentSeq = useRef(0);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -658,6 +658,18 @@ export function InfographicStudioScreen() {
     setCommentComposerAt({ x: rect.left + rect.width / 2, y: rect.top + rect.height });
   };
 
+  /**
+   * The run moved (zoom, scroll, resize) — follow it, but only if the bar is
+   * still open. Re-anchoring a closed bar is how "dismiss" stopped working.
+   * Returning the previous object when nothing moved also stops the observer
+   * and the render from feeding each other.
+   */
+  const repositionComposer = (rect: DOMRect) => {
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height;
+    setCommentComposerAt((prev) => (prev && (prev.x !== x || prev.y !== y) ? { x, y } : prev));
+  };
+
   const clearElementSelection = () => {
     setSelectedElementId(null);
     setCommentComposerAt(null);
@@ -681,14 +693,6 @@ export function InfographicStudioScreen() {
     showToast("Formatting reset to the template");
   };
 
-  const addElementToChat = () => {
-    if (!selectedElement) return;
-    setActiveTab("assistant");
-    const [blockId, field] = selectedElement.id.split(".");
-    const value = ((currentPage as unknown as Record<string, Record<string, string>>)[blockId] ?? {})[field];
-    setChatInput(`Rewrite the ${selectedElement.label.toLowerCase()} ("${value}") `);
-    showToast(`${selectedElement.label} attached to chat`);
-  };
 
   /* One text run on the page. The value is read from the page by the run's own
      id rather than passed in, so a run cannot be wired to the wrong field —
@@ -709,6 +713,7 @@ export function InfographicStudioScreen() {
       locked={studioMode !== "editor"}
       selected={selectedElementId === id}
       onSelect={(r) => handleSelectElement(id, r)}
+      onReposition={repositionComposer}
     />
   );
 
@@ -774,6 +779,22 @@ export function InfographicStudioScreen() {
     setTimeout(() => {
       const lower = text.toLowerCase();
       let reply = `Understood. I have adjusted the graphic layout grounded in the **${brandName}** dossier.`;
+
+      if (text === "I have more to add") {
+        /* Holding. The point of asking was to apply a batch once rather than
+           re-edit the page after every note. */
+        reply = "Holding this one. Keep marking up the page — tell me when you're done and I'll apply them together.";
+        addChatMessage({ role: "swishx", text: reply });
+        return;
+      }
+
+      if (text === "Just this page" || text === "Apply across all pages") {
+        reply = text === "Apply across all pages"
+          ? `Applying it across all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}. Every claim still resolves to an approved source.`
+          : `Applying it to **${currentPage.name}** only. The other pages are untouched.`;
+        addChatMessage({ role: "swishx", text: reply });
+        return;
+      }
 
       if (lower.includes("mlr") || lower.includes("comparative") || lower.includes("embrace-3")) {
         setMlrCheckResolved(true);
@@ -848,32 +869,29 @@ export function InfographicStudioScreen() {
    * than two because the commonest thing after writing a note about your own
    * work is asking for the change.
    */
-  const addElementComment = (text: string, alsoSendToChat: boolean) => {
-    // A counter rather than a timestamp: the id is needed straight away to
-    // hand the comment to the agent, and a clock read is an impure call the
-    // component body has no business making.
-    commentSeq.current += 1;
-    const id = `c-mine-${commentSeq.current}`;
-    setComments((prev) => [
-      {
-        id,
-        ...pageAnchor(activePageId),
-        elementId: selectedElementId ?? "page",
-        elementLabel: selectedElement?.label ?? ELEMENT_LABELS.page,
-        author: "You",
-        role: "Creative Author",
-        avatar: "MK",
-        text,
-        at: "Just now",
-        source: "mine",
-        status: "open",
-        sentToChat: false,
-      },
-      ...prev,
-    ]);
+  /**
+   * A suggestion about your own draft goes to the agent, not into the comment
+   * list. It is an instruction, and the thing that carries instructions here
+   * is the chat. Comments are somebody else's words on a published link —
+   * they have to be answered, which is why they are kept and counted; a note
+   * you wrote about your own work needs neither.
+   */
+  const addSuggestion = (text: string) => {
+    const label = selectedElement?.label ?? ELEMENT_LABELS.page;
     setCommentComposerAt(null);
-    if (alsoSendToChat) setTimeout(() => sendCommentToAgent(id), 60);
-    else showToast("Comment added");
+    setActiveTab("assistant");
+    addChatMessage({ role: "user", text: `[${label}] ${text}` });
+
+    /* The agent asks before it acts. A suggestion written in five words on a
+       canvas is rarely the whole instruction, and a batch of them is usually
+       one change rather than four. */
+    setTimeout(() => {
+      addChatMessage({
+        role: "swishx",
+        text: `Noted on **${label}** — "${text.trim()}".\n\nBefore I change anything: should this hold across the other pages too, or just this one? Add any more suggestions and I'll apply them together.`,
+        chips: ["Just this page", "Apply across all pages", "I have more to add"],
+      });
+    }, 700);
   };
 
   /* Closing a comment. A team comment cannot close without a note — the
@@ -1707,6 +1725,7 @@ export function InfographicStudioScreen() {
                   </InspectorTabButton>
                 )}
 
+                {(publishedCount > 0 || isReview) && (
                 <InspectorTabButton
                   tab="comments"
                   current={activeTab}
@@ -1717,6 +1736,7 @@ export function InfographicStudioScreen() {
                 >
                   Comments
                 </InspectorTabButton>
+                )}
 
                 <InspectorTabButton
                   tab="evidence"
@@ -1755,7 +1775,8 @@ export function InfographicStudioScreen() {
                             : "bg-subtle text-ink border border-hair rounded-tl-xs"
                         )}
                       >
-                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                        <FormattedMessageText text={msg.text} />
+                        <ChatChips chips={msg.chips} onPick={(chip) => handleSendMessage(chip)} />
                       </div>
                     </div>
                   ))}
@@ -2242,11 +2263,7 @@ export function InfographicStudioScreen() {
           <ElementActionBar
             at={commentComposerAt}
             elementLabel={selectedElement.label}
-            onAddToChat={() => {
-              addElementToChat();
-              setCommentComposerAt(null);
-            }}
-            onComment={addElementComment}
+            onSuggest={addSuggestion}
             onDismiss={() => setCommentComposerAt(null)}
           />
         )}
