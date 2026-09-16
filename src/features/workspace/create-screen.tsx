@@ -37,6 +37,8 @@ import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
+import { useVideoSteps, useCreativeSteps } from "@/features/workspace/flow-steps";
 import { AUDIENCE_OPTIONS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
 import {
   ProjectContextModal,
@@ -302,6 +304,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setVideoSubStage("directions");
   };
 
+  /* The trail this screen starts. Which one depends on the asset being made,
+     because the two flows do not share their middle steps. */
+  const videoFlow = useVideoSteps({});
+  const creativeFlow = useCreativeSteps({});
+  const flowSteps = isInfographic ? creativeFlow : videoFlow;
+
   const handleBackToSource = () => {
     setVideoSubStage("mode-select");
   };
@@ -356,6 +364,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     <div className="min-h-screen flex flex-col bg-subtle" onClick={() => setActivePopover(null)}>
       {/* ─── Top Studio-Matched Header Bar ─── */}
       <ScreenHeader>
+        {/* The first step of the trail, so Back leaves it for the mode
+            picker — there is nothing behind Brief inside the flow. */}
         <button
           onClick={handleBackToSource}
           className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5 cursor-pointer"
@@ -378,8 +388,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           </div>
         </div>
 
+        <FlowBreadcrumb steps={flowSteps} currentId="brief" />
+
         {/* Brand Switcher Action in Header */}
-        <div className="ml-6 hidden items-center gap-1 sm:flex">
+        <div className="ml-4 hidden items-center gap-1 sm:flex">
           <button
             type="button"
             onClick={() => setDossierModalOpen(true)}

@@ -7,6 +7,9 @@ export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scra
 export type SourceSelectionType = "dossier" | "url" | "text";
 export type VideoSubStage = "mode-select" | "source-select" | "intake" | "directions" | "studio";
 export type StudioEntry = "create" | "review";
+/** Which half of the creative plan screen is showing — its own step in the
+ *  trail, so the breadcrumb can send you back to it from the canvas. */
+export type CreativeStep = "brief" | "template";
 
 interface WorkspaceState {
   view: AppView;
@@ -38,6 +41,7 @@ interface WorkspaceState {
    * shared review rather than walking the whole wizard to reach it.
    */
   studioEntry: StudioEntry;
+  creativeStep: CreativeStep;
   directionId: string;
   selectedSceneId: string;
   inspectorTab: InspectorTab;
@@ -112,6 +116,7 @@ interface WorkspaceState {
   setInfographicLogoPlacement: (placement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none") => void;
   setLogoMark: (patch: Partial<LogoMark>) => void;
   setStudioEntry: (entry: StudioEntry) => void;
+  setCreativeStep: (step: CreativeStep) => void;
   setInfographicActivePage: (page: number) => void;
   reset: () => void;
 }
@@ -139,6 +144,7 @@ const initialState = {
   selectedSourceIds: [],
   demoScenarioId: "hcp-launch",
   studioEntry: "create" as StudioEntry,
+  creativeStep: "brief" as CreativeStep,
   directionId: creativeDirections[0].id,
   selectedSceneId: "scene-3",
   inspectorTab: "edit" as InspectorTab,
@@ -215,6 +221,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setSelectedSourceIds: (selectedSourceIds) => set({ selectedSourceIds }),
   setDemoScenarioId: (demoScenarioId) => set({ demoScenarioId }),
   setStudioEntry: (studioEntry) => set({ studioEntry }),
+  setCreativeStep: (creativeStep) => set({ creativeStep }),
   setDirectionId: (directionId) => set({ directionId }),
   setSelectedSceneId: (selectedSceneId) => set({ selectedSceneId }),
   setInspectorTab: (inspectorTab) => set({ inspectorTab }),

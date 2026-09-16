@@ -60,6 +60,8 @@ import { ResearchSourcesContent } from "@/features/workspace/research-sources-se
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { useVideoSteps } from "@/features/workspace/flow-steps";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -288,6 +290,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
      the old one. */
   const logoUploadRef = useRef<HTMLInputElement>(null);
   const scriptBuildStepList = useMemo(() => scriptBuildSteps(5), []);
+  const flowSteps = useVideoSteps({});
+  const backStep = previousStep(flowSteps, "plan");
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -943,9 +947,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       header={
         <ScreenHeader>
           <button
-            onClick={handleBackToBrief}
-            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5 cursor-pointer"
-            aria-label="Back to brief"
+            onClick={() => backStep?.onGo?.()}
+            disabled={!backStep?.onGo}
+            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+            aria-label={backStep ? `Back to ${backStep.label}` : "Back"}
+            title={backStep ? `Back to ${backStep.label}` : undefined}
           >
             <ArrowLeft className="size-4" />
           </button>
@@ -968,9 +974,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               you were already looking at; this names the job the plan is for
               and lets you change it without walking back to the brief. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
-            <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-              Need your input
-            </span>
+            <FlowBreadcrumb steps={flowSteps} currentId="plan" />
             <button
               type="button"
               onClick={() => setUseCaseDrawerOpen(true)}

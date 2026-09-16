@@ -12,7 +12,6 @@ import {
   Download,
   Expand,
   FileCheck2,
-  FileText,
   Film,
   History,
   Image as ImageIcon,
@@ -35,7 +34,6 @@ import {
   PanelRightOpen,
   Paperclip,
   Pause,
-  Pencil,
   Play,
   Plus,
   Redo2,
@@ -66,6 +64,8 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
+import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
@@ -329,6 +329,15 @@ export function StudioScreen() {
   const isEditor = studioMode === "editor";
   const isGenerating = studioMode === "generating";
   const isOpeningEditor = studioMode === "opening-editor";
+
+  /* Where this studio sits in the video trail, and what Back means here. */
+  const currentStepId: VideoStepId =
+    studioMode === "review" ? "review" : studioMode === "scenes" ? "production" : "editor";
+  const flowSteps = useVideoSteps({
+    toProduction: () => { setStudioMode("scenes"); setActiveTab("assistant"); },
+    toEditor: () => { setStudioMode("editor"); setActiveTab("edit"); },
+  });
+  const backStep = previousStep(flowSteps, currentStepId);
   const editorOpenStepList = useMemo(() => editorOpenSteps(sceneList.length), [sceneList.length]);
   const masterRenderStepList = useMemo(
     () => masterRenderSteps(sceneList.length, selectedQuality === "cinematic"),
@@ -1274,7 +1283,17 @@ export function StudioScreen() {
       panelMinCanvas={isReview ? 240 + 360 : isEditor ? 220 + 360 : 360}
       header={
         <ScreenHeader>
-          <button onClick={() => setView("home")} className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5" aria-label="Back home">
+          {/* One step back along the trail, not out of the project. This went
+              to the app home from every mode, so the control shaped like
+              "back" was the one that lost your place — while the crumb beside
+              it offered the real step back. */}
+          <button
+            onClick={() => backStep?.onGo?.()}
+            disabled={!backStep?.onGo}
+            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+            aria-label={backStep ? `Back to ${backStep.label}` : "Back"}
+            title={backStep ? `Back to ${backStep.label}` : undefined}
+          >
             <ArrowLeft className="size-4" />
           </button>
           <SwishXMark compact />
@@ -1287,26 +1306,7 @@ export function StudioScreen() {
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
           </div>
 
-          <div className="ml-6 hidden items-center gap-1 sm:flex">
-            {studioMode === "scenes" && <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">Production Plan</span>}
-            {studioMode === "editor" && (
-              <div className="flex items-center gap-1.5">
-                <button onClick={handleReturnToScript} className="focus-ring flex items-center gap-1.5 rounded-chip border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer">
-                  <FileText className="size-3.5 text-brand" /> <span>Production Plan</span>
-                </button>
-                <span className="text-ink-3">/</span>
-                <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">Video Editor</span>
-              </div>
-            )}
-            {studioMode === "generating" && <span className="inline-flex items-center gap-1.5 rounded-chip bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse"><span>Generating High-Res Video...</span></span>}
-            {studioMode === "review" && (
-              <div className="flex items-center gap-1.5">
-                <button onClick={handleReturnToEditor} className="focus-ring flex items-center gap-1.5 rounded-chip border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"><Pencil className="size-3 text-brand" /> <span>Video Editor</span></button>
-                <span className="text-ink-3">/</span>
-                <span className="rounded-chip bg-ok-bg px-3 py-0.5 text-caption font-extrabold text-ok border border-ok-line">Shared Review View · Final Master ({totalDurationSeconds}s)</span>
-              </div>
-            )}
-          </div>
+          <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
 
           <div className="ml-auto flex items-center gap-2">
             {/* Version. Defaults to Version 1 because that is what ships;

@@ -31,6 +31,8 @@ import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspa
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { useCreativeSteps } from "@/features/workspace/flow-steps";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
@@ -150,7 +152,12 @@ export function InfographicDirectionsScreen() {
 
   const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
 
-  const [currentStep, setCurrentStep] = useState<InfographicSubStep>("brief");
+  /* In the store, not local: the breadcrumb in the canvas studio needs to be
+     able to send you back to this step. */
+  const currentStep = useWorkspaceStore((st) => st.creativeStep) as InfographicSubStep;
+  const setCurrentStep = useWorkspaceStore((st) => st.setCreativeStep);
+  const flowSteps = useCreativeSteps({});
+  const backStep = previousStep(flowSteps, currentStep === "template" ? "layout" : "plan");
 
   /* ── The use case is the whole context, not a label ──────────────────────
      Same switcher as the video plan, filtered to image cases. Changing it
@@ -422,15 +429,12 @@ export function InfographicDirectionsScreen() {
               // grown its own, two arrows apart, which is a choice between
               // two things that should be one.
               // One step at a time, rather than dropping out of the flow.
-              if (currentStep === "template") {
-                setCurrentStep("brief");
-                return;
-              }
-              setVideoSubStage("intake");
-              setView("create");
+              backStep?.onGo?.();
             }}
-            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5 cursor-pointer"
-            aria-label="Back"
+            disabled={!backStep?.onGo}
+            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+            aria-label={backStep ? `Back to ${backStep.label}` : "Back"}
+            title={backStep ? `Back to ${backStep.label}` : undefined}
           >
             <ArrowLeft className="size-4" />
           </button>
@@ -456,9 +460,7 @@ export function InfographicDirectionsScreen() {
               the brief — the same switcher the video plan has, filtered to
               image cases. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
-            <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line">
-              {currentStep === "template" ? "Layout View" : "Need your input"}
-            </span>
+            <FlowBreadcrumb steps={flowSteps} currentId={currentStep === "template" ? "layout" : "plan"} />
             <button
               type="button"
               onClick={() => setUseCaseDrawerOpen(true)}

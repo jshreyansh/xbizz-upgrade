@@ -48,6 +48,8 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
+import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
@@ -320,6 +322,7 @@ export function InfographicStudioScreen() {
   // As in the video studio: a published asset opens under its own title.
   const storedProjectName = useWorkspaceStore((s) => s.projectName);
   const creativeTitle = storedProjectName.trim() || `${brandName} HCP Infographic`;
+
   const [studioMode, setStudioMode] = useState<CreativeStudioMode>(
     openedForReview ? "review" : "opening"
   );
@@ -460,6 +463,10 @@ export function InfographicStudioScreen() {
   }, [pagesList, activePageId]);
 
   const isReview = studioMode === "review";
+  /* Where this studio sits in the creative trail, and what Back means here. */
+  const currentStepId: CreativeStepId = studioMode === "review" ? "review" : "canvas";
+  const flowSteps = useCreativeSteps({ toCanvas: () => setStudioMode("editor") });
+  const backStep = previousStep(flowSteps, currentStepId);
   const canvasOpenStepList = useMemo(
     () => canvasOpenSteps(pagesList.length, BLOCK_ORDER.length),
     [pagesList.length]
@@ -914,19 +921,16 @@ export function InfographicStudioScreen() {
       header={
         <ScreenHeader spread>
           <div className="flex items-center gap-2 min-w-0">
+            {/* One step back along the trail. This skipped the Layout step it
+                came through, and used different logic from the video studio
+                for the same shape of screen. */}
             <button
               type="button"
-              onClick={() => {
-                if (studioMode === "review") {
-                  setStudioMode("editor");
-                } else {
-                  setView("directions");
-                  setVideoSubStage("directions");
-                }
-              }}
-              className="focus-ring mr-1 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5 hover:text-ink cursor-pointer"
-              title="Back"
-              aria-label="Back"
+              onClick={() => backStep?.onGo?.()}
+              disabled={!backStep?.onGo}
+              className="focus-ring mr-1 grid size-8 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 hover:text-ink disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
+              title={backStep ? `Back to ${backStep.label}` : undefined}
+              aria-label={backStep ? `Back to ${backStep.label}` : "Back"}
             >
               <ArrowLeft className="size-4" />
             </button>
@@ -950,11 +954,7 @@ export function InfographicStudioScreen() {
 
             {/* Mode Switchers */}
             <div className="ml-4 hidden items-center gap-1.5 md:flex">
-              {studioMode === "editor" && (
-                <span className="rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold text-brand-deep border border-tint-line">
-                  Canvas Editor
-                </span>
-              )}
+              <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
 
               {/* Version 1 is what ships today; Future is the opt-in preview
                   of what it grows into. Editor only — a reviewer on a shared
