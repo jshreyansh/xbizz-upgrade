@@ -1035,14 +1035,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 {/* Header in Left Canvas */}
                 <div className="flex items-center justify-between pb-2 shrink-0">
                   <div>
-                    <span className="block text-label font-bold uppercase tracking-[0.12em] text-brand">
-                      Available Context
-                    </span>
-                    <h2 className="text-display font-[850] text-ink tracking-tight mt-0.5">
-                      {brandName} Dossier Plan &amp; Storyboard Parameters
+                    {/* The screen is named after what it wants, not after
+                        what it holds. "Available Context · Dossier Plan &
+                        Storyboard Parameters" described the machinery; the
+                        person here is being asked some questions. */}
+                    <h2 className="text-display font-[850] text-ink tracking-tight">
+                      Need your input
                     </h2>
                     <p className="text-body text-ink-3 mt-0.5">
-                      Refine the creative treatment, audience focus, and evidence cues before confirming scenes.
+                      Answer below to help us refine the production plan for you.
                     </p>
                   </div>
                 </div>
