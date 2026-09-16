@@ -1035,25 +1035,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 {/* Header in Left Canvas */}
                 <div className="flex items-center justify-between pb-2 shrink-0">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
-                        Available Context
-                      </span>
-                      <span className="rounded-chip bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok border border-ok-line">
-                        Grounding active
-                      </span>
-                    </div>
+                    <span className="block text-label font-bold uppercase tracking-[0.12em] text-brand">
+                      Available Context
+                    </span>
                     <h2 className="text-display font-[850] text-ink tracking-tight mt-0.5">
                       {brandName} Dossier Plan &amp; Storyboard Parameters
                     </h2>
                     <p className="text-body text-ink-3 mt-0.5">
                       Refine the creative treatment, audience focus, and evidence cues before confirming scenes.
                     </p>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-2">
-                    <span className="rounded-chip bg-card px-3 py-1 text-label font-bold text-ok border border-hair shadow-2xs">
-                      ✓ 214 approved claims cited
-                    </span>
                   </div>
                 </div>
 
@@ -2319,24 +2309,17 @@ function PlanSection({
            section asking for attention ends up the quietest thing on screen —
            which is what the first attempt at this did. White keeps it forward;
            a saturated border, a ring and a rail make it unmistakable. */
+        /* The rail is the left border itself rather than a bar laid over one.
+           An overlay cannot follow the corner radius — it ran straight past
+           the curve at both ends — where a border is clipped to the shape by
+           definition. */
         needsAttention
-          ? "border-danger/45 bg-card ring-2 ring-danger/10 shadow-[0_6px_22px_-10px_rgba(159,58,56,.45)]"
+          ? "border-danger/45 border-l-[3px] border-l-danger bg-card ring-2 ring-danger/10 shadow-[0_6px_22px_-10px_rgba(159,58,56,.45)]"
           : open
             ? "border-hair bg-card"
             : "border-hair bg-white/80 opacity-[.76] hover:opacity-100 hover:bg-card hover:border-hair-3"
       )}
     >
-      {/* Reads straight down a column of rows, which a chip on the far end
-          does not. */}
-      {needsAttention && (
-        <span
-          aria-hidden
-          className={cn(
-            "absolute left-0 top-0 bottom-0 w-[3px] bg-danger",
-            open ? "rounded-l-card" : "rounded-l-control"
-          )}
-        />
-      )}
       <button
         onClick={onToggle}
         className={cn(
