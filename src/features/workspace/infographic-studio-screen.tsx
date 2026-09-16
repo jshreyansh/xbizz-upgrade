@@ -50,9 +50,8 @@ import { cn } from "@/lib/cn";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import {
-  ChatTaskList,
   SuggestionChecklist,
-  snapshot,
+  listSuggestions,
   useSuggestionQueue,
 } from "@/features/workspace/suggestion-queue";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
@@ -788,8 +787,7 @@ export function InfographicStudioScreen() {
         const open = suggestionQueue.queue.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: `Holding ${open.length > 1 ? "these" : "it"}. Keep marking up the page and send the next lot when you're ready — I'll run them together.`,
-          tasks: snapshot(open),
+          text: `Holding ${open.length > 1 ? `all ${open.length}` : "it"}. Keep marking up the page and send the next lot when you're ready — I'll run them together.`,
         });
         return;
       }
@@ -801,7 +799,6 @@ export function InfographicStudioScreen() {
           text: open.length
             ? `Scoped ${open.length > 1 ? `all ${open.length}` : "it"} ${suggestionAnswer === "all" ? `to all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}` : "to the page each was left on"}. Nothing is changed yet — tell me to run ${open.length > 1 ? "them" : "it"}.`
             : "Nothing queued to scope.",
-          tasks: snapshot(open),
         });
         return;
       }
@@ -921,9 +918,8 @@ export function InfographicStudioScreen() {
         role: "swishx",
         text:
           batch.length === 1
-            ? `Got it — one change to **${batch[0].elementLabel}**.\n\nShould it hold across the other pages too, or just this one? Say the word and I'll run it.`
-            : `Got ${batch.length} — here's what I'm holding.\n\nShould these hold across the other pages too, or just the ones they were left on? Say the word and I'll work through them.`,
-        tasks: snapshot(batch),
+            ? `Got it — one change to **${batch[0].elementLabel}**: ${batch[0].text}\n\nShould it hold across the other pages too, or just this one? Say the word and I'll run it.`
+            : `Got ${batch.length} — here's what I'm holding:\n\n${listSuggestions(batch)}\n\nShould these hold across the other pages too, or just the ones they were left on? Say the word and I'll work through them.`,
       });
     }, 700);
   };
@@ -941,7 +937,7 @@ export function InfographicStudioScreen() {
     if (suggestionQueue.pendingCount === 0) return null;
     const t = input.toLowerCase();
     if (/\b(all|every|each|other)\b.*\bpages?\b|\bacross all\b|\beverywhere\b/.test(t)) return "all";
-    if (/\b(just|only)\b.*\b(this|that|one)\b|\bthis (page|one) only\b/.test(t)) return "one";
+    if (/\b(just|only)\b.*\b(this|that|these|those|one|them|it)\b|\bthis (page|one) only\b/.test(t)) return "one";
     if (/\b(more|another|hold|wait|not yet)\b/.test(t)) return "more";
     if (/\b(run|resolve|apply|go ahead|do it|proceed|that's all|thats all|done adding)\b/.test(t)) return "run";
     return null;
@@ -953,8 +949,9 @@ export function InfographicStudioScreen() {
         `Working through ${count === 1 ? "it" : `all ${count}`}. Starting with **${first.elementLabel}**.`,
       step: (item, left) =>
         `**${item.elementLabel}** — applied${item.scope === "all" ? " across every page" : ""}. ${left} left.`,
+      /* The lead-in to the recap the queue appends under it. */
       finish: (count) =>
-        `That's ${count === 1 ? "it" : `all ${count}`} applied. Every claim still resolves to an approved source.`,
+        `That's ${count === 1 ? "it" : `all ${count}`} applied — every claim still resolves to an approved source. Here's what went in:`,
     });
 
   /* Closing a comment. A team comment cannot close without a note — the
@@ -1745,7 +1742,6 @@ export function InfographicStudioScreen() {
                         )}
                       >
                         <FormattedMessageText text={msg.text} />
-                        <ChatTaskList items={msg.tasks} />
                         <ChatChips chips={msg.chips} onPick={(chip) => handleSendMessage(chip)} />
                       </div>
                     </div>

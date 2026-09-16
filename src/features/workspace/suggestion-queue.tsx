@@ -66,22 +66,16 @@ function Row({ item }: { item: SuggestionSnapshot }) {
   );
 }
 
-/** The list the agent reprints at the end of a reply. */
-export function ChatTaskList({ items }: { items?: SuggestionSnapshot[] }) {
-  if (!items || items.length === 0) return null;
-  const left = items.filter((i) => i.status !== "done").length;
-  return (
-    <div className="mt-2.5 rounded-control border border-hair bg-subtle p-2.5">
-      <div className="mb-1.5 text-micro font-extrabold uppercase tracking-wider text-ink-3">
-        {left === 0 ? "All done" : `Open · ${left}`}
-      </div>
-      <ul className="space-y-1.5">
-        {items.map((item) => (
-          <Row key={item.id} item={item} />
-        ))}
-      </ul>
-    </div>
-  );
+/**
+ * The batch, written out as lines of a message.
+ *
+ * This was a checkbox panel rendered inside the chat bubble, reprinted in
+ * every reply while the agent worked — the same seven rows four times down
+ * the transcript, in a component that does not belong inside a sentence. A
+ * chat message is prose; what the agent is holding is said, not drawn.
+ */
+export function listSuggestions(items: Suggestion[]): string {
+  return items.map((item, i) => `${i + 1}. **${item.elementLabel}** — ${item.text}`).join("\n");
 }
 
 /**
@@ -138,7 +132,7 @@ export function SuggestionChecklist({
  * So: drafts collect silently, the whole batch is sent in one act, and at
  * that moment the strip empties because the list now lives in the chat.
  */
-export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; text: string; chips?: string[]; tasks?: SuggestionSnapshot[] }) => void) {
+export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; text: string; chips?: string[] }) => void) {
   /** Written but not sent — the strip above the input. */
   const [drafts, setDrafts] = useState<Suggestion[]>([]);
   /** Sent, and being worked — the list the agent reprints in its replies. */
@@ -201,7 +195,7 @@ export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; te
     if (pending.length === 0) return;
 
     writeQueue(queueRef.current.map((s) => (s.id === pending[0].id ? { ...s, status: "working" } : s)));
-    post({ role: "swishx", text: copy.start(pending.length, pending[0]), tasks: snapshot(queueRef.current) });
+    post({ role: "swishx", text: copy.start(pending.length, pending[0]) });
 
     pending.forEach((item, index) => {
       window.setTimeout(() => {
@@ -216,10 +210,15 @@ export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; te
           )
         );
         const left = pending.length - index - 1;
+        /* The running count is already in the sentence, so a list on every
+           step adds nothing on the way through. The recap at the end is the
+           one place seeing all of them together is worth the room. */
         post({
           role: "swishx",
-          text: left > 0 ? copy.step(item, left) : copy.finish(pending.length),
-          tasks: snapshot(queueRef.current),
+          text:
+            left > 0
+              ? copy.step(item, left)
+              : `${copy.finish(pending.length)}\n\n${listSuggestions(pending)}`,
         });
       }, 1500 * (index + 1));
     });

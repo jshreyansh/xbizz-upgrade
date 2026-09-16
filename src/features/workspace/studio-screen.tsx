@@ -62,9 +62,8 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import {
-  ChatTaskList,
   SuggestionChecklist,
-  snapshot,
+  listSuggestions,
   useSuggestionQueue,
   type Suggestion,
 } from "@/features/workspace/suggestion-queue";
@@ -601,9 +600,8 @@ export function StudioScreen() {
         role: "swishx",
         text:
           batch.length === 1
-            ? `Got it — one change to **${batch[0].elementLabel}**.\n\nShould it hold for the other scenes too, or just this one? Say the word and I'll run it.`
-            : `Got ${batch.length} — here's what I'm holding.\n\nShould these hold for the other scenes too, or just the ones they were left on? Say the word and I'll work through them.`,
-        tasks: snapshot(batch),
+            ? `Got it — one change to **${batch[0].elementLabel}**: ${batch[0].text}\n\nShould it hold for the other scenes too, or just this one? Say the word and I'll run it.`
+            : `Got ${batch.length} — here's what I'm holding:\n\n${listSuggestions(batch)}\n\nShould these hold for the other scenes too, or just the ones they were left on? Say the word and I'll work through them.`,
       });
     }, 700);
   };
@@ -621,7 +619,7 @@ export function StudioScreen() {
     if (suggestionQueue.pendingCount === 0) return null;
     const t = input.toLowerCase();
     if (/\b(all|every|each|other)\b.*\bscenes?\b|\bacross all\b|\beverywhere\b/.test(t)) return "all";
-    if (/\b(just|only)\b.*\b(this|that|one)\b|\bthis (scene|one) only\b/.test(t)) return "one";
+    if (/\b(just|only)\b.*\b(this|that|these|those|one|them|it)\b|\bthis (scene|one) only\b/.test(t)) return "one";
     if (/\b(more|another|hold|wait|not yet)\b/.test(t)) return "more";
     if (/\b(run|resolve|apply|go ahead|do it|proceed|that's all|thats all|done adding)\b/.test(t)) return "run";
     return null;
@@ -633,8 +631,10 @@ export function StudioScreen() {
         `Working through ${count === 1 ? "it" : `all ${count}`}. Starting with **${first.elementLabel}**.`,
       step: (item, left) =>
         `**${item.elementLabel}** — applied${item.scope === "all" ? " across every scene" : ""}. ${left} left.`,
+      /* The lead-in to the recap: the queue appends the batch under it, which
+         is the one place seeing all of them together earns the room. */
       finish: (count) =>
-        `That's ${count === 1 ? "it" : `all ${count}`} applied. Every line still resolves to an approved source — open the source pill under a line to see which.`,
+        `That's ${count === 1 ? "it" : `all ${count}`} applied — every line still resolves to an approved source, and the source pill under a line says which. Here's what went in:`,
     });
 
   /**
@@ -1285,8 +1285,7 @@ export function StudioScreen() {
         const open = suggestionQueue.queue.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: `Holding ${open.length > 1 ? "these" : "it"}. Keep marking up the canvas and send the next lot when you're ready — I'll run them together.`,
-          tasks: snapshot(open),
+          text: `Holding ${open.length > 1 ? `all ${open.length}` : "it"}. Keep marking up the canvas and send the next lot when you're ready — I'll run them together.`,
         });
       } else if (suggestionAnswer === "all" || suggestionAnswer === "one") {
         const open = suggestionQueue.scopeBatch(suggestionAnswer);
@@ -1295,7 +1294,6 @@ export function StudioScreen() {
           text: open.length
             ? `Scoped ${open.length > 1 ? `all ${open.length}` : "it"} ${suggestionAnswer === "all" ? `to all ${sceneList.length} scenes` : "to the scene each was left on"}. Nothing is changed yet — tell me to run ${open.length > 1 ? "them" : "it"}.`
             : `Nothing queued to scope.`,
-          tasks: snapshot(open),
         });
       } else if (suggestionAnswer === "run") {
         runSuggestionQueue();
@@ -2921,7 +2919,6 @@ export function StudioScreen() {
                         )}
                       >
                         <FormattedMessageText text={msg.text} />
-                        <ChatTaskList items={msg.tasks} />
                         <ChatChips chips={msg.chips} onPick={(chip) => handleSendChatMessage(chip)} />
                       </div>
                     </div>
