@@ -49,6 +49,7 @@ import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
+import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
@@ -283,15 +284,6 @@ const DEFAULT_PAGE_2: InfographicPageData = {
     citation: "Package Insert §2.1 & §5.2",
   },
 };
-
-const CLAIMS_LIST = [
-  { id: "claim-1", tag: "Claim §1.1 · Indication", desc: "Approved in adults aged 18+ for moderate-to-severe plaque psoriasis", source: "Prescribing Information p.3" },
-  { id: "claim-2", tag: "Claim §2.4 · Efficacy (52% PASI 90)", desc: "Statistically significant skin clearance vs 18% in placebo (p < 0.001)", source: "EMBRACE-3 readout Table 2.4" },
-  { id: "claim-3", tag: "Claim §3.1 · Mechanism (Dual Kinase)", desc: "Selective cellular kinase receptor binding and downstream cytokine inhibition", source: "Lancet Derm 2024; 42:118" },
-  { id: "claim-4", tag: "Claim §4.2 · Durability (Week 52)", desc: "Clearance maintained through 52-week open-label extension cohort", source: "EMBRACE-3 Long-Term Study" },
-  { id: "claim-5", tag: "Claim §5.2 · Tolerability & Safety", desc: "Contraindicated in severe hepatic impairment. Transient mild headache (<6%)", source: "FDA Label §5.2 Safety" },
-  { id: "claim-6", tag: "Claim §6.1 · Prescribing Cut-Off", desc: "Recommended for eGFR ≥25 mL/min/1.73m² with once-daily oral dosing", source: "Dosing & Administration §2.1" },
-];
 
 export function InfographicStudioScreen() {
   const router = useRouter();
@@ -1100,28 +1092,10 @@ export function InfographicStudioScreen() {
               </Button>
             )}
 
-            {/* The owner's way into comments, in the same place and the same
-                shape as the video editor's. Hidden in review, where the
-                reviewer's panel is the whole of what they see — a header
-                counter there would offer the owner's My/Team view to someone
-                who is not the owner. */}
-            {studioMode !== "review" && (
-              <button
-                type="button"
-                onClick={() => setCommentsModalOpen(true)}
-                title="Comments"
-                aria-label={`Comments — ${commentStats(comments).open} open`}
-                className={cn(
-                  "flex h-8 cursor-pointer items-center gap-1.5 rounded-chip border px-2.5 transition-colors",
-                  commentStats(comments).open > 0
-                    ? "border-brand/25 bg-tint text-brand-deep hover:bg-tint-strong"
-                    : "border-hair-2 bg-card text-ink-3 shadow-2xs hover:border-brand hover:text-ink"
-                )}
-              >
-                <MessageSquare className="size-3.5" />
-                <span className="text-caption font-bold tabular-nums">{commentStats(comments).open}</span>
-              </button>
-            )}
+            {/* No comments control here. Comments are a tab in the inspector,
+                the same as the video editor — a header counter beside it was
+                the same list offered twice, and from version 2 on both were
+                on screen at once. */}
 
             {studioMode === "review" && (
               <Button
@@ -1205,11 +1179,11 @@ export function InfographicStudioScreen() {
                 })}
               </div>
 
-              {/* Graphic Layers Tree (In Editor Mode) */}
+              {/* The page's layers, in one list (In Editor Mode) */}
               {studioMode === "editor" && (
                 <div className="p-3 flex-1">
                   <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-2">
-                    Graphic Layers
+                    Layers
                   </span>
                   <div className="space-y-1">
                     {[
@@ -1243,13 +1217,11 @@ export function InfographicStudioScreen() {
                     ))}
                   </div>
 
-                  {/* Art is its own list because it arrives on its own clock.
-                      Folding it into the block list would suggest a block is
-                      unfinished when only its art is still rendering. */}
-                  <span className="mt-4 mb-2 block text-caption font-extrabold uppercase tracking-wider text-ink-3">
-                    Art Layers
-                  </span>
-                  <div className="space-y-1">
+                  {/* Art sits in the same list, under a hairline rather than a
+                      second heading. It still arrives on its own clock — the
+                      countdown on the right says so — but two headings made
+                      one page's layers read as two separate panels. */}
+                  <div className="mt-2 space-y-1 border-t border-hair pt-2">
                     {[...currentPage.art]
                       .sort((a, b) => b.z - a.z)
                       .map((layer) => {
@@ -1999,41 +1971,11 @@ export function InfographicStudioScreen() {
             )}
 
             {/* ── TAB 3: CLAIMS & EVIDENCE LIBRARY ── */}
-            {activeTab === "evidence" && (
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                <div className="flex items-center justify-between border-b border-hair pb-2.5">
-                  <div>
-                    <div className="text-micro font-extrabold uppercase tracking-[0.12em] text-ink-3">
-                      Compliance Grounding
-                    </div>
-                    <h2 className="mt-0.5 text-body-lg font-[800] text-ink">24 Approved Claims</h2>
-                  </div>
-                  <span className="rounded-chip bg-ok-bg text-ok border border-ok-line px-2.5 py-0.5 text-micro font-bold">
-                    ✓ PromoMats Verified
-                  </span>
-                </div>
-
-                <div className="space-y-2.5">
-                  {CLAIMS_LIST.map((c) => (
-                    <div
-                      key={c.id}
-                      className="rounded-control border border-hair bg-canvas p-3 text-left hover:border-brand/20 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-micro font-bold text-brand-deep bg-tint px-2 py-0.5 rounded-glyph">
-                          {c.tag}
-                        </span>
-                        <span className="text-caption font-bold text-ok">✓ Approved</span>
-                      </div>
-                      <p className="text-label text-ink-2 leading-relaxed mt-1">{c.desc}</p>
-                      <div className="text-caption text-ink-3 mt-1.5 pt-1 border-t border-hair flex items-center justify-between">
-                        <span>Source: {c.source}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* The same panel the video editor shows. Two hand-rolled lists
+                meant the same question — what am I allowed to say — got two
+                different answers, and only one of them could open the dossier
+                the claim came from. */}
+            {activeTab === "evidence" && <ClaimsPanel brandName={brandName} />}
           </>
         ) : undefined
       }
