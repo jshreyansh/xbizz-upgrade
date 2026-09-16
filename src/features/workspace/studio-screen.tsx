@@ -36,7 +36,6 @@ import {
   Pause,
   Play,
   Plus,
-  Redo2,
   RotateCcw,
   ScanLine,
   Send,
@@ -46,7 +45,6 @@ import {
   Tag,
   Timer,
   Type,
-  Undo2,
   Volume2,
   VolumeX,
   X,
@@ -1383,19 +1381,6 @@ export function StudioScreen() {
           <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Editing only. There is nothing to undo on a published review,
-                and offering it there suggests the record can be changed. */}
-            {isEditor && (
-              <div className="hidden items-center gap-0.5 lg:flex">
-                <Button variant="ghost" size="icon" aria-label="Undo">
-                  <Undo2 className="size-4" />
-                </Button>
-                <Button variant="ghost" size="icon" aria-label="Redo" disabled>
-                  <Redo2 className="size-4" />
-                </Button>
-                <div className="mx-1 h-5 w-px bg-hair" />
-              </div>
-            )}
             {/* Version. Defaults to Version 1 because that is what ships;
                 Future is the opt-in preview of what it grows into. Editor
                 only — a reviewer on a shared link is not choosing an editor. */}

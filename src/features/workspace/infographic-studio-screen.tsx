@@ -4,13 +4,11 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
-  BarChart3,
   ArrowLeft,
   Check,
   CheckCircle2,
   Download,
   Image as ImageIcon,
-  Layers,
   MessageSquare,
   PanelRight,
   Pencil,
@@ -18,14 +16,13 @@ import {
   Send,
   Share2,
   ShieldCheck,
+  Expand,
   ZoomIn,
   ZoomOut,
   X,
   MessageCircle,
   PenLine,
   MessageSquareQuote,
-  Undo2,
-  Redo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -1025,19 +1022,6 @@ export function InfographicStudioScreen() {
             <div className="ml-4 hidden items-center gap-1.5 md:flex">
               <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
 
-              {/* Editing only. There is nothing to undo on a published review,
-                  and offering it there suggests the record can be changed. */}
-              {studioMode === "editor" && (
-                <div className="hidden items-center gap-0.5 lg:flex">
-                  <Button variant="ghost" size="icon" aria-label="Undo">
-                    <Undo2 className="size-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" aria-label="Redo" disabled>
-                    <Redo2 className="size-4" />
-                  </Button>
-                </div>
-              )}
-
               {/* Version 1 is what ships today; Future is the opt-in preview
                   of what it grows into. Editor only — a reviewer on a shared
                   link is not choosing an editor. */}
@@ -1090,38 +1074,6 @@ export function InfographicStudioScreen() {
               )}
             </div>
           </div>
-
-          {/* Center Canvas Zoom Controls */}
-          {studioMode !== "generating" && (
-            <div className="hidden sm:flex items-center gap-1 rounded-control border border-hair-2 bg-subtle p-1 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
-                className="p-1 text-ink-2 hover:text-black rounded-chip hover:bg-card cursor-pointer"
-                title="Zoom Out"
-              >
-                <ZoomOut className="size-3.5" />
-              </button>
-              <span className="text-label font-mono font-bold text-ink px-1.5 min-w-[45px] text-center">
-                {zoomLevel}%
-              </span>
-              <button
-                type="button"
-                onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
-                className="p-1 text-ink-2 hover:text-black rounded-chip hover:bg-card cursor-pointer"
-                title="Zoom In"
-              >
-                <ZoomIn className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setZoomLevel(100)}
-                className="px-2 py-0.5 text-caption font-bold text-brand hover:bg-card rounded-chip cursor-pointer"
-              >
-                Fit
-              </button>
-            </div>
-          )}
 
           {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
           <div className="flex items-center gap-2">
@@ -1223,87 +1175,10 @@ export function InfographicStudioScreen() {
                 })}
               </div>
 
-              {/* The page's layers, in one list (In Editor Mode) */}
-              {studioMode === "editor" && (
-                <div className="p-3 flex-1">
-                  <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3 block mb-2">
-                    Layers
-                  </span>
-                  <div className="space-y-1">
-                    {[
-                      { id: "header", label: "1. Brand & Formulation Header" },
-                      { id: "heroStat", label: "2. Stat Hero (52% PASI 90)" },
-                      { id: "moa", label: "3. Cellular MoA Cascade" },
-                      { id: "chart", label: "4. Pivotal EMBRACE-3 Chart" },
-                      { id: "isi", label: "5. Fair Balance & ISI" },
-                    ].map((layer) => (
-                      <button
-                        key={layer.id}
-                        type="button"
-                        onClick={() => handleSelectBlock(layer.id as any)}
-                        className={cn(
-                          "w-full flex items-center justify-between p-2 rounded-chip text-left text-label font-medium transition cursor-pointer",
-                          selectedBlockId === layer.id
-                            ? "bg-tint font-bold text-brand-deep shadow-2xs border border-brand/20"
-                            : "hover:bg-black/5 text-ink"
-                        )}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <Layers className="size-3 text-ink-3 shrink-0" />
-                          <span className="truncate">{layer.label}</span>
-                        </div>
-                        {!blockLanded(layer.id as (typeof BLOCK_ORDER)[number]) ? (
-                          <span className="shrink-0 text-micro font-bold italic text-ink-4">laying out</span>
-                        ) : (
-                          selectedBlockId === layer.id && <span className="size-1.5 rounded-full bg-brand" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Art sits in the same list, under a hairline rather than a
-                      second heading. It still arrives on its own clock — the
-                      countdown on the right says so — but two headings made
-                      one page's layers read as two separate panels. */}
-                  <div className="mt-2 space-y-1 border-t border-hair pt-2">
-                    {[...currentPage.art]
-                      .sort((a, b) => b.z - a.z)
-                      .map((layer) => {
-                        const ready = genElapsed >= layer.readyAt;
-                        const secondsLeft = Math.max(0, Math.ceil((layer.readyAt - genElapsed) / 1000));
-                        return (
-                          <button
-                            key={layer.id}
-                            type="button"
-                            onClick={() => { setSelectedArtId(layer.id); clearElementSelection(); }}
-                            className={cn(
-                              "flex w-full cursor-pointer items-center justify-between gap-2 rounded-chip p-2 text-left text-label font-medium transition",
-                              selectedArtId === layer.id
-                                ? "border border-brand/20 bg-tint font-bold text-brand-deep shadow-2xs"
-                                : "text-ink hover:bg-black/5"
-                            )}
-                          >
-                            <div className="flex min-w-0 items-center gap-2">
-                              {layer.kind === "graph" ? (
-                                <BarChart3 className="size-3 shrink-0 text-ink-3" />
-                              ) : layer.kind === "background" ? (
-                                <Layers className="size-3 shrink-0 text-ink-3" />
-                              ) : (
-                                <ImageIcon className="size-3 shrink-0 text-ink-3" />
-                              )}
-                              <span className="truncate">{layer.label}</span>
-                            </div>
-                            {ready ? (
-                              <span className="shrink-0 text-micro font-bold tabular-nums text-ink-4">z{layer.z}</span>
-                            ) : (
-                              <span className="shrink-0 text-micro font-bold tabular-nums text-brand">{secondsLeft}s</span>
-                            )}
-                          </button>
-                        );
-                      })}
-                  </div>
-                </div>
-              )}
+              {/* Pages, and nothing else. A layer list under them was a
+                  second way to select what the canvas already selects, and it
+                  answered a question — which block am I on — that the canvas
+                  itself answers by showing you. */}
 
               {/* Review Info (In Review Mode) */}
               {studioMode === "review" && (
@@ -1344,6 +1219,54 @@ export function InfographicStudioScreen() {
             />
         ) : (
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            {/* The canvas's own header, the same shape as the video editor's:
+                what you are looking at on the left, how you are looking at it
+                on the right. Zoom lived in the app header, three panels away
+                from the thing it scaled. */}
+            <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair-3/70 bg-white/60 px-4 backdrop-blur-sm">
+              <div className="flex min-w-0 items-center gap-2.5 text-label font-bold text-ink">
+                <span className="shrink-0 rounded-glyph border border-hair-2 bg-card px-2 py-0.5 font-extrabold shadow-2xs">
+                  Page {Math.max(1, pagesList.findIndex((pg) => pg.id === currentPage.id) + 1)} of {pagesList.length}
+                </span>
+                <span className="truncate">{currentPage.name}</span>
+              </div>
+              <div className="flex items-center gap-2 text-label">
+                <div className="hidden items-center gap-1 rounded-control border border-hair-2 bg-card p-0.5 shadow-2xs sm:flex">
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
+                      className="cursor-pointer rounded-glyph p-1 text-ink-2 transition hover:bg-subtle hover:text-ink"
+                      title="Zoom out"
+                      aria-label="Zoom out"
+                    >
+                      <ZoomOut className="size-3.5" />
+                    </button>
+                    <span className="min-w-[42px] px-1 text-center text-caption font-bold tabular-nums text-ink">
+                      {zoomLevel}%
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
+                      className="cursor-pointer rounded-glyph p-1 text-ink-2 transition hover:bg-subtle hover:text-ink"
+                      title="Zoom in"
+                      aria-label="Zoom in"
+                    >
+                      <ZoomIn className="size-3.5" />
+                    </button>
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel(100)}
+                    className="cursor-pointer rounded-glyph px-2 py-0.5 text-caption font-bold text-brand transition hover:bg-subtle"
+                  >
+                    Fit
+                  </button>
+                </div>
+                <Button variant="ghost" size="icon" className="size-7" aria-label="Full screen">
+                  <Expand className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+
             {/* What is still arriving, and what you can already do. The page
                 below is editable throughout — the strip is a status line, not
                 a gate. */}
