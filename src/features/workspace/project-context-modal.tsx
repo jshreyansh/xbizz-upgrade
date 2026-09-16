@@ -80,14 +80,20 @@ export function ProjectContextModal({
     frame: SHAPE_OPTIONS.find((s) => s.id === draft.shape)?.label ?? "Landscape",
   };
 
-  const toggleTopic = (id: string) =>
+  /**
+   * Topics are held as labels, because that is what the start modal writes and
+   * what every other screen reads. This compared against ids, so nothing ever
+   * matched: the count said "2 of 3 selected" beside six unselected tiles, and
+   * picking one added an id alongside the labels already there.
+   */
+  const toggleTopic = (label: string) =>
     setDraft((prev) => ({
       ...prev,
-      topics: prev.topics.includes(id)
-        ? prev.topics.filter((t) => t !== id)
+      topics: prev.topics.includes(label)
+        ? prev.topics.filter((t) => t !== label)
         : prev.topics.length >= 3
           ? prev.topics
-          : [...prev.topics, id],
+          : [...prev.topics, label],
     }));
 
   return (
@@ -188,13 +194,13 @@ export function ProjectContextModal({
               <div className="grid gap-2">
                 {topicOptions.map((option) => {
                   const Icon = option.icon;
-                  const active = draft.topics.includes(option.id);
+                  const active = draft.topics.includes(option.label);
                   const full = !active && draft.topics.length >= 3;
                   return (
                     <button
                       key={option.id}
                       type="button"
-                      onClick={() => toggleTopic(option.id)}
+                      onClick={() => toggleTopic(option.label)}
                       disabled={full}
                       className={cn(
                         "flex items-start gap-2.5 rounded-control border p-3 text-left transition",

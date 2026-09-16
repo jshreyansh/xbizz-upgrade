@@ -2101,9 +2101,18 @@ export function InfographicStudioScreen() {
                   <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
                     <LogoMark size={14} /> Generation Engine
                   </div>
-                  <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
-                    Confirm Creative Generation
-                  </h2>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                    <h2 className="text-display font-[850] tracking-tight text-ink">
+                      Confirm Creative Generation
+                    </h2>
+                    {/* Which version this becomes. Publishing is what creates
+                        one, and a person about to spend credits on it should
+                        be told what they are about to put a reviewer's name
+                        against. */}
+                    <span className="rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-caption font-bold text-brand-deep">
+                      Publishing as Version {draftVersion}
+                    </span>
+                  </div>
                 </div>
                 <Button
                   variant="ghost"
