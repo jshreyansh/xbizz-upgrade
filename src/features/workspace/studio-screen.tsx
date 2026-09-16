@@ -3248,7 +3248,7 @@ export function StudioScreen() {
             )}
 
             {/* ── TAB 3: CLAIMS & EVIDENCE LIBRARY ── */}
-            {activeTab === "evidence" && <ClaimsPanel highlightedClaimId={highlightedClaimId} />}
+            {activeTab === "evidence" && <ClaimsPanel highlightedClaimId={highlightedClaimId} brandName={brandName} />}
           </div>
         </>
       }

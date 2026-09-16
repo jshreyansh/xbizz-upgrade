@@ -395,13 +395,6 @@ export function ScriptSceneCard({
           </p>
         )}
 
-        {/* What must NOT be in frame is part of the direction, and the one
-            half a generator will otherwise get wrong silently. */}
-        {!pending && !editing && scene.negativeVisual && (
-          <p className="mt-1.5 border-t border-hair pt-1.5 text-caption leading-snug text-ink-4">
-            <span className="font-bold text-ink-3">Avoid:</span> {scene.negativeVisual}
-          </p>
-        )}
       </div>
 
       {/* ── Footer ── */}
