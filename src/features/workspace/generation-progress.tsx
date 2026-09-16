@@ -268,7 +268,7 @@ function WorkLogModal({
       onClick={onClose}
     >
       <div
-        className="flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-card border border-hair bg-card text-left shadow-float"
+        className="flex w-full max-w-lg flex-col overflow-hidden rounded-card border border-hair bg-card text-left shadow-float"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="flex items-start justify-between gap-3 border-b border-hair px-4 py-3">
@@ -292,7 +292,10 @@ function WorkLogModal({
           </span>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        {/* A fixed height from the first entry. Letting it grow with the list
+            means the dialog resizes under the reader on every update, and then
+            stops resizing once it hits a cap — two behaviours for one list. */}
+        <div className="h-[340px] overflow-y-auto p-3">
           <ol className="space-y-1.5">
             {ran.map((step, index) => {
               const done = index < current;

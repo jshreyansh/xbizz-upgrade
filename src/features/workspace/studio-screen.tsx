@@ -21,7 +21,9 @@ import {
   UserRound,
   LayoutPanelTop,
   Maximize2,
-  MessageSquare,
+  ShieldCheck,  MessageCircle,
+  PenLine,
+  MessageSquareQuote,
   MessageSquarePlus,
   Mic2,
   MoreHorizontal,
@@ -63,6 +65,7 @@ import {
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
+import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
@@ -1336,28 +1339,6 @@ export function StudioScreen() {
                   </button>
                 ))}
               </div>
-            )}
-
-            {/* Owner-only. A reviewer on the shared link reads comments in
-                the Comments tab, which is scoped to what they may see — the
-                My/Team split behind this counter is the owner's view of the
-                same records. */}
-            {!isReview && (
-            <button
-              type="button"
-              onClick={() => setCommentsOpen(true)}
-              title="Comments"
-              aria-label={`Comments — ${openComments.length} open`}
-              className={cn(
-                "flex h-8 items-center gap-1.5 rounded-chip border px-2.5 transition-colors cursor-pointer",
-                openComments.length > 0
-                  ? "border-brand/25 bg-tint text-brand-deep hover:bg-tint-strong"
-                  : "border-hair-2 bg-card text-ink-3 hover:border-brand hover:text-ink shadow-2xs"
-              )}
-            >
-              <MessageSquare className="size-3.5" />
-              <span className="text-caption font-bold tabular-nums">{openComments.length}</span>
-            </button>
             )}
 
             {/* Toggle Right Sidebar Panel Button (Icon Only) */}
@@ -2696,12 +2677,13 @@ export function StudioScreen() {
           <div className="p-2.5 border-b border-hair bg-subtle">
             {studioMode === "scenes" ? (
               /* ── SCRIPT STAGE: Only Chat & Claims Tabs (No Edit Tab) ── */
-              <div className="grid grid-cols-2 gap-1 p-1 bg-[#e6ebe6] rounded-panel border border-hair shadow-inner-xs">
+              <div className="flex gap-1 p-1 bg-[#e6ebe6] rounded-panel border border-hair shadow-inner-xs">
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}
                   onClick={setActiveTab}
-                  badge={<span className="size-1.5 rounded-full bg-ok animate-pulse shrink-0 mr-1" />}
+                  icon={MessageCircle}
+                  badge={<span className="size-1.5 rounded-full bg-ok animate-pulse shrink-0" />}
                 >
                   Chat
                 </InspectorTabButton>
@@ -2709,6 +2691,7 @@ export function StudioScreen() {
                   tab="evidence"
                   current={activeTab}
                   onClick={setActiveTab}
+                  icon={ShieldCheck}
                   count={APPROVED_CLAIMS.length}
                 >
                   Claims
@@ -2716,37 +2699,46 @@ export function StudioScreen() {
               </div>
             ) : (
               /* ── CANVAS EDITOR / REVIEW STAGES: Chat, Edit / Comments, Claims ── */
-              <div className="grid grid-cols-3 gap-1 p-1 bg-[#e6ebe6] rounded-panel border border-hair shadow-inner-xs">
+              /* Comments sit here rather than in the header. A reply from the
+                 agent resolves a reviewer's note, and the place to go and see
+                 that is the same list the note was left in — not a counter in
+                 the top bar that opens a different surface. */
+              <div className="flex gap-1 p-1 bg-[#e6ebe6] rounded-panel border border-hair shadow-inner-xs">
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}
                   onClick={setActiveTab}
-                  badge={<span className="size-1.5 rounded-full bg-ok animate-pulse shrink-0 mr-1" />}
+                  icon={MessageCircle}
+                  badge={<span className="size-1.5 rounded-full bg-ok animate-pulse shrink-0" />}
                 >
                   Chat
                 </InspectorTabButton>
-                {isReview ? (
-                  <InspectorTabButton
-                    tab="comments"
-                    current={activeTab}
-                    onClick={setActiveTab}
-                    count={openComments.length}
-                  >
-                    Comments
-                  </InspectorTabButton>
-                ) : (
+                {!isReview && (
                   <InspectorTabButton
                     tab="edit"
                     current={activeTab}
                     onClick={setActiveTab}
+                    icon={PenLine}
+                    chip={selectedScene ? `Scene ${selectedScene.number}` : undefined}
                   >
                     Edit
                   </InspectorTabButton>
                 )}
                 <InspectorTabButton
+                  tab="comments"
+                  current={activeTab}
+                  onClick={setActiveTab}
+                  icon={MessageSquareQuote}
+                  count={openComments.length}
+                  alwaysCount
+                >
+                  Comments
+                </InspectorTabButton>
+                <InspectorTabButton
                   tab="evidence"
                   current={activeTab}
                   onClick={setActiveTab}
+                  icon={ShieldCheck}
                   count={APPROVED_CLAIMS.length}
                 >
                   Claims
@@ -3443,50 +3435,6 @@ export function StudioScreen() {
   );
 }
 
-function InspectorTabButton({
-  tab,
-  current,
-  onClick,
-  badge,
-  count,
-  children,
-}: {
-  tab: string;
-  current: string;
-  onClick: (tab: any) => void;
-  badge?: React.ReactNode;
-  count?: number;
-  children: React.ReactNode;
-}) {
-  const active = tab === current;
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(tab)}
-      className={cn(
-        "group relative flex items-center justify-center gap-1 h-8.5 px-2 rounded-control text-body transition-all duration-150 cursor-pointer font-[800] select-none whitespace-nowrap",
-        active
-          ? "bg-card text-ink shadow-xs border border-hair"
-          : "text-ink-3 hover:text-ink hover:bg-white/50 border border-transparent"
-      )}
-    >
-      {badge}
-      <span>{children}</span>
-      {count !== undefined && (
-        <span
-          className={cn(
-            "text-caption font-extrabold px-1.5 py-0.2 rounded-chip transition-colors ml-0.5",
-            active
-              ? "bg-tint-strong text-brand-deep border border-brand/20"
-              : "bg-black/5 text-ink-3"
-          )}
-        >
-          {count}
-        </span>
-      )}
-    </button>
-  );
-}
 
 function AddSceneModal({ sceneCount, onClose, onAdd }: any) {
   const [category, setCategory] = useState<"normal" | "intro" | "outro" | "product">("normal");

@@ -21,6 +21,9 @@ import {
   ZoomIn,
   ZoomOut,
   X,
+  MessageCircle,
+  PenLine,
+  MessageSquareQuote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,6 +47,7 @@ import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
+import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
@@ -1647,67 +1651,54 @@ export function InfographicStudioScreen() {
           <>
             {/* Top Tabs Switcher */}
             <div className="p-3 border-b border-hair bg-canvas shrink-0">
-              <div className="flex rounded-control bg-[#edeef0] p-1 text-body font-bold">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("assistant")}
-                  className={cn(
-                    "flex-1 py-1.5 rounded-chip text-center transition cursor-pointer flex items-center justify-center gap-1.5",
-                    activeTab === "assistant"
-                      ? "bg-card text-ink shadow-2xs"
-                      : "text-ink-3 hover:text-ink"
-                  )}
+              {/* The same tab row the video studio has, from the same
+                  component — this was a fourth hand-rolled copy of it.
+                  Comments live here in the editor too, not only in review:
+                  the agent resolves a reviewer's note while you are editing,
+                  and this is where you go to see that. */}
+              <div className="flex gap-1 rounded-control bg-[#edeef0] p-1">
+                <InspectorTabButton
+                  tab="assistant"
+                  current={activeTab}
+                  onClick={setActiveTab}
+                  icon={MessageCircle}
+                  badge={<span className="size-1.5 rounded-full bg-ok shrink-0" />}
                 >
-                  <span className="size-1.5 rounded-full bg-ok" />
-                  <span>Chat</span>
-                </button>
+                  Chat
+                </InspectorTabButton>
 
                 {studioMode === "editor" && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("edit")}
-                    className={cn(
-                      "flex-1 py-1.5 rounded-chip text-center transition cursor-pointer",
-                      activeTab === "edit"
-                        ? "bg-card text-ink shadow-2xs"
-                        : "text-ink-3 hover:text-ink"
-                    )}
+                  <InspectorTabButton
+                    tab="edit"
+                    current={activeTab}
+                    onClick={setActiveTab}
+                    icon={PenLine}
+                    chip={`Page ${activePageId}`}
                   >
                     Edit
-                  </button>
+                  </InspectorTabButton>
                 )}
 
-                  {studioMode === "review" && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("comments")}
-                    className={cn(
-                      "flex-1 py-1.5 rounded-chip text-center transition cursor-pointer flex items-center justify-center gap-1",
-                      activeTab === "comments"
-                        ? "bg-card text-ink shadow-2xs"
-                        : "text-ink-3 hover:text-ink"
-                    )}
-                  >
-                    <span>Comments</span>
-                    <span className="size-4 rounded-full bg-tint text-brand-deep text-caption font-black grid place-items-center">
-                      {commentStats(comments).open}
-                    </span>
-                  </button>
-                  )}
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("evidence")}
-                  className={cn(
-                    "flex-1 py-1.5 rounded-chip text-center transition cursor-pointer flex items-center justify-center gap-1",
-                    activeTab === "evidence"
-                      ? "bg-card text-ink shadow-2xs"
-                      : "text-ink-3 hover:text-ink"
-                  )}
+                <InspectorTabButton
+                  tab="comments"
+                  current={activeTab}
+                  onClick={setActiveTab}
+                  icon={MessageSquareQuote}
+                  count={commentStats(comments).open}
+                  alwaysCount
                 >
-                  <span>Claims</span>
-                  <span className="text-caption text-ink-3 font-normal">24</span>
-                </button>
+                  Comments
+                </InspectorTabButton>
+
+                <InspectorTabButton
+                  tab="evidence"
+                  current={activeTab}
+                  onClick={setActiveTab}
+                  icon={ShieldCheck}
+                  count={24}
+                >
+                  Claims
+                </InspectorTabButton>
               </div>
             </div>
 
