@@ -590,27 +590,37 @@ export function StudioScreen() {
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `Noted on **${label}** — "${text.trim()}".\n\nShould this hold for the other scenes too, or just this one?`,
-        chips: scopeChips(open.length),
+        text: `Noted on **${label}** — "${text.trim()}".\n\nShould this hold for the other scenes too, or just this one? Keep adding if you have more, and tell me to run them when you're ready.`,
         tasks: snapshot(open),
       });
     }, 700);
   };
 
-  /** Answer the scope question, keep the list, offer to run it. */
-  const scopeChips = (openCount: number) => [
-    "Just this scene",
-    "Apply across all scenes",
-    "I have more to add",
-    openCount > 1 ? `Resolve all ${openCount}` : "Resolve it now",
-  ];
+  /**
+   * What a typed reply means.
+   *
+   * The options used to be buttons under the message, which made a
+   * conversation look like a form — and answered in the agent's words rather
+   * than yours. It reads the sentence instead. Scope is checked before the
+   * verb, because "apply across all scenes" is an answer to the scope
+   * question, not an instruction to start.
+   */
+  const suggestionIntent = (input: string): "all" | "one" | "more" | "run" | null => {
+    if (suggestionQueue.openCount === 0) return null;
+    const t = input.toLowerCase();
+    if (/\b(all|every|each|other)\b.*\bscenes?\b|\bacross all\b|\beverywhere\b/.test(t)) return "all";
+    if (/\b(just|only)\b.*\b(this|that|one)\b|\bthis (scene|one) only\b/.test(t)) return "one";
+    if (/\b(more|another|hold|wait|not yet)\b/.test(t)) return "more";
+    if (/\b(run|resolve|apply|go ahead|do it|proceed|that's all|thats all|done adding)\b/.test(t)) return "run";
+    return null;
+  };
 
   const runSuggestionQueue = () =>
     suggestionQueue.resolveAll({
       start: (count, first) =>
         `Working through ${count === 1 ? "it" : `all ${count}`}. Starting with **${first.elementLabel}**.`,
       step: (item, left) =>
-        `**${item.elementLabel}** — applied${item.scope === "Apply across all scenes" ? " across every scene" : ""}. ${left} left.`,
+        `**${item.elementLabel}** — applied${item.scope === "all" ? " across every scene" : ""}. ${left} left.`,
       finish: (count) =>
         `That's ${count === 1 ? "it" : `all ${count}`} applied. Every line still resolves to an approved source — open the source pill under a line to see which.`,
     });
@@ -1172,6 +1182,10 @@ export function StudioScreen() {
     addChatMessage({ role: "user", text: fullPrompt });
 
     const isCommentIntent = rawInput.toLowerCase().includes("comment") || rawInput.toLowerCase().includes("note") || rawInput.toLowerCase().includes("feedback");
+    /* Read before the scene-rewrite path can claim it: with suggestions open,
+       "apply across all scenes" is an answer to the question the agent just
+       asked, not a fresh instruction to rewrite the scenes you had selected. */
+    const suggestionAnswer = suggestionIntent(rawInput);
 
     /**
      * An instruction aimed at specific scenes rewrites those scenes — and then
@@ -1181,7 +1195,7 @@ export function StudioScreen() {
      * should say so before changing them.
      */
     const targetIds = scopedSceneIds.filter((id) => sceneList.some((s) => s.id === id));
-    if (targetIds.length > 0 && !isCommentIntent) {
+    if (targetIds.length > 0 && !isCommentIntent && !suggestionAnswer) {
       const targets = sceneList.filter((s) => targetIds.includes(s.id));
       const nameOf = (s: Scene) => `Scene ${s.number} — ${s.title}`;
 
@@ -1253,28 +1267,25 @@ export function StudioScreen() {
           role: "swishx",
           text: `Understood! Preserving individual scene customizations. You can continue editing in the canvas or click **Generate Video** on top right when ready.`,
         });
-      } else if (rawInput === "I have more to add") {
+      } else if (suggestionAnswer === "more") {
         /* Holding. The whole point of asking was to apply a batch once rather
            than re-edit after every note. */
         const open = suggestionQueue.suggestions.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: `Holding. Keep marking up the canvas — tell me when you're done and I'll work through these together.`,
-          chips: open.length > 1 ? [`Resolve all ${open.length}`] : ["Resolve it now"],
+          text: `Holding. Keep marking up the canvas — say the word when you're done and I'll work through ${open.length > 1 ? "these" : "it"} together.`,
           tasks: snapshot(open),
         });
-      } else if (rawInput === "Just this scene" || rawInput === "Apply across all scenes") {
-        const { newest, open } = suggestionQueue.scopeNewest(rawInput);
-        const wide = rawInput === "Apply across all scenes";
+      } else if (suggestionAnswer === "all" || suggestionAnswer === "one") {
+        const { newest, open } = suggestionQueue.scopeNewest(suggestionAnswer);
         addChatMessage({
           role: "swishx",
           text: newest
-            ? `Scoped **${newest.elementLabel}** ${wide ? `to all ${sceneList.length} scenes` : "to that scene only"}. Nothing is changed yet — say when to run these.`
+            ? `Scoped **${newest.elementLabel}** ${suggestionAnswer === "all" ? `to all ${sceneList.length} scenes` : "to that scene only"}. Nothing is changed yet — add more, or tell me to run ${open.length > 1 ? "them" : "it"}.`
             : `Nothing queued to scope.`,
-          chips: open.length > 1 ? ["I have more to add", `Resolve all ${open.length}`] : ["I have more to add", "Resolve it now"],
           tasks: snapshot(open),
         });
-      } else if (rawInput === "Resolve it now" || rawInput.startsWith("Resolve all ")) {
+      } else if (suggestionAnswer === "run") {
         runSuggestionQueue();
       } else if (isReview && isCommentIntent) {
         const timeMatch = rawInput.match(/0:\d{2}|\d{1,2}s|\d{1,2}\s*sec/i);

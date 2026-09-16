@@ -778,34 +778,33 @@ export function InfographicStudioScreen() {
       const lower = text.toLowerCase();
       let reply = `Understood. I have adjusted the graphic layout grounded in the **${brandName}** dossier.`;
 
-      if (text === "I have more to add") {
+      const suggestionAnswer = suggestionIntent(text);
+
+      if (suggestionAnswer === "more") {
         /* Holding. The point of asking was to apply a batch once rather than
            re-edit the page after every note. */
         const open = suggestionQueue.suggestions.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: "Holding. Keep marking up the page — tell me when you're done and I'll work through these together.",
-          chips: open.length > 1 ? [`Resolve all ${open.length}`] : ["Resolve it now"],
+          text: `Holding. Keep marking up the page — say the word when you're done and I'll work through ${open.length > 1 ? "these" : "it"} together.`,
           tasks: snapshot(open),
         });
         return;
       }
 
-      if (text === "Just this page" || text === "Apply across all pages") {
-        const { newest, open } = suggestionQueue.scopeNewest(text);
-        const wide = text === "Apply across all pages";
+      if (suggestionAnswer === "all" || suggestionAnswer === "one") {
+        const { newest, open } = suggestionQueue.scopeNewest(suggestionAnswer);
         addChatMessage({
           role: "swishx",
           text: newest
-            ? `Scoped **${newest.elementLabel}** ${wide ? `to all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}` : "to that page only"}. Nothing is changed yet — say when to run these.`
+            ? `Scoped **${newest.elementLabel}** ${suggestionAnswer === "all" ? `to all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}` : "to that page only"}. Nothing is changed yet — add more, or tell me to run ${open.length > 1 ? "them" : "it"}.`
             : "Nothing queued to scope.",
-          chips: open.length > 1 ? ["I have more to add", `Resolve all ${open.length}`] : ["I have more to add", "Resolve it now"],
           tasks: snapshot(open),
         });
         return;
       }
 
-      if (text === "Resolve it now" || text.startsWith("Resolve all ")) {
+      if (suggestionAnswer === "run") {
         runSuggestionQueue();
         return;
       }
@@ -903,26 +902,37 @@ export function InfographicStudioScreen() {
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `Noted on **${label}** — "${text.trim()}".\n\nShould this hold across the other pages too, or just this one?`,
-        chips: scopeChips(open.length),
+        text: `Noted on **${label}** — "${text.trim()}".\n\nShould this hold across the other pages too, or just this one? Keep adding if you have more, and tell me to run them when you're ready.`,
         tasks: snapshot(open),
       });
     }, 700);
   };
 
-  const scopeChips = (openCount: number) => [
-    "Just this page",
-    "Apply across all pages",
-    "I have more to add",
-    openCount > 1 ? `Resolve all ${openCount}` : "Resolve it now",
-  ];
+  /**
+   * What a typed reply means.
+   *
+   * The options used to be buttons under the message, which made a
+   * conversation look like a form — and answered in the agent's words rather
+   * than yours. It reads the sentence instead. Scope is checked before the
+   * verb, because "apply across all pages" is an answer to the scope
+   * question, not an instruction to start.
+   */
+  const suggestionIntent = (input: string): "all" | "one" | "more" | "run" | null => {
+    if (suggestionQueue.openCount === 0) return null;
+    const t = input.toLowerCase();
+    if (/\b(all|every|each|other)\b.*\bpages?\b|\bacross all\b|\beverywhere\b/.test(t)) return "all";
+    if (/\b(just|only)\b.*\b(this|that|one)\b|\bthis (page|one) only\b/.test(t)) return "one";
+    if (/\b(more|another|hold|wait|not yet)\b/.test(t)) return "more";
+    if (/\b(run|resolve|apply|go ahead|do it|proceed|that's all|thats all|done adding)\b/.test(t)) return "run";
+    return null;
+  };
 
   const runSuggestionQueue = () =>
     suggestionQueue.resolveAll({
       start: (count, first) =>
         `Working through ${count === 1 ? "it" : `all ${count}`}. Starting with **${first.elementLabel}**.`,
       step: (item, left) =>
-        `**${item.elementLabel}** — applied${item.scope === "Apply across all pages" ? " across every page" : ""}. ${left} left.`,
+        `**${item.elementLabel}** — applied${item.scope === "all" ? " across every page" : ""}. ${left} left.`,
       finish: (count) =>
         `That's ${count === 1 ? "it" : `all ${count}`} applied. Every claim still resolves to an approved source.`,
     });
@@ -1022,35 +1032,6 @@ export function InfographicStudioScreen() {
             <div className="ml-4 hidden items-center gap-1.5 md:flex">
               <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
 
-              {/* Version 1 is what ships today; Future is the opt-in preview
-                  of what it grows into. Editor only — a reviewer on a shared
-                  link is not choosing an editor. */}
-              {studioMode === "editor" && (
-                <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-0.5 sm:flex">
-                  {([
-                    { id: "v1" as const, label: "Version 1" },
-                    { id: "future" as const, label: "Future" },
-                  ]).map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() => setEditorVersion(option.id)}
-                      aria-pressed={editorVersion === option.id}
-                      title={
-                        option.id === "v1"
-                          ? "Ships today: select and direct, no formatting bar"
-                          : "Preview: set type on the canvas from the formatting bar"
-                      }
-                      className={cn(
-                        "cursor-pointer rounded-glyph px-2.5 py-1 text-caption font-bold transition-colors",
-                        editorVersion === option.id ? "bg-brand text-white" : "text-ink-3 hover:text-ink"
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
               {studioMode === "generating" && (
                 <span className="inline-flex items-center gap-1.5 rounded-chip bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse">
                   <LogoMark size={12} className="text-brand-deep animate-spin" />
@@ -1077,6 +1058,35 @@ export function InfographicStudioScreen() {
 
           {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
           <div className="flex items-center gap-2">
+            {/* Version 1 is what ships today; Future is the opt-in preview
+                of what it grows into. Editor only — a reviewer on a shared
+                link is not choosing an editor. */}
+            {studioMode === "editor" && (
+              <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-0.5 sm:flex">
+                {([
+                  { id: "v1" as const, label: "Version 1" },
+                  { id: "future" as const, label: "Future" },
+                ]).map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setEditorVersion(option.id)}
+                    aria-pressed={editorVersion === option.id}
+                    title={
+                      option.id === "v1"
+                        ? "Ships today: select and direct, no formatting bar"
+                        : "Preview: set type on the canvas from the formatting bar"
+                    }
+                    className={cn(
+                      "cursor-pointer rounded-glyph px-2.5 py-1 text-caption font-bold transition-colors",
+                      editorVersion === option.id ? "bg-brand text-white" : "text-ink-3 hover:text-ink"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
             {studioMode === "editor" && (
               <Button
                 size="sm"
