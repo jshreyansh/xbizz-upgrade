@@ -87,9 +87,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // 1. Audience & Speciality
   const [audience, setAudience] = useState<Audience>("HCP");
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
-  const [customSpecialities, setCustomSpecialities] = useState<string[]>([]);
-  const [customSpecialityInput, setCustomSpecialityInput] = useState("");
-  const [showCustomSpecialityBox, setShowCustomSpecialityBox] = useState(false);
 
   // 3. Format Shape (Landscape, Portrait)
   const [selectedShape, setSelectedShape] = useState<OutputShape>("landscape");
@@ -123,9 +120,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setDiseaseSearch("");
       setAudience("HCP");
       setSelectedSpecialities([]);
-      setCustomSpecialities([]);
-      setCustomSpecialityInput("");
-      setShowCustomSpecialityBox(false);
       setSelectedShape("landscape");
       const def = TOPICS_BY_AUDIENCE["HCP"];
       setSelectedTopics([def[0].label, def[1].label]);
@@ -180,7 +174,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     return allDiseases.filter((d) => d.label.toLowerCase().includes(q) || d.desc.toLowerCase().includes(q));
   }, [diseaseSearch, allDiseases]);
 
-  const allSpecialities = useMemo(() => [...INITIAL_HCP_SPECIALITIES, ...customSpecialities], [customSpecialities]);
+  const allSpecialities = INITIAL_HCP_SPECIALITIES;
 
   const currentTopics = TOPICS_BY_AUDIENCE[audience] || TOPICS_BY_AUDIENCE.HCP;
 
@@ -254,15 +248,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedDiseaseIds((prev) => [...prev, newId]);
     setCustomDiseaseInput("");
     setShowCustomDiseaseBox(false);
-  };
-
-  const handleAddCustomSpeciality = () => {
-    const trimmed = customSpecialityInput.trim();
-    if (!trimmed) return;
-    setCustomSpecialities((prev) => [...prev, trimmed]);
-    setSelectedSpecialities((prev) => [...prev, trimmed]);
-    setCustomSpecialityInput("");
-    setShowCustomSpecialityBox(false);
   };
 
   const handleSelectBrand = (brand: BrandItem) => {
@@ -497,7 +482,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   })}
                 </div>
 
-                {/* ── Direct 1-Click Doctor Speciality Chips + "Other" ── */}
+                {/* ── Direct 1-Click Doctor Speciality Chips ── */}
                 {audience === "HCP" && (
                   <div className="pt-3 border-t border-hair-2/80 space-y-2.5">
                     <div className="flex items-center justify-between">
@@ -515,19 +500,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       )}
                     </div>
 
+                    {/* The listed specialities are the ones the audience
+                        targeting actually knows about. A typed-in one looked
+                        like it narrowed the audience and did nothing of the
+                        sort, so the field is gone rather than decorative. */}
                     <ChipMultiSelect
                       size="sm"
                       options={allSpecialities.map((spec) => ({ id: spec, label: spec }))}
                       selected={selectedSpecialities}
                       onToggle={toggleSpeciality}
-                      otherLabel="Other"
-                      otherOpen={showCustomSpecialityBox}
-                      onToggleOther={() => setShowCustomSpecialityBox(!showCustomSpecialityBox)}
-                      customValue={customSpecialityInput}
-                      onCustomChange={setCustomSpecialityInput}
-                      onCustomSubmit={handleAddCustomSpeciality}
-                      customPlaceholder="Type custom doctor speciality (e.g. Hematologist, Pathologist)..."
-                      addLabel="Add"
                     />
 
                     <div className="flex justify-end pt-1">
