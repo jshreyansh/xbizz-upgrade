@@ -38,13 +38,13 @@ export function SwishXApplication() {
     if (videoSubStage === "mode-select") {
       if (assetType === "infographic") {
         return (
-          <AppShell pageTitle="Creatives">
+          <AppShell pageTitle="Create Doc/Images">
             <CreativesModeScreen />
           </AppShell>
         );
       }
       return (
-        <AppShell pageTitle="Create Videos with AI">
+        <AppShell pageTitle="Create Videos">
           <MagicVideoModeScreen />
         </AppShell>
       );

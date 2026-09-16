@@ -169,19 +169,12 @@ export function CreativesModeScreen() {
 
   return (
     <div className="page-enter space-y-6 max-w-[1140px] text-left">
-      {/* Header — Left-aligned matching Brand Dossiers and Video screen */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-        <div>
-          <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800, marginBottom: 5 }}>
-            Master Content Workflow
-          </div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>
-            Create Creatives with AI
-          </h1>
-          <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "64ch" }}>
-            Synthesize source-backed infographics, visual detail aids, congress posters, and journal ads in minutes — grounded in verified label claims.
-          </p>
-        </div>
+      {/* Header, the same shape as the video screen's. */}
+      <div>
+        <h1 className="text-hero font-[800] leading-tight tracking-[-1px] text-ink">Create Doc/Images</h1>
+        <p className="mt-1.5 max-w-[60ch] text-body-lg leading-relaxed text-ink-3">
+          Grounded in your verified label claims, from the first page.
+        </p>
       </div>
 
       {/* Mode Grid — 2 Engine Selection Cards (Exact 2x2 Grid Matching Video Studio) */}
@@ -189,7 +182,7 @@ export function CreativesModeScreen() {
         {/* ════ CARD 1: Infographic/Chart (Start from Scratch) ════ */}
         <div
           onClick={() => handleSelectMode("magic-chart")}
-          className="group relative flex flex-col rounded-card border border-hair bg-card shadow-soft transition-all duration-300 hover:border-brand hover:shadow-brand-soft hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
+          className="group relative flex flex-col rounded-card border border-hair bg-card shadow-soft transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden text-left"
         >
           {/* Top Info & Features */}
           <div className="flex flex-col p-5 pb-4">

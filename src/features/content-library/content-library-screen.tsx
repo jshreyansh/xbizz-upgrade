@@ -6,6 +6,7 @@ import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Eye, Pl
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
 import { demoScenarios } from "@/features/workspace/demo-scenarios";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { AssetVideo } from "@/features/workspace/asset-video";
 
 /**
  * Published work, and the way back into it.
@@ -375,32 +376,3 @@ export function ContentLibraryScreen() {
  * the motion is what confirms it, and that is worth exactly the moment you
  * hover.
  */
-function AssetVideo({ src }: { src: string }) {
-  const ref = useRef<HTMLVideoElement>(null);
-
-  // The hover lives on a wrapper, not on the video: the Preview scrim sits
-  // over the frame, and a pointer that lands on it is still a pointer on this
-  // card.
-  return (
-    <span
-      className="absolute inset-0"
-      onMouseEnter={() => void ref.current?.play().catch(() => {})}
-      onMouseLeave={() => ref.current?.pause()}
-    >
-      <video
-        ref={ref}
-        src={src}
-        loop
-        muted
-        playsInline
-        preload="auto"
-        // Nudged off zero so a frame is decoded and painted: a video parked at
-        // 0 with no poster renders as an empty box in some browsers.
-        onLoadedData={(e) => {
-          if (e.currentTarget.currentTime === 0) e.currentTarget.currentTime = 0.1;
-        }}
-        className="pointer-events-none h-full w-full object-cover opacity-85"
-      />
-    </span>
-  );
-}
