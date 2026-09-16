@@ -40,6 +40,11 @@ import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scen
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
+import {
+  ChatAttachmentRow,
+  useChatAttachments,
+  type LocalAttachment,
+} from "@/features/workspace/chat-attachments";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
 import {
   buildIntakeQuestions,
@@ -408,6 +413,8 @@ export function InfographicDirectionsScreen() {
   };
 
   // Chat state
+  const chatFiles = useChatAttachments();
+  const [pendingChatFiles, setPendingChatFiles] = useState<LocalAttachment[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const fileUploadRef = useRef<HTMLInputElement>(null);
@@ -423,11 +430,57 @@ export function InfographicDirectionsScreen() {
   };
 
   const handleSendChat = (directText?: string) => {
+    const attached = directText ? [] : chatFiles.take();
     const text = directText || chatInput.trim();
-    if (!text) return;
+    if (!text && attached.length === 0) return;
 
-    addChatMessage({ role: "user", text });
+    addChatMessage({
+      role: "user",
+      text: attached.length
+        ? [text, ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n")
+        : text,
+    });
     if (!directText) setChatInput("");
+
+    /* A file arrives without a job, and the two it could be doing here are
+       different enough that guessing is worse than asking. */
+    if (attached.length > 0) {
+      setPendingChatFiles(attached);
+      setTimeout(() => {
+        addChatMessage({
+          role: "swishx",
+          text:
+            attached.length === 1
+              ? `Got **${attached[0].name}**. Where should it go — a grounded source in Research and Sources, or just context for this question?`
+              : `Got ${attached.length} files. Where should they go — grounded sources in Research and Sources, or just context for this question?`,
+        });
+      }, 600);
+      return;
+    }
+
+    if (pendingChatFiles.length > 0) {
+      const lower = text.toLowerCase();
+      const files = pendingChatFiles;
+      const say = (message: string) =>
+        setTimeout(() => addChatMessage({ role: "swishx", text: message }), 500);
+      if (/\b(source|ground|grounding|evidence|research|dossier|claims?|study|data)\b/.test(lower)) {
+        setPendingChatFiles([]);
+        setUploadedDocs((prev) => [
+          ...prev,
+          ...files.map((f) => ({ name: f.name, size: "—", date: "Just now", note: text.trim() })),
+        ]);
+        setOpenSection("sources");
+        say(
+          `Added ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} to **Research and Sources**, with what you just said as the note.`
+        );
+        return;
+      }
+      if (/\b(context|just|only|nothing|reference|ignore|question|message)\b/.test(lower)) {
+        setPendingChatFiles([]);
+        say(`Understood — reading ${files.length === 1 ? "it" : "them"} for this question only. Nothing added to the plan.`);
+        return;
+      }
+    }
 
     /* While a question is outstanding, what you type is its answer — not a
        change request against a plan that does not exist yet. */
@@ -1228,8 +1281,19 @@ export function InfographicDirectionsScreen() {
 
             {/* Input Bar */}
             <div className="relative">
+              <ChatAttachmentRow attachments={chatFiles} />
               <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
-                <Plus className="size-3.5 text-ink-3 shrink-0" />
+                {/* The + was a drawn icon that did nothing. It attaches a file,
+                    the same as every other chat input. */}
+                <button
+                  type="button"
+                  onClick={chatFiles.open}
+                  className="grid size-5 shrink-0 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
+                  title="Attach a file"
+                  aria-label="Attach a file"
+                >
+                  <Plus className="size-3.5" />
+                </button>
                 <input
                   type="text"
                   value={chatInput}

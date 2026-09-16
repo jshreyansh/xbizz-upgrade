@@ -48,6 +48,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
+import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import {
   SuggestionChecklist,
@@ -717,6 +718,7 @@ export function InfographicStudioScreen() {
   );
 
   // Chat message handler connected directly to Workspace Store
+  const chatFiles = useChatAttachments();
   const [chatInput, setChatInput] = useState("");
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
@@ -769,11 +771,32 @@ export function InfographicStudioScreen() {
   };
 
   const handleSendMessage = (directText?: string) => {
+    const attached = directText ? [] : chatFiles.take();
     const text = directText || chatInput.trim();
-    if (!text) return;
+    if (!text && attached.length === 0) return;
 
-    addChatMessage({ role: "user", text });
+    addChatMessage({
+      role: "user",
+      text: attached.length
+        ? [text, ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n")
+        : text,
+    });
     if (!directText) setChatInput("");
+
+    /* In the editor there is no source list to file a document into, so the
+       question is what the file is FOR rather than where it goes. */
+    if (attached.length > 0) {
+      setTimeout(() => {
+        addChatMessage({
+          role: "swishx",
+          text:
+            attached.length === 1
+              ? `Got **${attached[0].name}**. Is it replacing something on the page, or reference for a change you want?`
+              : `Got ${attached.length} files. Are they replacing artwork on the page, or reference for a change you want?`,
+        });
+      }, 600);
+      if (!text) return;
+    }
 
     setTimeout(() => {
       const lower = text.toLowerCase();
@@ -1756,8 +1779,19 @@ export function InfographicStudioScreen() {
                       of you while you work. */}
                   {studioMode === "editor" && <SuggestionChecklist items={suggestionQueue.drafts} onSend={sendSuggestions} />}
 
+                  <ChatAttachmentRow attachments={chatFiles} />
                   <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
-                    <Plus className="size-3.5 text-ink-3 shrink-0" />
+                    {/* The + attaches a file, the same as every other chat
+                        input. It was a drawn icon that did nothing. */}
+                    <button
+                      type="button"
+                      onClick={chatFiles.open}
+                      className="grid size-5 shrink-0 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
+                      title="Attach a file"
+                      aria-label="Attach a file"
+                    >
+                      <Plus className="size-3.5" />
+                    </button>
                     <input
                       type="text"
                       value={chatInput}

@@ -11,7 +11,6 @@ import {
   Image as ImageIcon,
   Info,
   Layers,
-  Maximize2,
   MoreHorizontal,
   Paperclip,
   Search,
@@ -42,21 +41,12 @@ import {
   ProjectContextModal,
   type ContextField,
 } from "@/features/workspace/project-context-modal";
-
-type AttachmentKind = "image" | "video" | "doc";
-
-interface LocalAttachment {
-  id: string;
-  name: string;
-  kind: AttachmentKind;
-  previewUrl?: string;
-}
-
-function attachmentKind(file: File): AttachmentKind {
-  if (file.type.startsWith("image/")) return "image";
-  if (file.type.startsWith("video/")) return "video";
-  return "doc";
-}
+import {
+  AttachmentChip,
+  AttachmentPreviewModal,
+  attachmentKind,
+  type LocalAttachment,
+} from "@/features/workspace/chat-attachments";
 
 /* Nothing has been published yet on the way in, so the trail is one entry. */
 const DRAFT_ONLY: AssetVersion[] = [
@@ -751,95 +741,6 @@ function SourceChip({ source, onRemove }: { source: PlanningSource; onRemove: ()
   );
 }
 
-function AttachmentChip({
-  file,
-  onOpen,
-  onRemove,
-}: {
-  file: LocalAttachment;
-  onOpen?: () => void;
-  onRemove: () => void;
-}) {
-  const isMedia = file.kind !== "doc" && Boolean(file.previewUrl);
-  return (
-    <span className="flex min-h-9 items-center gap-2 rounded-chip border border-hair bg-[#edf1f4] py-1 pl-1 pr-1.5 text-body font-medium text-ink-3">
-      {isMedia ? (
-        <button
-          type="button"
-          onClick={onOpen}
-          className="focus-ring group relative grid size-7 shrink-0 place-items-center overflow-hidden rounded-glyph border border-hair bg-canvas cursor-pointer"
-          aria-label={`Preview ${file.name}`}
-        >
-          {file.kind === "image" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={file.previewUrl} alt="" className="size-full object-cover" />
-          ) : (
-            <video src={file.previewUrl} muted playsInline className="size-full object-cover" />
-          )}
-          <span className="absolute inset-0 grid place-items-center bg-ink/40 opacity-0 transition-opacity group-hover:opacity-100">
-            <Maximize2 className="size-3 text-white" />
-          </span>
-        </button>
-      ) : (
-        <span className="grid size-7 shrink-0 place-items-center rounded-glyph border border-hair bg-canvas">
-          <Paperclip className="size-3.5 opacity-75" />
-        </span>
-      )}
-      <span className="max-w-[180px] truncate">{file.name}</span>
-      <button
-        onClick={onRemove}
-        className="grid size-5 shrink-0 place-items-center rounded-full opacity-60 transition hover:bg-white/70 hover:opacity-100 cursor-pointer"
-        aria-label={`Remove ${file.name}`}
-      >
-        <X className="size-3" />
-      </button>
-    </span>
-  );
-}
-
-function AttachmentPreviewModal({ file, onClose }: { file: LocalAttachment; onClose: () => void }) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-6 backdrop-blur-[2px]"
-      role="dialog"
-      aria-modal="true"
-      aria-label={file.name}
-      onClick={onClose}
-    >
-      <div
-        className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-between gap-3 border-b border-hair px-4 py-2.5">
-          <span className="truncate text-body font-semibold text-ink">{file.name}</span>
-          <button
-            onClick={onClose}
-            className="grid size-7 shrink-0 place-items-center rounded-control text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
-            aria-label="Close preview"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-        <div className="grid min-h-0 place-items-center bg-canvas p-4">
-          {file.kind === "image" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={file.previewUrl} alt={file.name} className="max-h-[70vh] max-w-full object-contain" />
-          ) : (
-            <video src={file.previewUrl} controls autoPlay className="max-h-[70vh] max-w-full" />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function SourceLibraryModal({
   selectedIds,

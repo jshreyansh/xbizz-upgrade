@@ -54,6 +54,11 @@ import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-mod
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
+import {
+  ChatAttachmentRow,
+  useChatAttachments,
+  type LocalAttachment,
+} from "@/features/workspace/chat-attachments";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import {
   buildIntakeQuestions,
@@ -309,6 +314,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string }>
   >([]);
   const [editingMedia, setEditingMedia] = useState<{ id: string; name: string; note: string } | null>(null);
+  /* Files attached to the next chat message. Hoisted with the other hooks,
+     above the early return at the top of this component. */
+  const chatFiles = useChatAttachments();
+  /* Sent, and waiting to be told where they belong. */
+  const [pendingChatFiles, setPendingChatFiles] = useState<LocalAttachment[]>([]);
   const [intakeIndex, setIntakeIndex] = useState(0);
   const [intakeAnswers, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
   const flowSteps = useVideoSteps({});
@@ -672,7 +682,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   // ── Chat Input in Right Panel ──
   const [chatInput, setChatInput] = useState("");
-  const [chatContextOpen, setChatContextOpen] = useState(false);
 
   // Initialize store chat messages if empty
   useEffect(() => {
@@ -979,11 +988,86 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   };
 
   const handleSendChatMessage = (textToSend?: string) => {
+    const attached = textToSend ? [] : chatFiles.take();
     const text = textToSend || chatInput.trim();
-    if (!text) return;
+    if (!text && attached.length === 0) return;
 
-    addChatMessage({ role: "user", text });
+    addChatMessage({
+      role: "user",
+      text: attached.length
+        ? [text, ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n")
+        : text,
+    });
     if (!textToSend) setChatInput("");
+
+    /**
+     * A file arrives without a job, and the three it could be doing here are
+     * different enough that guessing is worse than asking: a source grounds
+     * claims and has to be verified, a packshot gets placed into scenes, and
+     * anything else is context for this one question. So it asks, and the
+     * answer is what files it.
+     */
+    if (attached.length > 0) {
+      setPendingChatFiles(attached);
+      setTimeout(() => {
+        addChatMessage({
+          role: "swishx",
+          text:
+            attached.length === 1
+              ? `Got **${attached[0].name}**. Where should it go — a grounded source in Research and Sources, product media for the scenes, or just context for this question?`
+              : `Got ${attached.length} files. Where should they go — grounded sources in Research and Sources, product media for the scenes, or just context for this question?`,
+        });
+      }, 600);
+      return;
+    }
+
+    /* An answer to "where should this go" beats every other reading of the
+       sentence, because it is answering the question just asked. */
+    if (pendingChatFiles.length > 0) {
+      const lower = text.toLowerCase();
+      const files = pendingChatFiles;
+      const say = (message: string) =>
+        setTimeout(() => addChatMessage({ role: "swishx", text: message }), 500);
+
+      if (/\b(source|ground|grounding|evidence|research|dossier|claims?|study|data)\b/.test(lower)) {
+        setPendingChatFiles([]);
+        setUploadedDocs((prev) => [
+          ...prev,
+          ...files.map((f) => ({ name: f.name, size: "—", date: "Just now", note: text.trim() })),
+        ]);
+        setOpenSection("sources");
+        say(
+          `Added ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} to **Research and Sources**, with what you just said as the note. Claims can ground in ${files.length === 1 ? "it" : "them"} now.`
+        );
+        return;
+      }
+      if (/\b(packshot|pack shot|product|media|photo|image|footage|asset|device|pen)\b/.test(lower)) {
+        setPendingChatFiles([]);
+        setProductMediaList((prev) => [
+          ...prev,
+          ...files.map((f, i) => ({
+            id: `media-chat-${Date.now()}-${i}`,
+            name: f.name,
+            type: (f.kind === "video" ? "video" : "image") as "image" | "video",
+            preview:
+              f.previewUrl ??
+              "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+            size: "—",
+            note: text.trim(),
+          })),
+        ]);
+        setOpenSection("product-assets");
+        say(
+          `Placed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} in **Product & Device Visual Assets**, with your note against ${files.length === 1 ? "it" : "them"}.`
+        );
+        return;
+      }
+      if (/\b(context|just|only|nothing|reference|ignore|question|message)\b/.test(lower)) {
+        setPendingChatFiles([]);
+        say(`Understood — reading ${files.length === 1 ? "it" : "them"} for this question only. Nothing added to the plan.`);
+        return;
+      }
+    }
 
     /* While a question is outstanding, what you type is its answer — not a
        change request against a plan that does not exist yet. */
@@ -2233,44 +2317,22 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             )}
 
             <div className="relative">
+              {/* The files on this message, above the field they were added
+                  from — the same chips the brief screen uses, because it is
+                  the same gesture. */}
+              <ChatAttachmentRow attachments={chatFiles} />
               <div className="flex items-center gap-1.5 rounded-control border border-hair-2 bg-subtle px-2.5 py-1.5 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setChatContextOpen(!chatContextOpen)}
-                    className="grid size-6 place-items-center rounded-chip text-ink-3 hover:text-ink hover:bg-black/5 transition cursor-pointer"
-                    title="Add context"
-                  >
-                    <Plus className="size-3.5" />
-                  </button>
-
-                  {chatContextOpen && (
-                    <div className="absolute bottom-full left-0 mb-2 w-48 rounded-control border border-hair-2 bg-card p-1 shadow-lg z-20 space-y-0.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setChatContextOpen(false);
-                          handleSendChatMessage("Attach trial citations from CLARITY-CV study.");
-                        }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 text-label font-medium text-ink-2 hover:bg-[#f4f5f3] rounded-chip transition text-left cursor-pointer"
-                      >
-                        <FileCheck2 className="size-3 text-brand" />
-                        Attach trial citations
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setChatContextOpen(false);
-                          handleSendChatMessage("Adjust narrative tone to be more clinical and objective.");
-                        }}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 text-label font-medium text-ink-2 hover:bg-[#f4f5f3] rounded-chip transition text-left cursor-pointer"
-                      >
-                        <Target className="size-3 text-brand" />
-                        Specify clinical tone
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {/* One thing: attach a file. This was a menu of two canned
+                    prompts wearing an attach icon. */}
+                <button
+                  type="button"
+                  onClick={chatFiles.open}
+                  className="grid size-6 place-items-center rounded-chip text-ink-3 hover:text-ink hover:bg-black/5 transition cursor-pointer"
+                  title="Attach a file"
+                  aria-label="Attach a file"
+                >
+                  <Plus className="size-3.5" />
+                </button>
 
                 <input
                   type="text"
@@ -2287,7 +2349,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 <button
                   type="button"
                   onClick={() => handleSendChatMessage()}
-                  disabled={!chatInput.trim() || isGenerating}
+                  disabled={(!chatInput.trim() && chatFiles.files.length === 0) || isGenerating}
                   className="grid size-6 place-items-center rounded-chip bg-brand text-white disabled:opacity-30 hover:bg-brand-deep transition cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Send className="size-3" />

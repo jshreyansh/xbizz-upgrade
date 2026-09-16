@@ -78,6 +78,7 @@ import { GenerationProgress, type GenerationStep } from "@/features/workspace/ge
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
+import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
 import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
@@ -265,6 +266,8 @@ export function StudioScreen() {
   const addChatMessage = useWorkspaceStore((s) => s.addChatMessage);
   /** What the author has asked for and the agent has not done yet. */
   const suggestionQueue = useSuggestionQueue(addChatMessage);
+  /* Files attached to the next chat message. */
+  const chatFiles = useChatAttachments();
   const studioChatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -746,7 +749,6 @@ export function StudioScreen() {
     window.setTimeout(() => setHighlightedClaimId(null), 2000);
   };
   const [chatContextMenuOpen, setChatContextMenuOpen] = useState(false);
-  const chatFileInputRef = useRef<HTMLInputElement>(null);
 
 
   // Canvas Element Drag & Drop Positioning State
@@ -1178,8 +1180,29 @@ export function StudioScreen() {
 
 
   const handleSendChatMessage = (presetText?: string) => {
+    const attached = presetText ? [] : chatFiles.take();
     const rawInput = (presetText || directorInput).trim();
-    if (!rawInput) return;
+    if (!rawInput && attached.length === 0) return;
+
+    /* In the editor there is no source list to file a document into, so the
+       question is what the file is FOR rather than where it goes. */
+    if (attached.length > 0) {
+      addChatMessage({
+        role: "user",
+        text: [rawInput, ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n"),
+      });
+      setDirectorInput("");
+      setTimeout(() => {
+        addChatMessage({
+          role: "swishx",
+          text:
+            attached.length === 1
+              ? `Got **${attached[0].name}**. Is it replacing something in this scene, or reference for a change you want?`
+              : `Got ${attached.length} files. Are they replacing media in the scenes, or reference for a change you want?`,
+        });
+      }, 600);
+      return;
+    }
 
     let fullPrompt = rawInput;
     if (!presetText && attachedContexts.length > 0) {
@@ -2978,6 +3001,10 @@ export function StudioScreen() {
                     className="flex flex-col gap-2 rounded-panel border border-hair bg-card p-2.5 shadow-xs focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15"
                   >
                     {/* Attached Context Chips */}
+                    {/* The files on this message — the same chips the brief
+                        screen uses, with previews for images and clips. */}
+                    <ChatAttachmentRow attachments={chatFiles} />
+
                     {attachedContexts.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 p-1.5 bg-subtle rounded-control border border-hair">
                         {attachedContexts.map((ctx) => (
@@ -3042,28 +3069,6 @@ export function StudioScreen() {
                       <div className="flex items-center gap-2">
                         {/* Plus Context Menu Button */}
                         <div className="relative">
-                          <input
-                            type="file"
-                            ref={chatFileInputRef}
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setAttachedContexts((prev) => [
-                                  ...prev,
-                                  {
-                                    id: `file-${Date.now()}`,
-                                    type: "file",
-                                    label: "File",
-                                    detail: file.name,
-                                  },
-                                ]);
-                                setToMessage(`Attached: ${file.name}`);
-                                setTimeout(() => setToMessage(null), 2500);
-                              }
-                            }}
-                          />
-
                           <button
                             type="button"
                             onClick={() => setChatContextMenuOpen(!chatContextMenuOpen)}
@@ -3081,7 +3086,10 @@ export function StudioScreen() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  chatFileInputRef.current?.click();
+                                  /* The shared picker, so a packshot dropped
+                                     in here gets the same thumbnail it gets on
+                                     the brief screen. */
+                                  chatFiles.open();
                                   setChatContextMenuOpen(false);
                                 }}
                                 className="w-full flex items-center gap-2 px-2.5 py-1.5 text-body font-medium text-ink hover:bg-tint hover:text-brand-deep rounded-control transition text-left cursor-pointer"
