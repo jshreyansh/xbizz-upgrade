@@ -525,13 +525,10 @@ export function InfographicDirectionsScreen() {
                ══════════════════════════════════════════════════════════════════ */}
             {currentStep === "brief" && (
               <>
-                {/* The shape of the work, before you go looking for it. */}
-                <PlanProgress
-                  sections={planSections}
-                  onJump={(id) => setOpenSection(id as PlanSectionId)}
-                />
-
-                {/* Header in Left Canvas (Identical to Video Screen) */}
+                {/* Header first, then the shape of the work — as the video
+                    plan has it. The progress bar was above the heading here,
+                    so the screen answered "how much is left" before it had
+                    said what it was. */}
                 <div className="flex items-center justify-between pb-1 shrink-0">
                   <div>
                     {/* Named after what it wants, as the video plan is. This
@@ -545,6 +542,11 @@ export function InfographicDirectionsScreen() {
                     </p>
                   </div>
                 </div>
+
+                <PlanProgress
+                  sections={planSections}
+                  onJump={(id) => setOpenSection(id as PlanSectionId)}
+                />
 
                 {/* ─── Rich Accordion Sections with Distinct Icons & Zoom Animation ─── */}
                 <div className="space-y-3 min-w-0 w-full">

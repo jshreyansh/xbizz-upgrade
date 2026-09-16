@@ -127,32 +127,26 @@ export function TemplateStepScreen({
           controls sit under it and stick while the grid scrolls. */}
       <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
         {/* Heading, in the canvas */}
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-label font-bold uppercase tracking-[0.12em] text-brand">
-                Design &amp; layout
-              </span>
-              <span className="rounded-chip border border-hair-2 bg-card px-2 py-0.5 text-caption font-bold text-ink-3">
-                {pageShape}
-              </span>
-            </div>
-            <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
-              Choose the layout this deck is built from
-            </h2>
-            <p className="mt-0.5 text-body text-ink-3">
-              The archetype decides the composition — which blocks exist, and how much each one holds.
-            </p>
-          </div>
-
-          <span className="shrink-0 rounded-chip border border-ok-line bg-ok-bg px-3 py-1 text-caption font-bold text-ok">
-            ✓ {matching.toLocaleString()} of {TEMPLATE_LIBRARY.length.toLocaleString()} match this brief
-          </span>
+        {/* A heading and one line under it, like every other step in the two
+            flows. There were three things here — an eyebrow, a shape chip and
+            a match count — stacked above a title that then had to work around
+            them. The shape and the match count both live in the controls
+            below, where the filters that change them are. */}
+        <div className="mb-4 min-w-0">
+          <h2 className="text-display font-[850] tracking-tight text-ink">
+            Choose a layout
+          </h2>
+          <p className="mt-0.5 text-body text-ink-3">
+            The layout decides which blocks the page has, and how much each one holds.
+          </p>
         </div>
 
         {/* Controls, stuck to the top of the scroller so the grid can run */}
         <div className="sticky top-0 z-[2] mb-4 space-y-2 rounded-panel border border-hair-2 bg-card/95 p-2.5 shadow-2xs backdrop-blur">
           <div className="flex flex-wrap items-center gap-2">
+            <span className="order-last shrink-0 rounded-chip border border-ok-line bg-ok-bg px-2.5 py-1 text-caption font-bold text-ok">
+              {matching.toLocaleString()} of {TEMPLATE_LIBRARY.length.toLocaleString()} match this brief · {pageShape}
+            </span>
             <label className="relative flex min-w-[180px] flex-1 items-center">
               <Search className="absolute left-2.5 size-3.5 text-ink-4" />
               <input
