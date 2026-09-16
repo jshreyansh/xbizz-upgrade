@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { creativeDirections } from "@/features/workspace/mock-data";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, LogoMark, OnboardingBeat, PresentationMode } from "@/types/content";
+import type { SuggestionSnapshot } from "@/features/workspace/suggestion-queue";
 
 export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
@@ -46,7 +47,7 @@ interface WorkspaceState {
   selectedSceneId: string;
   inspectorTab: InspectorTab;
   selectedQuality: "hd" | "cinematic";
-  chatMessages: Array<{ role: "user" | "swishx"; text: string; chips?: string[] }>;
+  chatMessages: Array<{ role: "user" | "swishx"; text: string; chips?: string[]; tasks?: SuggestionSnapshot[] }>;
   // Auth & onboarding
   authView: AuthView;
   onboardingBeat: OnboardingBeat;
@@ -72,8 +73,8 @@ interface WorkspaceState {
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
-  setChatMessages: (messages: Array<{ role: "user" | "swishx"; text: string; chips?: string[] }>) => void;
-  addChatMessage: (message: { role: "user" | "swishx"; text: string; chips?: string[] }) => void;
+  setChatMessages: (messages: Array<{ role: "user" | "swishx"; text: string; chips?: string[]; tasks?: SuggestionSnapshot[] }>) => void;
+  addChatMessage: (message: { role: "user" | "swishx"; text: string; chips?: string[]; tasks?: SuggestionSnapshot[] }) => void;
   setCreationMode: (mode: CreationMode) => void;
   setSourceType: (type: SourceSelectionType) => void;
   setSourcePayload: (payload: { dossierId?: string; url?: string; text?: string }) => void;

@@ -50,7 +50,6 @@ import {
   Volume2,
   VolumeX,
   X,
-  Zap,
 } from "lucide-react";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -64,6 +63,13 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
+import {
+  ChatTaskList,
+  SuggestionChecklist,
+  snapshot,
+  useSuggestionQueue,
+  type Suggestion,
+} from "@/features/workspace/suggestion-queue";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
@@ -267,6 +273,8 @@ export function StudioScreen() {
   const chatMessages = useWorkspaceStore((s) => s.chatMessages);
   const setChatMessages = useWorkspaceStore((s) => s.setChatMessages);
   const addChatMessage = useWorkspaceStore((s) => s.addChatMessage);
+  /** What the author has asked for and the agent has not done yet. */
+  const suggestionQueue = useSuggestionQueue(addChatMessage);
   const studioChatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -567,9 +575,10 @@ export function StudioScreen() {
    * you wrote about your own work needs neither.
    */
   const addSuggestion = (elementId: string, text: string) => {
-    const { label, detail } = describeElement(elementId);
+    const { label } = describeElement(elementId);
     setActiveTab("assistant");
     addChatMessage({ role: "user", text: `[${label}] ${text}` });
+    const { open } = suggestionQueue.add(label, text);
 
     /**
      * The agent asks before it acts.
@@ -583,11 +592,30 @@ export function StudioScreen() {
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `Noted on **${label}** — "${text.trim()}".\n\nBefore I change anything: should this hold for the other scenes too, or just this one? Add any more suggestions and I'll apply them together.`,
-        chips: ["Just this scene", "Apply across all scenes", "I have more to add"],
+        text: `Noted on **${label}** — "${text.trim()}".\n\nShould this hold for the other scenes too, or just this one?`,
+        chips: scopeChips(open.length),
+        tasks: snapshot(open),
       });
     }, 700);
   };
+
+  /** Answer the scope question, keep the list, offer to run it. */
+  const scopeChips = (openCount: number) => [
+    "Just this scene",
+    "Apply across all scenes",
+    "I have more to add",
+    openCount > 1 ? `Resolve all ${openCount}` : "Resolve it now",
+  ];
+
+  const runSuggestionQueue = () =>
+    suggestionQueue.resolveAll({
+      start: (count, first) =>
+        `Working through ${count === 1 ? "it" : `all ${count}`}. Starting with **${first.elementLabel}**.`,
+      step: (item, left) =>
+        `**${item.elementLabel}** — applied${item.scope === "Apply across all scenes" ? " across every scene" : ""}. ${left} left.`,
+      finish: (count) =>
+        `That's ${count === 1 ? "it" : `all ${count}`} applied. Every line still resolves to an approved source — open the source pill under a line to see which.`,
+    });
 
   /**
    * Handing a comment to the agent. The agent then closes it itself: resolved
@@ -1230,18 +1258,26 @@ export function StudioScreen() {
       } else if (rawInput === "I have more to add") {
         /* Holding. The whole point of asking was to apply a batch once rather
            than re-edit after every note. */
+        const open = suggestionQueue.suggestions.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: `Holding this one. Keep marking up the canvas — tell me when you're done and I'll apply them together.`,
+          text: `Holding. Keep marking up the canvas — tell me when you're done and I'll work through these together.`,
+          chips: open.length > 1 ? [`Resolve all ${open.length}`] : ["Resolve it now"],
+          tasks: snapshot(open),
         });
       } else if (rawInput === "Just this scene" || rawInput === "Apply across all scenes") {
+        const { newest, open } = suggestionQueue.scopeNewest(rawInput);
         const wide = rawInput === "Apply across all scenes";
         addChatMessage({
           role: "swishx",
-          text: wide
-            ? `Applying it across all ${sceneList.length} scenes. Every line still resolves to an approved source — open the source pill under a line to see which.`
-            : `Applying it to **Scene ${selectedScene.number} — ${selectedScene.title}** only. The other scenes are untouched.`,
+          text: newest
+            ? `Scoped **${newest.elementLabel}** ${wide ? `to all ${sceneList.length} scenes` : "to that scene only"}. Nothing is changed yet — say when to run these.`
+            : `Nothing queued to scope.`,
+          chips: open.length > 1 ? ["I have more to add", `Resolve all ${open.length}`] : ["I have more to add", "Resolve it now"],
+          tasks: snapshot(open),
         });
+      } else if (rawInput === "Resolve it now" || rawInput.startsWith("Resolve all ")) {
+        runSuggestionQueue();
       } else if (isReview && isCommentIntent) {
         const timeMatch = rawInput.match(/0:\d{2}|\d{1,2}s|\d{1,2}\s*sec/i);
         const extractedSec = timeMatch ? parseInt(timeMatch[0].replace(/[^0-9]/g, ""), 10) : Math.floor(masterCurrentTime);
@@ -2877,6 +2913,7 @@ export function StudioScreen() {
                         )}
                       >
                         <FormattedMessageText text={msg.text} />
+                        <ChatTaskList items={msg.tasks} />
                         <ChatChips chips={msg.chips} onPick={(chip) => handleSendChatMessage(chip)} />
                       </div>
                     </div>
@@ -2920,33 +2957,11 @@ export function StudioScreen() {
                     </div>
                   )}
 
-                  {/* Attached Primary Action Bar in Scene Editor Mode */}
-                  {isEditor && (
-                    <div className="rounded-panel border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2 shadow-2xs flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="size-6 rounded-full bg-brand/15 text-brand grid place-items-center shrink-0">
-                          <Film className="size-3.5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-label font-bold text-ink truncate">
-                            Ready for production
-                          </div>
-                          <div className="text-micro text-ink-3 truncate">
-                            {sceneList.length} scenes customized
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={handleOpenGenerateVideoModal}
-                        size="sm"
-                        className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
-                      >
-                        <Zap className="size-3 mr-1 fill-current" />
-                        <span>Generate and Publish</span>
-                      </Button>
-                    </div>
-                  )}
+                  {/* What is still owed, pinned where the second Generate and
+                      Publish button used to sit. That button was already in
+                      the header; this is the thing you actually need in front
+                      of you while you work. */}
+                  {isEditor && <SuggestionChecklist items={suggestionQueue.suggestions} />}
 
                   <form
                     onSubmit={(e) => {

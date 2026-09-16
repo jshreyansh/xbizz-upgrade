@@ -51,6 +51,12 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
+import {
+  ChatTaskList,
+  SuggestionChecklist,
+  snapshot,
+  useSuggestionQueue,
+} from "@/features/workspace/suggestion-queue";
 import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
@@ -310,6 +316,9 @@ export function InfographicStudioScreen() {
   } = useWorkspaceStore();
 
   const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
+
+  /** What the author has asked for and the agent has not done yet. */
+  const suggestionQueue = useSuggestionQueue(addChatMessage);
 
   // Studio Mode: Editor -> Generating -> Shared Review View
   /* Arriving from the Content Library means the asset is already published:
@@ -775,16 +784,32 @@ export function InfographicStudioScreen() {
       if (text === "I have more to add") {
         /* Holding. The point of asking was to apply a batch once rather than
            re-edit the page after every note. */
-        reply = "Holding this one. Keep marking up the page — tell me when you're done and I'll apply them together.";
-        addChatMessage({ role: "swishx", text: reply });
+        const open = suggestionQueue.suggestions.filter((sg) => sg.status !== "done");
+        addChatMessage({
+          role: "swishx",
+          text: "Holding. Keep marking up the page — tell me when you're done and I'll work through these together.",
+          chips: open.length > 1 ? [`Resolve all ${open.length}`] : ["Resolve it now"],
+          tasks: snapshot(open),
+        });
         return;
       }
 
       if (text === "Just this page" || text === "Apply across all pages") {
-        reply = text === "Apply across all pages"
-          ? `Applying it across all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}. Every claim still resolves to an approved source.`
-          : `Applying it to **${currentPage.name}** only. The other pages are untouched.`;
-        addChatMessage({ role: "swishx", text: reply });
+        const { newest, open } = suggestionQueue.scopeNewest(text);
+        const wide = text === "Apply across all pages";
+        addChatMessage({
+          role: "swishx",
+          text: newest
+            ? `Scoped **${newest.elementLabel}** ${wide ? `to all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}` : "to that page only"}. Nothing is changed yet — say when to run these.`
+            : "Nothing queued to scope.",
+          chips: open.length > 1 ? ["I have more to add", `Resolve all ${open.length}`] : ["I have more to add", "Resolve it now"],
+          tasks: snapshot(open),
+        });
+        return;
+      }
+
+      if (text === "Resolve it now" || text.startsWith("Resolve all ")) {
+        runSuggestionQueue();
         return;
       }
 
@@ -873,6 +898,7 @@ export function InfographicStudioScreen() {
     setCommentComposerAt(null);
     setActiveTab("assistant");
     addChatMessage({ role: "user", text: `[${label}] ${text}` });
+    const { open } = suggestionQueue.add(label, text);
 
     /* The agent asks before it acts. A suggestion written in five words on a
        canvas is rarely the whole instruction, and a batch of them is usually
@@ -880,11 +906,29 @@ export function InfographicStudioScreen() {
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `Noted on **${label}** — "${text.trim()}".\n\nBefore I change anything: should this hold across the other pages too, or just this one? Add any more suggestions and I'll apply them together.`,
-        chips: ["Just this page", "Apply across all pages", "I have more to add"],
+        text: `Noted on **${label}** — "${text.trim()}".\n\nShould this hold across the other pages too, or just this one?`,
+        chips: scopeChips(open.length),
+        tasks: snapshot(open),
       });
     }, 700);
   };
+
+  const scopeChips = (openCount: number) => [
+    "Just this page",
+    "Apply across all pages",
+    "I have more to add",
+    openCount > 1 ? `Resolve all ${openCount}` : "Resolve it now",
+  ];
+
+  const runSuggestionQueue = () =>
+    suggestionQueue.resolveAll({
+      start: (count, first) =>
+        `Working through ${count === 1 ? "it" : `all ${count}`}. Starting with **${first.elementLabel}**.`,
+      step: (item, left) =>
+        `**${item.elementLabel}** — applied${item.scope === "Apply across all pages" ? " across every page" : ""}. ${left} left.`,
+      finish: (count) =>
+        `That's ${count === 1 ? "it" : `all ${count}`} applied. Every claim still resolves to an approved source.`,
+    });
 
   /* Closing a comment. A team comment cannot close without a note — the
      person who wrote it only ever sees the share link, so "Resolved" with
@@ -1748,6 +1792,7 @@ export function InfographicStudioScreen() {
                         )}
                       >
                         <FormattedMessageText text={msg.text} />
+                        <ChatTaskList items={msg.tasks} />
                         <ChatChips chips={msg.chips} onPick={(chip) => handleSendMessage(chip)} />
                       </div>
                     </div>
@@ -1756,33 +1801,11 @@ export function InfographicStudioScreen() {
                 </div>
 
                 <div className="p-3 border-t border-hair bg-card shrink-0 space-y-2">
-                  {/* Attached Primary Action Bar in Creative Editor Mode */}
-                  {studioMode === "editor" && (
-                    <div className="rounded-panel border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2 shadow-2xs flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="size-6 rounded-full bg-brand/15 text-brand grid place-items-center shrink-0">
-                          <ImageIcon className="size-3.5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="text-label font-bold text-ink truncate">
-                            Ready for production
-                          </div>
-                          <div className="text-micro text-ink-3 truncate">
-                            {pagesList.length} {pagesList.length === 1 ? "page" : "pages"} customized
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={() => setConfirmGenerateModalOpen(true)}
-                        size="sm"
-                        className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02] gap-1"
-                      >
-                        <LogoMark size={12} className="mr-0.5 fill-current" />
-                        <span>Generate and Publish</span>
-                      </Button>
-                    </div>
-                  )}
+                  {/* What is still owed, pinned where the second Generate and
+                      Publish button used to sit. That button was already in
+                      the header; this is the thing you actually need in front
+                      of you while you work. */}
+                  {studioMode === "editor" && <SuggestionChecklist items={suggestionQueue.suggestions} />}
 
                   <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
                     <Plus className="size-3.5 text-ink-3 shrink-0" />
