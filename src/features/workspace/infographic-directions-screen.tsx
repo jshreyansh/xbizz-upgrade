@@ -21,6 +21,7 @@ import {
   Undo2,
   Upload,
   Users,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -1258,21 +1259,40 @@ function CreativePlanSection({
         )}
         aria-expanded={open}
       >
+        {/* The icon is which section this is; the colour is what state it is
+            in. This square keyed off `open` rather than state, so ANY open
+            section showed a tick — including the one that had not been
+            answered. */}
         <span
           className={cn(
-            "squircle-control grid shrink-0 place-items-center transition-transform group-hover:scale-105",
+            "squircle-control relative grid shrink-0 place-items-center transition-transform group-hover:scale-105",
             open ? "size-10 rounded-control" : "size-7 rounded-chip",
-            open
-              ? "bg-brand text-white shadow-xs"
+            tone === "attention"
+              ? "bg-danger-bg text-danger"
               : tone === "done"
-              ? "bg-brand/15 text-brand"
+              ? "bg-ok-bg text-ok"
               : "bg-[#edf3ef] text-brand"
           )}
         >
-          {open ? (
-            <Check className="size-4" strokeWidth={3} />
-          ) : (
-            <Icon className="size-3.5" />
+          <Icon className={cn(open ? "size-[19px]" : "size-3.5")} />
+
+          {/* Open, the state is said outright as well as coloured. Ringed in
+              the card's own background so it reads as a badge on the corner
+              rather than a smudge inside it. */}
+          {open && tone !== "default" && (
+            <span
+              aria-hidden
+              className={cn(
+                "absolute -right-1 -top-1 grid size-[15px] place-items-center rounded-full ring-2 ring-card",
+                tone === "done" ? "bg-ok text-white" : "bg-danger text-white"
+              )}
+            >
+              {tone === "done" ? (
+                <Check className="size-2.5" strokeWidth={3.5} />
+              ) : (
+                <X className="size-2.5" strokeWidth={3.5} />
+              )}
+            </span>
           )}
         </span>
 
