@@ -29,6 +29,7 @@ import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/conte
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { planningSources } from "@/features/workspace/mock-data";
+import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
@@ -262,17 +263,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     event.target.value = "";
   };
 
-  const getBrandDisplayName = (id?: string) => {
-    if (!id) return "Velmora";
-    if (id.startsWith("velmora")) return "Velmora";
-    if (id.startsWith("onkavia")) return "Onkavia";
-    if (id.startsWith("nirvexa")) return "Nirvexa";
-    if (id.startsWith("cardioxa")) return "Cardioxa";
-    if (id.startsWith("pulmovax")) return "PulmoVax";
-    return id.charAt(0).toUpperCase() + id.slice(1);
-  };
-
-  const currentBrandName = getBrandDisplayName(sourcePayload.dossierId);
+  /* From the catalogue, so a brand that only exists in the Product Library
+     still answers to its own name. */
+  const currentBrandName = useBrandName(sourcePayload.dossierId);
 
   /* Which of the four context questions is open, or none. Clicking a tile
      above the prompt opens that one; the modal keeps the other three

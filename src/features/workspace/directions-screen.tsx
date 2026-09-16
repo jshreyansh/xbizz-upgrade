@@ -54,6 +54,7 @@ import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/featu
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
+import { useBrandName } from "@/features/workspace/brand-catalogue";
 import {
   buildIntakeQuestions,
   intakeSteps,
@@ -288,6 +289,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const planPhase = useWorkspaceStore((st) => st.planPhase);
   const setPlanPhase = useWorkspaceStore((st) => st.setPlanPhase);
   const briefAttachments = useWorkspaceStore((st) => st.briefAttachments);
+  /* The brand comes from the catalogue, not from a five-entry map that
+     answered "Velmora" for every brand it had not heard of. Hoisted with the
+     other hooks, above the early return. */
+  const resolvedBrandName = useBrandName(useWorkspaceStore((st) => st.sourcePayload?.dossierId));
   const [intakeIndex, setIntakeIndex] = useState(0);
   const [intakeAnswers, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
   const flowSteps = useVideoSteps({});
@@ -360,15 +365,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleCopilotPanel]);
 
-  const dossierNames: Record<string, string> = {
-    velmora: "Velmora",
-    onkavia: "Onkavia",
-    nirvexa: "Nirvexa",
-    cardioxa: "Cardioxa",
-    pulmovax: "PulmoVax",
-  };
-
-  const brandName = dossierNames[sourcePayload.dossierId || "velmora"] || "Velmora";
+  const brandName = resolvedBrandName;
   const projectName = `${brandName} HCP launch`;
 
   const profile = profiles[assetType];

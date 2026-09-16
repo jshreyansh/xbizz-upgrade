@@ -43,6 +43,7 @@ import {
   type TextStyle,
 } from "@/features/workspace/canvas-text-toolbar";
 import { SwishXMark } from "@/components/ui/swishx-mark";
+import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
@@ -312,7 +313,8 @@ export function InfographicStudioScreen() {
     setVideoSubStage,
   } = useWorkspaceStore();
 
-  const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
+  /* From the catalogue, not from two hard-coded ids and a "Velmora" default. */
+  const brandName = useBrandName(sourcePayload?.dossierId);
 
   /** What the author has asked for and the agent has not done yet. */
   const suggestionQueue = useSuggestionQueue(addChatMessage);

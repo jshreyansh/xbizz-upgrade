@@ -63,3 +63,33 @@ export function filterBrands(brands: BrandItem[], query: string): BrandItem[] {
       b.therapyAreas.some((t) => t.toLowerCase().includes(q))
   );
 }
+
+/**
+ * The brand a dossier id belongs to.
+ *
+ * Four screens each kept their own map of five brand names and defaulted to
+ * "Velmora" for anything else — so picking Affolmy in Start Project produced
+ * a project called "Velmora HCP launch", grounded in "the Velmora dossier",
+ * for a brand nobody had chosen. The catalogue already knows every brand and
+ * which dossiers belong to it; nothing else should be guessing from a string.
+ */
+export function brandNameForDossier(brands: BrandItem[], dossierId?: string): string {
+  const id = (dossierId ?? "").trim();
+  // Therapy-area mode joins several ids with commas — no single brand to name.
+  if (!id || id.includes(",")) return "Velmora";
+  const hit =
+    brands.find((b) => b.id === id) ??
+    brands.find((b) => b.dossierIds?.includes(id)) ??
+    brands.find((b) => id.startsWith(`${b.id}-`));
+  if (hit) return hit.name;
+  // An id from outside the catalogue still names its brand in its first
+  // segment — better than answering with somebody else's product.
+  const head = id.split(/[-_]/)[0];
+  return head.charAt(0).toUpperCase() + head.slice(1);
+}
+
+/** The same lookup, for a component that has a dossier id and wants a name. */
+export function useBrandName(dossierId?: string): string {
+  const brands = useBrandCatalogue();
+  return useMemo(() => brandNameForDossier(brands, dossierId), [brands, dossierId]);
+}

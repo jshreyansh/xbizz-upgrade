@@ -78,6 +78,7 @@ import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/sc
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
+import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
 import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
@@ -105,14 +106,6 @@ const evidenceConfig: Record<EvidenceState, { label: string; className: string }
   supported: { label: "Supported", className: "bg-[#e8eef6] text-[#45617e]" },
   changed: { label: "Changed", className: "bg-warn-bg text-warn" },
   unsupported: { label: "Unsupported", className: "bg-[#danger-soft] text-danger" },
-};
-
-const dossierNames: Record<string, string> = {
-  velmora: "Velmora",
-  onkavia: "Onkavia",
-  nirvexa: "Nirvexa",
-  cardioxa: "Cardioxa",
-  pulmovax: "PulmoVax",
 };
 
 /**
@@ -276,18 +269,6 @@ export function StudioScreen() {
   const studioChatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (chatMessages.length === 0) {
-      const bName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
-      setChatMessages([
-        { role: "user", text: `Create a concise ${bName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.` },
-        { role: "swishx", text: `I've structured a 5-scene video plan grounded in the **${bName}** dossier and approved claims.` },
-        { role: "user", text: "Confirm plan & build script" },
-        { role: "swishx", text: `Script & storyboard scenes generated for **${bName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.` },
-      ]);
-    }
-  }, [chatMessages.length, sourcePayload?.dossierId, setChatMessages]);
-
-  useEffect(() => {
     studioChatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
@@ -337,7 +318,21 @@ export function StudioScreen() {
   );
   const isReview = studioMode === "review";
 
-  const brandName = dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora";
+  /* From the catalogue, not from a five-entry map that answered "Velmora" for
+     every brand it had not heard of. */
+  const brandName = useBrandName(sourcePayload?.dossierId);
+  /* Seeding the transcript needs the brand's name, so it sits below it. */
+  useEffect(() => {
+    if (chatMessages.length === 0) {
+      setChatMessages([
+        { role: "user", text: `Create a concise ${brandName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.` },
+        { role: "swishx", text: `I've structured a 5-scene video plan grounded in the **${brandName}** dossier and approved claims.` },
+        { role: "user", text: "Confirm plan & build script" },
+        { role: "swishx", text: `Script & storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.` },
+      ]);
+    }
+  }, [chatMessages.length, brandName, setChatMessages]);
+
   /* The name the project was given wins over one derived from its brand —
      the Content Library opens published assets under the title they were
      published with, and the start modal lets you type one. */
@@ -1340,7 +1335,7 @@ export function StudioScreen() {
           text: `✓ **Quality Blocker Resolved**: Condensed Scene 3 narration script to 135 wpm speech cadence. Removed redundant descriptors. Audio-visual pacing verified.`,
         });
       } else if (isReview) {
-        addChatMessage({ role: "swishx", text: `I've analyzed your question against the **${dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora"}** FDA prescribing information and PromoMats evidence library. All clinical claims are 100% grounded.` });
+        addChatMessage({ role: "swishx", text: `I've analyzed your question against the **${brandName}** FDA prescribing information and PromoMats evidence library. All clinical claims are 100% grounded.` });
       } else {
         addChatMessage({ role: "swishx", text: `Applied direction across Scene ${selectedScene.number}. All visual boundaries and claim groundings have been refreshed.` });
       }
@@ -1762,7 +1757,7 @@ export function StudioScreen() {
                         <MasterVideoSequenceComposition
                           sceneList={sceneList}
                           activeScene={activeMasterChapter}
-                          brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
+                          brandName={brandName}
                           isPlaying={masterPlaying}
                           sceneTime={Math.max(0, masterCurrentTime - (activeMasterChapter?.start ?? 0))}
                         />
@@ -2385,7 +2380,7 @@ export function StudioScreen() {
                           selectedCanvasElementId === "claim" && "ring-1 ring-ok bg-black/20"
                         )}
                       >
-                        <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}® · HCP Prescribing Brief</span>
+                        <span>{brandName}® · HCP Prescribing Brief</span>
                         <span className="rounded-glyph bg-emerald-950/80 border border-emerald-400/40 text-ok-on-dark px-2 py-0.5 font-bold">
                           {selectedScene.claim}
                         </span>
@@ -2714,7 +2709,7 @@ export function StudioScreen() {
                       <MasterVideoSequenceComposition
                         sceneList={sceneList}
                         activeScene={activeMasterChapter}
-                        brandName={dossierNames[sourcePayload?.dossierId || "velmora"] || "DERMORA"}
+                        brandName={brandName}
                         isPlaying={masterPlaying}
                         /* Scene-relative, so each element's in/out is measured
                            from its own scene rather than the whole video. */
@@ -2728,7 +2723,7 @@ export function StudioScreen() {
                         <span className="rounded-chip bg-ok/20 border border-emerald-400/30 px-2.5 py-0.5 text-ok-on-dark">
                           HD Master Render
                         </span>
-                        <span>{dossierNames[sourcePayload?.dossierId || "velmora"] || "Velmora"} HCP Master Video</span>
+                        <span>{brandName} HCP Master Video</span>
                       </div>
                       <div className="text-white/70 font-semibold">
                         Chapter {activeMasterChapter?.number} of {chapters.length}

@@ -23,6 +23,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
+import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
@@ -161,7 +162,8 @@ export function InfographicDirectionsScreen() {
     setCopilotPanelOpen,
   } = useWorkspaceStore();
 
-  const brandName = sourcePayload?.dossierId === "onkavia" ? "Onkavia" : sourcePayload?.dossierId === "pulmovax" ? "PulmoVax" : "Velmora";
+  /* From the catalogue, not from two hard-coded ids and a "Velmora" default. */
+  const brandName = useBrandName(sourcePayload?.dossierId);
 
   /* In the store, not local: the breadcrumb in the canvas studio needs to be
      able to send you back to this step. */
