@@ -54,6 +54,7 @@ import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/featu
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
+import { FormattedMessageText } from "@/features/workspace/chat-message";
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -191,24 +192,6 @@ const profiles: Record<AssetType, {
     lengthOptions: ["Single composition"],
   },
 };
-
-function FormattedMessageText({ text }: { text: string }) {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
-  return (
-    <p className="whitespace-pre-wrap">
-      {parts.map((part, i) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return (
-            <strong key={i} className="font-bold">
-              {part.slice(2, -2)}
-            </strong>
-          );
-        }
-        return part;
-      })}
-    </p>
-  );
-}
 
 /** The files a plan starts with when its use case does not say otherwise. */
 function defaultUploadedDocs(brand: string) {
