@@ -181,7 +181,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const audienceTitle = AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title ?? "";
   const groundingModes = GROUNDING_BY_AUDIENCE[audience] ?? ["brand"];
-  const canUseTherapyArea = groundingModes.includes("disease");
+  /**
+   * Therapy-area grounding is hidden for now — every audience grounds in a
+   * brand. The toggle, the disease picker and the mode they switch between
+   * are all still here and still work; this one flag is what turns them back
+   * on. Flipping it to groundingModes.includes("disease") restores the
+   * original behaviour for the audiences that allow it.
+   */
+  const canUseTherapyArea = false;
+  void groundingModes;
 
   /** What the project is grounded in, in one phrase, for the name and chips. */
   const groundingLabel = useMemo(() => {
@@ -536,7 +544,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                     <div className="flex justify-end pt-1">
                       <Button size="sm" variant="primary" onClick={() => setStage("grounding")} className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm">
-                        <span>Continue to Grounding</span>
+                        <span>Select Brand</span>
                         <ChevronRight className="size-3.5" />
                       </Button>
                     </div>
@@ -554,7 +562,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   2
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  Clinical Grounding
+                  Select Brand
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -577,7 +585,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     {stage === "details" && groundingLabel ? "✓" : "2"}
                   </div>
                   <span className="text-body-lg font-extrabold text-ink">
-                    Clinical Grounding
+                    Select Brand
                   </span>
                   {stage !== "grounding" && groundingLabel && (
                     <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
@@ -623,11 +631,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               {/* Expanded Body for Step 2 */}
               {stage === "grounding" && (
                 <div className="pt-4 space-y-3 animate-in fade-in duration-150">
-                  {!canUseTherapyArea && (
-                    <p className="text-label text-ink-3">
-                      {audienceTitle} assets are always grounded in a specific product.
-                    </p>
-                  )}
+                  <p className="text-label text-ink-3">
+                    Every asset is grounded in a specific product, so its claims can be traced back
+                    to an approved source.
+                  </p>
 
                   {sourceMode === "brand" ? (
                     <div className="space-y-3">
@@ -817,7 +824,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
                 <Lock className="size-3" />{" "}
-                {stage === "audience" ? "Confirm audience first" : "Select grounding first"}
+                {stage === "audience" ? "Confirm audience first" : "Select a brand first"}
               </span>
             </div>
           ) : (
