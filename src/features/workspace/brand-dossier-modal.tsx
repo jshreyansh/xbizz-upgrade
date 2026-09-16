@@ -932,31 +932,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between border-t border-hair-2 bg-canvas px-7 py-4 shrink-0">
-          {/* Reads in the order the steps now run. */}
-          <div className="flex flex-wrap items-center gap-1.5 text-body text-ink-3">
-            <span className="font-bold text-ink">{audienceTitle}</span>
-            {audience === "HCP" && selectedSpecialities.length > 0 && (
-              <span>({selectedSpecialities.join(", ")})</span>
-            )}
-            <span>·</span>
-            <span className={cn(groundingLabel ? "font-bold text-ink" : "text-ink-4")}>
-              {sourceMode === "brand"
-                ? selectedBrand?.name ?? "No brand selected"
-                : selectedDiseaseIds.length > 0
-                ? selectedDiseaseIds.map((id) => allDiseases.find((d) => d.id === id)?.label).filter(Boolean).join(", ")
-                : "No therapy area selected"}
-            </span>
-            {stage === "details" && (
-              <>
-                <span>·</span>
-                <span>{SHAPE_OPTIONS.find((s) => s.id === selectedShape)?.label}</span>
-                <span>·</span>
-                <span className="font-bold text-brand-deep">{selectedTopics.length} Topics</span>
-              </>
-            )}
-          </div>
-
+        {/* Every step above already states its own answer beside its heading,
+            so a running summary down here repeated all of them a second time. */}
+        <div className="flex items-center justify-end border-t border-hair-2 bg-canvas px-7 py-4 shrink-0">
           <div className="flex items-center gap-3 shrink-0">
             <Button variant="secondary" size="sm" onClick={onClose} className="px-4 cursor-pointer font-bold text-body">
               Cancel

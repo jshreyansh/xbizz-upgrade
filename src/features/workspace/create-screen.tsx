@@ -30,7 +30,6 @@ import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/featu
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -157,7 +156,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   const [sourceLibraryOpen, setSourceLibraryOpen] = useState(false);
   const [scenarioLibraryOpen, setScenarioLibraryOpen] = useState(false);
-  const [dossierModalOpen, setDossierModalOpen] = useState(false);
   const [activePopover, setActivePopover] = useState<"engine" | "aspect" | "pageshape" | "audience" | "topics" | "character" | "pages" | "template" | null>(null);
   const [selectedPresenterId, setSelectedPresenterId] = useState<string>("maya");
   const selectedPresenter = PRESENTERS.find((p) => p.id === selectedPresenterId) || PRESENTERS[0];
@@ -391,18 +389,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
         <FlowBreadcrumb steps={flowSteps} currentId="brief" />
 
-        {/* Brand Switcher Action in Header */}
-        <div className="ml-4 hidden items-center gap-1 sm:flex">
-          <button
-            type="button"
-            onClick={() => setDossierModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-chip bg-tint px-2.5 py-0.5 text-caption font-extrabold tracking-wide text-brand-deep border border-tint-line hover:bg-tint/80 transition-colors cursor-pointer"
-          >
-            <ShieldCheck className="size-3 text-brand" />
-            <span>{currentBrandName}</span>
-            <ChevronDown className="size-2.5" />
-          </button>
-        </div>
+        {/* The brand lives in the context tiles above the input, alongside the
+            audience, focus and frame it was chosen with — and clicking one
+            opens the same dialog this did. A second entry point in the header
+            reopened the whole start modal to change one of four answers that
+            are already on screen. */}
 
         <div className="ml-auto flex items-center gap-2">
           {/* Sample Briefs Button moved to Top Header */}
@@ -666,12 +657,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
 
       {previewFile && <AttachmentPreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />}
-
-      {/* Brand & Dossier Selection Pop-up Modal */}
-      <BrandDossierModal
-        open={dossierModalOpen}
-        onClose={() => setDossierModalOpen(false)}
-      />
 
       {/* The start modal's four questions, asked again from here. Update
           rather than Start Project, because this amends a project that
