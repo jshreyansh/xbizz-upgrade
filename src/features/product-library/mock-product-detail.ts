@@ -9,7 +9,69 @@ import type {
   ProductDocument,
   DocumentFileType,
   DossierEntryStatus,
+  DossierSection,
+  DossierTypeName,
 } from "@/features/product-library/product-library-types";
+
+/** Named sections per dossier type — seven each so every type's fixed
+ *  section count (3 to 7, see the `sections` formula below) can slice off
+ *  its own front slice and still read as a deliberate, ordered checklist
+ *  rather than "Section 1, Section 2, …". */
+const SECTION_TEMPLATES: Record<DossierTypeName, string[]> = {
+  Regulatory: [
+    "Indication & Approved Use",
+    "Dosing & Administration",
+    "Contraindications & Warnings",
+    "Labeling Compliance",
+    "Regulatory Approvals by Market",
+    "Post-Marketing Commitments",
+    "Variation & Renewal Filings",
+  ],
+  Clinical: [
+    "Pivotal Trial Design",
+    "Primary Endpoint Results",
+    "Secondary Endpoint Results",
+    "Subgroup Analyses",
+    "Long-Term Follow-Up Data",
+    "Comparator Studies",
+    "Real-World Evidence",
+  ],
+  Safety: [
+    "Adverse Event Profile",
+    "Serious Adverse Events",
+    "Drug Interactions",
+    "Special Population Warnings",
+    "Post-Marketing Surveillance",
+    "Risk Mitigation Measures",
+    "Signal Detection Log",
+  ],
+  Commercial: [
+    "Value Proposition",
+    "Payer & Formulary Positioning",
+    "Competitive Landscape",
+    "Pricing & Access Strategy",
+    "Field Performance Data",
+    "Market Share Trends",
+    "Launch Readiness",
+  ],
+  Patient: [
+    "Quality-of-Life Outcomes",
+    "Adherence & Persistence Data",
+    "Patient Support Program",
+    "Patient-Reported Experience",
+    "Caregiver Materials",
+    "Access & Affordability Support",
+    "Patient Education Assets",
+  ],
+  HCP: [
+    "Mechanism of Action",
+    "Prescribing Rationale",
+    "Dosing Convenience",
+    "Counseling Guidance",
+    "Peer-to-Peer Insights",
+    "Formulary & Access Notes",
+  ],
+};
 
 const CLAIM_TEMPLATES: Record<string, ((name: string, generic: string) => string)[]> = {
   Regulatory: [
@@ -66,6 +128,31 @@ function statusFor(index: number, verified: number, total: number): DossierEntry
   if (index < verified) return "verified";
   if (index < total) return "in review";
   return "not started";
+}
+
+/** Expands one dossier's summary (a status and a section count) into the
+ *  named sections the Dossier detail page lists — deterministic per
+ *  product, so reloading shows the same checklist rather than a fresh
+ *  random split each time. */
+export function buildDossierSections(entry: ProductDossierEntry): DossierSection[] {
+  if (entry.sections === 0) return [];
+
+  const titles = SECTION_TEMPLATES[entry.type].slice(0, entry.sections);
+  // A dossier "in review" reads as partway there: its first half already
+  // verified, the rest still in review — rather than every section sharing
+  // one status, which would make the sections list redundant with the
+  // dossier-level chip above it.
+  const verifiedThrough = entry.status === "verified" ? entry.sections : entry.status === "in review" ? Math.ceil(entry.sections / 2) : 0;
+
+  const base = Math.floor(entry.claimsCited / entry.sections);
+  const remainder = entry.claimsCited % entry.sections;
+
+  return titles.map((title, i) => ({
+    id: `${entry.type}-section-${i}`,
+    title,
+    status: i < verifiedThrough ? "verified" : entry.status === "not started" ? "not started" : "in review",
+    claimsCited: base + (i < remainder ? 1 : 0),
+  }));
 }
 
 function buildImages(productId: string, variationId: string, gradient: string, heroImageUrl?: string): ProductImage[] {

@@ -8,9 +8,6 @@ import {
   FileText,
   ListChecks,
   Paperclip,
-  CheckCircle2,
-  Clock,
-  Circle,
   Plus,
   Upload,
   Trash2,
@@ -28,11 +25,11 @@ import type {
   ProductImageAngle,
   ProductDocument,
   DocumentFileType,
-  DossierEntryStatus,
 } from "@/features/product-library/product-library-types";
 import { IMAGE_ANGLES } from "@/features/product-library/product-library-types";
 import { ProductArtwork, type ArtworkKind } from "@/features/product-library/product-artwork";
 import { ClaimCard } from "@/features/product-library/claim-card";
+import { DOSSIER_STATUS_STYLE as STATUS_STYLE } from "@/features/product-library/dossier-status";
 
 /** Only the lifestyle angle borrows the generic wellness scene — every other
  *  angle is a shot of the product's own type, distinguished by orientation. */
@@ -53,12 +50,6 @@ const ANGLE_TRANSFORM: Record<ProductImageAngle, string> = {
 
 export type Tab = "dossier" | "claims" | "documents" | "images";
 export const TAB_IDS: Tab[] = ["dossier", "claims", "documents", "images"];
-
-const STATUS_STYLE: Record<DossierEntryStatus, { icon: typeof CheckCircle2; tone: string; bg: string; label: string }> = {
-  verified: { icon: CheckCircle2, tone: "text-ok", bg: "bg-ok-bg", label: "Verified" },
-  "in review": { icon: Clock, tone: "text-warn", bg: "bg-warn-bg", label: "In review" },
-  "not started": { icon: Circle, tone: "text-ink-4", bg: "bg-subtle", label: "Not started" },
-};
 
 const FILE_TONE: Record<string, string> = {
   PDF: "bg-danger-bg text-danger",
@@ -402,7 +393,16 @@ export function ProductDetailScreen({
           {detail.dossiers.map((d) => {
             const s = STATUS_STYLE[d.status];
             return (
-              <div key={d.type} className="flex items-center gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair">
+              <div
+                key={d.type}
+                onClick={() => router.push(`/product-library/${product.id}/dossier/${d.type}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") router.push(`/product-library/${product.id}/dossier/${d.type}`);
+                }}
+                className="group flex cursor-pointer items-center gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair transition-all duration-200 hover:-translate-y-0.5 hover:shadow-soft"
+              >
                 <span className={`grid size-9 shrink-0 place-items-center rounded-control ${s.bg} ${s.tone}`}>
                   <s.icon size={16} />
                 </span>
@@ -413,9 +413,9 @@ export function ProductDetailScreen({
                   </span>
                 </div>
                 <span className={`rounded-chip px-2.5 py-1 text-caption font-extrabold ${s.bg} ${s.tone}`}>{s.label}</span>
-                <button className="text-body-lg font-bold text-brand hover:text-brand-deep transition-colors">
-                  {d.status === "not started" ? "Start →" : "View →"}
-                </button>
+                <span className="inline-flex items-center gap-1 text-body-lg font-bold text-brand transition-all group-hover:gap-1.5 group-hover:text-brand-deep">
+                  {d.status === "not started" ? "Start" : "View"} →
+                </span>
               </div>
             );
           })}

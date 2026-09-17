@@ -36,6 +36,16 @@ export interface ProductDossierEntry {
   updated: string;
 }
 
+/** One section within a dossier — what the Dossier detail page lists under
+ *  a dossier type. A dossier's `sections` count on ProductDossierEntry is
+ *  just that; these are the named rows that add up to it. */
+export interface DossierSection {
+  id: string;
+  title: string;
+  status: DossierEntryStatus;
+  claimsCited: number;
+}
+
 export type ClaimStatus = "approved" | "pending" | "held out";
 
 export interface ProductClaim {
