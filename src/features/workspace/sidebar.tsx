@@ -76,7 +76,7 @@ const ASSET_GROUPS: NavGroup[] = [
     items: [
       { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library" },
       { label: "Content Library", shortLabel: "Contents", icon: "library", href: "/content-library" },
-      { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "#" },
+      { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "/claims-library" },
     ],
   },
   {

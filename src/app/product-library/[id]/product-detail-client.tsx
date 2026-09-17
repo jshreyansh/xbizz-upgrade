@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useMemo } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
-import { ProductDetailScreen } from "@/features/product-library/product-detail-screen";
+import { ProductDetailScreen, TAB_IDS, type Tab } from "@/features/product-library/product-detail-screen";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
 
@@ -12,11 +12,18 @@ import { buildProductDetail } from "@/features/product-library/mock-product-deta
 // because products created via "Create brand" only exist in the zustand
 // store — a server component reading the static PRODUCTS array would 404 on
 // every brand created this session.
-export default function ProductDetailClient() {
+function ProductDetailInner() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const product = useProductLibraryStore((s) => s.products.find((p) => p.id === id));
   const detail = useMemo(() => (product ? buildProductDetail(product) : null), [product]);
+
+  // Lets the Claims Library (and anywhere else) deep-link straight into a
+  // tab — e.g. /product-library/velmora?tab=claims — instead of always
+  // landing on Dossier and asking the reader to find their own way.
+  const requestedTab = searchParams.get("tab");
+  const initialTab: Tab = (TAB_IDS as string[]).includes(requestedTab ?? "") ? (requestedTab as Tab) : "dossier";
 
   if (!product || !detail) {
     return (
@@ -37,7 +44,15 @@ export default function ProductDetailClient() {
 
   return (
     <AppShell pageTitle={product.name}>
-      <ProductDetailScreen product={product} detail={detail} />
+      <ProductDetailScreen product={product} detail={detail} initialTab={initialTab} />
     </AppShell>
+  );
+}
+
+export default function ProductDetailClient() {
+  return (
+    <Suspense fallback={null}>
+      <ProductDetailInner />
+    </Suspense>
   );
 }

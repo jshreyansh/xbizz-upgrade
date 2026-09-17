@@ -29,10 +29,10 @@ import type {
   ProductDocument,
   DocumentFileType,
   DossierEntryStatus,
-  ClaimStatus,
 } from "@/features/product-library/product-library-types";
 import { IMAGE_ANGLES } from "@/features/product-library/product-library-types";
 import { ProductArtwork, type ArtworkKind } from "@/features/product-library/product-artwork";
+import { ClaimCard } from "@/features/product-library/claim-card";
 
 /** Only the lifestyle angle borrows the generic wellness scene — every other
  *  angle is a shot of the product's own type, distinguished by orientation. */
@@ -51,18 +51,13 @@ const ANGLE_TRANSFORM: Record<ProductImageAngle, string> = {
   Lifestyle: "none",
 };
 
-type Tab = "dossier" | "claims" | "documents" | "images";
+export type Tab = "dossier" | "claims" | "documents" | "images";
+export const TAB_IDS: Tab[] = ["dossier", "claims", "documents", "images"];
 
 const STATUS_STYLE: Record<DossierEntryStatus, { icon: typeof CheckCircle2; tone: string; bg: string; label: string }> = {
   verified: { icon: CheckCircle2, tone: "text-ok", bg: "bg-ok-bg", label: "Verified" },
   "in review": { icon: Clock, tone: "text-warn", bg: "bg-warn-bg", label: "In review" },
   "not started": { icon: Circle, tone: "text-ink-4", bg: "bg-subtle", label: "Not started" },
-};
-
-const CLAIM_STYLE: Record<ClaimStatus, { tone: string; bg: string; line: string }> = {
-  approved: { tone: "text-ok", bg: "bg-ok-bg", line: "border-ok-line" },
-  pending: { tone: "text-warn", bg: "bg-warn-bg", line: "border-warn-line" },
-  "held out": { tone: "text-danger", bg: "bg-danger-bg", line: "border-danger" },
 };
 
 const FILE_TONE: Record<string, string> = {
@@ -83,9 +78,19 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function ProductDetailScreen({ product, detail }: { product: LibraryProduct; detail: ProductDetail }) {
+export function ProductDetailScreen({
+  product,
+  detail,
+  initialTab = "dossier",
+}: {
+  product: LibraryProduct;
+  detail: ProductDetail;
+  /** Lets another screen (the Claims Library) link straight into a tab
+   *  instead of always landing on Dossier. */
+  initialTab?: Tab;
+}) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("dossier");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [variations, setVariations] = useState<ProductVariation[]>(detail.variations);
   const [activeVariationId, setActiveVariationId] = useState(detail.variations[0]?.id ?? "");
   const [angleFilter, setAngleFilter] = useState<ProductImageAngle | "All">("All");
@@ -424,25 +429,22 @@ export function ProductDetailScreen({ product, detail }: { product: LibraryProdu
             <h2 className="text-title font-extrabold tracking-tight text-ink">Claims</h2>
             <p className="text-body text-ink-3">Every statement approved for use, cited back to its dossier section</p>
           </div>
-          <div className="flex flex-col gap-2">
-          {detail.claims.length === 0 && (
-            <p className="py-10 text-center text-body-lg text-ink-4">No claims cited yet — dossiers for this product haven&rsquo;t started.</p>
+
+          {detail.claims.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-panel border border-dashed border-hair-2 py-14 text-center">
+              <span className="grid size-11 place-items-center rounded-full bg-subtle text-ink-4">
+                <ListChecks size={20} />
+              </span>
+              <p className="text-body-lg font-bold text-ink-2">No claims cited yet</p>
+              <p className="max-w-[36ch] text-body text-ink-4">Dossiers for this product haven&rsquo;t started — claims appear here once a dossier cites them.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3.5">
+              {detail.claims.map((c) => (
+                <ClaimCard key={c.id} claim={c} />
+              ))}
+            </div>
           )}
-          {detail.claims.map((c) => {
-            const s = CLAIM_STYLE[c.status];
-            return (
-              <div key={c.id} className={`flex items-start gap-3 rounded-control border ${s.line} bg-card p-3.5`}>
-                <span className={`mt-0.5 shrink-0 rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] ${s.bg} ${s.tone}`}>
-                  {c.status}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-body-lg leading-relaxed text-ink-2">{c.text}</p>
-                  <span className="text-caption text-ink-4">{c.source}</span>
-                </div>
-              </div>
-            );
-          })}
-          </div>
         </div>
       )}
 
