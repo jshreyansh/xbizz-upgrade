@@ -545,7 +545,9 @@ export function StudioScreen() {
    * on top. Three different numbers were being shown as one, so the only
    * figure a user could act on — how much more this will cost — was missing.
    */
-  const [creditsUsed, setCreditsUsed] = useState(0);
+  /* Still accumulated — the toasts quote what each render spends — but no
+     longer read back: the dialog shows the budget, not a running total. */
+  const [, setCreditsUsed] = useState(0);
   const creditBudget = selectedQuality === "cinematic" ? 7500 : 2500;
   /** What the final render costs on top of what has already been spent. */
   const finalRenderCost = selectedQuality === "cinematic" ? 3000 : 1000;
@@ -1025,55 +1027,19 @@ export function StudioScreen() {
   const hasBlockers = !mlrCheckResolved || !qaCheckResolved;
   const blockerCount = (!mlrCheckResolved ? 1 : 0) + (!qaCheckResolved ? 1 : 0);
 
-  const handleFixMlrBlocker = () => {
-    setGenerateVideoModalOpen(false);
-    setCopilotPanelOpen(true);
-    setActiveTab("assistant");
-    const prompt = "@MLR Check: Please revise comparative wording in Scene 3 to strictly cite EMBRACE-3 PASI 90 rate (p < 0.001) without unverified superiority claims.";
-    setDirectorInput(prompt);
-    setAttachedContexts([{ id: "mlr-fix", type: "scene", label: "MLR Blocker", detail: "Comparative claim in Scene 3" }]);
-    setToMessage("Tagged MLR issue in SwishX Chat");
-    setTimeout(() => setToMessage(null), 2500);
-  };
-
-  const handleFixQaBlocker = () => {
-    setGenerateVideoModalOpen(false);
-    setCopilotPanelOpen(true);
-    setActiveTab("assistant");
-    const prompt = "@Quality Check: Tighten Scene 3 voiceover narration to 135 wpm speech cadence and remove redundant cellular descriptors.";
-    setDirectorInput(prompt);
-    setAttachedContexts([{ id: "qa-fix", type: "scene", label: "Quality Blocker", detail: "Voiceover density >150 wpm" }]);
-    setToMessage("Tagged Quality issue in SwishX Chat");
-    setTimeout(() => setToMessage(null), 2500);
-  };
-
-  const handleAutoFixBoth = () => {
-    setMlrCheckResolved(true);
-    setQaCheckResolved(true);
-    setSceneList((prev) =>
-      prev.map((s, idx) =>
-        idx === 2
-          ? {
-              ...s,
-              title: "Pivotal EMBRACE-3 PASI 90 Response",
-              headline: "Pivotal EMBRACE-3 PASI 90 Response",
-              narration: "In the EMBRACE-3 trial, 52% of patients achieved PASI 90 at Week 16 versus 18% with placebo (p < 0.001).",
-            }
-          : s
-      )
-    );
-    addChatMessage({
-      role: "swishx",
-      text: "✓ **Quality & MLR Pre-Flight Passed**: Auto-resolved both blockers. Rephrased Scene 3 to cite EMBRACE-3 Table 2.4 and adjusted narration to 135 wpm speech cadence. Ready to Generate and Publish.",
-    });
-    setToMessage("Resolved 2 pre-flight blockers with AI");
-    setTimeout(() => setToMessage(null), 2500);
-  };
-
   const handleOpenGenerateVideoModal = () => setGenerateVideoModalOpen(true);
 
+  /**
+   * Hand the asset to the people who do this for a living. Nothing is sent
+   * anywhere in this build; the toast is the same one every other hand-off on
+   * this screen uses.
+   */
+  const handleSendToSwishXTeam = () => {
+    setGenerateVideoModalOpen(false);
+    showToast("Sent to the SwishX team — they will reach out to you");
+  };
+
   const handleConfirmVideoGeneration = () => {
-    if (hasBlockers) return;
     setGenerateVideoModalOpen(false);
     /* Any scene still on its keyframes is rendered as part of the final
        render. Keyframes are a half-made preview, not an incomplete asset —
@@ -1542,7 +1508,7 @@ export function StudioScreen() {
 
             {isEditor && (
               <>
-                <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><LogoMark size={14} /> <span>Generate and Publish</span></Button>
+                <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><LogoMark size={14} /> <span>Publish</span></Button>
               </>
             )}
             {isReview && (
@@ -3612,9 +3578,7 @@ export function StudioScreen() {
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
                 {/* Cost & Spec Card */}
                 <GenerationCostCard
-                  used={creditsUsed}
-                  usedLabel="Partial generation and edits"
-                  renderCost={finalRenderCost}
+                  budget={creditBudget}
                   qualityLabel={selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}
                   facts={[
                     { label: "Length", value: `${totalDurationSeconds}s · ${sceneList.length} scenes` },
@@ -3623,8 +3587,11 @@ export function StudioScreen() {
                 />
 
                 {/* Automated Quality & MLR Pre-Flight Verification */}
+                {/* Flags, not gates. The checks say what a reviewer will
+                    query; whether that is worth stopping for is the author's
+                    call, and a dialog that refuses to publish until an agent
+                    has rewritten the line makes it the agent's. */}
                 <PreflightPanel
-                  onFixAll={handleAutoFixBoth}
                   checks={[
                     mlrCheckResolved
                       ? {
@@ -3639,7 +3606,6 @@ export function StudioScreen() {
                           severity: "blocker" as const,
                           title: "Unverified comparative claim",
                           detail: "Scene 3 claims superiority without citing a head-to-head trial comparator.",
-                          onFix: handleFixMlrBlocker,
                         },
                     qaCheckResolved
                       ? {
@@ -3654,7 +3620,6 @@ export function StudioScreen() {
                           severity: "warning" as const,
                           title: "Narration density over 150 wpm",
                           detail: "Scene 3 voiceover exceeds speech pacing limits with redundant words.",
-                          onFix: handleFixQaBlocker,
                         },
                     { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "Contraindication footnotes verified" },
                     { id: "terms", source: "Quality", title: "Medical terminology clear", detail: "Generic name and dosing accurate" },
@@ -3668,11 +3633,11 @@ export function StudioScreen() {
                   Generation renders in the background using neural motion models. You will receive an email notification when processing completes, and can continue working in SwishX.
                 </p>
 
-                <div className="flex items-center justify-between pt-2 border-t border-hair">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-hair">
                   {hasBlockers ? (
-                    <span className="text-label text-danger font-semibold flex items-center gap-1">
+                    <span className="text-label text-warn font-semibold flex items-center gap-1">
                       <AlertTriangle className="size-3 shrink-0" />
-                      Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
+                      {blockerCount} {blockerCount === 1 ? "item" : "items"} flagged for review
                     </span>
                   ) : (
                     <span className="text-label text-ok font-bold flex items-center gap-1">
@@ -3681,7 +3646,18 @@ export function StudioScreen() {
                     </span>
                   )}
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* The other way out of a flag: hand the whole thing to
+                        the people who do this for a living, rather than fix
+                        it here or publish past it. */}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleSendToSwishXTeam}
+                      className="font-bold cursor-pointer"
+                    >
+                      Send to SwishX Team for Edits
+                    </Button>
                     <Button
                       type="button"
                       variant="secondary"
@@ -3692,22 +3668,11 @@ export function StudioScreen() {
                     </Button>
                     <Button
                       type="button"
-                      disabled={hasBlockers}
                       onClick={handleConfirmVideoGeneration}
-                      className={cn(
-                        "font-bold px-5 gap-1.5 transition-all",
-                        hasBlockers
-                          ? "bg-black/10 text-black/35 cursor-not-allowed border-none shadow-none"
-                          : "bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
-                      )}
+                      className="font-bold px-5 gap-1.5 bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
                     >
                       <LogoMark size={14} />
-                      <span className="flex flex-col items-start leading-tight">
-                        <span>Confirm &amp; Generate Video</span>
-                        <span className="text-caption font-bold text-white/80 tabular-nums">
-                          {finalRenderCost.toLocaleString()} Credits
-                        </span>
-                      </span>
+                      <span>Publish</span>
                     </Button>
                   </div>
                 </div>

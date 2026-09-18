@@ -89,8 +89,8 @@ export function PreflightPanel({ checks, onFixAll, className }: PreflightPanelPr
               />
             ))}
           </div>
-          <span className={cn("text-label font-bold tabular-nums", allClear ? "text-ok" : "text-danger")}>
-            {allClear ? "All clear" : `${failing.length} to fix`}
+          <span className={cn("text-label font-bold tabular-nums", allClear ? "text-ok" : "text-warn")}>
+            {allClear ? "All clear" : `${failing.length} flagged`}
           </span>
         </div>
       </div>

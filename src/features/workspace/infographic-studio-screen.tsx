@@ -450,9 +450,11 @@ export function InfographicStudioScreen() {
    * generating pages and re-running layers, and the final render costs more on
    * top — so the only figure a user can act on was the one missing.
    */
-  const [creditsUsed, setCreditsUsed] = useState(() => pagesListInitialCost);
-  /** What rendering the final artwork costs on top of what is already spent. */
-  const finalRenderCost = pagesList.length * 120;
+  /* Still accumulated — the toasts quote what each render spends — but no
+     longer read back: the dialog shows the budget, not a running total. */
+  const [, setCreditsUsed] = useState(() => pagesListInitialCost);
+  /** The budget agreed on the plan screen: 300 credits a page. */
+  const creditBudget = pagesList.length * 300;
   const activePageId = infographicActivePage || 1;
 
   // Sync with store pages
@@ -731,43 +733,14 @@ export function InfographicStudioScreen() {
   const hasBlockers = !mlrCheckResolved || !qaCheckResolved;
   const blockerCount = (!mlrCheckResolved ? 1 : 0) + (!qaCheckResolved ? 1 : 0);
 
-  const handleFixMlrBlocker = () => {
+  /**
+   * Hand the asset to the people who do this for a living. Nothing is sent
+   * anywhere in this build; the toast is the same one every other hand-off on
+   * this screen uses.
+   */
+  const handleSendToSwishXTeam = () => {
     setConfirmGenerateModalOpen(false);
-    if (!copilotPanelOpen) toggleCopilotPanel();
-    setActiveTab("assistant");
-    setChatInput("@MLR Check: Please revise the primary efficacy comparison to cite verified EMBRACE-3 PASI 90 placebo rates (p < 0.001) without unverified superiority claims.");
-    showToast("Tagged MLR issue in SwishX Chat");
-  };
-
-  const handleFixQaBlocker = () => {
-    setConfirmGenerateModalOpen(false);
-    if (!copilotPanelOpen) toggleCopilotPanel();
-    setActiveTab("assistant");
-    setChatInput("@Quality Check: Remove redundant subtitle phrasing and standardize chemical nomenclature formatting.");
-    showToast("Tagged Quality issue in SwishX Chat");
-  };
-
-  const handleAutoFixBoth = () => {
-    setMlrCheckResolved(true);
-    setQaCheckResolved(true);
-    updateCurrentPage((prev) => ({
-      ...prev,
-      header: {
-        ...prev.header,
-        subtitle: "First-in-Class Dual Mechanism Kinase Inhibitor · Once-Daily 200mg Oral Formulation",
-      },
-      heroStat: {
-        ...prev.heroStat,
-        metric: "52% PASI 90",
-        comparison: "vs 18% Placebo (p < 0.001)",
-        detail: "52% of patients achieved PASI 90 at Week 16 vs 18% in placebo cohort (p < 0.001), sustained through Week 52.",
-      },
-    }));
-    addChatMessage({
-      role: "swishx",
-      text: "✓ **Quality & MLR Pre-Flight Passed**: Auto-resolved both blockers. Grounded hero efficacy in EMBRACE-3 Table 2.4 and polished headline phrasing. Ready to Generate and Publish.",
-    });
-    showToast("Resolved 2 pre-flight blockers with AI");
+    showToast("Sent to the SwishX team — they will reach out to you");
   };
 
   const handleSendMessage = (directText?: string) => {
@@ -1137,7 +1110,7 @@ export function InfographicStudioScreen() {
                 className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4.5 hover:scale-[1.02] transition-transform"
               >
                 <LogoMark size={14} />
-                <span>Generate and Publish</span>
+                <span>Publish</span>
               </Button>
             )}
 
@@ -2100,9 +2073,7 @@ export function InfographicStudioScreen() {
               <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
                 {/* Cost & Spec Card */}
                 <GenerationCostCard
-                  used={creditsUsed}
-                  usedLabel="Page generation and edits"
-                  renderCost={finalRenderCost}
+                  budget={creditBudget}
                   qualityLabel={"Vector 300 DPI"}
                   facts={[
                     { label: "Format", value: `${pagesList.length} ${pagesList.length === 1 ? "Page" : "Pages"} · ${pageGeometry.label}` },
@@ -2111,8 +2082,11 @@ export function InfographicStudioScreen() {
                 />
 
                 {/* Automated Quality & MLR Pre-Flight Verification */}
+                {/* Flags, not gates. The checks say what a reviewer will
+                    query; whether that is worth stopping for is the author's
+                    call, and a dialog that refuses to publish until an agent
+                    has rewritten the line makes it the agent's. */}
                 <PreflightPanel
-                  onFixAll={handleAutoFixBoth}
                   checks={[
                     mlrCheckResolved
                       ? {
@@ -2127,7 +2101,6 @@ export function InfographicStudioScreen() {
                           severity: "blocker" as const,
                           title: "Unverified comparative claim",
                           detail: "Hero card compares efficacy without citing the comparator placebo cohort.",
-                          onFix: handleFixMlrBlocker,
                         },
                     qaCheckResolved
                       ? {
@@ -2142,7 +2115,6 @@ export function InfographicStudioScreen() {
                           severity: "warning" as const,
                           title: "Subtitle phrasing redundancy",
                           detail: "Tagline contains redundant descriptors and unstandardised dosing syntax.",
-                          onFix: handleFixQaBlocker,
                         },
                     { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "eGFR ≥25 and box warnings verified" },
                     { id: "vector", source: "Quality", title: "Vector layout and contrast", detail: "300 DPI CMYK ready hierarchy" },
@@ -2156,11 +2128,11 @@ export function InfographicStudioScreen() {
                   Generation renders in the background using publication vector models. You will receive an email notification when processing completes, and can continue working in SwishX.
                 </p>
 
-                <div className="flex items-center justify-between pt-2 border-t border-hair">
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-hair">
                   {hasBlockers ? (
-                    <span className="text-label text-danger font-semibold flex items-center gap-1">
+                    <span className="text-label text-warn font-semibold flex items-center gap-1">
                       <AlertTriangle className="size-3 shrink-0" />
-                      Fix {blockerCount} {blockerCount === 1 ? "blocker" : "blockers"} to enable generation
+                      {blockerCount} {blockerCount === 1 ? "item" : "items"} flagged for review
                     </span>
                   ) : (
                     <span className="text-label text-ok font-bold flex items-center gap-1">
@@ -2169,7 +2141,18 @@ export function InfographicStudioScreen() {
                     </span>
                   )}
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* The other way out of a flag: hand the whole thing to
+                        the people who do this for a living, rather than fix
+                        it here or publish past it. */}
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleSendToSwishXTeam}
+                      className="font-bold cursor-pointer"
+                    >
+                      Send to SwishX Team for Edits
+                    </Button>
                     <Button
                       type="button"
                       variant="secondary"
@@ -2180,21 +2163,14 @@ export function InfographicStudioScreen() {
                     </Button>
                     <Button
                       type="button"
-                      disabled={hasBlockers}
                       onClick={() => {
-                        if (hasBlockers) return;
                         setConfirmGenerateModalOpen(false);
                         handlePublishCreative();
                       }}
-                      className={cn(
-                        "font-bold px-5 gap-1.5 transition-all",
-                        hasBlockers
-                          ? "bg-black/10 text-black/35 cursor-not-allowed border-none shadow-none"
-                          : "bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
-                      )}
+                      className="font-bold px-5 gap-1.5 bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
                     >
                       <LogoMark size={14} />
-                      <span>Confirm &amp; Generate Creative</span>
+                      <span>Publish</span>
                     </Button>
                   </div>
                 </div>
