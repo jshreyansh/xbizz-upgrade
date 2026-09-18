@@ -1,11 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Eye, Play } from "lucide-react";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
-import { demoScenarios } from "@/features/workspace/demo-scenarios";
-import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
 
 /**
@@ -30,22 +28,11 @@ const STATUS_STYLE: Record<LibraryAsset["status"], { bg: string; fg: string; lin
 type KindFilter = "all" | "video" | "infographic";
 
 export function ContentLibraryScreen() {
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [kind, setKind] = useState<KindFilter>("all");
 
-  const setAssetType = useWorkspaceStore((s) => s.setAssetType);
-  const setDemoScenarioId = useWorkspaceStore((s) => s.setDemoScenarioId);
-  const setStudioEntry = useWorkspaceStore((s) => s.setStudioEntry);
-  const setView_ = useWorkspaceStore((s) => s.setView);
-  const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
-  const setBrief = useWorkspaceStore((s) => s.setBrief);
-  const setAudience = useWorkspaceStore((s) => s.setAudience);
-  const setMarket = useWorkspaceStore((s) => s.setMarket);
-  const setIntendedUse = useWorkspaceStore((s) => s.setIntendedUse);
-  const setSelectedSourceIds = useWorkspaceStore((s) => s.setSelectedSourceIds);
-  const setProjectName = useWorkspaceStore((s) => s.setProjectName);
+  const openReview = useOpenPublishedAsset();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -59,25 +46,6 @@ export function ContentLibraryScreen() {
       );
     });
   }, [query, kind]);
-
-  /* Rebuild the project this asset was made from, then open its review. */
-  const openReview = (asset: LibraryAsset) => {
-    const scenario = demoScenarios.find((s) => s.id === asset.scenarioId);
-    if (scenario) {
-      setBrief(scenario.inputs.brief);
-      setAudience(scenario.inputs.audience);
-      setMarket(scenario.inputs.market);
-      setIntendedUse(scenario.inputs.intendedUse);
-      setSelectedSourceIds(scenario.inputs.selectedSourceIds);
-      setDemoScenarioId(scenario.id);
-    }
-    setProjectName(asset.title);
-    setAssetType(asset.kind);
-    setStudioEntry("review");
-    setVideoSubStage("studio");
-    setView_("studio");
-    router.push("/create");
-  };
 
   return (
     <div className="page-enter space-y-6">

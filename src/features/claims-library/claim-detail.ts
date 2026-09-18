@@ -1,0 +1,109 @@
+import type { LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
+import { buildProductDetail, variationLabelsFor } from "@/features/product-library/mock-product-detail";
+import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
+
+/**
+ * Who put this claim in the library, and who stood behind it.
+ *
+ * The two are different promises. A claim somebody typed and SwishX then
+ * checked against the label carries the author's name; a claim SwishX pulled
+ * out of the approved source itself never had an author to name. Collapsing
+ * them into one "verified" badge would hide the only part a reviewer asks
+ * about.
+ */
+export type ClaimOrigin = "authored" | "sourced";
+
+export interface ClaimReference {
+  label: string;
+  /** Either a link out, or a file in the brand's attachments. */
+  kind: "link" | "attachment";
+  detail: string;
+}
+
+export interface ClaimDetail {
+  claim: ProductClaim;
+  product: LibraryProduct;
+  origin: ClaimOrigin;
+  /** Who typed it, when the claim was authored rather than sourced. */
+  author?: string;
+  addedOn: string;
+  updatedOn: string;
+  /** Which presentations of the product this claim holds for. */
+  variations: string[];
+  references: ClaimReference[];
+  /** Published work that cites this claim. */
+  usedIn: LibraryAsset[];
+}
+
+/** Every claim in the catalogue, with the brand it belongs to. */
+export function allClaims(products: LibraryProduct[]): Array<{ claim: ProductClaim; product: LibraryProduct }> {
+  return products.flatMap((product) =>
+    buildProductDetail(product).claims.map((claim) => ({ claim, product }))
+  );
+}
+
+/** A stable number from a claim id, so nothing here reshuffles on a reload. */
+function seed(id: string): number {
+  let total = 0;
+  for (let i = 0; i < id.length; i += 1) total += id.charCodeAt(i) * (i + 1);
+  return total;
+}
+
+const AUTHORS = ["Maya Kapoor", "Dr. Anita Rao", "Sanjay Kulkarni", "Priya Menon"];
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"];
+
+function dateFrom(n: number): string {
+  return `${MONTHS[n % MONTHS.length]} ${(n % 27) + 1}, 2026`;
+}
+
+/**
+ * Everything the detail page shows about one claim, derived from its id so the
+ * same claim always reads the same way. Mock, in the way the rest of the
+ * catalogue is mock: a plausible record rather than a real audit trail.
+ */
+export function buildClaimDetail(claim: ProductClaim, product: LibraryProduct): ClaimDetail {
+  const n = seed(claim.id);
+  const origin: ClaimOrigin = n % 3 === 0 ? "authored" : "sourced";
+
+  const presentations = variationLabelsFor(product.type);
+  /* A claim about dosing holds for one presentation; a claim about the
+     molecule holds for all of them. */
+  const scoped = claim.dossierType === "Regulatory" || claim.dossierType === "Clinical";
+  const variations = scoped ? presentations : [presentations[n % presentations.length]];
+
+  const references: ClaimReference[] = [
+    {
+      label: `${product.name} approved label`,
+      kind: "attachment",
+      detail: `${claim.source} · PDF`,
+    },
+  ];
+  if (n % 2 === 0) {
+    references.push({
+      label: "EMBRACE-3 pivotal readout",
+      kind: "link",
+      detail: "Trial registry record",
+    });
+  }
+
+  /* Not every claim goes into every asset of its brand: a patient explainer
+     and a congress poster cite different halves of the same dossier. A
+     deterministic subset of the brand's published work, never empty while the
+     brand has any. */
+  const brandAssets = LIBRARY_ASSETS.filter((asset) => asset.brand === product.name);
+  const picked = brandAssets.filter((_, index) => (n >> index) % 2 === 0);
+  const usedIn = picked.length > 0 ? picked : brandAssets.slice(0, 1);
+
+  return {
+    claim,
+    product,
+    origin,
+    author: origin === "authored" ? AUTHORS[n % AUTHORS.length] : undefined,
+    addedOn: dateFrom(n),
+    updatedOn: dateFrom(n + 11),
+    variations,
+    references,
+    usedIn,
+  };
+}

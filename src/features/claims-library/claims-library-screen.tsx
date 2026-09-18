@@ -94,7 +94,10 @@ export function ClaimsLibraryScreen() {
     });
   }, [allClaims, query, status]);
 
-  const openClaim = (claim: LibraryClaim) => router.push(`/product-library/${claim.product.id}?tab=claims`);
+  /* Its own page, not the brand's Claims tab. A claim has a record of its
+     own — which presentations it holds for, who stood behind it, where it has
+     gone out — and none of that fits in a card on a shelf. */
+  const openClaim = (claim: LibraryClaim) => router.push(`/claims-library/${claim.id}`);
 
   return (
     <div className="page-enter space-y-6">
