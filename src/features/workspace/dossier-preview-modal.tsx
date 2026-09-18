@@ -136,7 +136,7 @@ export function DossierPreviewModal({
                         {doc.name}
                       </div>
                       <div className="text-label text-ink-3 mt-0.5">
-                        Approved Regulatory Label
+                        {doc.type ?? "Approved Regulatory Label"}
                       </div>
                     </div>
                   </div>

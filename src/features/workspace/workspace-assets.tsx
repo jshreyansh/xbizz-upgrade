@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Pencil, Play, Plus, X } from "lucide-react";
+import { Check, Eye, FileText, Pencil, Play, Plus, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 
@@ -166,13 +166,26 @@ export function workspaceAssets(brandName: string, role: WorkspaceAssetRole): Wo
   }));
 }
 
-/** The corner button that pulls an asset in. */
-function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
+/** A round icon control in a tile's corner. */
+function TileButton({
+  onClick,
+  label,
+  pressed,
+  className,
+  children,
+}: {
+  onClick: () => void;
+  label: string;
+  pressed?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
     <span
       role="button"
       tabIndex={0}
       aria-label={label}
+      aria-pressed={pressed}
       onClick={(e) => {
         e.stopPropagation();
         onClick();
@@ -183,10 +196,38 @@ function AddButton({ onClick, label }: { onClick: () => void; label: string }) {
           onClick();
         }
       }}
-      className="grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border border-hair-2 bg-card text-ink-3 shadow-2xs transition group-hover:border-brand group-hover:text-brand"
+      className={cn(
+        "grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border shadow-2xs transition",
+        className
+      )}
     >
-      <Plus className="size-3.5" />
+      {children}
     </span>
+  );
+}
+
+/**
+ * The corner button that takes an asset into account.
+ *
+ * It used to move the tile into My files, which read as an upload that had
+ * already happened — the same file in two places, and no way to tell that the
+ * shelf item was the one you took. It stays where it is and turns green
+ * instead, so the strip shows what has been counted in.
+ */
+function AddButton({ onClick, label, added = false }: { onClick: () => void; label: string; added?: boolean }) {
+  return (
+    <TileButton
+      onClick={onClick}
+      label={label}
+      pressed={added}
+      className={
+        added
+          ? "border-ok-line bg-ok-bg text-ok"
+          : "border-hair-2 bg-card text-ink-3 group-hover:border-brand group-hover:text-brand"
+      }
+    >
+      {added ? <Check className="size-3.5 stroke-[3]" /> : <Plus className="size-3.5" />}
+    </TileButton>
   );
 }
 
@@ -227,6 +268,8 @@ export function DocAssetTile({
   origin,
   source,
   onAdd,
+  added = false,
+  onPreview,
   action,
 }: {
   name: string;
@@ -234,6 +277,10 @@ export function DocAssetTile({
   origin?: string;
   source: "swishx" | "workspace";
   onAdd?: () => void;
+  /** Whether this one has been counted in. */
+  added?: boolean;
+  /** Opens the document itself, so taking it in is not a guess from a filename. */
+  onPreview?: () => void;
   /** Used instead of the + when the tile opens something (a dossier). */
   action?: React.ReactNode;
 }) {
@@ -241,7 +288,26 @@ export function DocAssetTile({
     <div className="group flex w-[248px] shrink-0 flex-col gap-1.5 rounded-control border border-hair-2 bg-card p-2.5 shadow-2xs transition hover:border-brand/40">
       <div className="flex items-center justify-between gap-2">
         <OriginTag source={source} />
-        {onAdd ? <AddButton onClick={onAdd} label={`Add ${name}`} /> : action}
+        <span className="flex shrink-0 items-center gap-1">
+          {onPreview && (
+            <TileButton
+              onClick={onPreview}
+              label={`Preview ${name}`}
+              className="border-hair-2 bg-card text-ink-3 hover:border-brand hover:text-brand"
+            >
+              <Eye className="size-3.5" />
+            </TileButton>
+          )}
+          {onAdd ? (
+            <AddButton
+              onClick={onAdd}
+              added={added}
+              label={added ? `Remove ${name} from the grounding` : `Use ${name} for grounding`}
+            />
+          ) : (
+            action
+          )}
+        </span>
       </div>
       <div className="flex min-w-0 items-start gap-1.5">
         <FileText className="mt-0.5 size-3.5 shrink-0 text-ink-3" />

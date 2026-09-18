@@ -39,7 +39,46 @@ export interface UploadedDoc {
 import type { DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
 import { groundingDossiers } from "@/features/workspace/grounding-dossiers";
-import { AssetStrip, DocAssetTile, workspaceAssets } from "@/features/workspace/workspace-assets";
+import { AssetStrip, DocAssetTile, workspaceAssets, type WorkspaceAsset } from "@/features/workspace/workspace-assets";
+
+/**
+ * A shelf document, opened.
+ *
+ * Taking a file into the grounding from its filename and a six-word note is
+ * a guess. The dossier reader already knows how to show a document and what
+ * was cited from it, so the shelf opens into that rather than into a viewer
+ * of its own. Mocked contents for now — the real ones come from the asset
+ * store.
+ */
+function workspaceDocPreview(asset: WorkspaceAsset, molecule: string): DossierPreviewData {
+  const extension = asset.name.split(".").pop()?.toUpperCase();
+  return {
+    name: asset.name,
+    molecule,
+    market: `Workspace · ${asset.origin}`,
+    sections: 6,
+    claims: 24,
+    indication: asset.note,
+    documents: [{ name: asset.name, citations: 24, type: extension ? `${extension} document` : undefined }],
+    keyClaims: [
+      {
+        category: "Efficacy & Primary Endpoints",
+        claim: "Primary endpoint met at Week 16, with the responder rate and confidence interval stated as approved.",
+        citation: `${asset.name} · §4.1 Indications`,
+      },
+      {
+        category: "Safety & Tolerability",
+        claim: "Adverse events at or above 2% incidence, reported verbatim from the approved safety wording.",
+        citation: `${asset.name} · §4.8 Undesirable effects`,
+      },
+      {
+        category: "Dosing & Administration",
+        claim: "Once-daily oral administration, with the titration schedule and missed-dose guidance as written.",
+        citation: `${asset.name} · §4.2 Posology`,
+      },
+    ],
+  };
+}
 
 export interface ResearchSourcesSectionProps {
   brandName: string;
@@ -86,6 +125,8 @@ export function ResearchSourcesContent({
   // Without the null state the tray snapped shut the instant research
   // finished, throwing away the three dossiers you just watched it assemble.
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  /** Shelf items counted into the grounding. They stay on the shelf. */
+  const [considered, setConsidered] = useState<string[]>([]);
   const researching = Boolean(research?.researching);
   // The research plays INSIDE this tray, so it is held open for the duration
   // and cannot be collapsed out from under itself.
@@ -103,18 +144,6 @@ export function ResearchSourcesContent({
       : "tirzelamide";
 
   const hasUserDocs = uploadedDocs.length > 0;
-  /**
-   * A grounding mode you cannot honour is not an option. Offering "Only my
-   * sources" with nothing attached invites a choice that produces an ungrounded
-   * script, so each mode is enabled only where its material exists — and the
-   * option comes back the moment the user uploads something.
-   */
-  const modeAvailable = {
-    "both": hasDossiers && hasUserDocs,
-    "my-sources": hasUserDocs,
-    "swishx-only": hasDossiers,
-  } as const;
-  const nothingToGroundIn = !hasDossiers && !hasUserDocs;
 
   const prebuiltDossiers = groundingDossiers(brandName, molecule);
   /* What earlier projects on this brand used, minus whatever is already in
@@ -122,6 +151,26 @@ export function ResearchSourcesContent({
   const reusableDocs = workspaceAssets(brandName, "source").filter(
     (asset) => !uploadedDocs.some((doc) => doc.name === asset.name)
   );
+  /**
+   * Suggested is not only our dossiers. A brand with no cleared dossier for
+   * this audience can still have three of its own approved documents on the
+   * shelf, and greying out both suggested options in that case said there was
+   * nothing to ground in while the material sat on screen.
+   */
+  const hasSuggested = hasDossiers || reusableDocs.length > 0;
+
+  /**
+   * A grounding mode you cannot honour is not an option. Offering "Only My
+   * Files" with nothing attached invites a choice that produces an ungrounded
+   * script, so each mode is enabled only where its material exists — and the
+   * option comes back the moment the user uploads something.
+   */
+  const modeAvailable = {
+    "both": hasSuggested && hasUserDocs,
+    "my-sources": hasUserDocs,
+    "swishx-only": hasSuggested,
+  } as const;
+  const nothingToGroundIn = !hasSuggested && !hasUserDocs;
 
   return (
     <div className="space-y-3">
@@ -391,18 +440,15 @@ export function ResearchSourcesContent({
                       name={asset.name}
                       note={asset.note}
                       origin={asset.origin}
+                      added={considered.includes(asset.id)}
                       onAdd={() =>
-                        onSetUploadedDocs((prev) => [
-                          ...prev,
-                          {
-                            name: asset.name,
-                            size: asset.size,
-                            date: asset.origin,
-                            note: asset.note,
-                            origin: "previous" as const,
-                          },
-                        ])
+                        setConsidered((prev) =>
+                          prev.includes(asset.id)
+                            ? prev.filter((id) => id !== asset.id)
+                            : [...prev, asset.id]
+                        )
                       }
+                      onPreview={() => onPreviewDossier(workspaceDocPreview(asset, molecule))}
                     />
                   ))}
                 </>
