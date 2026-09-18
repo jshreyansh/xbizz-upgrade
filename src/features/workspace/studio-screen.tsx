@@ -313,6 +313,18 @@ export function StudioScreen() {
   const phaseOf = (sceneId: string) => scenePhase[sceneId] ?? 0;
   const bgOf = (sceneId: string) => sceneBg[sceneId] ?? "keyframes";
 
+  /**
+   * Scenes still at their keyframes.
+   *
+   * The whole film cannot be watched while any of it is two still frames —
+   * playing it then shows a slideshow and calls it a preview, which is a
+   * worse answer than not playing at all.
+   */
+  const scenesAwaitingFootage = sceneList.filter(
+    (sc) => sc.backgroundKind === "video" && bgOf(sc.id) !== "ready"
+  );
+  const filmIsWatchable = scenesAwaitingFootage.length === 0;
+
   /** What one scene's footage costs to render. */
   const BG_RENDER_COST = 320;
 
@@ -1580,7 +1592,7 @@ export function StudioScreen() {
               />
             ) : (
               <>
-                {isReview ? (
+                {isReview || previewMode === "full" ? (
                   <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3.5 bg-card">
                     <span className="text-caption font-extrabold uppercase tracking-[0.12em] text-[#596660] flex items-center gap-1.5"><Film className="size-3.5 text-brand" /> <span>Video Chapters · {chapters.length}</span></span>
                     <span className="text-caption font-bold text-ink-3">{totalDurationSeconds}s</span>
@@ -1593,12 +1605,30 @@ export function StudioScreen() {
                     {/* Watching the whole film belongs to the list of scenes,
                         not to the header of the one you are editing. */}
                     {previewMode === "scene" && (
+                      /* Not `disabled`: a disabled button takes no pointer
+                         events, so the one thing it needs to do while it
+                         cannot be pressed — say why — would stop working
+                         too. It stays hoverable and refuses the click. */
                       <button
                         type="button"
-                        onClick={() => { setPreviewMode("full"); setScenePlaying(false); }}
+                        onClick={() => {
+                          if (!filmIsWatchable) return;
+                          setPreviewMode("full");
+                          setScenePlaying(false);
+                        }}
+                        aria-disabled={!filmIsWatchable}
                         aria-label="Play the whole film"
-                        title="Play the whole film"
-                        className="focus-ring grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border border-hair-2 bg-card text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand"
+                        title={
+                          filmIsWatchable
+                            ? "Play the whole film"
+                            : `${scenesAwaitingFootage.length} scene${scenesAwaitingFootage.length === 1 ? "" : "s"} still at keyframes. Generate ${scenesAwaitingFootage.length === 1 ? "it" : "them"} to watch the whole film.`
+                        }
+                        className={cn(
+                          "focus-ring grid size-6 shrink-0 place-items-center rounded-full border shadow-2xs transition",
+                          filmIsWatchable
+                            ? "cursor-pointer border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
+                            : "cursor-not-allowed border-hair-2 bg-subtle text-ink-4"
+                        )}
                       >
                         <Play className="size-3 fill-current" />
                       </button>
@@ -1628,8 +1658,12 @@ export function StudioScreen() {
                   </div>
                 )}
 
-                <div className={cn("flex-1 min-h-0 overflow-y-auto space-y-2.5", isReview ? "p-2.5 space-y-2" : isEditor ? "p-2.5" : "p-1 pr-2 space-y-3")}>
-                  {isReview
+                <div className={cn("flex-1 min-h-0 overflow-y-auto space-y-2.5", isReview || previewMode === "full" ? "p-2.5 space-y-2" : isEditor ? "p-2.5" : "p-1 pr-2 space-y-3")}>
+                  {/* While the whole film is playing the list is the film's
+                      chapters, not the scenes you were editing — the rail
+                      should say where you are in what is on screen, and
+                      clicking it should move the playhead there. */}
+                  {isReview || previewMode === "full"
                     ? chapters.map((ch) => {
                         const isCurrent = activeMasterChapter?.id === ch.id;
                         return (
@@ -3322,6 +3356,10 @@ export function StudioScreen() {
                 medicalReviewDone={mlrCheckResolved}
                 regulatoryReviewDone={qaCheckResolved}
                 canClose={!isReview}
+                onAddToChat={isReview ? undefined : (id) => {
+                  const comment = comments.find((c) => c.id === id);
+                  if (comment) sendCommentToAgent(comment);
+                }}
                 onResolve={(id, note) => closeComment(id, "resolved", note)}
                 onReject={(id, note) => closeComment(id, "rejected", note)}
                 onPost={(text) => {

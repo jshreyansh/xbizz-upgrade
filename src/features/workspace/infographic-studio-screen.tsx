@@ -1954,6 +1954,7 @@ export function InfographicStudioScreen() {
                 medicalReviewDone={mlrCheckResolved}
                 regulatoryReviewDone={qaCheckResolved}
                 canClose={studioMode === "editor"}
+                onAddToChat={studioMode === "editor" ? sendCommentToAgent : undefined}
                 onResolve={(id, note) => closeComment(id, "resolved", note)}
                 onReject={(id, note) => closeComment(id, "rejected", note)}
                 onPost={(text) => {

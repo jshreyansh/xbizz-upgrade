@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Clock, Send, X } from "lucide-react";
+import { Check, Clock, MessageSquarePlus, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import type { AssetComment } from "@/features/workspace/asset-comments";
@@ -24,6 +24,7 @@ export function ReviewComments({
   canClose = false,
   onResolve,
   onReject,
+  onAddToChat,
 }: {
   comments: AssetComment[];
   /** Where the reviewer is — the playhead on a video, the page on a deck —
@@ -40,6 +41,12 @@ export function ReviewComments({
   canClose?: boolean;
   onResolve?: (id: string, note: string) => void;
   onReject?: (id: string, note: string) => void;
+  /**
+   * Hand this comment to the agent. Absent on the shared link: a reviewer's
+   * words are outside input, and reaching the agent with them is the owner's
+   * act, taken deliberately, one comment at a time.
+   */
+  onAddToChat?: (id: string) => void;
 }) {
   const [draft, setDraft] = useState("");
   /* Which card is asking for its closing note, and what it will be closed as. */
@@ -128,6 +135,7 @@ export function ReviewComments({
           items={open}
           emptyLabel="Nothing open — every comment has been answered."
           canClose={canClose}
+          onAddToChat={onAddToChat}
           closing={closing}
           reason={reason}
           onReason={setReason}
@@ -157,6 +165,7 @@ function Group({
   items,
   emptyLabel,
   canClose = false,
+  onAddToChat,
   closing,
   reason = "",
   onReason,
@@ -169,6 +178,7 @@ function Group({
   items: AssetComment[];
   emptyLabel: string;
   canClose?: boolean;
+  onAddToChat?: (id: string) => void;
   closing?: { id: string; as: "resolved" | "rejected" } | null;
   reason?: string;
   onReason?: (next: string) => void;
@@ -286,7 +296,23 @@ function Group({
                       >
                         <X className="size-3" /> Discard
                       </button>
-                    <span className="ml-auto text-micro text-ink-4">Needs your decision</span>
+                    {/* The third door. Resolve and Discard both close the
+                        comment; this one does the work it is asking for —
+                        the note goes to the agent with the element it was
+                        left on, and the comment stays open until you have
+                        seen what came back. */}
+                    {onAddToChat && !comment.sentToChat && (
+                      <button
+                        type="button"
+                        onClick={() => onAddToChat(comment.id)}
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-brand/25 bg-tint px-2 py-1 text-caption font-bold text-brand-deep transition hover:border-brand"
+                      >
+                        <MessageSquarePlus className="size-3" /> Add to chat
+                      </button>
+                    )}
+                    <span className="ml-auto text-micro text-ink-4">
+                      {comment.sentToChat ? "In chat" : "Needs your decision"}
+                    </span>
                   </div>
                 )
               )}

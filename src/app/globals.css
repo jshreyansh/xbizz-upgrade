@@ -293,6 +293,14 @@ button {
   corner-shape: squircle;
 }
 
+/* This rule is unlayered, so it beat every `cursor-not-allowed` utility a
+   button ever carried — a control that refuses the click still showed the
+   hand that says it will take it. */
+button:disabled,
+button[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 button.rounded-full {
   corner-shape: round;
 }
