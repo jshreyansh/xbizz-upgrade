@@ -1864,49 +1864,6 @@ export function StudioScreen() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-label">
-                    {/* Render this scene's footage. Above the canvas rather
-                        than inside it: the frame is where you judge the shot,
-                        and a control laid over it is one more thing between
-                        you and the picture. */}
-                    {previewMode === "scene" &&
-                      selectedScene.backgroundKind === "video" &&
-                      selectedScenePhase >= 2 &&
-                      bgOf(selectedScene.id) !== "ready" && (
-                        <span className="flex items-center gap-1.5">
-                        <button
-                          type="button"
-                          disabled={bgOf(selectedScene.id) === "generating"}
-                          onClick={() => generateSceneBackground(selectedScene)}
-                          className={cn(
-                            "focus-ring inline-flex items-center gap-1.5 rounded-glyph border px-2.5 py-1 text-caption font-bold shadow-2xs transition",
-                            bgOf(selectedScene.id) === "generating"
-                              ? "cursor-not-allowed border-hair-2 bg-canvas text-ink-4"
-                              : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand hover:bg-tint-strong"
-                          )}
-                        >
-                          {bgOf(selectedScene.id) === "generating" ? (
-                            <>
-                              <LogoMark size={11} className="animate-spin" />
-                              Rendering…
-                            </>
-                          ) : (
-                            <>
-                              <LogoMark size={11} />
-                              Generate videos
-                            </>
-                          )}
-                        </button>
-                        {/* Beside the button, not inside it: it explains the
-                            button rather than being part of pressing it, and
-                            a hover that has to survive a click target is a
-                            hover you lose. */}
-                        <InfoTip label="What happens when I generate?">
-                          Every clip in this scene is still at its keyframes — the opening and
-                          closing frame of each shot. Generating renders them in full and spends
-                          the credits for it, so this is the moment to change a shot.
-                        </InfoTip>
-                        </span>
-                      )}
                     {/* Full preview now sits over the scene list, where the
                         whole film is the thing being listed. This header is
                         about the scene on screen. */}
@@ -2682,6 +2639,53 @@ export function StudioScreen() {
                     selected={selectedCanvasElementId === "narration"}
                     onSelect={() => handleSelectCanvasElement("narration")}
                   />
+
+                  {/* Render this scene's footage.
+                      It lived in the sub-header as a small chip, where it was
+                      the least prominent thing on a bar of labels — and it is
+                      the one action this scene is waiting for. It sits under
+                      the track instead, at the size of the decision it is. */}
+                  {selectedScene.backgroundKind === "video" &&
+                    selectedScenePhase >= 2 &&
+                    bgOf(selectedScene.id) !== "ready" && (
+                      <div className="flex w-full flex-wrap items-center gap-3 rounded-control border border-brand/30 bg-tint px-3.5 py-3 shadow-2xs">
+                        <button
+                          type="button"
+                          disabled={bgOf(selectedScene.id) === "generating"}
+                          onClick={() => generateSceneBackground(selectedScene)}
+                          className={cn(
+                            "focus-ring inline-flex items-center gap-2 rounded-control border px-4 py-2 text-body font-extrabold shadow-xs transition",
+                            bgOf(selectedScene.id) === "generating"
+                              ? "cursor-not-allowed border-hair-2 bg-canvas text-ink-4"
+                              : "cursor-pointer border-brand bg-brand text-white hover:bg-brand-deep"
+                          )}
+                        >
+                          {bgOf(selectedScene.id) === "generating" ? (
+                            <>
+                              <LogoMark size={15} className="animate-spin" />
+                              Rendering…
+                            </>
+                          ) : (
+                            <>
+                              <LogoMark size={15} />
+                              Generate videos
+                            </>
+                          )}
+                        </button>
+                        {/* Beside the button, not inside it: it explains the
+                            button rather than being part of pressing it, and
+                            a hover that has to survive a click target is a
+                            hover you lose. */}
+                        <InfoTip label="What happens when I generate?">
+                          Every clip in this scene is still at its keyframes — the opening and
+                          closing frame of each shot. Generating renders them in full and spends
+                          the credits for it, so this is the moment to change a shot.
+                        </InfoTip>
+                        <span className="ml-auto text-label text-ink-3">
+                          Still at keyframes
+                        </span>
+                      </div>
+                    )}
 
                   {/* Audio renders after the visuals, so it is still in flight
                       when the frame is already workable. Gone once the take

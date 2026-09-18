@@ -2,7 +2,10 @@
 
 import { useRef, useState } from "react";
 import {
+  Check,
+  Eye,
   Pencil,
+  ShieldCheck,
   TriangleAlert,
   ChevronDown,
   Plus,
@@ -192,6 +195,89 @@ export function ResearchSourcesContent({
         </div>
       )}
 
+      {/* ── The verified dossier, on its own ──
+          It was one tile in a horizontal strip, sized and shaped like the
+          four uploads beside it. It is not one of those: it is the record
+          every claim in this asset will be traced back to, and the only
+          thing here that has been through regulatory review. So it takes the
+          top of the section at full width, with the sweep, and the strip
+          below it is the brand's own material. */}
+      {prebuiltDossiers.map((dossier, idx) => {
+        const id = `sx-${idx}`;
+        const inUse = considered.includes(id);
+        return (
+          <div
+            key={id}
+            className={cn(
+              "verified-sheen relative overflow-hidden rounded-panel border p-3.5 shadow-xs transition-colors",
+              inUse
+                ? "border-ok-line bg-ok-bg/50 ring-1 ring-ok/20"
+                : "border-brand/35 bg-gradient-to-br from-tint via-card to-tint ring-1 ring-brand/10"
+            )}
+          >
+            <div className="relative z-10 flex flex-wrap items-center gap-3">
+              <div
+                className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-control"
+                style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand) 55%,var(--brand-deep))" }}
+              >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0"
+                  style={{ background: "linear-gradient(155deg,rgba(255,255,255,.45),transparent 45%)" }}
+                />
+                <LogoMark size={20} className="relative text-white" title="" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-extrabold uppercase tracking-wide text-ok">
+                    <ShieldCheck className="size-3" /> Verified from FDA
+                  </span>
+                  <span className="text-caption font-bold text-ink-4">
+                    {dossier.claims} approved claims · {dossier.sections} sections
+                  </span>
+                </div>
+                <div className="mt-1 truncate text-body-lg font-extrabold text-ink">
+                  {dossier.name}
+                </div>
+                <p className="mt-0.5 text-label leading-snug text-ink-3">
+                  Every claim written from this traces back to an approved source.
+                </p>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => onPreviewDossier(dossier)}
+                  className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 py-1.5 text-label font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand-deep"
+                >
+                  <Eye className="size-3.5" />
+                  <span>Preview</span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={inUse}
+                  onClick={() =>
+                    setConsidered((prev) =>
+                      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+                    )
+                  }
+                  className={cn(
+                    "focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-chip border px-3 py-1.5 text-label font-extrabold shadow-2xs transition",
+                    inUse
+                      ? "border-ok-line bg-ok-bg text-ok hover:brightness-95"
+                      : "border-brand bg-brand text-white hover:bg-brand-deep"
+                  )}
+                >
+                  {inUse ? <Check className="size-3.5 stroke-[3]" /> : <Plus className="size-3.5" />}
+                  <span>{inUse ? "Dossier in use" : "Use Verified Dossier"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
       {/* What the platform has for this brand — our approved dossier and the
           brand's own documents from earlier projects — offered first, because
           it is the material you did not have to supply. There is no mode to
@@ -217,7 +303,7 @@ export function ResearchSourcesContent({
                 are none" is information, where a missing tray reads as a
                 section that failed to load. */}
             <span className="shrink-0 rounded-chip border border-hair-2 bg-card px-2 py-0.2 text-caption font-bold tabular-nums text-ink-3">
-              {prebuiltDossiers.length + reusableDocs.length} suggested
+              {reusableDocs.length} suggested
             </span>
             {researching && (
               <span className="shrink-0 rounded-chip border border-brand/20 bg-tint px-2 py-0.2 text-caption font-bold text-brand">
@@ -273,26 +359,6 @@ export function ResearchSourcesContent({
                 ))
               : (
                 <>
-                  {prebuiltDossiers.map((dossier, idx) => {
-                    const id = `sx-${idx}`;
-                    return (
-                      <DocAssetTile
-                        key={id}
-                        featured
-                        source="swishx"
-                        name={dossier.name}
-                        note={`${dossier.claims} approved claims`}
-                        origin={`${dossier.sections} sections`}
-                        added={considered.includes(id)}
-                        onAdd={() =>
-                          setConsidered((prev) =>
-                            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-                          )
-                        }
-                        onPreview={() => onPreviewDossier(dossier)}
-                      />
-                    );
-                  })}
                   {reusableDocs.map((asset) => (
                     <DocAssetTile
                       key={asset.id}

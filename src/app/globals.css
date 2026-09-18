@@ -626,6 +626,33 @@ button.rounded-full {
   animation: shimmer 1.4s linear infinite;
 }
 
+/* A slow light sweep for the one panel that is meant to read as the most
+   thoroughly checked thing on the screen. Long pause between passes: a
+   verified mark that glints constantly reads as an advert, not a seal. The
+   reduced-motion block below stops it. */
+@keyframes verified-sheen {
+  0%   { transform: translateX(-160%) skewX(-18deg); }
+  45%  { transform: translateX(320%) skewX(-18deg); }
+  100% { transform: translateX(320%) skewX(-18deg); }
+}
+
+.verified-sheen::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 34%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, #fff 72%, transparent),
+    transparent
+  );
+  animation: verified-sheen 5.5s ease-in-out infinite;
+}
+
 /* "Generating." -> "Generating.." -> "Generating..." — three dots revealed in
    turn rather than three dots pulsing at once, so it reads as counting up.
    Each dot holds its full opacity for the rest of the cycle after appearing,
