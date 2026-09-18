@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Eye, Play } from "lucide-react";
+import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play } from "lucide-react";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
@@ -292,19 +292,14 @@ export function ContentLibraryScreen() {
                       {a.spec}
                     </span>
                   )}
-                  {/* Counts sit with the chips rather than in the footer: the
-                      footer has a date and an action in it, and three things
-                      on one card-width line is what pushed the action out. */}
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 9, fontSize: 12, color: "var(--ink-4)", paddingLeft: 2 }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                      <Eye size={12} /> {a.views}
+                  {/* Comments only. A view count is a vanity number on a
+                      shelf of your own work — it changes nothing you would do
+                      with the asset, where an unanswered comment does. */}
+                  {a.comments > 0 && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--brand)", fontWeight: 700, paddingLeft: 2 }}>
+                      <MessageSquare size={12} /> {a.comments}
                     </span>
-                    {a.comments > 0 && (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: "var(--brand)", fontWeight: 700 }}>
-                        <MessageSquare size={12} /> {a.comments}
-                      </span>
-                    )}
-                  </span>
+                  )}
                 </div>
 
                 {view !== "list" && <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />}

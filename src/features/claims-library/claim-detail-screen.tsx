@@ -3,12 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
   Eye,
-  FileText,
   Info,
   Layers,
   MessageSquare,
@@ -19,7 +17,8 @@ import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { CLAIM_STATUS_STYLE, DOSSIER_TYPE_ICON } from "@/features/product-library/claim-card";
 import { AssetVideo } from "@/features/workspace/asset-video";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
-import type { ClaimDetail } from "@/features/claims-library/claim-detail";
+import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
+import type { ClaimDetail, ClaimReference } from "@/features/claims-library/claim-detail";
 
 type Tab = "information" | "usage";
 
@@ -49,6 +48,9 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
   const router = useRouter();
   const openReview = useOpenPublishedAsset();
   const [tab, setTab] = useState<Tab>("information");
+  /* The reference being read. A citation you cannot open is a citation you
+     have to take on trust, which is the opposite of what one is for. */
+  const [preview, setPreview] = useState<ClaimReference | null>(null);
 
   const { claim, product } = detail;
   const status = CLAIM_STATUS_STYLE[claim.status];
@@ -163,7 +165,7 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
             </div>
 
             <div className="mt-4 border-t border-hair pt-3.5">
-              <Fact label="Variations included">
+              <Fact label="Variants included">
                 <div className="flex flex-wrap gap-1.5">
                   {detail.variations.map((variation) => (
                     <span
@@ -207,20 +209,23 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
             </h2>
             <ul className="mt-3 space-y-2">
               {detail.references.map((reference) => (
-                <li
-                  key={reference.label}
-                  className="flex items-center gap-3 rounded-control border border-hair-2 bg-canvas px-3 py-2.5"
-                >
-                  <span className="grid size-8 shrink-0 place-items-center rounded-chip bg-tint text-brand-deep">
-                    {reference.kind === "link" ? <ExternalLink size={14} /> : <Paperclip size={14} />}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-body font-bold text-ink">{reference.label}</div>
-                    <span className="truncate text-caption text-ink-3">{reference.detail}</span>
-                  </div>
-                  <span className="shrink-0 text-ink-4">
-                    {reference.kind === "link" ? <ArrowUpRight size={15} /> : <FileText size={15} />}
-                  </span>
+                <li key={reference.label}>
+                  <button
+                    type="button"
+                    onClick={() => setPreview(reference)}
+                    className="flex w-full cursor-pointer items-center gap-3 rounded-control border border-hair-2 bg-canvas px-3 py-2.5 text-left transition hover:border-brand/40 hover:bg-card"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-chip bg-tint text-brand-deep">
+                      {reference.kind === "link" ? <ExternalLink size={14} /> : <Paperclip size={14} />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-body font-bold text-ink">{reference.label}</div>
+                      <span className="truncate text-caption text-ink-3">{reference.detail}</span>
+                    </div>
+                    <span className="inline-flex shrink-0 items-center gap-1 text-caption font-bold text-brand">
+                      <Eye size={13} /> Preview
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -264,12 +269,11 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
                   {asset.audience} · {asset.spec}
                 </span>
                 <div className="mt-auto flex items-center gap-3 pt-2 text-caption text-ink-4">
-                  <span className="inline-flex items-center gap-1">
-                    <Eye size={12} /> {asset.views}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <MessageSquare size={12} /> {asset.comments}
-                  </span>
+                  {asset.comments > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <MessageSquare size={12} /> {asset.comments}
+                    </span>
+                  )}
                   <span className="ml-auto font-bold text-brand">Open review</span>
                 </div>
               </div>
@@ -285,6 +289,18 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
             </div>
           )}
         </div>
+      )}
+
+      {preview && (
+        <AttachmentPreviewModal
+          file={{
+            id: preview.label,
+            name: preview.label,
+            kind: preview.fileKind,
+            previewUrl: preview.previewUrl,
+          }}
+          onClose={() => setPreview(null)}
+        />
       )}
     </div>
   );

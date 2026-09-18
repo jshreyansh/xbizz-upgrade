@@ -155,7 +155,7 @@ export function ProductDetailScreen({
 
   function handleAddVariation() {
     const id = `${product.id}-var-custom-${Date.now()}`;
-    const label = `New variation ${variations.length + 1}`;
+    const label = `New variant ${variations.length + 1}`;
     const newVariation: ProductVariation = { id, label, images: [] };
     setVariations((prev) => [...prev, newVariation]);
     setActiveVariationId(id);
@@ -239,7 +239,7 @@ export function ProductDetailScreen({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-title font-extrabold tracking-tight text-ink">Product Images</h2>
-              <p className="text-body text-ink-3">Manage approved product visuals by variation and angle</p>
+              <p className="text-body text-ink-3">Manage approved product visuals by variant and angle</p>
             </div>
             <button
               onClick={handleUpload}
@@ -253,7 +253,7 @@ export function ProductDetailScreen({
           {/* Variations */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="mr-1 inline-flex items-center gap-1.5 text-label font-bold uppercase tracking-[.06em] text-ink-4">
-              <Layers size={12} /> Variation
+              <Layers size={12} /> Variant
             </span>
             {variations.map((v) => (
               <button
@@ -275,7 +275,7 @@ export function ProductDetailScreen({
               onClick={handleAddVariation}
               className="inline-flex items-center gap-1 rounded-chip border border-dashed border-hair-2 px-3 py-1.5 text-body font-bold text-ink-4 transition-colors hover:border-brand hover:text-brand-deep"
             >
-              <Plus size={13} /> Add variation
+              <Plus size={13} /> Add variant
             </button>
           </div>
 
@@ -378,7 +378,7 @@ export function ProductDetailScreen({
           </div>
 
           {visibleImages.length === 0 && (
-            <p className="py-6 text-center text-body text-ink-4">No {angleFilter.toLowerCase()} shot yet for this variation — upload one above.</p>
+            <p className="py-6 text-center text-body text-ink-4">No {angleFilter.toLowerCase()} shot yet for this variant — upload one above.</p>
           )}
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Maximize2, Paperclip, X } from "lucide-react";
+import { FileText, Maximize2, Paperclip, X } from "lucide-react";
 
 /**
  * Files attached to a message, wherever a message is written.
@@ -189,7 +189,7 @@ export function AttachmentPreviewModal({ file, onClose }: { file: LocalAttachmen
       onClick={onClose}
     >
       <div
-        className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
+        className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3 border-b border-hair px-4 py-2.5">
@@ -202,12 +202,27 @@ export function AttachmentPreviewModal({ file, onClose }: { file: LocalAttachmen
             <X className="size-4" />
           </button>
         </div>
-        <div className="grid min-h-0 place-items-center bg-canvas p-4">
+        <div className="grid min-h-0 flex-1 place-items-center overflow-auto bg-canvas p-4">
           {file.kind === "image" ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={file.previewUrl} alt={file.name} className="max-h-[70vh] max-w-full object-contain" />
+            <img src={file.previewUrl} alt={file.name} className="max-h-[calc(88vh-5rem)] max-w-full object-contain" />
+          ) : file.kind === "video" ? (
+            <video src={file.previewUrl} controls autoPlay className="max-h-[calc(88vh-5rem)] max-w-full" />
+          ) : file.previewUrl ? (
+            /* The browser's own document viewer. A PDF does not need a
+               reader written for it, and one written here would be worse
+               than the one already installed. */
+            <iframe src={file.previewUrl} title={file.name} className="h-[calc(88vh-5rem)] w-full rounded-control border border-hair bg-card" />
           ) : (
-            <video src={file.previewUrl} controls autoPlay className="max-h-[70vh] max-w-full" />
+            /* A document with nothing behind it yet. Saying so beats an empty
+               frame that looks like a viewer that failed. */
+            <div className="grid min-h-[280px] w-full place-items-center gap-2 rounded-control border border-dashed border-hair-2 bg-card px-6 py-16 text-center">
+              <FileText className="size-7 text-ink-4" />
+              <p className="text-body-lg font-bold text-ink-2">{file.name}</p>
+              <p className="max-w-[44ch] text-body text-ink-4">
+                No file is attached to this record yet, so there is nothing to display.
+              </p>
+            </div>
           )}
         </div>
       </div>

@@ -1567,7 +1567,7 @@ export function InfographicDirectionsScreen() {
                 mediaKind: "image" as const,
               }))}
               title="What is this asset for?"
-              prompt="A note and a variation travel with each asset, so it lands in the catalogue as one pack rather than as a file."
+              prompt="A note and a variant travel with each asset, so it lands in the catalogue as one pack rather than as a file."
               placeholder="e.g. the hero packshot, front of pack"
               variations={brandVariations(brandName)}
               onCancel={() => setPendingMedia([])}
@@ -1597,7 +1597,7 @@ export function InfographicDirectionsScreen() {
                 mediaKind: "image",
               }]}
               title="What is this asset for?"
-              prompt="The note and the variation travel with the asset wherever the page places it."
+              prompt="The note and the variant travel with the asset wherever the page places it."
               placeholder="e.g. the hero packshot, front of pack"
               variations={brandVariations(brandName)}
               onCancel={() => setEditingPackshot(null)}

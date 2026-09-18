@@ -151,7 +151,7 @@ export function FileNoteDialog({
 
               {needsVariation && (
                 <div className="mt-2.5">
-                  <span className="block text-label font-bold text-ink-2">Which variation?</span>
+                  <span className="block text-label font-bold text-ink-2">Which variant?</span>
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {variations!.map((variation) => {
                       const active = picked[file.id] === variation;
@@ -184,7 +184,7 @@ export function FileNoteDialog({
             {ready
               ? `${files.length} ${files.length === 1 ? "file" : "files"} ready`
               : needsVariation
-                ? "Each file needs a note and a variation"
+                ? "Each file needs a note and a variant"
                 : "Every file needs a note before it can be attached"}
           </span>
           <div className="flex items-center gap-2">

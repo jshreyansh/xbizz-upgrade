@@ -153,6 +153,8 @@ export function ReviewComments({
           count={closed.length}
           items={closed}
           emptyLabel="Nothing closed yet."
+          canClose={canClose}
+          onAddAsSuggestion={onAddAsSuggestion}
         />
       </div>
     </div>
@@ -301,8 +303,14 @@ function Group({
                         It lands in the same list a note left on the canvas
                         lands in, so a reviewer's point and your own can be
                         sent as one batch — which is usually one change, not
-                        two conversations. */}
-                    {onAddAsSuggestion && !comment.sentToChat && (
+                        two conversations.
+
+                        It never goes away. Sending a point once does not
+                        mean it landed: the first attempt may not have been
+                        what the reviewer meant, and a control that vanishes
+                        after one use leaves the second attempt with nowhere
+                        to start. */}
+                    {onAddAsSuggestion && (
                       <button
                         type="button"
                         onClick={() => onAddAsSuggestion(comment.id)}
@@ -342,6 +350,18 @@ function Group({
                   <p className="mt-1.5 text-micro italic text-ink-4">
                     Still not right? Add a new comment above rather than replying here.
                   </p>
+
+                  {/* A closed point can still be worth acting on — "resolved"
+                      records a decision, not that the work is finished. */}
+                  {canClose && onAddAsSuggestion && (
+                    <button
+                      type="button"
+                      onClick={() => onAddAsSuggestion(comment.id)}
+                      className="mt-2 inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-brand/25 bg-tint px-2 py-1 text-caption font-bold text-brand-deep transition hover:border-brand"
+                    >
+                      <MessageSquarePlus className="size-3" /> Add as suggestion
+                    </button>
+                  )}
                 </div>
               )}
             </div>

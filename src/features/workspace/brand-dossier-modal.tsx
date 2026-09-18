@@ -55,8 +55,8 @@ import type {
  */
 type RevealStage = "audience" | "grounding" | "details";
 
-/** The chip that means "no narrowing", kept out of the real variation names. */
-const ALL_VARIATIONS = "__all__";
+/** The chip that means "no narrowing", kept out of the real variant names. */
+const ALL_VARIANTS = "__all__";
 
 /** The brand's packshot at thumbnail size — the Product Library's own
  *  photography, so a row here looks like the row there. */
@@ -383,7 +383,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const variationLabel =
     selectedVariations.length === 0 || selectedVariations.length === variationOptions.length
-      ? "All variations"
+      ? "All variants"
       : selectedVariations.join(", ");
 
   const handleSelectAudience = (itemAudience: Audience) => {
@@ -843,7 +843,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         <div className="pt-3 border-t border-hair-2/80 space-y-2.5 animate-in fade-in duration-150">
                           <div className="flex items-center justify-between">
                             <span className="text-label font-bold text-ink-2">
-                              {selectedBrand.name} Variation:
+                              {selectedBrand.name} Variants:
                             </span>
                             {selectedVariations.length > 0 && (
                               <button
@@ -859,18 +859,23 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           <ChipMultiSelect
                             size="sm"
                             options={[
-                              { id: ALL_VARIATIONS, label: "All variations" },
+                              { id: ALL_VARIANTS, label: "All variants" },
                               ...variationOptions.map((v) => ({ id: v, label: v })),
                             ]}
+                            /* All means all: the individual chips tick with
+                               it, because "every presentation" and "each of
+                               these presentations" are the same answer, and
+                               showing one ticked chip beside three empty ones
+                               said the opposite. */
                             selected={
                               selectedVariations.length === 0
-                                ? [ALL_VARIATIONS]
+                                ? [ALL_VARIANTS, ...variationOptions]
                                 : selectedVariations.length === variationOptions.length
-                                  ? [ALL_VARIATIONS, ...selectedVariations]
+                                  ? [ALL_VARIANTS, ...selectedVariations]
                                   : selectedVariations
                             }
                             onToggle={(id) =>
-                              id === ALL_VARIATIONS ? setSelectedVariations([]) : toggleVariation(id)
+                              id === ALL_VARIANTS ? setSelectedVariations([]) : toggleVariation(id)
                             }
                           />
 

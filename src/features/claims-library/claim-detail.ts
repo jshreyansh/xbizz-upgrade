@@ -18,6 +18,10 @@ export interface ClaimReference {
   /** Either a link out, or a file in the brand's attachments. */
   kind: "link" | "attachment";
   detail: string;
+  /** What it is, so the preview knows how to show it. */
+  fileKind: "doc" | "image" | "video";
+  /** The file itself, where there is one to show. */
+  previewUrl?: string;
 }
 
 export interface ClaimDetail {
@@ -100,6 +104,14 @@ export function buildClaimDetail(claim: ProductClaim, product: LibraryProduct): 
       label: `${product.name} approved label`,
       kind: "attachment",
       detail: `${claim.source} · PDF`,
+      fileKind: "doc",
+    },
+    {
+      label: `${product.name} pack artwork`,
+      kind: "attachment",
+      detail: "Front of pack · PNG",
+      fileKind: "image",
+      previewUrl: `/products/${product.type.toLowerCase()}.jpg`,
     },
   ];
   if (n % 2 === 0) {
@@ -107,6 +119,7 @@ export function buildClaimDetail(claim: ProductClaim, product: LibraryProduct): 
       label: "EMBRACE-3 pivotal readout",
       kind: "link",
       detail: "Trial registry record",
+      fileKind: "doc",
     });
   }
 
