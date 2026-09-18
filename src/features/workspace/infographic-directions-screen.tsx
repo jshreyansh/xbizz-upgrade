@@ -36,7 +36,7 @@ import { PlanSectionContinue } from "@/features/workspace/plan-section-continue"
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
-import { IntakeChecklist } from "@/features/workspace/intake-checklist";
+import { IntakePlaceholder } from "@/features/workspace/intake-checklist";
 import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
@@ -58,7 +58,8 @@ import { FormattedMessageText } from "@/features/workspace/chat-message";
 import {
   buildIntakeQuestions,
   intakeSteps,
-  readIntakeAnswer,
+  intakeBundlePrompt,
+  readIntakeBundle,
   type IntakeAnswer,
 } from "@/features/workspace/plan-intake";
 
@@ -404,7 +405,9 @@ export function InfographicDirectionsScreen() {
   const setPlanPhase = useWorkspaceStore((st) => st.setPlanPhase);
   const briefAttachments = useWorkspaceStore((st) => st.briefAttachments);
   const [intakeIndex, setIntakeIndex] = useState(0);
-  const [intakeAnswers, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
+  /* Kept as the record of what was answered; nothing renders it, because the
+     plan below IS what the answers produced. */
+  const [, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
   const intakeQuestions = buildIntakeQuestions(briefAttachments, "infographic");
   const currentIntake = planPhase === "intake" ? intakeQuestions[intakeIndex] : undefined;
   const intakeStepList = intakeSteps(briefAttachments, brandName);
@@ -419,40 +422,41 @@ export function InfographicDirectionsScreen() {
         : `I've read the brief against the **${brandName}** dossier. A couple of things and I can lay the plan out.`,
     });
     setTimeout(() => {
-      const first = intakeQuestions[0];
-      if (first) addChatMessage({ role: "swishx", text: first.prompt });
+      const prompt = intakeBundlePrompt(intakeQuestions);
+      if (prompt) addChatMessage({ role: "swishx", text: prompt });
     }, 600);
   };
 
+  /**
+   * The reply, read against every question at once. Everything was asked
+   * together, so everything is answered together and the plan follows.
+   */
   const answerIntake = (text: string) => {
-    const question = intakeQuestions[intakeIndex];
-    if (!question) return;
-    const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
-    const answer = readIntakeAnswer(question, text, file?.kind ?? "doc");
-    setIntakeAnswers((prev) => [...prev, answer]);
-    if (answer.kind === "pages") setInfographicPages(answer.value);
-    if (answer.kind === "shape") {
-      /* A page is A4, tablet or screen — the creative flow has no mobile
-         shape, so a mobile answer lands on the nearest upright page. */
-      setPageShape(
-        answer.value === "16:9 landscape" ? "16:9"
-          : answer.value === "3:4 tablet" || answer.value === "9:16 mobile" ? "3:4"
-          : "A4"
-      );
+    if (intakeQuestions.length === 0) return;
+    const answers = readIntakeBundle(intakeQuestions, text, (question) => {
+      const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
+      return file?.kind ?? "doc";
+    });
+    setIntakeAnswers(answers);
+    setIntakeIndex(intakeQuestions.length);
+
+    for (const answer of answers) {
+      if (answer.kind === "pages") setInfographicPages(answer.value);
+      if (answer.kind === "shape") {
+        /* A page is A4, tablet or screen — the creative flow has no mobile
+           shape, so a mobile answer lands on the nearest upright page. */
+        setPageShape(
+          answer.value === "16:9 landscape" ? "16:9"
+            : answer.value === "3:4 tablet" || answer.value === "9:16 mobile" ? "3:4"
+            : "A4"
+        );
+      }
     }
 
-    const nextIndex = intakeIndex + 1;
-    const next = intakeQuestions[nextIndex];
-    setIntakeIndex(nextIndex);
-
     setTimeout(() => {
-      if (next) {
-        addChatMessage({ role: "swishx", text: `${answer.reply} ${next.prompt}` });
-        return;
-      }
       addChatMessage({
         role: "swishx",
-        text: `${answer.reply}\n\nThat's everything I needed. I've laid the plan out on the left — grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
+        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left — grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
       });
       setPlanPhase("plan");
     }, 650);
@@ -751,11 +755,7 @@ export function InfographicDirectionsScreen() {
                  answered would be a guess presented as a decision. What there
                  is instead is the questions themselves, and what has been
                  answered so far. */
-              <IntakeChecklist
-                questions={intakeQuestions}
-                answers={intakeAnswers}
-                currentIndex={intakeIndex}
-              />
+              <IntakePlaceholder />
             )}
 
             {currentStep === "brief" && planPhase === "plan" && (

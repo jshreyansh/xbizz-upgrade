@@ -86,19 +86,22 @@ export function buildIntakeQuestions(
   ];
 }
 
-/** What this question is about, in three or four words. The prompt itself is
- *  a sentence the agent says out loud; a checklist needs a name. */
-export function intakeLabel(question: IntakeQuestion): string {
-  switch (question.kind) {
-    case "attachment":
-      return question.fileName ? `What ${question.fileName} is for` : "What the attachment is for";
-    case "duration":
-      return "How long it runs";
-    case "pages":
-      return "How many pages";
-    case "shape":
-      return "What shape it is";
-  }
+/**
+ * Everything it needs, asked once.
+ *
+ * Asked one at a time, a person who already knew all three answers had to
+ * wait to be asked each of them — a form handed over a field at a time. One
+ * message, numbered, and they can answer it in a sentence or in a list.
+ */
+export function intakeBundlePrompt(questions: IntakeQuestion[]): string {
+  if (questions.length === 0) return "";
+  if (questions.length === 1) return questions[0].prompt;
+  const lines = questions.map((question, index) => `**${index + 1}.** ${question.prompt}`);
+  return [
+    `${questions.length} things and I can lay the plan out — answer them together or one line each.`,
+    "",
+    ...lines,
+  ].join("\n");
 }
 
 /* ── Reading an answer ───────────────────────────────────────────────────── */
@@ -196,6 +199,36 @@ export function readIntakeAnswer(
       };
     }
   }
+}
+
+/**
+ * One reply, read against every outstanding question.
+ *
+ * Each reader looks for its own words — a duration reader wants a number of
+ * seconds, a shape reader wants a shape — so a single answer covering three
+ * questions can be handed to all three. A per-file question first looks for
+ * the sentence that names its file, and falls back to the whole reply when
+ * the answer did not name any.
+ */
+export function readIntakeBundle(
+  questions: IntakeQuestion[],
+  text: string,
+  attachmentKind: (question: IntakeQuestion) => BriefAttachment["kind"]
+): IntakeAnswer[] {
+  const sentences = text.split(/(?:\r?\n|(?<=[.;!?])\s+)/).filter((part) => part.trim().length > 0);
+  return questions.map((question) => {
+    let slice = text;
+    if (question.kind === "attachment" && question.fileName) {
+      const stem = question.fileName.replace(/\.[a-z0-9]+$/i, "");
+      const named = sentences.find(
+        (part) =>
+          part.toLowerCase().includes(question.fileName!.toLowerCase()) ||
+          part.toLowerCase().includes(stem.toLowerCase())
+      );
+      if (named) slice = named;
+    }
+    return readIntakeAnswer(question, slice, attachmentKind(question));
+  });
 }
 
 /* ── The wait before the questions ───────────────────────────────────────── */

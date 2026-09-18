@@ -626,6 +626,29 @@ button.rounded-full {
   animation: shimmer 1.4s linear infinite;
 }
 
+/* The waiting bars on the plan screen while the questions are unanswered.
+   They sweep toward the chat on the right rather than filling up: nothing is
+   loading, so a bar that fills would be a lie about progress. The
+   reduced-motion block below stops it. */
+@keyframes intake-sweep {
+  0%   { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+
+.intake-sweep {
+  background-image: linear-gradient(
+    90deg,
+    transparent 10%,
+    color-mix(in srgb, var(--color-brand) 9%, transparent) 38%,
+    color-mix(in srgb, var(--color-brand) 20%, transparent) 50%,
+    color-mix(in srgb, var(--color-brand) 9%, transparent) 62%,
+    transparent 90%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: intake-sweep 2.1s linear infinite;
+}
+
 /* A slow light sweep for the one panel that is meant to read as the most
    thoroughly checked thing on the screen. Long pause between passes: a
    verified mark that glints constantly reads as an advert, not a seal. The

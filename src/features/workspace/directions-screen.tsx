@@ -51,7 +51,7 @@ import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { InfographicDirectionsScreen } from "@/features/workspace/infographic-directions-screen";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
-import { IntakeChecklist } from "@/features/workspace/intake-checklist";
+import { IntakePlaceholder } from "@/features/workspace/intake-checklist";
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
@@ -73,7 +73,8 @@ import { useBrandName } from "@/features/workspace/brand-catalogue";
 import {
   buildIntakeQuestions,
   intakeSteps,
-  readIntakeAnswer,
+  intakeBundlePrompt,
+  readIntakeBundle,
   type IntakeAnswer,
 } from "@/features/workspace/plan-intake";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
@@ -346,7 +347,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   /* Sent, and waiting to be told where they belong. */
   const [pendingChatFiles, setPendingChatFiles] = useState<LocalAttachment[]>([]);
   const [intakeIndex, setIntakeIndex] = useState(0);
-  const [intakeAnswers, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
+  /* Kept as the record of what was answered; nothing renders it, because the
+     plan below IS what the answers produced. */
+  const [, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
   const flowSteps = useVideoSteps({});
   const backStep = previousStep(flowSteps, "plan");
 
@@ -962,11 +965,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   /** The wait between the brief and the first question. */
   const intakeStepList = intakeSteps(briefAttachments, brandName);
 
-  const askIntake = (index: number) => {
-    const question = intakeQuestions[index];
-    if (!question) return;
-    addChatMessage({ role: "swishx", text: question.prompt });
-  };
 
   /** The wait is over: say what was read, then ask the first thing. */
   const handleIntakeResearched = () => {
@@ -978,37 +976,34 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out.`
         : `I've read the brief against the **${brandName}** dossier. One thing and I can lay the plan out.`,
     });
-    setTimeout(() => askIntake(0), 600);
+    setTimeout(() => {
+      const prompt = intakeBundlePrompt(intakeQuestions);
+      if (prompt) addChatMessage({ role: "swishx", text: prompt });
+    }, 600);
   };
 
   /**
-   * An answer to the outstanding question. It is recorded, applied to the
-   * plan, and the next question follows — or, when there is no next one, the
-   * plan itself.
+   * The reply, read against every question at once. Everything was asked in
+   * one message, so everything is answered in one, and the plan follows —
+   * drawn from those answers, which is the whole reason for asking rather
+   * than guessing.
    */
   const answerIntake = (text: string) => {
-    const question = intakeQuestions[intakeIndex];
-    if (!question) return;
-    const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
-    const answer = readIntakeAnswer(question, text, file?.kind ?? "doc");
-    setIntakeAnswers((prev) => [...prev, answer]);
-    if (answer.kind === "duration") setDuration(answer.value);
-
-    const nextIndex = intakeIndex + 1;
-    const next = intakeQuestions[nextIndex];
-    setIntakeIndex(nextIndex);
+    if (intakeQuestions.length === 0) return;
+    const answers = readIntakeBundle(intakeQuestions, text, (question) => {
+      const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
+      return file?.kind ?? "doc";
+    });
+    setIntakeAnswers(answers);
+    setIntakeIndex(intakeQuestions.length);
+    for (const answer of answers) {
+      if (answer.kind === "duration") setDuration(answer.value);
+    }
 
     setTimeout(() => {
-      if (next) {
-        addChatMessage({ role: "swishx", text: `${answer.reply} ${next.prompt}` });
-        return;
-      }
-      /* Everything it could not infer now has an answer, so the plan can be
-         drawn — and it is drawn from those answers, which is the whole reason
-         for asking rather than guessing. */
       addChatMessage({
         role: "swishx",
-        text: `${answer.reply}\n\nThat's everything I needed. I've laid the plan out on the left — grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
+        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left — grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
       });
       setPlanPhase("plan");
     }, 650);
@@ -1261,11 +1256,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                  answered would be a guess presented as a decision. What there
                  is instead is the questions themselves, and what has been
                  answered so far. */
-              <IntakeChecklist
-                questions={intakeQuestions}
-                answers={intakeAnswers}
-                currentIndex={intakeIndex}
-              />
+              <IntakePlaceholder />
             ) : (
               <>
                 {/* Header in Left Canvas */}
