@@ -88,25 +88,25 @@ const LIBRARY: WorkspaceAsset[] = [
   },
   {
     id: "wa-pack",
-    name: "{brand}_200mg_Pack_Front.png",
+    name: "{brand}_{v0}_Pack_Front.png",
     kind: "image",
     role: "product",
     note: "Hero packshot, front of pack",
     origin: "HCP Launch Film",
     size: "4.2 MB",
-    variation: "200mg tablet",
+    variation: "{v0}",
     previewUrl:
       "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
   },
   {
     id: "wa-device",
-    name: "{brand}_Autoinjector_3Q.png",
+    name: "{brand}_{v1}_3Q.png",
     kind: "image",
     role: "product",
-    note: "Device at three-quarter angle",
+    note: "Pack at three-quarter angle",
     origin: "Field Detail Aid",
     size: "2.8 MB",
-    variation: "Autoinjector pen",
+    variation: "{v1}",
     previewUrl:
       "https://images.unsplash.com/photo-1563213126-a4273aed2016?auto=format&fit=crop&w=400&q=80",
   },
@@ -133,12 +133,36 @@ const LIBRARY: WorkspaceAsset[] = [
   },
 ];
 
-/** The brand's history, with its name written into the filenames. */
+/** "10 mg · 10s strip" as a filename would have been written. */
+function slug(label: string): string {
+  return label.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+/**
+ * The brand's history, with its name and its real presentations written into
+ * the filenames.
+ *
+ * The two packshots used to be hard-coded to a 200mg tablet and an
+ * autoinjector pen, which is fine until the brand is neither — an oral
+ * antihypertensive does not have an autoinjector, and a suggested asset
+ * tagged with a variation the project has never heard of cannot be filed.
+ */
 export function workspaceAssets(brandName: string, role: WorkspaceAssetRole): WorkspaceAsset[] {
   const brand = brandName || "Brand";
+  const options = brandVariations(brandName);
+  const variationAt = (index: number) => options[index] ?? options[0] ?? "";
+  const fill = (text: string, asFilename: boolean) =>
+    text
+      .replace(/\{brand\}/g, brand)
+      .replace(/\{v(\d)\}/g, (_, i) => {
+        const label = variationAt(Number(i));
+        return asFilename ? slug(label) : label;
+      });
+
   return LIBRARY.filter((asset) => asset.role === role).map((asset) => ({
     ...asset,
-    name: asset.name.replace(/\{brand\}/g, brand),
+    name: fill(asset.name, true),
+    variation: asset.variation ? fill(asset.variation, false) : undefined,
   }));
 }
 
@@ -177,7 +201,7 @@ function OriginTag({ source }: { source: "swishx" | "workspace" }) {
           : "border-hair-2 bg-subtle text-ink-3"
       )}
     >
-      {source === "swishx" ? "SwishX" : "Workspace"}
+      {source === "swishx" ? "From SwishX" : "From Workspace"}
     </span>
   );
 }

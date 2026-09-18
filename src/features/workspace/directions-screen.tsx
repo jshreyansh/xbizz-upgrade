@@ -1772,7 +1772,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         return (
                           <div>
                             <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
-                              From your workspace
+                              Suggested from platform
                             </span>
                             <AssetStrip>
                               {reusable.map((asset) => (
@@ -1893,7 +1893,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         return (
                           <div>
                             <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
-                              Referenced before
+                              Suggested from platform
                             </span>
                             <AssetStrip>
                               {reusable.map((asset) => (

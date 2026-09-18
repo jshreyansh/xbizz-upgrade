@@ -6,7 +6,6 @@ import {
   TriangleAlert,
   ShieldCheck,
   Eye,
-  Check,
   ChevronDown,
   Plus,
   X,
@@ -205,42 +204,55 @@ export function ResearchSourcesContent({
       )}
 
       {/* Where the claims come from.
-          Three mutually exclusive options that between them fit on one line,
-          so they are one row of segments rather than three cards. The cards
-          carried a sentence of description each, which is three sentences
-          restating three titles that already say it — and about a fifth of
-          this accordion's height. An option that cannot be honoured keeps its
-          reason in the tooltip, and the empty states below say it in full. */}
-      <div className="flex w-full gap-1.5 rounded-control border border-hair-2 bg-canvas p-1">
-        {[
-          { id: "both" as const, title: "Dossiers + my files", missing: "Needs both an approved dossier and at least one attachment" },
-          { id: "my-sources" as const, title: "Only my files", missing: "Attach a file to use this" },
-          { id: "swishx-only" as const, title: "Only SwishX dossiers", missing: "No approved dossier exists for this request" },
-        ].map((opt) => {
-          const isSelected = sourceGroundingMode === opt.id;
-          const available = modeAvailable[opt.id];
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              disabled={!available}
-              aria-pressed={isSelected}
-              title={available ? undefined : opt.missing}
-              onClick={() => onSetSourceGroundingMode(opt.id)}
-              className={cn(
-                "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-glyph px-2.5 py-1.5 text-label font-bold transition",
-                !available
-                  ? "cursor-not-allowed text-ink-4 opacity-55"
-                  : isSelected
-                  ? "cursor-pointer bg-card text-brand-deep shadow-2xs ring-1 ring-brand/30"
-                  : "cursor-pointer text-ink-2 hover:bg-card/70 hover:text-ink"
-              )}
-            >
-              {isSelected && <Check className="size-3 shrink-0 stroke-[3] text-brand" />}
-              <span className="truncate">{opt.title}</span>
-            </button>
-          );
-        })}
+          It was a segmented bar, which is a control for switching views, not
+          for answering a question — and the question itself was never asked,
+          so three titles sat there with nothing saying what they were an
+          answer to. A question and three radio chips: one line, one choice,
+          and the shape of the control says only one can be true. An option
+          that cannot be honoured keeps its reason in the tooltip, and the
+          empty states below say it in full. */}
+      <div className="space-y-2">
+        <span className="block text-label font-bold text-ink-2">Ground the claims in:</span>
+        <div role="radiogroup" aria-label="Ground the claims in" className="flex flex-wrap gap-1.5">
+          {[
+            { id: "both" as const, title: "Suggested + My Files", missing: "Needs both an approved dossier and at least one attachment" },
+            { id: "my-sources" as const, title: "Only My Files", missing: "Attach a file to use this" },
+            { id: "swishx-only" as const, title: "Only From Suggested", missing: "No approved dossier exists for this request" },
+          ].map((opt) => {
+            const isSelected = sourceGroundingMode === opt.id;
+            const available = modeAvailable[opt.id];
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                disabled={!available}
+                title={available ? undefined : opt.missing}
+                onClick={() => onSetSourceGroundingMode(opt.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-chip border px-3 py-1.5 text-label font-semibold transition-all",
+                  !available
+                    ? "cursor-not-allowed border-hair-2 bg-canvas text-ink-4 opacity-55"
+                    : isSelected
+                    ? "cursor-pointer border-brand bg-tint font-bold text-brand-deep shadow-2xs"
+                    : "cursor-pointer border-hair-2 bg-card text-ink-2 hover:border-hair-3 hover:bg-subtle"
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "grid size-3.5 shrink-0 place-items-center rounded-full border transition-colors",
+                    isSelected ? "border-brand bg-brand" : "border-hair-3 bg-card"
+                  )}
+                >
+                  {isSelected && <span className="size-1.5 rounded-full bg-card" />}
+                </span>
+                <span>{opt.title}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* With nothing at all to offer there is nothing to disclose, so the
