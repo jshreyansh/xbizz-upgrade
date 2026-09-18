@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Plus, Play } from "lucide-react";
+import { FileText, Pencil, Play, Plus, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /**
@@ -262,6 +262,134 @@ export function MediaAssetTile({
         </span>
         {origin && <span className="block truncate text-micro text-ink-4">{origin}</span>}
       </div>
+    </div>
+  );
+}
+
+/* ── One grid for every kind of attached media ─────────────────────────────
+ *
+ * Product packshots and creative references are the same interaction wearing
+ * two labels: attached media with a preview and a note, a tile to add more,
+ * and a strip of what earlier projects used. They were built twice — the
+ * references list came out as rows of filenames with a dashed upload block
+ * three times the height of a thumbnail — so this is the one definition.
+ */
+
+export interface AttachedMedia {
+  id: string;
+  name: string;
+  note?: string;
+  previewUrl?: string;
+  kind: "image" | "video";
+  /** "4.2 MB", shown under the name when known. */
+  size?: string;
+}
+
+export function MediaAttachmentGrid({
+  items,
+  onUpload,
+  uploadLabel,
+  uploadHint = "PNG, JPG, MP4",
+  onRemove,
+  onEditNote,
+}: {
+  items: AttachedMedia[];
+  onUpload: () => void;
+  uploadLabel: string;
+  uploadHint?: string;
+  onRemove: (id: string) => void;
+  onEditNote?: (item: AttachedMedia) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="group relative flex flex-col overflow-hidden rounded-control border border-hair bg-card shadow-2xs transition-all hover:shadow-xs"
+        >
+          <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden bg-[#1a2b26]">
+            {item.kind === "video" && item.previewUrl ? (
+              <video
+                src={item.previewUrl}
+                muted
+                playsInline
+                preload="metadata"
+                onLoadedData={(e) => {
+                  if (e.currentTarget.currentTime === 0) e.currentTarget.currentTime = 0.1;
+                }}
+                className="size-full object-cover"
+              />
+            ) : item.previewUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={item.previewUrl}
+                alt={item.name}
+                className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : null}
+            {item.kind === "video" && (
+              <span className="pointer-events-none absolute inset-0 grid place-items-center">
+                <span className="grid size-8 place-items-center rounded-full bg-white/85 text-black shadow-md">
+                  <Play className="ml-0.5 size-3.5 fill-black" />
+                </span>
+              </span>
+            )}
+            <span className="absolute bottom-2 left-2 rounded-glyph bg-black/60 px-1.5 py-0.5 text-micro font-bold uppercase text-white backdrop-blur-xs">
+              {item.kind}
+            </span>
+            <button
+              type="button"
+              onClick={() => onRemove(item.id)}
+              title={`Remove ${item.name}`}
+              aria-label={`Remove ${item.name}`}
+              className="absolute right-2 top-2 grid size-6 cursor-pointer place-items-center rounded-full bg-black/60 text-white backdrop-blur-xs transition hover:bg-danger"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+
+          <div className="min-w-0 p-2.5">
+            <span className="block truncate text-body font-bold text-ink">{item.name}</span>
+            {item.note && (
+              <span className="mt-0.5 flex items-start gap-1 text-caption text-ink-3">
+                <span className="line-clamp-2 min-w-0 flex-1" title={item.note}>
+                  {item.note}
+                </span>
+                {onEditNote && (
+                  <button
+                    type="button"
+                    onClick={() => onEditNote(item)}
+                    aria-label={`Edit note on ${item.name}`}
+                    title="Edit note"
+                    className="grid size-4 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-brand"
+                  >
+                    <Pencil className="size-2.5" />
+                  </button>
+                )}
+              </span>
+            )}
+            {item.size && (
+              <span className="mt-0.5 block text-caption font-medium text-ink-4">{item.size}</span>
+            )}
+          </div>
+        </div>
+      ))}
+
+      {/* The uploader is a tile in the same grid, so adding one more is the
+          same size as the ones already there. */}
+      <button
+        type="button"
+        onClick={onUpload}
+        className="flex min-h-[110px] cursor-pointer flex-col items-center justify-center gap-2 rounded-control border-2 border-dashed border-brand/20 bg-card p-4 text-center transition hover:border-brand hover:bg-tint"
+      >
+        <span className="grid size-8 place-items-center rounded-full bg-tint text-brand">
+          <Plus className="size-4" />
+        </span>
+        <span>
+          <span className="block text-body font-bold text-brand">{uploadLabel}</span>
+          <span className="mt-0.5 block text-caption text-ink-3">{uploadHint}</span>
+        </span>
+      </button>
     </div>
   );
 }

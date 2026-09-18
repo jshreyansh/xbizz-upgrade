@@ -56,7 +56,12 @@ import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-mod
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
-import { AssetStrip, MediaAssetTile, workspaceAssets } from "@/features/workspace/workspace-assets";
+import {
+  AssetStrip,
+  MediaAssetTile,
+  MediaAttachmentGrid,
+  workspaceAssets,
+} from "@/features/workspace/workspace-assets";
 import {
   ChatAttachmentRow,
   useChatAttachments,
@@ -325,10 +330,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    * Hoisted with the other hooks, above the early return at the top.
    */
   const [referenceList, setReferenceList] = useState<
-    Array<{ id: string; name: string; kind: "image" | "video"; note: string }>
+    Array<{ id: string; name: string; kind: "image" | "video"; note: string; previewUrl?: string }>
   >([]);
   const [pendingReference, setPendingReference] = useState<
-    Array<{ id: string; name: string; kind: "image" | "video" }>
+    Array<{ id: string; name: string; kind: "image" | "video"; previewUrl?: string }>
   >([]);
   const [editingReference, setEditingReference] = useState<{ id: string; name: string; note: string } | null>(null);
   /* Files attached to the next chat message. Hoisted with the other hooks,
@@ -1104,6 +1109,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             name: f.name,
             kind: (f.kind === "video" ? "video" : "image") as "image" | "video",
             note: text.trim(),
+            previewUrl: f.previewUrl,
           })),
         ]);
         setOpenSection("references");
@@ -1705,92 +1711,38 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {productMediaList.map((media) => (
-                          <div
-                            key={media.id}
-                            className="group relative rounded-control border border-hair bg-card overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col"
-                          >
-                            <div className="relative aspect-video w-full bg-[#1a4435] overflow-hidden flex items-center justify-center">
-                              <img
-                                src={media.preview}
-                                alt={media.name}
-                                className="size-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                              <span className="absolute bottom-2 left-2 rounded-glyph bg-black/60 px-1.5 py-0.5 text-micro font-bold text-white uppercase backdrop-blur-xs">
-                                {media.type}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setProductMediaList((prev) => prev.filter((m) => m.id !== media.id))}
-                                className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-black/60 text-white hover:bg-danger transition cursor-pointer backdrop-blur-xs"
-                                title="Remove media"
-                              >
-                                <X className="size-3.5" />
-                              </button>
-                            </div>
-
-                            <div className="p-2.5">
-                              <span className="block truncate text-body font-bold text-ink">
-                                {media.name}
-                              </span>
-                              {/* What you said it is for, on the asset itself. */}
-                              {media.note && (
-                                <span className="mt-0.5 flex items-start gap-1 text-caption text-ink-3">
-                                  <span className="line-clamp-2 min-w-0 flex-1" title={media.note}>
-                                    {media.note}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setEditingMedia({ id: media.id, name: media.name, note: media.note ?? "" })
-                                    }
-                                    aria-label={`Edit note on ${media.name}`}
-                                    title="Edit note"
-                                    className="grid size-4 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-brand"
-                                  >
-                                    <Pencil className="size-2.5" />
-                                  </button>
-                                </span>
-                              )}
-                              <span className="text-caption text-ink-4 block mt-0.5 font-medium">
-                                {media.size} · Uploaded
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            /* Held, not attached: what the packshot is for is
-                               asked before it joins the plan, the same as a
-                               source file. */
-                            setPendingMedia([
-                              {
-                                id: `media-${Date.now()}`,
-                                name: `${brandName}_Autoinjector_3D_Packshot.png`,
-                                type: "image" as const,
-                                preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
-                                size: "4.2 MB",
-                              },
-                            ]);
-                          }}
-                          className="flex min-h-[110px] flex-col items-center justify-center gap-2 rounded-control border-2 border-dashed border-brand/20 bg-card p-4 text-center hover:bg-tint hover:border-brand transition cursor-pointer"
-                        >
-                          <div className="grid size-8 place-items-center rounded-full bg-tint text-brand">
-                            <Plus className="size-4" />
-                          </div>
-                          <div>
-                            <span className="block text-body font-bold text-brand">
-                              {productMediaList.length === 0 ? "Upload Product Photos / Videos" : "Add More Product Media"}
-                            </span>
-                            <span className="text-caption text-ink-3 mt-0.5 block">
-                              PNG, JPG, MP4 · Click to attach asset
-                            </span>
-                          </div>
-                        </button>
-                      </div>
+                      <MediaAttachmentGrid
+                        items={productMediaList.map((m) => ({
+                          id: m.id,
+                          name: m.name,
+                          note: m.note,
+                          previewUrl: m.preview,
+                          kind: m.type,
+                          size: m.size ? `${m.size} · Uploaded` : undefined,
+                        }))}
+                        uploadLabel={
+                          productMediaList.length === 0 ? "Upload product photos / videos" : "Add more media"
+                        }
+                        onUpload={() =>
+                          /* Held, not attached: what the packshot is for is
+                             asked before it joins the plan, the same as a
+                             source file. */
+                          setPendingMedia([
+                            {
+                              id: `media-${Date.now()}`,
+                              name: `${brandName}_Autoinjector_3D_Packshot.png`,
+                              type: "image" as const,
+                              preview:
+                                "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                              size: "4.2 MB",
+                            },
+                          ])
+                        }
+                        onRemove={(id) => setProductMediaList((prev) => prev.filter((m) => m.id !== id))}
+                        onEditNote={(item) =>
+                          setEditingMedia({ id: item.id, name: item.name, note: item.note ?? "" })
+                        }
+                      />
 
                       {/* Cleared artwork this brand already has, shown as
                           artwork. A filename and a plus said nothing about
@@ -1888,67 +1840,30 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         composition. <strong className="font-bold text-ink-2">Grounds no claims.</strong>
                       </p>
 
-                      {referenceList.length > 0 && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                          {referenceList.map((ref) => (
-                            <div
-                              key={ref.id}
-                              className="flex items-start gap-2 rounded-control border border-hair-2 bg-card px-2.5 py-2"
-                            >
-                              {ref.kind === "video" ? (
-                                <Film className="mt-0.5 size-3.5 shrink-0 text-brand" />
-                              ) : (
-                                <ImageIcon className="mt-0.5 size-3.5 shrink-0 text-brand" />
-                              )}
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate text-body font-bold text-ink">{ref.name}</span>
-                                <span className="block truncate text-caption text-ink-3" title={ref.note}>
-                                  {ref.note}
-                                </span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setEditingReference({ id: ref.id, name: ref.name, note: ref.note })
-                                }
-                                aria-label={`Edit note on ${ref.name}`}
-                                title="Edit note"
-                                className="grid size-5 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-brand cursor-pointer"
-                              >
-                                <Pencil className="size-3" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setReferenceList((prev) => prev.filter((r) => r.id !== ref.id))}
-                                aria-label={`Remove ${ref.name}`}
-                                className="grid size-5 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-danger cursor-pointer"
-                              >
-                                <X className="size-3" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() =>
+                      <MediaAttachmentGrid
+                        items={referenceList.map((r) => ({
+                          id: r.id,
+                          name: r.name,
+                          note: r.note,
+                          previewUrl: r.previewUrl,
+                          kind: r.kind,
+                        }))}
+                        uploadLabel={referenceList.length === 0 ? "Upload a reference" : "Add another"}
+                        onUpload={() =>
                           setPendingReference([
                             {
                               id: `ref-${Date.now()}`,
                               name: `${brandName}_Reference_Film.mp4`,
                               kind: "video" as const,
+                              previewUrl: "/reel-moa.mp4",
                             },
                           ])
                         }
-                        className="flex w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-control border-2 border-dashed border-brand/20 bg-card p-4 text-center transition hover:border-brand hover:bg-tint"
-                      >
-                        <span className="grid size-8 place-items-center rounded-full bg-tint text-brand">
-                          <Plus className="size-4" />
-                        </span>
-                        <span className="text-body font-bold text-brand">Upload a reference</span>
-                        <span className="text-caption text-ink-3">PNG, JPG, MP4</span>
-                      </button>
+                        onRemove={(id) => setReferenceList((prev) => prev.filter((r) => r.id !== id))}
+                        onEditNote={(item) =>
+                          setEditingReference({ id: item.id, name: item.name, note: item.note ?? "" })
+                        }
+                      />
 
                       {/* What earlier projects referenced, shown as what it is. */}
                       {(() => {
@@ -1979,6 +1894,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                         name: asset.name,
                                         kind: asset.kind === "video" ? "video" : "image",
                                         note: asset.note,
+                                        previewUrl: asset.previewUrl,
                                       },
                                     ])
                                   }

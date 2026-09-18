@@ -17,8 +17,6 @@ import {
   ShieldCheck,
   Target,
   Palette,
-  Upload,
-  X,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +40,12 @@ import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scen
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
-import { AssetStrip, MediaAssetTile, workspaceAssets } from "@/features/workspace/workspace-assets";
+import {
+  AssetStrip,
+  MediaAssetTile,
+  MediaAttachmentGrid,
+  workspaceAssets,
+} from "@/features/workspace/workspace-assets";
 import {
   ChatAttachmentRow,
   useChatAttachments,
@@ -349,7 +352,9 @@ export function InfographicDirectionsScreen() {
   const [objective, setObjective] = useState<string>("adoption");
   const [selectedAngles, setSelectedAngles] = useState<string[]>(["Product Introduction", "Mechanism of Action", "Indications"]);
   /** Reference material: how it should look, not what it may say. */
-  const [referenceList, setReferenceList] = useState<Array<{ id: string; name: string; note: string }>>([]);
+  const [referenceList, setReferenceList] = useState<
+    Array<{ id: string; name: string; note: string; previewUrl?: string; kind?: "image" | "video" }>
+  >([]);
   const [packshots, setPackshots] = useState<Array<{ id: string; name: string; url: string }>>([
     {
       id: "packshot-1",
@@ -1066,25 +1071,19 @@ export function InfographicDirectionsScreen() {
 
                       <div>
                         <div className="text-body font-bold text-ink mb-1">Product packshots (Optional)</div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          {packshots.map((ps) => (
-                            <div key={ps.id} className="relative group rounded-control border border-hair-2 overflow-hidden bg-card p-1 shadow-2xs">
-                              <img src={ps.url} alt={ps.name} className="size-16 object-cover rounded-chip" />
-                              <span className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-micro font-bold px-1 rounded-glyph truncate">
-                                {ps.name}
-                              </span>
-                            </div>
-                          ))}
-                          <input type="file" ref={fileUploadRef} className="hidden" />
-                          <button
-                            type="button"
-                            onClick={() => fileUploadRef.current?.click()}
-                            className="h-16 px-4 rounded-control border-2 border-dashed border-hair-3 hover:border-brand flex flex-col items-center justify-center gap-1 text-label font-bold text-ink-2 hover:text-brand bg-card cursor-pointer transition"
-                          >
-                            <Upload className="size-4" />
-                            <span>Add product image</span>
-                          </button>
-                        </div>
+                        <MediaAttachmentGrid
+                          items={packshots.map((ps) => ({
+                            id: ps.id,
+                            name: ps.name,
+                            previewUrl: ps.url,
+                            kind: "image" as const,
+                          }))}
+                          uploadLabel={packshots.length === 0 ? "Upload product image" : "Add another"}
+                          uploadHint="PNG, JPG"
+                          onUpload={() => fileUploadRef.current?.click()}
+                          onRemove={(id) => setPackshots((prev) => prev.filter((ps) => ps.id !== id))}
+                        />
+                        <input type="file" ref={fileUploadRef} className="hidden" />
 
                         {/* Cleared artwork this brand already has, shown as
                             artwork rather than as a filename. */}
@@ -1206,32 +1205,18 @@ export function InfographicDirectionsScreen() {
                         and palette. <strong className="font-bold text-ink-2">Grounds no claims.</strong>
                       </p>
 
-                      {referenceList.length > 0 && (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                          {referenceList.map((ref) => (
-                            <div
-                              key={ref.id}
-                              className="flex items-start gap-2 rounded-control border border-hair-2 bg-card px-2.5 py-2"
-                            >
-                              <ImageIcon className="mt-0.5 size-3.5 shrink-0 text-brand" />
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate text-body font-bold text-ink">{ref.name}</span>
-                                <span className="block truncate text-caption text-ink-3" title={ref.note}>
-                                  {ref.note}
-                                </span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setReferenceList((prev) => prev.filter((r) => r.id !== ref.id))}
-                                aria-label={`Remove ${ref.name}`}
-                                className="grid size-5 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-danger cursor-pointer"
-                              >
-                                <X className="size-3" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <MediaAttachmentGrid
+                        items={referenceList.map((r) => ({
+                          id: r.id,
+                          name: r.name,
+                          note: r.note,
+                          previewUrl: r.previewUrl,
+                          kind: r.kind ?? "image",
+                        }))}
+                        uploadLabel={referenceList.length === 0 ? "Upload a reference" : "Add another"}
+                        onUpload={() => fileUploadRef.current?.click()}
+                        onRemove={(id) => setReferenceList((prev) => prev.filter((r) => r.id !== id))}
+                      />
 
                       {/* What earlier projects referenced, shown as what it is. */}
                       {(() => {
@@ -1257,7 +1242,13 @@ export function InfographicDirectionsScreen() {
                                   onAdd={() =>
                                     setReferenceList((prev) => [
                                       ...prev,
-                                      { id: `ref-${asset.id}-${Date.now()}`, name: asset.name, note: asset.note },
+                                      {
+                                        id: `ref-${asset.id}-${Date.now()}`,
+                                        name: asset.name,
+                                        note: asset.note,
+                                        previewUrl: asset.previewUrl,
+                                        kind: asset.kind === "video" ? ("video" as const) : ("image" as const),
+                                      },
                                     ])
                                   }
                                 />
