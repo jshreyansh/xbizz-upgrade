@@ -278,7 +278,6 @@ export function InfographicDirectionsScreen() {
             },
           ]
     );
-    setSourceGroundingMode(docs && docs.length > 0 ? "my-sources" : "both");
 
     // Latent, not found: the check runs on Confirm.
     setSourcesWillFail(scenario.inputs.sourcesVerify === false);
@@ -293,7 +292,6 @@ export function InfographicDirectionsScreen() {
   };
 
 
-  const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([
     {
       name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`,
@@ -793,13 +791,7 @@ export function InfographicDirectionsScreen() {
                   <CreativePlanSection
                     icon={ShieldCheck}
                     title="Research and Sources"
-                    summary={
-                      sourceGroundingMode === "both"
-                        ? `${brandName} Approved Dossier + ${uploadedDocs.length} custom files active`
-                        : sourceGroundingMode === "my-sources"
-                        ? `${uploadedDocs.length} custom files active · Dossier ignored`
-                        : `${brandName} Approved Dossier · 214 claims`
-                    }
+                    summary={`${brandName} Approved Dossier + ${uploadedDocs.length} custom files active`}
                     state={planState(sectionNeedsYou("sources"))}
                     source={research.researching ? `researching ${research.current}/${research.total}` : "from source"}
                     error={foundBlock?.section === "sources" ? foundBlock : null}
@@ -809,17 +801,11 @@ export function InfographicDirectionsScreen() {
                   >
                     <ResearchSourcesContent
                       brandName={brandName || "Velmora"}
-                      sourceGroundingMode={sourceGroundingMode}
-                      onSetSourceGroundingMode={setSourceGroundingMode}
                       uploadedDocs={uploadedDocs}
                       onSetUploadedDocs={setUploadedDocs}
                       onPreviewDossier={(d) => setPreviewDossier(d)}
                       onContinue={() => advanceFrom("sources")}
                       research={research}
-                      /* The image flow keeps its dossiers for now; the blocked
-                         cases are wired on the video plan screen only. */
-                      hasDossiers
-                      onEditPrompt={() => setOpenSection("sources")}
                     />
                   </CreativePlanSection>
 

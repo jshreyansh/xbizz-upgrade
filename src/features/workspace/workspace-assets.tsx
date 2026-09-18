@@ -2,6 +2,7 @@
 
 import { Check, Eye, FileText, Pencil, Play, Plus, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 
 /**
@@ -271,12 +272,15 @@ export function DocAssetTile({
   added = false,
   onPreview,
   action,
+  featured = false,
 }: {
   name: string;
   note: string;
   origin?: string;
   source: "swishx" | "workspace";
   onAdd?: () => void;
+  /** Our own approved dossier: the one tile that is not somebody's upload. */
+  featured?: boolean;
   /** Whether this one has been counted in. */
   added?: boolean;
   /** Opens the document itself, so taking it in is not a guess from a filename. */
@@ -285,7 +289,14 @@ export function DocAssetTile({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="group flex w-[248px] shrink-0 flex-col gap-1.5 rounded-control border border-hair-2 bg-card p-2.5 shadow-2xs transition hover:border-brand/40">
+    <div
+      className={cn(
+        "group flex w-[248px] shrink-0 flex-col gap-1.5 rounded-control border p-2.5 shadow-2xs transition",
+        featured
+          ? "border-brand/35 bg-tint/50 ring-1 ring-brand/10 hover:border-brand/60"
+          : "border-hair-2 bg-card hover:border-brand/40"
+      )}
+    >
       <div className="flex items-center justify-between gap-2">
         <OriginTag source={source} />
         <span className="flex shrink-0 items-center gap-1">
@@ -310,7 +321,11 @@ export function DocAssetTile({
         </span>
       </div>
       <div className="flex min-w-0 items-start gap-1.5">
-        <FileText className="mt-0.5 size-3.5 shrink-0 text-ink-3" />
+        {featured ? (
+          <LogoMark size={14} className="mt-0.5 shrink-0 text-brand" title="" />
+        ) : (
+          <FileText className="mt-0.5 size-3.5 shrink-0 text-ink-3" />
+        )}
         <span className="min-w-0">
           <span className="block truncate text-body font-bold text-ink">{name}</span>
           <span className="block truncate text-caption text-ink-3" title={note}>

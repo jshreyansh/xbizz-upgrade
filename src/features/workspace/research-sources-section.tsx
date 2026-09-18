@@ -4,8 +4,6 @@ import { useRef, useState } from "react";
 import {
   Pencil,
   TriangleAlert,
-  ShieldCheck,
-  Eye,
   ChevronDown,
   Plus,
   X,
@@ -40,6 +38,7 @@ import type { DossierPreviewData } from "@/features/workspace/dossier-preview-mo
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
 import { groundingDossiers } from "@/features/workspace/grounding-dossiers";
 import { AssetStrip, DocAssetTile, workspaceAssets, type WorkspaceAsset } from "@/features/workspace/workspace-assets";
+import { LogoMark } from "@/components/ui/logo-mark";
 
 /**
  * A shelf document, opened.
@@ -82,20 +81,14 @@ function workspaceDocPreview(asset: WorkspaceAsset, molecule: string): DossierPr
 
 export interface ResearchSourcesSectionProps {
   brandName: string;
-  sourceGroundingMode: "both" | "my-sources" | "swishx-only";
-  onSetSourceGroundingMode: (mode: "both" | "my-sources" | "swishx-only") => void;
   uploadedDocs: UploadedDoc[];
   onSetUploadedDocs: React.Dispatch<React.SetStateAction<UploadedDoc[]>>;
   onPreviewDossier: (dossier: DossierPreviewData) => void;
   onContinue: () => void;
   /** Live grounding research, if the plan has just been generated. */
   research?: PlanResearch;
-  /** Whether SwishX has approved dossiers for this case at all. */
-  hasDossiers: boolean;
   /** Set when the attached files were checked and held nothing usable. */
   sourcesUnusable?: boolean;
-  /** Open the prompt for editing — the other way to supply missing context. */
-  onEditPrompt: () => void;
   /** Markets whose approved labels are both selected, if that has happened. */
   conflictingMarkets?: string[];
   /** Keep one market's label and drop the others. */
@@ -104,16 +97,12 @@ export interface ResearchSourcesSectionProps {
 
 export function ResearchSourcesContent({
   brandName,
-  sourceGroundingMode,
-  onSetSourceGroundingMode,
   uploadedDocs,
   onSetUploadedDocs,
   onPreviewDossier,
   onContinue,
   research,
-  hasDossiers,
   sourcesUnusable = false,
-  onEditPrompt,
   conflictingMarkets = [],
   onResolveConflict,
 }: ResearchSourcesSectionProps) {
@@ -143,65 +132,16 @@ export function ResearchSourcesContent({
       ? "levomilnacipran ER"
       : "tirzelamide";
 
-  const hasUserDocs = uploadedDocs.length > 0;
-
   const prebuiltDossiers = groundingDossiers(brandName, molecule);
   /* What earlier projects on this brand used, minus whatever is already in
      My files — nothing is offered twice. */
   const reusableDocs = workspaceAssets(brandName, "source").filter(
     (asset) => !uploadedDocs.some((doc) => doc.name === asset.name)
   );
-  /**
-   * Suggested is not only our dossiers. A brand with no cleared dossier for
-   * this audience can still have three of its own approved documents on the
-   * shelf, and greying out both suggested options in that case said there was
-   * nothing to ground in while the material sat on screen.
-   */
-  const hasSuggested = hasDossiers || reusableDocs.length > 0;
-
-  /**
-   * A grounding mode you cannot honour is not an option. Offering "Only My
-   * Files" with nothing attached invites a choice that produces an ungrounded
-   * script, so each mode is enabled only where its material exists — and the
-   * option comes back the moment the user uploads something.
-   */
-  const modeAvailable = {
-    "both": hasSuggested && hasUserDocs,
-    "my-sources": hasUserDocs,
-    "swishx-only": hasSuggested,
-  } as const;
-  const nothingToGroundIn = !hasSuggested && !hasUserDocs;
 
   return (
     <div className="space-y-3">
-      {nothingToGroundIn && (
-        /* Stated plainly and at the top: there is no combination of these
-           controls that produces a grounded script, so the user needs to
-           supply something rather than keep choosing. */
-        <div className="rounded-panel border border-danger-line bg-danger-bg p-3.5">
-          <div className="flex items-start gap-2.5">
-            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
-            <div className="min-w-0">
-              <p className="text-body font-extrabold text-danger">Nothing to ground this in</p>
-              <p className="mt-0.5 text-label leading-snug text-ink-2">
-                There is no approved {brandName || "brand"} dossier for this request and no files
-                attached. Add a file, or add the missing context to your prompt, before a script
-                can be written.
-              </p>
-              <div className="mt-2.5 flex flex-wrap gap-2">
-                <Button size="sm" variant="primary" onClick={() => docUploadRef.current?.click()} className="text-label font-bold cursor-pointer">
-                  <Plus className="size-3.5" /> Attach files
-                </Button>
-                <Button size="sm" variant="secondary" onClick={onEditPrompt} className="text-label font-bold cursor-pointer">
-                  Edit the prompt
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {sourcesUnusable && !nothingToGroundIn && (
+      {sourcesUnusable && (
         /* The files are present but were checked and hold nothing usable. */
         <div className="rounded-panel border border-danger-line bg-danger-bg p-3.5">
           <div className="flex items-start gap-2.5">
@@ -252,76 +192,11 @@ export function ResearchSourcesContent({
         </div>
       )}
 
-      {/* Where the claims come from.
-          It was a segmented bar, which is a control for switching views, not
-          for answering a question — and the question itself was never asked,
-          so three titles sat there with nothing saying what they were an
-          answer to. A question and three radio chips: one line, one choice,
-          and the shape of the control says only one can be true. An option
-          that cannot be honoured keeps its reason in the tooltip, and the
-          empty states below say it in full. */}
-      <div className="space-y-2">
-        <span className="block text-label font-bold text-ink-2">Ground the claims in:</span>
-        <div role="radiogroup" aria-label="Ground the claims in" className="flex flex-wrap gap-1.5">
-          {[
-            { id: "both" as const, title: "Suggested + My Files", missing: "Needs both an approved dossier and at least one attachment" },
-            { id: "my-sources" as const, title: "Only My Files", missing: "Attach a file to use this" },
-            { id: "swishx-only" as const, title: "Only From Suggested", missing: "No approved dossier exists for this request" },
-          ].map((opt) => {
-            const isSelected = sourceGroundingMode === opt.id;
-            const available = modeAvailable[opt.id];
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                disabled={!available}
-                title={available ? undefined : opt.missing}
-                onClick={() => onSetSourceGroundingMode(opt.id)}
-                className={cn(
-                  "flex items-center gap-2 rounded-chip border px-3 py-1.5 text-label font-semibold transition-all",
-                  !available
-                    ? "cursor-not-allowed border-hair-2 bg-canvas text-ink-4 opacity-55"
-                    : isSelected
-                    ? "cursor-pointer border-brand bg-tint font-bold text-brand-deep shadow-2xs"
-                    : "cursor-pointer border-hair-2 bg-card text-ink-2 hover:border-hair-3 hover:bg-subtle"
-                )}
-              >
-                <span
-                  aria-hidden
-                  className={cn(
-                    "grid size-3.5 shrink-0 place-items-center rounded-full border transition-colors",
-                    isSelected ? "border-brand bg-brand" : "border-hair-3 bg-card"
-                  )}
-                >
-                  {isSelected && <span className="size-1.5 rounded-full bg-card" />}
-                </span>
-                <span>{opt.title}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* With nothing at all to offer there is nothing to disclose, so the
-          tray becomes the one line it would have contained. A collapsible
-          that opens onto an empty state is two clicks to learn there is no
-          news. The workspace's own files count as something to offer: no
-          cleared dossier does not mean no material. */}
-      {!hasDossiers && reusableDocs.length === 0 && !researching ? (
-        <p className="flex items-center gap-2 rounded-panel border border-hair bg-[#f4f6f3] px-3 py-2 text-label text-ink-3">
-          <ShieldCheck className="size-3.5 shrink-0 text-ink-4" />
-          <span className="min-w-0">
-            No cleared {brandName || "brand"} dossier for this audience. Your own files are the
-            grounding.
-          </span>
-        </p>
-      ) : (
-
-      /* Verified dossiers. Reference material, not a decision, so it sits
-         BELOW the choice and starts collapsed — except while the grounding
-         research runs, which plays out inside it. */
+      {/* What the platform has for this brand — our approved dossier and the
+          brand's own documents from earlier projects — offered first, because
+          it is the material you did not have to supply. There is no mode to
+          choose any more: you take what you want from here, and My files
+          below holds what you add yourself. */}
       <div className="rounded-panel bg-[#f4f6f3] border border-hair">
         <button
           type="button"
@@ -334,18 +209,15 @@ export function ResearchSourcesContent({
           )}
         >
           <div className="flex min-w-0 items-center gap-2">
-            <ShieldCheck className="size-3.5 shrink-0 text-ok" />
+            <LogoMark size={14} className="shrink-0 text-brand" title="" />
             <span className="truncate text-body font-extrabold text-ink">
               Suggested from platform
             </span>
             {/* The count is the point when it is zero: "we looked and there
                 are none" is information, where a missing tray reads as a
                 section that failed to load. */}
-            <span className={cn(
-              "shrink-0 rounded-chip border px-2 py-0.2 text-caption font-bold tabular-nums",
-              hasDossiers ? "border-hair-2 bg-card text-ink-3" : "border-danger-line bg-danger-bg text-danger"
-            )}>
-              {(hasDossiers ? prebuiltDossiers.length : 0) + reusableDocs.length} suggested
+            <span className="shrink-0 rounded-chip border border-hair-2 bg-card px-2 py-0.2 text-caption font-bold tabular-nums text-ink-3">
+              {prebuiltDossiers.length + reusableDocs.length} suggested
             </span>
             {researching && (
               <span className="shrink-0 rounded-chip border border-brand/20 bg-tint px-2 py-0.2 text-caption font-bold text-brand">
@@ -382,19 +254,6 @@ export function ResearchSourcesContent({
               </div>
             </div>
           )}
-          {/* Why there is no SwishX tile in the strip — one quiet line, not a
-              dashed full-width panel with centred text. With a dossier present
-              the tray reads fine; without one, that panel was a band of empty
-              card sitting on top of the tiles that are actually on offer. */}
-          {!hasDossiers && !researching && (
-            <p className="mb-2 flex items-center gap-1.5 text-caption text-ink-4">
-              <ShieldCheck className="size-3 shrink-0" />
-              <span className="min-w-0">
-                No cleared {brandName || "brand"} dossier for this audience.
-              </span>
-            </p>
-          )}
-
           {/* Ours and yours in one strip, tagged by where each came from.
               These were two stacked panels, which made one question — what can
               this be grounded in — look like two. It scrolls sideways rather
@@ -414,25 +273,26 @@ export function ResearchSourcesContent({
                 ))
               : (
                 <>
-                  {hasDossiers &&
-                    prebuiltDossiers.map((dossier, idx) => (
+                  {prebuiltDossiers.map((dossier, idx) => {
+                    const id = `sx-${idx}`;
+                    return (
                       <DocAssetTile
-                        key={`sx-${idx}`}
+                        key={id}
+                        featured
                         source="swishx"
                         name={dossier.name}
                         note={`${dossier.claims} approved claims`}
-                        action={
-                          <button
-                            type="button"
-                            onClick={() => onPreviewDossier(dossier)}
-                            className="focus-ring flex cursor-pointer items-center gap-1 rounded-chip border border-hair-2 bg-canvas px-2 py-0.5 text-label font-bold text-brand-deep transition hover:border-brand"
-                          >
-                            <Eye className="size-3" />
-                            View
-                          </button>
+                        origin={`${dossier.sections} sections`}
+                        added={considered.includes(id)}
+                        onAdd={() =>
+                          setConsidered((prev) =>
+                            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+                          )
                         }
+                        onPreview={() => onPreviewDossier(dossier)}
                       />
-                    ))}
+                    );
+                  })}
                   {reusableDocs.map((asset) => (
                     <DocAssetTile
                       key={asset.id}
@@ -457,11 +317,9 @@ export function ResearchSourcesContent({
           </div>
         )}
       </div>
-      )}
 
-      {/* Uploaded Documents Context */}
-      {(sourceGroundingMode === "both" || sourceGroundingMode === "my-sources" || nothingToGroundIn || sourcesUnusable) && (
-        <div className="space-y-1.5 border-t border-hair pt-2.5 animate-in fade-in duration-150">
+      {/* What you added yourself. */}
+      <div className="space-y-1.5 border-t border-hair pt-2.5">
           <div className="flex items-center justify-between">
             <span className="text-label font-bold uppercase tracking-wider text-ink-3">
               My files ({uploadedDocs.length})
@@ -570,8 +428,7 @@ export function ResearchSourcesContent({
             ))}
           </div>
 
-        </div>
-      )}
+      </div>
 
       {pending.length > 0 && (
         <FileNoteDialog

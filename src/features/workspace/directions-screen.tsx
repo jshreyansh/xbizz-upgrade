@@ -479,7 +479,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
      be derived from the plan rather than synced to it by an effect. */
   const [openOverride, setOpenOverride] = useState<PlanSectionId | null | undefined>(undefined);
   const setOpenSection = setOpenOverride;
-  const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>(
     () => defaultUploadedDocs(brandName)
   );
@@ -573,8 +572,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         // normal working files — not whichever files the last case left behind.
         : defaultUploadedDocs(brandName)
     );
-    // With nothing of ours to lean on, the user's own files are all there is.
-    setSourceGroundingMode(docs && docs.length > 0 ? "my-sources" : "both");
     // Whether those files hold anything is part of the case — but it is not
     // KNOWN until Confirm runs the check, so only the latent flag is set here.
     setSourcesWillFail(scenario.inputs.sourcesVerify === false);
@@ -644,27 +641,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    */
   const requestTooVague = !isRequestSpecific(brief);
 
-  const hasDossiers = selectedSourceIds.some((id) => {
-    const kind = planningSources.find((source) => source.id === id)?.kind;
-    return kind === "approved-source" || kind === "claims";
-  });
-  const hasUserDocs = uploadedDocs.length > 0;
-  const nothingToGroundIn = !hasDossiers && !hasUserDocs;
-
   /**
-   * The mode that is actually in force. Stored preference is kept so it
-   * returns when both sides are available again — the user asked for "both"
-   * once, and uploading a file should give them "both" back rather than
-   * leaving them on whatever we fell back to.
+   * The approved dossier is a given at this stage. Whether one exists was
+   * never a question the person planning could answer, and treating it as one
+   * meant the plan could block itself on a condition with no way out of it
+   * from here.
    */
-  const effectiveGroundingMode =
-    hasDossiers && hasUserDocs
-      ? sourceGroundingMode
-      : hasUserDocs
-      ? "my-sources"
-      : hasDossiers
-      ? "swishx-only"
-      : sourceGroundingMode;
+  const nothingToGroundIn = false;
 
   const openPromptEditor = () => {
     setPromptDraft(brief);
@@ -1341,13 +1324,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   <PlanSection
                     icon={ShieldCheck}
                     title="Research and Sources"
-                    summary={
-                      sourceGroundingMode === "both"
-                        ? `${brandName} Approved Dossier + ${uploadedDocs.length} custom files active`
-                        : sourceGroundingMode === "my-sources"
-                        ? `${uploadedDocs.length} custom files active · Dossier ignored`
-                        : `${brandName} Approved Dossier · 214 claims`
-                    }
+                    summary={`${brandName} Approved Dossier + ${uploadedDocs.length} custom files active`}
                     state={planState(sectionNeedsYou("sources"))}
                     source={
                       research.researching
@@ -1363,8 +1340,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   >
                     <ResearchSourcesContent
                       brandName={brandName || "Velmora"}
-                      sourceGroundingMode={effectiveGroundingMode}
-                      onSetSourceGroundingMode={setSourceGroundingMode}
                       uploadedDocs={uploadedDocs}
                       onSetUploadedDocs={(next) => {
                         setUploadedDocs(next);
@@ -1376,9 +1351,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       onPreviewDossier={(d) => setPreviewDossier(d)}
                       onContinue={() => advanceFrom("sources")}
                       research={research}
-                      hasDossiers={hasDossiers}
                       sourcesUnusable={sourcesUnusable}
-                      onEditPrompt={openPromptEditor}
                       conflictingMarkets={sourceConflictResolved ? [] : conflictingMarkets}
                       onResolveConflict={resolveSourceConflict}
                     />
