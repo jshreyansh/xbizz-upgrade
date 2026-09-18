@@ -12,7 +12,8 @@ import {
   Search,
   Target,
   X,
-  Plus,
+  FileImage,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -332,8 +333,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           </span>
 
           <div className="relative z-10 flex items-center gap-3">
+            {/* What is being made, not a generic "new thing" plus — the same
+                glyph the sidebar uses for this studio, so the modal says which
+                one you are in before you have read a word of it. */}
             <div className="grid size-9 place-items-center rounded-control bg-tint text-brand-deep border border-tint-line shadow-2xs">
-              <Plus className="size-4.5" strokeWidth={2.5} />
+              {assetType === "infographic" ? (
+                <FileImage className="size-4.5" strokeWidth={1.9} />
+              ) : (
+                <Video className="size-4.5" strokeWidth={1.9} />
+              )}
             </div>
             {/* Before there is anything to name it after, this is the modal's
                 title. Once audience and grounding are answered it becomes the
