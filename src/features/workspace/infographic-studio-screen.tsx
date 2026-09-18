@@ -885,6 +885,24 @@ export function InfographicStudioScreen() {
    * you wrote about your own work needs neither.
    */
   /**
+   * A teammate's comment, taken into the same list your own notes go into.
+   *
+   * It used to go straight to the agent as its own message, which made a
+   * reviewer's point a separate conversation from the change you were already
+   * drafting — and they are usually the same change. In the list it can be
+   * sent with whatever you mark up next, and resolved in one pass.
+   */
+  const addCommentAsSuggestion = (id: string) => {
+    const comment = comments.find((c) => c.id === id);
+    if (!comment) return;
+    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, sentToChat: true } : c)));
+    setActiveTab("assistant");
+    const label = `${comment.containerLabel} · ${comment.elementLabel}`;
+    suggestionQueue.add(label, comment.text);
+    showToast(`Added to suggestions · ${label}`);
+  };
+
+  /**
    * A note goes to the list above the input, and nowhere else yet. Nothing is
    * said to the agent until you send the batch — marking up a page should not
    * cost a round of conversation per note.
@@ -1927,7 +1945,7 @@ export function InfographicStudioScreen() {
                 medicalReviewDone={mlrCheckResolved}
                 regulatoryReviewDone={qaCheckResolved}
                 canClose={studioMode === "editor"}
-                onAddToChat={studioMode === "editor" ? sendCommentToAgent : undefined}
+                onAddAsSuggestion={studioMode === "editor" ? addCommentAsSuggestion : undefined}
                 onResolve={(id, note) => closeComment(id, "resolved", note)}
                 onReject={(id, note) => closeComment(id, "rejected", note)}
                 onPost={(text) => {

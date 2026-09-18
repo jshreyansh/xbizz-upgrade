@@ -642,6 +642,24 @@ export function StudioScreen() {
   };
 
   /**
+   * A teammate's comment, taken into the same list your own notes go into.
+   *
+   * It used to go straight to the agent as its own message, which made a
+   * reviewer's point a separate conversation from the change you were already
+   * drafting — and they are usually the same change. In the list it can be
+   * sent with whatever you mark up next, and resolved in one pass.
+   */
+  const addCommentAsSuggestion = (id: string) => {
+    const comment = comments.find((c) => c.id === id);
+    if (!comment) return;
+    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, sentToChat: true } : c)));
+    setActiveTab("assistant");
+    const label = `${comment.containerLabel} · ${comment.elementLabel}`;
+    suggestionQueue.add(label, comment.text);
+    showToast(`Added to suggestions · ${label}`);
+  };
+
+  /**
    * Handing the batch over: one message with every annotation in it, and the
    * strip empties because the list is in the chat now.
    *
@@ -3326,10 +3344,7 @@ export function StudioScreen() {
                 medicalReviewDone={mlrCheckResolved}
                 regulatoryReviewDone={qaCheckResolved}
                 canClose={!isReview}
-                onAddToChat={isReview ? undefined : (id) => {
-                  const comment = comments.find((c) => c.id === id);
-                  if (comment) sendCommentToAgent(comment);
-                }}
+                onAddAsSuggestion={isReview ? undefined : addCommentAsSuggestion}
                 onResolve={(id, note) => closeComment(id, "resolved", note)}
                 onReject={(id, note) => closeComment(id, "rejected", note)}
                 onPost={(text) => {

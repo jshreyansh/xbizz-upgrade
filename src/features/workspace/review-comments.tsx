@@ -24,7 +24,7 @@ export function ReviewComments({
   canClose = false,
   onResolve,
   onReject,
-  onAddToChat,
+  onAddAsSuggestion,
 }: {
   comments: AssetComment[];
   /** Where the reviewer is — the playhead on a video, the page on a deck —
@@ -42,11 +42,11 @@ export function ReviewComments({
   onResolve?: (id: string, note: string) => void;
   onReject?: (id: string, note: string) => void;
   /**
-   * Hand this comment to the agent. Absent on the shared link: a reviewer's
-   * words are outside input, and reaching the agent with them is the owner's
-   * act, taken deliberately, one comment at a time.
+   * Take this comment into the suggestion list above the chat input. Absent
+   * on the shared link: a reviewer's words are outside input, and putting
+   * them in front of the agent is the owner's act, taken deliberately.
    */
-  onAddToChat?: (id: string) => void;
+  onAddAsSuggestion?: (id: string) => void;
 }) {
   const [draft, setDraft] = useState("");
   /* Which card is asking for its closing note, and what it will be closed as. */
@@ -135,7 +135,7 @@ export function ReviewComments({
           items={open}
           emptyLabel="Nothing open — every comment has been answered."
           canClose={canClose}
-          onAddToChat={onAddToChat}
+          onAddAsSuggestion={onAddAsSuggestion}
           closing={closing}
           reason={reason}
           onReason={setReason}
@@ -165,7 +165,7 @@ function Group({
   items,
   emptyLabel,
   canClose = false,
-  onAddToChat,
+  onAddAsSuggestion,
   closing,
   reason = "",
   onReason,
@@ -178,7 +178,7 @@ function Group({
   items: AssetComment[];
   emptyLabel: string;
   canClose?: boolean;
-  onAddToChat?: (id: string) => void;
+  onAddAsSuggestion?: (id: string) => void;
   closing?: { id: string; as: "resolved" | "rejected" } | null;
   reason?: string;
   onReason?: (next: string) => void;
@@ -297,21 +297,22 @@ function Group({
                         <X className="size-3" /> Discard
                       </button>
                     {/* The third door. Resolve and Discard both close the
-                        comment; this one does the work it is asking for —
-                        the note goes to the agent with the element it was
-                        left on, and the comment stays open until you have
-                        seen what came back. */}
-                    {onAddToChat && !comment.sentToChat && (
+                        comment; this one does the work it is asking for.
+                        It lands in the same list a note left on the canvas
+                        lands in, so a reviewer's point and your own can be
+                        sent as one batch — which is usually one change, not
+                        two conversations. */}
+                    {onAddAsSuggestion && !comment.sentToChat && (
                       <button
                         type="button"
-                        onClick={() => onAddToChat(comment.id)}
+                        onClick={() => onAddAsSuggestion(comment.id)}
                         className="inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-brand/25 bg-tint px-2 py-1 text-caption font-bold text-brand-deep transition hover:border-brand"
                       >
-                        <MessageSquarePlus className="size-3" /> Add to chat
+                        <MessageSquarePlus className="size-3" /> Add as suggestion
                       </button>
                     )}
                     <span className="ml-auto text-micro text-ink-4">
-                      {comment.sentToChat ? "In chat" : "Needs your decision"}
+                      {comment.sentToChat ? "In suggestions" : "Needs your decision"}
                     </span>
                   </div>
                 )
