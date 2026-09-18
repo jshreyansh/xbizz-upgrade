@@ -475,7 +475,13 @@ export function InfographicDirectionsScreen() {
         setPendingChatFiles([]);
         setUploadedDocs((prev) => [
           ...prev,
-          ...files.map((f) => ({ name: f.name, size: "—", date: "Just now", note: text.trim() })),
+          ...files.map((f) => ({
+            name: f.name,
+            size: "—",
+            date: "Just now",
+            note: text.trim(),
+            origin: "new" as const,
+          })),
         ]);
         setOpenSection("sources");
         say(

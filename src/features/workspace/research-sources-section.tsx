@@ -30,6 +30,12 @@ export interface UploadedDoc {
   size: string;
   date: string;
   note?: string;
+  /**
+   * Whether this arrived with the brief or was pulled in from an earlier
+   * project. Both are grounding, but one has been used before and the other
+   * has not, and that is worth a glance rather than a memory.
+   */
+  origin?: "new" | "previous";
 }
 import type { DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
@@ -269,7 +275,7 @@ export function ResearchSourcesContent({
           <div className="flex min-w-0 items-center gap-2">
             <ShieldCheck className="size-3.5 shrink-0 text-ok" />
             <span className="truncate text-body font-extrabold text-ink">
-              Available to ground in
+              Suggested from platform
             </span>
             {/* The count is the point when it is zero: "we looked and there
                 are none" is information, where a missing tray reads as a
@@ -278,7 +284,7 @@ export function ResearchSourcesContent({
               "shrink-0 rounded-chip border px-2 py-0.2 text-caption font-bold tabular-nums",
               hasDossiers ? "border-hair-2 bg-card text-ink-3" : "border-danger-line bg-danger-bg text-danger"
             )}>
-              {(hasDossiers ? prebuiltDossiers.length : 0) + reusableDocs.length} available
+              {(hasDossiers ? prebuiltDossiers.length : 0) + reusableDocs.length} suggested
             </span>
             {researching && (
               <span className="shrink-0 rounded-chip border border-brand/20 bg-tint px-2 py-0.2 text-caption font-bold text-brand">
@@ -372,7 +378,13 @@ export function ResearchSourcesContent({
                       onAdd={() =>
                         onSetUploadedDocs((prev) => [
                           ...prev,
-                          { name: asset.name, size: asset.size, date: asset.origin, note: asset.note },
+                          {
+                            name: asset.name,
+                            size: asset.size,
+                            date: asset.origin,
+                            note: asset.note,
+                            origin: "previous" as const,
+                          },
                         ])
                       }
                     />
@@ -444,7 +456,21 @@ export function ResearchSourcesContent({
                 <div className="flex items-center gap-2 min-w-0">
                   <FileText className={cn("size-3.5 shrink-0", sourcesUnusable ? "text-danger" : "text-brand")} />
                   <span className="min-w-0">
-                    <span className="block truncate font-semibold text-ink">{doc.name}</span>
+                    <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="truncate font-semibold text-ink">{doc.name}</span>
+                      {/* Where it came from, so a reused file is not mistaken
+                          for one you attached today. */}
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-glyph border px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide",
+                          doc.origin === "previous"
+                            ? "border-hair-2 bg-subtle text-ink-3"
+                            : "border-tint-line bg-tint text-brand-deep"
+                        )}
+                      >
+                        {doc.origin === "previous" ? "Added previously" : "New"}
+                      </span>
+                    </span>
                     {/* What you said the file is for, where the file is. */}
                     {doc.note && (
                       <span className="block truncate text-caption text-ink-3" title={doc.note}>
@@ -500,6 +526,7 @@ export function ResearchSourcesContent({
                 size: f.size,
                 date: "Just now",
                 note: notes[f.id].trim(),
+                origin: "new" as const,
               })),
             ]);
             setPending([]);

@@ -216,13 +216,15 @@ function defaultUploadedDocs(brand: string): UploadedDoc[] {
       name: `${brand || "Brand"}_Clinical_Study_Report_Phase3.pdf`,
       size: "4.2 MB",
       date: "Today",
-      note: "Primary endpoint tables — ground the efficacy claims in these",
+      note: "Primary endpoint tables, for the efficacy claims",
+      origin: "new" as const,
     },
     {
       name: `${brand || "Brand"}_Core_Visual_Aid_Brief.docx`,
       size: "840 KB",
       date: "Today",
-      note: "Approved wording and tone for HCP-facing copy",
+      note: "Approved wording and tone for HCP copy",
+      origin: "new" as const,
     },
   ];
 }
@@ -549,6 +551,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             size: sizeForFile(name),
             date: "Today",
             note: "Attached with the brief",
+            origin: "new" as const,
           }))
         // A case that says nothing about attachments means the user has their
         // normal working files — not whichever files the last case left behind.
@@ -1057,7 +1060,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         setPendingChatFiles([]);
         setUploadedDocs((prev) => [
           ...prev,
-          ...files.map((f) => ({ name: f.name, size: "—", date: "Just now", note: text.trim() })),
+          ...files.map((f) => ({
+            name: f.name,
+            size: "—",
+            date: "Just now",
+            note: text.trim(),
+            origin: "new" as const,
+          })),
         ]);
         setOpenSection("sources");
         say(
