@@ -1,9 +1,65 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Film, ImageIcon, Layers, MessageSquarePlus, Video } from "lucide-react";
+import { Film, ImageIcon, Layers, MessageSquarePlus, RefreshCw, Video } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 import type { Scene, Shot } from "@/types/content";
+
+/**
+ * One frame of a clip, parked.
+ *
+ * A shot is a stretch of footage, and the only honest small picture of it is
+ * a frame from that stretch. Parked rather than played: five cards playing in
+ * a panel is five decoders showing motion nobody asked to watch.
+ */
+function FrameThumb({
+  src,
+  at,
+  duration,
+  label,
+  image,
+}: {
+  src?: string;
+  /** Scene time to park on. */
+  at: number;
+  /** Scene length, so scene seconds map onto clip seconds. */
+  duration: number;
+  label: string;
+  /** A still instead of a clip. */
+  image?: string;
+}) {
+  const ref = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const seek = () => {
+      const clip = node.duration || 0;
+      if (!Number.isFinite(clip) || clip <= 0) return;
+      const scaled = duration > 0 ? (at / duration) * clip : at;
+      node.currentTime = Math.min(Math.max(0.1, scaled), Math.max(0.1, clip - 0.05));
+    };
+    if (node.readyState >= 1) seek();
+    else node.addEventListener("loadedmetadata", seek, { once: true });
+  }, [src, at, duration]);
+
+  return (
+    <span className="min-w-0 flex-1">
+      <span className="relative block aspect-video w-full overflow-hidden rounded-glyph border border-hair bg-[#16231f]">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt={label} className="size-full object-cover" />
+        ) : src ? (
+          <video ref={ref} src={src} muted playsInline preload="metadata" className="size-full object-cover" />
+        ) : null}
+      </span>
+      <span className="mt-0.5 block truncate text-micro font-bold uppercase tracking-wide text-ink-4">
+        {label}
+      </span>
+    </span>
+  );
+}
 
 /**
  * Which media layers are attached to a shot.
@@ -43,6 +99,9 @@ export function ShotCards({
   onScrub,
   onAddToChat,
   onReplaceMedia,
+  videosReady = true,
+  onGenerateVideos,
+  generating = false,
 }: {
   scene: Scene;
   currentTime: number;
@@ -52,6 +111,12 @@ export function ShotCards({
   /** Hand this shot to the agent to change. */
   onAddToChat: (shot: Shot) => void;
   onReplaceMedia: (shot: Shot, elementId: string, kind: "image" | "video") => void;
+  /** Whether this scene's footage has been rendered past its keyframes. */
+  videosReady?: boolean;
+  /** Render this scene's footage, from a shot card. */
+  onGenerateVideos?: () => void;
+  /** True while that render is running. */
+  generating?: boolean;
 }) {
   const shots = scene.shots ?? [];
 
@@ -147,39 +212,113 @@ export function ShotCards({
                 </span>
               </div>
 
+              {/* This shot's own opening and closing frame, off the scene's
+                  footage. A shot is a stretch of film and its two ends are
+                  what you can actually judge before it is rendered. */}
+              {scene.backgroundKind === "video" && scene.bgVideoSrc && (
+                <div className="mb-2 flex gap-1.5">
+                  <FrameThumb
+                    src={scene.bgVideoSrc}
+                    at={shot.startAt}
+                    duration={scene.duration || 10}
+                    label={videosReady ? "Opens" : "Opening keyframe"}
+                  />
+                  <FrameThumb
+                    src={scene.bgVideoSrc}
+                    at={shot.endAt}
+                    duration={scene.duration || 10}
+                    label={videosReady ? "Ends" : "Closing keyframe"}
+                  />
+                </div>
+              )}
+
               {media.length === 0 ? (
                 <p className="text-caption italic text-ink-4">
-                  No media in this shot — the frame is copy only.
+                  No media in this shot. The frame is copy over the footage.
                 </p>
               ) : (
                 <ul className="space-y-1.5">
                   {media.map((layer) => {
                     const Icon = layer.kind === "video" ? Video : ImageIcon;
+                    const clipSrc = scene.mediaVideoSrc;
+                    const stillSrc = scene.mediaImageSrc;
+                    /* A clip that has not been rendered shows the same two
+                       keyframes the canvas shows, and offers the same render.
+                       A still is a still: it is there, so it is shown. */
+                    const pending = layer.kind === "video" && !videosReady;
                     return (
                       <li
                         key={`${shot.id}-${layer.elementId}`}
-                        className="flex items-center justify-between gap-2 rounded-glyph border border-hair bg-canvas p-1.5"
+                        className="rounded-glyph border border-hair bg-canvas p-1.5"
                       >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span className="grid size-7 shrink-0 place-items-center rounded-glyph bg-tint">
-                            <Icon className="size-3.5 text-brand" />
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block truncate text-caption font-bold text-ink">{layer.label}</span>
-                            <span className="block text-micro text-ink-3 tabular-nums">
-                              {layer.kind === "video" ? "Video Clip" : "Image Asset"} ·{" "}
-                              {layer.inAt.toFixed(1)}s – {layer.outAt.toFixed(1)}s
-                              {layer.kind === "video" && " (60fps)"}
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="grid size-7 shrink-0 place-items-center rounded-glyph bg-tint">
+                              <Icon className="size-3.5 text-brand" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block truncate text-caption font-bold text-ink">{layer.label}</span>
+                              <span className="block text-micro text-ink-3 tabular-nums">
+                                {layer.kind === "video" ? "Video clip" : "Image"} ·{" "}
+                                {layer.inAt.toFixed(1)}s – {layer.outAt.toFixed(1)}s
+                              </span>
                             </span>
                           </span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => onReplaceMedia(shot, layer.elementId, layer.kind)}
-                          className="shrink-0 rounded-glyph border border-hair-2 bg-card px-2 py-1 text-micro font-bold text-ink-2 transition-colors hover:border-brand hover:text-brand cursor-pointer"
-                        >
-                          {layer.kind === "video" ? "Swap" : "Replace"}
-                        </button>
+                          {pending ? (
+                            <button
+                              type="button"
+                              disabled={generating}
+                              onClick={() => onGenerateVideos?.()}
+                              className={cn(
+                                "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-2 py-1 text-micro font-bold transition-colors",
+                                generating
+                                  ? "cursor-not-allowed border-hair-2 bg-card text-ink-4"
+                                  : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand"
+                              )}
+                            >
+                              <LogoMark size={9} className={generating ? "animate-spin" : undefined} />
+                              {generating ? "Rendering" : "Generate"}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => onReplaceMedia(shot, layer.elementId, layer.kind)}
+                              className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-glyph border border-hair-2 bg-card px-2 py-1 text-micro font-bold text-ink-2 transition-colors hover:border-brand hover:text-brand"
+                            >
+                              <RefreshCw className="size-2.5" />
+                              Regenerate
+                            </button>
+                          )}
+                        </div>
+
+                        {/* What it looks like, rather than what it is called. */}
+                        <div className="mt-1.5 flex gap-1.5">
+                          {layer.kind === "image" ? (
+                            <FrameThumb at={0} duration={1} label="Still" image={stillSrc} />
+                          ) : pending ? (
+                            <>
+                              <FrameThumb
+                                src={clipSrc}
+                                at={layer.inAt}
+                                duration={scene.duration || 10}
+                                label="Opening keyframe"
+                              />
+                              <FrameThumb
+                                src={clipSrc}
+                                at={layer.outAt}
+                                duration={scene.duration || 10}
+                                label="Closing keyframe"
+                              />
+                            </>
+                          ) : (
+                            <FrameThumb
+                              src={clipSrc}
+                              at={layer.inAt}
+                              duration={scene.duration || 10}
+                              label="Rendered clip"
+                            />
+                          )}
+                        </div>
                       </li>
                     );
                   })}

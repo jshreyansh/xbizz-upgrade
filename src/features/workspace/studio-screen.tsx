@@ -3453,6 +3453,9 @@ export function StudioScreen() {
                     scene={selectedScene}
                     currentTime={sceneCurrentTime}
                     highlightedShotId={highlightedShotId}
+                    videosReady={bgOf(selectedScene.id) === "ready"}
+                    generating={bgOf(selectedScene.id) === "generating"}
+                    onGenerateVideos={() => generateSceneBackground(selectedScene)}
                     onScrub={(seconds) => {
                       setSceneCurrentTime(seconds);
                       setScenePlaying(false);
