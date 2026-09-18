@@ -28,6 +28,8 @@ interface WorkspaceState {
   audience: Audience;
   goal: string;
   topics: string[];
+  /** Which presentations of the brand this project covers. Empty means all. */
+  variations: string[];
   market: string;
   intendedUse: string;
   format: string;
@@ -106,6 +108,7 @@ interface WorkspaceState {
   setGoal: (goal: string) => void;
   setTopics: (topics: string[]) => void;
   toggleTopic: (topic: string) => void;
+  setVariations: (variations: string[]) => void;
   setMarket: (market: string) => void;
   setIntendedUse: (intendedUse: string) => void;
   setFormat: (format: string) => void;
@@ -157,6 +160,7 @@ const initialState = {
   audience: "" as Audience,
   goal: "",
   topics: [] as string[],
+  variations: [] as string[],
   market: "United States",
   intendedUse: "HCP meeting",
   format: "16:9",
@@ -236,6 +240,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
         ? state.topics.filter((t) => t !== topic)
         : [...state.topics, topic],
     })),
+  setVariations: (variations) => set({ variations }),
   setMarket: (market) => set({ market }),
   setIntendedUse: (intendedUse) => set({ intendedUse }),
   setFormat: (format) => set({ format }),

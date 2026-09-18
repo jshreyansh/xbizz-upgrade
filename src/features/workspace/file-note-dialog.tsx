@@ -58,8 +58,11 @@ export function FileNoteDialog({
   const [notes, setNotes] = useState<Record<string, string>>(() =>
     Object.fromEntries(files.map((f) => [f.id, f.note ?? ""]))
   );
+  // A project scoped to one presentation has nothing to ask — the single
+  // chip is the answer, so it starts picked rather than blocking Attach.
+  const only = variations?.length === 1 ? variations[0] : "";
   const [picked, setPicked] = useState<Record<string, string>>(() =>
-    Object.fromEntries(files.map((f) => [f.id, f.variation ?? ""]))
+    Object.fromEntries(files.map((f) => [f.id, f.variation ?? only]))
   );
   const needsVariation = Boolean(variations && variations.length > 0);
   const ready = files.every(

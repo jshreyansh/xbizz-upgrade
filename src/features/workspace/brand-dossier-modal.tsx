@@ -20,6 +20,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { cn } from "@/lib/cn";
 import { useBrandCatalogue, filterBrands } from "@/features/workspace/brand-catalogue";
+import { BRAND_VARIATIONS } from "@/features/workspace/workspace-assets";
 import type { Audience } from "@/types/content";
 export {
   INITIAL_BRANDS,
@@ -37,13 +38,11 @@ import {
   INITIAL_HCP_SPECIALITIES,
   AUDIENCE_OPTIONS,
   TOPICS_BY_AUDIENCE,
-  SHAPE_OPTIONS,
   GROUNDING_BY_AUDIENCE,
 } from "@/features/workspace/brand-modal-data";
 import type {
   BrandItem,
   DossierItem,
-  OutputShape,
 } from "@/features/workspace/brand-modal-data";
 
 /**
@@ -53,6 +52,9 @@ import type {
  * audiences for which therapy-area grounding makes no sense.
  */
 type RevealStage = "audience" | "grounding" | "details";
+
+/** The chip that means "no narrowing", kept out of the real variation names. */
+const ALL_VARIATIONS = "__all__";
 
 interface BrandDossierModalProps {
   open: boolean;
@@ -71,6 +73,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const setPageShapeStore = useWorkspaceStore((s) => s.setPageShape);
   const setTopicsStore = useWorkspaceStore((s) => s.setTopics);
   const setProjectNameStore = useWorkspaceStore((s) => s.setProjectName);
+  const setVariationsStore = useWorkspaceStore((s) => s.setVariations);
 
   // Progressive Stage: "audience" -> "grounding" -> "details"
   const [stage, setStage] = useState<RevealStage>("audience");
@@ -80,6 +83,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [brandSearch, setBrandSearch] = useState("");
   const [diseaseSearch, setDiseaseSearch] = useState("");
   const [selectedBrandId, setSelectedBrandId] = useState<string>("");
+  /**
+   * Which presentations of the brand the project covers.
+   *
+   * Empty is not "none chosen" — it is All, the state the step opens in. A
+   * project is usually about the whole product, and making people tick four
+   * boxes to say so would be a worse default than the one answer that is
+   * right most of the time.
+   */
+  const [selectedVariations, setSelectedVariations] = useState<string[]>([]);
   const [selectedDiseaseIds, setSelectedDiseaseIds] = useState<string[]>([]);
   const [customDiseases, setCustomDiseases] = useState<Array<{ id: string; label: string; desc: string }>>([]);
   const [customDiseaseInput, setCustomDiseaseInput] = useState("");
@@ -88,9 +100,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // 1. Audience & Speciality
   const [audience, setAudience] = useState<Audience>("HCP");
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
-
-  // 3. Format Shape (Landscape, Portrait)
-  const [selectedShape, setSelectedShape] = useState<OutputShape>("landscape");
 
   // 4. Focus Topics
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
@@ -113,6 +122,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setNameEdited(false);
       setEditingName(false);
       setSelectedBrandId("");
+      setSelectedVariations([]);
       setSelectedDiseaseIds([]);
       setCustomDiseases([]);
       setCustomDiseaseInput("");
@@ -121,7 +131,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setDiseaseSearch("");
       setAudience("HCP");
       setSelectedSpecialities([]);
-      setSelectedShape("landscape");
       const def = TOPICS_BY_AUDIENCE["HCP"];
       setSelectedTopics([def[0].label, def[1].label]);
     }
@@ -216,10 +225,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // topics, and toggleTopic refuses to drop below one, so selectedTopics is
   // never empty — which meant this used to reduce to "a brand exists" and left
   // Start Project live while section 3 had never been opened.
-  const hasReachedOutputShape = stage === "details";
+  const hasReachedFocusTopics = stage === "details";
   const canProceed =
     (sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
-    hasReachedOutputShape &&
+    hasReachedFocusTopics &&
     selectedTopics.length > 0;
 
   const toggleTopic = (label: string) => {
@@ -251,11 +260,33 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setShowCustomDiseaseBox(false);
   };
 
+  /**
+   * Picking the brand no longer closes the step — the variations belong to the
+   * brand, so they cannot be asked before it and do not deserve a step of
+   * their own. The step stays open on All until Continue.
+   */
   const handleSelectBrand = (brand: BrandItem) => {
     setSelectedBrandId(brand.id);
     setBrandSearch(brand.name);
-    setStage("details");
+    setSelectedVariations([]);
   };
+
+  /**
+   * One click reads as "this one", not "one more" — so a click from All
+   * narrows to that single variation, and only a click made while already
+   * narrowed adds to the set. Clearing the last one falls back to All rather
+   * than leaving the project grounded in nothing.
+   */
+  const toggleVariation = (variation: string) => {
+    setSelectedVariations((prev) =>
+      prev.includes(variation) ? prev.filter((v) => v !== variation) : [...prev, variation]
+    );
+  };
+
+  const variationLabel =
+    selectedVariations.length === 0 || selectedVariations.length === BRAND_VARIATIONS.length
+      ? "All variations"
+      : selectedVariations.join(", ");
 
   const handleSelectAudience = (itemAudience: Audience) => {
     setAudience(itemAudience);
@@ -280,13 +311,23 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     }
     setAudienceStore(audience);
     setTopicsStore(selectedTopics);
+    setVariationsStore(
+      selectedVariations.length === BRAND_VARIATIONS.length ? [] : selectedVariations
+    );
     setProjectNameStore(nameValue.trim() || suggestedName);
     
-    // Two shapes, mapped to what each flow calls them.
+    /**
+     * Portrait, until somebody says otherwise.
+     *
+     * Shape is not a decision that has to be made before the project exists —
+     * it is visible and changeable on the brief, and the intake asks about it
+     * again. Asking here only added a step to a screen that should be about
+     * what the asset is, not how tall it is.
+     */
     if (assetType === "infographic") {
-      setPageShapeStore(selectedShape === "portrait" ? "3:4" : "16:9");
+      setPageShapeStore("3:4");
     } else {
-      setFormatStore(selectedShape === "portrait" ? "9:16" : "16:9");
+      setFormatStore("9:16");
     }
     
     setView("create");
@@ -571,6 +612,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         : `${selectedDiseaseIds.length} Therapy Area${selectedDiseaseIds.length > 1 ? "s" : ""}: ${selectedDiseaseIds.map((id) => allDiseases.find((d) => d.id === id)?.label).filter(Boolean).join(", ")}`}
                     </span>
                   )}
+                  {stage !== "grounding" && sourceMode === "brand" && groundingLabel && (
+                    <span className="text-label font-semibold text-ink-3 truncate max-w-[220px]">
+                      {variationLabel}
+                    </span>
+                  )}
                 </div>
 
                 {stage !== "grounding" ? (
@@ -695,6 +741,61 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         </div>
                         </>
                       )}
+
+                      {/* ── Variations of the selected brand ── */}
+                      {selectedBrand && (
+                        <div className="space-y-2.5 rounded-panel border border-tint-line bg-tint/40 p-3.5 animate-in fade-in duration-150">
+                          <div className="flex items-center justify-between">
+                            <span className="text-label font-bold text-ink-2">
+                              {selectedBrand.name} Variation:
+                            </span>
+                            {selectedVariations.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setSelectedVariations([])}
+                                className="text-caption font-semibold text-ink-4 hover:text-ink-2 cursor-pointer"
+                              >
+                                Reset to all
+                              </button>
+                            )}
+                          </div>
+
+                          <ChipMultiSelect
+                            size="sm"
+                            options={[
+                              { id: ALL_VARIATIONS, label: "All variations" },
+                              ...BRAND_VARIATIONS.map((v) => ({ id: v, label: v })),
+                            ]}
+                            selected={
+                              selectedVariations.length === 0
+                                ? [ALL_VARIATIONS]
+                                : selectedVariations.length === BRAND_VARIATIONS.length
+                                  ? [ALL_VARIATIONS, ...selectedVariations]
+                                  : selectedVariations
+                            }
+                            onToggle={(id) =>
+                              id === ALL_VARIATIONS ? setSelectedVariations([]) : toggleVariation(id)
+                            }
+                          />
+
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-caption text-ink-4">
+                              {selectedVariations.length === 0
+                                ? "Every presentation of this product."
+                                : `${selectedVariations.length} of ${BRAND_VARIATIONS.length} presentations.`}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="primary"
+                              onClick={() => setStage("details")}
+                              className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm"
+                            >
+                              <span>Continue</span>
+                              <ChevronRight className="size-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -744,7 +845,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             </div>
           )}
 
-          {/* ══════════════ 3 & 4: OUTPUT SIZE + CLINICAL FOCUS TOPICS ══════════════ */}
+          {/* ══════════════ 3. CLINICAL FOCUS TOPICS ══════════════ */}
           {stage !== "details" ? (
             <div className="rounded-panel border border-dashed border-hair-2 bg-canvas p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
@@ -752,7 +853,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   3
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  Output Shape &amp; Clinical Focus Topics
+                  Clinical Focus Topics
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -763,51 +864,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           ) : (
             <div className="space-y-4 animate-in fade-in duration-200">
               
-              {/* 3. Output Shape — landscape or portrait */}
-              <div className="rounded-panel border border-hair bg-card p-4 space-y-2.5 shadow-2xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
-                      3
-                    </div>
-                    <span className="text-body font-extrabold text-ink">
-                      Output Shape
-                    </span>
-                  </div>
-                  <span className="text-label font-bold text-ok bg-ok-bg px-2.5 py-0.5 rounded-chip border border-ok-line">
-                    {SHAPE_OPTIONS.find((s) => s.id === selectedShape)?.label}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {SHAPE_OPTIONS.map((opt) => {
-                    const isSel = selectedShape === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setSelectedShape(opt.id)}
-                        className={cn(
-                          "flex items-center justify-center gap-2.5 py-3 px-4 rounded-control border transition-all cursor-pointer shadow-2xs",
-                          isSel
-                            ? "border-brand bg-tint text-brand-deep font-extrabold shadow-2xs ring-2 ring-brand/15"
-                            : "border-hair bg-card hover:border-hair-3 text-ink"
-                        )}
-                      >
-                        {opt.renderIcon(isSel)}
-                        <span className="text-body-lg font-bold">{opt.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 4. Clinical Focus Topics (Audience-tailored Hero Cards) */}
+              {/* 3. Clinical Focus Topics (Audience-tailored Hero Cards) */}
               <div className="rounded-panel border border-hair bg-card p-5 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
-                      4
+                      3
                     </div>
                     <div>
                       <h3 className="text-body-lg font-extrabold text-ink">

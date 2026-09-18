@@ -2,6 +2,7 @@
 
 import { FileText, Pencil, Play, Plus, X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 
 /**
  * What this brand already has, from the projects before this one.
@@ -37,9 +38,24 @@ export interface WorkspaceAsset {
  * one device, one strength. Tagging it at the moment it is added is what
  * makes the library searchable later; tagging it afterwards never happens.
  */
+export const BRAND_VARIATIONS = [
+  "200mg tablet",
+  "50mg tablet",
+  "Autoinjector pen",
+  "Oral suspension",
+];
+
+/**
+ * Narrowed to what the project is about.
+ *
+ * A project scoped to the autoinjector should not be asking which of four
+ * presentations a pack shot is of. The scope is chosen once, in Start Project,
+ * and does not change afterwards — so this reads it rather than subscribing.
+ */
 export function brandVariations(brandName: string): string[] {
   void brandName;
-  return ["200mg tablet", "50mg tablet", "Autoinjector pen", "Oral suspension"];
+  const picked = useWorkspaceStore.getState().variations;
+  return picked.length > 0 ? picked : BRAND_VARIATIONS;
 }
 
 const LIBRARY: WorkspaceAsset[] = [
