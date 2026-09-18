@@ -24,7 +24,7 @@ import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
-import { ResearchSourcesContent } from "@/features/workspace/research-sources-section";
+import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
@@ -40,6 +40,7 @@ import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scen
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
+import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
 import {
   AssetStrip,
   MediaAssetTile,
@@ -252,10 +253,28 @@ export function InfographicDirectionsScreen() {
     const docs = scenario.inputs.uploadedDocs;
     setUploadedDocs(
       docs
-        ? docs.map((name) => ({ name, size: "1.2 MB", date: "Today" }))
+        ? docs.map((name) => ({
+            name,
+            size: "1.2 MB",
+            date: "Today",
+            note: "Attached with the brief",
+            origin: "new" as const,
+          }))
         : [
-            { name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`, size: "3.6 MB", date: "Today" },
-            { name: `${brandName}_Visual_Claims_Master.docx`, size: "720 KB", date: "Today" },
+            {
+              name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`,
+              size: "3.6 MB",
+              date: "Today",
+              note: "Endpoint figures for the hero stat",
+              origin: "new" as const,
+            },
+            {
+              name: `${brandName}_Visual_Claims_Master.docx`,
+              size: "720 KB",
+              date: "Today",
+              note: "Approved claim wording, verbatim",
+              origin: "new" as const,
+            },
           ]
     );
     setSourceGroundingMode(docs && docs.length > 0 ? "my-sources" : "both");
@@ -274,9 +293,21 @@ export function InfographicDirectionsScreen() {
 
 
   const [sourceGroundingMode, setSourceGroundingMode] = useState<"both" | "my-sources" | "swishx-only">("both");
-  const [uploadedDocs, setUploadedDocs] = useState<Array<{ name: string; size: string; date: string }>>([
-    { name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`, size: "3.6 MB", date: "Today" },
-    { name: `${brandName}_Visual_Claims_Master.docx`, size: "720 KB", date: "Today" },
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([
+    {
+      name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`,
+      size: "3.6 MB",
+      date: "Today",
+      note: "Endpoint figures for the hero stat",
+      origin: "new",
+    },
+    {
+      name: `${brandName}_Visual_Claims_Master.docx`,
+      size: "720 KB",
+      date: "Today",
+      note: "Approved claim wording, verbatim",
+      origin: "new",
+    },
   ]);
   const [previewDossier, setPreviewDossier] = useState<DossierPreviewData | null>(null);
 
@@ -355,7 +386,9 @@ export function InfographicDirectionsScreen() {
   const [referenceList, setReferenceList] = useState<
     Array<{ id: string; name: string; note: string; previewUrl?: string; kind?: "image" | "video" }>
   >([]);
-  const [packshots, setPackshots] = useState<Array<{ id: string; name: string; url: string }>>([
+  const [packshots, setPackshots] = useState<
+    Array<{ id: string; name: string; url: string; note?: string }>
+  >([
     {
       id: "packshot-1",
       name: `${brandName}_Autoinjector_3D_Packshot.png`,
@@ -430,7 +463,18 @@ export function InfographicDirectionsScreen() {
   const [pendingChatFiles, setPendingChatFiles] = useState<LocalAttachment[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatBottomRef = useRef<HTMLDivElement>(null);
-  const fileUploadRef = useRef<HTMLInputElement>(null);
+  /* Media picked but not yet attached: what it is for is asked before it
+     joins the plan, the same as a source file and the same as the video
+     flow. The uploader here used to open a file input with no handler at
+     all, so nothing was ever added and nothing was ever asked. */
+  const [pendingMedia, setPendingMedia] = useState<
+    Array<{ id: string; name: string; url: string }>
+  >([]);
+  const [editingPackshot, setEditingPackshot] = useState<{ id: string; name: string; note: string } | null>(null);
+  const [pendingReference, setPendingReference] = useState<
+    Array<{ id: string; name: string; kind: "image" | "video"; previewUrl?: string }>
+  >([]);
+  const [editingReference, setEditingReference] = useState<{ id: string; name: string; note: string } | null>(null);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -498,7 +542,13 @@ export function InfographicDirectionsScreen() {
         setPendingChatFiles([]);
         setReferenceList((prev) => [
           ...prev,
-          ...files.map((f, i) => ({ id: `ref-chat-${Date.now()}-${i}`, name: f.name, note: text.trim() })),
+          ...files.map((f, i) => ({
+            id: `ref-chat-${Date.now()}-${i}`,
+            name: f.name,
+            note: text.trim(),
+            previewUrl: f.previewUrl,
+            kind: (f.kind === "video" ? "video" : "image") as "image" | "video",
+          })),
         ]);
         setOpenSection("references");
         say(
@@ -1075,15 +1125,26 @@ export function InfographicDirectionsScreen() {
                           items={packshots.map((ps) => ({
                             id: ps.id,
                             name: ps.name,
+                            note: ps.note,
                             previewUrl: ps.url,
                             kind: "image" as const,
                           }))}
                           uploadLabel={packshots.length === 0 ? "Upload product image" : "Add another"}
                           uploadHint="PNG, JPG"
-                          onUpload={() => fileUploadRef.current?.click()}
+                          onUpload={() =>
+                            setPendingMedia([
+                              {
+                                id: `ps-${Date.now()}`,
+                                name: `${brandName}_Pack_Front.png`,
+                                url: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                              },
+                            ])
+                          }
                           onRemove={(id) => setPackshots((prev) => prev.filter((ps) => ps.id !== id))}
+                          onEditNote={(item) =>
+                            setEditingPackshot({ id: item.id, name: item.name, note: item.note ?? "" })
+                          }
                         />
-                        <input type="file" ref={fileUploadRef} className="hidden" />
 
                         {/* Cleared artwork this brand already has, shown as
                             artwork rather than as a filename. */}
@@ -1110,7 +1171,12 @@ export function InfographicDirectionsScreen() {
                                     onAdd={() =>
                                       setPackshots((prev) => [
                                         ...prev,
-                                        { id: `ps-${asset.id}-${Date.now()}`, name: asset.name, url: asset.previewUrl ?? "" },
+                                        {
+                                          id: `ps-${asset.id}-${Date.now()}`,
+                                          name: asset.name,
+                                          url: asset.previewUrl ?? "",
+                                          note: asset.note,
+                                        },
                                       ])
                                     }
                                   />
@@ -1214,8 +1280,21 @@ export function InfographicDirectionsScreen() {
                           kind: r.kind ?? "image",
                         }))}
                         uploadLabel={referenceList.length === 0 ? "Upload a reference" : "Add another"}
-                        onUpload={() => fileUploadRef.current?.click()}
+                        onUpload={() =>
+                          setPendingReference([
+                            {
+                              id: `ref-${Date.now()}`,
+                              name: "Congress_Poster_Reference.png",
+                              kind: "image" as const,
+                              previewUrl:
+                                "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=400&q=80",
+                            },
+                          ])
+                        }
                         onRemove={(id) => setReferenceList((prev) => prev.filter((r) => r.id !== id))}
+                        onEditNote={(item) =>
+                          setEditingReference({ id: item.id, name: item.name, note: item.note ?? "" })
+                        }
                       />
 
                       {/* What earlier projects referenced, shown as what it is. */}
@@ -1473,6 +1552,77 @@ export function InfographicDirectionsScreen() {
       }
       overlay={
         <>
+          {/* The same note dialog the sources uploader and the video flow use:
+              a file arrives with a note about what it is for, or it does not
+              arrive. */}
+          {pendingMedia.length > 0 && (
+            <FileNoteDialog
+              files={pendingMedia.map((m) => ({ id: m.id, name: m.name, kind: "media" as const }))}
+              title="What is this asset for?"
+              prompt="A note travels with each asset, so it is placed where you meant it."
+              placeholder="e.g. the hero packshot, front of pack"
+              onCancel={() => setPendingMedia([])}
+              onConfirm={(notes) => {
+                setPackshots((prev) => [
+                  ...prev,
+                  ...pendingMedia.map((m) => ({ ...m, note: notes[m.id].trim() })),
+                ]);
+                setPendingMedia([]);
+              }}
+            />
+          )}
+
+          {editingPackshot && (
+            <FileNoteDialog
+              files={[{ id: editingPackshot.id, name: editingPackshot.name, kind: "media", note: editingPackshot.note }]}
+              title="What is this asset for?"
+              prompt="The note travels with the asset wherever the page places it."
+              placeholder="e.g. the hero packshot, front of pack"
+              onCancel={() => setEditingPackshot(null)}
+              onConfirm={(notes) => {
+                const next = notes[editingPackshot.id].trim();
+                setPackshots((prev) =>
+                  prev.map((ps) => (ps.id === editingPackshot.id ? { ...ps, note: next } : ps))
+                );
+                setEditingPackshot(null);
+              }}
+            />
+          )}
+
+          {pendingReference.length > 0 && (
+            <FileNoteDialog
+              files={pendingReference.map((r) => ({ id: r.id, name: r.name, kind: "media" as const }))}
+              title="What should we take from this reference?"
+              prompt="A reference steers the layout. Saying which part matters is what makes it usable."
+              placeholder="e.g. the density of the evidence block"
+              onCancel={() => setPendingReference([])}
+              onConfirm={(notes) => {
+                setReferenceList((prev) => [
+                  ...prev,
+                  ...pendingReference.map((r) => ({ ...r, note: notes[r.id].trim() })),
+                ]);
+                setPendingReference([]);
+              }}
+            />
+          )}
+
+          {editingReference && (
+            <FileNoteDialog
+              files={[{ id: editingReference.id, name: editingReference.name, kind: "media", note: editingReference.note }]}
+              title="What should we take from this reference?"
+              prompt="The note travels with the reference wherever the layout uses it."
+              placeholder="e.g. the density of the evidence block"
+              onCancel={() => setEditingReference(null)}
+              onConfirm={(notes) => {
+                const next = notes[editingReference.id].trim();
+                setReferenceList((prev) =>
+                  prev.map((r) => (r.id === editingReference.id ? { ...r, note: next } : r))
+                );
+                setEditingReference(null);
+              }}
+            />
+          )}
+
           {useCaseDrawerOpen && (
             <ScenarioDrawer
               currentScenarioId={demoScenarioId}
