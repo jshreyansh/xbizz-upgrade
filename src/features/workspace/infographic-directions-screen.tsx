@@ -475,12 +475,14 @@ export function InfographicDirectionsScreen() {
     Array<{ id: string; name: string; url: string }>
   >([]);
   const [editingPackshot, setEditingPackshot] = useState<
-    { id: string; name: string; note: string; variation?: string } | null
+    { id: string; name: string; note: string; variation?: string; previewUrl?: string } | null
   >(null);
   const [pendingReference, setPendingReference] = useState<
     Array<{ id: string; name: string; kind: "image" | "video"; previewUrl?: string }>
   >([]);
-  const [editingReference, setEditingReference] = useState<{ id: string; name: string; note: string } | null>(null);
+  const [editingReference, setEditingReference] = useState<
+    { id: string; name: string; note: string; previewUrl?: string; mediaKind?: "image" | "video" } | null
+  >(null);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1121,7 +1123,7 @@ export function InfographicDirectionsScreen() {
                             setPendingMedia([
                               {
                                 id: `ps-${Date.now()}`,
-                                name: `${brandName}_Pack_Front.png`,
+                                name: `${brandName}_${brandVariations(brandName)[0].replace(/[^a-zA-Z0-9]+/g, "_")}_Pack_Front.png`,
                                 url: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
                               },
                             ])
@@ -1133,6 +1135,7 @@ export function InfographicDirectionsScreen() {
                               name: item.name,
                               note: item.note ?? "",
                               variation: item.variation,
+                              previewUrl: item.previewUrl,
                             })
                           }
                         />
@@ -1286,7 +1289,13 @@ export function InfographicDirectionsScreen() {
                         }
                         onRemove={(id) => setReferenceList((prev) => prev.filter((r) => r.id !== id))}
                         onEditNote={(item) =>
-                          setEditingReference({ id: item.id, name: item.name, note: item.note ?? "" })
+                          setEditingReference({
+                            id: item.id,
+                            name: item.name,
+                            note: item.note ?? "",
+                            previewUrl: item.previewUrl,
+                            mediaKind: item.kind,
+                          })
                         }
                       />
 
@@ -1550,7 +1559,13 @@ export function InfographicDirectionsScreen() {
               arrive. */}
           {pendingMedia.length > 0 && (
             <FileNoteDialog
-              files={pendingMedia.map((m) => ({ id: m.id, name: m.name, kind: "media" as const }))}
+              files={pendingMedia.map((m) => ({
+                id: m.id,
+                name: m.name,
+                kind: "media" as const,
+                previewUrl: m.url,
+                mediaKind: "image" as const,
+              }))}
               title="What is this asset for?"
               prompt="A note and a variation travel with each asset, so it lands in the catalogue as one pack rather than as a file."
               placeholder="e.g. the hero packshot, front of pack"
@@ -1578,6 +1593,8 @@ export function InfographicDirectionsScreen() {
                 kind: "media",
                 note: editingPackshot.note,
                 variation: editingPackshot.variation,
+                previewUrl: editingPackshot.previewUrl,
+                mediaKind: "image",
               }]}
               title="What is this asset for?"
               prompt="The note and the variation travel with the asset wherever the page places it."
@@ -1600,7 +1617,13 @@ export function InfographicDirectionsScreen() {
 
           {pendingReference.length > 0 && (
             <FileNoteDialog
-              files={pendingReference.map((r) => ({ id: r.id, name: r.name, kind: "media" as const }))}
+              files={pendingReference.map((r) => ({
+                id: r.id,
+                name: r.name,
+                kind: "media" as const,
+                previewUrl: r.previewUrl,
+                mediaKind: r.kind,
+              }))}
               title="What should we take from this reference?"
               prompt="A reference steers the layout. Saying which part matters is what makes it usable."
               placeholder="e.g. the density of the evidence block"
@@ -1617,7 +1640,14 @@ export function InfographicDirectionsScreen() {
 
           {editingReference && (
             <FileNoteDialog
-              files={[{ id: editingReference.id, name: editingReference.name, kind: "media", note: editingReference.note }]}
+              files={[{
+                id: editingReference.id,
+                name: editingReference.name,
+                kind: "media",
+                note: editingReference.note,
+                previewUrl: editingReference.previewUrl,
+                mediaKind: editingReference.mediaKind,
+              }]}
               title="What should we take from this reference?"
               prompt="The note travels with the reference wherever the layout uses it."
               placeholder="e.g. the density of the evidence block"

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { FileText, ImageIcon, X } from "lucide-react";
+import { FileText, ImageIcon, PlayCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
@@ -27,6 +27,16 @@ export interface PendingFile {
   note?: string;
   /** Prefilled when editing an asset already tagged to a variation. */
   variation?: string;
+  /**
+   * The asset itself.
+   *
+   * Writing what a file is for from its filename is guesswork — two packshots
+   * of the same pack differ by the angle, and nothing in the name says which
+   * is which. The file is shown, so the note is written about what is in it.
+   */
+  previewUrl?: string;
+  /** Which kind of media, when there is a preview to show. */
+  mediaKind?: "image" | "video";
 }
 
 export function FileNoteDialog({
@@ -98,12 +108,38 @@ export function FileNoteDialog({
             <div key={file.id} className="rounded-control border border-hair-2 bg-canvas p-3">
               <div className="flex min-w-0 items-center gap-2">
                 {file.kind === "media" ? (
-                  <ImageIcon className="size-3.5 shrink-0 text-brand" />
+                  file.mediaKind === "video" ? (
+                    <PlayCircle className="size-3.5 shrink-0 text-brand" />
+                  ) : (
+                    <ImageIcon className="size-3.5 shrink-0 text-brand" />
+                  )
                 ) : (
                   <FileText className="size-3.5 shrink-0 text-brand" />
                 )}
                 <span className="truncate text-body font-bold text-ink">{file.name}</span>
               </div>
+
+              {file.previewUrl && (
+                <div className="mt-2 overflow-hidden rounded-control border border-hair-2 bg-black">
+                  {file.mediaKind === "video" ? (
+                    /* Playable, because a reference is about pacing and grade
+                       and neither survives a still frame. */
+                    <video
+                      src={file.previewUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="max-h-[200px] w-full bg-black object-contain"
+                    />
+                  ) : (
+                    <img
+                      src={file.previewUrl}
+                      alt=""
+                      className="max-h-[200px] w-full bg-black object-contain"
+                    />
+                  )}
+                </div>
+              )}
               <textarea
                 autoFocus={file.id === files[0]?.id}
                 value={notes[file.id] ?? ""}

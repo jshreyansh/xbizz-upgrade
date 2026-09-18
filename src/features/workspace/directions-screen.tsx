@@ -328,7 +328,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string }>
   >([]);
   const [editingMedia, setEditingMedia] = useState<
-    { id: string; name: string; note: string; variation?: string } | null
+    { id: string; name: string; note: string; variation?: string; previewUrl?: string; mediaKind?: "image" | "video" } | null
   >(null);
   /**
    * Reference material: how it should feel, not what it may say.
@@ -340,7 +340,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const [pendingReference, setPendingReference] = useState<
     Array<{ id: string; name: string; kind: "image" | "video"; previewUrl?: string }>
   >([]);
-  const [editingReference, setEditingReference] = useState<{ id: string; name: string; note: string } | null>(null);
+  const [editingReference, setEditingReference] = useState<
+    { id: string; name: string; note: string; previewUrl?: string; mediaKind?: "image" | "video" } | null
+  >(null);
   /* Files attached to the next chat message. Hoisted with the other hooks,
      above the early return at the top of this component. */
   const chatFiles = useChatAttachments();
@@ -1702,7 +1704,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           setPendingMedia([
                             {
                               id: `media-${Date.now()}`,
-                              name: `${brandName}_Autoinjector_3D_Packshot.png`,
+                              name: `${brandName}_${brandVariations(brandName)[0].replace(/[^a-zA-Z0-9]+/g, "_")}_Pack_Front.png`,
                               type: "image" as const,
                               preview:
                                 "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
@@ -1717,6 +1719,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             name: item.name,
                             note: item.note ?? "",
                             variation: item.variation,
+                            previewUrl: item.previewUrl,
+                            mediaKind: item.kind,
                           })
                         }
                       />
@@ -1840,7 +1844,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         }
                         onRemove={(id) => setReferenceList((prev) => prev.filter((r) => r.id !== id))}
                         onEditNote={(item) =>
-                          setEditingReference({ id: item.id, name: item.name, note: item.note ?? "" })
+                          setEditingReference({
+                            id: item.id,
+                            name: item.name,
+                            note: item.note ?? "",
+                            previewUrl: item.previewUrl,
+                            mediaKind: item.kind,
+                          })
                         }
                       />
 
@@ -2486,7 +2496,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           {/* ── Modals & Drawers ── */}
           {pendingMedia.length > 0 && (
             <FileNoteDialog
-              files={pendingMedia.map((m) => ({ id: m.id, name: m.name, kind: "media" as const }))}
+              files={pendingMedia.map((m) => ({
+                id: m.id,
+                name: m.name,
+                kind: "media" as const,
+                previewUrl: m.preview,
+                mediaKind: m.type,
+              }))}
               title="What is this asset for?"
               prompt="A note and a variation travel with each asset, so it lands in the catalogue as one pack rather than as a file."
               placeholder="e.g. the hero packshot, front of pack, for the opening scene"
@@ -2508,7 +2524,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
           {pendingReference.length > 0 && (
             <FileNoteDialog
-              files={pendingReference.map((r) => ({ id: r.id, name: r.name, kind: "media" as const }))}
+              files={pendingReference.map((r) => ({
+                id: r.id,
+                name: r.name,
+                kind: "media" as const,
+                previewUrl: r.previewUrl,
+                mediaKind: r.kind,
+              }))}
               title="What should we take from this reference?"
               prompt="A reference steers the treatment — pacing, grade, composition. Saying which part matters is what makes it usable."
               placeholder="e.g. the pacing and the grade — match this, not the script"
@@ -2525,7 +2547,14 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
           {editingReference && (
             <FileNoteDialog
-              files={[{ id: editingReference.id, name: editingReference.name, kind: "media", note: editingReference.note }]}
+              files={[{
+                id: editingReference.id,
+                name: editingReference.name,
+                kind: "media",
+                note: editingReference.note,
+                previewUrl: editingReference.previewUrl,
+                mediaKind: editingReference.mediaKind,
+              }]}
               title="What should we take from this reference?"
               prompt="The note travels with the reference wherever the treatment uses it."
               placeholder="e.g. the pacing and the grade — match this, not the script"
@@ -2548,6 +2577,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 kind: "media",
                 note: editingMedia.note,
                 variation: editingMedia.variation,
+                previewUrl: editingMedia.previewUrl,
+                mediaKind: editingMedia.mediaKind,
               }]}
               title="What is this asset for?"
               prompt="The note and the variation travel with the asset wherever the plan places it."
