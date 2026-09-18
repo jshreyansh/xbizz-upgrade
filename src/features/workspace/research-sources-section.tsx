@@ -34,7 +34,7 @@ export interface UploadedDoc {
 import type { DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
 import { groundingDossiers } from "@/features/workspace/grounding-dossiers";
-import { WorkspaceAssetShelf, workspaceAssets } from "@/features/workspace/workspace-assets";
+import { AssetStrip, DocAssetTile, workspaceAssets } from "@/features/workspace/workspace-assets";
 
 export interface ResearchSourcesSectionProps {
   brandName: string;
@@ -112,6 +112,11 @@ export function ResearchSourcesContent({
   const nothingToGroundIn = !hasDossiers && !hasUserDocs;
 
   const prebuiltDossiers = groundingDossiers(brandName, molecule);
+  /* What earlier projects on this brand used, minus whatever is already in
+     My files — nothing is offered twice. */
+  const reusableDocs = workspaceAssets(brandName, "source").filter(
+    (asset) => !uploadedDocs.some((doc) => doc.name === asset.name)
+  );
 
   return (
     <div className="space-y-3">
@@ -232,15 +237,17 @@ export function ResearchSourcesContent({
         })}
       </div>
 
-      {/* With nothing found there is nothing to disclose, so the tray becomes
-          the one line it would have contained. A collapsible that opens onto
-          an empty state is two clicks to learn there is no news. */}
-      {!hasDossiers && !researching ? (
+      {/* With nothing at all to offer there is nothing to disclose, so the
+          tray becomes the one line it would have contained. A collapsible
+          that opens onto an empty state is two clicks to learn there is no
+          news. The workspace's own files count as something to offer: no
+          cleared dossier does not mean no material. */}
+      {!hasDossiers && reusableDocs.length === 0 && !researching ? (
         <p className="flex items-center gap-2 rounded-panel border border-hair bg-[#f4f6f3] px-3 py-2 text-label text-ink-3">
           <ShieldCheck className="size-3.5 shrink-0 text-ink-4" />
           <span className="min-w-0">
-            No approved {brandName || "brand"} dossier is cleared for this market and audience —
-            your own files are the grounding.
+            No cleared {brandName || "brand"} dossier for this audience. Your own files are the
+            grounding.
           </span>
         </p>
       ) : (
@@ -262,7 +269,7 @@ export function ResearchSourcesContent({
           <div className="flex min-w-0 items-center gap-2">
             <ShieldCheck className="size-3.5 shrink-0 text-ok" />
             <span className="truncate text-body font-extrabold text-ink">
-              Verified dossiers · {brandName || "Brand"}
+              Available to ground in
             </span>
             {/* The count is the point when it is zero: "we looked and there
                 are none" is information, where a missing tray reads as a
@@ -271,7 +278,7 @@ export function ResearchSourcesContent({
               "shrink-0 rounded-chip border px-2 py-0.2 text-caption font-bold tabular-nums",
               hasDossiers ? "border-hair-2 bg-card text-ink-3" : "border-danger-line bg-danger-bg text-danger"
             )}>
-              {hasDossiers ? prebuiltDossiers.length : 0} sourced
+              {(hasDossiers ? prebuiltDossiers.length : 0) + reusableDocs.length} available
             </span>
             {researching && (
               <span className="shrink-0 rounded-chip border border-brand/20 bg-tint px-2 py-0.2 text-caption font-bold text-brand">
@@ -311,65 +318,68 @@ export function ResearchSourcesContent({
           {!hasDossiers && (
             <div className="rounded-control border border-dashed border-hair-2 bg-card px-3 py-3 text-center">
               <p className="text-label text-ink-3">
-                Nothing in the {brandName || "brand"} library is cleared for this market and
-                audience — your own files are the grounding.
+                No cleared {brandName || "brand"} dossier for this audience. Your own files are the
+                grounding.
               </p>
             </div>
           )}
 
-          {/* One dossier, so one tile — not a three-column grid with two
-              empty columns in it. */}
-          <div className={cn("grid grid-cols-1 gap-2.5 sm:grid-cols-2", !hasDossiers && "hidden")}>
-            {prebuiltDossiers.map((dossier, idx) => (
-              researching && idx >= (research?.step ?? 0) ? (
-                <div
-                  key={idx}
-                  aria-hidden
-                  className="p-3 rounded-control bg-card border border-hair-2 shadow-2xs flex flex-col gap-2 shimmer"
-                >
-                  <div className="flex items-center justify-between gap-2">
+          {/* Ours and yours in one strip, tagged by where each came from.
+              These were two stacked panels, which made one question — what can
+              this be grounded in — look like two. It scrolls sideways rather
+              than growing down the accordion. */}
+          <AssetStrip>
+            {researching
+              ? prebuiltDossiers.map((_, idx) => (
+                  <div
+                    key={idx}
+                    aria-hidden
+                    className="shimmer flex w-[248px] shrink-0 flex-col gap-2 rounded-control border border-hair-2 bg-card p-2.5 shadow-2xs"
+                  >
                     <div className="h-3.5 w-16 rounded-chip bg-black/8" />
-                    <div className="h-3.5 w-14 rounded-chip bg-black/6" />
+                    <div className="h-3.5 w-full rounded-chip bg-black/8" />
+                    <div className="h-3.5 w-2/3 rounded-chip bg-black/6" />
                   </div>
-                  <div className="h-3.5 w-full rounded-chip bg-black/8" />
-                  <div className="mt-1 h-6.5 w-full rounded-chip bg-black/5" />
-                </div>
-              ) : (
-              <div
-                key={idx}
-                className={cn(
-                  "p-3 rounded-control bg-card border border-hair-2 flex flex-col justify-between shadow-2xs gap-2",
-                  researching && "animate-in fade-in zoom-in-95 duration-300",
-                )}
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    {/* A document mark and a claim count. The market badge went
-                        with the other two dossiers: which market governs this
-                        asset was settled when the brand was picked, and the
-                        record itself says so when you open it. */}
-                    <FileText className="size-3.5 shrink-0 text-brand-deep" />
-                    <span className="text-caption font-bold text-ok bg-ok-bg px-1.5 py-0.2 rounded-glyph">
-                      {dossier.claims} claims
-                    </span>
-                  </div>
-                  <div className="text-body font-bold text-ink leading-snug line-clamp-1">
-                    {dossier.name}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => onPreviewDossier(dossier)}
-                  className="mt-1 flex items-center justify-center gap-1.5 w-full py-1.5 rounded-chip bg-[#f0f4f1] hover:bg-tint text-brand-deep text-label font-bold border border-hair-2 transition-colors cursor-pointer"
-                >
-                  <Eye className="size-3.5 text-brand" />
-                  <span>View</span>
-                </button>
-              </div>
-              )
-            ))}
-          </div>
+                ))
+              : (
+                <>
+                  {hasDossiers &&
+                    prebuiltDossiers.map((dossier, idx) => (
+                      <DocAssetTile
+                        key={`sx-${idx}`}
+                        source="swishx"
+                        name={dossier.name}
+                        note={`${dossier.claims} approved claims`}
+                        action={
+                          <button
+                            type="button"
+                            onClick={() => onPreviewDossier(dossier)}
+                            className="focus-ring flex cursor-pointer items-center gap-1 rounded-chip border border-hair-2 bg-canvas px-2 py-0.5 text-label font-bold text-brand-deep transition hover:border-brand"
+                          >
+                            <Eye className="size-3" />
+                            View
+                          </button>
+                        }
+                      />
+                    ))}
+                  {reusableDocs.map((asset) => (
+                    <DocAssetTile
+                      key={asset.id}
+                      source="workspace"
+                      name={asset.name}
+                      note={asset.note}
+                      origin={asset.origin}
+                      onAdd={() =>
+                        onSetUploadedDocs((prev) => [
+                          ...prev,
+                          { name: asset.name, size: asset.size, date: asset.origin, note: asset.note },
+                        ])
+                      }
+                    />
+                  ))}
+                </>
+              )}
+          </AssetStrip>
           </div>
         )}
       </div>
@@ -472,18 +482,6 @@ export function ResearchSourcesContent({
             ))}
           </div>
 
-          {/* What this brand already has. A document explained on last
-              month's project arrives with that explanation attached. */}
-          <WorkspaceAssetShelf
-            assets={workspaceAssets(brandName, "source")}
-            used={uploadedDocs.map((doc) => doc.name)}
-            onAdd={(asset) =>
-              onSetUploadedDocs((prev) => [
-                ...prev,
-                { name: asset.name, size: asset.size, date: asset.origin, note: asset.note },
-              ])
-            }
-          />
         </div>
       )}
 

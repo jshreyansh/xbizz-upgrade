@@ -56,7 +56,7 @@ import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-mod
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
-import { WorkspaceAssetShelf, workspaceAssets } from "@/features/workspace/workspace-assets";
+import { AssetStrip, MediaAssetTile, workspaceAssets } from "@/features/workspace/workspace-assets";
 import {
   ChatAttachmentRow,
   useChatAttachments,
@@ -1692,7 +1692,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           Product Packshots &amp; Device Reference Media
                         </p>
                         <p className="text-ink-3 text-body">
-                          Add multiple photos or videos of your drug packaging, delivery pen, or MoA visual clips. These will be visually grounded in 3D across product scenes.
+                          Packaging, delivery pen or MoA clips. Placed into the product scenes.
                         </p>
                       </div>
 
@@ -1783,26 +1783,48 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </button>
                       </div>
 
-                      {/* Packshots this brand already has. Cleared artwork does
-                          not need clearing twice. */}
-                      <WorkspaceAssetShelf
-                        assets={workspaceAssets(brandName, "product")}
-                        used={productMediaList.map((m) => m.name)}
-                        label="Already in your workspace"
-                        onAdd={(asset) =>
-                          setProductMediaList((prev) => [
-                            ...prev,
-                            {
-                              id: `media-lib-${asset.id}-${Date.now()}`,
-                              name: asset.name,
-                              type: asset.kind === "video" ? "video" : "image",
-                              preview: asset.previewUrl ?? "",
-                              size: asset.size,
-                              note: asset.note,
-                            },
-                          ])
-                        }
-                      />
+                      {/* Cleared artwork this brand already has, shown as
+                          artwork. A filename and a plus said nothing about
+                          which pack it was. */}
+                      {(() => {
+                        const reusable = workspaceAssets(brandName, "product").filter(
+                          (asset) => !productMediaList.some((m) => m.name === asset.name)
+                        );
+                        if (reusable.length === 0) return null;
+                        return (
+                          <div>
+                            <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
+                              From your workspace
+                            </span>
+                            <AssetStrip>
+                              {reusable.map((asset) => (
+                                <MediaAssetTile
+                                  key={asset.id}
+                                  source="workspace"
+                                  name={asset.name}
+                                  note={asset.note}
+                                  origin={asset.origin}
+                                  previewUrl={asset.previewUrl}
+                                  kind={asset.kind}
+                                  onAdd={() =>
+                                    setProductMediaList((prev) => [
+                                      ...prev,
+                                      {
+                                        id: `media-lib-${asset.id}-${Date.now()}`,
+                                        name: asset.name,
+                                        type: asset.kind === "video" ? "video" : "image",
+                                        preview: asset.previewUrl ?? "",
+                                        size: asset.size,
+                                        note: asset.note,
+                                      },
+                                    ])
+                                  }
+                                />
+                              ))}
+                            </AssetStrip>
+                          </div>
+                        );
+                      })()}
                     </div>
                     {/* ONE continue, like every other section. This used to be a
                         bespoke orange "Save Product Assets & Next" that always
@@ -1843,8 +1865,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     title="Visual & creative references"
                     summary={
                       referenceList.length > 0
-                        ? `${referenceList.length} reference${referenceList.length === 1 ? "" : "s"} · shapes the treatment`
-                        : "Optional · show us the look you are after"
+                        ? `${referenceList.length} reference${referenceList.length === 1 ? "" : "s"}`
+                        : "The look you are after"
                     }
                     state={planState(false, referenceList.length === 0)}
                     source={referenceList.length > 0 ? `${referenceList.length} attached` : undefined}
@@ -1852,16 +1874,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     onToggle={() => toggleSection("references")}
                   >
                     <div className="space-y-3">
-                      <div className="rounded-control border border-hair-2 bg-canvas p-3">
-                        <p className="text-body font-bold text-ink">A film, a layout, a look</p>
-                        <p className="mt-0.5 text-body leading-snug text-ink-3">
-                          Anything that shows how this should feel — an earlier brand film, a
-                          competitor&apos;s ad, a poster you liked. It steers pacing, grade and
-                          composition.{" "}
-                          <strong className="font-bold text-ink-2">Nothing here grounds a claim</strong> —
-                          evidence belongs in Research and Sources.
-                        </p>
-                      </div>
+                      <p className="text-body leading-snug text-ink-3">
+                        A film or an image that shows the look you want. Steers pacing, grade and
+                        composition. <strong className="font-bold text-ink-2">Grounds no claims.</strong>
+                      </p>
 
                       {referenceList.length > 0 && (
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -1922,26 +1938,47 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           <Plus className="size-4" />
                         </span>
                         <span className="text-body font-bold text-brand">Upload a reference</span>
-                        <span className="text-caption text-ink-3">PNG, JPG, MP4 · a note travels with it</span>
+                        <span className="text-caption text-ink-3">PNG, JPG, MP4</span>
                       </button>
 
-                      {/* Whatever earlier projects on this brand referenced. */}
-                      <WorkspaceAssetShelf
-                        assets={workspaceAssets(brandName, "reference")}
-                        used={referenceList.map((r) => r.name)}
-                        label="Referenced before"
-                        onAdd={(asset) =>
-                          setReferenceList((prev) => [
-                            ...prev,
-                            {
-                              id: `ref-lib-${asset.id}-${Date.now()}`,
-                              name: asset.name,
-                              kind: asset.kind === "video" ? "video" : "image",
-                              note: asset.note,
-                            },
-                          ])
-                        }
-                      />
+                      {/* What earlier projects referenced, shown as what it is. */}
+                      {(() => {
+                        const reusable = workspaceAssets(brandName, "reference").filter(
+                          (asset) => !referenceList.some((r) => r.name === asset.name)
+                        );
+                        if (reusable.length === 0) return null;
+                        return (
+                          <div>
+                            <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
+                              Referenced before
+                            </span>
+                            <AssetStrip>
+                              {reusable.map((asset) => (
+                                <MediaAssetTile
+                                  key={asset.id}
+                                  source="workspace"
+                                  name={asset.name}
+                                  note={asset.note}
+                                  origin={asset.origin}
+                                  previewUrl={asset.previewUrl}
+                                  kind={asset.kind}
+                                  onAdd={() =>
+                                    setReferenceList((prev) => [
+                                      ...prev,
+                                      {
+                                        id: `ref-lib-${asset.id}-${Date.now()}`,
+                                        name: asset.name,
+                                        kind: asset.kind === "video" ? "video" : "image",
+                                        note: asset.note,
+                                      },
+                                    ])
+                                  }
+                                />
+                              ))}
+                            </AssetStrip>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <PlanSectionContinue
                       label={referenceList.length === 0 ? "Skip & Continue" : "Save & Continue"}

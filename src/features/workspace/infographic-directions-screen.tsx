@@ -42,7 +42,7 @@ import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scen
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
-import { WorkspaceAssetShelf, workspaceAssets } from "@/features/workspace/workspace-assets";
+import { AssetStrip, MediaAssetTile, workspaceAssets } from "@/features/workspace/workspace-assets";
 import {
   ChatAttachmentRow,
   useChatAttachments,
@@ -1080,17 +1080,40 @@ export function InfographicDirectionsScreen() {
                           </button>
                         </div>
 
-                        {/* Cleared artwork this brand already has. */}
-                        <WorkspaceAssetShelf
-                          assets={workspaceAssets(brandName, "product")}
-                          used={packshots.map((ps) => ps.name)}
-                          onAdd={(asset) =>
-                            setPackshots((prev) => [
-                              ...prev,
-                              { id: `ps-${asset.id}-${Date.now()}`, name: asset.name, url: asset.previewUrl ?? "" },
-                            ])
-                          }
-                        />
+                        {/* Cleared artwork this brand already has, shown as
+                            artwork rather than as a filename. */}
+                        {(() => {
+                          const reusable = workspaceAssets(brandName, "product").filter(
+                            (asset) => !packshots.some((ps) => ps.name === asset.name)
+                          );
+                          if (reusable.length === 0) return null;
+                          return (
+                            <div className="mt-3">
+                              <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
+                                From your workspace
+                              </span>
+                              <AssetStrip>
+                                {reusable.map((asset) => (
+                                  <MediaAssetTile
+                                    key={asset.id}
+                                    source="workspace"
+                                    name={asset.name}
+                                    note={asset.note}
+                                    origin={asset.origin}
+                                    previewUrl={asset.previewUrl}
+                                    kind={asset.kind}
+                                    onAdd={() =>
+                                      setPackshots((prev) => [
+                                        ...prev,
+                                        { id: `ps-${asset.id}-${Date.now()}`, name: asset.name, url: asset.previewUrl ?? "" },
+                                      ])
+                                    }
+                                  />
+                                ))}
+                              </AssetStrip>
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       <div>
@@ -1163,8 +1186,8 @@ export function InfographicDirectionsScreen() {
                     title="Visual & creative references"
                     summary={
                       referenceList.length > 0
-                        ? `${referenceList.length} reference${referenceList.length === 1 ? "" : "s"} · shapes the layout`
-                        : "Optional · show us the look you are after"
+                        ? `${referenceList.length} reference${referenceList.length === 1 ? "" : "s"}`
+                        : "The look you are after"
                     }
                     state={planState(false, referenceList.length === 0)}
                     source={referenceList.length > 0 ? `${referenceList.length} attached` : undefined}
@@ -1172,16 +1195,10 @@ export function InfographicDirectionsScreen() {
                     onToggle={() => setOpenSection(openSection === "references" ? null : "references")}
                   >
                     <div className="space-y-3">
-                      <div className="rounded-control border border-hair-2 bg-canvas p-3">
-                        <p className="text-body font-bold text-ink">A poster, a spread, a look</p>
-                        <p className="mt-0.5 text-body leading-snug text-ink-3">
-                          Anything that shows how this should read — a congress poster you liked, a
-                          journal spread, an earlier leave-behind. It steers density, hierarchy and
-                          palette.{" "}
-                          <strong className="font-bold text-ink-2">Nothing here grounds a claim</strong> —
-                          evidence belongs in Research and Sources.
-                        </p>
-                      </div>
+                      <p className="text-body leading-snug text-ink-3">
+                        A poster or a spread that shows the look you want. Steers density, hierarchy
+                        and palette. <strong className="font-bold text-ink-2">Grounds no claims.</strong>
+                      </p>
 
                       {referenceList.length > 0 && (
                         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -1210,18 +1227,39 @@ export function InfographicDirectionsScreen() {
                         </div>
                       )}
 
-                      {/* Whatever earlier projects on this brand referenced. */}
-                      <WorkspaceAssetShelf
-                        assets={workspaceAssets(brandName, "reference")}
-                        used={referenceList.map((r) => r.name)}
-                        label="Referenced before"
-                        onAdd={(asset) =>
-                          setReferenceList((prev) => [
-                            ...prev,
-                            { id: `ref-${asset.id}-${Date.now()}`, name: asset.name, note: asset.note },
-                          ])
-                        }
-                      />
+                      {/* What earlier projects referenced, shown as what it is. */}
+                      {(() => {
+                        const reusable = workspaceAssets(brandName, "reference").filter(
+                          (asset) => !referenceList.some((r) => r.name === asset.name)
+                        );
+                        if (reusable.length === 0) return null;
+                        return (
+                          <div>
+                            <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">
+                              Referenced before
+                            </span>
+                            <AssetStrip>
+                              {reusable.map((asset) => (
+                                <MediaAssetTile
+                                  key={asset.id}
+                                  source="workspace"
+                                  name={asset.name}
+                                  note={asset.note}
+                                  origin={asset.origin}
+                                  previewUrl={asset.previewUrl}
+                                  kind={asset.kind}
+                                  onAdd={() =>
+                                    setReferenceList((prev) => [
+                                      ...prev,
+                                      { id: `ref-${asset.id}-${Date.now()}`, name: asset.name, note: asset.note },
+                                    ])
+                                  }
+                                />
+                              ))}
+                            </AssetStrip>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <PlanSectionContinue
                       label={referenceList.length === 0 ? "Skip & Continue" : "Save & Continue"}
