@@ -9,6 +9,7 @@
  * .tsx rather than .ts because SHAPE_OPTIONS carries renderIcon JSX.
  */
 
+import type { ProductType } from "@/features/product-library/product-library-types";
 import {
   Activity,
   AlertCircle,
@@ -52,6 +53,11 @@ export interface BrandItem {
   therapyAreas: string[];
   hasDossier: boolean;
   dossierIds?: string[];
+  /** What the product physically is — decides its packshot and the
+   *  presentations it ships in. Carried over from the Product Library. */
+  type?: ProductType;
+  gradient?: string;
+  referenceImageUrl?: string;
 }
 
 export interface DossierItem {
@@ -73,8 +79,8 @@ export const INITIAL_BRANDS: BrandItem[] = [
   { id: "velmora", name: "Velmora", genericName: "tirzelamide", therapyAreas: ["Dermatology", "Cardiology"], hasDossier: true, dossierIds: ["velmora-commercial", "velmora-smpc", "velmora-heor"] },
   { id: "onkavia", name: "Onkavia", genericName: "relunocitinib", therapyAreas: ["Oncology"], hasDossier: true, dossierIds: ["onkavia-ema", "onkavia-fda"] },
   { id: "nirvexa", name: "Nirvexa", genericName: "brentaxaban", therapyAreas: ["Immunology"], hasDossier: true, dossierIds: ["nirvexa-mhra", "nirvexa-fda"] },
-  { id: "cardioxa", name: "Cardioxa", genericName: "levomilnacipran ER", therapyAreas: ["Cardiology"], hasDossier: true, dossierIds: ["cardioxa-sample"] },
-  { id: "pulmovax", name: "PulmoVax", genericName: "albuterol / budesonide", therapyAreas: ["Respiratory"], hasDossier: true, dossierIds: ["pulmovax-sample"] },
+  { id: "cardioxa", name: "Cardioxa", genericName: "levomilnacipran ER", therapyAreas: ["Cardiology"], hasDossier: true, dossierIds: ["cardioxa-sample"], type: "Tablet", gradient: "linear-gradient(150deg,#0f766e,#14b8a6 55%,#5eead4)" },
+  { id: "pulmovax", name: "PulmoVax", genericName: "albuterol / budesonide", therapyAreas: ["Respiratory"], hasDossier: true, dossierIds: ["pulmovax-sample"], type: "Device", gradient: "linear-gradient(150deg,#1d4ed8,#3b82f6 55%,#93c5fd)" },
   { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
   { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
   { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },

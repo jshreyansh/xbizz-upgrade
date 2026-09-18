@@ -234,6 +234,7 @@ export function ProductArtwork({
   kind,
   className,
   variant = "hero",
+  photoUrl,
 }: {
   kind: ArtworkKind;
   className?: string;
@@ -241,9 +242,12 @@ export function ProductArtwork({
    *  banners. "icon" — a plain, contained thumbnail for small selector
    *  chips, sitting flush with whatever card already surrounds it. */
   variant?: "hero" | "icon";
+  /** A brand's own uploaded reference photo, which stands in for the stock
+   *  packshot wherever it exists. */
+  photoUrl?: string;
 }) {
   if (variant === "icon") {
-    const iconPhoto = PHOTO_ICON[kind];
+    const iconPhoto = photoUrl ?? PHOTO_ICON[kind];
     if (iconPhoto) {
       return (
         <div className={className}>
@@ -253,7 +257,7 @@ export function ProductArtwork({
     }
   }
 
-  const photo = PHOTO[kind];
+  const photo = photoUrl ?? PHOTO[kind];
   if (photo) {
     return (
       <div className={className}>

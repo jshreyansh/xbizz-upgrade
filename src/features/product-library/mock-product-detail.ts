@@ -116,6 +116,13 @@ const VARIATION_LABELS: Record<LibraryProduct["type"], string[]> = {
   Device: ["Single-use pen", "Refill cartridge"],
 };
 
+/** The presentations a product of this type ships in. The studio's Start
+ *  Project step asks which of them a project covers, and it should be asking
+ *  about the same list the Product Library shows. */
+export function variationLabelsFor(type: LibraryProduct["type"]): string[] {
+  return VARIATION_LABELS[type];
+}
+
 const DOCUMENT_TEMPLATES: Array<{ name: string; category: string; fileType: DocumentFileType; size: string }> = [
   { name: "Prescribing Information (SmPC)", category: "Regulatory", fileType: "PDF", size: "1.8 MB" },
   { name: "Field Training Deck", category: "Training", fileType: "PPTX", size: "6.2 MB" },

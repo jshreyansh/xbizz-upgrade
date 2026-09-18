@@ -30,6 +30,9 @@ function fromProduct(product: LibraryProduct): BrandItem {
     therapyAreas: product.therapyAreas ?? [],
     // A dossier is a separate act; a brand record on its own has none.
     hasDossier: product.dossiersVerified > 0,
+    type: product.type,
+    gradient: product.gradient,
+    referenceImageUrl: product.referenceImageUrl,
   };
 }
 

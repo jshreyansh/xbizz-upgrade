@@ -21,6 +21,8 @@ import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { cn } from "@/lib/cn";
 import { useBrandCatalogue, filterBrands } from "@/features/workspace/brand-catalogue";
 import { BRAND_VARIATIONS } from "@/features/workspace/workspace-assets";
+import { ProductArtwork } from "@/features/product-library/product-artwork";
+import { variationLabelsFor } from "@/features/product-library/mock-product-detail";
 import type { Audience } from "@/types/content";
 export {
   INITIAL_BRANDS,
@@ -55,6 +57,90 @@ type RevealStage = "audience" | "grounding" | "details";
 
 /** The chip that means "no narrowing", kept out of the real variation names. */
 const ALL_VARIATIONS = "__all__";
+
+/** The brand's packshot at thumbnail size — the Product Library's own
+ *  photography, so a row here looks like the row there. */
+function BrandThumb({ brand, className }: { brand: BrandItem; className?: string }) {
+  if (brand.type) {
+    return (
+      <ProductArtwork
+        kind={brand.type}
+        variant="icon"
+        photoUrl={brand.referenceImageUrl}
+        className={cn("overflow-hidden rounded-chip border border-hair-2", className)}
+      />
+    );
+  }
+  return (
+    <div className={cn("grid place-items-center rounded-chip border border-hair-2 bg-subtle text-caption font-black text-ink-2", className)}>
+      {brand.name.slice(0, 2).toUpperCase()}
+    </div>
+  );
+}
+
+/**
+ * The brand you picked, as a tile.
+ *
+ * It was a highlighted row in the result list, which read as "still choosing"
+ * — the same strip as the four you did not pick. A choice that has been made
+ * deserves to look like an object: the packshot, the molecule, what it treats.
+ */
+function SelectedBrandTile({ brand, onChange }: { brand: BrandItem; onChange: () => void }) {
+  return (
+    <div className="group flex items-stretch gap-3.5 rounded-panel border border-brand/30 bg-card p-3 shadow-2xs ring-2 ring-brand/10 animate-in fade-in slide-in-from-top-1 duration-200">
+      <div
+        className="relative grid size-[84px] shrink-0 place-items-center overflow-hidden rounded-control"
+        style={{ background: brand.gradient ?? "linear-gradient(150deg,var(--brand-deep),var(--brand) 55%,#ffb38a)" }}
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{ background: "linear-gradient(155deg,rgba(255,255,255,.34),transparent 45%)" }}
+        />
+        {brand.type ? (
+          <ProductArtwork
+            kind={brand.type}
+            photoUrl={brand.referenceImageUrl}
+            className="relative h-[80%] w-[80%] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <span className="relative text-body-lg font-black text-white">{brand.name.slice(0, 2).toUpperCase()}</span>
+        )}
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-body-lg font-extrabold text-ink">{brand.name}</span>
+          <span className="shrink-0 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok">
+            Dossier Ready
+          </span>
+        </div>
+        <span className="truncate text-label italic text-ink-3">{brand.genericName}</span>
+        {brand.therapyAreas.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-1">
+            {brand.therapyAreas.map((area) => (
+              <span
+                key={area}
+                className="rounded-chip border border-hair-2 bg-subtle px-2 py-0.5 text-caption font-semibold text-ink-3"
+              >
+                {area}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={onChange}
+        className="flex h-fit shrink-0 cursor-pointer items-center gap-1 text-label font-bold text-brand hover:underline"
+      >
+        <Edit3 className="size-3" />
+        <span>Change</span>
+      </button>
+    </div>
+  );
+}
 
 interface BrandDossierModalProps {
   open: boolean;
@@ -156,6 +242,18 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const selectedBrand = useMemo(
     () => brandCatalogue.find((b) => b.id === selectedBrandId) || null,
     [brandCatalogue, selectedBrandId]
+  );
+
+  /**
+   * The presentations this brand actually ships in.
+   *
+   * The Product Library already knows them — a tablet comes in strips and a
+   * bottle, a device in a pen and a refill — so asking here with a generic
+   * list would have offered an autoinjector pen for an oral antihypertensive.
+   */
+  const variationOptions = useMemo(
+    () => (selectedBrand?.type ? variationLabelsFor(selectedBrand.type) : BRAND_VARIATIONS),
+    [selectedBrand]
   );
 
   // Search-only. A real catalogue runs to a few thousand products, so an
@@ -284,7 +382,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   };
 
   const variationLabel =
-    selectedVariations.length === 0 || selectedVariations.length === BRAND_VARIATIONS.length
+    selectedVariations.length === 0 || selectedVariations.length === variationOptions.length
       ? "All variations"
       : selectedVariations.join(", ");
 
@@ -311,9 +409,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     }
     setAudienceStore(audience);
     setTopicsStore(selectedTopics);
-    setVariationsStore(
-      selectedVariations.length === BRAND_VARIATIONS.length ? [] : selectedVariations
-    );
+    // Stored as a concrete list either way, so everything downstream asks
+    // about this brand's presentations rather than a generic set.
+    setVariationsStore(selectedVariations.length > 0 ? selectedVariations : variationOptions);
     setProjectNameStore(nameValue.trim() || suggestedName);
     
     /**
@@ -661,20 +759,30 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                   {sourceMode === "brand" ? (
                     <div className="space-y-3">
-                      <div className="relative flex items-center">
-                        <Search className="absolute left-3.5 size-4 text-ink-4" />
-                        <input
-                          type="text"
-                          value={brandSearch}
-                          onChange={(e) => setBrandSearch(e.target.value)}
-                          placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
-                          className="w-full rounded-control border border-hair-2 bg-card pl-10 pr-4 py-2.5 text-body-lg font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
-                          autoFocus
-                        />
-                      </div>
+                      {/* The search hides once a brand is chosen — the tile
+                          below is the answer, and leaving a half-filled search
+                          box above it read as if nothing had been picked. */}
+                      {!selectedBrand && (
+                        <div className="relative flex items-center">
+                          <Search className="absolute left-3.5 size-4 text-ink-4" />
+                          <input
+                            type="text"
+                            value={brandSearch}
+                            onChange={(e) => setBrandSearch(e.target.value)}
+                            placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
+                            className="w-full rounded-control border border-hair-2 bg-card pl-10 pr-4 py-2.5 text-body-lg font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
+                            autoFocus
+                          />
+                        </div>
+                      )}
 
-                      {/* Nothing until there is a query — see filteredBrands. */}
-                      {!brandSearch.trim() ? (
+                      {selectedBrand ? (
+                        <SelectedBrandTile
+                          brand={selectedBrand}
+                          onChange={() => { setSelectedBrandId(""); setBrandSearch(""); setSelectedVariations([]); }}
+                        />
+                      ) : !brandSearch.trim() ? (
+                        /* Nothing until there is a query — see filteredBrands. */
                         <div className="rounded-panel border border-dashed border-hair-2 bg-card px-4 py-6 text-center">
                           <p className="text-body font-bold text-ink-2">Start typing to find a product</p>
                           <p className="text-label text-ink-4 mt-0.5">
@@ -682,46 +790,34 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           </p>
                         </div>
                       ) : (
-                        <>
                         <div className="rounded-panel border border-hair-2/90 bg-card shadow-2xs divide-y divide-hair max-h-[220px] overflow-y-auto">
-                          {filteredBrands.map((brand) => {
-                            const isSel = brand.id === selectedBrandId;
-                            return (
-                              <button
-                                key={brand.id}
-                                type="button"
-                                onClick={() => handleSelectBrand(brand)}
-                                className={cn(
-                                  "flex w-full cursor-pointer items-center justify-between px-4 py-2.5 text-left transition-colors",
-                                  isSel ? "bg-tint font-bold text-brand-deep" : "text-ink-2 hover:bg-subtle"
-                                )}
-                              >
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <div className={cn(
-                                    "grid size-7 place-items-center rounded-chip text-caption font-black border shrink-0",
-                                    isSel ? "bg-brand text-white border-brand" : "bg-subtle text-ink-2 border-hair-2"
-                                  )}>
-                                    {brand.name.slice(0, 2).toUpperCase()}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <div className="text-body font-bold">{brand.name}</div>
-                                    <div className="text-label text-ink-3 italic truncate">
-                                      {[brand.genericName, brand.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
-                                    </div>
+                          {filteredBrands.map((brand) => (
+                            <button
+                              key={brand.id}
+                              type="button"
+                              onClick={() => handleSelectBrand(brand)}
+                              className="group flex w-full cursor-pointer items-center justify-between px-3.5 py-2.5 text-left text-ink-2 transition-colors hover:bg-subtle"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <BrandThumb brand={brand} className="size-10 shrink-0" />
+                                <div className="min-w-0">
+                                  <div className="text-body font-bold">{brand.name}</div>
+                                  <div className="text-label text-ink-3 italic truncate">
+                                    {[brand.genericName, brand.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
                                   </div>
                                 </div>
+                              </div>
 
-                                <div className="flex items-center gap-2 shrink-0 ml-2">
-                                  <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-chip border border-ok-line">
-                                    Dossier Ready
-                                  </span>
-                                  <span className="text-label font-bold text-brand flex items-center gap-0.5">
-                                    Select <ChevronRight className="size-3" />
-                                  </span>
-                                </div>
-                              </button>
-                            );
-                          })}
+                              <div className="flex items-center gap-2 shrink-0 ml-2">
+                                <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-chip border border-ok-line">
+                                  Dossier Ready
+                                </span>
+                                <span className="flex items-center gap-0.5 text-label font-bold text-brand transition-transform duration-150 group-hover:translate-x-0.5">
+                                  Select <ChevronRight className="size-3" />
+                                </span>
+                              </div>
+                            </button>
+                          ))}
                           {filteredBrands.length === 0 && (
                             /* Naming where a brand comes from, without trying
                                to do it here. Adding one is a Product Library
@@ -739,12 +835,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             </div>
                           )}
                         </div>
-                        </>
                       )}
 
-                      {/* ── Variations of the selected brand ── */}
+                      {/* ── Which presentations, asked the way the speciality
+                          chips are asked in step 1: a rule, a label, chips. ── */}
                       {selectedBrand && (
-                        <div className="space-y-2.5 rounded-panel border border-tint-line bg-tint/40 p-3.5 animate-in fade-in duration-150">
+                        <div className="pt-3 border-t border-hair-2/80 space-y-2.5 animate-in fade-in duration-150">
                           <div className="flex items-center justify-between">
                             <span className="text-label font-bold text-ink-2">
                               {selectedBrand.name} Variation:
@@ -764,12 +860,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             size="sm"
                             options={[
                               { id: ALL_VARIATIONS, label: "All variations" },
-                              ...BRAND_VARIATIONS.map((v) => ({ id: v, label: v })),
+                              ...variationOptions.map((v) => ({ id: v, label: v })),
                             ]}
                             selected={
                               selectedVariations.length === 0
                                 ? [ALL_VARIATIONS]
-                                : selectedVariations.length === BRAND_VARIATIONS.length
+                                : selectedVariations.length === variationOptions.length
                                   ? [ALL_VARIATIONS, ...selectedVariations]
                                   : selectedVariations
                             }
@@ -778,12 +874,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             }
                           />
 
-                          <div className="flex items-center justify-between pt-1">
-                            <span className="text-caption text-ink-4">
-                              {selectedVariations.length === 0
-                                ? "Every presentation of this product."
-                                : `${selectedVariations.length} of ${BRAND_VARIATIONS.length} presentations.`}
-                            </span>
+                          <div className="flex justify-end pt-1">
                             <Button
                               size="sm"
                               variant="primary"
