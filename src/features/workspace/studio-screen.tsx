@@ -42,6 +42,7 @@ import {
   Share2,
   Sliders,
   SlidersHorizontal,
+  Sparkles,
   Tag,
   Timer,
   Type,
@@ -79,6 +80,7 @@ import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claim
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
+import { BackgroundKeyframes } from "@/features/workspace/background-keyframes";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
 import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
@@ -246,8 +248,26 @@ export function StudioScreen() {
    * untouchable for twenty seconds while scene 1 was already idle.
    */
   const [scenePhase, setScenePhase] = useState<Record<string, 0 | 1 | 2>>({});
+  /**
+   * Where each scene's background footage has got to.
+   *
+   * Separate from the phase because it no longer follows it. Phase 2 means
+   * the image and the graph have arrived; the footage stops at its keyframes
+   * and waits to be asked, because rendering it is the expensive, hard to
+   * undo half of a scene and the moment before it is the moment to change
+   * your mind.
+   */
+  const [sceneBg, setSceneBg] = useState<Record<string, "keyframes" | "generating" | "ready">>({});
 
   const [toastMessage, setToMessage] = useState<string | null>(null);
+  /* One helper rather than a setTimeout beside every call: a second toast
+     raised while the first was up used to clear both on the first timer. */
+  const toastTimer = useRef<number | null>(null);
+  const showToast = (message: string) => {
+    setToMessage(message);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToMessage(null), 2600);
+  };
 
   const [sceneList, setSceneList] = useState<Scene[]>(() =>
     // Every line of an approved script IS grounded — the badges are not a
@@ -291,6 +311,27 @@ export function StudioScreen() {
 
 
   const phaseOf = (sceneId: string) => scenePhase[sceneId] ?? 0;
+  const bgOf = (sceneId: string) => sceneBg[sceneId] ?? "keyframes";
+
+  /** What one scene's footage costs to render. */
+  const BG_RENDER_COST = 320;
+
+  /**
+   * Render one scene's background, from its keyframes.
+   *
+   * Charged, because it is real render spend and a quote that moves only at
+   * publish would hide where the money went.
+   */
+  const generateSceneBackground = (scene: Scene) => {
+    if (bgOf(scene.id) !== "keyframes") return;
+    setSceneBg((prev) => ({ ...prev, [scene.id]: "generating" }));
+    setCreditsUsed((prev) => prev + BG_RENDER_COST);
+    showToast(`Rendering scene ${scene.number} footage · ${BG_RENDER_COST} credits`);
+    window.setTimeout(() => {
+      setSceneBg((prev) => ({ ...prev, [scene.id]: "ready" }));
+      showToast(`Scene ${scene.number} footage ready`);
+    }, 4200);
+  };
   /**
    * Editing opens when every scene has its structure, not when everything has
    * finished. Waiting for the media would keep the user idle through the slow
@@ -580,6 +621,10 @@ export function StudioScreen() {
     const { label } = describeElement(elementId);
     setActiveTab("assistant");
     suggestionQueue.add(label, text);
+    /* The note lands in a list above the chat input, which is somewhere you
+       may not be looking — you were looking at the canvas. The toast says it
+       arrived. */
+    showToast(`Added to suggestions · ${label}`);
   };
 
   /**
@@ -1018,6 +1063,16 @@ export function StudioScreen() {
   const handleConfirmVideoGeneration = () => {
     if (hasBlockers) return;
     setGenerateVideoModalOpen(false);
+    /* Any scene still on its keyframes is rendered as part of the final
+       render. Keyframes are a half-made preview, not an incomplete asset —
+       so publishing is never blocked on having pressed a button five times. */
+    setSceneBg((prev) => {
+      const next = { ...prev };
+      sceneList.forEach((sc) => {
+        if (sc.backgroundKind === "video") next[sc.id] = "ready";
+      });
+      return next;
+    });
     setStudioMode("generating");
     setActiveTab("assistant");
     const creditsDeducted = selectedQuality === "cinematic" ? "7,500" : "2,500";
@@ -1765,6 +1820,39 @@ export function StudioScreen() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-label">
+                    {/* Render this scene's footage. Above the canvas rather
+                        than inside it: the frame is where you judge the shot,
+                        and a control laid over it is one more thing between
+                        you and the picture. */}
+                    {previewMode === "scene" &&
+                      selectedScene.backgroundKind === "video" &&
+                      selectedScenePhase >= 2 &&
+                      bgOf(selectedScene.id) !== "ready" && (
+                        <button
+                          type="button"
+                          disabled={bgOf(selectedScene.id) === "generating"}
+                          onClick={() => generateSceneBackground(selectedScene)}
+                          title="Check the keyframes first. Changing the shot is cheaper now than after the render."
+                          className={cn(
+                            "focus-ring inline-flex items-center gap-1.5 rounded-glyph border px-2.5 py-1 text-caption font-bold shadow-2xs transition",
+                            bgOf(selectedScene.id) === "generating"
+                              ? "cursor-not-allowed border-hair-2 bg-canvas text-ink-4"
+                              : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand hover:bg-tint-strong"
+                          )}
+                        >
+                          {bgOf(selectedScene.id) === "generating" ? (
+                            <>
+                              <LogoMark size={11} className="animate-spin" />
+                              Rendering…
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="size-3" />
+                              Generate footage
+                            </>
+                          )}
+                        </button>
+                      )}
                     {previewMode === "scene" && (
                       <button
                         type="button"
@@ -1917,7 +2005,32 @@ export function StudioScreen() {
                         straight over it. z-[1] keeps it under every content
                         layer. */}
                     {selectedScene.backgroundKind === "video" && (
-                      selectedScenePhase >= 2 && selectedScene.bgVideoSrc ? (
+                      selectedScenePhase >= 2 &&
+                      selectedScene.bgVideoSrc &&
+                      bgOf(selectedScene.id) !== "ready" ? (
+                        /* Keyframes, not footage: the shot's first and last
+                           frame, each holding half the scene. The decision
+                           worth making is whether this is the right shot, and
+                           that decision is cheaper now than after the render. */
+                        <>
+                          <BackgroundKeyframes
+                            src={selectedScene.bgVideoSrc}
+                            duration={selectedScene.duration || 10}
+                            currentTime={sceneCurrentTime}
+                            shots={selectedScene.shots}
+                            className="z-[1]"
+                          />
+                          <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-[#06100d]/85 via-[#06100d]/55 to-[#06100d]/20" />
+                          {bgOf(selectedScene.id) === "generating" && (
+                            <div className="pointer-events-none absolute inset-0 z-[2] grid place-items-center bg-black/35 backdrop-blur-[1px]">
+                              <span className="inline-flex items-center gap-2 rounded-chip border border-white/15 bg-black/70 px-3 py-1.5 text-label font-bold text-white">
+                                <LogoMark size={13} className="animate-spin text-brand" />
+                                Rendering footage…
+                              </span>
+                            </div>
+                          )}
+                        </>
+                      ) : selectedScenePhase >= 2 && selectedScene.bgVideoSrc ? (
                         <>
                           <video
                             ref={bgVideoRef}

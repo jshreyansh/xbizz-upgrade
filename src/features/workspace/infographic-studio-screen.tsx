@@ -921,6 +921,9 @@ export function InfographicStudioScreen() {
     setCommentComposerAt(null);
     setActiveTab("assistant");
     suggestionQueue.add(label, text);
+    /* The note lands above the chat input, which is not where you were
+       looking — you were looking at the page. */
+    showToast(`Added to suggestions · ${label}`);
   };
 
   /**

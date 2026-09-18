@@ -75,6 +75,8 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-2",
+    backgroundKind: "video",
+    bgVideoSrc: "/40781-426939561_medium.mp4",
     shots: [
       { id: "s2-a", index: 1, startAt: 0,   endAt: 2.0, label: "Name the target",        transitionIn: "Cut", narrationFragment: 'DERMORA binds selectively at the intended receptor,', visualStory: 'Title lands on a clean plate with no media behind it.' },
       { id: "s2-b", index: 2, startAt: 2.0, endAt: 4.5, label: "Bring in the pathway",   transitionIn: "Scale up 4% ease-out", narrationFragment: 'blocking the downstream signal', visualStory: 'The pathway clip scales up into frame behind the copy as the receptor is named.' },
@@ -104,6 +106,8 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-3",
+    backgroundKind: "video",
+    bgVideoSrc: "/27019-361107952_medium.mp4",
     graph: {
       title: "PASI 90 response at Week 16",
       unit: "% of patients",
@@ -148,6 +152,8 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-4",
+    backgroundKind: "video",
+    bgVideoSrc: "/21617-319452308_medium.mp4",
     shots: [
       { id: "s4-a", index: 1, startAt: 0,   endAt: 1.5,  label: "State the regimen",     transitionIn: "Cut", narrationFragment: 'One tablet daily,', visualStory: 'Regimen stated over a clean frame.' },
       { id: "s4-b", index: 2, startAt: 1.5, endAt: 4.2,  label: "Show the pack",         transitionIn: "Cross dissolve 400ms", narrationFragment: 'with no titration required,', visualStory: 'Packshot cross-dissolves in as the titration point is made.' },
@@ -177,6 +183,8 @@ export const scenes: Scene[] = [
   },
   {
     id: "scene-5",
+    backgroundKind: "video",
+    bgVideoSrc: "/46621-448480587_medium.mp4",
     avatar: { name: "Dr. Maya Chen · clinical and warm", role: "Consultant Dermatologist", position: "bottom-left", scale: 0.58 },
     shots: [
       { id: "s5-a", index: 1, startAt: 0,   endAt: 6.4, label: "The next step",     transitionIn: "Cut", narrationFragment: 'Review the full Prescribing Information,', visualStory: 'Closing copy on a quiet frame with no media behind it.' },
