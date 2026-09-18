@@ -58,6 +58,29 @@ function dateFrom(n: number): string {
 }
 
 /**
+ * The published work a brand could have cited this claim in.
+ *
+ * Only four brands have real entries in the Content Library, which left the
+ * Usage tab empty for most of the catalogue — a tab that is blank for two
+ * claims in three teaches people not to open it. The rest borrow the shape of
+ * that work under their own name: the same formats, specs and figures, titled
+ * for the brand whose claim this is, so the grid reads as this brand's shelf
+ * rather than somebody else's film.
+ */
+function publishedFor(product: LibraryProduct): LibraryAsset[] {
+  const own = LIBRARY_ASSETS.filter((asset) => asset.brand === product.name);
+  if (own.length >= 3) return own;
+  const borrowed = LIBRARY_ASSETS.filter((asset) => asset.brand !== product.name).map((asset) => ({
+    ...asset,
+    id: `${product.id}-${asset.id}`,
+    title: asset.title.replace(asset.brand, product.name),
+    brand: product.name,
+    gradient: product.gradient,
+  }));
+  return [...own, ...borrowed];
+}
+
+/**
  * Everything the detail page shows about one claim, derived from its id so the
  * same claim always reads the same way. Mock, in the way the rest of the
  * catalogue is mock: a plausible record rather than a real audit trail.
@@ -88,12 +111,12 @@ export function buildClaimDetail(claim: ProductClaim, product: LibraryProduct): 
   }
 
   /* Not every claim goes into every asset of its brand: a patient explainer
-     and a congress poster cite different halves of the same dossier. A
-     deterministic subset of the brand's published work, never empty while the
-     brand has any. */
-  const brandAssets = LIBRARY_ASSETS.filter((asset) => asset.brand === product.name);
-  const picked = brandAssets.filter((_, index) => (n >> index) % 2 === 0);
-  const usedIn = picked.length > 0 ? picked : brandAssets.slice(0, 1);
+     and a congress poster cite different halves of the same dossier. Two or
+     three each, chosen from the claim's own id so the same claim always shows
+     the same work. */
+  const shelf = publishedFor(product);
+  const take = 2 + (n % 2);
+  const usedIn = Array.from({ length: Math.min(take, shelf.length) }, (_, i) => shelf[(n + i) % shelf.length]);
 
   return {
     claim,
