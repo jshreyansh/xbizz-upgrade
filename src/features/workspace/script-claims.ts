@@ -115,3 +115,53 @@ export function citationsFor(tag: string, narration: string): SceneCitation[] {
   );
   return claims.map((claim, i) => cite(claim, anchors[i % slots]));
 }
+
+/* ── Where a claim is actually used ──────────────────────────────────────── */
+
+export interface ClaimUse {
+  sceneNumber: number;
+  /** The shot inside that scene, when the cited clause sits in one. */
+  shotIndex?: number;
+}
+
+/** "Scene 3 · Shot 2", or just the scene when the line is not split. */
+export function claimUseLabel(use: ClaimUse): string {
+  return use.shotIndex ? `Scene ${use.sceneNumber} · Shot ${use.shotIndex}` : `Scene ${use.sceneNumber}`;
+}
+
+interface UsageScene {
+  number: number;
+  narrativeTag?: string;
+  narration: string;
+  shots?: Array<{ index: number; narrationFragment: string }>;
+}
+
+/**
+ * Which scene, and which shot inside it,each claim is cited in.
+ *
+ * Read from the same citations the badges under the narration are built from,
+ * rather than from a second list — a claim card that advertises a placement
+ * the badges disagree with is worse than a card that says nothing. The shot is
+ * found by locating the cited clause in a shot's own slice of the narration,
+ * which is the only honest way to say "Shot 2" rather than guess.
+ */
+export function claimUsage(scenes: UsageScene[]): Record<string, ClaimUse[]> {
+  const usage: Record<string, ClaimUse[]> = {};
+  for (const scene of scenes) {
+    if (!scene.narration?.trim()) continue;
+    const segments = splitSegments(scene.narration);
+    for (const citation of citationsFor(scene.narrativeTag ?? "", scene.narration)) {
+      if (!citation.claimId) continue;
+      const segment = segments[citation.anchor ?? 0] ?? "";
+      const probe = segment.trim().slice(0, 24).toLowerCase();
+      const shot = probe
+        ? scene.shots?.find((s) => s.narrationFragment.toLowerCase().includes(probe))
+        : undefined;
+      const list = (usage[citation.claimId] ??= []);
+      if (!list.some((u) => u.sceneNumber === scene.number && u.shotIndex === shot?.index)) {
+        list.push({ sceneNumber: scene.number, shotIndex: shot?.index });
+      }
+    }
+  }
+  return usage;
+}

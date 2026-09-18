@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { APPROVED_CLAIMS } from "@/features/workspace/script-claims";
+import { APPROVED_CLAIMS, claimUseLabel, type ClaimUse } from "@/features/workspace/script-claims";
 import {
   DossierPreviewModal,
   type DossierPreviewData,
@@ -28,9 +28,19 @@ import { moleculeFor, primaryDossier } from "@/features/workspace/grounding-doss
 export function ClaimsPanel({
   highlightedClaimId,
   brandName = "Velmora",
+  usage,
 }: {
   highlightedClaimId?: string | null;
   brandName?: string;
+  /**
+   * Where each claim is cited, keyed by claim id.
+   *
+   * The list answered "what am I allowed to say" and stopped there, so a card
+   * gave no way to tell a claim carrying three lines of the film from one
+   * nothing has used yet. Omitted where the surface has no placements to
+   * report, and then no card claims one.
+   */
+  usage?: Record<string, ClaimUse[]>;
 }) {
   const [dossier, setDossier] = useState<DossierPreviewData | null>(null);
 
@@ -70,6 +80,32 @@ export function ClaimsPanel({
             </div>
             <h4 className="text-body font-bold text-ink">{claim.title}</h4>
             <p className="mt-1 text-caption leading-relaxed text-ink-3">{claim.detail}</p>
+
+            {usage && (
+              /* Where it is used. Two placements shown, the rest counted —
+                 the point is to tell a claim that is carrying the film from
+                 one nothing has picked up yet, not to list every hit. */
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                {(usage[claim.id] ?? []).slice(0, 2).map((use) => (
+                  <span
+                    key={`${use.sceneNumber}-${use.shotIndex ?? "x"}`}
+                    className="rounded-glyph border border-hair-2 bg-card px-1.5 py-0.5 text-micro font-bold text-ink-2"
+                  >
+                    {claimUseLabel(use)}
+                  </span>
+                ))}
+                {(usage[claim.id]?.length ?? 0) > 2 && (
+                  <span className="text-micro font-bold text-ink-4">
+                    +{(usage[claim.id]?.length ?? 0) - 2} more
+                  </span>
+                )}
+                {(usage[claim.id]?.length ?? 0) === 0 && (
+                  <span className="rounded-glyph border border-dashed border-hair-2 px-1.5 py-0.5 text-micro font-semibold text-ink-4">
+                    Not used yet
+                  </span>
+                )}
+              </div>
+            )}
 
             <button
               type="button"

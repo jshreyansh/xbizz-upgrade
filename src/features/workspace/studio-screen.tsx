@@ -75,7 +75,7 @@ import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
 import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
-import { APPROVED_CLAIMS, citationsFor } from "@/features/workspace/script-claims";
+import { APPROVED_CLAIMS, citationsFor, claimUsage } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
@@ -3520,7 +3520,13 @@ export function StudioScreen() {
             )}
 
             {/* ── TAB 3: CLAIMS & EVIDENCE LIBRARY ── */}
-            {activeTab === "evidence" && <ClaimsPanel highlightedClaimId={highlightedClaimId} brandName={brandName} />}
+            {activeTab === "evidence" && (
+              <ClaimsPanel
+                highlightedClaimId={highlightedClaimId}
+                brandName={brandName}
+                usage={claimUsage(sceneList)}
+              />
+            )}
           </div>
         </>
       }
