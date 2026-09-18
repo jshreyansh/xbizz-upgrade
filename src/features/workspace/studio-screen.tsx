@@ -1596,10 +1596,11 @@ export function StudioScreen() {
                       <button
                         type="button"
                         onClick={() => { setPreviewMode("full"); setScenePlaying(false); }}
-                        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-glyph border border-hair-2 bg-card px-2 py-1 text-caption font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand"
+                        aria-label="Play the whole film"
+                        title="Play the whole film"
+                        className="focus-ring grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border border-hair-2 bg-card text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand"
                       >
                         <Play className="size-3 fill-current" />
-                        Full preview
                       </button>
                     )}
                   </div>
@@ -1812,30 +1813,20 @@ export function StudioScreen() {
                         <span>{selectedScene.title}</span>
                       </>
                     ) : (
-                      /* The pair only appears once you are in full preview.
-                         Editing is the editor's normal state, and a permanent
-                         two-tab switch would make it look like a choice you
-                         have to keep making. */
-                      <div className="flex items-center gap-1 rounded-control border border-hair-2 bg-[#e6ebe6] p-0.5">
-                        {([
-                          { id: "full" as const, label: "Full preview" },
-                          { id: "scene" as const, label: "Scene preview" },
-                        ]).map((opt) => (
-                          <button
-                            key={opt.id}
-                            type="button"
-                            onClick={() => setPreviewMode(opt.id)}
-                            className={cn(
-                              "cursor-pointer rounded-glyph px-2.5 py-1 text-caption font-bold transition",
-                              previewMode === opt.id
-                                ? "bg-card text-brand-deep shadow-2xs"
-                                : "text-ink-3 hover:text-ink"
-                            )}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
+                      /* One label and one way out, rather than a two-tab
+                         switch that made watching and editing look like a
+                         choice you have to keep making. */
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => { setPreviewMode("scene"); setMasterPlaying(false); }}
+                          aria-label="Back to editing"
+                          className="focus-ring grid size-6 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
+                        >
+                          <ArrowLeft className="size-3.5" />
+                        </button>
+                        <span className="font-extrabold">Full preview</span>
+                      </>
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-label">
@@ -1911,7 +1902,7 @@ export function StudioScreen() {
                         />
                       </div>
 
-                      <div className="relative z-10 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-4 text-label text-white">
+                      <div className="relative z-[40] flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-4 text-label text-white">
                         <span className="font-extrabold">
                           {activeMasterChapter?.number}. {activeMasterChapter?.title}
                         </span>
@@ -1920,9 +1911,12 @@ export function StudioScreen() {
                         </span>
                       </div>
 
+                      {/* Above the brand mark, which the composition paints at
+                          z-30 and which was sitting squarely on top of the way
+                          out of here. Chrome is over the film by definition. */}
                       <div
                         data-player-chrome
-                        className="relative z-10 space-y-3 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-4 pt-8 text-white"
+                        className="relative z-[40] space-y-3 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-4 pt-8 text-white"
                       >
                         <ChapterScrubber
                           chapters={chapters}
