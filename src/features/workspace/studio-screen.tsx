@@ -1586,8 +1586,22 @@ export function StudioScreen() {
                     <span className="text-caption font-bold text-ink-3">{totalDurationSeconds}s</span>
                   </div>
                 ) : isEditor ? (
-                  <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair px-3 bg-card">
-                    <span className="text-micro font-bold uppercase tracking-[0.12em] text-[#77817c]">Scenes · {totalDurationSeconds} sec</span>
+                  <div className="flex h-11 shrink-0 items-center justify-between gap-2 border-b border-hair px-3 bg-card">
+                    <span className="min-w-0 truncate text-micro font-bold uppercase tracking-[0.12em] text-[#77817c]">
+                      Scenes · {totalDurationSeconds} sec
+                    </span>
+                    {/* Watching the whole film belongs to the list of scenes,
+                        not to the header of the one you are editing. */}
+                    {previewMode === "scene" && (
+                      <button
+                        type="button"
+                        onClick={() => { setPreviewMode("full"); setScenePlaying(false); }}
+                        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-glyph border border-hair-2 bg-card px-2 py-1 text-caption font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand"
+                      >
+                        <Play className="size-3 fill-current" />
+                        Full preview
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-between pb-4 shrink-0">
@@ -1868,16 +1882,9 @@ export function StudioScreen() {
                         </InfoTip>
                         </span>
                       )}
-                    {previewMode === "scene" && (
-                      <button
-                        type="button"
-                        onClick={() => { setPreviewMode("full"); setScenePlaying(false); }}
-                        className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-glyph border border-hair-2 bg-card px-2.5 py-1 text-caption font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand"
-                      >
-                        <Play className="size-3 fill-current" />
-                        Full preview
-                      </button>
-                    )}
+                    {/* Full preview now sits over the scene list, where the
+                        whole film is the thing being listed. This header is
+                        about the scene on screen. */}
                     <span className="rounded-glyph bg-card border border-hair-2 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
                       Fit 16:9
                     </span>
