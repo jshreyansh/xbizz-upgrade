@@ -15,7 +15,6 @@ import {
   Film,
   History,
   Image as ImageIcon,
-  Info,
   Layers,
   Stamp,
   UserRound,
@@ -81,6 +80,7 @@ import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { BackgroundKeyframes } from "@/features/workspace/background-keyframes";
+import { InfoTip } from "@/features/workspace/info-tip";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
 import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
@@ -1833,11 +1833,11 @@ export function StudioScreen() {
                       selectedScene.backgroundKind === "video" &&
                       selectedScenePhase >= 2 &&
                       bgOf(selectedScene.id) !== "ready" && (
+                        <span className="flex items-center gap-1.5">
                         <button
                           type="button"
                           disabled={bgOf(selectedScene.id) === "generating"}
                           onClick={() => generateSceneBackground(selectedScene)}
-                          title="Every clip in this scene is at its keyframes. Check them first — changing a shot is cheaper now than after the render."
                           className={cn(
                             "focus-ring inline-flex items-center gap-1.5 rounded-glyph border px-2.5 py-1 text-caption font-bold shadow-2xs transition",
                             bgOf(selectedScene.id) === "generating"
@@ -1853,11 +1853,20 @@ export function StudioScreen() {
                           ) : (
                             <>
                               <LogoMark size={11} />
-                              Generate all videos
-                              <Info className="size-3 text-brand-deep/60" />
+                              Generate videos
                             </>
                           )}
                         </button>
+                        {/* Beside the button, not inside it: it explains the
+                            button rather than being part of pressing it, and
+                            a hover that has to survive a click target is a
+                            hover you lose. */}
+                        <InfoTip label="What happens when I generate?">
+                          Every clip in this scene is still at its keyframes — the opening and
+                          closing frame of each shot. Generating renders them in full and spends
+                          the credits for it, so this is the moment to change a shot.
+                        </InfoTip>
+                        </span>
                       )}
                     {previewMode === "scene" && (
                       <button
