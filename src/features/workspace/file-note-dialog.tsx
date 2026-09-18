@@ -25,6 +25,8 @@ export interface PendingFile {
   kind: "doc" | "media";
   /** Prefilled when editing an existing note. */
   note?: string;
+  /** Prefilled when editing an asset already tagged to a variation. */
+  variation?: string;
 }
 
 export function FileNoteDialog({
@@ -32,6 +34,7 @@ export function FileNoteDialog({
   title,
   prompt,
   placeholder,
+  variations,
   onCancel,
   onConfirm,
 }: {
@@ -39,13 +42,31 @@ export function FileNoteDialog({
   title: string;
   prompt: string;
   placeholder: string;
+  /**
+   * The brand's variations, when this asset is product artwork.
+   *
+   * A packshot is not of a brand, it is of one presentation of it — the 200mg
+   * tablet, the pen, the suspension — and a library where that is not
+   * recorded is a library you cannot pull the right pack out of. So the
+   * variation is asked for at the same moment as the note, and the asset
+   * enters the catalogue tagged.
+   */
+  variations?: string[];
   onCancel: () => void;
-  onConfirm: (notes: Record<string, string>) => void;
+  onConfirm: (notes: Record<string, string>, variations: Record<string, string>) => void;
 }) {
   const [notes, setNotes] = useState<Record<string, string>>(() =>
     Object.fromEntries(files.map((f) => [f.id, f.note ?? ""]))
   );
-  const ready = files.every((f) => (notes[f.id] ?? "").trim().length > 0);
+  const [picked, setPicked] = useState<Record<string, string>>(() =>
+    Object.fromEntries(files.map((f) => [f.id, f.variation ?? ""]))
+  );
+  const needsVariation = Boolean(variations && variations.length > 0);
+  const ready = files.every(
+    (f) =>
+      (notes[f.id] ?? "").trim().length > 0 &&
+      (!needsVariation || (picked[f.id] ?? "").length > 0)
+  );
 
   return createPortal(
     <div
@@ -88,6 +109,33 @@ export function FileNoteDialog({
                 placeholder={placeholder}
                 className="mt-2 w-full resize-none rounded-control border border-hair-2 bg-card px-2.5 py-2 text-body text-ink outline-none transition placeholder:text-ink-4 focus:border-brand focus:ring-2 focus:ring-brand/15"
               />
+
+              {needsVariation && (
+                <div className="mt-2.5">
+                  <span className="block text-label font-bold text-ink-2">Which variation?</span>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {variations!.map((variation) => {
+                      const active = picked[file.id] === variation;
+                      return (
+                        <button
+                          key={variation}
+                          type="button"
+                          aria-pressed={active}
+                          onClick={() => setPicked((prev) => ({ ...prev, [file.id]: variation }))}
+                          className={cn(
+                            "cursor-pointer rounded-chip border px-2.5 py-1 text-label font-bold transition",
+                            active
+                              ? "border-brand bg-brand text-white"
+                              : "border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
+                          )}
+                        >
+                          {variation}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -96,7 +144,9 @@ export function FileNoteDialog({
           <span className={cn("text-label", ready ? "text-ink-3" : "text-ink-4")}>
             {ready
               ? `${files.length} ${files.length === 1 ? "file" : "files"} ready`
-              : "Every file needs a note before it can be attached"}
+              : needsVariation
+                ? "Each file needs a note and a variation"
+                : "Every file needs a note before it can be attached"}
           </span>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onClick={onCancel} className="cursor-pointer text-label font-bold">
@@ -106,7 +156,7 @@ export function FileNoteDialog({
               size="sm"
               variant="primary"
               disabled={!ready}
-              onClick={() => onConfirm(notes)}
+              onClick={() => onConfirm(notes, picked)}
               className="cursor-pointer text-label font-bold disabled:opacity-40"
             >
               {files.some((f) => f.note !== undefined) ? "Save note" : "Attach"}

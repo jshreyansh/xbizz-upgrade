@@ -26,6 +26,20 @@ export interface WorkspaceAsset {
   origin: string;
   size: string;
   previewUrl?: string;
+  /** Which presentation of the brand this shows, for product artwork. */
+  variation?: string;
+}
+
+/**
+ * The presentations a brand ships in.
+ *
+ * Product artwork is never of a brand in the abstract — it is of one pack,
+ * one device, one strength. Tagging it at the moment it is added is what
+ * makes the library searchable later; tagging it afterwards never happens.
+ */
+export function brandVariations(brandName: string): string[] {
+  void brandName;
+  return ["200mg tablet", "50mg tablet", "Autoinjector pen", "Oral suspension"];
 }
 
 const LIBRARY: WorkspaceAsset[] = [
@@ -64,6 +78,7 @@ const LIBRARY: WorkspaceAsset[] = [
     note: "Hero packshot, front of pack",
     origin: "HCP Launch Film",
     size: "4.2 MB",
+    variation: "200mg tablet",
     previewUrl:
       "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
   },
@@ -75,6 +90,7 @@ const LIBRARY: WorkspaceAsset[] = [
     note: "Device at three-quarter angle",
     origin: "Field Detail Aid",
     size: "2.8 MB",
+    variation: "Autoinjector pen",
     previewUrl:
       "https://images.unsplash.com/photo-1563213126-a4273aed2016?auto=format&fit=crop&w=400&q=80",
   },
@@ -209,6 +225,7 @@ export function MediaAssetTile({
   previewUrl,
   kind,
   source,
+  variation,
   onAdd,
 }: {
   name: string;
@@ -217,6 +234,8 @@ export function MediaAssetTile({
   previewUrl?: string;
   kind: WorkspaceAssetKind;
   source?: "swishx" | "workspace";
+  /** Which presentation of the brand this is. */
+  variation?: string;
   onAdd?: () => void;
 }) {
   return (
@@ -257,6 +276,11 @@ export function MediaAssetTile({
       </div>
       <div className="min-w-0 p-2">
         <span className="block truncate text-body font-bold text-ink">{name}</span>
+        {variation && (
+          <span className="mt-0.5 inline-flex max-w-full items-center rounded-glyph border border-tint-line bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">
+            <span className="truncate">{variation}</span>
+          </span>
+        )}
         <span className="block truncate text-caption text-ink-3" title={note}>
           {note}
         </span>
@@ -283,6 +307,8 @@ export interface AttachedMedia {
   kind: "image" | "video";
   /** "4.2 MB", shown under the name when known. */
   size?: string;
+  /** Which presentation of the brand this is, for product artwork. */
+  variation?: string;
 }
 
 export function MediaAttachmentGrid({
@@ -350,6 +376,11 @@ export function MediaAttachmentGrid({
 
           <div className="min-w-0 p-2.5">
             <span className="block truncate text-body font-bold text-ink">{item.name}</span>
+            {item.variation && (
+              <span className="mt-0.5 inline-flex max-w-full items-center rounded-glyph border border-tint-line bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">
+                <span className="truncate">{item.variation}</span>
+              </span>
+            )}
             {item.note && (
               <span className="mt-0.5 flex items-start gap-1 text-caption text-ink-3">
                 <span className="line-clamp-2 min-w-0 flex-1" title={item.note}>

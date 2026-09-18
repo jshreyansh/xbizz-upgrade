@@ -45,6 +45,7 @@ import {
   AssetStrip,
   MediaAssetTile,
   MediaAttachmentGrid,
+  brandVariations,
   workspaceAssets,
 } from "@/features/workspace/workspace-assets";
 import {
@@ -387,7 +388,7 @@ export function InfographicDirectionsScreen() {
     Array<{ id: string; name: string; note: string; previewUrl?: string; kind?: "image" | "video" }>
   >([]);
   const [packshots, setPackshots] = useState<
-    Array<{ id: string; name: string; url: string; note?: string }>
+    Array<{ id: string; name: string; url: string; note?: string; variation?: string }>
   >([
     {
       id: "packshot-1",
@@ -470,7 +471,9 @@ export function InfographicDirectionsScreen() {
   const [pendingMedia, setPendingMedia] = useState<
     Array<{ id: string; name: string; url: string }>
   >([]);
-  const [editingPackshot, setEditingPackshot] = useState<{ id: string; name: string; note: string } | null>(null);
+  const [editingPackshot, setEditingPackshot] = useState<
+    { id: string; name: string; note: string; variation?: string } | null
+  >(null);
   const [pendingReference, setPendingReference] = useState<
     Array<{ id: string; name: string; kind: "image" | "video"; previewUrl?: string }>
   >([]);
@@ -1128,6 +1131,7 @@ export function InfographicDirectionsScreen() {
                             note: ps.note,
                             previewUrl: ps.url,
                             kind: "image" as const,
+                            variation: ps.variation,
                           }))}
                           uploadLabel={packshots.length === 0 ? "Upload product image" : "Add another"}
                           uploadHint="PNG, JPG"
@@ -1142,7 +1146,12 @@ export function InfographicDirectionsScreen() {
                           }
                           onRemove={(id) => setPackshots((prev) => prev.filter((ps) => ps.id !== id))}
                           onEditNote={(item) =>
-                            setEditingPackshot({ id: item.id, name: item.name, note: item.note ?? "" })
+                            setEditingPackshot({
+                              id: item.id,
+                              name: item.name,
+                              note: item.note ?? "",
+                              variation: item.variation,
+                            })
                           }
                         />
 
@@ -1168,6 +1177,7 @@ export function InfographicDirectionsScreen() {
                                     origin={asset.origin}
                                     previewUrl={asset.previewUrl}
                                     kind={asset.kind}
+                                    variation={asset.variation}
                                     onAdd={() =>
                                       setPackshots((prev) => [
                                         ...prev,
@@ -1176,6 +1186,7 @@ export function InfographicDirectionsScreen() {
                                           name: asset.name,
                                           url: asset.previewUrl ?? "",
                                           note: asset.note,
+                                          variation: asset.variation,
                                         },
                                       ])
                                     }
@@ -1559,13 +1570,18 @@ export function InfographicDirectionsScreen() {
             <FileNoteDialog
               files={pendingMedia.map((m) => ({ id: m.id, name: m.name, kind: "media" as const }))}
               title="What is this asset for?"
-              prompt="A note travels with each asset, so it is placed where you meant it."
+              prompt="A note and a variation travel with each asset, so it lands in the catalogue as one pack rather than as a file."
               placeholder="e.g. the hero packshot, front of pack"
+              variations={brandVariations(brandName)}
               onCancel={() => setPendingMedia([])}
-              onConfirm={(notes) => {
+              onConfirm={(notes, variations) => {
                 setPackshots((prev) => [
                   ...prev,
-                  ...pendingMedia.map((m) => ({ ...m, note: notes[m.id].trim() })),
+                  ...pendingMedia.map((m) => ({
+                    ...m,
+                    note: notes[m.id].trim(),
+                    variation: variations[m.id],
+                  })),
                 ]);
                 setPendingMedia([]);
               }}
@@ -1574,15 +1590,26 @@ export function InfographicDirectionsScreen() {
 
           {editingPackshot && (
             <FileNoteDialog
-              files={[{ id: editingPackshot.id, name: editingPackshot.name, kind: "media", note: editingPackshot.note }]}
+              files={[{
+                id: editingPackshot.id,
+                name: editingPackshot.name,
+                kind: "media",
+                note: editingPackshot.note,
+                variation: editingPackshot.variation,
+              }]}
               title="What is this asset for?"
-              prompt="The note travels with the asset wherever the page places it."
+              prompt="The note and the variation travel with the asset wherever the page places it."
               placeholder="e.g. the hero packshot, front of pack"
+              variations={brandVariations(brandName)}
               onCancel={() => setEditingPackshot(null)}
-              onConfirm={(notes) => {
+              onConfirm={(notes, variations) => {
                 const next = notes[editingPackshot.id].trim();
                 setPackshots((prev) =>
-                  prev.map((ps) => (ps.id === editingPackshot.id ? { ...ps, note: next } : ps))
+                  prev.map((ps) =>
+                    ps.id === editingPackshot.id
+                      ? { ...ps, note: next, variation: variations[editingPackshot.id] }
+                      : ps
+                  )
                 );
                 setEditingPackshot(null);
               }}

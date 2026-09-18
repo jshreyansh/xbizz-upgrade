@@ -60,6 +60,7 @@ import {
   AssetStrip,
   MediaAssetTile,
   MediaAttachmentGrid,
+  brandVariations,
   workspaceAssets,
 } from "@/features/workspace/workspace-assets";
 import {
@@ -324,7 +325,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const [pendingMedia, setPendingMedia] = useState<
     Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string }>
   >([]);
-  const [editingMedia, setEditingMedia] = useState<{ id: string; name: string; note: string } | null>(null);
+  const [editingMedia, setEditingMedia] = useState<
+    { id: string; name: string; note: string; variation?: string } | null
+  >(null);
   /**
    * Reference material: how it should feel, not what it may say.
    * Hoisted with the other hooks, above the early return at the top.
@@ -452,7 +455,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   // Dynamic Product Media Assets: Starts EMPTY by default
   const [productMediaList, setProductMediaList] = useState<
-    Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string; note?: string }>
+    Array<{
+      id: string;
+      name: string;
+      type: "image" | "video";
+      preview: string;
+      size: string;
+      note?: string;
+      variation?: string;
+    }>
   >([]);
 
   const isProductFocus =
@@ -1719,6 +1730,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           previewUrl: m.preview,
                           kind: m.type,
                           size: m.size ? `${m.size} · Uploaded` : undefined,
+                          variation: m.variation,
                         }))}
                         uploadLabel={
                           productMediaList.length === 0 ? "Upload product photos / videos" : "Add more media"
@@ -1740,7 +1752,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         }
                         onRemove={(id) => setProductMediaList((prev) => prev.filter((m) => m.id !== id))}
                         onEditNote={(item) =>
-                          setEditingMedia({ id: item.id, name: item.name, note: item.note ?? "" })
+                          setEditingMedia({
+                            id: item.id,
+                            name: item.name,
+                            note: item.note ?? "",
+                            variation: item.variation,
+                          })
                         }
                       />
 
@@ -1767,6 +1784,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                   origin={asset.origin}
                                   previewUrl={asset.previewUrl}
                                   kind={asset.kind}
+                                  variation={asset.variation}
                                   onAdd={() =>
                                     setProductMediaList((prev) => [
                                       ...prev,
@@ -1777,6 +1795,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                         preview: asset.previewUrl ?? "",
                                         size: asset.size,
                                         note: asset.note,
+                                        variation: asset.variation,
                                       },
                                     ])
                                   }
@@ -2509,13 +2528,18 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             <FileNoteDialog
               files={pendingMedia.map((m) => ({ id: m.id, name: m.name, kind: "media" as const }))}
               title="What is this asset for?"
-              prompt="A note travels with each asset, so it is placed where you meant it rather than wherever it fits."
-              placeholder="e.g. the hero packshot — front of pack, use it in the opening scene"
+              prompt="A note and a variation travel with each asset, so it lands in the catalogue as one pack rather than as a file."
+              placeholder="e.g. the hero packshot, front of pack, for the opening scene"
+              variations={brandVariations(brandName)}
               onCancel={() => setPendingMedia([])}
-              onConfirm={(notes) => {
+              onConfirm={(notes, variations) => {
                 setProductMediaList((prev) => [
                   ...prev,
-                  ...pendingMedia.map((m) => ({ ...m, note: notes[m.id].trim() })),
+                  ...pendingMedia.map((m) => ({
+                    ...m,
+                    note: notes[m.id].trim(),
+                    variation: variations[m.id],
+                  })),
                 ]);
                 setPendingMedia([]);
               }}
@@ -2558,15 +2582,26 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
           {editingMedia && (
             <FileNoteDialog
-              files={[{ id: editingMedia.id, name: editingMedia.name, kind: "media", note: editingMedia.note }]}
+              files={[{
+                id: editingMedia.id,
+                name: editingMedia.name,
+                kind: "media",
+                note: editingMedia.note,
+                variation: editingMedia.variation,
+              }]}
               title="What is this asset for?"
-              prompt="The note travels with the asset wherever the plan places it."
-              placeholder="e.g. the hero packshot — front of pack, use it in the opening scene"
+              prompt="The note and the variation travel with the asset wherever the plan places it."
+              placeholder="e.g. the hero packshot, front of pack, for the opening scene"
+              variations={brandVariations(brandName)}
               onCancel={() => setEditingMedia(null)}
-              onConfirm={(notes) => {
+              onConfirm={(notes, variations) => {
                 const next = notes[editingMedia.id].trim();
                 setProductMediaList((prev) =>
-                  prev.map((m) => (m.id === editingMedia.id ? { ...m, note: next } : m))
+                  prev.map((m) =>
+                    m.id === editingMedia.id
+                      ? { ...m, note: next, variation: variations[editingMedia.id] }
+                      : m
+                  )
                 );
                 setEditingMedia(null);
               }}

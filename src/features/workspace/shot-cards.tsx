@@ -216,19 +216,46 @@ export function ShotCards({
                   footage. A shot is a stretch of film and its two ends are
                   what you can actually judge before it is rendered. */}
               {scene.backgroundKind === "video" && scene.bgVideoSrc && (
-                <div className="mb-2 flex gap-1.5">
-                  <FrameThumb
-                    src={scene.bgVideoSrc}
-                    at={shot.startAt}
-                    duration={scene.duration || 10}
-                    label={videosReady ? "Opens" : "Opening keyframe"}
-                  />
-                  <FrameThumb
-                    src={scene.bgVideoSrc}
-                    at={shot.endAt}
-                    duration={scene.duration || 10}
-                    label={videosReady ? "Ends" : "Closing keyframe"}
-                  />
+                <div className="mb-2">
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-micro font-bold uppercase tracking-wide text-ink-4">
+                      {videosReady ? "Footage" : "Footage keyframes"}
+                    </span>
+                    {/* The background is footage like any other clip, and a
+                        scene whose only video IS the background had nothing to
+                        press — the render was offered beside layers it did not
+                        have. */}
+                    {!videosReady && (
+                      <button
+                        type="button"
+                        disabled={generating}
+                        onClick={() => onGenerateVideos?.()}
+                        className={cn(
+                          "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-2 py-0.5 text-micro font-bold transition-colors",
+                          generating
+                            ? "cursor-not-allowed border-hair-2 bg-card text-ink-4"
+                            : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand"
+                        )}
+                      >
+                        <LogoMark size={9} className={generating ? "animate-spin" : undefined} />
+                        {generating ? "Rendering" : "Generate"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <FrameThumb
+                      src={scene.bgVideoSrc}
+                      at={shot.startAt}
+                      duration={scene.duration || 10}
+                      label={videosReady ? "Opens" : "Opening keyframe"}
+                    />
+                    <FrameThumb
+                      src={scene.bgVideoSrc}
+                      at={shot.endAt}
+                      duration={scene.duration || 10}
+                      label={videosReady ? "Ends" : "Closing keyframe"}
+                    />
+                  </div>
                 </div>
               )}
 
