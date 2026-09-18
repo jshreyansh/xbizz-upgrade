@@ -15,6 +15,8 @@ import {
   FileCheck2,
   FileText,
   Film,
+  Image as ImageIcon,
+  Palette,
   Globe2,
   Info,
   Layers,
@@ -54,6 +56,7 @@ import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-mod
 import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
+import { WorkspaceAssetShelf, workspaceAssets } from "@/features/workspace/workspace-assets";
 import {
   ChatAttachmentRow,
   useChatAttachments,
@@ -82,7 +85,7 @@ import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 
-type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets" | "logo";
+type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets" | "references" | "logo";
 
 /** One name per section, so the progress bar and the tiles agree. */
 const SECTION_TITLES: Record<PlanSectionId, string> = {
@@ -90,6 +93,7 @@ const SECTION_TITLES: Record<PlanSectionId, string> = {
   treatment: "Creative treatment",
   logo: "Brand mark",
   "product-assets": "Product & Device Visual Assets",
+  references: "Visual & creative references",
   message: "Message and audience",
   delivery: "Delivery & Cost",
   voice: "Voice and sound",
@@ -314,6 +318,17 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     Array<{ id: string; name: string; type: "image" | "video"; preview: string; size: string }>
   >([]);
   const [editingMedia, setEditingMedia] = useState<{ id: string; name: string; note: string } | null>(null);
+  /**
+   * Reference material: how it should feel, not what it may say.
+   * Hoisted with the other hooks, above the early return at the top.
+   */
+  const [referenceList, setReferenceList] = useState<
+    Array<{ id: string; name: string; kind: "image" | "video"; note: string }>
+  >([]);
+  const [pendingReference, setPendingReference] = useState<
+    Array<{ id: string; name: string; kind: "image" | "video" }>
+  >([]);
+  const [editingReference, setEditingReference] = useState<{ id: string; name: string; note: string } | null>(null);
   /* Files attached to the next chat message. Hoisted with the other hooks,
      above the early return at the top of this component. */
   const chatFiles = useChatAttachments();
@@ -716,15 +731,20 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    * deciding for itself where to go — which is how `selectTreatment` used to
    * collapse everything to null and leave Product Assets to be found by hand.
    */
+  /* In the order they are drawn. An order that disagrees with the markup
+     sends Save & Continue jumping back up the page — which is what putting
+     the mark after the product assets here, while drawing it before them,
+     had already started doing. */
   const sectionOrder: PlanSectionId[] = [
     "sources",
     isMagicAvatar ? "voice" : "treatment",
-    ...(isProductFocus ? (["product-assets"] as PlanSectionId[]) : []),
     // Every video carries a mark, so this is not folded into product assets —
-    // that section only appears when the brief is product-focused. It sits
-    // where it renders: an order that disagrees with the markup sends Save &
-    // Continue jumping back up the page.
+    // that section only appears when the brief is product-focused.
     "logo",
+    ...(isProductFocus ? (["product-assets"] as PlanSectionId[]) : []),
+    /* Reference material sits beside the product media and nowhere near the
+       sources: it shapes the treatment, and it grounds nothing. */
+    "references",
     "message",
     "delivery",
     // Visual-only has nothing to voice, and avatar mode already voiced it in
@@ -769,9 +789,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     }
   };
 
-  /** Product assets are genuinely skippable unless the brief is product-led. */
+  /**
+   * Product assets are genuinely skippable unless the brief is product-led,
+   * and references always are — a plan blocked for want of a mood board is a
+   * plan refusing to start over a nice-to-have.
+   */
   const sectionOptional = (section: PlanSectionId) =>
-    section === "product-assets" && !isProductFocus;
+    section === "references" || (section === "product-assets" && !isProductFocus);
 
   const planSections = sectionOrder.map((id) => ({
     id,
@@ -1014,8 +1038,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           role: "swishx",
           text:
             attached.length === 1
-              ? `Got **${attached[0].name}**. Where should it go — a grounded source in Research and Sources, product media for the scenes, or just context for this question?`
-              : `Got ${attached.length} files. Where should they go — grounded sources in Research and Sources, product media for the scenes, or just context for this question?`,
+              ? `Got **${attached[0].name}**. Where should it go — a grounded source, product media for the scenes, a creative reference for the look, or just context for this question?`
+              : `Got ${attached.length} files. Where should they go — grounded sources, product media for the scenes, creative references for the look, or just context for this question?`,
         });
       }, 600);
       return;
@@ -1062,7 +1086,24 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         );
         return;
       }
-      if (/\b(context|just|only|nothing|reference|ignore|question|message)\b/.test(lower)) {
+      if (/\b(reference|look|style|feel|mood|pacing|grade|inspiration)\b/.test(lower)) {
+        setPendingChatFiles([]);
+        setReferenceList((prev) => [
+          ...prev,
+          ...files.map((f, i) => ({
+            id: `ref-chat-${Date.now()}-${i}`,
+            name: f.name,
+            kind: (f.kind === "video" ? "video" : "image") as "image" | "video",
+            note: text.trim(),
+          })),
+        ]);
+        setOpenSection("references");
+        say(
+          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual & creative references**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the treatment — no claim will ground in it.`
+        );
+        return;
+      }
+      if (/\b(context|just|only|nothing|ignore|question|message)\b/.test(lower)) {
         setPendingChatFiles([]);
         say(`Understood — reading ${files.length === 1 ? "it" : "them"} for this question only. Nothing added to the plan.`);
         return;
@@ -1742,6 +1783,26 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         </button>
                       </div>
 
+                      {/* Packshots this brand already has. Cleared artwork does
+                          not need clearing twice. */}
+                      <WorkspaceAssetShelf
+                        assets={workspaceAssets(brandName, "product")}
+                        used={productMediaList.map((m) => m.name)}
+                        label="Already in your workspace"
+                        onAdd={(asset) =>
+                          setProductMediaList((prev) => [
+                            ...prev,
+                            {
+                              id: `media-lib-${asset.id}-${Date.now()}`,
+                              name: asset.name,
+                              type: asset.kind === "video" ? "video" : "image",
+                              preview: asset.previewUrl ?? "",
+                              size: asset.size,
+                              note: asset.note,
+                            },
+                          ])
+                        }
+                      />
                     </div>
                     {/* ONE continue, like every other section. This used to be a
                         bespoke orange "Save Product Assets & Next" that always
@@ -1765,6 +1826,126 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         }
                         advanceFrom("product-assets");
                       }}
+                    />
+                  </PlanSection>
+                  )}
+
+                  {/* Visual & creative references — how it should feel, not
+                      what it may say. Its own section because an asset from
+                      you is doing one of three jobs, and this is the third:
+                      evidence grounds a claim, a packshot appears on screen,
+                      and a reference shapes the treatment. Folding it into
+                      either of the others would put material that grounds
+                      nothing next to material that grounds everything. */}
+                  {shows("references") && (
+                  <PlanSection
+                    icon={Palette}
+                    title="Visual & creative references"
+                    summary={
+                      referenceList.length > 0
+                        ? `${referenceList.length} reference${referenceList.length === 1 ? "" : "s"} · shapes the treatment`
+                        : "Optional · show us the look you are after"
+                    }
+                    state={planState(false, referenceList.length === 0)}
+                    source={referenceList.length > 0 ? `${referenceList.length} attached` : undefined}
+                    open={openSection === "references"}
+                    onToggle={() => toggleSection("references")}
+                  >
+                    <div className="space-y-3">
+                      <div className="rounded-control border border-hair-2 bg-canvas p-3">
+                        <p className="text-body font-bold text-ink">A film, a layout, a look</p>
+                        <p className="mt-0.5 text-body leading-snug text-ink-3">
+                          Anything that shows how this should feel — an earlier brand film, a
+                          competitor&apos;s ad, a poster you liked. It steers pacing, grade and
+                          composition.{" "}
+                          <strong className="font-bold text-ink-2">Nothing here grounds a claim</strong> —
+                          evidence belongs in Research and Sources.
+                        </p>
+                      </div>
+
+                      {referenceList.length > 0 && (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {referenceList.map((ref) => (
+                            <div
+                              key={ref.id}
+                              className="flex items-start gap-2 rounded-control border border-hair-2 bg-card px-2.5 py-2"
+                            >
+                              {ref.kind === "video" ? (
+                                <Film className="mt-0.5 size-3.5 shrink-0 text-brand" />
+                              ) : (
+                                <ImageIcon className="mt-0.5 size-3.5 shrink-0 text-brand" />
+                              )}
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-body font-bold text-ink">{ref.name}</span>
+                                <span className="block truncate text-caption text-ink-3" title={ref.note}>
+                                  {ref.note}
+                                </span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEditingReference({ id: ref.id, name: ref.name, note: ref.note })
+                                }
+                                aria-label={`Edit note on ${ref.name}`}
+                                title="Edit note"
+                                className="grid size-5 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-brand cursor-pointer"
+                              >
+                                <Pencil className="size-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setReferenceList((prev) => prev.filter((r) => r.id !== ref.id))}
+                                aria-label={`Remove ${ref.name}`}
+                                className="grid size-5 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-danger cursor-pointer"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPendingReference([
+                            {
+                              id: `ref-${Date.now()}`,
+                              name: `${brandName}_Reference_Film.mp4`,
+                              kind: "video" as const,
+                            },
+                          ])
+                        }
+                        className="flex w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-control border-2 border-dashed border-brand/20 bg-card p-4 text-center transition hover:border-brand hover:bg-tint"
+                      >
+                        <span className="grid size-8 place-items-center rounded-full bg-tint text-brand">
+                          <Plus className="size-4" />
+                        </span>
+                        <span className="text-body font-bold text-brand">Upload a reference</span>
+                        <span className="text-caption text-ink-3">PNG, JPG, MP4 · a note travels with it</span>
+                      </button>
+
+                      {/* Whatever earlier projects on this brand referenced. */}
+                      <WorkspaceAssetShelf
+                        assets={workspaceAssets(brandName, "reference")}
+                        used={referenceList.map((r) => r.name)}
+                        label="Referenced before"
+                        onAdd={(asset) =>
+                          setReferenceList((prev) => [
+                            ...prev,
+                            {
+                              id: `ref-lib-${asset.id}-${Date.now()}`,
+                              name: asset.name,
+                              kind: asset.kind === "video" ? "video" : "image",
+                              note: asset.note,
+                            },
+                          ])
+                        }
+                      />
+                    </div>
+                    <PlanSectionContinue
+                      label={referenceList.length === 0 ? "Skip & Continue" : "Save & Continue"}
+                      onClick={() => advanceFrom("references")}
                     />
                   </PlanSection>
                   )}
@@ -2375,6 +2556,40 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   ...pendingMedia.map((m) => ({ ...m, note: notes[m.id].trim() })),
                 ]);
                 setPendingMedia([]);
+              }}
+            />
+          )}
+
+          {pendingReference.length > 0 && (
+            <FileNoteDialog
+              files={pendingReference.map((r) => ({ id: r.id, name: r.name, kind: "media" as const }))}
+              title="What should we take from this reference?"
+              prompt="A reference steers the treatment — pacing, grade, composition. Saying which part matters is what makes it usable."
+              placeholder="e.g. the pacing and the grade — match this, not the script"
+              onCancel={() => setPendingReference([])}
+              onConfirm={(notes) => {
+                setReferenceList((prev) => [
+                  ...prev,
+                  ...pendingReference.map((r) => ({ ...r, note: notes[r.id].trim() })),
+                ]);
+                setPendingReference([]);
+              }}
+            />
+          )}
+
+          {editingReference && (
+            <FileNoteDialog
+              files={[{ id: editingReference.id, name: editingReference.name, kind: "media", note: editingReference.note }]}
+              title="What should we take from this reference?"
+              prompt="The note travels with the reference wherever the treatment uses it."
+              placeholder="e.g. the pacing and the grade — match this, not the script"
+              onCancel={() => setEditingReference(null)}
+              onConfirm={(notes) => {
+                const next = notes[editingReference.id].trim();
+                setReferenceList((prev) =>
+                  prev.map((r) => (r.id === editingReference.id ? { ...r, note: next } : r))
+                );
+                setEditingReference(null);
               }}
             />
           )}

@@ -16,7 +16,9 @@ import {
   Send,
   ShieldCheck,
   Target,
+  Palette,
   Upload,
+  X,
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +42,7 @@ import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scen
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
+import { WorkspaceAssetShelf, workspaceAssets } from "@/features/workspace/workspace-assets";
 import {
   ChatAttachmentRow,
   useChatAttachments,
@@ -54,7 +57,7 @@ import {
 } from "@/features/workspace/plan-intake";
 
 type InfographicSubStep = "brief" | "template";
-type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets";
+type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets" | "references";
 
 /** One name per section, so the progress bar and the tiles agree. */
 interface AudienceOption {
@@ -204,7 +207,7 @@ export function InfographicDirectionsScreen() {
   /* No "design" here: the layout archetype became its own step, because it
      decides the page's whole composition and because the twelve hundred
      variants behind the five families need room the accordion never had. */
-  const sectionOrder: PlanSectionId[] = ["sources", "format", "audience", "objective", "assets"];
+  const sectionOrder: PlanSectionId[] = ["sources", "format", "audience", "objective", "assets", "references"];
 
   const advanceFrom = (section: PlanSectionId) => {
     // Working a section through is what confirms it; the status then reads as
@@ -296,7 +299,10 @@ export function InfographicDirectionsScreen() {
   const sectionNeedsYou = (section: PlanSectionId) =>
     section === "sources" ? !hasGrounding || sourcesUnusable : false;
 
-  const sectionOptional = (section: PlanSectionId) => section === "assets";
+  /* References are always optional: a page blocked for want of a mood board
+     is a plan refusing to start over a nice-to-have. */
+  const sectionOptional = (section: PlanSectionId) =>
+    section === "assets" || section === "references";
 
   const planBlock: { section: PlanSectionId; title: string; detail: string } | null = !hasGrounding
     ? {
@@ -342,7 +348,9 @@ export function InfographicDirectionsScreen() {
   const [language, setLanguage] = useState<string>("English");
   const [objective, setObjective] = useState<string>("adoption");
   const [selectedAngles, setSelectedAngles] = useState<string[]>(["Product Introduction", "Mechanism of Action", "Indications"]);
-  const [packshots] = useState<Array<{ id: string; name: string; url: string }>>([
+  /** Reference material: how it should look, not what it may say. */
+  const [referenceList, setReferenceList] = useState<Array<{ id: string; name: string; note: string }>>([]);
+  const [packshots, setPackshots] = useState<Array<{ id: string; name: string; url: string }>>([
     {
       id: "packshot-1",
       name: `${brandName}_Autoinjector_3D_Packshot.png`,
@@ -451,8 +459,8 @@ export function InfographicDirectionsScreen() {
           role: "swishx",
           text:
             attached.length === 1
-              ? `Got **${attached[0].name}**. Where should it go — a grounded source in Research and Sources, or just context for this question?`
-              : `Got ${attached.length} files. Where should they go — grounded sources in Research and Sources, or just context for this question?`,
+              ? `Got **${attached[0].name}**. Where should it go — a grounded source, page artwork, a creative reference for the look, or just context for this question?`
+              : `Got ${attached.length} files. Where should they go — grounded sources, page artwork, creative references for the look, or just context for this question?`,
         });
       }, 600);
       return;
@@ -475,7 +483,31 @@ export function InfographicDirectionsScreen() {
         );
         return;
       }
-      if (/\b(context|just|only|nothing|reference|ignore|question|message)\b/.test(lower)) {
+      if (/\b(reference|look|style|feel|layout|density|palette|inspiration)\b/.test(lower)) {
+        setPendingChatFiles([]);
+        setReferenceList((prev) => [
+          ...prev,
+          ...files.map((f, i) => ({ id: `ref-chat-${Date.now()}-${i}`, name: f.name, note: text.trim() })),
+        ]);
+        setOpenSection("references");
+        say(
+          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual & creative references**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the layout — no claim will ground in it.`
+        );
+        return;
+      }
+      if (/\b(packshot|pack shot|product|artwork|photo|image|asset|device|pen)\b/.test(lower)) {
+        setPendingChatFiles([]);
+        setPackshots((prev) => [
+          ...prev,
+          ...files.map((f, i) => ({ id: `ps-chat-${Date.now()}-${i}`, name: f.name, url: f.previewUrl ?? "" })),
+        ]);
+        setOpenSection("assets");
+        say(
+          `Placed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} in **Product & Device Visual Assets**.`
+        );
+        return;
+      }
+      if (/\b(context|just|only|nothing|ignore|question|message)\b/.test(lower)) {
         setPendingChatFiles([]);
         say(`Understood — reading ${files.length === 1 ? "it" : "them"} for this question only. Nothing added to the plan.`);
         return;
@@ -1047,6 +1079,18 @@ export function InfographicDirectionsScreen() {
                             <span>Add product image</span>
                           </button>
                         </div>
+
+                        {/* Cleared artwork this brand already has. */}
+                        <WorkspaceAssetShelf
+                          assets={workspaceAssets(brandName, "product")}
+                          used={packshots.map((ps) => ps.name)}
+                          onAdd={(asset) =>
+                            setPackshots((prev) => [
+                              ...prev,
+                              { id: `ps-${asset.id}-${Date.now()}`, name: asset.name, url: asset.previewUrl ?? "" },
+                            ])
+                          }
+                        />
                       </div>
 
                       <div>
@@ -1109,6 +1153,81 @@ export function InfographicDirectionsScreen() {
                     <PlanSectionContinue onClick={() => advanceFrom("assets")} />
                   </CreativePlanSection>
 
+                  {/* 6. Visual & creative references — how it should look, not
+                      what it may say. Its own section because an asset from you
+                      is doing one of three jobs, and this is the third:
+                      evidence grounds a claim, a packshot appears on the page,
+                      and a reference shapes the layout. */}
+                  <CreativePlanSection
+                    icon={Palette}
+                    title="Visual & creative references"
+                    summary={
+                      referenceList.length > 0
+                        ? `${referenceList.length} reference${referenceList.length === 1 ? "" : "s"} · shapes the layout`
+                        : "Optional · show us the look you are after"
+                    }
+                    state={planState(false, referenceList.length === 0)}
+                    source={referenceList.length > 0 ? `${referenceList.length} attached` : undefined}
+                    open={openSection === "references"}
+                    onToggle={() => setOpenSection(openSection === "references" ? null : "references")}
+                  >
+                    <div className="space-y-3">
+                      <div className="rounded-control border border-hair-2 bg-canvas p-3">
+                        <p className="text-body font-bold text-ink">A poster, a spread, a look</p>
+                        <p className="mt-0.5 text-body leading-snug text-ink-3">
+                          Anything that shows how this should read — a congress poster you liked, a
+                          journal spread, an earlier leave-behind. It steers density, hierarchy and
+                          palette.{" "}
+                          <strong className="font-bold text-ink-2">Nothing here grounds a claim</strong> —
+                          evidence belongs in Research and Sources.
+                        </p>
+                      </div>
+
+                      {referenceList.length > 0 && (
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {referenceList.map((ref) => (
+                            <div
+                              key={ref.id}
+                              className="flex items-start gap-2 rounded-control border border-hair-2 bg-card px-2.5 py-2"
+                            >
+                              <ImageIcon className="mt-0.5 size-3.5 shrink-0 text-brand" />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-body font-bold text-ink">{ref.name}</span>
+                                <span className="block truncate text-caption text-ink-3" title={ref.note}>
+                                  {ref.note}
+                                </span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setReferenceList((prev) => prev.filter((r) => r.id !== ref.id))}
+                                aria-label={`Remove ${ref.name}`}
+                                className="grid size-5 shrink-0 place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-danger cursor-pointer"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Whatever earlier projects on this brand referenced. */}
+                      <WorkspaceAssetShelf
+                        assets={workspaceAssets(brandName, "reference")}
+                        used={referenceList.map((r) => r.name)}
+                        label="Referenced before"
+                        onAdd={(asset) =>
+                          setReferenceList((prev) => [
+                            ...prev,
+                            { id: `ref-${asset.id}-${Date.now()}`, name: asset.name, note: asset.note },
+                          ])
+                        }
+                      />
+                    </div>
+                    <PlanSectionContinue
+                      label={referenceList.length === 0 ? "Skip & Continue" : "Save & Continue"}
+                      onClick={() => advanceFrom("references")}
+                    />
+                  </CreativePlanSection>
 
                 </div>
               </>

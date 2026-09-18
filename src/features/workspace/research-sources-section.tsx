@@ -34,6 +34,7 @@ export interface UploadedDoc {
 import type { DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
 import { groundingDossiers } from "@/features/workspace/grounding-dossiers";
+import { WorkspaceAssetShelf, workspaceAssets } from "@/features/workspace/workspace-assets";
 
 export interface ResearchSourcesSectionProps {
   brandName: string;
@@ -316,7 +317,9 @@ export function ResearchSourcesContent({
             </div>
           )}
 
-          <div className={cn("grid grid-cols-1 sm:grid-cols-3 gap-2.5", !hasDossiers && "hidden")}>
+          {/* One dossier, so one tile — not a three-column grid with two
+              empty columns in it. */}
+          <div className={cn("grid grid-cols-1 gap-2.5 sm:grid-cols-2", !hasDossiers && "hidden")}>
             {prebuiltDossiers.map((dossier, idx) => (
               researching && idx >= (research?.step ?? 0) ? (
                 <div
@@ -341,14 +344,11 @@ export function ResearchSourcesContent({
               >
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    {/* A document mark, because that is what a dossier is —
-                        the market badge says WHICH one, not what kind. */}
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      <FileText className="size-3.5 shrink-0 text-brand-deep" />
-                      <span className="truncate text-caption font-extrabold uppercase tracking-wide text-brand-deep bg-tint px-1.5 py-0.2 rounded-glyph border border-tint-line">
-                        {dossier.market}
-                      </span>
-                    </span>
+                    {/* A document mark and a claim count. The market badge went
+                        with the other two dossiers: which market governs this
+                        asset was settled when the brand was picked, and the
+                        record itself says so when you open it. */}
+                    <FileText className="size-3.5 shrink-0 text-brand-deep" />
                     <span className="text-caption font-bold text-ok bg-ok-bg px-1.5 py-0.2 rounded-glyph">
                       {dossier.claims} claims
                     </span>
@@ -471,6 +471,19 @@ export function ResearchSourcesContent({
               </div>
             ))}
           </div>
+
+          {/* What this brand already has. A document explained on last
+              month's project arrives with that explanation attached. */}
+          <WorkspaceAssetShelf
+            assets={workspaceAssets(brandName, "source")}
+            used={uploadedDocs.map((doc) => doc.name)}
+            onAdd={(asset) =>
+              onSetUploadedDocs((prev) => [
+                ...prev,
+                { name: asset.name, size: asset.size, date: asset.origin, note: asset.note },
+              ])
+            }
+          />
         </div>
       )}
 
