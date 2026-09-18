@@ -86,6 +86,21 @@ export function buildIntakeQuestions(
   ];
 }
 
+/** What this question is about, in three or four words. The prompt itself is
+ *  a sentence the agent says out loud; a checklist needs a name. */
+export function intakeLabel(question: IntakeQuestion): string {
+  switch (question.kind) {
+    case "attachment":
+      return question.fileName ? `What ${question.fileName} is for` : "What the attachment is for";
+    case "duration":
+      return "How long it runs";
+    case "pages":
+      return "How many pages";
+    case "shape":
+      return "What shape it is";
+  }
+}
+
 /* ── Reading an answer ───────────────────────────────────────────────────── */
 
 const DEFERRED = /\b(you decide|your call|whatever|not sure|dunno|don'?t know|skip|up to you|anything)\b/i;

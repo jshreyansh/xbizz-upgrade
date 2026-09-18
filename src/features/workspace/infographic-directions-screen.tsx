@@ -36,6 +36,7 @@ import { PlanSectionContinue } from "@/features/workspace/plan-section-continue"
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
+import { IntakeChecklist } from "@/features/workspace/intake-checklist";
 import { demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { TemplateStepScreen } from "@/features/workspace/template-step-screen";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
@@ -403,7 +404,7 @@ export function InfographicDirectionsScreen() {
   const setPlanPhase = useWorkspaceStore((st) => st.setPlanPhase);
   const briefAttachments = useWorkspaceStore((st) => st.briefAttachments);
   const [intakeIndex, setIntakeIndex] = useState(0);
-  const [, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
+  const [intakeAnswers, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
   const intakeQuestions = buildIntakeQuestions(briefAttachments, "infographic");
   const currentIntake = planPhase === "intake" ? intakeQuestions[intakeIndex] : undefined;
   const intakeStepList = intakeSteps(briefAttachments, brandName);
@@ -746,20 +747,15 @@ export function InfographicDirectionsScreen() {
             )}
 
             {currentStep === "brief" && planPhase === "intake" && (
-              /* Nothing to review yet. A plan drawn before the questions were
-                 answered would be a guess presented as a decision, and the
-                 accordion makes a guess look settled. */
-              <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-                <h2 className="text-display font-[850] tracking-tight text-ink">Need your input</h2>
-                <p className="mt-1.5 max-w-[42ch] text-body-lg text-ink-3">
-                  Answer in chat to help us make the best plan for you.
-                </p>
-                {intakeQuestions.length > 0 && (
-                  <p className="mt-5 text-label font-bold tabular-nums text-ink-4">
-                    {Math.min(intakeIndex + 1, intakeQuestions.length)} of {intakeQuestions.length}
-                  </p>
-                )}
-              </div>
+              /* No plan to review yet — one drawn before the questions were
+                 answered would be a guess presented as a decision. What there
+                 is instead is the questions themselves, and what has been
+                 answered so far. */
+              <IntakeChecklist
+                questions={intakeQuestions}
+                answers={intakeAnswers}
+                currentIndex={intakeIndex}
+              />
             )}
 
             {currentStep === "brief" && planPhase === "plan" && (
