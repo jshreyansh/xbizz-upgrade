@@ -119,6 +119,15 @@ export function ResearchSourcesContent({
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
   /** Shelf items counted into the grounding. They stay on the shelf. */
   const [considered, setConsidered] = useState<string[]>([]);
+  /**
+   * Verified dossiers taken OUT of the grounding.
+   *
+   * The dossier is not an opt-in the way a workspace file is — it is what the
+   * project was grounded in the moment the brand was chosen, and the plan
+   * above already says so. Starting it unticked asked the user to opt into
+   * the thing that was already true.
+   */
+  const [dossiersOut, setDossiersOut] = useState<string[]>([]);
   const researching = Boolean(research?.researching);
   // The research plays INSIDE this tray, so it is held open for the duration
   // and cannot be collapsed out from under itself.
@@ -204,7 +213,7 @@ export function ResearchSourcesContent({
           below it is the brand's own material. */}
       {prebuiltDossiers.map((dossier, idx) => {
         const id = `sx-${idx}`;
-        const inUse = considered.includes(id);
+        const inUse = !dossiersOut.includes(id);
         return (
           <div
             key={id}
@@ -258,7 +267,7 @@ export function ResearchSourcesContent({
                   type="button"
                   aria-pressed={inUse}
                   onClick={() =>
-                    setConsidered((prev) =>
+                    setDossiersOut((prev) =>
                       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
                     )
                   }

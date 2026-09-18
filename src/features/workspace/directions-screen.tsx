@@ -2119,7 +2119,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
                             </div>
                             <div>
-                              <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Estimated Project Cost</div>
+                              <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Project Budget</div>
                               <div className="text-subhead font-[850] text-white">⚡ {estimatedCredits.toLocaleString()} Credits</div>
                             </div>
                           </div>
