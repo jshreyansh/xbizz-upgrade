@@ -321,13 +321,17 @@ export function ResearchSourcesContent({
               </div>
             </div>
           )}
-          {!hasDossiers && (
-            <div className="rounded-control border border-dashed border-hair-2 bg-card px-3 py-3 text-center">
-              <p className="text-label text-ink-3">
-                No cleared {brandName || "brand"} dossier for this audience. Your own files are the
-                grounding.
-              </p>
-            </div>
+          {/* Why there is no SwishX tile in the strip — one quiet line, not a
+              dashed full-width panel with centred text. With a dossier present
+              the tray reads fine; without one, that panel was a band of empty
+              card sitting on top of the tiles that are actually on offer. */}
+          {!hasDossiers && !researching && (
+            <p className="mb-2 flex items-center gap-1.5 text-caption text-ink-4">
+              <ShieldCheck className="size-3 shrink-0" />
+              <span className="min-w-0">
+                No cleared {brandName || "brand"} dossier for this audience.
+              </span>
+            </p>
           )}
 
           {/* Ours and yours in one strip, tagged by where each came from.
