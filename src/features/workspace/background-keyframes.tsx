@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Sparkles } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 import type { Shot } from "@/types/content";
 
@@ -105,7 +105,7 @@ export function BackgroundKeyframes({
 
       {/* Said plainly, so a still is never mistaken for the finished shot. */}
       <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-chip border border-white/15 bg-black/65 px-2 py-1 text-caption font-bold text-white backdrop-blur-xs">
-        <Sparkles className="size-3 text-brand" />
+        <LogoMark size={11} className="text-brand" />
         {beats.length > 1 ? `Shot ${active.index} · ` : ""}
         {showTail ? "closing frame" : "opening frame"}
       </span>

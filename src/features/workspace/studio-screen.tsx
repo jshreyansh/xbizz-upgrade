@@ -15,6 +15,7 @@ import {
   Film,
   History,
   Image as ImageIcon,
+  Info,
   Layers,
   Stamp,
   UserRound,
@@ -42,7 +43,6 @@ import {
   Share2,
   Sliders,
   SlidersHorizontal,
-  Sparkles,
   Tag,
   Timer,
   Type,
@@ -1694,7 +1694,12 @@ export function StudioScreen() {
                             </div>
 
                             <div className="relative aspect-video w-full rounded-chip overflow-hidden border border-hair-2 bg-[#173d31]">
-                              <DynamicSceneComposition scene={sc} compact />
+                              {/* Stills. Five clips playing in a 100px rail
+                                  is five decoders running to show nothing you
+                                  can read, and while a scene is on keyframes
+                                  it would be playing footage that does not
+                                  exist yet. */}
+                              <DynamicSceneComposition scene={sc} compact isPlaying={false} />
                             </div>
 
                             <div className="mt-1.5 text-label font-semibold text-ink-2 line-clamp-1">
@@ -1832,7 +1837,7 @@ export function StudioScreen() {
                           type="button"
                           disabled={bgOf(selectedScene.id) === "generating"}
                           onClick={() => generateSceneBackground(selectedScene)}
-                          title="Check the keyframes first. Changing the shot is cheaper now than after the render."
+                          title="Every clip in this scene is at its keyframes. Check them first — changing a shot is cheaper now than after the render."
                           className={cn(
                             "focus-ring inline-flex items-center gap-1.5 rounded-glyph border px-2.5 py-1 text-caption font-bold shadow-2xs transition",
                             bgOf(selectedScene.id) === "generating"
@@ -1847,8 +1852,9 @@ export function StudioScreen() {
                             </>
                           ) : (
                             <>
-                              <Sparkles className="size-3" />
-                              Generate footage
+                              <LogoMark size={11} />
+                              Generate all videos
+                              <Info className="size-3 text-brand-deep/60" />
                             </>
                           )}
                         </button>
@@ -2318,15 +2324,27 @@ export function StudioScreen() {
                                   : "border-white/20 hover:border-white/40"
                               )}
                             >
-                              {/* Real Looping Video Player (Synced with scene play/pause) */}
-                              <video
-                                ref={canvasVideoRef}
-                                src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
-                                loop
-                                muted
-                                playsInline
-                                className="size-full object-cover pointer-events-none opacity-90"
-                              />
+                              {/* Footage is footage, wherever it sits. A clip
+                                  stitched into the frame is rendered on the
+                                  same terms as the background: keyframes
+                                  first, the clip when you ask for it. */}
+                              {bgOf(selectedScene.id) !== "ready" ? (
+                                <BackgroundKeyframes
+                                  src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
+                                  duration={selectedScene.duration || 10}
+                                  currentTime={sceneCurrentTime}
+                                  shots={selectedScene.shots}
+                                />
+                              ) : (
+                                <video
+                                  ref={canvasVideoRef}
+                                  src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
+                                  loop
+                                  muted
+                                  playsInline
+                                  className="size-full object-cover pointer-events-none opacity-90"
+                                />
+                              )}
 
                               <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
                                 <span className="text-micro font-extrabold text-info-on-dark uppercase tracking-wide bg-black/70 px-1.5 py-0.5 rounded-glyph border border-sky-400/40">

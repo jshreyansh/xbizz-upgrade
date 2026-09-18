@@ -82,19 +82,28 @@ export function DynamicSceneComposition({
     };
   };
 
+  /* Paused means paused on a frame, not on a black box: a video parked at
+     exactly 0 paints nothing in some browsers, so a still is nudged off it. */
+  const holdFrame = (node: HTMLVideoElement | null) => {
+    if (!node) return;
+    node.pause();
+    const park = () => {
+      if (node.currentTime < 0.05) node.currentTime = 0.1;
+    };
+    if (node.readyState >= 2) park();
+    else node.addEventListener("loadeddata", park, { once: true });
+  };
+
   React.useEffect(() => {
     if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.play().catch(() => {});
-    } else {
-      videoRef.current.pause();
-    }
+    if (isPlaying) videoRef.current.play().catch(() => {});
+    else holdFrame(videoRef.current);
   }, [isPlaying, scene.mediaVideoSrc]);
 
   React.useEffect(() => {
     if (!bgVideoRef.current) return;
     if (isPlaying) bgVideoRef.current.play().catch(() => {});
-    else bgVideoRef.current.pause();
+    else holdFrame(bgVideoRef.current);
   }, [isPlaying, scene.bgVideoSrc]);
 
   return (
