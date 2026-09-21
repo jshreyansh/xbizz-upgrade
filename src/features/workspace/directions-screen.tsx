@@ -96,6 +96,8 @@ import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 
+import { Portal } from "@/components/ui/portal";
+
 type PlanSectionId = "sources" | "treatment" | "message" | "delivery" | "voice" | "story" | "product-assets" | "references" | "logo";
 
 /** One name per section, so the progress bar and the tiles agree. */
@@ -2607,6 +2609,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                the missing context in words is the alternative to attaching a
                file, and walking back to the brief screen to do it would throw
                away everything already decided on this one. */
+            <Portal>
             <div className="fixed inset-0 z-[9999] grid place-items-center bg-ink/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Edit prompt">
               <div className="rise-in w-full max-w-[620px] overflow-hidden rounded-card border border-hair-2 bg-card shadow-float">
                 <div className="flex items-start justify-between gap-3 border-b border-hair-2 bg-canvas px-6 py-4">
@@ -2658,6 +2661,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 </div>
               </div>
             </div>
+            </Portal>
           )}
           {useCaseDrawerOpen && (
             <ScenarioDrawer
@@ -3088,6 +3092,7 @@ function PresenterLibrary({
   onClose: () => void;
 }) {
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-[680px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
         <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
@@ -3124,6 +3129,7 @@ function PresenterLibrary({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
@@ -3141,6 +3147,7 @@ function VoiceLibrary({
   onPreview: (name: string) => void;
 }) {
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-[620px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
         <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
@@ -3187,6 +3194,7 @@ function VoiceLibrary({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 
@@ -3200,6 +3208,7 @@ function SourceManager({
   onClose: () => void;
 }) {
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-[700px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
         <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
@@ -3243,6 +3252,7 @@ function SourceManager({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 

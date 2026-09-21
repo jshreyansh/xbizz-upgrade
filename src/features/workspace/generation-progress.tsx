@@ -5,6 +5,8 @@ import { Check, ListTree, X } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 
+import { Portal } from "@/components/ui/portal";
+
 /**
  * Every wait in the studio, from one component.
  *
@@ -260,6 +262,7 @@ function WorkLogModal({
   const ran = steps.slice(0, current + 1);
 
   return (
+    <Portal>
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4 backdrop-blur-[2px] sm:p-6"
       role="dialog"
@@ -330,5 +333,6 @@ function WorkLogModal({
         </footer>
       </div>
     </div>
+    </Portal>
   );
 }

@@ -67,6 +67,8 @@ import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 
+import { Portal } from "@/components/ui/portal";
+
 /* Layout → Canvas Editor, reported per page and per block. */
 function canvasOpenSteps(pageCount: number, blockCount: number): GenerationStep[] {
   const perPage: GenerationStep[] = [];
@@ -1997,6 +1999,7 @@ export function InfographicStudioScreen() {
 
         {/* ── EXPORT MODAL ── */}
         {exportModalOpen && (
+          <Portal>
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
             <div className="w-full max-w-[460px] rounded-panel bg-card p-6 shadow-2xl border border-hair-2 text-left space-y-4">
               <div className="flex items-center justify-between">
@@ -2049,10 +2052,12 @@ export function InfographicStudioScreen() {
               </div>
             </div>
           </div>
+          </Portal>
         )}
 
         {/* ── CONFIRM CREATIVE GENERATION MODAL (Matching Exact Form & Rate Spec with Quality & MLR Layer) ── */}
         {confirmGenerateModalOpen && (
+          <Portal>
           <div
             className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
             role="dialog"
@@ -2195,6 +2200,7 @@ export function InfographicStudioScreen() {
               </div>
             </div>
           </div>
+          </Portal>
         )}
 
         {/* ── WHAT YOU CAN DO TO THE SELECTED ELEMENT ──

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Menu, Play, Search, X } from "lucide-react";
 
+import { Portal } from "@/components/ui/portal";
+
 interface TopbarProps {
   pageTitle?: string;
   /** Opens the off-canvas mobile navigation drawer. Only the hamburger
@@ -117,10 +119,11 @@ export function Topbar({ pageTitle = "Home", onMenuClick }: TopbarProps) {
         </div>
       </header>
 
-      {/* Demo video modal — rendered as a sibling of <header>, not a child, since
-          the header's backdrop-filter establishes a containing block that would
-          otherwise trap this "fixed" overlay inside the header's own box. */}
+      {/* Demo video modal — portalled to the body. The header's backdrop-filter
+          establishes a containing block, and a "fixed" overlay rendered under it
+          is trapped inside the header's own box. */}
       {demoOpen && (
+        <Portal>
         <div
           className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200"
           onClick={() => setDemoOpen(false)}
@@ -146,6 +149,7 @@ export function Topbar({ pageTitle = "Home", onMenuClick }: TopbarProps) {
             </div>
           </div>
         </div>
+        </Portal>
       )}
     </>
   );

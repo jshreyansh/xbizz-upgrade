@@ -5,6 +5,8 @@ import { Check, Send, X, CornerDownRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 
+import { Portal } from "@/components/ui/portal";
+
 export type CommentSurface = "video" | "creative";
 
 /**
@@ -259,6 +261,7 @@ export function CommentsModal({
   const openCount = (items: AssetComment[]) => items.filter((c) => c.status === "open").length;
 
   return (
+    <Portal>
     <div className="fixed inset-0 z-[9999] grid place-items-center bg-ink/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Comments">
       <div className="rise-in flex max-h-[80vh] w-full max-w-[620px] flex-col overflow-hidden rounded-card border border-hair-2 bg-card shadow-float">
         <div className="flex items-start justify-between gap-3 border-b border-hair-2 bg-canvas px-6 py-4">
@@ -343,6 +346,7 @@ export function CommentsModal({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }
 

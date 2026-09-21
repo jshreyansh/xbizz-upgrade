@@ -37,6 +37,8 @@ import { VersionChip, type AssetVersion } from "@/features/workspace/version-tra
 import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { useVideoSteps, useCreativeSteps } from "@/features/workspace/flow-steps";
 import { AUDIENCE_OPTIONS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
+import { Portal } from "@/components/ui/portal";
+
 import {
   ProjectContextModal,
   type ContextField,
@@ -762,6 +764,7 @@ function SourceLibraryModal({
   brandName?: string;
 }) {
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/38 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true">
       <div className="flex max-h-[85vh] w-full max-w-[620px] flex-col rounded-card border border-white/60 bg-card shadow-2xl">
         <div className="flex items-center justify-between border-b border-hair p-5">
@@ -799,5 +802,6 @@ function SourceLibraryModal({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

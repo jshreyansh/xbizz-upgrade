@@ -6,6 +6,8 @@ import { demoScenarios, type DemoScenario, type DemoScenarioCategory } from "@/f
 import type { AssetType } from "@/types/content";
 import { cn } from "@/lib/cn";
 
+import { Portal } from "@/components/ui/portal";
+
 const CATEGORY_ICONS: Record<DemoScenarioCategory, typeof CircleCheck> = {
   "Happy paths": CircleCheck,
   "Dynamic branches": GitBranch,
@@ -43,6 +45,7 @@ export function ScenarioDrawer({
   const categories = [...new Set(available.map((s) => s.category))];
 
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 flex justify-end bg-ink/38 backdrop-blur-[2px]" role="dialog" aria-modal="true">
       <div className="slide-left flex h-full w-full max-w-[440px] flex-col border-l border-white/50 bg-canvas shadow-2xl">
         <div className="flex items-center justify-between border-b border-hair px-5 py-4">
@@ -96,5 +99,6 @@ export function ScenarioDrawer({
         </div>
       </div>
     </div>
+    </Portal>
   );
 }

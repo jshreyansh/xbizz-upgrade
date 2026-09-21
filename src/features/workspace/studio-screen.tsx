@@ -103,6 +103,8 @@ import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 import { PreflightPanel } from "@/features/workspace/preflight-panel";
 import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
 
+import { Portal } from "@/components/ui/portal";
+
 const evidenceConfig: Record<EvidenceState, { label: string; className: string }> = {
   approved: { label: "Approved", className: "bg-[#e5f1e9] text-[#2d6749]" },
   supported: { label: "Supported", className: "bg-[#e8eef6] text-[#45617e]" },
@@ -3561,6 +3563,7 @@ export function StudioScreen() {
         )}
 
         {generateVideoModalOpen && (
+          <Portal>
           <div
             className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm"
             role="dialog"
@@ -3700,6 +3703,7 @@ export function StudioScreen() {
               </div>
             </div>
           </div>
+          </Portal>
         )}
 
         {/* Share & Distribute Modal */}
@@ -3730,6 +3734,7 @@ function AddSceneModal({ sceneCount, onClose, onAdd }: any) {
   const [category, setCategory] = useState<"normal" | "intro" | "outro" | "product">("normal");
   const [title, setTitle] = useState("");
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
       <div className="w-full max-w-[500px] bg-card rounded-card p-6 space-y-4">
         <h2 className="text-title font-extrabold">Add New Scene</h2>
@@ -3737,5 +3742,6 @@ function AddSceneModal({ sceneCount, onClose, onAdd }: any) {
         <div className="flex justify-end gap-2"><Button variant="secondary" onClick={onClose}>Cancel</Button><Button onClick={() => onAdd({ title, category })} className="bg-brand text-white">Add</Button></div>
       </div>
     </div>
+    </Portal>
   );
 }

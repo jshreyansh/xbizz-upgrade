@@ -31,6 +31,8 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
 
+import { Portal } from "@/components/ui/portal";
+
 export interface BrandItem {
   id: string;
   name: string;
@@ -908,6 +910,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
 
       {/* ── Add Brand Modal Dialog (Fixed & Sized Properly) ── */}
       {isAddBrandModalOpen && (
+        <Portal>
         <div
           className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-150"
           onClick={() => setIsAddBrandModalOpen(false)}
@@ -1026,6 +1029,7 @@ export function MagicVideoSourceScreen({ embedded = false }: { embedded?: boolea
             </form>
           </div>
         </div>
+        </Portal>
       )}
     </main>
   );

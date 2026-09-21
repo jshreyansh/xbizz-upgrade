@@ -5,6 +5,8 @@ import { Check, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { AssetComment } from "@/features/workspace/asset-comments";
 
+import { Portal } from "@/components/ui/portal";
+
 /**
  * Which version this is, and what the ones before it settled.
  *
@@ -109,6 +111,7 @@ function VersionTrailModal({
   }, [onClose]);
 
   return (
+    <Portal>
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4 backdrop-blur-[2px] sm:p-6"
       role="dialog"
@@ -200,5 +203,6 @@ function VersionTrailModal({
         </footer>
       </div>
     </div>
+    </Portal>
   );
 }
