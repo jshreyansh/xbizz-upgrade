@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Grid3x3, List, Plus, ShieldCheck, Eye, Star, Package, MoreHorizontal } from "lucide-react";
+import { Search, Grid3x3, List, ShieldCheck, Eye, Star, Package, MoreHorizontal } from "lucide-react";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { DataList } from "@/components/patterns/data-list";
 
 export function ProductLibraryScreen() {
   const router = useRouter();
@@ -42,28 +43,9 @@ export function ProductLibraryScreen() {
             Every product you own — its photography, its dossiers and its approved claims, held together so nothing gets built from a stray file again.
           </p>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="hover:-translate-y-0.5 hover:shadow-lg transition-all"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 20px",
-            borderRadius: "var(--r)",
-            fontWeight: 700,
-            fontSize: 14,
-            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            color: "#fff",
-            boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
-            border: "none",
-            cursor: "pointer",
-            flexShrink: 0,
-          }}
-        >
-          <Plus size={16} />
-          Create brand
-        </button>
+        {/* Create brand is hidden while brands are seeded rather than made
+            here. The modal and its wiring stay — this is the one line that
+            turns it back on. */}
       </div>
 
       <CreateBrandModal open={createOpen} onClose={() => setCreateOpen(false)} />
@@ -119,13 +101,8 @@ export function ProductLibraryScreen() {
       </div>
 
       {/* Product grid */}
-      <div
-        style={
-          view === "grid"
-            ? { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 18 }
-            : { display: "flex", flexDirection: "column", gap: 10 }
-        }
-      >
+      {view === "grid" ? (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 18 }}>
         {filtered.map((p, i) => (
           <div
             key={p.id}
@@ -144,16 +121,14 @@ export function ProductLibraryScreen() {
               overflow: "hidden",
               cursor: "pointer",
               animationDelay: `${80 + i * 45}ms`,
-              display: view === "list" ? "flex" : "block",
-              alignItems: view === "list" ? "center" : undefined,
             }}
           >
             <div
               className="relative overflow-hidden"
               style={{
                 background: p.gradient,
-                height: view === "list" ? 64 : 168,
-                width: view === "list" ? 90 : "100%",
+                height: 168,
+                width: "100%",
                 flexShrink: 0,
               }}
             >
@@ -193,7 +168,7 @@ export function ProductLibraryScreen() {
 
               {/* Overflow menu — visual parity with the reference design's
                   per-card "…" affordance (Duplicate / Archive placeholders). */}
-              {view !== "list" && (
+              {(
                 <div className="absolute right-2 top-2 z-20">
                   <button
                     type="button"
@@ -226,15 +201,7 @@ export function ProductLibraryScreen() {
                   )}
                 </div>
               )}
-              {view === "list" ? (
-                <div className="absolute inset-0 flex items-center justify-center p-2">
-                  {p.referenceImageUrl ? (
-                    <img src={p.referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-sm" />
-                  ) : (
-                    <ProductArtwork kind={p.type} className="h-full w-full drop-shadow-sm" />
-                  )}
-                </div>
-              ) : (
+              {(
                 <div className="absolute -bottom-3 right-[-8%] h-[85%] w-3/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
                   {p.referenceImageUrl ? (
                     <img src={p.referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
@@ -245,27 +212,22 @@ export function ProductLibraryScreen() {
               )}
             </div>
 
-            <div style={{ padding: view === "list" ? "10px 16px" : "14px 16px 16px", flex: view === "list" ? 1 : undefined, display: view === "list" ? "flex" : "block", alignItems: view === "list" ? "center" : undefined, justifyContent: view === "list" ? "space-between" : undefined, gap: 16 }}>
+            <div style={{ padding: "14px 16px 16px", gap: 16 }}>
               <div style={{ minWidth: 0 }}>
                 <b style={{ display: "block", fontSize: 15.5, fontWeight: 800, color: "var(--ink)", letterSpacing: "-.2px" }}>{p.name}</b>
                 <span style={{ fontSize: 12.5, color: "var(--ink-3)", fontStyle: "italic" }}>{p.genericName}</span>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: view === "list" ? 0 : "10px 0" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "10px 0" }}>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: p.dossiersVerified === p.dossiersTotal ? "var(--ok-bg)" : "var(--tint-2)", color: p.dossiersVerified === p.dossiersTotal ? "var(--ok)" : "var(--brand-deep)", border: `1px solid ${p.dossiersVerified === p.dossiersTotal ? "var(--ok-line)" : "var(--tint-line)"}` }}>
                   {p.dossiersVerified} dossiers
                 </span>
                 <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "var(--surface-subtle)", color: "var(--ink-3)", border: "1px solid var(--hair)" }}>
                   {p.claimsApproved} claims
                 </span>
-                {view !== "list" && (
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "var(--surface-subtle)", color: "var(--ink-3)", border: "1px solid var(--hair)" }}>
-                    {p.views} views
-                  </span>
-                )}
               </div>
 
-              {view !== "list" && <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />}
+              <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "var(--ink-4)" }}>
                 <span>{p.updated}</span>
@@ -281,7 +243,85 @@ export function ProductLibraryScreen() {
         ))}
       </div>
 
-      {filtered.length === 0 && (
+      ) : (
+        <DataList
+          rows={filtered}
+          rowKey={(p) => p.id}
+          onRowClick={(p) => router.push(`/product-library/${p.id}`)}
+          emptyLabel={`No products match “${query}”.`}
+          columns={[
+            {
+              id: "product",
+              header: "Product",
+              minWidth: 260,
+              cell: (p) => (
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-chip"
+                    style={{ background: p.gradient }}
+                  >
+                    <ProductArtwork kind={p.type} photoUrl={p.referenceImageUrl} className="h-7 w-7" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-body font-bold text-ink">{p.name}</span>
+                    <span className="block truncate text-caption italic text-ink-3">{p.genericName}</span>
+                  </span>
+                </div>
+              ),
+            },
+            {
+              id: "type",
+              header: "Type",
+              width: 110,
+              cell: (p) => (
+                <span className="rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold uppercase tracking-[.03em] text-ink-3">
+                  {p.type}
+                </span>
+              ),
+            },
+            {
+              id: "dossiers",
+              header: "Dossiers",
+              width: 120,
+              cell: (p) => (
+                <span
+                  className={`rounded-chip border px-2 py-0.5 text-caption font-bold ${
+                    p.dossiersVerified === p.dossiersTotal
+                      ? "border-ok-line bg-ok-bg text-ok"
+                      : "border-tint-line bg-tint text-brand-deep"
+                  }`}
+                >
+                  {p.dossiersVerified} of {p.dossiersTotal}
+                </span>
+              ),
+            },
+            {
+              id: "claims",
+              header: "Claims",
+              width: 100,
+              cell: (p) => (
+                <span className="text-body font-bold tabular-nums text-ink-2">{p.claimsApproved}</span>
+              ),
+            },
+            {
+              id: "updated",
+              header: "Updated",
+              width: 130,
+              cell: (p) => <span className="truncate text-caption text-ink-4">{p.updated}</span>,
+            },
+            {
+              id: "open",
+              header: "",
+              width: 80,
+              align: "right",
+              hideHeader: true,
+              cell: () => <span className="text-label font-bold text-brand">Open →</span>,
+            },
+          ]}
+        />
+      )}
+
+      {view === "grid" && filtered.length === 0 && (
         <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--ink-4)", fontSize: 14 }}>
           No products match &ldquo;{query}&rdquo;.
         </div>

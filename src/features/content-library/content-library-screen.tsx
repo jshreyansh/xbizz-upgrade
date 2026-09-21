@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play } from "lucide-react";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { DataList } from "@/components/patterns/data-list";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
@@ -102,13 +103,8 @@ export function ContentLibraryScreen() {
         </Segmented>
       </div>
 
-      <div
-        style={
-          view === "grid"
-            ? { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }
-            : { display: "flex", flexDirection: "column", gap: 10 }
-        }
-      >
+      {view === "grid" ? (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
         {filtered.map((a, i) => {
           const status = STATUS_STYLE[a.status];
           const KindIcon = a.kind === "video" ? Film : ImageIcon;
@@ -130,8 +126,6 @@ export function ContentLibraryScreen() {
                 overflow: "hidden",
                 cursor: "pointer",
                 animationDelay: `${80 + i * 45}ms`,
-                display: view === "list" ? "flex" : "block",
-                alignItems: view === "list" ? "center" : undefined,
               }}
             >
               {/* The asset itself, not a coloured rectangle standing in for it.
@@ -142,8 +136,8 @@ export function ContentLibraryScreen() {
                 className="relative overflow-hidden"
                 style={{
                   background: a.gradient,
-                  height: view === "list" ? 64 : 168,
-                  width: view === "list" ? 104 : "100%",
+                  height: 168,
+                  width: "100%",
                   flexShrink: 0,
                 }}
               >
@@ -155,7 +149,7 @@ export function ContentLibraryScreen() {
                 />
 
                 {/* A deck's own composition, at card size. */}
-                {!a.videoSrc && a.metric && view !== "list" && (
+                {!a.videoSrc && a.metric && (
                   <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col justify-end p-3.5">
                     <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "rgba(255,255,255,.62)" }}>
                       {a.badge}
@@ -205,7 +199,7 @@ export function ContentLibraryScreen() {
                     background: "rgba(255,255,255,.9)",
                     padding: "3px 8px",
                     borderRadius: 99,
-                    display: view === "list" ? "none" : "block",
+                    display: "block",
                   }}
                 >
                   {a.spec}
@@ -222,16 +216,16 @@ export function ContentLibraryScreen() {
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 6,
-                      padding: view === "list" ? "5px 10px" : "8px 14px",
+                      padding: "8px 14px",
                       borderRadius: 99,
                       background: "#fff",
                       color: "var(--brand-deep)",
                       fontWeight: 800,
-                      fontSize: view === "list" ? 11 : 12.5,
+                      fontSize: 12.5,
                       boxShadow: "0 8px 22px -10px rgba(0,0,0,.6)",
                     }}
                   >
-                    <Play size={view === "list" ? 11 : 13} fill="currentColor" />
+                    <Play size={13} fill="currentColor" />
                     Preview
                   </span>
                 </span>
@@ -239,11 +233,8 @@ export function ContentLibraryScreen() {
 
               <div
                 style={{
-                  padding: view === "list" ? "10px 16px" : "13px 16px 15px",
-                  flex: view === "list" ? 1 : undefined,
-                  display: view === "list" ? "flex" : "block",
-                  alignItems: view === "list" ? "center" : undefined,
-                  justifyContent: view === "list" ? "space-between" : undefined,
+                  padding: "13px 16px 15px",
+                  display: "block",
                   gap: 16,
                   minWidth: 0,
                 }}
@@ -257,17 +248,10 @@ export function ContentLibraryScreen() {
                   </span>
                 </div>
 
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: view === "list" ? 0 : "10px 0" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "10px 0" }}>
                   <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: status.bg, color: status.fg, border: `1px solid ${status.line}` }}>
                     {a.status}
                   </span>
-                  {/* In grid the spec rides on the frame; here is where it
-                      lives when there is no frame to ride on. */}
-                  {view === "list" && (
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "var(--surface-subtle)", color: "var(--ink-3)", border: "1px solid var(--hair)" }}>
-                      {a.spec}
-                    </span>
-                  )}
                   {/* Comments only. A view count is a vanity number on a
                       shelf of your own work — it changes nothing you would do
                       with the asset, where an unanswered comment does. */}
@@ -278,7 +262,7 @@ export function ContentLibraryScreen() {
                   )}
                 </div>
 
-                {view !== "list" && <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />}
+                <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 12, color: "var(--ink-4)", minWidth: 0 }}>
                   <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -296,8 +280,105 @@ export function ContentLibraryScreen() {
           );
         })}
       </div>
+      ) : (
+        <DataList
+          rows={filtered}
+          rowKey={(a) => a.id}
+          onRowClick={openReview}
+          emptyLabel={`No assets match “${query}”.`}
+          columns={[
+            {
+              id: "asset",
+              header: "Asset",
+              minWidth: 280,
+              cell: (a) => (
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    className="relative grid h-11 w-16 shrink-0 place-items-center overflow-hidden rounded-chip"
+                    style={{ background: a.gradient }}
+                  >
+                    {a.videoSrc ? (
+                      <AssetVideo src={a.videoSrc} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="px-1 text-center text-micro font-extrabold leading-tight text-white/80">
+                        {a.badge}
+                      </span>
+                    )}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-body font-bold text-ink">{a.title}</span>
+                    <span className="block truncate text-caption text-ink-3">
+                      {a.brand} · {a.audience}
+                    </span>
+                  </span>
+                </div>
+              ),
+            },
+            {
+              id: "kind",
+              header: "Kind",
+              width: 110,
+              cell: (a) => (
+                <span className="inline-flex items-center gap-1.5 rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
+                  {a.kind === "video" ? <Film size={11} /> : <ImageIcon size={11} />}
+                  {a.kind === "video" ? "Video" : "Doc"}
+                </span>
+              ),
+            },
+            {
+              id: "status",
+              header: "Status",
+              width: 130,
+              cell: (a) => {
+                const tone = STATUS_STYLE[a.status];
+                return (
+                  <span
+                    className="rounded-chip px-2 py-0.5 text-caption font-bold"
+                    style={{ background: tone.bg, color: tone.fg, border: `1px solid ${tone.line}` }}
+                  >
+                    {a.status}
+                  </span>
+                );
+              },
+            },
+            {
+              id: "spec",
+              header: "Spec",
+              width: 140,
+              cell: (a) => <span className="truncate text-caption text-ink-3">{a.spec}</span>,
+            },
+            {
+              id: "comments",
+              header: "Comments",
+              width: 110,
+              cell: (a) =>
+                a.comments > 0 ? (
+                  <span className="inline-flex items-center gap-1 text-caption font-bold text-brand">
+                    <MessageSquare size={12} /> {a.comments}
+                  </span>
+                ) : (
+                  <span className="text-caption text-ink-4">—</span>
+                ),
+            },
+            {
+              id: "updated",
+              header: "Updated",
+              width: 150,
+              cell: (a) => <span className="truncate text-caption text-ink-4">{a.updated}</span>,
+            },
+            {
+              id: "open",
+              header: "",
+              width: 120,
+              align: "right",
+              hideHeader: true,
+              cell: () => <span className="whitespace-nowrap text-label font-bold text-brand">Open review →</span>,
+            },
+          ]}
+        />
+      )}
 
-      {filtered.length === 0 && (
+      {view === "grid" && filtered.length === 0 && (
         <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--ink-4)", fontSize: 14 }}>
           No assets match &ldquo;{query}&rdquo;.
         </div>

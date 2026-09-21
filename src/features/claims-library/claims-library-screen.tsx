@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus } from "lucide-react";
+import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus, Grid3x3, List } from "lucide-react";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
-import { ClaimCard } from "@/features/product-library/claim-card";
+import { ClaimCard, CLAIM_STATUS_STYLE, DOSSIER_TYPE_ICON } from "@/features/product-library/claim-card";
+import { DataList } from "@/components/patterns/data-list";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { ClaimStatus, LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
 
@@ -66,6 +67,10 @@ export function ClaimsLibraryScreen() {
   const products = useProductLibraryStore((s) => s.products);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
+  /* The one shelf without a list view. A claim is mostly a sentence and a
+     status, which is exactly what a row is for — the cards were the only way
+     to read a hundred of them. */
+  const [view, setView] = useState<"grid" | "list">("grid");
 
   const allClaims: LibraryClaim[] = useMemo(
     () => products.flatMap((product) => buildProductDetail(product).claims.map((claim) => ({ ...claim, product }))),
@@ -130,6 +135,17 @@ export function ClaimsLibraryScreen() {
                 </SegmentedButton>
               ))}
             </Segmented>
+
+            <Segmented>
+              {([
+                { id: "grid" as const, Icon: Grid3x3, label: "Grid" },
+                { id: "list" as const, Icon: List, label: "List" },
+              ]).map(({ id, Icon, label }) => (
+                <SegmentedButton key={id} active={view === id} onClick={() => setView(id)}>
+                  <Icon size={13} /> {label}
+                </SegmentedButton>
+              ))}
+            </Segmented>
           </div>
 
           {/* Under the controls, not over them. The Product Library settled
@@ -174,6 +190,7 @@ export function ClaimsLibraryScreen() {
           }
         />
       ) : (
+        view === "grid" ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3.5">
           {filtered.map((c) => (
             <ClaimCard
@@ -189,6 +206,77 @@ export function ClaimsLibraryScreen() {
             />
           ))}
         </div>
+        ) : (
+        <DataList
+          rows={filtered}
+          rowKey={(c) => `${c.product.id}-${c.id}`}
+          onRowClick={openClaim}
+          emptyLabel="No claims match."
+          columns={[
+            {
+              id: "type",
+              header: "Evidence",
+              width: 150,
+              cell: (c) => {
+                const Icon = DOSSIER_TYPE_ICON[c.dossierType];
+                const tone = CLAIM_STATUS_STYLE[c.status];
+                return (
+                  <span className="inline-flex min-w-0 items-center gap-1.5 text-caption font-extrabold uppercase tracking-[.03em] text-ink-3">
+                    <span className={`grid size-6 shrink-0 place-items-center rounded-chip ${tone.bg} ${tone.tone}`}>
+                      <Icon size={13} />
+                    </span>
+                    <span className="truncate">{c.dossierType}</span>
+                  </span>
+                );
+              },
+            },
+            {
+              id: "claim",
+              header: "Claim",
+              minWidth: 320,
+              cell: (c) => <span className="line-clamp-2 text-body leading-snug text-ink-2">{c.text}</span>,
+            },
+            {
+              id: "status",
+              header: "Status",
+              width: 120,
+              cell: (c) => {
+                const tone = CLAIM_STATUS_STYLE[c.status];
+                return (
+                  <span className={`rounded-chip px-2 py-0.5 text-caption font-bold ${tone.bg} ${tone.tone}`}>
+                    {tone.label}
+                  </span>
+                );
+              },
+            },
+            {
+              id: "brand",
+              header: "Brand",
+              width: 150,
+              cell: (c) => (
+                <span className="inline-flex min-w-0 items-center gap-1.5 text-caption font-bold text-ink-2">
+                  <span className="size-1.5 shrink-0 rounded-full" style={{ background: c.product.gradient }} />
+                  <span className="truncate">{c.product.name}</span>
+                </span>
+              ),
+            },
+            {
+              id: "source",
+              header: "Source",
+              minWidth: 200,
+              cell: (c) => <span className="truncate text-caption text-ink-4">{c.source}</span>,
+            },
+            {
+              id: "open",
+              header: "",
+              width: 80,
+              align: "right",
+              hideHeader: true,
+              cell: () => <span className="text-label font-bold text-brand">Open →</span>,
+            },
+          ]}
+        />
+        )
       )}
     </div>
   );
