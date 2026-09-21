@@ -60,20 +60,11 @@ export interface ProductClaim {
 export const IMAGE_ANGLES = ["Front", "Back", "Side", "Top", "Packaging", "Lifestyle"] as const;
 export type ProductImageAngle = (typeof IMAGE_ANGLES)[number];
 
-/**
- * What the brand team has done with a file somebody uploaded.
- *
- * Attachments and images both arrive from a person and are then checked
- * against the approved source. A library that shows only the file is a
- * folder; the state is the part that makes it a library.
- */
-export type AssetVerification = "verified" | "in progress" | "has issues";
-
-/** Who put a file here — the workspace, or SwishX on the workspace's behalf. */
+/** Who on the team put a file here. */
 export interface AssetOrigin {
   name: string;
   /** Their team, so a name on its own does not have to be recognised. */
-  team?: string;
+  team: string;
 }
 
 export interface ProductImage {
@@ -91,10 +82,11 @@ export interface ProductImage {
   label: string;
   angle: ProductImageAngle;
   gradient: string;
-  state: AssetVerification;
   addedBy: AssetOrigin;
   addedOn: string;
   updatedOn: string;
+  /** Put away rather than deleted — nothing here is thrown out. */
+  archived?: boolean;
   /** Set only for the Front angle of the default variation when the brand
    *  was created with an uploaded reference photo. */
   imageUrl?: string;
@@ -113,14 +105,14 @@ export type DocumentFileType = "PDF" | "DOCX" | "PPTX" | "XLSX";
 export interface ProductDocument {
   id: string;
   name: string;
-  category: string;
   fileType: DocumentFileType;
   size: string;
   /** When it was attached. An attachment is a record of what was supplied,
    *  so the date that matters is the one it arrived on. */
   addedOn: string;
   addedBy: AssetOrigin;
-  state: AssetVerification;
+  /** Put away rather than deleted — nothing here is thrown out. */
+  archived?: boolean;
   /** The file itself, where there is one to open. */
   previewUrl?: string;
 }

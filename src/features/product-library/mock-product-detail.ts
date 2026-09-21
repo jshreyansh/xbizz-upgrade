@@ -12,7 +12,6 @@ import type {
   DossierSection,
   DossierTypeName,
   AssetOrigin,
-  AssetVerification,
   ProductImageAngle,
 } from "@/features/product-library/product-library-types";
 
@@ -128,63 +127,61 @@ export function variationLabelsFor(type: LibraryProduct["type"]): string[] {
 
 const DOCUMENT_TEMPLATES: Array<{
   name: string;
-  category: string;
   fileType: DocumentFileType;
   size: string;
   addedBy: AssetOrigin;
   addedOn: string;
-  state: AssetVerification;
   previewUrl?: string;
+  archived?: boolean;
 }> = [
   {
     name: "Prescribing Information",
-    category: "Regulatory",
     fileType: "PDF",
     size: "1.8 MB",
-    addedBy: { name: "SwishX" },
+    addedBy: { name: "Maya Kapoor", team: "Medical Affairs" },
     addedOn: "Jul 2, 2026",
-    state: "verified",
     previewUrl: "/documents/sample-approved-label.pdf",
   },
   {
     name: "Field Training Deck",
-    category: "Training",
     fileType: "PPTX",
     size: "6.2 MB",
     addedBy: { name: "Rohan Desai", team: "Field Excellence" },
     addedOn: "Aug 14, 2026",
-    state: "in progress",
     previewUrl: "/documents/sample-clinical-study-report.pdf",
   },
   {
     name: "Batch Release Certificate",
-    category: "Quality",
     fileType: "PDF",
     size: "420 KB",
     addedBy: { name: "Neha Iyer", team: "Quality" },
     addedOn: "Sep 3, 2026",
-    state: "verified",
     previewUrl: "/documents/sample-clinical-study-report.pdf",
   },
   {
     name: "MLR Sign-off Record",
-    category: "Compliance",
     fileType: "PDF",
     size: "290 KB",
     addedBy: { name: "Maya Kapoor", team: "Medical Affairs" },
     addedOn: "Sep 9, 2026",
-    state: "verified",
     previewUrl: "/documents/sample-approved-label.pdf",
   },
   {
     name: "Packaging Artwork Spec",
-    category: "Regulatory",
     fileType: "DOCX",
     size: "1.1 MB",
     addedBy: { name: "Arjun Pillai", team: "Marketing" },
     addedOn: "Sep 15, 2026",
-    state: "has issues",
     previewUrl: "/documents/sample-approved-label.pdf",
+  },
+  {
+    name: "Launch Deck (2025 cycle)",
+    fileType: "PPTX",
+    size: "8.4 MB",
+    addedBy: { name: "Arjun Pillai", team: "Marketing" },
+    addedOn: "Nov 4, 2025",
+    previewUrl: "/documents/sample-clinical-study-report.pdf",
+    archived: true,
   },
 ];
 
@@ -198,15 +195,14 @@ const DOCUMENT_TEMPLATES: Array<{
  */
 const IMAGE_SEEDS: Record<
   ProductImageAngle,
-  { file: string; comment: string; by: AssetOrigin; added: string; updated: string; state: AssetVerification }
+  { file: string; comment: string; by: AssetOrigin; added: string; updated: string; archived?: boolean }
 > = {
   Front: {
     file: "pack_front_hero.png",
     comment: "Approved front-of-pack hero. Use this one for anything a prescriber sees.",
-    by: { name: "SwishX" },
+    by: { name: "Sana Qureshi", team: "Creative" },
     added: "Jul 2, 2026",
     updated: "Aug 21, 2026",
-    state: "verified",
   },
   Back: {
     file: "pack_back_panel.png",
@@ -214,7 +210,6 @@ const IMAGE_SEEDS: Record<
     by: { name: "Arjun Pillai", team: "Marketing" },
     added: "Jul 9, 2026",
     updated: "Jul 9, 2026",
-    state: "verified",
   },
   Side: {
     file: "pack_side_batch.png",
@@ -222,7 +217,6 @@ const IMAGE_SEEDS: Record<
     by: { name: "Arjun Pillai", team: "Marketing" },
     added: "Jul 9, 2026",
     updated: "Sep 1, 2026",
-    state: "has issues",
   },
   Top: {
     file: "pack_top_down.png",
@@ -230,7 +224,6 @@ const IMAGE_SEEDS: Record<
     by: { name: "Sana Qureshi", team: "Creative" },
     added: "Aug 4, 2026",
     updated: "Aug 4, 2026",
-    state: "in progress",
   },
   Packaging: {
     file: "carton_open_flat.png",
@@ -238,15 +231,14 @@ const IMAGE_SEEDS: Record<
     by: { name: "Sana Qureshi", team: "Creative" },
     added: "Aug 18, 2026",
     updated: "Sep 5, 2026",
-    state: "verified",
   },
   Lifestyle: {
     file: "lifestyle_counter_am.png",
-    comment: "Lifestyle scene, morning light. No hands or faces, so it clears without a release.",
+    comment: "Lifestyle scene from the 2025 shoot. Superseded by the current campaign art.",
     by: { name: "Sana Qureshi", team: "Creative" },
-    added: "Aug 18, 2026",
-    updated: "Aug 18, 2026",
-    state: "in progress",
+    added: "Nov 12, 2025",
+    updated: "Nov 12, 2025",
+    archived: true,
   },
 };
 
@@ -300,10 +292,10 @@ function buildImages(
       label: `${angle} shot`,
       angle,
       gradient: product.gradient,
-      state: seed.state,
       addedBy: seed.by,
       addedOn: seed.added,
       updatedOn: seed.updated,
+      archived: seed.archived,
       imageUrl: angle === "Front" ? heroImageUrl : undefined,
     };
   });
@@ -337,7 +329,10 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
           text: template ? template(product.name, product.genericName) : `Grounded claim for ${product.name}.`,
           source: `${d.type} dossier, section ${i + 1}`,
           dossierType: d.type,
-          status: d.status === "verified" ? ("approved" as const) : i === 0 ? ("pending" as const) : ("held out" as const),
+          /* Everything in the library is approved. A claim that has not
+             cleared review is not in the library yet — it is in the dossier
+             being worked on, which is a different screen. */
+          status: "approved" as const,
         };
       })
     );
@@ -354,12 +349,11 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
   const documents: ProductDocument[] = DOCUMENT_TEMPLATES.map((tpl, i) => ({
     id: `${product.id}-doc-${i}`,
     name: `${product.name} — ${tpl.name}`,
-    category: tpl.category,
     fileType: tpl.fileType,
     size: tpl.size,
     addedOn: tpl.addedOn,
     addedBy: tpl.addedBy,
-    state: tpl.state,
+    archived: tpl.archived,
     previewUrl: tpl.previewUrl,
   }));
 

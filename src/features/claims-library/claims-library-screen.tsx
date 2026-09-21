@@ -90,6 +90,9 @@ export function ClaimsLibraryScreen() {
     [allClaims]
   );
 
+  /* Two zeroed tiles and two empty tabs are worse than none. */
+  const mixedStatuses = stats.pending > 0 || stats.heldOut > 0;
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allClaims.filter((c) => {
@@ -131,13 +134,20 @@ export function ClaimsLibraryScreen() {
               />
             </div>
 
-            <Segmented>
-              {STATUS_TABS.map((t) => (
-                <SegmentedButton key={t.id} active={status === t.id} onClick={() => setStatus(t.id)}>
-                  {t.label}
-                </SegmentedButton>
-              ))}
-            </Segmented>
+            {/* Only where there is something to filter. Every claim in the
+                library is approved — one that has not cleared review is still
+                in the dossier being worked on — so the three review tabs
+                would be one full list and two empty ones. The filter stays
+                in the code for the day that changes. */}
+            {mixedStatuses && (
+              <Segmented>
+                {STATUS_TABS.map((t) => (
+                  <SegmentedButton key={t.id} active={status === t.id} onClick={() => setStatus(t.id)}>
+                    {t.label}
+                  </SegmentedButton>
+                ))}
+              </Segmented>
+            )}
 
             <Segmented>
               {([
@@ -158,8 +168,13 @@ export function ClaimsLibraryScreen() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
             <StatTile icon={ListChecks} label="claims cited" value={stats.total} tint="var(--tint)" color="var(--brand-deep)" />
             <StatTile icon={CheckCircle2} label="approved" value={stats.approved} tint="var(--color-ok-bg)" color="var(--ok)" />
-            <StatTile icon={Clock} label="pending review" value={stats.pending} tint="var(--color-warn-bg)" color="var(--warn)" />
-            <StatTile icon={XCircle} label="held out" value={stats.heldOut} tint="var(--color-danger-bg)" color="var(--danger)" />
+            <StatTile icon={PackagePlus} label="brands covered" value={products.length} tint="var(--tint-2)" color="var(--brand)" />
+            {mixedStatuses && (
+              <>
+                <StatTile icon={Clock} label="pending review" value={stats.pending} tint="var(--color-warn-bg)" color="var(--warn)" />
+                <StatTile icon={XCircle} label="held out" value={stats.heldOut} tint="var(--color-danger-bg)" color="var(--danger)" />
+              </>
+            )}
           </div>
         </>
       )}

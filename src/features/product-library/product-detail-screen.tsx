@@ -3,14 +3,14 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Archive,
   ChevronLeft,
   Image as ImageIcon,
   FileText,
   ListChecks,
   Paperclip,
   Upload,
-  Trash2,
-  RefreshCw,
+  Undo2,
   Download,
   Eye,
   Layers,
@@ -27,8 +27,8 @@ import type {
 } from "@/features/product-library/product-library-types";
 import { IMAGE_ANGLES } from "@/features/product-library/product-library-types";
 import { ProductArtwork, type ArtworkKind } from "@/features/product-library/product-artwork";
-import { ClaimCard } from "@/features/product-library/claim-card";
-import { AssetStateBadge, originLabel } from "@/features/product-library/asset-state-badge";
+import { originLabel } from "@/features/product-library/asset-origin";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 import { DOSSIER_STATUS_STYLE as STATUS_STYLE } from "@/features/product-library/dossier-status";
 
@@ -85,7 +85,17 @@ export function ProductDetailScreen({
   const [tab, setTab] = useState<Tab>(initialTab);
   const [variations, setVariations] = useState<ProductVariation[]>(detail.variations);
   const [activeVariationId, setActiveVariationId] = useState(detail.variations[0]?.id ?? "");
-  const documents = detail.documents;
+  const [documents, setDocuments] = useState<ProductDocument[]>(detail.documents);
+  /**
+   * Active or archived, on both file shelves.
+   *
+   * Nothing here is deleted: an attachment is the record of what a brand was
+   * grounded in, and an image somebody shot is still the image they shot.
+   * Putting one away takes it out of the way without taking it off the
+   * record, so both shelves need somewhere to look for what was put away.
+   */
+  const [docShelf, setDocShelf] = useState<"active" | "archived">("active");
+  const [imageShelf, setImageShelf] = useState<"active" | "archived">("active");
   const [openImageMenuId, setOpenImageMenuId] = useState<string | null>(null);
   /** The attachment being read, in the same viewer the studio uses. */
   const [previewDoc, setPreviewDoc] = useState<ProductDocument | null>(null);
@@ -99,15 +109,22 @@ export function ProductDetailScreen({
      variant chips filtered six tiles down to one, which is a control for a
      list this size and a way to hide five of the six things you came to
      look at. The angle is on the tile; that is enough. */
-  const visibleImages = activeVariation?.images ?? [];
+  const allImages = activeVariation?.images ?? [];
+  const visibleImages = allImages.filter((img) => !!img.archived === (imageShelf === "archived"));
+  const archivedImageCount = allImages.filter((img) => img.archived).length;
 
-  const totalImages = variations.reduce((sum, v) => sum + v.images.length, 0);
+  const visibleDocs = documents.filter((doc) => !!doc.archived === (docShelf === "archived"));
+  const archivedDocCount = documents.filter((doc) => doc.archived).length;
+
+  /* Header counts and tab badges count what is on the shelf, not what the
+     shelf has ever held. Archived is a separate view with its own count. */
+  const activeImageTotal = variations.reduce((sum, v) => sum + v.images.filter((i) => !i.archived).length, 0);
 
   const TABS: { key: Tab; label: string; icon: typeof ImageIcon; count: number }[] = [
     { key: "dossier", label: "Dossier", icon: FileText, count: detail.dossiers.length },
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
-    { key: "documents", label: "Attachments", icon: Paperclip, count: documents.length },
-    { key: "images", label: "Product Images", icon: ImageIcon, count: totalImages },
+    { key: "documents", label: "Team Attachments", icon: Paperclip, count: documents.filter((d) => !d.archived).length },
+    { key: "images", label: "Product Images", icon: ImageIcon, count: activeImageTotal },
   ];
 
 
@@ -137,19 +154,12 @@ export function ProductDetailScreen({
     ]);
   }
 
-  function handleReplace(imageId: string) {
-    updateActiveImages((images) =>
-      images.map((img) => {
-        if (img.id !== imageId) return img;
-        const i = IMAGE_ANGLES.indexOf(img.angle);
-        const nextAngle = IMAGE_ANGLES[(i + 1) % IMAGE_ANGLES.length];
-        return { ...img, angle: nextAngle, label: `${nextAngle} shot` };
-      })
-    );
+  function setImageArchived(imageId: string, archived: boolean) {
+    updateActiveImages((images) => images.map((img) => (img.id === imageId ? { ...img, archived } : img)));
   }
 
-  function handleDelete(imageId: string) {
-    updateActiveImages((images) => images.filter((img) => img.id !== imageId));
+  function setDocArchived(docId: string, archived: boolean) {
+    setDocuments((prev) => prev.map((doc) => (doc.id === docId ? { ...doc, archived } : doc)));
   }
 
 
@@ -188,8 +198,8 @@ export function ProductDetailScreen({
         <div className="flex items-center gap-5">
           <Stat value={product.dossiersVerified} label="Dossiers" />
           <Stat value={product.claimsApproved} label="Claims" />
-          <Stat value={documents.length} label="Attachments" />
-          <Stat value={totalImages} label="Images" />
+          <Stat value={documents.filter((d) => !d.archived).length} label="Attachments" />
+          <Stat value={activeImageTotal} label="Images" />
         </div>
       </div>
 
@@ -252,6 +262,15 @@ export function ProductDetailScreen({
                 {v.label}
               </button>
             ))}
+
+            <Segmented className="ml-auto">
+              <SegmentedButton active={imageShelf === "active"} onClick={() => setImageShelf("active")}>
+                Active {allImages.length - archivedImageCount}
+              </SegmentedButton>
+              <SegmentedButton active={imageShelf === "archived"} onClick={() => setImageShelf("archived")}>
+                Archived {archivedImageCount}
+              </SegmentedButton>
+            </Segmented>
           </div>
 
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
@@ -277,11 +296,7 @@ export function ProductDetailScreen({
                     )}
                   </div>
 
-                  <div className="absolute left-2 top-2">
-                    <AssetStateBadge state={img.state} onDark />
-                  </div>
-
-                  {/* Always-visible overflow menu — Replace / Delete */}
+                  {/* Always-visible overflow menu — Archive / Restore */}
                   <div className="absolute right-2 top-2">
                     <button
                       type="button"
@@ -298,27 +313,17 @@ export function ProductDetailScreen({
                     {openImageMenuId === img.id && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className="absolute right-0 top-[calc(100%+6px)] z-10 w-36 overflow-hidden rounded-control border border-hair bg-card shadow-float"
+                        className="absolute right-0 top-[calc(100%+6px)] z-10 w-40 overflow-hidden rounded-control border border-hair bg-card shadow-float"
                       >
                         <button
                           type="button"
                           onClick={() => {
-                            handleReplace(img.id);
+                            setImageArchived(img.id, !img.archived);
                             setOpenImageMenuId(null);
                           }}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-body font-semibold text-ink-2 transition-colors hover:bg-subtle"
+                          className="flex w-full cursor-pointer items-center gap-2 px-3 py-2.5 text-body font-semibold text-ink-2 transition-colors hover:bg-subtle"
                         >
-                          <RefreshCw size={13} /> Replace
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleDelete(img.id);
-                            setOpenImageMenuId(null);
-                          }}
-                          className="flex w-full items-center gap-2 px-3 py-2.5 text-body font-semibold text-danger transition-colors hover:bg-danger-bg"
-                        >
-                          <Trash2 size={13} /> Delete
+                          {img.archived ? <><Undo2 size={13} /> Restore</> : <><Archive size={13} /> Archive</>}
                         </button>
                       </div>
                     )}
@@ -405,7 +410,7 @@ export function ProductDetailScreen({
         <div className="space-y-4">
           <div>
             <h2 className="text-title font-extrabold tracking-tight text-ink">Claims</h2>
-            <p className="text-body text-ink-3">Every statement approved for use, cited back to its dossier section</p>
+            <p className="text-body text-ink-3">Every statement approved for use — open one for its sources, the presentations it holds for, and where it has gone out</p>
           </div>
 
           {detail.claims.length === 0 ? (
@@ -417,9 +422,30 @@ export function ProductDetailScreen({
               <p className="max-w-[36ch] text-body text-ink-4">Dossiers for this product haven&rsquo;t started — claims appear here once a dossier cites them.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3.5">
+            /* Rows, like the dossiers and the attachments above. A claim is a
+               sentence and a way in; a card gave it a picture's worth of room
+               and let eighteen of them fill the screen. */
+            <div className="flex flex-col gap-2">
               {detail.claims.map((c) => (
-                <ClaimCard key={c.id} claim={c} />
+                <div
+                  key={c.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => router.push(`/claims-library/${c.id}`)}
+                  onKeyDown={(e) => { if (e.key === "Enter") router.push(`/claims-library/${c.id}`); }}
+                  className="group flex cursor-pointer flex-wrap items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair transition-all hover:border-hair-3 hover:shadow-soft"
+                >
+                  <span className="grid size-9 shrink-0 place-items-center rounded-control bg-ok-bg text-ok">
+                    <ListChecks size={16} />
+                  </span>
+                  <p className="line-clamp-2 min-w-0 flex-1 text-body-lg leading-snug text-ink-2">{c.text}</p>
+                  <span className="shrink-0 rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ok">
+                    Approved
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-body-lg font-bold text-brand transition-all group-hover:gap-1.5 group-hover:text-brand-deep">
+                    View details →
+                  </span>
+                </div>
               ))}
             </div>
           )}
@@ -430,25 +456,30 @@ export function ProductDetailScreen({
         <div className="space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-title font-extrabold tracking-tight text-ink">Attachments</h2>
-              <p className="text-body text-ink-3">Prescribing information, decks, and anything else this brand was grounded in</p>
+              <h2 className="text-title font-extrabold tracking-tight text-ink">Team Attachments</h2>
+              <p className="text-body text-ink-3">Prescribing information, decks, and anything else your team grounded this brand in</p>
             </div>
+            <Segmented>
+              <SegmentedButton active={docShelf === "active"} onClick={() => setDocShelf("active")}>
+                Active {documents.length - archivedDocCount}
+              </SegmentedButton>
+              <SegmentedButton active={docShelf === "archived"} onClick={() => setDocShelf("archived")}>
+                Archived {archivedDocCount}
+              </SegmentedButton>
+            </Segmented>
           </div>
           <div className="flex flex-col gap-2">
-            {documents.map((doc) => (
+            {visibleDocs.map((doc) => (
               <div key={doc.id} className="flex flex-wrap items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair">
                 <span className={`grid size-9 shrink-0 place-items-center rounded-control text-caption font-extrabold ${FILE_TONE[doc.fileType] ?? "bg-subtle text-ink-3"}`}>
                   {doc.fileType}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <b className="truncate text-body-lg font-bold text-ink">{doc.name}</b>
-                    <AssetStateBadge state={doc.state} />
-                  </div>
+                  <b className="block truncate text-body-lg font-bold text-ink">{doc.name}</b>
                   {/* Added, not updated: an attachment is a record of what
                       was supplied, and who supplied it is half of that. */}
                   <span className="text-caption text-ink-4">
-                    {doc.category} · {doc.size} · Added {doc.addedOn} · {originLabel(doc.addedBy)}
+                    {doc.size} · Added {doc.addedOn} · {originLabel(doc.addedBy)}
                   </span>
                 </div>
                 <button
@@ -461,11 +492,22 @@ export function ProductDetailScreen({
                 <button className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-body-lg font-bold text-brand transition-colors hover:text-brand-deep">
                   <Download size={14} /> Download
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setDocArchived(doc.id, !doc.archived)}
+                  title={doc.archived ? "Restore" : "Archive"}
+                  aria-label={doc.archived ? `Restore ${doc.name}` : `Archive ${doc.name}`}
+                  className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-control text-ink-4 transition-colors hover:bg-subtle hover:text-ink"
+                >
+                  {doc.archived ? <Undo2 size={14} /> : <Archive size={14} />}
+                </button>
               </div>
             ))}
           </div>
-          {documents.length === 0 && (
-            <p className="py-10 text-center text-body-lg text-ink-4">No attachments yet — upload one above.</p>
+          {visibleDocs.length === 0 && (
+            <p className="py-10 text-center text-body-lg text-ink-4">
+              {docShelf === "archived" ? "Nothing archived." : "No attachments yet — upload one above."}
+            </p>
           )}
         </div>
       )}
