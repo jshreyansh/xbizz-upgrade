@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
+import { ScratchCard } from "@/features/workspace/scratch-card";
 
 /**
  * Where a video starts.
@@ -21,26 +22,22 @@ const SLATE = "linear-gradient(135deg, #162022 0%, #25373b 60%, #3a555c 100%)";
 const VIOLET = "linear-gradient(135deg, #1b1622 0%, #352b42 60%, #524266 100%)";
 const UMBER = "linear-gradient(135deg, #221a16 0%, #3b2a25 60%, #5c413a 100%)";
 
-const clip = (id: string, videoSrc: string, bg: string): StartingPointExample => ({ id, videoSrc, bg });
+const clip = (
+  id: string,
+  videoSrc: string,
+  bg: string,
+  badge: string,
+  aspect: string
+): StartingPointExample => ({ id, videoSrc, bg, badge, aspect });
 
 const STARTING_POINTS: { id: string; title: string; subtitle: string; examples: StartingPointExample[] }[] = [
-  {
-    id: "scratch",
-    title: "Create from Scratch",
-    subtitle: "A blank brief, your own direction",
-    examples: [
-      clip("scratch-1", "/reel-moa.mp4", DARK),
-      clip("scratch-2", "/4360-178617258_medium.mp4", VIOLET),
-      clip("scratch-3", "/326638_medium.mp4", FOREST),
-    ],
-  },
   {
     id: "new-drug",
     title: "New Drug Release",
     subtitle: "Launch film for a newly approved brand",
     examples: [
-      clip("new-drug-1", "/21617-319452308_medium.mp4", PLUM),
-      clip("new-drug-2", "/133898-758336558_medium.mp4", DARK),
+      clip("new-drug-1", "/21617-319452308_medium.mp4", PLUM, "Launch Film", "16:9 · 60 sec"),
+      clip("new-drug-2", "/133898-758336558_medium.mp4", DARK, "Launch Film", "9:16 · 30 sec"),
     ],
   },
   {
@@ -48,8 +45,8 @@ const STARTING_POINTS: { id: string; title: string; subtitle: string; examples: 
     title: "Patient Handouts",
     subtitle: "Plain language for someone starting treatment",
     examples: [
-      clip("patient-1", "/Brevanta final draft-web.mp4", SLATE),
-      clip("patient-2", "/6973-197914400_medium.mp4", FOREST),
+      clip("patient-1", "/Brevanta final draft-web.mp4", SLATE, "Patient Explainer", "16:9 · 45 sec"),
+      clip("patient-2", "/6973-197914400_medium.mp4", FOREST, "Patient Explainer", "3:4 Tablet"),
     ],
   },
   {
@@ -57,8 +54,8 @@ const STARTING_POINTS: { id: string; title: string; subtitle: string; examples: 
     title: "Clinical Results",
     subtitle: "Pivotal readout, endpoint by endpoint",
     examples: [
-      clip("results-1", "/27019-361107952_medium.mp4", FOREST),
-      clip("results-2", "/46621-448480587_medium.mp4", DARK),
+      clip("results-1", "/27019-361107952_medium.mp4", FOREST, "Evidence Readout", "16:9 · 60 sec"),
+      clip("results-2", "/46621-448480587_medium.mp4", DARK, "Evidence Readout", "Congress Loop"),
     ],
   },
   {
@@ -66,8 +63,8 @@ const STARTING_POINTS: { id: string; title: string; subtitle: string; examples: 
     title: "Drug Explainer",
     subtitle: "How the mechanism works, in sequence",
     examples: [
-      clip("explainer-1", "/40781-426939561_medium.mp4", VIOLET),
-      clip("explainer-2", "/133900-758336565_medium.mp4", PLUM),
+      clip("explainer-1", "/40781-426939561_medium.mp4", VIOLET, "Mechanism Reel", "16:9 · 50 sec"),
+      clip("explainer-2", "/133900-758336565_medium.mp4", PLUM, "Mechanism Reel", "9:16 Social"),
     ],
   },
   {
@@ -75,8 +72,8 @@ const STARTING_POINTS: { id: string; title: string; subtitle: string; examples: 
     title: "Field Rep Training",
     subtitle: "Brief the field team before a launch",
     examples: [
-      clip("field-1", "/tecentriq-reel.mp4", UMBER),
-      clip("field-2", "/avatar-showcase.mp4", VIOLET),
+      clip("field-1", "/tecentriq-reel.mp4", UMBER, "Field Training", "16:9 · 90 sec"),
+      clip("field-2", "/avatar-showcase.mp4", VIOLET, "Field Training", "Presenter-led"),
     ],
   },
 ];
@@ -102,13 +99,19 @@ export function MagicVideoModeScreen() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
+        <ScratchCard
+          title="Create from Scratch"
+          subtitle="A blank brief, your own direction"
+          delayMs={80}
+          onSelect={() => handleSelect("scratch")}
+        />
         {STARTING_POINTS.map((point, i) => (
           <StartingPointCard
             key={point.id}
             title={point.title}
             subtitle={point.subtitle}
             examples={point.examples}
-            delayMs={80 + i * 45}
+            delayMs={125 + i * 45}
             onSelect={() => handleSelect("magic-reel")}
           />
         ))}

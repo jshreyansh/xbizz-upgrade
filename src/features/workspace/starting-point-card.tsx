@@ -86,6 +86,7 @@ export function StartingPointCard({
         style={{ background: current.bg }}
       >
         {current.videoSrc ? (
+          <>
           <video
             key={current.id}
             ref={videoRef}
@@ -101,6 +102,28 @@ export function StartingPointCard({
             }}
             className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-85"
           />
+          {/* What kind of thing this is, and what shape it comes out in.
+              The creative tiles carried both and the video tiles carried
+              neither, so two screens of the same card answered different
+              questions. */}
+          {(current.badge || current.aspect) && (
+            <div className="pointer-events-none absolute inset-x-0 top-0 flex min-w-0 items-center justify-between gap-2 p-4">
+              {current.badge ? (
+                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-chip border border-white/10 bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md">
+                  {badgeIcon}
+                  <span className="truncate">{current.badge}</span>
+                </span>
+              ) : (
+                <span />
+              )}
+              {current.aspect && (
+                <span className="shrink-0 rounded-chip bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
+                  {current.aspect}
+                </span>
+              )}
+            </div>
+          )}
+          </>
         ) : (
           /* A composition draws itself: the same figure and citation the real
              page would lead on, at tile size. */
