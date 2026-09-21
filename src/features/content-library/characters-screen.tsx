@@ -183,6 +183,7 @@ export function CharactersScreen() {
               /* A re-render fills in whatever the last pack was missing. */
               views: refining.views.map((v) => ({ ...v, missing: false })),
               createdOn: "Just now",
+              updatedOn: "Just now",
               example: false,
             });
             setRefining(null);
@@ -200,6 +201,7 @@ export function CharactersScreen() {
                 ...refining.sources,
               ],
               createdOn: "Just now",
+              updatedOn: "Just now",
               archived: false,
               example: false,
             });

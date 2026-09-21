@@ -117,6 +117,7 @@ export function CharacterCreateModal({
                   url: IMAGE_GUIDE.find((g) => g.id === id)?.example,
                 })),
         createdOn: "Just now",
+        updatedOn: "Just now",
       });
     }, 2600);
   };

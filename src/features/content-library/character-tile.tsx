@@ -106,6 +106,18 @@ export function CharacterTile({
           </button>
         ) : (
           <>
+            {/* Refine sat in the footer, in the slot every other shelf gives
+                to the date. It is a control, so it belongs with the controls —
+                and it leads them, because refining is what you come back to a
+                character to do. */}
+            <button
+              type="button"
+              onClick={onRefine}
+              className="mr-0.5 inline-flex cursor-pointer items-center gap-1 rounded-chip px-1.5 py-1 text-caption font-bold text-brand transition hover:bg-tint hover:text-brand-deep"
+            >
+              <Sparkles className="size-3.5" />
+              Refine
+            </button>
             <button
               type="button"
               onClick={onEdit}
@@ -127,20 +139,7 @@ export function CharacterTile({
           </>
         )
       }
-      footerLeft={
-        character.archived ? (
-          "Archived"
-        ) : (
-          <button
-            type="button"
-            onClick={onRefine}
-            className="inline-flex cursor-pointer items-center gap-1.5 font-bold text-brand transition hover:text-brand-deep"
-          >
-            <Sparkles className="size-3.5" />
-            Refine character
-          </button>
-        )
-      }
+      footerLeft={character.archived ? "Archived" : character.updatedOn}
       footerRight={
         <button
           type="button"

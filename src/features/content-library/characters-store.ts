@@ -25,9 +25,13 @@ export const useCharactersStore = create<CharactersState>((set) => ({
   characters: EXAMPLE_CHARACTERS,
   /* Anything this workspace made goes in front of the examples. */
   add: (character) => set((state) => ({ characters: [character, ...state.characters] })),
+  /* Any change stamps the date the tile shows. Archiving does not: putting
+     something away is not a change to the thing. */
   update: (id, patch) =>
     set((state) => ({
-      characters: state.characters.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+      characters: state.characters.map((c) =>
+        c.id === id ? { ...c, ...patch, updatedOn: patch.updatedOn ?? "Just now" } : c
+      ),
     })),
   setArchived: (id, archived) =>
     set((state) => ({

@@ -9,6 +9,7 @@ import { CLAIM_STATUS_STYLE, DOSSIER_TYPE_ICON } from "@/features/product-librar
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { DataList } from "@/components/patterns/data-list";
+import { claimUpdatedOn } from "@/features/claims-library/claim-detail";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { ClaimStatus, LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
 
@@ -239,12 +240,21 @@ export function ClaimsLibraryScreen() {
                 }
                 title={<span className="line-clamp-2 whitespace-normal leading-snug">{c.text}</span>}
                 chips={
-                  <span className="inline-flex items-center gap-1.5 rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
-                    <span className="size-1.5 shrink-0 rounded-full" style={{ background: c.product.gradient }} />
-                    {c.product.name}
-                  </span>
+                  <>
+                    <span className="inline-flex items-center gap-1.5 rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
+                      <span className="size-1.5 shrink-0 rounded-full" style={{ background: c.product.gradient }} />
+                      {c.product.name}
+                    </span>
+                    {/* Where in the dossier it came from. It used to close the
+                        card, which is the slot every other shelf gives to the
+                        date — so it moves up here with the other facts about
+                        the claim, and the footer says when, like the rest. */}
+                    <span className="inline-flex min-w-0 items-center rounded-chip bg-subtle px-2 py-0.5 text-caption text-ink-4">
+                      <span className="truncate">{c.source}</span>
+                    </span>
+                  </>
                 }
-                footerLeft={c.source}
+                footerLeft={claimUpdatedOn(c.id)}
                 footerRight={<TileOpen />}
               />
             );
@@ -309,6 +319,12 @@ export function ClaimsLibraryScreen() {
               header: "Source",
               minWidth: 200,
               cell: (c) => <span className="truncate text-caption text-ink-4">{c.source}</span>,
+            },
+            {
+              id: "updated",
+              header: "Updated",
+              width: 120,
+              cell: (c) => <span className="truncate text-caption text-ink-4">{claimUpdatedOn(c.id)}</span>,
             },
             {
               id: "open",

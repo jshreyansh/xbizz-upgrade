@@ -55,10 +55,23 @@ function seed(id: string): number {
 
 const AUTHORS = ["Maya Kapoor", "Dr. Anita Rao", "Sanjay Kulkarni", "Priya Menon"];
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-function dateFrom(n: number): string {
-  return `${MONTHS[n % MONTHS.length]} ${(n % 27) + 1}, 2026`;
+/**
+ * A date in 2026, counted in days from the first of January.
+ *
+ * Counting days rather than picking a month and a day out of the same number
+ * separately is what keeps "updated" after "added": two modulos against
+ * different bases could put the revision two months before the claim.
+ */
+function dayIn2026(offset: number): string {
+  const d = new Date(Date.UTC(2026, 0, 1 + offset));
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
+/** When the claim went into the library. */
+function addedDay(claimId: string): number {
+  return seed(claimId) % 190;
 }
 
 /**
@@ -82,6 +95,18 @@ function publishedFor(product: LibraryProduct): LibraryAsset[] {
     gradient: product.gradient,
   }));
   return [...own, ...borrowed];
+}
+
+/**
+ * When a claim last changed, without building its whole record.
+ *
+ * The shelf needs one line in a tile footer; buildClaimDetail assembles
+ * references, usage and an audit trail to get there. Same derivation either
+ * way, so the tile and the detail page never disagree.
+ */
+export function claimUpdatedOn(claimId: string): string {
+  const added = addedDay(claimId);
+  return dayIn2026(added + 14 + (seed(claimId) % 47));
 }
 
 /**
@@ -136,8 +161,8 @@ export function buildClaimDetail(claim: ProductClaim, product: LibraryProduct): 
     product,
     origin,
     author: origin === "authored" ? AUTHORS[n % AUTHORS.length] : undefined,
-    addedOn: dateFrom(n),
-    updatedOn: dateFrom(n + 11),
+    addedOn: dayIn2026(addedDay(claim.id)),
+    updatedOn: claimUpdatedOn(claim.id),
     variations,
     references,
     usedIn,

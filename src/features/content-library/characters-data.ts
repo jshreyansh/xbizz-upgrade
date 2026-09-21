@@ -64,6 +64,8 @@ export interface Character {
   views: CharacterView[];
   sources: CharacterSource[];
   createdOn: string;
+  /** When it last changed — a rename, a refine, a new identity pack. */
+  updatedOn: string;
   archived?: boolean;
   /** Seeded examples sort behind anything this workspace made itself. */
   example?: boolean;
@@ -116,6 +118,7 @@ export const EXAMPLE_CHARACTERS: Character[] = [
       { kind: "image", label: "anaya_reference_02.png", url: "/characters/anaya-profile.png" },
     ],
     createdOn: "Sep 12, 2026",
+    updatedOn: "Sep 18, 2026",
     example: true,
   },
   {
@@ -136,6 +139,7 @@ export const EXAMPLE_CHARACTERS: Character[] = [
       },
     ],
     createdOn: "Sep 9, 2026",
+    updatedOn: "Sep 16, 2026",
     example: true,
   },
   {
@@ -156,6 +160,7 @@ export const EXAMPLE_CHARACTERS: Character[] = [
       },
     ],
     createdOn: "Sep 4, 2026",
+    updatedOn: "Sep 4, 2026",
     example: true,
   },
   {
@@ -171,6 +176,7 @@ export const EXAMPLE_CHARACTERS: Character[] = [
     ),
     sources: [{ kind: "video", label: "wei_turntable_60s.mp4", url: "/avatar-showcase.mp4" }],
     createdOn: "Aug 28, 2026",
+    updatedOn: "Sep 11, 2026",
     example: true,
   },
 ];
