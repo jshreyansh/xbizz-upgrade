@@ -5,7 +5,7 @@ import { ContentLibraryScreen } from "@/features/content-library/content-library
 
 export default function ContentLibraryPage() {
   return (
-    <AppShell pageTitle="Content Library">
+    <AppShell pageTitle="All Content">
       <ContentLibraryScreen />
     </AppShell>
   );

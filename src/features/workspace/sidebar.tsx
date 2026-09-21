@@ -63,6 +63,22 @@ interface NavItem {
   icon: string;
   href: string;
   badge?: number;
+  /**
+   * Shelves that live under this one.
+   *
+   * Indented rows rather than tabs inside the page: each shelf is a place you
+   * can link to, land on and come back to, and a tab strip inside one route
+   * is none of those. They only appear while the section is open, so the rail
+   * stays a list of destinations rather than a tree.
+   */
+  children?: NavChild[];
+}
+
+interface NavChild {
+  label: string;
+  href: string;
+  /** Named but not built — no link, and a badge that says why. */
+  soon?: boolean;
 }
 
 interface NavGroup {
@@ -75,7 +91,17 @@ const ASSET_GROUPS: NavGroup[] = [
     label: "Assets",
     items: [
       { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library" },
-      { label: "Content Library", shortLabel: "Contents", icon: "library", href: "/content-library" },
+      {
+        label: "Content Library",
+        shortLabel: "Contents",
+        icon: "library",
+        href: "/content-library",
+        children: [
+          { label: "All Content", href: "/content-library" },
+          { label: "Characters", href: "/content-library/characters" },
+          { label: "Voices", href: "#", soon: true },
+        ],
+      },
       { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "/claims-library" },
     ],
   },
@@ -318,8 +344,14 @@ export function Sidebar() {
 
               {group.items.map((item) => {
                 const isActive = item.href !== "#" && pathname.startsWith(item.href);
+                /* A parent row highlights for the section, but the child rows
+                   carry the exact page — otherwise landing on Characters lit
+                   two rows and told you nothing about which one you were on. */
+                const childActive = (href: string) =>
+                  href !== "#" && pathname === href;
                 return (
-                  <div key={item.label} className="flex justify-center">
+                  <div key={item.label} className="flex flex-col items-center">
+                  <div className="flex w-full justify-center">
                     <button
                       onClick={() => {
                         if (item.href !== "#") router.push(item.href);
@@ -351,6 +383,46 @@ export function Sidebar() {
                         </span>
                       )}
                     </button>
+                  </div>
+
+                  {!collapsed && item.children && isActive && (
+                    /* Hung off the parent with a hairline, so the indent reads
+                       as "inside this" rather than as three more top-level
+                       rows that happen to sit lower. */
+                    <div className="relative mt-1 w-full space-y-0.5 pl-[26px]">
+                      <span
+                        aria-hidden
+                        className="absolute bottom-1.5 left-[15px] top-1 w-px bg-hair-2"
+                      />
+                      {item.children.map((child) => {
+                        const active = childActive(child.href);
+                        return (
+                          <button
+                            key={child.label}
+                            type="button"
+                            disabled={child.soon}
+                            onClick={() => {
+                              if (!child.soon) router.push(child.href);
+                            }}
+                            className={`flex h-[32px] w-full items-center gap-2 rounded-glyph px-2.5 text-left text-body transition-colors ${
+                              child.soon
+                                ? "cursor-not-allowed text-ink-4"
+                                : active
+                                  ? "cursor-pointer bg-tint font-bold text-brand-deep"
+                                  : "cursor-pointer text-ink-2 hover:bg-tint/60 hover:text-brand-deep"
+                            }`}
+                          >
+                            <span className="truncate">{child.label}</span>
+                            {child.soon && (
+                              <span className="ml-auto shrink-0 rounded-chip bg-tint px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide text-brand-deep">
+                                Soon
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   </div>
                 );
               })}

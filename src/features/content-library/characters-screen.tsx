@@ -72,10 +72,12 @@ export function CharactersScreen() {
   }, [characters, shelf, typeFilter, query]);
 
   return (
-    <div className="space-y-5">
+    <div className="page-enter space-y-6">
       <div>
-        <h2 className="text-title font-extrabold tracking-tight text-ink">Characters</h2>
-        <p className="mt-1 max-w-[62ch] text-body text-ink-3">
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>
+          Characters
+        </h1>
+        <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
           People your studios can cast — each one held as a set of views that agree with each
           other, so the same face turns up in every asset.
         </p>
