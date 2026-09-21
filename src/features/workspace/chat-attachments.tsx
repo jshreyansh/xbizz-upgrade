@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { FileText, Maximize2, Paperclip, X } from "lucide-react";
+import { Portal } from "@/components/ui/portal";
 
 /**
  * Files attached to a message, wherever a message is written.
@@ -181,52 +182,54 @@ export function AttachmentPreviewModal({ file, onClose }: { file: LocalAttachmen
   }, [onClose]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-6 backdrop-blur-[2px]"
-      role="dialog"
-      aria-modal="true"
-      aria-label={file.name}
-      onClick={onClose}
-    >
+    <Portal>
       <div
-        className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
-        onClick={(event) => event.stopPropagation()}
+        className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-6 backdrop-blur-[2px]"
+        role="dialog"
+        aria-modal="true"
+        aria-label={file.name}
+        onClick={onClose}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-hair px-4 py-2.5">
-          <span className="truncate text-body font-semibold text-ink">{file.name}</span>
-          <button
-            onClick={onClose}
-            className="grid size-7 shrink-0 place-items-center rounded-control text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
-            aria-label="Close preview"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-        <div className="grid min-h-0 flex-1 place-items-center overflow-auto bg-canvas p-4">
-          {file.kind === "image" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={file.previewUrl} alt={file.name} className="max-h-[calc(88vh-5rem)] max-w-full object-contain" />
-          ) : file.kind === "video" ? (
-            <video src={file.previewUrl} controls autoPlay className="max-h-[calc(88vh-5rem)] max-w-full" />
-          ) : file.previewUrl ? (
-            /* The browser's own document viewer. A PDF does not need a
-               reader written for it, and one written here would be worse
-               than the one already installed. */
-            <iframe src={file.previewUrl} title={file.name} className="h-[calc(88vh-5rem)] w-full rounded-control border border-hair bg-card" />
-          ) : (
-            /* A document with nothing behind it yet. Saying so beats an empty
-               frame that looks like a viewer that failed. */
-            <div className="grid min-h-[280px] w-full place-items-center gap-2 rounded-control border border-dashed border-hair-2 bg-card px-6 py-16 text-center">
-              <FileText className="size-7 text-ink-4" />
-              <p className="text-body-lg font-bold text-ink-2">{file.name}</p>
-              <p className="max-w-[44ch] text-body text-ink-4">
-                No file is attached to this record yet, so there is nothing to display.
-              </p>
-            </div>
-          )}
+        <div
+          className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="flex items-center justify-between gap-3 border-b border-hair px-4 py-2.5">
+            <span className="truncate text-body font-semibold text-ink">{file.name}</span>
+            <button
+              onClick={onClose}
+              className="grid size-7 shrink-0 place-items-center rounded-control text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
+              aria-label="Close preview"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+          <div className="grid min-h-0 flex-1 place-items-center overflow-auto bg-canvas p-4">
+            {file.kind === "image" ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={file.previewUrl} alt={file.name} className="max-h-[calc(88vh-5rem)] max-w-full object-contain" />
+            ) : file.kind === "video" ? (
+              <video src={file.previewUrl} controls autoPlay className="max-h-[calc(88vh-5rem)] max-w-full" />
+            ) : file.previewUrl ? (
+              /* The browser's own document viewer. A PDF does not need a
+                 reader written for it, and one written here would be worse
+                 than the one already installed. */
+              <iframe src={file.previewUrl} title={file.name} className="h-[calc(88vh-5rem)] w-full rounded-control border border-hair bg-card" />
+            ) : (
+              /* A document with nothing behind it yet. Saying so beats an empty
+                 frame that looks like a viewer that failed. */
+              <div className="grid min-h-[280px] w-full place-items-center gap-2 rounded-control border border-dashed border-hair-2 bg-card px-6 py-16 text-center">
+                <FileText className="size-7 text-ink-4" />
+                <p className="text-body-lg font-bold text-ink-2">{file.name}</p>
+                <p className="max-w-[44ch] text-body text-ink-4">
+                  No file is attached to this record yet, so there is nothing to display.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 

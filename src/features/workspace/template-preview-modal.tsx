@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { Portal } from "@/components/ui/portal";
 
 /**
  * Looking at a layout before committing to it.
@@ -74,80 +75,82 @@ export function TemplatePreviewModal({
   const role = PAGE_ROLES[page];
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4 backdrop-blur-[2px] sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${spec.name} preview`}
-      onClick={onClose}
-    >
+    <Portal>
       <div
-        className="flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
-        onClick={(event) => event.stopPropagation()}
+        className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4 backdrop-blur-[2px] sm:p-6"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${spec.name} preview`}
+        onClick={onClose}
       >
-        <header className="flex items-start justify-between gap-3 border-b border-hair px-4 py-3">
-          <div className="min-w-0">
-            <h2 className="truncate text-body-lg font-[850] tracking-tight text-ink">{spec.name}</h2>
-            <p className="truncate text-label text-ink-3">{spec.meta}</p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button size="sm" onClick={onUse} disabled={selected}>
-              {selected ? (
-                <>
-                  <Check className="size-3.5 stroke-[3]" />
-                  In use
-                </>
-              ) : (
-                `Use ${spec.name}`
-              )}
-            </Button>
-            <button
-              onClick={onClose}
-              className="grid size-8 place-items-center rounded-control text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
-              aria-label="Close preview"
-            >
-              <X className="size-4" />
-            </button>
-          </div>
-        </header>
-
-        {/* The page, flanked by the two controls that move between pages. */}
-        <div className="flex min-h-0 items-center gap-2 bg-canvas p-3 sm:gap-3 sm:p-4">
-          <PageArrow direction="prev" disabled={page === 0} onClick={() => go(-1)} />
-          <div className="flex min-w-0 flex-1 justify-center">
-            <div
-              style={{ aspectRatio: aspectOf(spec.shape) }}
-              className="max-h-[58vh] w-full max-w-full overflow-hidden rounded-panel border border-hair bg-card shadow-xs"
-            >
-              <DummyPage spec={spec} kind={role.kind} pageNumber={page + 1} />
+        <div
+          className="flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <header className="flex items-start justify-between gap-3 border-b border-hair px-4 py-3">
+            <div className="min-w-0">
+              <h2 className="truncate text-body-lg font-[850] tracking-tight text-ink">{spec.name}</h2>
+              <p className="truncate text-label text-ink-3">{spec.meta}</p>
             </div>
-          </div>
-          <PageArrow direction="next" disabled={page === total - 1} onClick={() => go(1)} />
-        </div>
-
-        <footer className="flex items-center justify-between gap-3 border-t border-hair px-4 py-2.5">
-          <span className="text-label font-bold tabular-nums text-ink-3">
-            Page {page + 1} of {total}
-            <span className="ml-2 font-medium text-ink-4">{role.label}</span>
-          </span>
-          <div className="flex items-center gap-1.5">
-            {PAGE_ROLES.map((item, index) => (
-              <button
-                key={item.label}
-                type="button"
-                onClick={() => setPage(index)}
-                aria-label={`Page ${index + 1} — ${item.label}`}
-                aria-current={index === page}
-                className={cn(
-                  "h-1.5 rounded-full transition-all cursor-pointer",
-                  index === page ? "w-5 bg-brand" : "w-1.5 bg-hair-3 hover:bg-ink-4"
+            <div className="flex shrink-0 items-center gap-2">
+              <Button size="sm" onClick={onUse} disabled={selected}>
+                {selected ? (
+                  <>
+                    <Check className="size-3.5 stroke-[3]" />
+                    In use
+                  </>
+                ) : (
+                  `Use ${spec.name}`
                 )}
-              />
-            ))}
+              </Button>
+              <button
+                onClick={onClose}
+                className="grid size-8 place-items-center rounded-control text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
+                aria-label="Close preview"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          </header>
+
+          {/* The page, flanked by the two controls that move between pages. */}
+          <div className="flex min-h-0 items-center gap-2 bg-canvas p-3 sm:gap-3 sm:p-4">
+            <PageArrow direction="prev" disabled={page === 0} onClick={() => go(-1)} />
+            <div className="flex min-w-0 flex-1 justify-center">
+              <div
+                style={{ aspectRatio: aspectOf(spec.shape) }}
+                className="max-h-[58vh] w-full max-w-full overflow-hidden rounded-panel border border-hair bg-card shadow-xs"
+              >
+                <DummyPage spec={spec} kind={role.kind} pageNumber={page + 1} />
+              </div>
+            </div>
+            <PageArrow direction="next" disabled={page === total - 1} onClick={() => go(1)} />
           </div>
-        </footer>
+
+          <footer className="flex items-center justify-between gap-3 border-t border-hair px-4 py-2.5">
+            <span className="text-label font-bold tabular-nums text-ink-3">
+              Page {page + 1} of {total}
+              <span className="ml-2 font-medium text-ink-4">{role.label}</span>
+            </span>
+            <div className="flex items-center gap-1.5">
+              {PAGE_ROLES.map((item, index) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => setPage(index)}
+                  aria-label={`Page ${index + 1} — ${item.label}`}
+                  aria-current={index === page}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all cursor-pointer",
+                    index === page ? "w-5 bg-brand" : "w-1.5 bg-hair-3 hover:bg-ink-4"
+                  )}
+                />
+              ))}
+            </div>
+          </footer>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 

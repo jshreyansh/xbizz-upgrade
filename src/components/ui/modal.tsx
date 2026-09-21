@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 import { Panel } from "@/components/ui/panel";
 import { Surface } from "@/components/ui/surface";
 import { IconButton } from "@/components/ui/button";
+import { Portal } from "@/components/ui/portal";
 
 /**
  * One dialog shell for the 13 that were hand-built.
@@ -89,6 +90,7 @@ export function Modal({
   if (!open) return null;
 
   return (
+    <Portal>
     <div
       role="dialog"
       aria-modal="true"
@@ -121,5 +123,6 @@ export function Modal({
         </Panel>
       </Surface>
     </div>
+    </Portal>
   );
 }

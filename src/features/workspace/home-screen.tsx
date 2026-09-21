@@ -9,6 +9,7 @@ import { PERSONA } from "@/features/workspace/mock-personas";
 import { cn } from "@/lib/cn";
 import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
+import { Portal } from "@/components/ui/portal";
 
 function greeting(hour: number) {
   if (hour < 5) return "Still up";
@@ -1252,82 +1253,84 @@ export function HomeScreen() {
 
       {/* Video Playback Lightbox Modal */}
       {playingVideoItem && (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200"
-          onClick={() => setPlayingVideoItem(null)}
-          role="dialog"
-          aria-modal="true"
-        >
+        <Portal>
           <div
-            className={cn(
-              "w-full overflow-hidden rounded-card border border-white/20 bg-[#0d1017] shadow-2xl text-white select-none transition-all flex flex-col max-h-[90vh]",
-              playingVideoItem.aspect === "9/16" ? "max-w-[380px]" : "max-w-[820px]"
-            )}
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200"
+            onClick={() => setPlayingVideoItem(null)}
+            role="dialog"
+            aria-modal="true"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/40 shrink-0">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <span className="rounded-glyph bg-brand px-2 py-0.5 text-caption font-extrabold uppercase text-white shrink-0">
-                  {playingVideoItem.tag}
-                </span>
-                <span className="text-body-lg font-bold text-white truncate">
-                  {playingVideoItem.title}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPlayingVideoItem(null)}
-                className="grid size-8 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer shrink-0 ml-2"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Video Player (Aspect-Aware Sizing) */}
             <div
               className={cn(
-                "relative bg-black flex items-center justify-center overflow-hidden min-h-0 flex-1",
-                playingVideoItem.aspect === "9/16"
-                  ? "aspect-[9/16] max-h-[62vh]"
-                  : "aspect-video max-h-[65vh]"
+                "w-full overflow-hidden rounded-card border border-white/20 bg-[#0d1017] shadow-2xl text-white select-none transition-all flex flex-col max-h-[90vh]",
+                playingVideoItem.aspect === "9/16" ? "max-w-[380px]" : "max-w-[820px]"
               )}
+              onClick={(e) => e.stopPropagation()}
             >
-              {playingVideoItem.videoSrc ? (
-                <video
-                  src={playingVideoItem.videoSrc}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="size-full object-contain"
-                />
-              ) : (
-                <div className="text-center p-8 space-y-2">
-                  <p className="text-body-lg font-semibold text-white/70">Sample Showreel Preview</p>
-                  <p className="text-body text-white/40">Grounded in verified regulatory trial anchors.</p>
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/40 shrink-0">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="rounded-glyph bg-brand px-2 py-0.5 text-caption font-extrabold uppercase text-white shrink-0">
+                    {playingVideoItem.tag}
+                  </span>
+                  <span className="text-body-lg font-bold text-white truncate">
+                    {playingVideoItem.title}
+                  </span>
                 </div>
-              )}
-            </div>
-
-            {/* Footer Controls / Details */}
-            <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-t border-white/10 text-body shrink-0">
-              <div className="min-w-0 pr-3">
-                <p className="font-semibold text-white/90 truncate">{playingVideoItem.subtitle}</p>
-                <p className="text-label text-white/50">{playingVideoItem.meta} · Verified Prescribing Info</p>
+                <button
+                  type="button"
+                  onClick={() => setPlayingVideoItem(null)}
+                  className="grid size-8 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer shrink-0 ml-2"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setPlayingVideoItem(null);
-                  router.push("/create");
-                }}
-                className="rounded-control bg-brand px-4 py-2 text-body font-bold text-white shadow-lg hover:bg-brand-deep transition cursor-pointer shrink-0"
+
+              {/* Video Player (Aspect-Aware Sizing) */}
+              <div
+                className={cn(
+                  "relative bg-black flex items-center justify-center overflow-hidden min-h-0 flex-1",
+                  playingVideoItem.aspect === "9/16"
+                    ? "aspect-[9/16] max-h-[62vh]"
+                    : "aspect-video max-h-[65vh]"
+                )}
               >
-                Create with this style →
-              </button>
+                {playingVideoItem.videoSrc ? (
+                  <video
+                    src={playingVideoItem.videoSrc}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="size-full object-contain"
+                  />
+                ) : (
+                  <div className="text-center p-8 space-y-2">
+                    <p className="text-body-lg font-semibold text-white/70">Sample Showreel Preview</p>
+                    <p className="text-body text-white/40">Grounded in verified regulatory trial anchors.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Controls / Details */}
+              <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-t border-white/10 text-body shrink-0">
+                <div className="min-w-0 pr-3">
+                  <p className="font-semibold text-white/90 truncate">{playingVideoItem.subtitle}</p>
+                  <p className="text-label text-white/50">{playingVideoItem.meta} · Verified Prescribing Info</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlayingVideoItem(null);
+                    router.push("/create");
+                  }}
+                  className="rounded-control bg-brand px-4 py-2 text-body font-bold text-white shadow-lg hover:bg-brand-deep transition cursor-pointer shrink-0"
+                >
+                  Create with this style →
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* Brand & Dossier Starter Modal */}

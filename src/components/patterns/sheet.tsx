@@ -3,6 +3,7 @@
 import { useEffect, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { Panel } from "@/components/ui/panel";
+import { Portal } from "@/components/ui/portal";
 
 /**
  * An edge-anchored panel over a scrim — what the right inspector becomes when
@@ -61,6 +62,7 @@ export function Sheet({
     : { width: size ?? 410, maxWidth: "100vw" };
 
   return (
+    <Portal>
     <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true">
       <button
         type="button"
@@ -85,5 +87,6 @@ export function Sheet({
         {children}
       </Panel>
     </div>
+    </Portal>
   );
 }

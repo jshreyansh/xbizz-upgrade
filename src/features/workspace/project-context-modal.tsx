@@ -13,6 +13,7 @@ import {
   TOPICS_BY_AUDIENCE,
   type OutputShape,
 } from "@/features/workspace/brand-modal-data";
+import { Portal } from "@/components/ui/portal";
 
 /**
  * Changing what the prompt is grounded in, without leaving the prompt.
@@ -97,268 +98,270 @@ export function ProjectContextModal({
     }));
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Update project context"
-      className="fixed inset-0 z-[9999] grid place-items-center bg-ink/50 p-4 backdrop-blur-sm"
-    >
-      <div className="rise-in flex max-h-[86vh] w-full max-w-[640px] flex-col overflow-hidden rounded-card border border-hair-2 bg-card shadow-float">
-        <div className="flex items-start justify-between gap-3 border-b border-hair-2 bg-canvas px-5 py-3.5">
-          <div className="min-w-0">
-            <div className="text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-              Project context
+    <Portal>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Update project context"
+        className="fixed inset-0 z-[9999] grid place-items-center bg-ink/50 p-4 backdrop-blur-sm"
+      >
+        <div className="rise-in flex max-h-[86vh] w-full max-w-[640px] flex-col overflow-hidden rounded-card border border-hair-2 bg-card shadow-float">
+          <div className="flex items-start justify-between gap-3 border-b border-hair-2 bg-canvas px-5 py-3.5">
+            <div className="min-w-0">
+              <div className="text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
+                Project context
+              </div>
+              <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
+                {FIELD_TITLES[field].title}
+              </h2>
+              <p className="mt-0.5 text-label text-ink-3">{FIELD_TITLES[field].hint}</p>
             </div>
-            <h2 className="mt-0.5 text-display font-[850] tracking-tight text-ink">
-              {FIELD_TITLES[field].title}
-            </h2>
-            <p className="mt-0.5 text-label text-ink-3">{FIELD_TITLES[field].hint}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition-colors hover:bg-black/5 hover:text-ink"
-          >
-            <X className="size-4.5" />
-          </button>
-        </div>
-
-        {/* The other three stay reachable: having opened this to change one
-            thing, changing a second should not mean opening it again. */}
-        <div className="flex flex-wrap gap-1.5 border-b border-hair px-5 py-2.5">
-          {(Object.keys(FIELD_TITLES) as ContextField[]).map((id) => (
             <button
-              key={id}
               type="button"
-              onClick={() => setField(id)}
-              className={cn(
-                "inline-flex cursor-pointer items-center gap-1.5 rounded-chip border px-2.5 py-1 text-label font-bold transition",
-                field === id
-                  ? "border-brand bg-tint text-brand-deep"
-                  : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
-              )}
+              onClick={onClose}
+              aria-label="Close"
+              className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition-colors hover:bg-black/5 hover:text-ink"
             >
-              {FIELD_TITLES[id].title}
-              <span className="font-semibold text-ink-4">{summary[id]}</span>
+              <X className="size-4.5" />
             </button>
-          ))}
-        </div>
+          </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-5">
-          {field === "audience" && (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {AUDIENCE_OPTIONS.map((option) => {
-                const Icon = option.icon;
-                const active = draft.audience === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() =>
-                      setDraft((prev) => ({
-                        ...prev,
-                        audience: option.id,
-                        // Topics belong to an audience: keeping the old ones
-                        // would offer an HCP's mechanism pillars to a patient.
-                        topics: prev.audience === option.id ? prev.topics : [],
-                      }))
-                    }
-                    className={cn(
-                      "flex cursor-pointer items-start gap-2.5 rounded-control border p-3 text-left transition",
-                      active
-                        ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
-                        : "border-hair-2 bg-card hover:border-hair-3"
-                    )}
-                  >
-                    <Icon className={cn("mt-0.5 size-4 shrink-0", active ? "text-brand" : "text-ink-3")} />
-                    <span className="min-w-0">
-                      <span className="block text-body font-bold text-ink">{option.title}</span>
-                      <span className="mt-0.5 block text-label text-ink-3">{option.subtitle}</span>
-                    </span>
-                    {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {field === "topics" && (
-            <div className="space-y-2">
-              <p className="text-label font-bold text-ink-2">
-                {draft.topics.length} of 3 selected
-                {draft.topics.length >= 3 && (
-                  <span className="ml-1.5 font-semibold text-ink-4">— deselect one to choose another</span>
+          {/* The other three stay reachable: having opened this to change one
+              thing, changing a second should not mean opening it again. */}
+          <div className="flex flex-wrap gap-1.5 border-b border-hair px-5 py-2.5">
+            {(Object.keys(FIELD_TITLES) as ContextField[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setField(id)}
+                className={cn(
+                  "inline-flex cursor-pointer items-center gap-1.5 rounded-chip border px-2.5 py-1 text-label font-bold transition",
+                  field === id
+                    ? "border-brand bg-tint text-brand-deep"
+                    : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
                 )}
-              </p>
-              <div className="grid gap-2">
-                {topicOptions.map((option) => {
+              >
+                {FIELD_TITLES[id].title}
+                <span className="font-semibold text-ink-4">{summary[id]}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto p-5">
+            {field === "audience" && (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {AUDIENCE_OPTIONS.map((option) => {
                   const Icon = option.icon;
-                  const active = draft.topics.includes(option.label);
-                  const full = !active && draft.topics.length >= 3;
+                  const active = draft.audience === option.id;
                   return (
                     <button
                       key={option.id}
                       type="button"
-                      onClick={() => toggleTopic(option.label)}
-                      disabled={full}
+                      onClick={() =>
+                        setDraft((prev) => ({
+                          ...prev,
+                          audience: option.id,
+                          // Topics belong to an audience: keeping the old ones
+                          // would offer an HCP's mechanism pillars to a patient.
+                          topics: prev.audience === option.id ? prev.topics : [],
+                        }))
+                      }
                       className={cn(
-                        "flex items-start gap-2.5 rounded-control border p-3 text-left transition",
+                        "flex cursor-pointer items-start gap-2.5 rounded-control border p-3 text-left transition",
                         active
-                          ? "cursor-pointer border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
-                          : full
-                            ? "cursor-not-allowed border-hair-2 bg-canvas opacity-50"
-                            : "cursor-pointer border-hair-2 bg-card hover:border-hair-3"
+                          ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
+                          : "border-hair-2 bg-card hover:border-hair-3"
                       )}
                     >
                       <Icon className={cn("mt-0.5 size-4 shrink-0", active ? "text-brand" : "text-ink-3")} />
                       <span className="min-w-0">
-                        <span className="block text-body font-bold text-ink">{option.label}</span>
-                        <span className="mt-0.5 block text-label leading-snug text-ink-3">{option.detail}</span>
+                        <span className="block text-body font-bold text-ink">{option.title}</span>
+                        <span className="mt-0.5 block text-label text-ink-3">{option.subtitle}</span>
                       </span>
                       {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
                     </button>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
 
-          {field === "frame" && (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {SHAPE_OPTIONS.map((option) => {
-                const active = draft.shape === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => setDraft((prev) => ({ ...prev, shape: option.id }))}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-2.5 rounded-control border p-3 text-left transition",
-                      active
-                        ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
-                        : "border-hair-2 bg-card hover:border-hair-3"
-                    )}
-                  >
-                    {option.renderIcon(active)}
-                    <span className="text-body font-bold text-ink">{option.label}</span>
-                    {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {field === "brand" && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5 rounded-control border border-hair-2 bg-canvas p-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-control bg-tint text-body font-[850] text-brand-deep">
-                  {brand.name.slice(0, 2).toUpperCase()}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-body font-bold text-ink">{brand.name}</span>
-                  <span className="block truncate text-label text-ink-3">
-                    {brand.genericName} · {brand.therapyAreas.join(", ")}
-                  </span>
-                </span>
-                <span className="ml-auto shrink-0 rounded-glyph bg-ok-bg px-2 py-0.5 text-micro font-bold text-ok">
-                  Grounded
-                </span>
-              </div>
-
-              <label className="relative flex items-center">
-                <Search className="absolute left-2.5 size-3.5 text-ink-4" />
-                <input
-                  type="search"
-                  value={brandQuery}
-                  onChange={(e) => setBrandQuery(e.target.value)}
-                  placeholder="Search brand name or molecule…"
-                  className="w-full rounded-control border border-hair-2 bg-card py-2 pl-8 pr-2.5 text-body text-ink outline-none focus:border-brand"
-                />
-              </label>
-
-              {brandQuery.trim() === "" ? (
-                <p className="text-label text-ink-3">
-                  Start typing to find a product. The catalogue is thousands of brands, so nothing is
-                  listed until you ask for it.
+            {field === "topics" && (
+              <div className="space-y-2">
+                <p className="text-label font-bold text-ink-2">
+                  {draft.topics.length} of 3 selected
+                  {draft.topics.length >= 3 && (
+                    <span className="ml-1.5 font-semibold text-ink-4">— deselect one to choose another</span>
+                  )}
                 </p>
-              ) : brandResults.length === 0 ? (
-                <p className="text-label text-ink-3">Nothing matches that.</p>
-              ) : (
-                <div className="grid gap-1.5">
-                  {brandResults.map((option) => {
-                    /* Same rule as the start modal: without a verified dossier
-                       there is nothing for a claim to trace back to, so the
-                       brand is listed but cannot be chosen. */
-                    const verified = option.hasDossier;
+                <div className="grid gap-2">
+                  {topicOptions.map((option) => {
+                    const Icon = option.icon;
+                    const active = draft.topics.includes(option.label);
+                    const full = !active && draft.topics.length >= 3;
                     return (
                       <button
                         key={option.id}
                         type="button"
-                        disabled={!verified}
-                        title={verified ? undefined : `${option.name} has no verified dossier yet`}
-                        onClick={() => {
-                          setDraft((prev) => ({ ...prev, brandId: option.id }));
-                          setBrandQuery("");
-                        }}
+                        onClick={() => toggleTopic(option.label)}
+                        disabled={full}
                         className={cn(
-                          "flex items-center gap-2.5 rounded-control border p-2.5 text-left transition",
-                          verified
-                            ? "cursor-pointer border-hair-2 bg-card hover:border-brand"
-                            : "cursor-not-allowed border-hair bg-canvas/60"
+                          "flex items-start gap-2.5 rounded-control border p-3 text-left transition",
+                          active
+                            ? "cursor-pointer border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
+                            : full
+                              ? "cursor-not-allowed border-hair-2 bg-canvas opacity-50"
+                              : "cursor-pointer border-hair-2 bg-card hover:border-hair-3"
                         )}
                       >
-                        <span className={cn(
-                          "grid size-8 shrink-0 place-items-center rounded-chip text-caption font-[850]",
-                          verified ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4"
-                        )}>
-                          {option.name.slice(0, 2).toUpperCase()}
-                        </span>
+                        <Icon className={cn("mt-0.5 size-4 shrink-0", active ? "text-brand" : "text-ink-3")} />
                         <span className="min-w-0">
-                          <span className={cn("block text-body font-bold", verified ? "text-ink" : "text-ink-3")}>
-                            {option.name}
-                          </span>
-                          <span className="block truncate text-label text-ink-3">
-                            {[option.genericName, option.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
-                          </span>
+                          <span className="block text-body font-bold text-ink">{option.label}</span>
+                          <span className="mt-0.5 block text-label leading-snug text-ink-3">{option.detail}</span>
                         </span>
-                        {verified ? (
-                          <ChevronDown className="ml-auto size-3.5 -rotate-90 text-ink-4" />
-                        ) : (
-                          <span className="ml-auto shrink-0 rounded-chip border border-warn-line bg-warn-bg px-2 py-0.5 text-caption font-bold text-warn">
-                            Unverified
-                          </span>
-                        )}
+                        {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
                       </button>
                     );
                   })}
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
 
-        <div className="flex items-center justify-between gap-3 border-t border-hair bg-canvas px-5 py-3">
-          <span className="min-w-0 truncate text-label text-ink-3">
-            {summary.brand} · {summary.audience} · {summary.topics} · {summary.frame}
-          </span>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="cursor-pointer rounded-control px-3 py-1.5 text-body font-bold text-ink-3 transition hover:text-ink"
-            >
-              Cancel
-            </button>
-            <Button
-              onClick={() => onSave(draft)}
-              className="h-9 cursor-pointer rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep"
-            >
-              Update
-            </Button>
+            {field === "frame" && (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {SHAPE_OPTIONS.map((option) => {
+                  const active = draft.shape === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setDraft((prev) => ({ ...prev, shape: option.id }))}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-2.5 rounded-control border p-3 text-left transition",
+                        active
+                          ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
+                          : "border-hair-2 bg-card hover:border-hair-3"
+                      )}
+                    >
+                      {option.renderIcon(active)}
+                      <span className="text-body font-bold text-ink">{option.label}</span>
+                      {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {field === "brand" && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5 rounded-control border border-hair-2 bg-canvas p-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-control bg-tint text-body font-[850] text-brand-deep">
+                    {brand.name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-body font-bold text-ink">{brand.name}</span>
+                    <span className="block truncate text-label text-ink-3">
+                      {brand.genericName} · {brand.therapyAreas.join(", ")}
+                    </span>
+                  </span>
+                  <span className="ml-auto shrink-0 rounded-glyph bg-ok-bg px-2 py-0.5 text-micro font-bold text-ok">
+                    Grounded
+                  </span>
+                </div>
+
+                <label className="relative flex items-center">
+                  <Search className="absolute left-2.5 size-3.5 text-ink-4" />
+                  <input
+                    type="search"
+                    value={brandQuery}
+                    onChange={(e) => setBrandQuery(e.target.value)}
+                    placeholder="Search brand name or molecule…"
+                    className="w-full rounded-control border border-hair-2 bg-card py-2 pl-8 pr-2.5 text-body text-ink outline-none focus:border-brand"
+                  />
+                </label>
+
+                {brandQuery.trim() === "" ? (
+                  <p className="text-label text-ink-3">
+                    Start typing to find a product. The catalogue is thousands of brands, so nothing is
+                    listed until you ask for it.
+                  </p>
+                ) : brandResults.length === 0 ? (
+                  <p className="text-label text-ink-3">Nothing matches that.</p>
+                ) : (
+                  <div className="grid gap-1.5">
+                    {brandResults.map((option) => {
+                      /* Same rule as the start modal: without a verified dossier
+                         there is nothing for a claim to trace back to, so the
+                         brand is listed but cannot be chosen. */
+                      const verified = option.hasDossier;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          disabled={!verified}
+                          title={verified ? undefined : `${option.name} has no verified dossier yet`}
+                          onClick={() => {
+                            setDraft((prev) => ({ ...prev, brandId: option.id }));
+                            setBrandQuery("");
+                          }}
+                          className={cn(
+                            "flex items-center gap-2.5 rounded-control border p-2.5 text-left transition",
+                            verified
+                              ? "cursor-pointer border-hair-2 bg-card hover:border-brand"
+                              : "cursor-not-allowed border-hair bg-canvas/60"
+                          )}
+                        >
+                          <span className={cn(
+                            "grid size-8 shrink-0 place-items-center rounded-chip text-caption font-[850]",
+                            verified ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4"
+                          )}>
+                            {option.name.slice(0, 2).toUpperCase()}
+                          </span>
+                          <span className="min-w-0">
+                            <span className={cn("block text-body font-bold", verified ? "text-ink" : "text-ink-3")}>
+                              {option.name}
+                            </span>
+                            <span className="block truncate text-label text-ink-3">
+                              {[option.genericName, option.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
+                            </span>
+                          </span>
+                          {verified ? (
+                            <ChevronDown className="ml-auto size-3.5 -rotate-90 text-ink-4" />
+                          ) : (
+                            <span className="ml-auto shrink-0 rounded-chip border border-warn-line bg-warn-bg px-2 py-0.5 text-caption font-bold text-warn">
+                              Unverified
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-hair bg-canvas px-5 py-3">
+            <span className="min-w-0 truncate text-label text-ink-3">
+              {summary.brand} · {summary.audience} · {summary.topics} · {summary.frame}
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="cursor-pointer rounded-control px-3 py-1.5 text-body font-bold text-ink-3 transition hover:text-ink"
+              >
+                Cancel
+              </button>
+              <Button
+                onClick={() => onSave(draft)}
+                className="h-9 cursor-pointer rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep"
+              >
+                Update
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
