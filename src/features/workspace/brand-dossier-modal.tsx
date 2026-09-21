@@ -1006,10 +1006,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               {isSel && <Check className="size-2 stroke-[3]" />}
                             </div>
                           </div>
-                          <div>
-                            <div className="text-body font-bold text-ink leading-snug">{top.label}</div>
-                            <div className="text-caption text-ink-3 mt-0.5 leading-snug line-clamp-2">{top.detail}</div>
-                          </div>
+                          <div className="text-body font-bold text-ink leading-snug">{top.label}</div>
                         </div>
                       </button>
                     );

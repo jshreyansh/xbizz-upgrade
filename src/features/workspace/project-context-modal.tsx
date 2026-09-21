@@ -173,7 +173,7 @@ export function ProjectContextModal({
                           : "border-hair-2 bg-card hover:border-hair-3"
                       )}
                     >
-                      <Icon className={cn("mt-0.5 size-4 shrink-0", active ? "text-brand" : "text-ink-3")} />
+                      <Icon className={cn("size-4 shrink-0", active ? "text-brand" : "text-ink-3")} />
                       <span className="min-w-0">
                         <span className="block text-body font-bold text-ink">{option.title}</span>
                         <span className="mt-0.5 block text-label text-ink-3">{option.subtitle}</span>
@@ -205,7 +205,7 @@ export function ProjectContextModal({
                         onClick={() => toggleTopic(option.label)}
                         disabled={full}
                         className={cn(
-                          "flex items-start gap-2.5 rounded-control border p-3 text-left transition",
+                          "flex items-center gap-2.5 rounded-control border p-3 text-left transition",
                           active
                             ? "cursor-pointer border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
                             : full
@@ -214,10 +214,7 @@ export function ProjectContextModal({
                         )}
                       >
                         <Icon className={cn("mt-0.5 size-4 shrink-0", active ? "text-brand" : "text-ink-3")} />
-                        <span className="min-w-0">
-                          <span className="block text-body font-bold text-ink">{option.label}</span>
-                          <span className="mt-0.5 block text-label leading-snug text-ink-3">{option.detail}</span>
-                        </span>
+                        <span className="min-w-0 text-body font-bold text-ink">{option.label}</span>
                         {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
                       </button>
                     );

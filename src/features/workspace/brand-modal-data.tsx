@@ -41,6 +41,8 @@ import {
   UserCheck,
   Users,
   Sparkles,
+  Zap,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
@@ -190,55 +192,74 @@ export const GROUNDING_BY_AUDIENCE: Record<Audience, Array<"brand" | "disease">>
   Distributor:    ["brand"],
 };
 
-// ── Audience-aware Clinical Topics with Semantic Icons ──
-export const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; detail: string; icon: any }>> = {
+/**
+ * What each audience is actually asked about.
+ *
+ * Every audience used to get exactly six, and the six were written from the
+ * HCP list outwards — a distributor was offered "HTA Submissions" and a
+ * consumer "Living with the Condition" because the shape wanted six rows,
+ * not because either is a thing those people ask for. The lists are the
+ * length the audience makes them: a prescriber has more to decide than a
+ * stockist does.
+ *
+ * Labels only. A one-line gloss under each was explaining the topic to
+ * someone who already picked the audience, and six of them turned a choice
+ * into a page of reading.
+ */
+export const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; icon: LucideIcon }>> = {
   HCP: [
-    { id: "moa", label: "Mechanism of Action", detail: "Receptor binding, phosphorylation blockade, cellular cascade", icon: Activity },
-    { id: "efficacy", label: "Efficacy & Clinical Readout", detail: "Primary endpoints, PASI 90 / MACE reduction, responder rates", icon: TrendingUp },
-    { id: "safety", label: "Safety & Tolerability", detail: "Adverse events, hepatic/renal cut-offs, black-box warnings", icon: ShieldCheck },
-    { id: "dosing", label: "Dosing & Administration", detail: "Once-daily oral regimen, titration schedule, missed dose guidance", icon: Pill },
-    { id: "patient-profile", label: "Patient Profile", detail: "Indication, contraindications, comorbidities, eGFR thresholds", icon: UserCheck },
-    { id: "head-to-head", label: "Comparative Head-to-Head", detail: "Non-inferiority and superiority metrics vs Standard of Care", icon: Scale },
-  ],
-  Patient: [
-    { id: "how-it-works", label: "How it Works", detail: "Simple explanation of mechanism in plain language", icon: Sparkles },
-    { id: "what-to-expect", label: "What to Expect", detail: "Onset of action, how quickly you may see results", icon: Clock },
-    { id: "side-effects", label: "Side Effects & Safety", detail: "Common side effects, when to contact your doctor", icon: AlertCircle },
-    { id: "how-to-take", label: "How to Take It", detail: "Dosing schedule, missed dose instructions, storage", icon: Pill },
-    { id: "living-with", label: "Living with the Condition", detail: "Lifestyle tips, diet, support resources", icon: Heart },
-    { id: "real-outcomes", label: "Real Patient Outcomes", detail: "PRO scores, quality of life improvements, adherence data", icon: CheckCircle2 },
+    { id: "product-intro", label: "Product Introduction", icon: Pill },
+    { id: "moa", label: "Mechanism of Action", icon: Activity },
+    { id: "indications", label: "Indications", icon: Target },
+    { id: "dosage-safety", label: "Dosage & Safety", icon: ShieldCheck },
+    { id: "interactions", label: "Drug Interactions", icon: Zap },
+    { id: "side-effects", label: "Side Effects", icon: AlertCircle },
+    { id: "efficacy", label: "Efficacy & Clinical Readout", icon: TrendingUp },
+    { id: "head-to-head", label: "Comparative Head-to-Head", icon: Scale },
   ],
   "Field team": [
-    { id: "key-messages", label: "Key Selling Messages", detail: "Core brand claims, approved differentiation points", icon: Target },
-    { id: "objection-handling", label: "Objection Handling", detail: "Common HCP objections and evidence-based responses", icon: MessageSquareQuote },
-    { id: "clinical-evidence", label: "Clinical Evidence Summary", detail: "Pivotal trial highlights condensed for field use", icon: BookOpen },
-    { id: "dosing-guide", label: "Dosing Guide", detail: "Quick-reference dosing, titration, administration reminders", icon: Pill },
-    { id: "competitive", label: "Competitive Positioning", detail: "Head-to-head data, market positioning vs competitors", icon: TrendingUp },
-    { id: "fair-balance", label: "Fair Balance & ISI", detail: "Required safety statements and black-box warnings", icon: ShieldAlert },
+    { id: "product-pitch", label: "Product Pitch", icon: Target },
+    { id: "key-indications", label: "Key Indications", icon: BookOpen },
+    { id: "competitive", label: "Competitive Advantages", icon: TrendingUp },
+    { id: "objection-handling", label: "Objection Handling", icon: MessageSquareQuote },
+    { id: "dosing-guide", label: "Dosing Guide", icon: Pill },
+    { id: "fair-balance", label: "Fair Balance & ISI", icon: ShieldAlert },
   ],
-  Hospital: [
-    { id: "budget-impact", label: "Budget Impact", detail: "Cost-per-patient analysis, hospital formulary cost model", icon: Coins },
-    { id: "heor", label: "HEOR & QALY", detail: "Health economic outcomes, quality-adjusted life year data", icon: BarChart3 },
-    { id: "formulary", label: "Formulary Positioning", detail: "Formulary placement rationale, tier status, step edits", icon: Building2 },
-    { id: "cost-effectiveness", label: "Cost-Effectiveness", detail: "ICERs, NNT, comparative cost vs standard of care", icon: Scale },
-    { id: "contracting", label: "Contracting & GPO", detail: "GPO contracts, rebate structure, pull-through support", icon: FileText },
-    { id: "hta", label: "HTA Submissions", detail: "NICE, HAS, G-BA dossier highlights for procurement teams", icon: BookOpenCheck },
-  ],
-  Distributor: [
-    { id: "product-overview", label: "Product Overview", detail: "Indication, mechanism summary, approved markets", icon: Package },
-    { id: "market-opportunity", label: "Market Opportunity", detail: "Patient population size, market growth forecasts", icon: TrendingUp },
-    { id: "supply-logistics", label: "Supply & Logistics", detail: "Cold-chain requirements, shelf life, supply timelines", icon: Truck },
-    { id: "sku-packaging", label: "SKU & Packaging", detail: "Available pack sizes, barcode, unit-of-use details", icon: Box },
-    { id: "reimbursement", label: "Reimbursement Landscape", detail: "Payer coverage, co-pay programs, access support", icon: CreditCard },
-    { id: "distribution-terms", label: "Distribution Terms", detail: "Trade terms, margin, exclusivity, territory rights", icon: FileSpreadsheet },
+  Patient: [
+    { id: "what-it-treats", label: "What It Treats", icon: Sparkles },
+    { id: "how-to-take", label: "How to Take It", icon: Pill },
+    { id: "safety-side-effects", label: "Safety & Side Effects", icon: AlertCircle },
+    { id: "lifestyle-adherence", label: "Lifestyle & Adherence", icon: Heart },
+    { id: "how-it-works", label: "How it Works", icon: Activity },
+    { id: "what-to-expect", label: "What to Expect", icon: Clock },
+    { id: "real-outcomes", label: "Real Patient Outcomes", icon: CheckCircle2 },
   ],
   Consumer: [
-    { id: "what-it-does", label: "What it Does", detail: "Plain-language description of the medicine's purpose", icon: Sparkles },
-    { id: "who-its-for", label: "Who it's For", detail: "Who is prescribed this medicine and why", icon: Users },
-    { id: "how-to-take-consumer", label: "How to Take It", detail: "Simple dosing instructions and reminders", icon: Pill },
-    { id: "side-effects-consumer", label: "Possible Side Effects", detail: "Most common side effects in everyday language", icon: AlertCircle },
-    { id: "talk-to-doctor", label: "Talking to Your Doctor", detail: "Questions to ask your healthcare provider", icon: Stethoscope },
-    { id: "lifestyle", label: "Lifestyle Tips", detail: "Diet, exercise, and habit advice alongside treatment", icon: Heart },
+    { id: "product-overview-consumer", label: "Product Overview", icon: Package },
+    { id: "key-benefits", label: "Key Benefits", icon: Sparkles },
+    { id: "how-to-use", label: "How to Use", icon: Pill },
+    { id: "safety-basics", label: "Safety Basics", icon: ShieldCheck },
+    { id: "who-its-for", label: "Who it's For", icon: Users },
+    { id: "talk-to-doctor", label: "Talking to Your Doctor", icon: Stethoscope },
+    { id: "lifestyle-tips", label: "Lifestyle Tips", icon: Heart },
+  ],
+  Hospital: [
+    { id: "product-overview-hospital", label: "Product Overview", icon: Package },
+    { id: "clinical-evidence", label: "Clinical Evidence", icon: BookOpenCheck },
+    { id: "quality-standards", label: "Safety & Quality Standards", icon: ShieldCheck },
+    { id: "cost-procurement", label: "Cost & Procurement", icon: Coins },
+    { id: "heor", label: "HEOR & QALY", icon: BarChart3 },
+    { id: "formulary", label: "Formulary Positioning", icon: Building2 },
+    { id: "cost-effectiveness", label: "Cost-Effectiveness", icon: Scale },
+    { id: "contracting", label: "Contracting & GPO", icon: FileText },
+  ],
+  Distributor: [
+    { id: "product-overview-trade", label: "Product Overview", icon: Package },
+    { id: "market-demand", label: "Market & Demand", icon: TrendingUp },
+    { id: "margins", label: "Margins & Commercials", icon: FileSpreadsheet },
+    { id: "storage-handling", label: "Storage & Handling", icon: Truck },
+    { id: "sku-packaging", label: "SKU & Packaging", icon: Box },
+    { id: "reimbursement", label: "Reimbursement Landscape", icon: CreditCard },
   ],
 };
 
