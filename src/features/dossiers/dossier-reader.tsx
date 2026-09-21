@@ -139,10 +139,23 @@ export function DossierReader({
     setHighlightedClaimId(claimId);
   }
 
-  /** A subsection in the index jumps to its heading in the document. */
-  function goToSubsection(subId: string) {
+  /**
+   * A subsection in the index jumps to its heading in the document.
+   *
+   * The index lists every section's parts, so the target is often not in the
+   * open section at all — open it first, and scroll once the browser has
+   * painted the section it belongs to.
+   */
+  function goToSubsection(sectionId: string, subId: string) {
     setActiveSubId(subId);
-    document.getElementById(`dossier-sub-${subId}`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+    const scroll = () =>
+      document.getElementById(`dossier-sub-${subId}`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+    if (sectionId === activeSectionId) {
+      scroll();
+      return;
+    }
+    setActiveSectionId(sectionId);
+    requestAnimationFrame(() => requestAnimationFrame(scroll));
   }
 
   const createMagicVideo = onCreateVideo ?? (() => router.push("/create"));
@@ -443,13 +456,13 @@ export function DossierReader({
                         </button>
                       );
 
-                      /* Subsections belong to the section you are reading, so
-                         they appear under the open one and nowhere else — an
-                         index that lists every part of every section is a
-                         table of contents, not a way to move. Collapsed, the
-                         rail is 72px of numbers and there is no room for them
-                         at all. */
-                      if (claimsPanelOpen || !isSelected || !sec.subsections?.length) return row;
+                      /* Always listed, not only under the section you happen
+                         to be in: an index whose shape changes as you move
+                         through it cannot be scanned, and you cannot see that
+                         3 has three parts until you are already in 3.
+                         Collapsed, the rail is 72px of numbers and there is
+                         no room for them at all. */
+                      if (claimsPanelOpen || !sec.subsections?.length) return row;
 
                       return (
                         <div key={sec.id}>
@@ -460,7 +473,7 @@ export function DossierReader({
                               return (
                                 <button
                                   key={sub.id}
-                                  onClick={() => goToSubsection(sub.id)}
+                                  onClick={() => goToSubsection(sec.id, sub.id)}
                                   title={`${sec.number}.${sub.number} ${sub.title}`}
                                   style={{
                                     width: "100%",
