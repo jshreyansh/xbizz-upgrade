@@ -43,7 +43,7 @@ export default function ClaimDetailClient() {
   }
 
   return (
-    <AppShell pageTitle={detail.claim.dossierType}>
+    <AppShell pageTitle={detail.product.name}>
       <ClaimDetailScreen detail={detail} />
     </AppShell>
   );

@@ -9,12 +9,13 @@ import {
   Eye,
   Info,
   Layers,
+  ListChecks,
   MessageSquare,
   Paperclip,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
-import { CLAIM_STATUS_STYLE, DOSSIER_TYPE_ICON } from "@/features/product-library/claim-card";
+import { CLAIM_STATUS_STYLE } from "@/features/product-library/claim-card";
 import { AssetVideo } from "@/features/workspace/asset-video";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
@@ -54,7 +55,6 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
 
   const { claim, product } = detail;
   const status = CLAIM_STATUS_STYLE[claim.status];
-  const TypeIcon = DOSSIER_TYPE_ICON[claim.dossierType];
 
   const TABS: { key: Tab; label: string; icon: typeof Info; count?: number }[] = [
     { key: "information", label: "Information", icon: Info },
@@ -76,14 +76,18 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
           than the space it filled. */}
       <div className="flex flex-wrap items-start gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair">
         <span className={cn("grid size-12 shrink-0 place-items-center rounded-control", status.bg, status.tone)}>
-          <TypeIcon size={20} />
+          <ListChecks size={20} />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-title font-extrabold tracking-tight text-ink">{claim.dossierType}</h1>
+          {/* The statement is the heading. The dossier type was standing in
+              for one, which put a category where the claim should be. */}
+          <div className="flex flex-wrap items-start gap-2">
+            <h1 className="min-w-0 flex-1 text-subhead font-extrabold leading-snug tracking-tight text-ink">
+              {claim.text}
+            </h1>
             <span
               className={cn(
-                "rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em]",
+                "mt-1 shrink-0 rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em]",
                 status.bg,
                 status.tone
               )}
@@ -91,8 +95,6 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
               {status.label}
             </span>
           </div>
-          <p className="mt-1 text-body-lg leading-relaxed text-ink-2">{claim.text}</p>
-          <span className="mt-1.5 block text-caption text-ink-4">{claim.source}</span>
         </div>
       </div>
 

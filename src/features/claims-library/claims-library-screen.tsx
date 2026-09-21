@@ -2,12 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus, Grid3x3, List } from "lucide-react";
+import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus } from "lucide-react";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
-import { CLAIM_STATUS_STYLE, DOSSIER_TYPE_ICON } from "@/features/product-library/claim-card";
-import { ProductArtwork } from "@/features/product-library/product-artwork";
-import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
+import { CLAIM_STATUS_STYLE } from "@/features/product-library/claim-card";
 import { DataList } from "@/components/patterns/data-list";
 import { claimUpdatedOn } from "@/features/claims-library/claim-detail";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
@@ -70,10 +68,6 @@ export function ClaimsLibraryScreen() {
   const products = useProductLibraryStore((s) => s.products);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
-  /* The one shelf without a list view. A claim is mostly a sentence and a
-     status, which is exactly what a row is for — the cards were the only way
-     to read a hundred of them. */
-  const [view, setView] = useState<"grid" | "list">("grid");
 
   const allClaims: LibraryClaim[] = useMemo(
     () => products.flatMap((product) => buildProductDetail(product).claims.map((claim) => ({ ...claim, product }))),
@@ -116,8 +110,8 @@ export function ClaimsLibraryScreen() {
       <div>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>Claims Library</h1>
         <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-          Every claim cited across your brands, in one place — see what&rsquo;s approved, what&rsquo;s still
-          waiting on review, and what got held out, without opening each brand one at a time.
+          Every approved claim across your brands, in one place — what each one says, which brand it
+          belongs to and when it last changed, without opening each brand one at a time.
         </p>
       </div>
 
@@ -129,7 +123,7 @@ export function ClaimsLibraryScreen() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search claims, brands or dossier types…"
+                placeholder="Search claims or brands…"
                 style={{ width: "100%", padding: "10px 13px 10px 36px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)", background: "#fff" }}
               />
             </div>
@@ -149,16 +143,6 @@ export function ClaimsLibraryScreen() {
               </Segmented>
             )}
 
-            <Segmented>
-              {([
-                { id: "grid" as const, Icon: Grid3x3, label: "Grid" },
-                { id: "list" as const, Icon: List, label: "List" },
-              ]).map(({ id, Icon, label }) => (
-                <SegmentedButton key={id} active={view === id} onClick={() => setView(id)}>
-                  <Icon size={13} /> {label}
-                </SegmentedButton>
-              ))}
-            </Segmented>
           </div>
 
           {/* Under the controls, not over them. The Product Library settled
@@ -208,74 +192,9 @@ export function ClaimsLibraryScreen() {
           }
         />
       ) : (
-        view === "grid" ? (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3.5">
-          {filtered.map((c, i) => {
-            const Icon = DOSSIER_TYPE_ICON[c.dossierType];
-            const tone = CLAIM_STATUS_STYLE[c.status];
-            return (
-              <LibraryTile
-                key={`${c.product.id}-${c.id}`}
-                delayMs={60 + i * 25}
-                onClick={() => openClaim(c)}
-                media={
-                  /* A claim had no picture, so it was the one card on any
-                     shelf that did not look like the others. It borrows the
-                     product's, which is also the honest answer to "what is
-                     this about". */
-                  <div
-                    className="relative h-[120px] w-full overflow-hidden"
-                    style={{ background: c.product.gradient }}
-                  >
-                    <span aria-hidden className="pointer-events-none absolute inset-0 bg-white/60" />
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute rounded-full"
-                      style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.5),transparent 70%)" }}
-                    />
-                    <div className="absolute -bottom-2 right-[-6%] h-[88%] w-1/2 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
-                      <ProductArtwork
-                        kind={c.product.type}
-                        photoUrl={c.product.referenceImageUrl}
-                        className="h-full w-full"
-                      />
-                    </div>
-                  </div>
-                }
-                mediaTopLeft={
-                  <span className="inline-flex items-center gap-1.5 rounded-chip bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90 backdrop-blur-sm">
-                    <Icon size={10} />
-                    {c.dossierType}
-                  </span>
-                }
-                mediaTopRight={
-                  <span className={`rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] ${tone.bg} ${tone.tone}`}>
-                    {tone.label}
-                  </span>
-                }
-                title={<span className="line-clamp-2 whitespace-normal leading-snug">{c.text}</span>}
-                chips={
-                  <>
-                    <span className="inline-flex items-center gap-1.5 rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
-                      <span className="size-1.5 shrink-0 rounded-full" style={{ background: c.product.gradient }} />
-                      {c.product.name}
-                    </span>
-                    {/* Where in the dossier it came from. It used to close the
-                        card, which is the slot every other shelf gives to the
-                        date — so it moves up here with the other facts about
-                        the claim, and the footer says when, like the rest. */}
-                    <span className="inline-flex min-w-0 items-center rounded-chip bg-subtle px-2 py-0.5 text-caption text-ink-4">
-                      <span className="truncate">{c.source}</span>
-                    </span>
-                  </>
-                }
-                footerLeft={claimUpdatedOn(c.id)}
-                footerRight={<TileOpen />}
-              />
-            );
-          })}
-        </div>
-        ) : (
+        /* Rows, and only rows. A claim is a sentence, a brand and a way in —
+           a card gave a sentence a picture's worth of room, and a hundred of
+           them could not be read. */
         <DataList
           rows={filtered}
           rowKey={(c) => `${c.product.id}-${c.id}`}
@@ -283,26 +202,9 @@ export function ClaimsLibraryScreen() {
           emptyLabel="No claims match."
           columns={[
             {
-              id: "type",
-              header: "Evidence",
-              width: 150,
-              cell: (c) => {
-                const Icon = DOSSIER_TYPE_ICON[c.dossierType];
-                const tone = CLAIM_STATUS_STYLE[c.status];
-                return (
-                  <span className="inline-flex min-w-0 items-center gap-1.5 text-caption font-extrabold uppercase tracking-[.03em] text-ink-3">
-                    <span className={`grid size-6 shrink-0 place-items-center rounded-chip ${tone.bg} ${tone.tone}`}>
-                      <Icon size={13} />
-                    </span>
-                    <span className="truncate">{c.dossierType}</span>
-                  </span>
-                );
-              },
-            },
-            {
               id: "claim",
               header: "Claim",
-              minWidth: 320,
+              minWidth: 380,
               cell: (c) => <span className="line-clamp-2 text-body leading-snug text-ink-2">{c.text}</span>,
             },
             {
@@ -330,12 +232,6 @@ export function ClaimsLibraryScreen() {
               ),
             },
             {
-              id: "source",
-              header: "Source",
-              minWidth: 200,
-              cell: (c) => <span className="truncate text-caption text-ink-4">{c.source}</span>,
-            },
-            {
               id: "updated",
               header: "Updated",
               width: 120,
@@ -344,14 +240,13 @@ export function ClaimsLibraryScreen() {
             {
               id: "open",
               header: "",
-              width: 80,
+              width: 120,
               align: "right",
               hideHeader: true,
-              cell: () => <span className="text-label font-bold text-brand">Open →</span>,
+              cell: () => <span className="text-label font-bold text-brand">View details →</span>,
             },
           ]}
         />
-        )
       )}
     </div>
   );
