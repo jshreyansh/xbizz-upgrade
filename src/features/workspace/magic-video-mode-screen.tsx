@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
-import { ScratchCard } from "@/features/workspace/scratch-card";
+import { CreateTile } from "@/components/patterns/create-tile";
 
 /**
  * Where a video starts.
@@ -99,9 +99,10 @@ export function MagicVideoModeScreen() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
-        <ScratchCard
+        <CreateTile
           title="Create from Scratch"
-          subtitle="A blank brief, your own direction"
+          subtitle="A blank brief and your own direction, grounded in the same approved claims."
+          actionLabel="New video"
           delayMs={80}
           onSelect={() => handleSelect("scratch")}
         />

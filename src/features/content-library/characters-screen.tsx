@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Search, UserRoundPlus } from "lucide-react";
+import { Search, UserRoundPlus } from "lucide-react";
+import { CreateTile } from "@/components/patterns/create-tile";
 import { useCharactersStore } from "@/features/content-library/characters-store";
 import {
   characterTypeLabel,
@@ -112,22 +113,13 @@ export function CharactersScreen() {
           /* The first tile makes the thing, the way the Create landing and the
              Product Library both open with the action rather than a toolbar
              button somebody has to go looking for. */
-          <button
-            type="button"
-            onClick={() => setCreating(true)}
-            className="group flex min-h-[260px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-panel border border-dashed border-hair-3 bg-canvas p-6 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:bg-tint/40"
-          >
-            <span className="grid size-12 place-items-center rounded-full bg-tint text-brand-deep transition group-hover:bg-brand group-hover:text-white">
-              <UserRoundPlus className="size-5" />
-            </span>
-            <span className="text-body-lg font-extrabold text-ink">Create new</span>
-            <span className="max-w-[28ch] text-caption leading-snug text-ink-3">
-              From a description, or from footage and photographs of a real person.
-            </span>
-            <span className="mt-1 inline-flex items-center gap-1 text-label font-bold text-brand">
-              <Plus className="size-3.5" /> New character
-            </span>
-          </button>
+          <CreateTile
+            icon={<UserRoundPlus className="size-5" />}
+            title="Create new"
+            subtitle="From a description, or from footage and photographs of a real person."
+            actionLabel="New character"
+            onSelect={() => setCreating(true)}
+          />
         )}
 
         {visible.map((character) => (

@@ -5,7 +5,7 @@ import { Image as ImageIcon, Layers } from "lucide-react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
-import { ScratchCard } from "@/features/workspace/scratch-card";
+import { CreateTile } from "@/components/patterns/create-tile";
 
 /**
  * Where a creative starts. The same tile the video screen uses: the example
@@ -117,13 +117,12 @@ export function CreativesModeScreen() {
       {/* Three across, the same grid the video screen uses — two wide tiles
           beside a blank one was a different screen for the same decision. */}
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
-        <ScratchCard
+        <CreateTile
           title="Start from Scratch"
-          subtitle="A blank page, your own direction"
+          subtitle="A blank page and your own direction, grounded in the same approved claims."
+          actionLabel="New doc"
           delayMs={80}
-          onSelect={() =>
-            handleSelectMode("scratch", "")
-          }
+          onSelect={() => handleSelectMode("scratch", "")}
         />
         <StartingPointCard
           title="Infographic / Chart"
