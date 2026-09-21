@@ -118,9 +118,8 @@ export function CreativesModeScreen() {
           beside a blank one was a different screen for the same decision. */}
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
         <CreateTile
-          title="Start from Scratch"
+          title="Create From Scratch"
           subtitle="A blank page and your own direction, grounded in the same approved claims."
-          actionLabel="New doc"
           delayMs={80}
           onSelect={() => handleSelectMode("scratch", "")}
         />

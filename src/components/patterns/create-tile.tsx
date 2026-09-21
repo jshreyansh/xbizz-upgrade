@@ -11,16 +11,17 @@ import { Plus } from "lucide-react";
  * and the title below, so the same action read as two different things one
  * click apart.
  *
- * Everything sits in the middle here — the glyph, what it makes, a line
- * saying what you get, and the action — because unlike its neighbours this
- * tile has no preview to lead with, and centring is what tells you that at a
- * glance.
+ * Everything sits in the middle here — the glyph, what it makes, and a line
+ * saying what you get — because unlike its neighbours this tile has no
+ * preview to lead with, and centring is what tells you that at a glance.
+ *
+ * One plus, not two. The disc and a "+ New doc" underneath were the same
+ * affordance drawn twice, which reads as two actions on a tile that has one.
  */
 export function CreateTile({
   icon,
   title,
   subtitle,
-  actionLabel,
   onSelect,
   delayMs = 0,
   className,
@@ -29,7 +30,6 @@ export function CreateTile({
   icon?: React.ReactNode;
   title: string;
   subtitle: string;
-  actionLabel: string;
   onSelect: () => void;
   delayMs?: number;
   className?: string;
@@ -46,9 +46,6 @@ export function CreateTile({
       </span>
       <span className="text-body-lg font-extrabold text-ink">{title}</span>
       <span className="max-w-[30ch] text-caption leading-snug text-ink-3">{subtitle}</span>
-      <span className="mt-1 inline-flex items-center gap-1 text-label font-bold text-brand">
-        <Plus className="size-3.5" /> {actionLabel}
-      </span>
     </button>
   );
 }

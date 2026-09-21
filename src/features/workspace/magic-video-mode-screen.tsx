@@ -100,9 +100,8 @@ export function MagicVideoModeScreen() {
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
         <CreateTile
-          title="Create from Scratch"
+          title="Create From Scratch"
           subtitle="A blank brief and your own direction, grounded in the same approved claims."
-          actionLabel="New video"
           delayMs={80}
           onSelect={() => handleSelect("scratch")}
         />
