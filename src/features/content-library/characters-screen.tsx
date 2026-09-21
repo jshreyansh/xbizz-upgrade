@@ -115,9 +115,8 @@ export function CharactersScreen() {
              button somebody has to go looking for. */
           <CreateTile
             icon={<UserRoundPlus className="size-5" />}
-            title="Create new"
+            title="Create new Character"
             subtitle="From a description, or from footage and photographs of a real person."
-            actionLabel="New character"
             onSelect={() => setCreating(true)}
           />
         )}

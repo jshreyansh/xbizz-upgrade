@@ -8,6 +8,7 @@ import { useProductLibraryStore } from "@/features/product-library/product-libra
 import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { DataList } from "@/components/patterns/data-list";
+import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 
 export function ProductLibraryScreen() {
   const router = useRouter();
@@ -104,145 +105,89 @@ export function ProductLibraryScreen() {
       {view === "grid" ? (
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 18 }}>
         {filtered.map((p, i) => (
-          <div
+          <LibraryTile
             key={p.id}
+            delayMs={80 + i * 45}
             onClick={() => router.push(`/product-library/${p.id}`)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") router.push(`/product-library/${p.id}`);
-            }}
-            className="group rise-in-stagger hover:-translate-y-1 transition-all duration-200"
-            style={{
-              background: "#fff",
-              borderRadius: "var(--r-xl)",
-              border: "1px solid var(--hair)",
-              boxShadow: "var(--sh-1)",
-              overflow: "hidden",
-              cursor: "pointer",
-              animationDelay: `${80 + i * 45}ms`,
-            }}
-          >
-            <div
-              className="relative overflow-hidden"
-              style={{
-                background: p.gradient,
-                height: 168,
-                width: "100%",
-                flexShrink: 0,
-              }}
-            >
-              {/* Soft pastel wash — lightens the brand gradient into the airy,
-                  photography-forward card tone rather than a saturated block. */}
-              <span aria-hidden className="pointer-events-none absolute inset-0 bg-white/60" />
-              {/* Ambient glow behind the artwork — gives the packshot a lit, studio feel */}
-              <span
-                aria-hidden
-                className="pointer-events-none absolute rounded-full"
-                style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.5),transparent 70%)" }}
-              />
-              <span
-                className="pointer-events-none absolute inset-y-0 left-0 w-1/2 opacity-0 group-hover:opacity-100 group-hover:[animation:shimmer-sweep_1.1s_ease-out]"
-                style={{
-                  background: "linear-gradient(115deg,transparent 30%,rgba(255,255,255,.32) 50%,transparent 70%)",
-                }}
-              />
-              <span
-                style={{
-                  position: "absolute",
-                  top: 10,
-                  left: 12,
-                  zIndex: 2,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: ".04em",
-                  color: "rgba(255,255,255,.9)",
-                  background: "rgba(20,20,25,.45)",
-                  padding: "3px 8px",
-                  borderRadius: 99,
-                }}
-              >
+            media={
+              <div className="relative h-[168px] w-full overflow-hidden" style={{ background: p.gradient }}>
+                {/* Soft pastel wash — lightens the brand gradient into the
+                    airy, photography-forward card tone. */}
+                <span aria-hidden className="pointer-events-none absolute inset-0 bg-white/60" />
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute rounded-full"
+                  style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.5),transparent 70%)" }}
+                />
+                <span
+                  className="pointer-events-none absolute inset-y-0 left-0 w-1/2 opacity-0 group-hover:opacity-100 group-hover:[animation:shimmer-sweep_1.1s_ease-out]"
+                  style={{ background: "linear-gradient(115deg,transparent 30%,rgba(255,255,255,.32) 50%,transparent 70%)" }}
+                />
+                <div className="absolute -bottom-3 right-[-8%] h-[85%] w-3/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
+                  <ProductArtwork kind={p.type} photoUrl={p.referenceImageUrl} className="h-full w-full" />
+                </div>
+              </div>
+            }
+            mediaTopLeft={
+              <span className="rounded-chip bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90">
                 {p.type}
               </span>
-
-              {/* Overflow menu — visual parity with the reference design's
-                  per-card "…" affordance (Duplicate / Archive placeholders). */}
-              {(
-                <div className="absolute right-2 top-2 z-20">
-                  <button
-                    type="button"
-                    title="More options"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenMenuId(openMenuId === p.id ? null : p.id);
-                    }}
-                    className="grid size-6 place-items-center rounded-full text-ink-2 backdrop-blur-sm transition-colors hover:bg-card"
-                    style={{ background: "rgba(255,255,255,.75)" }}
+            }
+            mediaTopRight={
+              <span className="relative">
+                <button
+                  type="button"
+                  title="More options"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenMenuId(openMenuId === p.id ? null : p.id);
+                  }}
+                  className="grid size-6 cursor-pointer place-items-center rounded-full bg-white/75 text-ink-2 backdrop-blur-sm transition-colors hover:bg-card"
+                >
+                  <MoreHorizontal size={14} />
+                </button>
+                {openMenuId === p.id && (
+                  <span
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 top-[calc(100%+6px)] z-30 block w-36 overflow-hidden rounded-control border border-hair bg-card py-1 shadow-float"
                   >
-                    <MoreHorizontal size={14} />
-                  </button>
-                  {openMenuId === p.id && (
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute right-0 top-[calc(100%+6px)] w-36 overflow-hidden rounded-control border border-hair bg-card py-1 shadow-float"
-                    >
-                      {["Duplicate", "Archive"].map((action) => (
-                        <button
-                          key={action}
-                          type="button"
-                          onClick={() => setOpenMenuId(null)}
-                          className="flex w-full items-center px-3 py-1.5 text-left text-body font-medium text-ink-2 hover:bg-black/[0.04]"
-                        >
-                          {action}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-              {(
-                <div className="absolute -bottom-3 right-[-8%] h-[85%] w-3/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
-                  {p.referenceImageUrl ? (
-                    <img src={p.referenceImageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
-                  ) : (
-                    <ProductArtwork kind={p.type} className="h-full w-full" />
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div style={{ padding: "14px 16px 16px", gap: 16 }}>
-              <div style={{ minWidth: 0 }}>
-                <b style={{ display: "block", fontSize: 15.5, fontWeight: 800, color: "var(--ink)", letterSpacing: "-.2px" }}>{p.name}</b>
-                <span style={{ fontSize: 12.5, color: "var(--ink-3)", fontStyle: "italic" }}>{p.genericName}</span>
-              </div>
-
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "10px 0" }}>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: p.dossiersVerified === p.dossiersTotal ? "var(--ok-bg)" : "var(--tint-2)", color: p.dossiersVerified === p.dossiersTotal ? "var(--ok)" : "var(--brand-deep)", border: `1px solid ${p.dossiersVerified === p.dossiersTotal ? "var(--ok-line)" : "var(--tint-line)"}` }}>
+                    {["Duplicate", "Archive"].map((action) => (
+                      <button
+                        key={action}
+                        type="button"
+                        onClick={() => setOpenMenuId(null)}
+                        className="flex w-full cursor-pointer items-center px-3 py-1.5 text-left text-body font-medium text-ink-2 hover:bg-black/[0.04]"
+                      >
+                        {action}
+                      </button>
+                    ))}
+                  </span>
+                )}
+              </span>
+            }
+            title={p.name}
+            subtitle={<span className="italic">{p.genericName}</span>}
+            chips={
+              <>
+                <span
+                  className={`rounded-chip border px-2 py-0.5 text-caption font-bold ${
+                    p.dossiersVerified === p.dossiersTotal
+                      ? "border-ok-line bg-ok-bg text-ok"
+                      : "border-tint-line bg-tint text-brand-deep"
+                  }`}
+                >
                   {p.dossiersVerified} dossiers
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "var(--surface-subtle)", color: "var(--ink-3)", border: "1px solid var(--hair)" }}>
+                <span className="rounded-chip border border-hair bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
                   {p.claimsApproved} claims
                 </span>
-              </div>
-
-              <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />
-
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12, color: "var(--ink-4)" }}>
-                <span>{p.updated}</span>
-                <span
-                  className="group-hover:gap-2"
-                  style={{ color: "var(--brand)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4, transition: "gap .2s var(--e)" }}
-                >
-                  Open →
-                </span>
-              </div>
-            </div>
-          </div>
+              </>
+            }
+            footerLeft={p.updated}
+            footerRight={<TileOpen />}
+          />
         ))}
       </div>
-
       ) : (
         <DataList
           rows={filtered}

@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus, Grid3x3, List } from "lucide-react";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
-import { ClaimCard, CLAIM_STATUS_STYLE, DOSSIER_TYPE_ICON } from "@/features/product-library/claim-card";
+import { CLAIM_STATUS_STYLE, DOSSIER_TYPE_ICON } from "@/features/product-library/claim-card";
+import { ProductArtwork } from "@/features/product-library/product-artwork";
+import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { DataList } from "@/components/patterns/data-list";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { ClaimStatus, LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
@@ -192,19 +194,61 @@ export function ClaimsLibraryScreen() {
       ) : (
         view === "grid" ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3.5">
-          {filtered.map((c) => (
-            <ClaimCard
-              key={`${c.product.id}-${c.id}`}
-              claim={c}
-              onClick={() => openClaim(c)}
-              footer={
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
-                  <span className="size-1.5 shrink-0 rounded-full" style={{ background: c.product.gradient }} />
-                  {c.product.name}
-                </span>
-              }
-            />
-          ))}
+          {filtered.map((c, i) => {
+            const Icon = DOSSIER_TYPE_ICON[c.dossierType];
+            const tone = CLAIM_STATUS_STYLE[c.status];
+            return (
+              <LibraryTile
+                key={`${c.product.id}-${c.id}`}
+                delayMs={60 + i * 25}
+                onClick={() => openClaim(c)}
+                media={
+                  /* A claim had no picture, so it was the one card on any
+                     shelf that did not look like the others. It borrows the
+                     product's, which is also the honest answer to "what is
+                     this about". */
+                  <div
+                    className="relative h-[120px] w-full overflow-hidden"
+                    style={{ background: c.product.gradient }}
+                  >
+                    <span aria-hidden className="pointer-events-none absolute inset-0 bg-white/60" />
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute rounded-full"
+                      style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.5),transparent 70%)" }}
+                    />
+                    <div className="absolute -bottom-2 right-[-6%] h-[88%] w-1/2 transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-[1.03]">
+                      <ProductArtwork
+                        kind={c.product.type}
+                        photoUrl={c.product.referenceImageUrl}
+                        className="h-full w-full"
+                      />
+                    </div>
+                  </div>
+                }
+                mediaTopLeft={
+                  <span className="inline-flex items-center gap-1.5 rounded-chip bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90 backdrop-blur-sm">
+                    <Icon size={10} />
+                    {c.dossierType}
+                  </span>
+                }
+                mediaTopRight={
+                  <span className={`rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] ${tone.bg} ${tone.tone}`}>
+                    {tone.label}
+                  </span>
+                }
+                title={<span className="line-clamp-2 whitespace-normal leading-snug">{c.text}</span>}
+                chips={
+                  <span className="inline-flex items-center gap-1.5 rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
+                    <span className="size-1.5 shrink-0 rounded-full" style={{ background: c.product.gradient }} />
+                    {c.product.name}
+                  </span>
+                }
+                footerLeft={c.source}
+                footerRight={<TileOpen />}
+              />
+            );
+          })}
         </div>
         ) : (
         <DataList

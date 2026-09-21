@@ -35,7 +35,7 @@ export const PRODUCTS: LibraryProduct[] = [
     dossiersTotal: 4,
     claimsApproved: 214,
     views: 12,
-    updated: "Today, 9:15 AM",
+    updated: "Sep 21, 2026",
   },
   {
     id: "onkavia",
@@ -47,7 +47,7 @@ export const PRODUCTS: LibraryProduct[] = [
     dossiersTotal: 5,
     claimsApproved: 186,
     views: 8,
-    updated: "Yesterday, 4:30 PM",
+    updated: "Sep 20, 2026",
   },
   {
     id: "nirvexa",
@@ -59,7 +59,7 @@ export const PRODUCTS: LibraryProduct[] = [
     dossiersTotal: 6,
     claimsApproved: 162,
     views: 15,
-    updated: "3 days ago",
+    updated: "Sep 18, 2026",
   },
   {
     id: "dermora",
@@ -71,7 +71,7 @@ export const PRODUCTS: LibraryProduct[] = [
     dossiersTotal: 3,
     claimsApproved: 44,
     views: 2,
-    updated: "1 week ago",
+    updated: "Sep 14, 2026",
   },
   {
     id: "pulmavia",
@@ -83,7 +83,7 @@ export const PRODUCTS: LibraryProduct[] = [
     dossiersTotal: 5,
     claimsApproved: 230,
     views: 9,
-    updated: "Curated sample",
+    updated: "Aug 29, 2026",
   },
   {
     id: "renalis",
@@ -95,6 +95,6 @@ export const PRODUCTS: LibraryProduct[] = [
     dossiersTotal: 2,
     claimsApproved: 0,
     views: 1,
-    updated: "New",
+    updated: "Sep 21, 2026",
   },
 ];
