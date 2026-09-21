@@ -68,6 +68,7 @@ const LIBRARY: WorkspaceAsset[] = [
     note: "Endpoint tables",
     origin: "HCP Launch Film",
     size: "8.1 MB",
+    previewUrl: "/documents/sample-clinical-study-report.pdf",
   },
   {
     id: "wa-isi",
@@ -81,6 +82,7 @@ const LIBRARY: WorkspaceAsset[] = [
   {
     id: "wa-monograph",
     name: "{brand}_Prescribing_Information.pdf",
+    previewUrl: "/documents/sample-approved-label.pdf",
     kind: "doc",
     role: "source",
     note: "Dosing and cut-offs",

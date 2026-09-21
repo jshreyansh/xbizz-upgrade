@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
+import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 
 /**
  * An attached file and what it is for.
@@ -37,56 +38,17 @@ export interface UploadedDoc {
    */
   origin?: "new" | "previous";
 }
-import type { DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
 import { groundingDossiers } from "@/features/workspace/grounding-dossiers";
 import { AssetStrip, DocAssetTile, workspaceAssets, type WorkspaceAsset } from "@/features/workspace/workspace-assets";
 import { LogoMark } from "@/components/ui/logo-mark";
 
-/**
- * A shelf document, opened.
- *
- * Taking a file into the grounding from its filename and a six-word note is
- * a guess. The dossier reader already knows how to show a document and what
- * was cited from it, so the shelf opens into that rather than into a viewer
- * of its own. Mocked contents for now — the real ones come from the asset
- * store.
- */
-function workspaceDocPreview(asset: WorkspaceAsset, molecule: string): DossierPreviewData {
-  const extension = asset.name.split(".").pop()?.toUpperCase();
-  return {
-    name: asset.name,
-    molecule,
-    market: `Workspace · ${asset.origin}`,
-    sections: 6,
-    claims: 24,
-    indication: asset.note,
-    documents: [{ name: asset.name, citations: 24, type: extension ? `${extension} document` : undefined }],
-    keyClaims: [
-      {
-        category: "Efficacy & Primary Endpoints",
-        claim: "Primary endpoint met at Week 16, with the responder rate and confidence interval stated as approved.",
-        citation: `${asset.name} · §4.1 Indications`,
-      },
-      {
-        category: "Safety & Tolerability",
-        claim: "Adverse events at or above 2% incidence, reported verbatim from the approved safety wording.",
-        citation: `${asset.name} · §4.8 Undesirable effects`,
-      },
-      {
-        category: "Dosing & Administration",
-        claim: "Once-daily oral administration, with the titration schedule and missed-dose guidance as written.",
-        citation: `${asset.name} · §4.2 Posology`,
-      },
-    ],
-  };
-}
-
 export interface ResearchSourcesSectionProps {
   brandName: string;
   uploadedDocs: UploadedDoc[];
   onSetUploadedDocs: React.Dispatch<React.SetStateAction<UploadedDoc[]>>;
-  onPreviewDossier: (dossier: DossierPreviewData) => void;
+  /** Open the approved dossier itself. The reader lives with the parent. */
+  onPreviewDossier: () => void;
   onContinue: () => void;
   /** Live grounding research, if the plan has just been generated. */
   research?: PlanResearch;
@@ -119,6 +81,11 @@ export function ResearchSourcesContent({
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
   /** Shelf items counted into the grounding. They stay on the shelf. */
   const [considered, setConsidered] = useState<string[]>([]);
+  /* A workspace file opens as a file — the browser's own viewer for a PDF,
+     the picture for an image. It is the user's own document, not a dossier,
+     and dressing it as one said it had sections and approved claims that
+     nobody had written. */
+  const [previewFile, setPreviewFile] = useState<WorkspaceAsset | null>(null);
   /**
    * Verified dossiers taken OUT of the grounding.
    *
@@ -257,7 +224,7 @@ export function ResearchSourcesContent({
               <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => onPreviewDossier(dossier)}
+                  onClick={onPreviewDossier}
                   className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 py-1.5 text-label font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand-deep"
                 >
                   <Eye className="size-3.5" />
@@ -383,7 +350,7 @@ export function ResearchSourcesContent({
                             : [...prev, asset.id]
                         )
                       }
-                      onPreview={() => onPreviewDossier(workspaceDocPreview(asset, molecule))}
+                      onPreview={() => setPreviewFile(asset)}
                     />
                   ))}
                 </>
@@ -504,6 +471,18 @@ export function ResearchSourcesContent({
           </div>
 
       </div>
+
+      {previewFile && (
+        <AttachmentPreviewModal
+          file={{
+            id: previewFile.id,
+            name: previewFile.name,
+            kind: previewFile.kind === "doc" ? "doc" : previewFile.kind,
+            previewUrl: previewFile.previewUrl,
+          }}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
 
       {pending.length > 0 && (
         <FileNoteDialog
