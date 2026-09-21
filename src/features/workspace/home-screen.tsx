@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Video, Image as ImageIcon, Globe, ArrowRight, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { Video, Image as ImageIcon, Globe, ArrowRight, ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { PERSONA } from "@/features/workspace/mock-personas";
@@ -114,7 +114,7 @@ const RECENT_PROJECTS: RecentProject[] = [
  *  further down in the showcase lane, so clicking it opens the same player. */
 const HERO_SAMPLE: ShowcaseItem = {
   title: "Dr. Anita Rao on first-line use",
-  subtitle: "HCP · UK · MHRA",
+  subtitle: "HCP · US · FDA",
   meta: "1:00",
   aspect: "16/9",
   gradient: "linear-gradient(160deg,#0a1f18,#13382c 48%,#1d5442)",
@@ -141,7 +141,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
       },
       {
         title: "Dosing & titration explainer",
-        subtitle: "Endocrinology · EU · EMA",
+        subtitle: "Endocrinology · US · FDA",
         meta: "0:30",
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#2a1b0f,#5c3515 48%,#9e6130)",
@@ -151,7 +151,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
       },
       {
         title: "Dr. Anita Rao on first-line use",
-        subtitle: "HCP · UK · MHRA",
+        subtitle: "HCP · US · FDA",
         meta: "1:00",
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#0a1f18,#13382c 48%,#1d5442)",
@@ -187,7 +187,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
       },
       {
         title: "Onkavia patient landing page",
-        subtitle: "EMA Anchor · NSCLC",
+        subtitle: "FDA Anchor · NSCLC",
         meta: "3 pages",
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#3a1e4d,#63307a 48%,#a06bc4)",
@@ -196,7 +196,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
       },
       {
         title: "Nirvexa congress microsite",
-        subtitle: "MHRA Anchor · Immunology",
+        subtitle: "FDA Anchor · Immunology",
         meta: "4 pages",
         aspect: "16/9",
         gradient: "linear-gradient(160deg,#12332c,#1d5a4a 48%,#3f9c7f)",
@@ -231,7 +231,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
       },
       {
         title: "Onkavia congress panel",
-        subtitle: "EMA · 2×1m booth stand",
+        subtitle: "FDA · 2×1m booth stand",
         meta: "2x1m",
         aspect: "16/9",
         gradient: "linear-gradient(150deg,#33193f,#5b2c70 50%,#9a63bc)",
@@ -1255,41 +1255,45 @@ export function HomeScreen() {
       {playingVideoItem && (
         <Portal>
           <div
-            className="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-md animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setPlayingVideoItem(null)}
             role="dialog"
             aria-modal="true"
           >
+            {/* Light, like every other dialog here. The showcase player was
+                the one surface wearing a dark chrome of its own — a film has
+                to letterbox against black, but nothing around it does. */}
             <div
               className={cn(
-                "w-full overflow-hidden rounded-card border border-white/20 bg-[#0d1017] shadow-2xl text-white select-none transition-all flex flex-col max-h-[90vh]",
+                "flex w-full max-h-[90vh] select-none flex-col overflow-hidden rounded-card border border-hair bg-card shadow-float transition-all",
                 playingVideoItem.aspect === "9/16" ? "max-w-[380px]" : "max-w-[820px]"
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3.5 bg-black/40 shrink-0">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="rounded-glyph bg-brand px-2 py-0.5 text-caption font-extrabold uppercase text-white shrink-0">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-hair bg-canvas px-5 py-3.5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="shrink-0 rounded-glyph bg-tint px-2 py-0.5 text-caption font-extrabold uppercase tracking-[.04em] text-brand-deep">
                     {playingVideoItem.tag}
                   </span>
-                  <span className="text-body-lg font-bold text-white truncate">
+                  <span className="truncate text-body-lg font-bold text-ink">
                     {playingVideoItem.title}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setPlayingVideoItem(null)}
-                  className="grid size-8 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer shrink-0 ml-2"
+                  aria-label="Close preview"
+                  className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
                 >
-                  ✕
+                  <X className="size-4" />
                 </button>
               </div>
 
-              {/* Video Player (Aspect-Aware Sizing) */}
+              {/* The one part that stays dark: a clip letterboxes against
+                  black or it looks like a rendering fault. */}
               <div
                 className={cn(
-                  "relative bg-black flex items-center justify-center overflow-hidden min-h-0 flex-1",
+                  "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-[#0b0d12]",
                   playingVideoItem.aspect === "9/16"
                     ? "aspect-[9/16] max-h-[62vh]"
                     : "aspect-video max-h-[65vh]"
@@ -1304,29 +1308,16 @@ export function HomeScreen() {
                     className="size-full object-contain"
                   />
                 ) : (
-                  <div className="text-center p-8 space-y-2">
+                  <div className="space-y-2 p-8 text-center">
                     <p className="text-body-lg font-semibold text-white/70">Sample Showreel Preview</p>
                     <p className="text-body text-white/40">Grounded in verified regulatory trial anchors.</p>
                   </div>
                 )}
               </div>
 
-              {/* Footer Controls / Details */}
-              <div className="flex items-center justify-between px-5 py-3.5 bg-white/[0.03] border-t border-white/10 text-body shrink-0">
-                <div className="min-w-0 pr-3">
-                  <p className="font-semibold text-white/90 truncate">{playingVideoItem.subtitle}</p>
-                  <p className="text-label text-white/50">{playingVideoItem.meta} · Verified Prescribing Info</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPlayingVideoItem(null);
-                    router.push("/create");
-                  }}
-                  className="rounded-control bg-brand px-4 py-2 text-body font-bold text-white shadow-lg hover:bg-brand-deep transition cursor-pointer shrink-0"
-                >
-                  Create with this style →
-                </button>
+              <div className="shrink-0 border-t border-hair bg-canvas px-5 py-3.5">
+                <p className="truncate text-body font-semibold text-ink-2">{playingVideoItem.subtitle}</p>
+                <p className="text-label text-ink-4">{playingVideoItem.meta} · Verified Prescribing Info</p>
               </div>
             </div>
           </div>
