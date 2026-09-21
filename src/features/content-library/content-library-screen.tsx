@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play } from "lucide-react";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
@@ -71,59 +72,34 @@ export function ContentLibraryScreen() {
           />
         </div>
 
-        <div style={{ display: "flex", border: "1px solid var(--hair-2)", borderRadius: "var(--r)", padding: 3, background: "var(--surface-subtle)", gap: 2 }}>
+        <Segmented>
           {([
             { id: "all" as const, label: "All" },
             { id: "video" as const, label: "Video" },
             { id: "infographic" as const, label: "Doc & image" },
           ]).map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => setKind(opt.id)}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "calc(var(--r) - 3px)",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 12.5,
-                fontWeight: 700,
-                background: kind === opt.id ? "#fff" : "transparent",
-                color: kind === opt.id ? "var(--brand-deep)" : "var(--ink-3)",
-                boxShadow: kind === opt.id ? "var(--sh-1)" : "none",
-              }}
-            >
+            <SegmentedButton key={opt.id} active={kind === opt.id} onClick={() => setKind(opt.id)}>
               {opt.label}
-            </button>
+            </SegmentedButton>
           ))}
-        </div>
+        </Segmented>
 
-        <div style={{ display: "flex", border: "1px solid var(--hair-2)", borderRadius: "var(--r)", padding: 3, background: "var(--surface-subtle)" }}>
+        <Segmented>
           {([
             { id: "grid" as const, Icon: Grid3x3, label: "Grid view" },
             { id: "list" as const, Icon: List, label: "List view" },
           ]).map(({ id, Icon, label }) => (
-            <button
+            <SegmentedButton
               key={id}
+              active={view === id}
               onClick={() => setView(id)}
               aria-label={label}
-              aria-pressed={view === id}
-              style={{
-                display: "grid",
-                placeItems: "center",
-                width: 32,
-                height: 30,
-                borderRadius: "calc(var(--r) - 3px)",
-                border: "none",
-                cursor: "pointer",
-                background: view === id ? "#fff" : "transparent",
-                color: view === id ? "var(--brand-deep)" : "var(--ink-4)",
-                boxShadow: view === id ? "var(--sh-1)" : "none",
-              }}
+              className="w-8 px-0"
             >
               <Icon size={15} />
-            </button>
+            </SegmentedButton>
           ))}
-        </div>
+        </Segmented>
       </div>
 
       <div

@@ -6,6 +6,7 @@ import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus } from "l
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
 import { ClaimCard } from "@/features/product-library/claim-card";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { ClaimStatus, LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
 
 /**
@@ -122,27 +123,13 @@ export function ClaimsLibraryScreen() {
               />
             </div>
 
-            <div style={{ display: "flex", border: "1px solid var(--hair-2)", borderRadius: "var(--r)", padding: 3, background: "var(--surface-subtle)", gap: 2 }}>
+            <Segmented>
               {STATUS_TABS.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setStatus(t.id)}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "calc(var(--r) - 3px)",
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    background: status === t.id ? "#fff" : "transparent",
-                    color: status === t.id ? "var(--brand-deep)" : "var(--ink-3)",
-                    boxShadow: status === t.id ? "var(--sh-1)" : "none",
-                  }}
-                >
+                <SegmentedButton key={t.id} active={status === t.id} onClick={() => setStatus(t.id)}>
                   {t.label}
-                </button>
+                </SegmentedButton>
               ))}
-            </div>
+            </Segmented>
           </div>
 
           {/* Under the controls, not over them. The Product Library settled

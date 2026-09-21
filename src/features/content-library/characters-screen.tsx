@@ -2,13 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { Plus, Search, UserRoundPlus } from "lucide-react";
-import { cn } from "@/lib/cn";
 import { useCharactersStore } from "@/features/content-library/characters-store";
 import {
-  CHARACTER_TYPES,
   characterTypeLabel,
   type Character,
 } from "@/features/content-library/characters-data";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { CharacterTile } from "@/features/content-library/character-tile";
 import { CharacterCreateModal } from "@/features/content-library/character-create-modal";
 import { CharacterEditModal } from "@/features/content-library/character-edit-modal";
@@ -16,7 +15,6 @@ import { CharacterRefineModal } from "@/features/content-library/character-refin
 import { CharacterGalleryModal } from "@/features/content-library/character-gallery-modal";
 
 type Shelf = "active" | "archived";
-type TypeFilter = "all" | (typeof CHARACTER_TYPES)[number];
 
 /**
  * The people this workspace can cast.
@@ -33,7 +31,6 @@ export function CharactersScreen() {
 
   const [shelf, setShelf] = useState<Shelf>("active");
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
 
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Character | null>(null);
@@ -58,7 +55,6 @@ export function CharactersScreen() {
     const q = query.trim().toLowerCase();
     return characters
       .filter((c) => (shelf === "archived" ? c.archived : !c.archived))
-      .filter((c) => typeFilter === "all" || c.type === typeFilter)
       .filter(
         (c) =>
           !q ||
@@ -69,7 +65,7 @@ export function CharactersScreen() {
       /* What this workspace made comes first; the seeded examples fall to the
          back, where they read as reference rather than as your own roster. */
       .sort((a, b) => Number(Boolean(a.example)) - Number(Boolean(b.example)));
-  }, [characters, shelf, typeFilter, query]);
+  }, [characters, shelf, query]);
 
   return (
     <div className="page-enter space-y-6">
@@ -86,55 +82,29 @@ export function CharactersScreen() {
       {/* Active / Archived, then search and filters — the order every other
           shelf here uses. */}
       <div className="flex flex-wrap items-center gap-2.5">
-        <div className="flex gap-0.5 rounded-control border border-hair-2 bg-subtle p-0.5">
-          {([
-            { id: "active" as const, label: "Active", count: counts.active },
-            { id: "archived" as const, label: "Archived", count: counts.archived },
-          ]).map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setShelf(tab.id)}
-              aria-pressed={shelf === tab.id}
-              className={cn(
-                "cursor-pointer rounded-glyph px-3 py-1.5 text-label font-bold transition",
-                shelf === tab.id ? "bg-card text-brand-deep shadow-2xs" : "text-ink-3 hover:text-ink"
-              )}
-            >
-              {tab.label}
-              <span className="ml-1.5 text-caption tabular-nums text-ink-4">{tab.count}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="relative flex min-w-[220px] max-w-[380px] flex-1 items-center">
-          <Search className="absolute left-3.5 size-4 text-ink-4" />
+        {/* Same width and height as every other library's search — a shelf
+            that sizes its own controls reads as a different product. */}
+        <div style={{ position: "relative", flex: 1, minWidth: 220, maxWidth: 420 }}>
+          <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)" }} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search characters by name, type or look…"
-            className="w-full rounded-control border border-hair-2 bg-card py-2.5 pl-10 pr-3 text-body text-ink outline-none transition placeholder:text-ink-4 focus:border-brand focus:ring-2 focus:ring-brand/15"
+            style={{ width: "100%", padding: "10px 13px 10px 36px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)", background: "#fff" }}
           />
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {(["all", ...CHARACTER_TYPES] as TypeFilter[]).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => setTypeFilter(option)}
-              aria-pressed={typeFilter === option}
-              className={cn(
-                "cursor-pointer rounded-chip border px-2.5 py-1 text-label font-bold transition",
-                typeFilter === option
-                  ? "border-brand bg-tint text-brand-deep"
-                  : "border-hair-2 bg-card text-ink-3 hover:border-hair-3 hover:text-ink"
-              )}
-            >
-              {option === "all" ? "All" : option}
-            </button>
+        <Segmented>
+          {([
+            { id: "active" as const, label: "Active", count: counts.active },
+            { id: "archived" as const, label: "Archived", count: counts.archived },
+          ]).map((tab) => (
+            <SegmentedButton key={tab.id} active={shelf === tab.id} onClick={() => setShelf(tab.id)}>
+              {tab.label}
+              <span className="text-caption tabular-nums text-ink-4">{tab.count}</span>
+            </SegmentedButton>
           ))}
-        </div>
+        </Segmented>
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">

@@ -6,6 +6,7 @@ import { Search, Grid3x3, List, Plus, ShieldCheck, Eye, Star, Package, MoreHoriz
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 
 export function ProductLibraryScreen() {
   const router = useRouter();
@@ -78,30 +79,14 @@ export function ProductLibraryScreen() {
             style={{ width: "100%", padding: "10px 13px 10px 36px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)", background: "#fff" }}
           />
         </div>
-        <div style={{ display: "flex", border: "1px solid var(--hair-2)", borderRadius: "var(--r)", padding: 3, background: "var(--surface-subtle)" }}>
+        <Segmented>
           {(["grid", "list"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className="transition-colors"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "7px 13px",
-                borderRadius: 10,
-                fontSize: 12.5,
-                fontWeight: 700,
-                color: view === v ? "var(--ink)" : "var(--ink-4)",
-                background: view === v ? "#fff" : "transparent",
-                boxShadow: view === v ? "var(--sh-1)" : "none",
-              }}
-            >
+            <SegmentedButton key={v} active={view === v} onClick={() => setView(v)}>
               {v === "grid" ? <Grid3x3 size={13} /> : <List size={13} />}
               {v === "grid" ? "Grid" : "List"}
-            </button>
+            </SegmentedButton>
           ))}
-        </div>
+        </Segmented>
       </div>
 
       {/* Stat cards */}
