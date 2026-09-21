@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play } from "lucide-react";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { DataList } from "@/components/patterns/data-list";
+import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
@@ -28,11 +29,15 @@ const STATUS_STYLE: Record<LibraryAsset["status"], { bg: string; fg: string; lin
 };
 
 type KindFilter = "all" | "video" | "infographic";
+type StageFilter = "all" | "draft" | "published" | "archived";
 
 export function ContentLibraryScreen() {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [kind, setKind] = useState<KindFilter>("all");
+  /* Where a thing is in its life, which the review status does not answer:
+     a draft can be in MLR, and an archived asset was published once. */
+  const [stage, setStage] = useState<StageFilter>("all");
 
   const openReview = useOpenPublishedAsset();
 
@@ -40,6 +45,7 @@ export function ContentLibraryScreen() {
     const q = query.trim().toLowerCase();
     return LIBRARY_ASSETS.filter((a) => {
       if (kind !== "all" && a.kind !== kind) return false;
+      if (stage !== "all" && a.stage !== stage) return false;
       if (!q) return true;
       return (
         a.title.toLowerCase().includes(q) ||
@@ -47,7 +53,7 @@ export function ContentLibraryScreen() {
         a.audience.toLowerCase().includes(q)
       );
     });
-  }, [query, kind]);
+  }, [query, kind, stage]);
 
   return (
     <div className="page-enter space-y-6">
@@ -87,6 +93,19 @@ export function ContentLibraryScreen() {
 
         <Segmented>
           {([
+            { id: "all" as const, label: "All" },
+            { id: "draft" as const, label: "Drafts" },
+            { id: "published" as const, label: "Published" },
+            { id: "archived" as const, label: "Archived" },
+          ]).map((opt) => (
+            <SegmentedButton key={opt.id} active={stage === opt.id} onClick={() => setStage(opt.id)}>
+              {opt.label}
+            </SegmentedButton>
+          ))}
+        </Segmented>
+
+        <Segmented>
+          {([
             { id: "grid" as const, Icon: Grid3x3, label: "Grid view" },
             { id: "list" as const, Icon: List, label: "List view" },
           ]).map(({ id, Icon, label }) => (
@@ -109,174 +128,73 @@ export function ContentLibraryScreen() {
           const status = STATUS_STYLE[a.status];
           const KindIcon = a.kind === "video" ? Film : ImageIcon;
           return (
-            <div
+            <LibraryTile
               key={a.id}
+              delayMs={80 + i * 45}
               onClick={() => openReview(a)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") openReview(a);
-              }}
-              className="group rise-in-stagger hover:-translate-y-1 transition-all duration-200"
-              style={{
-                background: "#fff",
-                borderRadius: "var(--r-xl)",
-                border: "1px solid var(--hair)",
-                boxShadow: "var(--sh-1)",
-                overflow: "hidden",
-                cursor: "pointer",
-                animationDelay: `${80 + i * 45}ms`,
-              }}
-            >
-              {/* The asset itself, not a coloured rectangle standing in for it.
-                  A film plays its own reel and a deck shows the figure it leads
-                  on — which is the only thing that tells two of these apart at
-                  a glance. */}
-              <div
-                className="relative overflow-hidden"
-                style={{
-                  background: a.gradient,
-                  height: 168,
-                  width: "100%",
-                  flexShrink: 0,
-                }}
-              >
-                {a.videoSrc && <AssetVideo src={a.videoSrc} />}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute rounded-full"
-                  style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.22),transparent 70%)" }}
-                />
-
-                {/* A deck's own composition, at card size. */}
-                {!a.videoSrc && a.metric && (
-                  <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col justify-end p-3.5">
-                    <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: ".06em", textTransform: "uppercase", color: "rgba(255,255,255,.62)" }}>
-                      {a.badge}
-                    </span>
-                    <span style={{ fontSize: 21, fontWeight: 900, letterSpacing: "-.6px", lineHeight: 1.1, color: "#fff", marginTop: 2 }}>
-                      {a.metric}
-                    </span>
-                    <span style={{ fontSize: 11, color: "rgba(255,255,255,.66)", marginTop: 3 }}>
-                      {a.metricLabel}
-                    </span>
-                  </div>
-                )}
-
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 10,
-                    left: 12,
-                    zIndex: 2,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: ".04em",
-                    color: "rgba(255,255,255,.9)",
-                    background: "rgba(0,0,0,.4)",
-                    backdropFilter: "blur(6px)",
-                    padding: "3px 8px",
-                    borderRadius: 99,
-                  }}
-                >
+              media={
+                /* The asset itself, not a coloured rectangle standing in for
+                   it. A film plays its own reel and a deck shows the figure it
+                   leads on — the only thing that tells two of these apart at a
+                   glance. */
+                <div className="relative h-[168px] w-full overflow-hidden" style={{ background: a.gradient }}>
+                  {a.videoSrc && <AssetVideo src={a.videoSrc} />}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute rounded-full"
+                    style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.22),transparent 70%)" }}
+                  />
+                  {!a.videoSrc && a.metric && (
+                    <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col justify-end p-3.5">
+                      <span className="text-micro font-extrabold uppercase tracking-[.06em] text-white/60">
+                        {a.badge}
+                      </span>
+                      <span className="mt-0.5 text-subhead font-black leading-tight tracking-tight text-white">
+                        {a.metric}
+                      </span>
+                      <span className="mt-0.5 text-caption text-white/65">{a.metricLabel}</span>
+                    </div>
+                  )}
+                </div>
+              }
+              mediaTopLeft={
+                <span className="inline-flex items-center gap-1.5 rounded-chip bg-black/40 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90 backdrop-blur-sm">
                   <KindIcon size={10} />
                   {a.kind === "video" ? "Video" : "Doc / image"}
                 </span>
-
-                <span
-                  style={{
-                    position: "absolute",
-                    top: 10,
-                    right: 12,
-                    zIndex: 2,
-                    fontSize: 10,
-                    fontWeight: 800,
-                    color: "var(--ink)",
-                    background: "rgba(255,255,255,.9)",
-                    padding: "3px 8px",
-                    borderRadius: 99,
-                    display: "block",
-                  }}
-                >
+              }
+              mediaTopRight={
+                <span className="rounded-chip bg-white/90 px-2 py-0.5 text-micro font-extrabold text-ink">
                   {a.spec}
                 </span>
-
-                {/* Preview is the whole point of the card, so the affordance
-                    sits on the frame rather than in a menu. */}
-                <span
-                  className="pointer-events-none absolute inset-0 z-[3] grid place-items-center opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                  style={{ background: "rgba(0,0,0,.34)" }}
-                >
+              }
+              mediaHover={
+                a.videoSrc ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-chip bg-brand px-3 py-1.5 text-label font-bold text-white shadow-md">
+                    <Play size={13} fill="currentColor" /> Preview
+                  </span>
+                ) : undefined
+              }
+              title={a.title}
+              subtitle={`${a.brand} · ${a.audience}`}
+              chips={
+                <>
                   <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      padding: "8px 14px",
-                      borderRadius: 99,
-                      background: "#fff",
-                      color: "var(--brand-deep)",
-                      fontWeight: 800,
-                      fontSize: 12.5,
-                      boxShadow: "0 8px 22px -10px rgba(0,0,0,.6)",
-                    }}
+                    className="rounded-chip px-2 py-0.5 text-caption font-bold"
+                    style={{ background: status.bg, color: status.fg, border: `1px solid ${status.line}` }}
                   >
-                    <Play size={13} fill="currentColor" />
-                    Preview
-                  </span>
-                </span>
-              </div>
-
-              <div
-                style={{
-                  padding: "13px 16px 15px",
-                  display: "block",
-                  gap: 16,
-                  minWidth: 0,
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <b style={{ display: "block", fontSize: 15, fontWeight: 800, color: "var(--ink)", letterSpacing: "-.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {a.title}
-                  </b>
-                  <span style={{ fontSize: 12.5, color: "var(--ink-3)" }}>
-                    {a.brand} · {a.audience}
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "10px 0" }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: status.bg, color: status.fg, border: `1px solid ${status.line}` }}>
                     {a.status}
                   </span>
-                  {/* Comments only. A view count is a vanity number on a
-                      shelf of your own work — it changes nothing you would do
-                      with the asset, where an unanswered comment does. */}
                   {a.comments > 0 && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--brand)", fontWeight: 700, paddingLeft: 2 }}>
+                    <span className="inline-flex items-center gap-1 text-caption font-bold text-brand">
                       <MessageSquare size={12} /> {a.comments}
                     </span>
                   )}
-                </div>
-
-                <div style={{ height: 1, background: "var(--hair)", margin: "10px 0" }} />
-
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, fontSize: 12, color: "var(--ink-4)", minWidth: 0 }}>
-                  <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {a.updated}
-                  </span>
-                  <span
-                    className="group-hover:gap-2"
-                    style={{ color: "var(--brand)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4, transition: "gap .2s var(--e)", whiteSpace: "nowrap", flexShrink: 0 }}
-                  >
-                    Open review →
-                  </span>
-                </div>
-              </div>
-            </div>
+                </>
+              }
+              footerLeft={a.updated}
+              footerRight={<TileOpen label="Open review" />}
+            />
           );
         })}
       </div>

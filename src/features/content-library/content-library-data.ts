@@ -20,6 +20,11 @@ export interface LibraryAsset {
   /** "16:9 · 50 sec" for video, "A4 · 2 pages" for a creative. */
   spec: string;
   status: "Published" | "In MLR review" | "Approved";
+  /**
+   * Where it is in its life, which is a different question from its review
+   * status: a draft can be in MLR, and an archived asset was published once.
+   */
+  stage: "draft" | "published" | "archived";
   updated: string;
   views: number;
   comments: number;
@@ -43,7 +48,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     audience: "HCP · Dermatology",
     spec: "16:9 · 50 sec",
     status: "Published",
-    updated: "Updated 2 days ago",
+    stage: "published",
+    updated: "Sep 19, 2026",
     views: 412,
     comments: 3,
     gradient: "linear-gradient(150deg,#0f2d22,#14532d 55%,#1f7a4d)",
@@ -58,7 +64,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     audience: "HCP · Dermatology",
     spec: "Landscape · 1 page",
     status: "Published",
-    updated: "Updated 3 days ago",
+    stage: "published",
+    updated: "Sep 18, 2026",
     views: 288,
     comments: 1,
     gradient: "linear-gradient(150deg,#111827,#1f2937 55%,#334155)",
@@ -75,7 +82,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     audience: "Patients",
     spec: "16:9 · 45 sec",
     status: "In MLR review",
-    updated: "Updated 5 hours ago",
+    stage: "draft",
+    updated: "Sep 21, 2026",
     views: 96,
     comments: 5,
     gradient: "linear-gradient(150deg,#3b1d5e,#5b21b6 55%,#7c3aed)",
@@ -90,7 +98,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     audience: "HCP · Oncology",
     spec: "9:16 · 40 sec",
     status: "Approved",
-    updated: "Updated last week",
+    stage: "published",
+    updated: "Sep 15, 2026",
     views: 173,
     comments: 0,
     gradient: "linear-gradient(150deg,#0c2740,#0e4f6e 55%,#1d7fa8)",
@@ -105,7 +114,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     audience: "HCP · Oncology",
     spec: "A4 print · 1 page",
     status: "Published",
-    updated: "Updated last week",
+    stage: "published",
+    updated: "Sep 15, 2026",
     views: 134,
     comments: 2,
     gradient: "linear-gradient(150deg,#3a1414,#7f1d1d 55%,#b91c1c)",
@@ -122,7 +132,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     audience: "Field force",
     spec: "16:9 · 3 pages",
     status: "In MLR review",
-    updated: "Updated 2 weeks ago",
+    stage: "draft",
+    updated: "Sep 8, 2026",
     views: 61,
     comments: 4,
     gradient: "linear-gradient(150deg,#12303a,#155e75 55%,#0891b2)",
@@ -139,7 +150,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     audience: "HCP · Immunology",
     spec: "9:16 · 30 sec",
     status: "Published",
-    updated: "Updated 3 weeks ago",
+    stage: "archived",
+    updated: "Sep 1, 2026",
     views: 502,
     comments: 0,
     gradient: "linear-gradient(150deg,#1c1917,#44403c 55%,#78716c)",
@@ -154,7 +166,8 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     audience: "Patients",
     spec: "3:4 tablet · 1 page",
     status: "Approved",
-    updated: "Updated last month",
+    stage: "archived",
+    updated: "Aug 24, 2026",
     views: 219,
     comments: 1,
     gradient: "linear-gradient(150deg,#422006,#854d0e 55%,#ca8a04)",
