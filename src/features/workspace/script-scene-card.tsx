@@ -63,7 +63,17 @@ function sceneElements(scene: Scene) {
  */
 /** Shared with the content plan: the same inline badge, so a citation behaves
  *  identically whether it sits in a narration line or a page block. */
-export function CitationPill({ citations, onDetails }: { citations: SceneCitation[]; onDetails?: (claimId: string) => void }) {
+export function CitationPill({
+  citations,
+  onDetails,
+  detailsLabel = "Details",
+}: {
+  citations: SceneCitation[];
+  onDetails?: (claimId: string) => void;
+  /** What the jump is called where it lands. In a dossier it opens the
+   *  section's whole claims rail, which "Details" does not describe. */
+  detailsLabel?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [coords, setCoords] = useState<{ left: number; top: number } | null>(null);
@@ -182,7 +192,7 @@ export function CitationPill({ citations, onDetails }: { citations: SceneCitatio
                 onClick={() => { setOpen(false); onDetails(current.claimId!); }}
                 className="inline-flex shrink-0 items-center gap-1 rounded-glyph px-1.5 py-0.5 text-caption font-bold text-brand transition-colors hover:bg-tint cursor-pointer"
               >
-                <span>Details</span>
+                <span>{detailsLabel}</span>
                 <ChevronRight className="size-3" />
               </button>
             )}

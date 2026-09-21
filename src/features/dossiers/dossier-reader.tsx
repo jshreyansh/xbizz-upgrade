@@ -566,7 +566,7 @@ export function DossierReader({
                     {sec.content.split("\n\n").map((para, i) => (
                       <p key={i} style={{ marginBottom: 18 }}>
                         {para}{" "}
-                        <CitationPill citations={citationFor(i)} onDetails={openClaimInRail} />
+                        <CitationPill citations={citationFor(i)} onDetails={openClaimInRail} detailsLabel="All claims" />
                       </p>
                     ))}
 
@@ -592,7 +592,7 @@ export function DossierReader({
                           {sub.content.split("\n\n").map((para, j) => (
                             <p key={j} style={{ marginBottom: 18 }}>
                               {para}{" "}
-                              <CitationPill citations={citationFor(offset + j)} onDetails={openClaimInRail} />
+                              <CitationPill citations={citationFor(offset + j)} onDetails={openClaimInRail} detailsLabel="All claims" />
                             </p>
                           ))}
                         </section>
