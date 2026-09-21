@@ -63,7 +63,7 @@ function ExampleFrame({
           src={example.videoSrc}
           loop
           muted
-          autoPlay
+          autoPlay={controls}
           controls={controls}
           playsInline
           preload="auto"
@@ -282,21 +282,28 @@ export function StartingPointCard({
   badgeIcon?: React.ReactNode;
 }) {
   const [index, setIndex] = useState(0);
+  const [hovered, setHovered] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const current = examples[index] ?? examples[0];
   const many = examples.length > 1;
 
-  /* A tile shows what it is without being asked. Cycling used to wait for a
-     pointer, which meant a screen of tiles showed one example each and the
-     second and third were only found by hovering every one of them. Paused
-     while the preview is open, so the dialog is not arguing with the tile
-     behind it. */
+  /* Cycling belongs to the tile you are pointing at. Six tiles playing and
+     rotating on their own is six things moving while you read the seventh. */
   useEffect(() => {
-    if (!many || previewing) return;
+    if (!hovered || !many || previewing) return;
     const t = setInterval(() => setIndex((p) => (p + 1) % examples.length), ROTATE_MS);
     return () => clearInterval(t);
-  }, [many, previewing, examples.length]);
+  }, [hovered, many, previewing, examples.length]);
+
+  /* A clip runs while pointed at and holds a painted frame otherwise, so a
+     screen of tiles is one decoder rather than six. */
+  useEffect(() => {
+    const node = videoRef.current;
+    if (!node) return;
+    if (hovered && !previewing) void node.play().catch(() => {});
+    else node.pause();
+  }, [hovered, previewing, index]);
 
   const step = (delta: number) =>
     setIndex((p) => (p + delta + examples.length) % examples.length);
@@ -306,6 +313,8 @@ export function StartingPointCard({
     <button
       type="button"
       onClick={onSelect}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="rise-in-stagger group overflow-hidden rounded-card border border-hair bg-card text-left shadow-soft transition-all duration-200 hover:-translate-y-1"
       style={{ animationDelay: `${delayMs}ms` }}
     >
@@ -317,18 +326,17 @@ export function StartingPointCard({
 
         {/* Looking is not choosing. The tile starts a project, so the one
             thing you might want first — a proper look — gets a control of
-            its own rather than being the same click. */}
+            its own. Bottom right, because bottom centre is where the tile
+            already says how many examples it holds. */}
         <span
           role="button"
           tabIndex={-1}
           aria-label={`Preview ${title}`}
           onClick={(e) => { e.stopPropagation(); setPreviewing(true); }}
-          className="absolute inset-x-0 bottom-0 z-20 flex translate-y-2 items-center justify-center gap-1.5 bg-gradient-to-t from-black/75 to-transparent px-3 pb-3 pt-8 text-label font-bold text-white opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
+          className="absolute bottom-2.5 right-2.5 z-20 inline-flex cursor-pointer items-center gap-1.5 rounded-chip bg-card px-2.5 py-1.5 text-label font-bold text-ink shadow-soft opacity-0 transition-all duration-200 hover:bg-tint hover:text-brand-deep group-hover:opacity-100"
         >
-          <span className="inline-flex cursor-pointer items-center gap-1.5 rounded-chip bg-card px-3 py-1.5 text-ink shadow-soft transition hover:bg-tint hover:text-brand-deep">
-            <Eye className="size-3.5" />
-            Preview
-          </span>
+          <Eye className="size-3.5" />
+          Preview
         </span>
 
         {/* Walk the examples yourself. Only on hover — at rest a tile is a
@@ -353,7 +361,7 @@ export function StartingPointCard({
             >
               <ChevronRight className="size-4" />
             </span>
-            <div className="pointer-events-none absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1 transition-opacity group-hover:opacity-0">
+            <div className="pointer-events-none absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1 opacity-0 transition-opacity group-hover:opacity-100">
               {examples.map((ex, i) => (
                 <span
                   key={ex.id}
