@@ -75,36 +75,63 @@ const SECTION_TEMPLATES: Record<DossierTypeName, string[]> = {
   ],
 };
 
+/**
+ * A claim as a reviewer would actually see it written.
+ *
+ * These were one short sentence each, which is not what clears MLR: an
+ * approved statement carries the population it applies to, the evidence
+ * behind it, and the boundary past which it stops being true. Written short,
+ * the whole library read as slogans — and the detail page, whose job is to
+ * show the statement in full, had nothing to show.
+ */
 const CLAIM_TEMPLATES: Record<string, ((name: string, generic: string) => string)[]> = {
   Regulatory: [
-    (n, g) => `${n} (${g}) is approved for the indication and dosing described in the current label.`,
-    (n) => `${n}'s labeling has been reviewed and cleared for the promotional claims used in this cycle.`,
-    (n, g) => `No off-label claims appear in any ${n} (${g}) asset currently in market.`,
+    (n, g) =>
+      `${n} (${g}) is approved for the indication and dosing described in the current Prescribing Information, and may be promoted only within that wording. The approved indication covers adults meeting the criteria set out in Section 1; use outside those criteria, including any paediatric population, is outside the label and may not be implied in any material. Where a statement paraphrases the indication rather than quoting it, the paraphrase must not widen the population, soften a contraindication or omit the qualifier the label attaches to it.`,
+    (n) =>
+      `${n}'s labelling has been reviewed and cleared for the promotional claims used in this cycle, against the revision current at the time of sign-off. Every claim in the approved set traces to a numbered section of the label, and the traceability is recorded rather than asserted. A label revision invalidates that clearance: claims must be re-checked against the new text before any asset carrying them goes back into market, and the sign-off record on this brand's attachments names the revision each claim was cleared against.`,
+    (n, g) =>
+      `No off-label claims appear in any ${n} (${g}) asset currently in market, as confirmed by the most recent audit of the live inventory. The audit covers every published asset across video, document and web, and checks each claim in each asset against the approved set rather than sampling. Two assets from the previous cycle were withdrawn rather than corrected, and are held in the archive. The audit is repeated at each label revision and whenever a new market is added.`,
   ],
   Clinical: [
-    (n) => `Pivotal trial data demonstrates statistically significant efficacy for ${n} versus the comparator arm.`,
-    (n) => `Secondary endpoints for ${n} were consistent with the primary readout across all studied subgroups.`,
-    (n) => `Long-term follow-up data for ${n} supports durability of response beyond the initial trial period.`,
+    (n) =>
+      `Pivotal trial data demonstrates statistically significant efficacy for ${n} versus the comparator arm on the pre-specified primary endpoint, with the treatment effect holding on both the relative and absolute scale. The result was obtained in a randomised, double-blind, multi-centre population, and the estimate is not materially sensitive to assumptions about missing data. A relative figure presented without the absolute one overstates the effect and will not clear review; either may be quoted, but not the first alone.`,
+    (n) =>
+      `Secondary endpoints for ${n} were consistent with the primary readout across all studied subgroups, with no component moving against the composite and no subgroup interaction reaching nominal significance. Those endpoints that were hierarchically tested and met significance may be quoted as evidence of effect; those that were exploratory may be described only as supportive. Subgroup figures are supportive in every case and may not be presented as evidence of benefit in a particular population.`,
+    (n) =>
+      `Long-term follow-up data for ${n} supports durability of response beyond the initial trial period, with the separation between arms maintained through the extension phase. Median duration of response had not been reached at the most recent data cut, and the proportion still in response is reported with its confidence interval wherever the figure is used. Follow-up beyond the extension is ongoing, and no statement may be made about the period it covers until that data reads out.`,
   ],
   Safety: [
-    (n) => `${n} has a well-characterized, consistent safety profile across the studied population.`,
-    (n) => `The most common adverse events reported with ${n} were mild to moderate and self-limiting.`,
-    (n) => `Post-marketing surveillance of ${n} has not identified any new safety signals to date.`,
+    (n) =>
+      `${n} has a well-characterised, consistent safety profile across the studied population, with adverse reactions reported at rates and severities set out in Section 6 of the label. Every suspected event in the programme was adjudicated by an independent committee blinded to allocation. The profile is described as consistent rather than favourable: a comparison to another product's tolerability requires a head-to-head study, and none has been conducted.`,
+    (n) =>
+      `The most common adverse events reported with ${n} were mild to moderate and self-limiting, resolving without intervention in the large majority of cases and leading to discontinuation in fewer than one patient in twenty. Each reaction quoted must carry both its rate and the comparator rate, since a figure on its own reads as attributable when the difference between arms is what the data supports. The label's warnings accompany any statement about tolerability.`,
+    (n) =>
+      `Post-marketing surveillance of ${n} has not identified any new safety signals to date, across the exposure accumulated since first approval. Surveillance covers spontaneous reports, the registry and the periodic safety update cycle, and the absence of a signal is a statement about what has been observed rather than a guarantee about what has not. This claim is re-checked at each periodic safety update and is withdrawn automatically if a signal is raised.`,
   ],
   Commercial: [
-    (n) => `${n} offers a differentiated value proposition versus existing standard-of-care options.`,
-    (n) => `Payer feedback positions ${n} favorably on total cost of care versus the current formulary standard.`,
-    (n) => `Field data shows ${n} converting new-to-brand prescriptions faster than the category average.`,
+    (n) =>
+      `${n} offers a differentiated value proposition versus existing standard-of-care options, on the basis of the outcomes demonstrated in its own programme rather than a cross-trial comparison. Differentiation is described in terms of what the evidence supports — the endpoints met, the population studied, the dosing regimen — and not as superiority, which would require a head-to-head study. Any comparative wording must name the comparator and the study it comes from.`,
+    (n) =>
+      `Payer feedback positions ${n} favourably on total cost of care versus the current formulary standard, drawing on the budget-impact model submitted with the dossier and on advisory board input across the major accounts. Model assumptions must accompany any figure quoted from it, and the figure may not be presented as a realised saving. Individual payer decisions vary by contract and no access statement may be generalised from one account to another.`,
+    (n) =>
+      `Field data shows ${n} converting new-to-brand prescriptions faster than the category average over the first two quarters since launch, measured against the syndicated panel. The figure is an observed trend in prescribing behaviour, not a clinical outcome, and it must be labelled as such wherever it appears. It may be used internally and in field material, and may not appear in any asset directed at patients.`,
   ],
   Patient: [
-    (n) => `Patients on ${n} reported meaningful improvement in quality-of-life measures.`,
-    (n) => `Adherence data for ${n} improved after introducing the simplified dosing schedule.`,
-    (n) => `Patient support materials for ${n} were rated clear and reassuring in post-launch surveys.`,
+    (n) =>
+      `Patients on ${n} reported meaningful improvement in quality-of-life measures on the validated instrument used in the programme, with the change exceeding the minimal clinically important difference at the pre-specified timepoint. Patient-reported outcomes were a secondary endpoint and are described as supportive of the primary result rather than as evidence in their own right. The instrument and the timepoint must be named wherever the result is quoted.`,
+    (n) =>
+      `Adherence data for ${n} improved after the simplified dosing schedule was introduced, measured by refill persistence across the observation period. The comparison is before-and-after within the same population rather than against another product, and must be presented that way. Adherence is a behaviour, not an outcome: no inference about efficacy may be drawn from it in any material, including material aimed at prescribers.`,
+    (n) =>
+      `Patient support materials for ${n} were rated clear and reassuring in post-launch surveys, against the readability and comprehension criteria set for patient-facing content. The rating covers the materials, not the medicine, and may not be restated as a statement about the treatment or about patient experience of it. Every patient-facing asset carries the approved safety wording in full, at the size and placement the label requires.`,
   ],
   HCP: [
-    (n, g) => `${g} provides a mechanism of action that supports once-daily dosing convenience for ${n}.`,
-    (n) => `HCPs cited ${n}'s onset of action as a key factor in first-line prescribing decisions.`,
-    (n) => `Prescriber feedback on ${n} highlights ease of counseling patients on expected outcomes.`,
+    (n, g) =>
+      `${g} provides a mechanism of action that supports once-daily dosing convenience for ${n}, with a pharmacokinetic profile that maintains exposure across the interval at the approved dose. Convenience is a description of the regimen the label sets out and not a claim of benefit; it may not be presented as improving outcomes, and the dosing statement must match Section 2 of the label exactly wherever it appears.`,
+    (n) =>
+      `HCPs cited ${n}'s onset of action as a key factor in first-line prescribing decisions, in the qualitative research conducted across the target specialties after launch. This is reported prescriber opinion and must be attributed as such, with the research named. It is not evidence of clinical benefit and may not be used to support a comparative statement about any other product in the class.`,
+    (n) =>
+      `Prescriber feedback on ${n} highlights ease of counselling patients on expected outcomes, particularly on what to expect in the first month and on what the label says about missed doses. The feedback supports the counselling materials in the brand's attachments and is used to shape them. Like all opinion research it is attributed to the study it came from and is never presented alongside efficacy data as though it were part of it.`,
   ],
 };
 
