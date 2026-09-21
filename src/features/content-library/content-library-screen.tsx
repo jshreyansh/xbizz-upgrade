@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play } from "lucide-react";
+import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play, AudioLines } from "lucide-react";
+import { CharactersScreen } from "@/features/content-library/characters-screen";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
@@ -27,7 +28,17 @@ const STATUS_STYLE: Record<LibraryAsset["status"], { bg: string; fg: string; lin
 
 type KindFilter = "all" | "video" | "infographic";
 
+/** The three shelves this library holds. */
+type Shelf = "created" | "characters" | "voices";
+
+const SHELVES: Array<{ id: Shelf; label: string; soon?: boolean }> = [
+  { id: "created", label: "Content created" },
+  { id: "characters", label: "Characters" },
+  { id: "voices", label: "Voices", soon: true },
+];
+
 export function ContentLibraryScreen() {
+  const [shelf, setShelf] = useState<Shelf>("created");
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [kind, setKind] = useState<KindFilter>("all");
@@ -54,11 +65,56 @@ export function ContentLibraryScreen() {
           Content Library
         </h1>
         <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-          Every asset you have published — open one to see exactly what the shared link shows, with
-          the comments your reviewers left on it.
+          Everything your studios draw on — the work you have published, and the people and voices
+          it is cast with.
         </p>
       </div>
 
+      {/* Three shelves, one strip. Sub-tabs rather than three sidebar entries:
+          a character is not a destination of its own, it is one of the things
+          this library holds. */}
+      <div className="flex flex-wrap gap-0.5 rounded-control border border-hair-2 bg-subtle p-0.5">
+        {SHELVES.map((tab) => {
+          const active = shelf === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setShelf(tab.id)}
+              aria-pressed={active}
+              className={`flex cursor-pointer items-center gap-1.5 rounded-glyph px-3.5 py-2 text-body font-bold transition ${
+                active ? "bg-card text-brand-deep shadow-2xs" : "text-ink-3 hover:text-ink"
+              }`}
+            >
+              {tab.label}
+              {tab.soon && (
+                <span className="rounded-chip bg-tint px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide text-brand-deep">
+                  Soon
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {shelf === "characters" ? (
+        <CharactersScreen />
+      ) : shelf === "voices" ? (
+        /* Named, not built. The tab exists so the shape of the library is
+           legible; inventing the flow before it is specified would be worse
+           than an honest placeholder. */
+        <div className="rounded-panel border border-dashed border-hair-2 bg-canvas py-20 text-center">
+          <span className="mx-auto grid size-12 place-items-center rounded-full bg-tint text-brand-deep">
+            <AudioLines size={22} />
+          </span>
+          <p className="mt-3 text-body-lg font-bold text-ink-2">Voices are coming</p>
+          <p className="mx-auto mt-1 max-w-[42ch] text-body text-ink-4">
+            The same idea as characters, for how they sound — one voice, reusable across every
+            asset your studios make.
+          </p>
+        </div>
+      ) : (
+      <>
       {/* Search, kind filter, view toggle */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <div style={{ position: "relative", flex: 1, minWidth: 220, maxWidth: 420 }}>
@@ -325,6 +381,8 @@ export function ContentLibraryScreen() {
         <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--ink-4)", fontSize: 14 }}>
           No assets match &ldquo;{query}&rdquo;.
         </div>
+      )}
+      </>
       )}
     </div>
   );
