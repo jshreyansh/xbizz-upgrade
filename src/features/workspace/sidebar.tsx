@@ -154,6 +154,16 @@ export function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [createFlyoutOpen, setCreateFlyoutOpen] = useState(false);
   const flyoutTimerRef = useRef<NodeJS.Timeout | null>(null);
+  /**
+   * The nav row whose children are showing beside the collapsed rail.
+   *
+   * Studio already did this; Content Library's three shelves simply
+   * disappeared when the rail closed, so the only way to reach Characters
+   * was to open the rail first. Anchored to the row's own top, because
+   * unlike Studio's it is not always in the same place.
+   */
+  const [childFlyout, setChildFlyout] = useState<{ item: NavItem; top: number } | null>(null);
+  const childFlyoutTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const sbw = collapsed ? 80 : 252;
 
@@ -185,6 +195,9 @@ export function Sidebar() {
   const handleMouseEnterCreate = () => {
     if (collapsed) {
       if (flyoutTimerRef.current) clearTimeout(flyoutTimerRef.current);
+      /* One panel beside the rail at a time. */
+      if (childFlyoutTimerRef.current) clearTimeout(childFlyoutTimerRef.current);
+      setChildFlyout(null);
       setCreateFlyoutOpen(true);
     }
   };
@@ -195,6 +208,20 @@ export function Sidebar() {
         setCreateFlyoutOpen(false);
       }, 220);
     }
+  };
+
+  const openChildFlyout = (item: NavItem, anchor: HTMLElement | null) => {
+    if (!collapsed || !item.children?.length || !anchor) return;
+    if (childFlyoutTimerRef.current) clearTimeout(childFlyoutTimerRef.current);
+    if (flyoutTimerRef.current) clearTimeout(flyoutTimerRef.current);
+    setCreateFlyoutOpen(false);
+    const rect = anchor.getBoundingClientRect();
+    setChildFlyout({ item, top: rect.top });
+  };
+
+  const closeChildFlyout = () => {
+    if (childFlyoutTimerRef.current) clearTimeout(childFlyoutTimerRef.current);
+    childFlyoutTimerRef.current = setTimeout(() => setChildFlyout(null), 220);
   };
 
   return (
@@ -350,7 +377,12 @@ export function Sidebar() {
                 const childActive = (href: string) =>
                   href !== "#" && pathname === href;
                 return (
-                  <div key={item.label} className="flex flex-col items-center">
+                  <div
+                    key={item.label}
+                    className="flex flex-col items-center"
+                    onMouseEnter={(e) => openChildFlyout(item, e.currentTarget)}
+                    onMouseLeave={() => { if (item.children?.length) closeChildFlyout(); }}
+                  >
                   <div className="flex w-full justify-center">
                     <button
                       onClick={() => {
@@ -560,6 +592,65 @@ export function Sidebar() {
                     <NavIcon name={tile.icon} />
                   </span>
                   <span className="truncate text-body-lg tracking-tight">{tile.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── The same flyout for a shelf with children ── */}
+      {collapsed && childFlyout && (
+        <div
+          onMouseEnter={() => {
+            if (childFlyoutTimerRef.current) clearTimeout(childFlyoutTimerRef.current);
+          }}
+          onMouseLeave={closeChildFlyout}
+          style={{
+            position: "fixed",
+            left: 92,
+            /* Clamped so a row near the bottom of the rail does not open a
+               panel that runs off the screen. */
+            top: Math.min(childFlyout.top, Math.max(12, window.innerHeight - 64 - childFlyout.item.children!.length * 40)),
+            zIndex: 9999,
+            animation: "spring-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both",
+          }}
+          className="w-[230px] rounded-card border border-hair bg-card p-3.5 shadow-float backdrop-blur-2xl"
+        >
+          <div className="mb-2.5 flex items-center gap-2 border-b border-hair pb-2.5">
+            <span className="grid size-6 place-items-center rounded-chip bg-tint text-brand">
+              <NavIcon name={childFlyout.item.icon} />
+            </span>
+            <span className="text-body-lg font-[800] tracking-tight text-ink">{childFlyout.item.label}</span>
+          </div>
+
+          <div className="space-y-1">
+            {childFlyout.item.children!.map((child) => {
+              const active = child.href !== "#" && pathname === child.href;
+              return (
+                <button
+                  key={child.label}
+                  type="button"
+                  disabled={child.soon}
+                  onClick={() => {
+                    if (child.soon) return;
+                    setChildFlyout(null);
+                    router.push(child.href);
+                  }}
+                  className={`flex w-full items-center gap-2 rounded-control px-2.5 py-2 text-left text-body-lg tracking-tight transition-all duration-150 ${
+                    child.soon
+                      ? "cursor-not-allowed text-ink-4"
+                      : active
+                        ? "cursor-pointer bg-brand font-bold text-white shadow-brand-lift"
+                        : "cursor-pointer font-normal text-ink-2 hover:bg-tint hover:font-bold hover:text-brand-deep"
+                  }`}
+                >
+                  <span className="truncate">{child.label}</span>
+                  {child.soon && (
+                    <span className="ml-auto shrink-0 rounded-chip bg-tint px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide text-brand-deep">
+                      Soon
+                    </span>
+                  )}
                 </button>
               );
             })}
