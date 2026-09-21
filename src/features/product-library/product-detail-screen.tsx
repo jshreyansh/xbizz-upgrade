@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Archive,
@@ -24,13 +24,24 @@ import type {
   ProductImage,
   ProductImageAngle,
   ProductDocument,
+  DocumentFileType,
 } from "@/features/product-library/product-library-types";
-import { IMAGE_ANGLES } from "@/features/product-library/product-library-types";
 import { ProductArtwork, type ArtworkKind } from "@/features/product-library/product-artwork";
 import { originLabel } from "@/features/product-library/asset-origin";
+import { PERSONA } from "@/features/workspace/mock-personas";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 import { DOSSIER_STATUS_STYLE as STATUS_STYLE } from "@/features/product-library/dossier-status";
+
+/** 1.8 MB, 420 KB — the way the seeded attachments already read. */
+function formatSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
+/** Whoever is signed in — anything uploaded here is theirs. */
+const UPLOADER = { name: PERSONA.name, team: "Brand" };
 
 /** Only the lifestyle angle borrows the generic wellness scene — every other
  *  angle is a shot of the product's own type, distinguished by orientation. */
@@ -99,6 +110,20 @@ export function ProductDetailScreen({
   const [openImageMenuId, setOpenImageMenuId] = useState<string | null>(null);
   /** The attachment being read, in the same viewer the studio uses. */
   const [previewDoc, setPreviewDoc] = useState<ProductDocument | null>(null);
+  /**
+   * Files picked but not yet filed.
+   *
+   * A file lands here with nothing said about it, and the same dialog the
+   * studio uses collects the note — and, for a packshot, which presentation
+   * it is of. The library is built out of what people say about what they
+   * upload, so asking afterwards means never asking.
+   */
+  const [pendingImages, setPendingImages] = useState<PendingFile[] | null>(null);
+  const [pendingDocs, setPendingDocs] = useState<PendingFile[] | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
+  /** File sizes, kept from the pick so the row can print one. */
+  const pendingSizes = useRef<Record<string, string>>({});
 
   const activeVariation = useMemo(
     () => variations.find((v) => v.id === activeVariationId) ?? variations[0],
@@ -133,25 +158,74 @@ export function ProductDetailScreen({
   }
 
   function handleUpload() {
-    if (!activeVariation) return;
-    const used = new Set(activeVariation.images.map((img) => img.angle));
-    const nextAngle = IMAGE_ANGLES.find((a) => !used.has(a)) ?? "Front";
-    const id = `${activeVariation.id}-img-${Date.now()}`;
-    updateActiveImages((images) => [
-      ...images,
-      {
-        id,
-        name: `${product.name.toLowerCase()}_${nextAngle.toLowerCase()}_new.png`,
-        comment: "Uploaded here — add a note so the studio knows what it is for.",
-        label: `${nextAngle} shot`,
-        angle: nextAngle,
-        gradient: product.gradient,
-        state: "in progress",
-        addedBy: { name: "Siva Gnanam", team: "Brand" },
+    imageInputRef.current?.click();
+  }
+
+  function pickFiles(event: React.ChangeEvent<HTMLInputElement>, into: "images" | "docs") {
+    const picked = Array.from(event.target.files ?? []);
+    /* Reset first: picking the same file twice in a row fires no change
+       event otherwise, and the second attempt silently does nothing. */
+    event.target.value = "";
+    if (picked.length === 0) return;
+    const files: PendingFile[] = picked.map((file, i) => ({
+      id: `${Date.now()}-${i}`,
+      name: file.name,
+      kind: into === "images" ? "media" : "doc",
+      previewUrl: into === "images" ? URL.createObjectURL(file) : undefined,
+      mediaKind: into === "images" ? "image" : undefined,
+    }));
+    files.forEach((f, i) => { pendingSizes.current[f.id] = formatSize(picked[i].size); });
+    if (into === "images") setPendingImages(files);
+    else setPendingDocs(files);
+  }
+
+  function fileTypeOf(name: string): DocumentFileType {
+    const ext = name.split(".").pop()?.toUpperCase();
+    return ext === "DOCX" || ext === "PPTX" || ext === "XLSX" ? ext : "PDF";
+  }
+
+  function confirmImages(notes: Record<string, string>, picked: Record<string, string>) {
+    const files = pendingImages ?? [];
+    setVariations((prev) =>
+      prev.map((variation) => {
+        const mine = files.filter((f) => picked[f.id] === variation.label);
+        if (mine.length === 0) return variation;
+        const added: ProductImage[] = mine.map((file, i) => {
+          return {
+            id: `${variation.id}-img-${Date.now()}-${i}`,
+            name: file.name,
+            comment: notes[file.id] ?? "",
+            label: file.name,
+            gradient: product.gradient,
+            addedBy: UPLOADER,
+            addedOn: "Just now",
+            updatedOn: "Just now",
+            imageUrl: file.previewUrl,
+          };
+        });
+        return { ...variation, images: [...variation.images, ...added] };
+      })
+    );
+    setImageShelf("active");
+    setPendingImages(null);
+  }
+
+  function confirmDocs(notes: Record<string, string>) {
+    const files = pendingDocs ?? [];
+    setDocuments((prev) => [
+      ...prev,
+      ...files.map((file) => ({
+        id: `${product.id}-doc-${file.id}`,
+        name: file.name,
+        comment: notes[file.id] ?? "",
+        fileType: fileTypeOf(file.name),
+        size: pendingSizes.current[file.id] ?? "—",
         addedOn: "Just now",
-        updatedOn: "Just now",
-      },
+        addedBy: UPLOADER,
+      })),
     ]);
+    setDocShelf("active");
+    setPendingDocs(null);
   }
 
   function setImageArchived(imageId: string, archived: boolean) {
@@ -287,12 +361,15 @@ export function ProductDetailScreen({
                   />
                   <div
                     className="absolute inset-0 p-3 transition-transform duration-300 group-hover:scale-[1.04]"
-                    style={{ transform: ANGLE_TRANSFORM[img.angle] }}
+                    /* The skew stands in for a camera angle on generated
+                       artwork. A real photograph already has one. */
+                    style={{ transform: img.angle && !img.imageUrl ? ANGLE_TRANSFORM[img.angle] : undefined }}
                   >
                     {img.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={img.imageUrl} alt="" className="h-full w-full object-contain drop-shadow-lg" />
                     ) : (
-                      <ProductArtwork kind={artworkFor(img.angle, product.type)} className="h-full w-full" />
+                      <ProductArtwork kind={artworkFor(img.angle ?? "Front", product.type)} className="h-full w-full" />
                     )}
                   </div>
 
@@ -344,7 +421,7 @@ export function ProductDetailScreen({
                     <span className="shrink-0">Updated {img.updatedOn}</span>
                   </div>
                   <span className="mt-1 truncate text-micro text-ink-4">
-                    {img.angle} · {originLabel(img.addedBy)}
+                    {img.angle ? `${img.angle} · ` : ""}{originLabel(img.addedBy)}
                   </span>
                 </div>
               </div>
@@ -459,6 +536,14 @@ export function ProductDetailScreen({
               <h2 className="text-title font-extrabold tracking-tight text-ink">Team Attachments</h2>
               <p className="text-body text-ink-3">Prescribing information, decks, and anything else your team grounded this brand in</p>
             </div>
+            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => docInputRef.current?.click()}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-control border border-hair-2 bg-card px-3 py-1.5 text-body font-bold text-ink-2 transition-colors hover:border-brand hover:bg-tint hover:text-brand-deep"
+            >
+              <Upload size={14} /> Add attachment
+            </button>
             <Segmented>
               <SegmentedButton active={docShelf === "active"} onClick={() => setDocShelf("active")}>
                 Active {documents.length - archivedDocCount}
@@ -467,6 +552,7 @@ export function ProductDetailScreen({
                 Archived {archivedDocCount}
               </SegmentedButton>
             </Segmented>
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             {visibleDocs.map((doc) => (
@@ -476,9 +562,12 @@ export function ProductDetailScreen({
                 </span>
                 <div className="min-w-0 flex-1">
                   <b className="block truncate text-body-lg font-bold text-ink">{doc.name}</b>
+                  {doc.comment && (
+                    <p className="line-clamp-2 text-caption leading-snug text-ink-3">{doc.comment}</p>
+                  )}
                   {/* Added, not updated: an attachment is a record of what
                       was supplied, and who supplied it is half of that. */}
-                  <span className="text-caption text-ink-4">
+                  <span className="mt-0.5 block text-caption text-ink-4">
                     {doc.size} · Added {doc.addedOn} · {originLabel(doc.addedBy)}
                   </span>
                 </div>
@@ -506,10 +595,53 @@ export function ProductDetailScreen({
           </div>
           {visibleDocs.length === 0 && (
             <p className="py-10 text-center text-body-lg text-ink-4">
-              {docShelf === "archived" ? "Nothing archived." : "No attachments yet — upload one above."}
+              {docShelf === "archived" ? "Nothing archived." : "No attachments yet — add one above."}
             </p>
           )}
         </div>
+      )}
+
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        onChange={(e) => pickFiles(e, "images")}
+      />
+      <input
+        ref={docInputRef}
+        type="file"
+        accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+        multiple
+        hidden
+        onChange={(e) => pickFiles(e, "docs")}
+      />
+
+      {/* The studio's own dialog. A file is not filed until somebody has
+          said what it is for, and a packshot is of a presentation rather
+          than of a brand — so both are asked at the moment of upload. */}
+      {pendingImages && (
+        <FileNoteDialog
+          files={pendingImages}
+          title={pendingImages.length === 1 ? "Add this image" : `Add ${pendingImages.length} images`}
+          prompt="Say what the shot is for and which presentation it is of, so anyone picking it later knows."
+          placeholder="e.g. Front-of-pack hero, approved for HCP material"
+          variations={variations.map((v) => v.label)}
+          onCancel={() => setPendingImages(null)}
+          onConfirm={confirmImages}
+        />
+      )}
+
+      {pendingDocs && (
+        <FileNoteDialog
+          files={pendingDocs}
+          title={pendingDocs.length === 1 ? "Add this attachment" : `Add ${pendingDocs.length} attachments`}
+          prompt="Say what the team should use it for. The note sits under the file on the shelf."
+          placeholder="e.g. Signed MLR minutes for the launch pack"
+          onCancel={() => setPendingDocs(null)}
+          onConfirm={confirmDocs}
+        />
       )}
 
       {/* The same viewer the studio opens for a workspace document. There is

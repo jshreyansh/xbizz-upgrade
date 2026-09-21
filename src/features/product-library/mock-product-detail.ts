@@ -127,6 +127,7 @@ export function variationLabelsFor(type: LibraryProduct["type"]): string[] {
 
 const DOCUMENT_TEMPLATES: Array<{
   name: string;
+  comment: string;
   fileType: DocumentFileType;
   size: string;
   addedBy: AssetOrigin;
@@ -136,6 +137,7 @@ const DOCUMENT_TEMPLATES: Array<{
 }> = [
   {
     name: "Prescribing Information",
+    comment: "The current approved label. Every regulatory claim in the dossier traces back to this.",
     fileType: "PDF",
     size: "1.8 MB",
     addedBy: { name: "Maya Kapoor", team: "Medical Affairs" },
@@ -144,6 +146,7 @@ const DOCUMENT_TEMPLATES: Array<{
   },
   {
     name: "Field Training Deck",
+    comment: "What the reps are trained on this cycle. Slides 12-18 are the fair-balance section.",
     fileType: "PPTX",
     size: "6.2 MB",
     addedBy: { name: "Rohan Desai", team: "Field Excellence" },
@@ -152,6 +155,7 @@ const DOCUMENT_TEMPLATES: Array<{
   },
   {
     name: "Batch Release Certificate",
+    comment: "Release paperwork for the batches now in market. Quality reference, not for promotional use.",
     fileType: "PDF",
     size: "420 KB",
     addedBy: { name: "Neha Iyer", team: "Quality" },
@@ -160,6 +164,7 @@ const DOCUMENT_TEMPLATES: Array<{
   },
   {
     name: "MLR Sign-off Record",
+    comment: "Signed MLR minutes for the launch pack. Attach this whenever a claim is queried.",
     fileType: "PDF",
     size: "290 KB",
     addedBy: { name: "Maya Kapoor", team: "Medical Affairs" },
@@ -168,6 +173,7 @@ const DOCUMENT_TEMPLATES: Array<{
   },
   {
     name: "Packaging Artwork Spec",
+    comment: "Print spec for the carton. The pack photography on the Images tab was shot against this.",
     fileType: "DOCX",
     size: "1.1 MB",
     addedBy: { name: "Arjun Pillai", team: "Marketing" },
@@ -176,6 +182,7 @@ const DOCUMENT_TEMPLATES: Array<{
   },
   {
     name: "Launch Deck (2025 cycle)",
+    comment: "Last cycle’s launch deck. Superseded by the current pack, kept for reference.",
     fileType: "PPTX",
     size: "8.4 MB",
     addedBy: { name: "Arjun Pillai", team: "Marketing" },
@@ -349,6 +356,7 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
   const documents: ProductDocument[] = DOCUMENT_TEMPLATES.map((tpl, i) => ({
     id: `${product.id}-doc-${i}`,
     name: `${product.name} — ${tpl.name}`,
+    comment: tpl.comment,
     fileType: tpl.fileType,
     size: tpl.size,
     addedOn: tpl.addedOn,

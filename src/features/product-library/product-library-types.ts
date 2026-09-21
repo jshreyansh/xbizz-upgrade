@@ -80,7 +80,14 @@ export interface ProductImage {
    */
   comment: string;
   label: string;
-  angle: ProductImageAngle;
+  /**
+   * Which of the six standard shots this is.
+   *
+   * Only for the generated packshots, whose artwork is derived from it. A
+   * photograph somebody uploaded is whatever they photographed — naming it
+   * "Front" because Front was the next free slot is a caption nobody wrote.
+   */
+  angle?: ProductImageAngle;
   gradient: string;
   addedBy: AssetOrigin;
   addedOn: string;
@@ -105,6 +112,8 @@ export type DocumentFileType = "PDF" | "DOCX" | "PPTX" | "XLSX";
 export interface ProductDocument {
   id: string;
   name: string;
+  /** What the person who attached it said it was for. */
+  comment: string;
   fileType: DocumentFileType;
   size: string;
   /** When it was attached. An attachment is a record of what was supplied,
