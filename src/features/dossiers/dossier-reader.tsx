@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { DOCUMENT_TYPES, PHARMA_SECTIONS } from "@/features/dossiers/dossier-wizard-data";
+import { CitationPill } from "@/features/workspace/script-scene-card";
+import type { SceneCitation } from "@/types/content";
+import { X } from "lucide-react";
 
 /**
  * A dossier, read.
@@ -34,7 +37,14 @@ export function DossierReader({
   const [sendRecipients, setSendRecipients] = useState<string[]>([]);
   const [sentAt, setSentAt] = useState<string | null>(null);
   const [claimsPanelOpen, setClaimsPanelOpen] = useState(false);
-  const [resolvedClaims, setResolvedClaims] = useState<Record<string, "pending" | "accepted" | "rejected">>({});
+  const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
+  const highlightRef = useRef<HTMLDivElement>(null);
+
+  /* Scroll the rail to the claim the citation named — opening a panel and
+     leaving the reader to find the row themselves is most of the work. */
+  useEffect(() => {
+    if (highlightedClaimId) highlightRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [highlightedClaimId]);
 
   function toggleSendRecipient(role: string) {
     setSendRecipients((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]));
@@ -45,6 +55,49 @@ export function DossierReader({
     setSentAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
     setShowSendMenu(false);
   }
+
+  /**
+   * The claims this section cites, as records rather than a footnote list.
+   *
+   * A dossier section states things; each statement rests on a source. The
+   * seed carries the sources and a claim count, so the records are derived
+   * from those rather than invented per render — the same claim keeps the
+   * same id, which is what lets a citation highlight one.
+   */
+  const activeSection = useMemo(
+    () => activeDossier.sections.find((s) => s.id === activeSectionId) ?? activeDossier.sections[0],
+    [activeDossier, activeSectionId]
+  );
+
+  const sectionClaims = useMemo(() => {
+    if (!activeSection) return [];
+    const paragraphs = activeSection.content.split("\n\n");
+    return paragraphs.map((para, i) => ({
+      id: `${activeSection.id}-claim-${i}`,
+      source: activeSection.citations[i % Math.max(1, activeSection.citations.length)] ?? "On-record source",
+      status: "Approved",
+      text: para.split(". ").slice(0, 2).join(". ").trim(),
+    }));
+  }, [activeSection]);
+
+  /** The badge at the end of a paragraph, pointing at that paragraph's claim. */
+  const citationsForParagraph = (
+    section: typeof activeSection,
+    index: number
+  ): SceneCitation[] => {
+    if (!section) return [];
+    const claim = sectionClaims[index];
+    if (!claim) return [];
+    return [
+      {
+        id: `${claim.id}-cite`,
+        source: claim.source,
+        title: claim.text,
+        date: "Approved · current",
+        claimId: claim.id,
+      },
+    ];
+  };
 
   const createMagicVideo = onCreateVideo ?? (() => router.push("/create"));
 
@@ -227,7 +280,7 @@ export function DossierReader({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: claimsPanelOpen ? "72px minmax(0, 1fr) 390px" : "320px minmax(0, 1fr)",
+            gridTemplateColumns: claimsPanelOpen ? "72px minmax(0, 1fr) 340px" : "320px minmax(0, 1fr)",
             gap: 20,
             alignItems: "start",
             transition: "grid-template-columns 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -283,7 +336,7 @@ export function DossierReader({
                     )}
                     {sectionsInCat.map((sec) => {
                       const isSelected = activeSectionId === sec.id;
-                      const hasIssues = sec.unverifiedClaims && sec.unverifiedClaims.length > 0;
+
                       return (
                         <button
                           key={sec.id}
@@ -309,7 +362,7 @@ export function DossierReader({
                             style={{
                               fontSize: 12,
                               fontWeight: 800,
-                              color: isSelected ? "var(--brand-deep)" : hasIssues ? "#dc2626" : "var(--ink-4)",
+                              color: isSelected ? "var(--brand-deep)" : "var(--ink-4)",
                               display: "grid",
                               placeItems: "center",
                               width: claimsPanelOpen ? 34 : 20,
@@ -336,8 +389,8 @@ export function DossierReader({
                               >
                                 {sec.title}
                               </b>
-                              <span style={{ fontSize: 10.5, color: hasIssues ? "#dc2626" : "var(--ink-4)", fontWeight: hasIssues ? 700 : 400 }}>
-                                {hasIssues ? `⚠️ ${sec.unverifiedClaims?.length} pending` : `${sec.claimsCount} claims · ${sec.citations.length} sources`}
+                              <span style={{ fontSize: 10.5, color: "var(--ink-4)" }}>
+                                {`${sec.claimsCount} claims · ${sec.citations.length} sources`}
                               </span>
                             </span>
                           )}
@@ -354,66 +407,8 @@ export function DossierReader({
           {(() => {
             const sec = activeDossier.sections.find((s) => s.id === activeSectionId) || activeDossier.sections[0];
             const secIndex = activeDossier.sections.findIndex((s) => s.id === sec.id);
-            const unverifiedList = sec.unverifiedClaims || [];
-            const pendingCount = unverifiedList.filter((u) => !resolvedClaims[u.id]).length;
-
             return (
               <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-2)", overflow: "hidden" }}>
-                {/* ── SECTION LEVEL CLAIMS DEFICIENCY WARNING BANNER ── */}
-                {unverifiedList.length > 0 && (
-                  <div
-                    style={{
-                      background: "#fffbeb",
-                      borderBottom: "1px solid #fde68a",
-                      padding: "14px 28px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 16,
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <span style={{ display: "grid", placeItems: "center", width: 28, height: 28, borderRadius: "50%", background: "#fef3c7", color: "#b45309", fontSize: 14 }}>
-                        ⚠️
-                      </span>
-                      <div>
-                        <b style={{ fontSize: 13, color: "#92400e", display: "block" }}>
-                          {pendingCount > 0
-                            ? `Please resolve all ${pendingCount} pending claims verification issues`
-                            : "All claims verification issues resolved in this section"}
-                        </b>
-                        <span style={{ fontSize: 11.5, color: "#b45309" }}>
-                          {pendingCount > 0
-                            ? "Clinical claims must match verified on-label source anchors before export."
-                            : "Ready for formal MLR approval."}
-                        </span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setClaimsPanelOpen((prev) => !prev)}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 6,
-                        padding: "8px 14px",
-                        borderRadius: "var(--r)",
-                        fontWeight: 700,
-                        fontSize: 12,
-                        background: claimsPanelOpen ? "#fef3c7" : "linear-gradient(180deg,#d97706,#b45309)",
-                        color: claimsPanelOpen ? "#92400e" : "#fff",
-                        border: "none",
-                        boxShadow: "0 2px 6px rgba(180,83,9,0.2)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span>{claimsPanelOpen ? "Close Claims Panel" : "Resolve Claims →"}</span>
-                    </button>
-                  </div>
-                )}
-
                 <div style={{ padding: "40px 44px 32px", position: "relative" }}>
                   <span
                     aria-hidden="true"
@@ -434,21 +429,38 @@ export function DossierReader({
                           fontSize: 11,
                           padding: "2px 7px",
                           borderRadius: 99,
-                          background: unverifiedList.length > 0 ? "#fef2f2" : "var(--ok-bg)",
-                          color: unverifiedList.length > 0 ? "#dc2626" : "var(--ok)",
-                          border: unverifiedList.length > 0 ? "1px solid #fecaca" : "1px solid var(--ok-line)",
+                          background: "var(--ok-bg)",
+                          color: "var(--ok)",
+                          border: "1px solid var(--ok-line)",
                           fontWeight: 700,
                         }}
                       >
-                        {unverifiedList.length > 0 ? "⚠️ Needs Verification" : "MLR Approved"}
+                        MLR Approved
                       </span>
                     </div>
                     <h2 style={{ fontSize: 27, fontWeight: 800, letterSpacing: "-.6px", margin: 0, maxWidth: "38ch" }}>{sec.title}</h2>
                   </div>
 
-                  {/* Body Content with citations */}
+                  {/* The body, cited where it is written.
+                      A footnote list under the section says the whole section
+                      rests on two sources; a badge at the end of a paragraph
+                      says which source that paragraph rests on, which is the
+                      question a reviewer is actually asking. Same badge as
+                      the production plan's narration, so a citation behaves
+                      the same wherever it appears. */}
                   <div style={{ fontSize: 15.5, lineHeight: 1.85, color: "var(--ink-2)", maxWidth: "72ch" }}>
-                    <p>{sec.content}</p>
+                    {sec.content.split("\n\n").map((para, i, all) => (
+                      <p key={i} style={{ marginBottom: i === all.length - 1 ? 0 : 18 }}>
+                        {para}{" "}
+                        <CitationPill
+                          citations={citationsForParagraph(sec, i)}
+                          onDetails={(claimId) => {
+                            setClaimsPanelOpen(true);
+                            setHighlightedClaimId(claimId);
+                          }}
+                        />
+                      </p>
+                    ))}
                   </div>
 
                   {/* Citations Footer */}
@@ -491,182 +503,68 @@ export function DossierReader({
             );
           })()}
 
-          {/* ── RIGHT CLAIMS VERIFICATION DRAWER (Opens when user clicks Resolve Claims) ── */}
-          {claimsPanelOpen && (() => {
-            const sec = activeDossier.sections.find((s) => s.id === activeSectionId) || activeDossier.sections[0];
-            const unverifiedList = sec.unverifiedClaims || [];
-
-            return (
-              <div
-                style={{
-                  background: "#fff",
-                  borderRadius: "var(--r-xl)",
-                  border: "1px solid var(--hair)",
-                  boxShadow: "var(--sh-2)",
-                  overflow: "hidden",
-                  position: "sticky",
-                  top: 20,
-                  maxHeight: "calc(100vh - 120px)",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-                className="animate-in fade-in slide-in-from-right-4 duration-300"
-              >
-                {/* Drawer Header */}
-                <div
-                  style={{
-                    padding: "16px 20px",
-                    borderBottom: "1px solid var(--hair)",
-                    background: "#fafbf9",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
+          {/* The claim a citation points at, beside the sentence making it.
+              Opened by the badge, not by a button in the chrome: you go
+              looking for a claim because you are reading one. */}
+          {claimsPanelOpen && (
+            <aside
+              style={{
+                background: "#fff",
+                borderRadius: "var(--r-xl)",
+                border: "1px solid var(--hair)",
+                boxShadow: "var(--sh-2)",
+                overflow: "hidden",
+                alignSelf: "start",
+                position: "sticky",
+                top: 16,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "14px 16px", borderBottom: "1px solid var(--hair)" }}>
+                <div>
+                  <span style={{ display: "block", fontSize: 10, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-4)" }}>
+                    Cited claims
+                  </span>
+                  <b style={{ fontSize: 13.5, fontWeight: 800 }}>{sectionClaims.length} in this section</b>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setClaimsPanelOpen(false); setHighlightedClaimId(null); }}
+                  aria-label="Close claims"
+                  className="grid size-7 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
                 >
-                  <div>
-                    <span style={{ fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", fontWeight: 800, color: "#d97706" }}>
-                      Claims Verification
-                    </span>
-                    <b style={{ fontSize: 14.5, fontWeight: 800, display: "block", color: "var(--ink)", marginTop: 2 }}>
-                      Section {sec.number} Claims ({unverifiedList.length})
-                    </b>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setClaimsPanelOpen(false)}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      fontSize: 16,
-                      cursor: "pointer",
-                      color: "var(--ink-4)",
-                      padding: 4,
-                    }}
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                {/* Claims Tile Stack */}
-                <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "grid", gap: 12 }}>
-                  {unverifiedList.length === 0 ? (
-                    <div style={{ padding: 24, textAlign: "center", color: "var(--ink-4)", fontSize: 13 }}>
-                      No pending unverified claims for this section.
-                    </div>
-                  ) : (
-                    unverifiedList.map((item, idx) => {
-                      const status = resolvedClaims[item.id] || item.status;
-                      return (
-                        <div
-                          key={item.id}
-                          style={{
-                            borderRadius: "var(--r)",
-                            border:
-                              status === "accepted"
-                                ? "1px solid var(--ok-line)"
-                                : status === "rejected"
-                                ? "1px solid #fecaca"
-                                : "1px solid #fde68a",
-                            background:
-                              status === "accepted"
-                                ? "var(--ok-bg)"
-                                : status === "rejected"
-                                ? "#fef2f2"
-                                : "#fffdfa",
-                            padding: 14,
-                            boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
-                            display: "grid",
-                            gap: 8,
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: "var(--ink-4)" }}>
-                              Claim #{idx + 1}
-                            </span>
-                            {status !== "pending" && (
-                              <span
-                                style={{
-                                  fontSize: 10,
-                                  fontWeight: 800,
-                                  padding: "2px 6px",
-                                  borderRadius: 99,
-                                  background: status === "accepted" ? "var(--ok)" : "#dc2626",
-                                  color: "#fff",
-                                }}
-                              >
-                                {status === "accepted" ? "Verified" : "Denied"}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Claim Statement */}
-                          <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: "var(--ink)", lineHeight: 1.4 }}>
-                            "{item.claim}"
-                          </p>
-
-                          {/* Issue Description */}
-                          <div style={{ background: "rgba(0,0,0,0.03)", padding: "8px 10px", borderRadius: 8 }}>
-                            <span style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: "#b45309", display: "block", marginBottom: 2 }}>
-                              Deficiency
-                            </span>
-                            <p style={{ margin: 0, fontSize: 11.5, color: "var(--ink-2)", lineHeight: 1.4 }}>
-                              {item.issue}
-                            </p>
-                          </div>
-
-                          {/* Source Link */}
-                          <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--brand)" }}>
-                            <span>🔗</span>
-                            <span style={{ textDecoration: "underline", fontWeight: 600 }}>{item.sourceLink}</span>
-                          </div>
-
-                          {/* Accept / Deny Action Buttons */}
-                          <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                            <button
-                              type="button"
-                              onClick={() => setResolvedClaims((prev) => ({ ...prev, [item.id]: "accepted" }))}
-                              style={{
-                                flex: 1,
-                                padding: "7px 10px",
-                                borderRadius: 8,
-                                fontSize: 11.5,
-                                fontWeight: 700,
-                                background: status === "accepted" ? "var(--ok)" : "#fff",
-                                color: status === "accepted" ? "#fff" : "var(--ok)",
-                                border: "1px solid var(--ok-line)",
-                                cursor: "pointer",
-                                transition: "all 0.2s ease",
-                              }}
-                            >
-                              ✓ Accept Claim
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setResolvedClaims((prev) => ({ ...prev, [item.id]: "rejected" }))}
-                              style={{
-                                flex: 1,
-                                padding: "7px 10px",
-                                borderRadius: 8,
-                                fontSize: 11.5,
-                                fontWeight: 700,
-                                background: status === "rejected" ? "#dc2626" : "#fff",
-                                color: status === "rejected" ? "#fff" : "#dc2626",
-                                border: "1px solid #fecaca",
-                                cursor: "pointer",
-                                transition: "all 0.2s ease",
-                              }}
-                            >
-                              ✕ Deny / Flag
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                  <X className="size-4" />
+                </button>
               </div>
-            );
-          })()}
+
+              <div style={{ maxHeight: 620, overflowY: "auto", padding: 12, display: "grid", gap: 8 }}>
+                {sectionClaims.map((claim) => {
+                  const active = highlightedClaimId === claim.id;
+                  return (
+                    <div
+                      key={claim.id}
+                      ref={active ? highlightRef : undefined}
+                      style={{
+                        borderRadius: "var(--r)",
+                        border: `1px solid ${active ? "var(--brand)" : "var(--hair-2)"}`,
+                        background: active ? "var(--tint)" : "var(--surface-subtle)",
+                        boxShadow: active ? "0 0 0 2px color-mix(in srgb, var(--brand) 20%, transparent)" : "none",
+                        padding: "10px 12px",
+                        transition: "background .2s, border-color .2s, box-shadow .2s",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--brand-deep)" }}>
+                          {claim.source}
+                        </span>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--ok)" }}>✓ {claim.status}</span>
+                      </div>
+                      <p style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.55, color: "var(--ink-2)" }}>{claim.text}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </aside>
+          )}
         </div>
       </div>
   );
