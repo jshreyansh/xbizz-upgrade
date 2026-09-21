@@ -6,7 +6,7 @@ import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus } from "l
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
 import { CLAIM_STATUS_STYLE } from "@/features/product-library/claim-card";
-import { DataList } from "@/components/patterns/data-list";
+import { TileList } from "@/components/patterns/tile-list";
 import { claimUpdatedOn } from "@/features/claims-library/claim-detail";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { ClaimStatus, LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
@@ -192,60 +192,44 @@ export function ClaimsLibraryScreen() {
           }
         />
       ) : (
-        /* Rows, and only rows. A claim is a sentence, a brand and a way in —
-           a card gave a sentence a picture's worth of room, and a hundred of
-           them could not be read. */
-        <DataList
+        /* Rows that are cards, the way the product page lists its dossiers
+           and its claims. Each row is a thing you open rather than a set of
+           values you read down a column, and a table put the claim — the
+           only part anyone reads — in a cell between two headings. */
+        <TileList
           rows={filtered}
           rowKey={(c) => `${c.product.id}-${c.id}`}
           onRowClick={openClaim}
           emptyLabel="No claims match."
-          columns={[
-            {
-              id: "claim",
-              header: "Claim",
-              minWidth: 380,
-              cell: (c) => <span className="line-clamp-2 text-body leading-snug text-ink-2">{c.text}</span>,
-            },
-            {
-              id: "status",
-              header: "Status",
-              width: 120,
-              cell: (c) => {
-                const tone = CLAIM_STATUS_STYLE[c.status];
-                return (
-                  <span className={`rounded-chip px-2 py-0.5 text-caption font-bold ${tone.bg} ${tone.tone}`}>
-                    {tone.label}
-                  </span>
-                );
-              },
-            },
-            {
-              id: "brand",
-              header: "Brand",
-              width: 150,
-              cell: (c) => (
-                <span className="inline-flex min-w-0 items-center gap-1.5 text-caption font-bold text-ink-2">
-                  <span className="size-1.5 shrink-0 rounded-full" style={{ background: c.product.gradient }} />
-                  <span className="truncate">{c.product.name}</span>
+          renderRow={(c) => {
+            const tone = CLAIM_STATUS_STYLE[c.status];
+            return (
+              <>
+                <span className={`grid size-9 shrink-0 place-items-center rounded-control ${tone.bg} ${tone.tone}`}>
+                  <ListChecks size={16} />
                 </span>
-              ),
-            },
-            {
-              id: "updated",
-              header: "Updated",
-              width: 120,
-              cell: (c) => <span className="truncate text-caption text-ink-4">{claimUpdatedOn(c.id)}</span>,
-            },
-            {
-              id: "open",
-              header: "",
-              width: 120,
-              align: "right",
-              hideHeader: true,
-              cell: () => <span className="text-label font-bold text-brand">View details →</span>,
-            },
-          ]}
+
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2 text-body-lg leading-snug text-ink-2">{c.text}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-caption text-ink-4">
+                    <span className="inline-flex min-w-0 items-center gap-1.5 font-bold text-ink-3">
+                      <span className="size-1.5 shrink-0 rounded-full" style={{ background: c.product.gradient }} />
+                      <span className="truncate">{c.product.name}</span>
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span>Updated {claimUpdatedOn(c.id)}</span>
+                  </div>
+                </div>
+
+                <span className={`shrink-0 rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] ${tone.bg} ${tone.tone}`}>
+                  {tone.label}
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-1 text-body-lg font-bold text-brand transition-all group-hover:gap-1.5 group-hover:text-brand-deep">
+                  View details →
+                </span>
+              </>
+            );
+          }}
         />
       )}
     </div>
