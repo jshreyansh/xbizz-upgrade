@@ -11,6 +11,9 @@ import type {
   DossierEntryStatus,
   DossierSection,
   DossierTypeName,
+  AssetOrigin,
+  AssetVerification,
+  ProductImageAngle,
 } from "@/features/product-library/product-library-types";
 
 /** Named sections per dossier type — seven each so every type's fixed
@@ -123,13 +126,129 @@ export function variationLabelsFor(type: LibraryProduct["type"]): string[] {
   return VARIATION_LABELS[type];
 }
 
-const DOCUMENT_TEMPLATES: Array<{ name: string; category: string; fileType: DocumentFileType; size: string }> = [
-  { name: "Prescribing Information (SmPC)", category: "Regulatory", fileType: "PDF", size: "1.8 MB" },
-  { name: "Field Training Deck", category: "Training", fileType: "PPTX", size: "6.2 MB" },
-  { name: "Batch Release Certificate", category: "Quality", fileType: "PDF", size: "420 KB" },
-  { name: "MLR Sign-off Record", category: "Compliance", fileType: "PDF", size: "290 KB" },
-  { name: "Packaging Artwork Spec", category: "Regulatory", fileType: "DOCX", size: "1.1 MB" },
+const DOCUMENT_TEMPLATES: Array<{
+  name: string;
+  category: string;
+  fileType: DocumentFileType;
+  size: string;
+  addedBy: AssetOrigin;
+  addedOn: string;
+  state: AssetVerification;
+  previewUrl?: string;
+}> = [
+  {
+    name: "Prescribing Information",
+    category: "Regulatory",
+    fileType: "PDF",
+    size: "1.8 MB",
+    addedBy: { name: "SwishX" },
+    addedOn: "Jul 2, 2026",
+    state: "verified",
+    previewUrl: "/documents/sample-approved-label.pdf",
+  },
+  {
+    name: "Field Training Deck",
+    category: "Training",
+    fileType: "PPTX",
+    size: "6.2 MB",
+    addedBy: { name: "Rohan Desai", team: "Field Excellence" },
+    addedOn: "Aug 14, 2026",
+    state: "in progress",
+    previewUrl: "/documents/sample-clinical-study-report.pdf",
+  },
+  {
+    name: "Batch Release Certificate",
+    category: "Quality",
+    fileType: "PDF",
+    size: "420 KB",
+    addedBy: { name: "Neha Iyer", team: "Quality" },
+    addedOn: "Sep 3, 2026",
+    state: "verified",
+    previewUrl: "/documents/sample-clinical-study-report.pdf",
+  },
+  {
+    name: "MLR Sign-off Record",
+    category: "Compliance",
+    fileType: "PDF",
+    size: "290 KB",
+    addedBy: { name: "Maya Kapoor", team: "Medical Affairs" },
+    addedOn: "Sep 9, 2026",
+    state: "verified",
+    previewUrl: "/documents/sample-approved-label.pdf",
+  },
+  {
+    name: "Packaging Artwork Spec",
+    category: "Regulatory",
+    fileType: "DOCX",
+    size: "1.1 MB",
+    addedBy: { name: "Arjun Pillai", team: "Marketing" },
+    addedOn: "Sep 15, 2026",
+    state: "has issues",
+    previewUrl: "/documents/sample-approved-label.pdf",
+  },
 ];
+
+/**
+ * What somebody said about a shot when they uploaded it.
+ *
+ * The studio asks which product and variant an image is for and what it
+ * shows; that answer is what the tile carries under the file name, so the
+ * library reads as things people put there rather than six slots a system
+ * filled in.
+ */
+const IMAGE_SEEDS: Record<
+  ProductImageAngle,
+  { file: string; comment: string; by: AssetOrigin; added: string; updated: string; state: AssetVerification }
+> = {
+  Front: {
+    file: "pack_front_hero.png",
+    comment: "Approved front-of-pack hero. Use this one for anything a prescriber sees.",
+    by: { name: "SwishX" },
+    added: "Jul 2, 2026",
+    updated: "Aug 21, 2026",
+    state: "verified",
+  },
+  Back: {
+    file: "pack_back_panel.png",
+    comment: "Back panel with the full dosage text legible at 100%.",
+    by: { name: "Arjun Pillai", team: "Marketing" },
+    added: "Jul 9, 2026",
+    updated: "Jul 9, 2026",
+    state: "verified",
+  },
+  Side: {
+    file: "pack_side_batch.png",
+    comment: "Side profile. Batch panel is visible — crop it out before any external use.",
+    by: { name: "Arjun Pillai", team: "Marketing" },
+    added: "Jul 9, 2026",
+    updated: "Sep 1, 2026",
+    state: "has issues",
+  },
+  Top: {
+    file: "pack_top_down.png",
+    comment: "Top-down for grid layouts. Shot on the studio white, no shadow pass yet.",
+    by: { name: "Sana Qureshi", team: "Creative" },
+    added: "Aug 4, 2026",
+    updated: "Aug 4, 2026",
+    state: "in progress",
+  },
+  Packaging: {
+    file: "carton_open_flat.png",
+    comment: "Carton with the leaflet in frame — for anything about what is in the box.",
+    by: { name: "Sana Qureshi", team: "Creative" },
+    added: "Aug 18, 2026",
+    updated: "Sep 5, 2026",
+    state: "verified",
+  },
+  Lifestyle: {
+    file: "lifestyle_counter_am.png",
+    comment: "Lifestyle scene, morning light. No hands or faces, so it clears without a release.",
+    by: { name: "Sana Qureshi", team: "Creative" },
+    added: "Aug 18, 2026",
+    updated: "Aug 18, 2026",
+    state: "in progress",
+  },
+};
 
 function statusFor(index: number, verified: number, total: number): DossierEntryStatus {
   if (index < verified) return "verified";
@@ -162,14 +281,32 @@ export function buildDossierSections(entry: ProductDossierEntry): DossierSection
   }));
 }
 
-function buildImages(productId: string, variationId: string, gradient: string, heroImageUrl?: string): ProductImage[] {
-  return IMAGE_ANGLES.map((angle, i) => ({
-    id: `${productId}-${variationId}-img-${i}`,
-    label: `${angle} shot`,
-    angle,
-    gradient,
-    imageUrl: angle === "Front" ? heroImageUrl : undefined,
-  }));
+function buildImages(
+  product: LibraryProduct,
+  variationId: string,
+  variationLabel: string,
+  heroImageUrl?: string
+): ProductImage[] {
+  const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  /* The pack size is part of the file name, because it is the thing that
+     tells two otherwise identical front shots apart. */
+  const size = variationLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return IMAGE_ANGLES.map((angle, i) => {
+    const seed = IMAGE_SEEDS[angle];
+    return {
+      id: `${product.id}-${variationId}-img-${i}`,
+      name: `${slug}_${size}_${seed.file}`,
+      comment: seed.comment,
+      label: `${angle} shot`,
+      angle,
+      gradient: product.gradient,
+      state: seed.state,
+      addedBy: seed.by,
+      addedOn: seed.added,
+      updatedOn: seed.updated,
+      imageUrl: angle === "Front" ? heroImageUrl : undefined,
+    };
+  });
 }
 
 /** Derives a full ProductDetail (variations, 6 dossier types, claims,
@@ -211,7 +348,7 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
     // variation's Front angle only — every other angle/variation still
     // gets the generated packshot art.
     const heroImageUrl = i === 0 ? product.referenceImageUrl : undefined;
-    return { id, label, images: buildImages(product.id, id, product.gradient, heroImageUrl) };
+    return { id, label, images: buildImages(product, id, label, heroImageUrl) };
   });
 
   const documents: ProductDocument[] = DOCUMENT_TEMPLATES.map((tpl, i) => ({
@@ -220,7 +357,10 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
     category: tpl.category,
     fileType: tpl.fileType,
     size: tpl.size,
-    updated: i % 2 === 0 ? product.updated : "3 weeks ago",
+    addedOn: tpl.addedOn,
+    addedBy: tpl.addedBy,
+    state: tpl.state,
+    previewUrl: tpl.previewUrl,
   }));
 
   return { variations, dossiers, claims, documents };

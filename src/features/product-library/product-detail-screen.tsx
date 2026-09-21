@@ -12,6 +12,7 @@ import {
   Trash2,
   RefreshCw,
   Download,
+  Eye,
   Layers,
   MoreHorizontal,
 } from "lucide-react";
@@ -23,11 +24,12 @@ import type {
   ProductImage,
   ProductImageAngle,
   ProductDocument,
-  DocumentFileType,
 } from "@/features/product-library/product-library-types";
 import { IMAGE_ANGLES } from "@/features/product-library/product-library-types";
 import { ProductArtwork, type ArtworkKind } from "@/features/product-library/product-artwork";
 import { ClaimCard } from "@/features/product-library/claim-card";
+import { AssetStateBadge, originLabel } from "@/features/product-library/asset-state-badge";
+import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 import { DOSSIER_STATUS_STYLE as STATUS_STYLE } from "@/features/product-library/dossier-status";
 
 /** Only the lifestyle angle borrows the generic wellness scene — every other
@@ -83,19 +85,21 @@ export function ProductDetailScreen({
   const [tab, setTab] = useState<Tab>(initialTab);
   const [variations, setVariations] = useState<ProductVariation[]>(detail.variations);
   const [activeVariationId, setActiveVariationId] = useState(detail.variations[0]?.id ?? "");
-  const [angleFilter, setAngleFilter] = useState<ProductImageAngle | "All">("All");
-  const [documents, setDocuments] = useState<ProductDocument[]>(detail.documents);
+  const documents = detail.documents;
   const [openImageMenuId, setOpenImageMenuId] = useState<string | null>(null);
+  /** The attachment being read, in the same viewer the studio uses. */
+  const [previewDoc, setPreviewDoc] = useState<ProductDocument | null>(null);
 
   const activeVariation = useMemo(
     () => variations.find((v) => v.id === activeVariationId) ?? variations[0],
     [variations, activeVariationId]
   );
 
-  const visibleImages = useMemo(
-    () => (angleFilter === "All" ? activeVariation?.images ?? [] : (activeVariation?.images ?? []).filter((img) => img.angle === angleFilter)),
-    [activeVariation, angleFilter]
-  );
+  /* Every shot for the variant, unfiltered. The angle row underneath the
+     variant chips filtered six tiles down to one, which is a control for a
+     list this size and a way to hide five of the six things you came to
+     look at. The angle is on the tile; that is enough. */
+  const visibleImages = activeVariation?.images ?? [];
 
   const totalImages = variations.reduce((sum, v) => sum + v.images.length, 0);
 
@@ -106,12 +110,6 @@ export function ProductDetailScreen({
     { key: "images", label: "Product Images", icon: ImageIcon, count: totalImages },
   ];
 
-  const UPLOADABLE_TYPES: DocumentFileType[] = ["PDF", "DOCX", "PPTX", "XLSX"];
-
-
-  function handleDeleteDocument(id: string) {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
-  }
 
   function updateActiveImages(fn: (images: ProductImage[]) => ProductImage[]) {
     setVariations((prev) => prev.map((v) => (v.id === activeVariation?.id ? { ...v, images: fn(v.images) } : v)));
@@ -122,7 +120,21 @@ export function ProductDetailScreen({
     const used = new Set(activeVariation.images.map((img) => img.angle));
     const nextAngle = IMAGE_ANGLES.find((a) => !used.has(a)) ?? "Front";
     const id = `${activeVariation.id}-img-${Date.now()}`;
-    updateActiveImages((images) => [...images, { id, label: `${nextAngle} shot`, angle: nextAngle, gradient: product.gradient }]);
+    updateActiveImages((images) => [
+      ...images,
+      {
+        id,
+        name: `${product.name.toLowerCase()}_${nextAngle.toLowerCase()}_new.png`,
+        comment: "Uploaded here — add a note so the studio knows what it is for.",
+        label: `${nextAngle} shot`,
+        angle: nextAngle,
+        gradient: product.gradient,
+        state: "in progress",
+        addedBy: { name: "Siva Gnanam", team: "Brand" },
+        addedOn: "Just now",
+        updatedOn: "Just now",
+      },
+    ]);
   }
 
   function handleReplace(imageId: string) {
@@ -218,7 +230,7 @@ export function ProductDetailScreen({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-title font-extrabold tracking-tight text-ink">Product Images</h2>
-              <p className="text-body text-ink-3">Manage approved product visuals by variant and angle</p>
+              <p className="text-body text-ink-3">Every image this brand has, by presentation — with what the person who uploaded it said it was for</p>
             </div>
           </div>
 
@@ -230,10 +242,7 @@ export function ProductDetailScreen({
             {variations.map((v) => (
               <button
                 key={v.id}
-                onClick={() => {
-                  setActiveVariationId(v.id);
-                  setAngleFilter("All");
-                }}
+                onClick={() => setActiveVariationId(v.id)}
                 className={`rounded-chip border px-3 py-1.5 text-body font-bold transition-colors ${
                   v.id === activeVariation?.id
                     ? "border-brand bg-tint text-brand-deep"
@@ -245,26 +254,11 @@ export function ProductDetailScreen({
             ))}
           </div>
 
-          {/* Angle filter */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {(["All", ...IMAGE_ANGLES] as const).map((a) => (
-              <button
-                key={a}
-                onClick={() => setAngleFilter(a)}
-                className={`rounded-chip px-2.5 py-1 text-caption font-bold transition-colors ${
-                  angleFilter === a ? "bg-ink text-white" : "bg-subtle text-ink-3 hover:bg-tint-2"
-                }`}
-              >
-                {a === "All" ? "All angles" : a}
-              </button>
-            ))}
-          </div>
-
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
             {visibleImages.map((img) => (
               <div
                 key={img.id}
-                className="group overflow-hidden rounded-panel border border-hair bg-card shadow-hair transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft"
+                className="group flex flex-col overflow-hidden rounded-panel border border-hair bg-card shadow-hair transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft"
               >
                 <div className="relative overflow-hidden" style={{ background: img.gradient, height: 150 }}>
                   <span
@@ -281,6 +275,10 @@ export function ProductDetailScreen({
                     ) : (
                       <ProductArtwork kind={artworkFor(img.angle, product.type)} className="h-full w-full" />
                     )}
+                  </div>
+
+                  <div className="absolute left-2 top-2">
+                    <AssetStateBadge state={img.state} onDark />
                   </div>
 
                   {/* Always-visible overflow menu — Replace / Delete */}
@@ -326,9 +324,23 @@ export function ProductDetailScreen({
                     )}
                   </div>
                 </div>
-                <div className="p-3">
-                  <span className="block text-body font-bold text-ink">{img.angle}</span>
-                  <span className="text-caption text-ink-4">{img.label}</span>
+                {/* The file and what the person who uploaded it said about
+                    it — which is what the studio asked them for and what
+                    anyone picking a shot actually needs. "Front / Front
+                    shot" named the slot twice and said nothing. */}
+                <div className="flex flex-1 flex-col p-3">
+                  <b className="block truncate text-body font-bold text-ink" title={img.name}>
+                    {img.name}
+                  </b>
+                  <p className="mt-1 line-clamp-2 text-caption leading-snug text-ink-3">{img.comment}</p>
+                  <div className="mt-2.5 h-px bg-hair" />
+                  <div className="mt-2 flex items-center justify-between gap-2 text-micro text-ink-4">
+                    <span className="truncate">Added {img.addedOn}</span>
+                    <span className="shrink-0">Updated {img.updatedOn}</span>
+                  </div>
+                  <span className="mt-1 truncate text-micro text-ink-4">
+                    {img.angle} · {originLabel(img.addedBy)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -344,7 +356,7 @@ export function ProductDetailScreen({
           </div>
 
           {visibleImages.length === 0 && (
-            <p className="py-6 text-center text-body text-ink-4">No {angleFilter.toLowerCase()} shot yet for this variant — upload one above.</p>
+            <p className="py-6 text-center text-body text-ink-4">No images yet for this variant — upload one above.</p>
           )}
         </div>
       )}
@@ -424,26 +436,30 @@ export function ProductDetailScreen({
           </div>
           <div className="flex flex-col gap-2">
             {documents.map((doc) => (
-              <div key={doc.id} className="group flex items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair">
+              <div key={doc.id} className="flex flex-wrap items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair">
                 <span className={`grid size-9 shrink-0 place-items-center rounded-control text-caption font-extrabold ${FILE_TONE[doc.fileType] ?? "bg-subtle text-ink-3"}`}>
                   {doc.fileType}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <b className="block text-body-lg font-bold text-ink">{doc.name}</b>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <b className="truncate text-body-lg font-bold text-ink">{doc.name}</b>
+                    <AssetStateBadge state={doc.state} />
+                  </div>
+                  {/* Added, not updated: an attachment is a record of what
+                      was supplied, and who supplied it is half of that. */}
                   <span className="text-caption text-ink-4">
-                    {doc.category} · {doc.size} · Updated {doc.updated}
+                    {doc.category} · {doc.size} · Added {doc.addedOn} · {originLabel(doc.addedBy)}
                   </span>
                 </div>
-                <button className="inline-flex items-center gap-1.5 text-body-lg font-bold text-brand hover:text-brand-deep transition-colors">
-                  <Download size={14} /> Download
-                </button>
                 <button
                   type="button"
-                  title="Delete document"
-                  onClick={() => handleDeleteDocument(doc.id)}
-                  className="grid size-8 shrink-0 place-items-center rounded-control text-ink-4 opacity-0 transition-all group-hover:opacity-100 hover:bg-danger-bg hover:text-danger"
+                  onClick={() => setPreviewDoc(doc)}
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control border border-hair-2 px-2.5 py-1.5 text-body font-bold text-ink-2 transition-colors hover:border-brand hover:bg-tint hover:text-brand-deep"
                 >
-                  <Trash2 size={14} />
+                  <Eye size={14} /> View
+                </button>
+                <button className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-body-lg font-bold text-brand transition-colors hover:text-brand-deep">
+                  <Download size={14} /> Download
                 </button>
               </div>
             ))}
@@ -452,6 +468,15 @@ export function ProductDetailScreen({
             <p className="py-10 text-center text-body-lg text-ink-4">No attachments yet — upload one above.</p>
           )}
         </div>
+      )}
+
+      {/* The same viewer the studio opens for a workspace document. There is
+          one way to read a file here. */}
+      {previewDoc && (
+        <AttachmentPreviewModal
+          file={{ id: previewDoc.id, name: previewDoc.name, kind: "doc", previewUrl: previewDoc.previewUrl }}
+          onClose={() => setPreviewDoc(null)}
+        />
       )}
     </div>
   );
