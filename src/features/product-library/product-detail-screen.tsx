@@ -8,7 +8,6 @@ import {
   FileText,
   ListChecks,
   Paperclip,
-  Plus,
   Upload,
   Trash2,
   RefreshCw,
@@ -109,18 +108,6 @@ export function ProductDetailScreen({
 
   const UPLOADABLE_TYPES: DocumentFileType[] = ["PDF", "DOCX", "PPTX", "XLSX"];
 
-  function handleUploadDocument() {
-    const fileType = UPLOADABLE_TYPES[documents.length % UPLOADABLE_TYPES.length];
-    const doc: ProductDocument = {
-      id: `${product.id}-doc-${Date.now()}`,
-      name: `${product.name} — Untitled document`,
-      category: "Uncategorized",
-      fileType,
-      size: "—",
-      updated: "Just now",
-    };
-    setDocuments((prev) => [doc, ...prev]);
-  }
 
   function handleDeleteDocument(id: string) {
     setDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -153,14 +140,6 @@ export function ProductDetailScreen({
     updateActiveImages((images) => images.filter((img) => img.id !== imageId));
   }
 
-  function handleAddVariation() {
-    const id = `${product.id}-var-custom-${Date.now()}`;
-    const label = `New variant ${variations.length + 1}`;
-    const newVariation: ProductVariation = { id, label, images: [] };
-    setVariations((prev) => [...prev, newVariation]);
-    setActiveVariationId(id);
-    setAngleFilter("All");
-  }
 
   return (
     <div className="page-enter space-y-6 max-w-[980px]">
@@ -241,13 +220,6 @@ export function ProductDetailScreen({
               <h2 className="text-title font-extrabold tracking-tight text-ink">Product Images</h2>
               <p className="text-body text-ink-3">Manage approved product visuals by variant and angle</p>
             </div>
-            <button
-              onClick={handleUpload}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-control px-4 py-2.5 text-body-lg font-bold text-white transition-all hover:-translate-y-0.5"
-              style={{ background: "linear-gradient(180deg,#ff5b2d,var(--brand))", boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)" }}
-            >
-              <Plus size={15} /> Upload image
-            </button>
           </div>
 
           {/* Variations */}
@@ -271,12 +243,6 @@ export function ProductDetailScreen({
                 {v.label}
               </button>
             ))}
-            <button
-              onClick={handleAddVariation}
-              className="inline-flex items-center gap-1 rounded-chip border border-dashed border-hair-2 px-3 py-1.5 text-body font-bold text-ink-4 transition-colors hover:border-brand hover:text-brand-deep"
-            >
-              <Plus size={13} /> Add variant
-            </button>
           </div>
 
           {/* Angle filter */}
@@ -455,12 +421,6 @@ export function ProductDetailScreen({
               <h2 className="text-title font-extrabold tracking-tight text-ink">Attachments</h2>
               <p className="text-body text-ink-3">Prescribing information, decks, and anything else this brand was grounded in</p>
             </div>
-            <button
-              onClick={handleUploadDocument}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-control border border-dashed border-hair-2 px-3 py-1.5 text-body font-bold text-ink-3 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
-            >
-              <Upload size={13} /> Upload attachment
-            </button>
           </div>
           <div className="flex flex-col gap-2">
             {documents.map((doc) => (
