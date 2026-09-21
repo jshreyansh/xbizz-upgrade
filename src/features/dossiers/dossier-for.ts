@@ -71,6 +71,11 @@ export function dossierFor(
       ...section,
       title: rename(section.title),
       content: rename(section.content),
+      subsections: section.subsections?.map((sub) => ({
+        ...sub,
+        title: rename(sub.title),
+        content: rename(sub.content),
+      })),
       unverifiedClaims: section.unverifiedClaims?.map((claim) => ({
         ...claim,
         claim: rename(claim.claim),

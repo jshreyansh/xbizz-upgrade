@@ -28,6 +28,21 @@ export interface UnverifiedClaim {
   status: "pending" | "accepted" | "rejected";
 }
 
+/**
+ * A numbered part of a section — 3.1, 3.2 — with a body of its own.
+ *
+ * Not every section has them. The ones that do are the ones a reviewer
+ * navigates inside rather than reads through: a safety section where the
+ * bleeding data and the other adverse reactions are separate questions.
+ */
+export interface DossierSubsection {
+  id: string;
+  /** The part after the dot: 1 gives 3.1 under section 3. */
+  number: number;
+  title: string;
+  content: string;
+}
+
 export interface DossierSection {
   id: string;
   number: number;
@@ -37,6 +52,8 @@ export interface DossierSection {
   claimsCount: number;
   heldOutCount: number;
   citations: string[];
+  /** Present only where the section is navigated rather than read through. */
+  subsections?: DossierSubsection[];
   unverifiedClaims?: UnverifiedClaim[];
   /** True once this section has been revised via the chat-based refinement panel. */
   edited?: boolean;

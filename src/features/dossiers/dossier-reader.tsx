@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { DOCUMENT_TYPES, PHARMA_SECTIONS } from "@/features/dossiers/dossier-wizard-data";
+import { citationSource } from "@/features/dossiers/citation-sources";
 import { CitationPill } from "@/features/workspace/script-scene-card";
 import type { SceneCitation } from "@/types/content";
-import { X } from "lucide-react";
+import { ExternalLink, X } from "lucide-react";
 
 /**
  * A dossier, read.
@@ -33,6 +34,8 @@ export function DossierReader({
   const [activeSectionId, setActiveSectionId] = useState<string>(
     activeDossier.sections[0]?.id || "sec-a1"
   );
+  /** The subsection last jumped to, so the index shows where you are. */
+  const [activeSubId, setActiveSubId] = useState<string | null>(null);
   const [showSendMenu, setShowSendMenu] = useState(false);
   const [sendRecipients, setSendRecipients] = useState<string[]>([]);
   const [sentAt, setSentAt] = useState<string | null>(null);
@@ -56,48 +59,91 @@ export function DossierReader({
     setShowSendMenu(false);
   }
 
-  /**
-   * The claims this section cites, as records rather than a footnote list.
-   *
-   * A dossier section states things; each statement rests on a source. The
-   * seed carries the sources and a claim count, so the records are derived
-   * from those rather than invented per render — the same claim keeps the
-   * same id, which is what lets a citation highlight one.
-   */
   const activeSection = useMemo(
     () => activeDossier.sections.find((s) => s.id === activeSectionId) ?? activeDossier.sections[0],
     [activeDossier, activeSectionId]
   );
 
-  const sectionClaims = useMemo(() => {
-    if (!activeSection) return [];
-    const paragraphs = activeSection.content.split("\n\n");
-    return paragraphs.map((para, i) => ({
-      id: `${activeSection.id}-claim-${i}`,
-      source: activeSection.citations[i % Math.max(1, activeSection.citations.length)] ?? "On-record source",
-      status: "Approved",
-      text: para.split(". ").slice(0, 2).join(". ").trim(),
-    }));
+  /**
+   * Every paragraph in the open section, in reading order.
+   *
+   * A section's own body comes first, then each subsection's, so a claim's
+   * position is the same whether it sits in 3 or in 3.2 — which is what lets
+   * one index address both.
+   */
+  const paragraphs = useMemo(() => {
+    if (!activeSection) return [] as { key: string; text: string; subId?: string }[];
+    const out: { key: string; text: string; subId?: string }[] = [];
+    activeSection.content.split("\n\n").forEach((text, i) => out.push({ key: `body-${i}`, text }));
+    activeSection.subsections?.forEach((sub) => {
+      sub.content.split("\n\n").forEach((text, i) => out.push({ key: `${sub.id}-${i}`, text, subId: sub.id }));
+    });
+    return out;
   }, [activeSection]);
 
-  /** The badge at the end of a paragraph, pointing at that paragraph's claim. */
-  const citationsForParagraph = (
-    section: typeof activeSection,
-    index: number
-  ): SceneCitation[] => {
-    if (!section) return [];
+  /** Where each subsection's paragraphs start in that list. */
+  const subsectionOffset = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!activeSection) return map;
+    let at = activeSection.content.split("\n\n").length;
+    activeSection.subsections?.forEach((sub) => {
+      map.set(sub.id, at);
+      at += sub.content.split("\n\n").length;
+    });
+    return map;
+  }, [activeSection]);
+
+  /**
+   * The claims this section makes, as records rather than a footnote list.
+   *
+   * One per paragraph: the sentence that states it, and the source it rests
+   * on resolved to the register that source lives in. The id is positional,
+   * so the same claim keeps the same id across renders — which is what lets
+   * a citation badge highlight one.
+   */
+  const sectionClaims = useMemo(
+    () =>
+      paragraphs.map((para, i) => {
+        const cited = activeSection?.citations ?? [];
+        const raw = cited[i % Math.max(1, cited.length)] ?? "On-record source";
+        return {
+          id: `${activeSection?.id ?? "sec"}-claim-${i}`,
+          /* The first sentence, not the paragraph around it. A claim is a
+             statement; the rest of the paragraph is what surrounds it. */
+          line: para.text.split(/(?<=\.)\s/)[0].trim(),
+          source: citationSource(raw),
+        };
+      }),
+    [paragraphs, activeSection]
+  );
+
+  /** The badge at the end of a paragraph, pointing at that paragraph's source. */
+  const citationFor = (index: number): SceneCitation[] => {
     const claim = sectionClaims[index];
     if (!claim) return [];
     return [
       {
         id: `${claim.id}-cite`,
-        source: claim.source,
-        title: claim.text,
-        date: "Approved · current",
+        source: claim.source.publisher,
+        title: claim.source.line,
+        date: claim.source.locator ?? "On record · approved",
         claimId: claim.id,
+        url: claim.source.url || undefined,
       },
     ];
   };
+
+  /** A citation's Details opens the rail on the claim it points at. */
+  function openClaimInRail(claimId: string) {
+    setClaimsPanelOpen(true);
+    setHighlightedClaimId(claimId);
+  }
+
+  /** A subsection in the index jumps to its heading in the document. */
+  function goToSubsection(subId: string) {
+    setActiveSubId(subId);
+    document.getElementById(`dossier-sub-${subId}`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
 
   const createMagicVideo = onCreateVideo ?? (() => router.push("/create"));
 
@@ -337,10 +383,10 @@ export function DossierReader({
                     {sectionsInCat.map((sec) => {
                       const isSelected = activeSectionId === sec.id;
 
-                      return (
+                      const row = (
                         <button
                           key={sec.id}
-                          onClick={() => setActiveSectionId(sec.id)}
+                          onClick={() => { setActiveSectionId(sec.id); setActiveSubId(null); }}
                           title={`${String(sec.number).padStart(2, "0")}. ${sec.title}`}
                           style={{
                             width: "100%",
@@ -396,6 +442,61 @@ export function DossierReader({
                           )}
                         </button>
                       );
+
+                      /* Subsections belong to the section you are reading, so
+                         they appear under the open one and nowhere else — an
+                         index that lists every part of every section is a
+                         table of contents, not a way to move. Collapsed, the
+                         rail is 72px of numbers and there is no room for them
+                         at all. */
+                      if (claimsPanelOpen || !isSelected || !sec.subsections?.length) return row;
+
+                      return (
+                        <div key={sec.id}>
+                          {row}
+                          <div style={{ marginBottom: 6, paddingLeft: 14, borderLeft: "1px solid var(--hair)", marginLeft: 19 }}>
+                            {sec.subsections.map((sub) => {
+                              const here = activeSubId === sub.id;
+                              return (
+                                <button
+                                  key={sub.id}
+                                  onClick={() => goToSubsection(sub.id)}
+                                  title={`${sec.number}.${sub.number} ${sub.title}`}
+                                  style={{
+                                    width: "100%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 7,
+                                    padding: "5px 8px",
+                                    borderRadius: "var(--r-s)",
+                                    textAlign: "left",
+                                    background: here ? "var(--tint)" : "transparent",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <span style={{ fontSize: 10.5, fontWeight: 800, color: here ? "var(--brand)" : "var(--ink-4)", fontVariantNumeric: "tabular-nums" }}>
+                                    {sec.number}.{sub.number}
+                                  </span>
+                                  <span
+                                    style={{
+                                      flex: 1,
+                                      minWidth: 0,
+                                      fontSize: 12,
+                                      fontWeight: here ? 700 : 500,
+                                      color: here ? "var(--brand-deep)" : "var(--ink-2)",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {sub.title}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
                     })}
                   </div>
                 );
@@ -449,18 +550,41 @@ export function DossierReader({
                       the production plan's narration, so a citation behaves
                       the same wherever it appears. */}
                   <div style={{ fontSize: 15.5, lineHeight: 1.85, color: "var(--ink-2)", maxWidth: "72ch" }}>
-                    {sec.content.split("\n\n").map((para, i, all) => (
-                      <p key={i} style={{ marginBottom: i === all.length - 1 ? 0 : 18 }}>
+                    {sec.content.split("\n\n").map((para, i) => (
+                      <p key={i} style={{ marginBottom: 18 }}>
                         {para}{" "}
-                        <CitationPill
-                          citations={citationsForParagraph(sec, i)}
-                          onDetails={(claimId) => {
-                            setClaimsPanelOpen(true);
-                            setHighlightedClaimId(claimId);
-                          }}
-                        />
+                        <CitationPill citations={citationFor(i)} onDetails={openClaimInRail} />
                       </p>
                     ))}
+
+                    {/* A numbered part of the section, with a heading the
+                        index can address. Same prose, same badges — the only
+                        thing a subsection adds is a place to jump to. */}
+                    {sec.subsections?.map((sub) => {
+                      const offset = subsectionOffset.get(sub.id) ?? 0;
+                      return (
+                        <section key={sub.id} id={`dossier-sub-${sub.id}`} style={{ scrollMarginTop: 24 }}>
+                          <h3
+                            style={{
+                              display: "flex", alignItems: "baseline", gap: 10,
+                              margin: "26px 0 10px", fontSize: 17, fontWeight: 800,
+                              letterSpacing: "-.3px", color: "var(--ink)",
+                            }}
+                          >
+                            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--brand)", fontVariantNumeric: "tabular-nums" }}>
+                              {sec.number}.{sub.number}
+                            </span>
+                            {sub.title}
+                          </h3>
+                          {sub.content.split("\n\n").map((para, j) => (
+                            <p key={j} style={{ marginBottom: 18 }}>
+                              {para}{" "}
+                              <CitationPill citations={citationFor(offset + j)} onDetails={openClaimInRail} />
+                            </p>
+                          ))}
+                        </section>
+                      );
+                    })}
                   </div>
 
                   {/* Citations Footer */}
@@ -469,12 +593,27 @@ export function DossierReader({
                       On-Record Citations
                     </b>
                     <div style={{ display: "grid", gap: 6 }}>
-                      {sec.citations.map((cite, i) => (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
-                          <span style={{ color: "var(--brand)", fontWeight: 800 }}>[{i + 1}]</span>
-                          <span>{cite}</span>
-                        </div>
-                      ))}
+                      {sec.citations.map((cite, i) => {
+                        const src = citationSource(cite);
+                        return (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
+                            <span style={{ color: "var(--brand)", fontWeight: 800 }}>[{i + 1}]</span>
+                            <span style={{ minWidth: 0, flex: 1 }}>{cite}</span>
+                            {src.url && (
+                              <a
+                                href={src.url}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="inline-flex shrink-0 cursor-pointer items-center gap-1 font-bold text-brand transition-colors hover:text-brand-deep"
+                                style={{ fontSize: 11.5 }}
+                              >
+                                {src.publisher}
+                                <ExternalLink className="size-3" />
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -554,11 +693,33 @@ export function DossierReader({
                     >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                         <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".04em", textTransform: "uppercase", color: "var(--brand-deep)" }}>
-                          {claim.source}
+                          {claim.source.publisher}
                         </span>
-                        <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--ok)" }}>✓ {claim.status}</span>
+                        <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--ok)" }}>✓ Approved</span>
                       </div>
-                      <p style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.55, color: "var(--ink-2)" }}>{claim.text}</p>
+
+                      {/* The claim, then what backs it. The paragraph it came
+                          from is two inches to the left — repeating it here
+                          made the rail a second copy of the document. */}
+                      <p className="line-clamp-2" style={{ marginTop: 4, fontSize: 12.5, lineHeight: 1.55, color: "var(--ink)", fontWeight: 600 }}>
+                        {claim.line}
+                      </p>
+                      <p style={{ marginTop: 5, fontSize: 11.5, lineHeight: 1.5, color: "var(--ink-3)" }}>
+                        {claim.source.line}
+                        {claim.source.locator ? ` · ${claim.source.locator}` : ""}
+                      </p>
+                      {claim.source.url && (
+                        <a
+                          href={claim.source.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          style={{ marginTop: 7, fontSize: 11.5, fontWeight: 700 }}
+                          className="inline-flex cursor-pointer items-center gap-1 text-brand transition-colors hover:text-brand-deep"
+                        >
+                          View source
+                          <ExternalLink className="size-3" />
+                        </a>
+                      )}
                     </div>
                   );
                 })}

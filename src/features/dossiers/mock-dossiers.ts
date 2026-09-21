@@ -138,6 +138,11 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
         claimsCount: 28,
         heldOutCount: 26,
         citations: ["CLARITY-CV Phase III (NEJM 2025; 392:101-114)", "NCT04892110"],
+        subsections: [
+          { id: "sec-3-1", number: 1, title: "Trial design and population", content: "CLARITY-CV randomised 12,480 adults with an acute coronary syndrome in the preceding twelve months, 1:1, double-blind, across 41 countries and 620 sites. Background low-dose aspirin was mandatory in both arms, so the comparison is Velmora added to standard of care rather than Velmora against it.\n\nMedian age was 64, 38% of participants were women, and 31% had diabetes at entry. Adherence exceeded 92% in both arms and fewer than 1% were lost to follow-up, which is what allows the primary estimate to be quoted without a sensitivity caveat." },
+          { id: "sec-3-2", number: 2, title: "Primary composite endpoint", content: "The primary endpoint was the first occurrence of cardiovascular death, myocardial infarction or stroke. Velmora reduced it from 11.8% to 9.1% over a median 28 months (HR 0.76; 95% CI 0.68–0.85; p < 0.001), with the curves separating by day 30 and continuing to diverge to the end of follow-up.\n\nThe absolute risk reduction of 2.7 percentage points corresponds to a number needed to treat of 37 over the trial period. Both the relative and the absolute figure are on the label and either may be used, but a relative figure presented without the absolute one overstates the effect and will not clear review." },
+          { id: "sec-3-3", number: 3, title: "Component and subgroup analyses", content: "Every component moved with the composite: cardiovascular death (HR 0.81; 95% CI 0.69–0.95), myocardial infarction (HR 0.74; 95% CI 0.63–0.87) and ischaemic stroke (HR 0.71; 95% CI 0.56–0.90). No component moved against it, which is the basis for describing the result as a treatment effect rather than one dominant endpoint carrying the rest.\n\nTwelve subgroups were pre-specified and none showed an interaction reaching nominal significance. Subgroup figures are supportive only and may not be presented as evidence of benefit in a particular population." },
+        ],
         unverifiedClaims: [
           {
             id: "uv-4",
@@ -157,6 +162,10 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
         claimsCount: 22,
         heldOutCount: 18,
         citations: ["FDA PI Section 6.1 Adverse Reactions", "CLARITY-CV Safety Appendix"],
+        subsections: [
+          { id: "sec-4-1", number: 1, title: "Bleeding events and adjudication", content: "Major TIMI bleeding occurred in 1.9% of Velmora-treated patients against 1.4% on placebo (HR 1.34; 95% CI 0.98–1.82; p = 0.06). Fatal and intracranial haemorrhage were equal between arms at 0.2%.\n\nEvery suspected event was adjudicated by an independent clinical events committee blinded to allocation, scored against the TIMI and BARC definitions in parallel so the result can be read on either scale. The confidence interval crosses one, so the finding is described as not excluding a modest increase — never as equivalence." },
+          { id: "sec-4-2", number: 2, title: "Other adverse reactions", content: "Adverse reactions occurring in at least 2% of treated patients and more often than on placebo were dyspepsia (4.1% vs 3.2%), bruising (3.8% vs 2.4%) and epistaxis (2.6% vs 1.7%). None led to a dose change in more than 1% of participants.\n\nDiscontinuation for any adverse event was 6.2% against 5.4%. Hepatic enzyme elevations above three times the upper limit of normal occurred at the same rate in both arms, and the label carries no hepatic monitoring requirement." },
+        ],
       },
       {
         id: "sec-5",
@@ -167,6 +176,11 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
         claimsCount: 14,
         heldOutCount: 5,
         citations: ["FDA PI Section 2.1 & 8.6"],
+        subsections: [
+          { id: "sec-5-1", number: 1, title: "Renal and hepatic impairment", content: "No dosage adjustment is required in mild or moderate renal impairment (eGFR 30–59 mL/min/1.73m²). Below 15 mL/min the medicine has not been studied and is not recommended; between 15 and 29 the label advises clinical judgement rather than a defined reduction.\n\nMild hepatic impairment needs no adjustment. In moderate impairment exposure rose 1.4-fold and the label directs clinical monitoring rather than a lower dose. Severe impairment was not studied, and no dosing statement may be made for it." },
+          { id: "sec-5-2", number: 2, title: "Missed dose and switching", content: "A missed dose should be taken the same day and the normal schedule resumed the following morning; two doses must never be taken together. This wording is on the label and may be reproduced verbatim in patient-facing material.\n\nSwitching from a vitamin K antagonist begins once the INR falls below 2.0. Switching from a parenteral anticoagulant begins at the time the next infusion would have been due. Anything beyond these two instructions, including a bridging regimen, is outside the approved text." },
+          { id: "sec-5-3", number: 3, title: "Perioperative interruption", content: "For a procedure carrying a moderate or high bleeding risk, the label directs interruption at least 48 hours beforehand, and at least 24 hours for a low-risk procedure. Treatment restarts once haemostasis is secured.\n\nNo reversal agent is approved. In the event of significant bleeding the label directs discontinuation and standard supportive management, and promotional material may not imply that a reversal option exists." },
+        ],
       },
     ],
   },
@@ -220,7 +234,7 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
         content: "Onkavia is indicated as monotherapy for treatment-naïve adult patients with RET fusion-positive advanced non-small cell lung cancer, validated via next-generation sequencing (NGS) or RT-PCR.\n\nThe indication is tied to the biomarker, not to the histology alone: fusion status must be confirmed by an approved or validated assay before treatment is initiated, and the trial population was enrolled on that basis. Claims that describe the medicine as a treatment for advanced NSCLC without the fusion qualifier are outside the label.\n\nPrior systemic therapy for advanced disease was an exclusion in the pivotal study, so the treatment-naive wording is a description of the evidence rather than a preference between lines. The programme in previously treated patients is ongoing and no statement about that setting is supportable yet.",
         claimsCount: 12,
         heldOutCount: 6,
-        citations: ["EMA SmPC Section 4.1", "ESMO Clinical Guidelines 2025"],
+        citations: ["FDA PI Section 1 Indications and Usage", "NCCN Clinical Practice Guidelines (v3.2025)"],
       },
       {
         id: "sec-o2",
@@ -281,7 +295,7 @@ export const MOCK_DOSSIERS: BrandDossier[] = [
         content: "Nirvexa induced endoscopic mucosal healing at Week 12 in 58% of biologic-experienced patients, maintaining steroid-free remission through Week 52 in 67% of responders.\n\nEndoscopic healing was scored centrally against the Mayo endoscopic subscore, with a score of zero or one counted as healing. The biologic-experienced population had failed a median of two prior advanced therapies, which is the comparison that makes the Week 12 figure meaningful and should accompany it wherever it is quoted.\n\nSteroid-free remission was defined as clinical remission with no corticosteroid exposure for at least twelve weeks before the Week 52 visit. Patients who required rescue therapy were counted as non-responders from the point of rescue onward, so the maintenance figure is not inflated by treatment switching.",
         claimsCount: 18,
         heldOutCount: 3,
-        citations: ["Gastroenterology 2025", "MHRA SmPC Section 5.1"],
+        citations: ["Gastroenterology 2025", "FDA PI Section 12.1 Mechanism of Action"],
       },
     ],
   },

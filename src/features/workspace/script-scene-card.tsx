@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  ExternalLink,
   Image as ImageIcon,
   Palette,
   Pencil,
@@ -174,18 +175,33 @@ export function CitationPill({ citations, onDetails }: { citations: SceneCitatio
           </div>
           <p className="mt-1 text-body leading-snug text-ink-2">{current.title}</p>
           <div className="mt-1.5 flex items-center justify-between gap-2">
-            <span className="text-caption text-ink-4">{current.date}</span>
+            <span className="min-w-0 truncate text-caption text-ink-4">{current.date}</span>
             {current.claimId && onDetails && (
               <button
                 type="button"
                 onClick={() => { setOpen(false); onDetails(current.claimId!); }}
-                className="inline-flex items-center gap-1 rounded-glyph px-1.5 py-0.5 text-caption font-bold text-brand transition-colors hover:bg-tint cursor-pointer"
+                className="inline-flex shrink-0 items-center gap-1 rounded-glyph px-1.5 py-0.5 text-caption font-bold text-brand transition-colors hover:bg-tint cursor-pointer"
               >
                 <span>Details</span>
                 <ChevronRight className="size-3" />
               </button>
             )}
           </div>
+
+          {/* The source itself, one click away. A citation you cannot open is
+              a citation you have to take on trust. */}
+          {current.url && (
+            <a
+              href={current.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              onClick={(e) => e.stopPropagation()}
+              className="mt-2 flex items-center justify-center gap-1.5 rounded-glyph border border-hair-2 bg-subtle px-2 py-1.5 text-caption font-bold text-ink-2 transition-colors hover:border-brand hover:bg-tint hover:text-brand cursor-pointer"
+            >
+              <span>View source</span>
+              <ExternalLink className="size-3" />
+            </a>
+          )}
         </div>,
         document.body
       )}

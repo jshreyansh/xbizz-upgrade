@@ -56,6 +56,12 @@ export interface SceneCitation {
   anchor?: number;
   /** The approved claim this resolves to, so the badge can jump to its card. */
   claimId?: string;
+  /**
+   * The public record behind the source — Drugs@FDA, the trial registry, the
+   * journal. Opened in a new tab, because checking a citation is a detour
+   * from reading, not the end of it. Absent for anything held on file.
+   */
+  url?: string;
 }
 
 /**
