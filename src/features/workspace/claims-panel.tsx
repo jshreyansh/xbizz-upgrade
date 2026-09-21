@@ -4,11 +4,10 @@ import { useState } from "react";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { APPROVED_CLAIMS, claimUseLabel, type ClaimUse } from "@/features/workspace/script-claims";
-import {
-  DossierPreviewModal,
-  type DossierPreviewData,
-} from "@/features/workspace/dossier-preview-modal";
-import { moleculeFor, primaryDossier } from "@/features/workspace/grounding-dossiers";
+import { DossierReaderModal } from "@/features/dossiers/dossier-reader-modal";
+import { dossierFor } from "@/features/dossiers/dossier-for";
+import { moleculeFor } from "@/features/workspace/grounding-dossiers";
+import type { BrandDossier } from "@/features/dossiers/dossier-types";
 
 /**
  * The approved claims, beside whatever is being written.
@@ -20,10 +19,10 @@ import { moleculeFor, primaryDossier } from "@/features/workspace/grounding-doss
  * of one.
  *
  * "See in dossier" answers the next question, which is where the claim came
- * from. It opens the same record the plan's Research and Sources step shows
- * when it describes what this project is grounded in — the same component and
- * the same data, because a claim that opened a different dossier from the one
- * the plan named would be worse than no link at all.
+ * from. It opens the master document itself — the same reader the Brand
+ * Dossiers page and the product's dossier route use — rather than a summary
+ * written for this panel, because a claim that opens something other than
+ * the dossier it cites is worse than no link at all.
  */
 export function ClaimsPanel({
   highlightedClaimId,
@@ -42,7 +41,7 @@ export function ClaimsPanel({
    */
   usage?: Record<string, ClaimUse[]>;
 }) {
-  const [dossier, setDossier] = useState<DossierPreviewData | null>(null);
+  const [dossier, setDossier] = useState<BrandDossier | null>(null);
 
   return (
     <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -109,7 +108,7 @@ export function ClaimsPanel({
 
             <button
               type="button"
-              onClick={() => setDossier(primaryDossier(brandName, moleculeFor(brandName)))}
+              onClick={() => setDossier(dossierFor(brandName, moleculeFor(brandName)))}
               className={cn(
                 "focus-ring mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-1.5 py-1 text-caption font-bold transition",
                 // Quiet until the card is under the pointer or is the one a
@@ -126,7 +125,7 @@ export function ClaimsPanel({
         ))}
       </div>
 
-      <DossierPreviewModal dossier={dossier} onClose={() => setDossier(null)} />
+      <DossierReaderModal dossier={dossier} onClose={() => setDossier(null)} />
     </div>
   );
 }

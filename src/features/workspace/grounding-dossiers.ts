@@ -1,4 +1,21 @@
-import type { DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
+import { PRODUCTS } from "@/features/product-library/mock-products";
+import { INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
+
+/**
+ * A dossier as a shelf tile: enough to name it and say how much it carries.
+ * The full document lives in the dossier reader — this is the summary the
+ * Research and Sources strip shows before you open it.
+ */
+export interface DossierPreviewData {
+  name: string;
+  molecule: string;
+  market: string;
+  sections: number;
+  claims: number;
+  documents: Array<{ name: string; citations: number; type?: string }>;
+  keyClaims?: Array<{ category: string; claim: string; citation: string }>;
+  indication?: string;
+}
 
 /**
  * The approved dossier this project is grounded in.
@@ -53,15 +70,20 @@ export function primaryDossier(brandName: string, molecule: string): DossierPrev
   return groundingDossiers(brandName, molecule)[0];
 }
 
-/** Molecule per brand, so both callers name the same one. */
+/**
+ * Molecule per brand, so every caller names the same one.
+ *
+ * Reads the catalogues rather than a hand-kept ladder of five: the ladder
+ * fell through to tirzelamide for everything it did not know, which put
+ * Velmora's molecule on Affolmy's dossier. A brand nobody has heard of still
+ * needs an answer, and the last case is that answer rather than a default
+ * pretending to be one.
+ */
 export function moleculeFor(brandName: string): string {
-  return brandName === "Onkavia"
-    ? "relunocitinib"
-    : brandName === "PulmoVax"
-    ? "albuterol / budesonide"
-    : brandName === "Nirvexa"
-    ? "brentaxaban"
-    : brandName === "Cardioxa"
-    ? "levomilnacipran ER"
-    : "tirzelamide";
+  const name = brandName.trim().toLowerCase();
+  const fromLibrary = PRODUCTS.find((p) => p.name.toLowerCase() === name);
+  if (fromLibrary) return fromLibrary.genericName;
+  const fromStudio = INITIAL_BRANDS.find((b) => b.name.toLowerCase() === name);
+  if (fromStudio) return fromStudio.genericName;
+  return "tirzelamide";
 }

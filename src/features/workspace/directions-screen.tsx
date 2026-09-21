@@ -54,7 +54,10 @@ import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { IntakePlaceholder } from "@/features/workspace/intake-checklist";
 import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/features/workspace/demo-scenarios";
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-dossier-modal";
-import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
+import { DossierReaderModal } from "@/features/dossiers/dossier-reader-modal";
+import { dossierFor } from "@/features/dossiers/dossier-for";
+import { moleculeFor } from "@/features/workspace/grounding-dossiers";
+import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
 import {
@@ -488,7 +491,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>(
     () => defaultUploadedDocs(brandName)
   );
-  const [previewDossier, setPreviewDossier] = useState<DossierPreviewData | null>(null);
+  const [previewDossier, setPreviewDossier] = useState<BrandDossier | null>(null);
   const docUploadRef = useRef<HTMLInputElement>(null);
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
   const [previewingAudio, setPreviewingAudio] = useState<string | null>(null);
@@ -1337,7 +1340,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                         setSourcesUnusable(false);
                         setSourcesWillFail(false);
                       }}
-                      onPreviewDossier={(d) => setPreviewDossier(d)}
+                      onPreviewDossier={() => setPreviewDossier(dossierFor(brandName, moleculeFor(brandName)))}
                       onContinue={() => advanceFrom("sources")}
                       research={research}
                       sourcesUnusable={sourcesUnusable}
@@ -2699,7 +2702,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             />
           )}
           {previewDossier && (
-            <DossierPreviewModal
+            <DossierReaderModal
               dossier={previewDossier}
               onClose={() => setPreviewDossier(null)}
             />

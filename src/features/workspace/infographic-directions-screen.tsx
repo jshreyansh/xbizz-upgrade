@@ -23,7 +23,10 @@ import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { DossierPreviewModal, type DossierPreviewData } from "@/features/workspace/dossier-preview-modal";
+import { DossierReaderModal } from "@/features/dossiers/dossier-reader-modal";
+import { dossierFor } from "@/features/dossiers/dossier-for";
+import { moleculeFor } from "@/features/workspace/grounding-dossiers";
+import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -310,7 +313,7 @@ export function InfographicDirectionsScreen() {
       origin: "new",
     },
   ]);
-  const [previewDossier, setPreviewDossier] = useState<DossierPreviewData | null>(null);
+  const [previewDossier, setPreviewDossier] = useState<BrandDossier | null>(null);
 
   /**
    * Why the plan cannot be confirmed, or null.
@@ -801,7 +804,7 @@ export function InfographicDirectionsScreen() {
                       brandName={brandName || "Velmora"}
                       uploadedDocs={uploadedDocs}
                       onSetUploadedDocs={setUploadedDocs}
-                      onPreviewDossier={(d) => setPreviewDossier(d)}
+                      onPreviewDossier={() => setPreviewDossier(dossierFor(brandName, moleculeFor(brandName)))}
                       onContinue={() => advanceFrom("sources")}
                       research={research}
                     />
@@ -1678,7 +1681,7 @@ export function InfographicDirectionsScreen() {
             />
           )}
           {previewDossier && (
-            <DossierPreviewModal
+            <DossierReaderModal
               dossier={previewDossier}
               onClose={() => setPreviewDossier(null)}
             />
