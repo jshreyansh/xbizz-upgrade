@@ -16,7 +16,6 @@ import {
   Layers,
   MoreHorizontal,
 } from "lucide-react";
-import { cn } from "@/lib/cn";
 import type {
   LibraryProduct,
   ProductDetail,
@@ -30,6 +29,7 @@ import { ProductArtwork, type ArtworkKind } from "@/features/product-library/pro
 import { originLabel } from "@/features/product-library/asset-origin";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { DetailHeader, type DetailTab } from "@/components/patterns/detail-header";
 import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 import { DOSSIER_STATUS_STYLE as STATUS_STYLE } from "@/features/product-library/dossier-status";
@@ -145,7 +145,7 @@ export function ProductDetailScreen({
      shelf has ever held. Archived is a separate view with its own count. */
   const activeImageTotal = variations.reduce((sum, v) => sum + v.images.filter((i) => !i.archived).length, 0);
 
-  const TABS: { key: Tab; label: string; icon: typeof ImageIcon; count: number }[] = [
+  const TABS: DetailTab<Tab>[] = [
     { key: "dossier", label: "Dossier", icon: FileText, count: detail.dossiers.length },
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
     { key: "documents", label: "Team Attachments", icon: Paperclip, count: documents.filter((d) => !d.archived).length },
@@ -248,64 +248,38 @@ export function ProductDetailScreen({
         Product Library
       </button>
 
-      {/* Compact profile row — no full-width cover photo, just the essentials */}
-      <div className="flex flex-wrap items-center gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair">
-        <span className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-control" style={{ background: product.gradient }}>
-          <span
-            aria-hidden
-            className="pointer-events-none absolute rounded-full"
-            style={{ width: "140%", height: "140%", right: "-30%", top: "-30%", background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
-          />
-          {product.referenceImageUrl ? (
-            <img src={product.referenceImageUrl} alt="" className="relative h-full w-full object-cover" />
-          ) : (
-            <ProductArtwork kind={product.type} className="relative h-8 w-8" />
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-title font-extrabold tracking-tight text-ink">{product.name}</h1>
-            <span className="rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold uppercase tracking-[.03em] text-ink-3">{product.type}</span>
+      {/* What this brand is, and the four ways of looking at it — one card,
+          because the tabs belong to the brand rather than to the page. */}
+      <DetailHeader tabs={TABS} active={tab} onSelect={setTab}>
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-control" style={{ background: product.gradient }}>
+            <span
+              aria-hidden
+              className="pointer-events-none absolute rounded-full"
+              style={{ width: "140%", height: "140%", right: "-30%", top: "-30%", background: "radial-gradient(circle,rgba(255,255,255,.3),transparent 70%)" }}
+            />
+            {product.referenceImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={product.referenceImageUrl} alt="" className="relative h-full w-full object-cover" />
+            ) : (
+              <ProductArtwork kind={product.type} className="relative h-8 w-8" />
+            )}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-title font-extrabold tracking-tight text-ink">{product.name}</h1>
+              <span className="rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold uppercase tracking-[.03em] text-ink-3">{product.type}</span>
+            </div>
+            <span className="text-body italic text-ink-3">{product.genericName}</span>
           </div>
-          <span className="text-body italic text-ink-3">{product.genericName}</span>
+          <div className="flex items-center gap-5">
+            <Stat value={product.dossiersVerified} label="Dossiers" />
+            <Stat value={product.claimsApproved} label="Claims" />
+            <Stat value={documents.filter((d) => !d.archived).length} label="Attachments" />
+            <Stat value={activeImageTotal} label="Images" />
+          </div>
         </div>
-        <div className="flex items-center gap-5">
-          <Stat value={product.dossiersVerified} label="Dossiers" />
-          <Stat value={product.claimsApproved} label="Claims" />
-          <Stat value={documents.filter((d) => !d.archived).length} label="Attachments" />
-          <Stat value={activeImageTotal} label="Images" />
-        </div>
-      </div>
-
-      {/* Tabs — one bordered strip, divided, with a gradient bar under the active tab */}
-      <div className="flex overflow-hidden rounded-panel border border-hair bg-card shadow-hair">
-        {TABS.map((t, i) => {
-          const active = tab === t.key;
-          return (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={cn(
-                "relative flex flex-1 items-center justify-center gap-2 px-3.5 py-3.5 text-body-lg font-bold transition-colors",
-                i > 0 && "border-l border-hair",
-                active ? "bg-tint-2/50 text-brand-deep" : "text-ink-3 hover:text-ink"
-              )}
-            >
-              <t.icon size={15} />
-              {t.label}
-              <span className={`rounded-chip px-1.5 py-0.5 text-micro font-extrabold ${active ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4"}`}>
-                {t.count}
-              </span>
-              {active && (
-                <span
-                  className="absolute inset-x-0 bottom-0 h-[3px] rounded-t-full"
-                  style={{ background: "linear-gradient(90deg,var(--brand),var(--brand-deep))" }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      </DetailHeader>
 
       {/* Tab content */}
       {tab === "images" && (

@@ -14,6 +14,7 @@ import {
   Paperclip,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { DetailHeader, type DetailTab } from "@/components/patterns/detail-header";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { CLAIM_STATUS_STYLE } from "@/features/product-library/claim-card";
 import { AssetVideo } from "@/features/workspace/asset-video";
@@ -56,7 +57,7 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
   const { claim, product } = detail;
   const status = CLAIM_STATUS_STYLE[claim.status];
 
-  const TABS: { key: Tab; label: string; icon: typeof Info; count?: number }[] = [
+  const TABS: DetailTab<Tab>[] = [
     { key: "information", label: "Information", icon: Info },
     { key: "usage", label: "Usage", icon: Layers, count: detail.usedIn.length },
   ];
@@ -71,69 +72,37 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
         Claims Library
       </button>
 
-      {/* The claim itself, in the header. No counts on the right: a single
-          statement has nothing to total, and a row of zeroes would be worse
-          than the space it filled. */}
-      <div className="flex flex-wrap items-start gap-4 rounded-panel border border-hair bg-card p-4 shadow-hair">
-        <span className={cn("grid size-12 shrink-0 place-items-center rounded-control", status.bg, status.tone)}>
-          <ListChecks size={20} />
-        </span>
-        <div className="min-w-0 flex-1">
-          {/* The statement is the heading. The dossier type was standing in
-              for one, which put a category where the claim should be. */}
-          <div className="flex flex-wrap items-start gap-2">
-            <h1 className="min-w-0 flex-1 text-subhead font-extrabold leading-snug tracking-tight text-ink">
+      {/* The claim, and the two ways of looking at it — one card. The
+          statement can run to a paragraph, so the header gives it the room
+          to be read rather than clamping the thing the page is about. */}
+      <DetailHeader tabs={TABS} active={tab} onSelect={setTab}>
+        <div className="flex flex-wrap items-start gap-4">
+          <span className={cn("grid size-12 shrink-0 place-items-center rounded-control", status.bg, status.tone)}>
+            <ListChecks size={20} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              {/* The statement is the heading. The dossier type was standing
+                  in for one, which put a category where the claim should be. */}
+              <span className="text-label font-extrabold uppercase tracking-[.12em] text-ink-4">
+                Approved claim
+              </span>
+              <span
+                className={cn(
+                  "shrink-0 rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em]",
+                  status.bg,
+                  status.tone
+                )}
+              >
+                {status.label}
+              </span>
+            </div>
+            <h1 className="mt-1.5 max-w-[78ch] text-body-lg font-semibold leading-relaxed text-ink">
               {claim.text}
             </h1>
-            <span
-              className={cn(
-                "mt-1 shrink-0 rounded-chip px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em]",
-                status.bg,
-                status.tone
-              )}
-            >
-              {status.label}
-            </span>
           </div>
         </div>
-      </div>
-
-      {/* Tabs — the same strip the Product Detail page uses. */}
-      <div className="flex overflow-hidden rounded-panel border border-hair bg-card shadow-hair">
-        {TABS.map((t, i) => {
-          const active = tab === t.key;
-          return (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={cn(
-                "relative flex flex-1 cursor-pointer items-center justify-center gap-2 px-3.5 py-3.5 text-body-lg font-bold transition-colors",
-                i > 0 && "border-l border-hair",
-                active ? "bg-tint-2/50 text-brand-deep" : "text-ink-3 hover:text-ink"
-              )}
-            >
-              <t.icon size={15} />
-              {t.label}
-              {t.count !== undefined && (
-                <span
-                  className={cn(
-                    "rounded-chip px-1.5 py-0.5 text-micro font-extrabold",
-                    active ? "bg-tint text-brand-deep" : "bg-subtle text-ink-4"
-                  )}
-                >
-                  {t.count}
-                </span>
-              )}
-              {active && (
-                <span
-                  className="absolute inset-x-0 bottom-0 h-[3px] rounded-t-full"
-                  style={{ background: "linear-gradient(90deg,var(--brand),var(--brand-deep))" }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      </DetailHeader>
 
       {tab === "information" ? (
         <div className="space-y-4">
@@ -207,7 +176,7 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
           {/* What it traces back to. */}
           <section className="rounded-panel border border-hair bg-card p-4 shadow-hair">
             <h2 className="text-body font-extrabold uppercase tracking-[.05em] text-ink-4">
-              References and attachments
+              References and Sources
             </h2>
             <ul className="mt-3 space-y-2">
               {detail.references.map((reference) => (
