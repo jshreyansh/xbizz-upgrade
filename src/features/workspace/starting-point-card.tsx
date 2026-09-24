@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Eye, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Portal } from "@/components/ui/portal";
 import { cn } from "@/lib/cn";
 
@@ -170,7 +169,6 @@ export function StartingPointPreviewModal({
   examples,
   index,
   onIndex,
-  onUse,
   onClose,
   badgeIcon,
 }: {
@@ -179,7 +177,6 @@ export function StartingPointPreviewModal({
   examples: StartingPointExample[];
   index: number;
   onIndex: (next: number) => void;
-  onUse: () => void;
   onClose: () => void;
   badgeIcon?: React.ReactNode;
 }) {
@@ -233,36 +230,33 @@ export function StartingPointPreviewModal({
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-hair bg-canvas px-5 py-3">
-            {many ? (
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => onIndex((index - 1 + examples.length) % examples.length)}
-                  aria-label="Previous example"
-                  className="grid size-7 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
-                >
-                  <ChevronLeft className="size-4" />
-                </button>
-                <span className="text-caption font-bold tabular-nums text-ink-4">
-                  {Math.min(index, examples.length - 1) + 1} / {examples.length}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onIndex((index + 1) % examples.length)}
-                  aria-label="Next example"
-                  className="grid size-7 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
-                >
-                  <ChevronRight className="size-4" />
-                </button>
-              </div>
-            ) : (
-              <span />
-            )}
-            <Button size="sm" variant="primary" onClick={onUse} className="cursor-pointer font-bold">
-              Create with this style →
-            </Button>
-          </div>
+          {/* Paging only. The preview is for looking; committing to a
+              starting point is what the tile behind it is for, and putting
+              the same commitment inside the look made the dialog a second
+              way to start a project. */}
+          {many && (
+            <div className="flex shrink-0 items-center justify-center gap-2 border-t border-hair bg-canvas px-5 py-3">
+              <button
+                type="button"
+                onClick={() => onIndex((index - 1 + examples.length) % examples.length)}
+                aria-label="Previous example"
+                className="grid size-7 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+              <span className="text-caption font-bold tabular-nums text-ink-4">
+                {Math.min(index, examples.length - 1) + 1} / {examples.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => onIndex((index + 1) % examples.length)}
+                aria-label="Next example"
+                className="grid size-7 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </Portal>
@@ -392,7 +386,6 @@ export function StartingPointCard({
         examples={examples}
         index={index}
         onIndex={setIndex}
-        onUse={() => { setPreviewing(false); onSelect(); }}
         onClose={() => setPreviewing(false)}
         badgeIcon={badgeIcon}
       />
