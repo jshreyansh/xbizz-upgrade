@@ -41,13 +41,11 @@ const ROTATE_MS = 4000;
  */
 function ExampleFrame({
   example,
-  badgeIcon,
   large,
   videoRef,
   controls,
 }: {
   example: StartingPointExample;
-  badgeIcon?: React.ReactNode;
   /** Type steps up with the frame — a caption sized for a tile disappears. */
   large?: boolean;
   videoRef?: React.Ref<HTMLVideoElement>;
@@ -76,27 +74,6 @@ function ExampleFrame({
             !controls && "pointer-events-none"
           )}
         />
-        {/* What kind of thing this is, and what shape it comes out in. Only
-            in the preview: on a tile they sat over the frame, which is the
-            one part of a starting point that has to be seen, and the name
-            under the tile already answers what it is. */}
-        {large && (example.badge || example.aspect) && (
-          <div className="pointer-events-none absolute inset-x-0 top-0 flex min-w-0 items-center justify-between gap-2 p-4">
-            {example.badge ? (
-              <span className="inline-flex min-w-0 items-center gap-1.5 rounded-chip border border-white/10 bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md">
-                {badgeIcon}
-                <span className="truncate">{example.badge}</span>
-              </span>
-            ) : (
-              <span />
-            )}
-            {example.aspect && (
-              <span className="shrink-0 rounded-chip bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
-                {example.aspect}
-              </span>
-            )}
-          </div>
-        )}
       </>
     );
   }
@@ -107,20 +84,6 @@ function ExampleFrame({
      the caption below it is the one thing it must not do. */
   return (
     <div className={cn("pointer-events-none absolute inset-0 flex flex-col justify-between", large ? "gap-4 p-8" : "gap-2 p-4")}>
-      <div className={cn("flex min-w-0 items-center justify-between gap-2", !large && "hidden")}>
-        {example.badge && (
-          <span className="inline-flex min-w-0 items-center gap-1.5 rounded-chip border border-white/10 bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md">
-            {badgeIcon}
-            <span className="truncate">{example.badge}</span>
-          </span>
-        )}
-        {example.aspect && (
-          <span className="shrink-0 rounded-chip bg-white/90 px-2.5 py-0.5 text-caption font-bold text-ink shadow-xs">
-            {example.aspect}
-          </span>
-        )}
-      </div>
-
       <div className="min-w-0">
         {example.eyebrow && (
           <div className={cn("truncate font-bold uppercase tracking-wider text-white/70", large ? "text-body" : "text-label")}>
@@ -170,7 +133,6 @@ export function StartingPointPreviewModal({
   index,
   onIndex,
   onClose,
-  badgeIcon,
 }: {
   title: string;
   subtitle: string;
@@ -178,7 +140,6 @@ export function StartingPointPreviewModal({
   index: number;
   onIndex: (next: number) => void;
   onClose: () => void;
-  badgeIcon?: React.ReactNode;
 }) {
   const many = examples.length > 1;
   const current = examples[Math.min(index, examples.length - 1)] ?? examples[0];
@@ -226,7 +187,7 @@ export function StartingPointPreviewModal({
               className="relative mx-auto w-full max-w-[760px] overflow-hidden rounded-control"
               style={{ aspectRatio: "16 / 9", background: current.bg }}
             >
-              <ExampleFrame example={current} badgeIcon={badgeIcon} large controls={Boolean(current.videoSrc)} />
+              <ExampleFrame example={current} large controls={Boolean(current.videoSrc)} />
             </div>
           </div>
 
@@ -269,14 +230,12 @@ export function StartingPointCard({
   examples,
   onSelect,
   delayMs = 0,
-  badgeIcon,
 }: {
   title: string;
   subtitle: string;
   examples: StartingPointExample[];
   onSelect: () => void;
   delayMs?: number;
-  badgeIcon?: React.ReactNode;
 }) {
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
@@ -319,7 +278,7 @@ export function StartingPointCard({
         className="relative aspect-video overflow-hidden"
         style={{ background: current.bg }}
       >
-        <ExampleFrame example={current} badgeIcon={badgeIcon} videoRef={videoRef} />
+        <ExampleFrame example={current} videoRef={videoRef} />
 
         {/* Looking is not choosing. The tile starts a project, so the one
             thing you might want first — a proper look — gets a control of
@@ -387,7 +346,7 @@ export function StartingPointCard({
         index={index}
         onIndex={setIndex}
         onClose={() => setPreviewing(false)}
-        badgeIcon={badgeIcon}
+       
       />
     )}
     </>

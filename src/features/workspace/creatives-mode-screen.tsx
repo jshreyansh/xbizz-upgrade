@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Image as ImageIcon, Layers } from "lucide-react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
@@ -127,7 +126,6 @@ export function CreativesModeScreen() {
           title="Infographic / Chart"
           subtitle="One page led by a figure, for HCPs or patients"
           examples={CHART_EXAMPLES}
-          badgeIcon={<ImageIcon className="size-3 text-brand" />}
           delayMs={80}
           onSelect={() =>
             handleSelectMode(
@@ -140,7 +138,6 @@ export function CreativesModeScreen() {
           title="Presentation / Deck"
           subtitle="Multi-panel detail aid for the field team"
           examples={DECK_EXAMPLES}
-          badgeIcon={<Layers className="size-3 text-info" />}
           delayMs={125}
           onSelect={() =>
             handleSelectMode(
