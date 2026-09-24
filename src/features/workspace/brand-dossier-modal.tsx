@@ -112,7 +112,7 @@ function SelectedBrandTile({ brand, onChange }: { brand: BrandItem; onChange: ()
         <div className="flex items-center gap-2">
           <span className="truncate text-body-lg font-extrabold text-ink">{brand.name}</span>
           <span className="shrink-0 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok">
-            Dossier Ready
+            Verified
           </span>
         </div>
         <span className="truncate text-label italic text-ink-3">{brand.genericName}</span>
@@ -810,7 +810,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
                               <div className="flex items-center gap-2 shrink-0 ml-2">
                                 <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-chip border border-ok-line">
-                                  Dossier Ready
+                                  Verified
                                 </span>
                                 <span className="flex items-center gap-0.5 text-label font-bold text-brand transition-transform duration-150 group-hover:translate-x-0.5">
                                   Select <ChevronRight className="size-3" />
@@ -990,23 +990,23 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         key={top.id}
                         type="button"
                         onClick={() => toggleTopic(top.label)}
+                        /* One row, not a card with a body. The gloss under
+                           each label is gone, and a tile still holding the
+                           height for it stood a name in the top corner of an
+                           empty box. */
                         className={cn(
-                          "group relative flex flex-col justify-between p-3.5 rounded-control border text-left transition-all duration-150 cursor-pointer shadow-2xs min-h-[92px]",
+                          "group relative flex items-center gap-2.5 p-3 rounded-control border text-left transition-all duration-150 cursor-pointer shadow-2xs",
                           isSel
                             ? "border-brand bg-[#f3f9f5] ring-2 ring-brand/15 shadow-sm"
                             : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
                         )}
                       >
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <div className={cn("grid size-6 place-items-center rounded-glyph transition-colors shrink-0", isSel ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
-                              <IconComp className="size-3" />
-                            </div>
-                            <div className={cn("size-3.5 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
-                              {isSel && <Check className="size-2 stroke-[3]" />}
-                            </div>
-                          </div>
-                          <div className="text-body font-bold text-ink leading-snug">{top.label}</div>
+                        <div className={cn("grid size-7 place-items-center rounded-glyph transition-colors shrink-0", isSel ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
+                          <IconComp className="size-3.5" />
+                        </div>
+                        <span className="min-w-0 flex-1 text-body font-bold leading-snug text-ink">{top.label}</span>
+                        <div className={cn("size-4 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
+                          {isSel && <Check className="size-2.5 stroke-[3]" />}
                         </div>
                       </button>
                     );

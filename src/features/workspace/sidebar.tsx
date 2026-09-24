@@ -381,12 +381,12 @@ export function Sidebar() {
               )}
 
               {group.items.map((item) => {
-                /* A parent never carries the highlight: its shelves are
-                   always listed under it, and one of them is its own page,
-                   so lighting the parent too said the page was in two
-                   places. The child that is the page carries it. */
-                const isActive =
-                  !item.children && item.href !== "#" && pathname.startsWith(item.href);
+                /* The parent lights for the whole section and the child for
+                   the exact page, so a shelf inside Content Library reads as
+                   being inside it rather than as a row that happens to sit
+                   under one. Two different weights: solid on the parent,
+                   tint on the child. */
+                const isActive = item.href !== "#" && pathname.startsWith(item.href);
                 /* A parent row highlights for the section, but the child rows
                    carry the exact page — otherwise landing on Characters lit
                    two rows and told you nothing about which one you were on. */
