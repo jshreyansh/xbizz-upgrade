@@ -49,12 +49,14 @@ interface CreateTile {
   label: string;
   icon: string;
   targetAsset: string;
+  /** Named but not built. No link, and a badge that says why. */
+  soon?: boolean;
 }
 
 const CREATE_TILES: CreateTile[] = [
   { label: "Video", icon: "video", targetAsset: "video" },
   { label: "Docs", icon: "image", targetAsset: "infographic" },
-  { label: "Web", icon: "globe", targetAsset: "web" },
+  { label: "Web", icon: "globe", targetAsset: "web", soon: true },
 ];
 
 interface NavItem {
@@ -90,7 +92,6 @@ const ASSET_GROUPS: NavGroup[] = [
   {
     label: "Workspace",
     items: [
-      { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library" },
       {
         label: "Content Library",
         shortLabel: "Contents",
@@ -102,6 +103,7 @@ const ASSET_GROUPS: NavGroup[] = [
           { label: "Voices", href: "#", soon: true },
         ],
       },
+      { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library" },
       { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "/claims-library" },
     ],
   },
@@ -313,17 +315,26 @@ export function Sidebar() {
                   return (
                     <button
                       key={tile.label}
-                      onClick={() => handleCreateNav(tile.targetAsset)}
-                      className={`group flex w-full h-[40px] items-center gap-3 rounded-control px-3 text-left transition-all duration-150 cursor-pointer ${
-                        isTileActive
-                          ? "bg-brand text-white shadow-brand-lift font-bold"
-                          : "text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
+                      type="button"
+                      disabled={tile.soon}
+                      onClick={() => { if (!tile.soon) handleCreateNav(tile.targetAsset); }}
+                      className={`group flex w-full h-[40px] items-center gap-3 rounded-control px-3 text-left transition-all duration-150 ${
+                        tile.soon
+                          ? "cursor-not-allowed text-ink-4"
+                          : isTileActive
+                            ? "cursor-pointer bg-brand text-white shadow-brand-lift font-bold"
+                            : "cursor-pointer text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
                       }`}
                     >
-                      <span className={`shrink-0 transition-colors ${isTileActive ? "text-white" : "text-ink-3 group-hover:text-brand"}`}>
+                      <span className={`shrink-0 transition-colors ${tile.soon ? "text-ink-4" : isTileActive ? "text-white" : "text-ink-3 group-hover:text-brand"}`}>
                         <NavIcon name={tile.icon} />
                       </span>
                       <span className="truncate text-body-lg tracking-tight">{tile.label}</span>
+                      {tile.soon && (
+                        <span className="ml-auto shrink-0 rounded-chip bg-tint px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide text-brand-deep">
+                          Soon
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -370,7 +381,12 @@ export function Sidebar() {
               )}
 
               {group.items.map((item) => {
-                const isActive = item.href !== "#" && pathname.startsWith(item.href);
+                /* A parent never carries the highlight: its shelves are
+                   always listed under it, and one of them is its own page,
+                   so lighting the parent too said the page was in two
+                   places. The child that is the page carries it. */
+                const isActive =
+                  !item.children && item.href !== "#" && pathname.startsWith(item.href);
                 /* A parent row highlights for the section, but the child rows
                    carry the exact page — otherwise landing on Characters lit
                    two rows and told you nothing about which one you were on. */
@@ -417,10 +433,13 @@ export function Sidebar() {
                     </button>
                   </div>
 
-                  {!collapsed && item.children && isActive && (
-                    /* Hung off the parent with a hairline, so the indent reads
-                       as "inside this" rather than as three more top-level
-                       rows that happen to sit lower. */
+                  {!collapsed && item.children && (
+                    /* Always, not only while you are inside. A rail whose
+                       shape changes as you move through it cannot be learned,
+                       and Characters was reachable only from a screen you had
+                       to already be on. Hung off the parent with a hairline,
+                       so the indent reads as "inside this" rather than as
+                       three more top-level rows that happen to sit lower. */
                     <div className="relative mt-1 w-full space-y-0.5 pl-[26px]">
                       <span
                         aria-hidden
