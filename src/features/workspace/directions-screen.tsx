@@ -45,9 +45,11 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SwishXMark } from "@/components/ui/swishx-mark";
-import { AudienceIcon, ChannelIcon } from "@/components/ui/select-icons";
+import { AudienceIcon } from "@/components/ui/select-icons";
+// Destinations (parked): import { ChannelIcon } from "@/components/ui/select-icons";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
-import { displayIntendedUses, parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
+import { displayIntendedUses } from "@/features/workspace/intended-use";
+// Destinations (parked): import { parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { InfographicDirectionsScreen } from "@/features/workspace/infographic-directions-screen";
@@ -115,7 +117,7 @@ const SECTION_TITLES: Record<PlanSectionId, string> = {
 };
 
 const audienceOptions: Audience[] = ["HCP", "Patient", "Field team", "Hospital", "Distributor", "Consumer"];
-const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
+// Destinations (parked): const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
 const topics = ["Product introduction", "Mechanism", "Pivotal evidence", "Dosing & safety", "Patient impact"];
 const presenters = [
   { name: "Dr. Maya Kapoor", role: "Dermatologist · warm, reassuring", image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=160&q=80" },
@@ -2056,9 +2058,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     onToggle={() => toggleSection("delivery")}
                   >
                     <div className="space-y-3">
-                      {/* Destinations, parked rather than deleted. Where an
-                          asset goes changes the spec, so this comes back, but
-                          it is not a decision the plan acts on yet.
+                      {/* Destinations (parked) rather than deleted. Where an asset
+                          goes changes the spec, so this comes back, but it is
+                          not a decision the plan acts on yet. Its imports, its
+                          option list and MultiChoiceGroup are commented out
+                          under the same marker: search "Destinations (parked)"
+                          to restore all four together.
                       <DecisionRow
                         label="Destinations"
                         value={displayIntendedUses(intendedUse)}
@@ -2893,6 +2898,8 @@ function ChoiceGroup({
   );
 }
 
+/* Destinations (parked): the only caller is the commented-out Destinations
+   row in Delivery & Cost. It comes back with that row.
 function MultiChoiceGroup({
   label,
   values,
@@ -2940,6 +2947,7 @@ function MultiChoiceGroup({
     </div>
   );
 }
+*/
 
 function FormatChoices({
   label,
