@@ -111,7 +111,7 @@ const CLAIM_TEMPLATES: Record<string, ((name: string, generic: string) => string
   ],
   Commercial: [
     (n) =>
-      `${n} offers a differentiated value proposition versus existing standard-of-care options, on the basis of the outcomes demonstrated in its own programme rather than a cross-trial comparison. Differentiation is described in terms of what the evidence supports — the endpoints met, the population studied, the dosing regimen — and not as superiority, which would require a head-to-head study. Any comparative wording must name the comparator and the study it comes from.`,
+      `${n} offers a differentiated value proposition versus existing standard-of-care options, on the basis of the outcomes demonstrated in its own programme rather than a cross-trial comparison. Differentiation is described in terms of what the evidence supports. The endpoints met, the population studied, the dosing regimen, and not as superiority, which would require a head-to-head study. Any comparative wording must name the comparator and the study it comes from.`,
     (n) =>
       `Payer feedback positions ${n} favourably on total cost of care versus the current formulary standard, drawing on the budget-impact model submitted with the dossier and on advisory board input across the major accounts. Model assumptions must accompany any figure quoted from it, and the figure may not be presented as a realised saving. Individual payer decisions vary by contract and no access statement may be generalised from one account to another.`,
     (n) =>
@@ -247,7 +247,7 @@ const IMAGE_SEEDS: Record<
   },
   Side: {
     file: "pack_side_batch.png",
-    comment: "Side profile. Batch panel is visible — crop it out before any external use.",
+    comment: "Side profile. Batch panel is visible, crop it out before any external use.",
     by: { name: "Arjun Pillai", team: "Marketing" },
     added: "Jul 9, 2026",
     updated: "Sep 1, 2026",
@@ -261,7 +261,7 @@ const IMAGE_SEEDS: Record<
   },
   Packaging: {
     file: "carton_open_flat.png",
-    comment: "Carton with the leaflet in frame — for anything about what is in the box.",
+    comment: "Carton with the leaflet in frame, for anything about what is in the box.",
     by: { name: "Sana Qureshi", team: "Creative" },
     added: "Aug 18, 2026",
     updated: "Sep 5, 2026",
@@ -274,6 +274,24 @@ const IMAGE_SEEDS: Record<
     updated: "Nov 12, 2025",
     archived: true,
   },
+};
+
+/**
+ * Where the evidence behind a claim actually sits.
+ *
+ * A claim already names the dossier section it was written in, which says
+ * where we filed it. It did not say where anyone else could check it, and
+ * that is the question a reviewer asks first. Regulatory and safety wording
+ * lives in the label; clinical results live in the registry and the
+ * journals; commercial positioning is ours and says so.
+ */
+const EVIDENCE_SOURCE: Record<DossierTypeName, string[]> = {
+  Regulatory: ["FDA"],
+  Clinical: ["ClinicalTrials.gov", "PubMed", "FDA"],
+  Safety: ["FDA", "PubMed"],
+  Commercial: ["Data on file"],
+  Patient: ["PubMed", "FDA"],
+  HCP: ["PubMed", "FDA"],
 };
 
 function statusFor(index: number, verified: number, total: number): DossierEntryStatus {
@@ -362,6 +380,7 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
           id: `${product.id}-claim-${di}-${i}`,
           text: template ? template(product.name, product.genericName) : `Grounded claim for ${product.name}.`,
           source: `${d.type} dossier, section ${i + 1}`,
+          evidenceSource: EVIDENCE_SOURCE[d.type][i % EVIDENCE_SOURCE[d.type].length],
           dossierType: d.type,
           /* Everything in the library is approved. A claim that has not
              cleared review is not in the library yet — it is in the dossier
@@ -382,7 +401,7 @@ export function buildProductDetail(product: LibraryProduct): ProductDetail {
 
   const documents: ProductDocument[] = DOCUMENT_TEMPLATES.map((tpl, i) => ({
     id: `${product.id}-doc-${i}`,
-    name: `${product.name} — ${tpl.name}`,
+    name: `${product.name} · ${tpl.name}`,
     comment: tpl.comment,
     fileType: tpl.fileType,
     size: tpl.size,

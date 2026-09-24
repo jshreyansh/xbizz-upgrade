@@ -32,6 +32,7 @@ import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { DetailHeader, type DetailTab } from "@/components/patterns/detail-header";
 import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
+import { ClaimRow } from "@/features/claims-library/claim-row";
 import { DOSSIER_STATUS_STYLE as STATUS_STYLE } from "@/features/product-library/dossier-status";
 
 /** 1.8 MB, 420 KB — the way the seeded attachments already read. */
@@ -288,7 +289,7 @@ export function ProductDetailScreen({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-title font-extrabold tracking-tight text-ink">Product Images</h2>
-              <p className="text-body text-ink-3">Every image this brand has, by presentation — with what the person who uploaded it said it was for</p>
+              <p className="text-body text-ink-3">Every image this brand has, by presentation, with what the person who uploaded it said it was for</p>
             </div>
           </div>
 
@@ -412,7 +413,7 @@ export function ProductDetailScreen({
           </div>
 
           {visibleImages.length === 0 && (
-            <p className="py-6 text-center text-body text-ink-4">No images yet for this variant — upload one above.</p>
+            <p className="py-6 text-center text-body text-ink-4">No images yet for this variant, upload one above.</p>
           )}
         </div>
       )}
@@ -461,7 +462,7 @@ export function ProductDetailScreen({
         <div className="space-y-4">
           <div>
             <h2 className="text-title font-extrabold tracking-tight text-ink">Claims</h2>
-            <p className="text-body text-ink-3">Every statement approved for use — open one for its sources, the presentations it holds for, and where it has gone out</p>
+            <p className="text-body text-ink-3">Every statement approved for use, open one for its sources, the presentations it holds for, and where it has gone out</p>
           </div>
 
           {detail.claims.length === 0 ? (
@@ -470,12 +471,14 @@ export function ProductDetailScreen({
                 <ListChecks size={20} />
               </span>
               <p className="text-body-lg font-bold text-ink-2">No claims cited yet</p>
-              <p className="max-w-[36ch] text-body text-ink-4">Dossiers for this product haven&rsquo;t started — claims appear here once a dossier cites them.</p>
+              <p className="max-w-[36ch] text-body text-ink-4">Dossiers for this product haven&rsquo;t started, claims appear here once a dossier cites them.</p>
             </div>
           ) : (
             /* Rows, like the dossiers and the attachments above. A claim is a
                sentence and a way in; a card gave it a picture's worth of room
-               and let eighteen of them fill the screen. */
+               and let eighteen of them fill the screen. Same row as the
+               Claims Library, without the brand chip — every row here is
+               this brand's. */
             <div className="flex flex-col gap-2">
               {detail.claims.map((c) => (
                 <div
@@ -486,16 +489,7 @@ export function ProductDetailScreen({
                   onKeyDown={(e) => { if (e.key === "Enter") router.push(`/claims-library/${c.id}`); }}
                   className="group flex cursor-pointer flex-wrap items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair transition-all hover:border-hair-3 hover:shadow-soft"
                 >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-control bg-ok-bg text-ok">
-                    <ListChecks size={16} />
-                  </span>
-                  <p className="line-clamp-2 min-w-0 flex-1 text-body-lg leading-snug text-ink-2">{c.text}</p>
-                  <span className="shrink-0 rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ok">
-                    Approved
-                  </span>
-                  <span className="inline-flex shrink-0 items-center gap-1 text-body-lg font-bold text-brand transition-all group-hover:gap-1.5 group-hover:text-brand-deep">
-                    View details →
-                  </span>
+                  <ClaimRow claim={c} />
                 </div>
               ))}
             </div>
@@ -569,7 +563,7 @@ export function ProductDetailScreen({
           </div>
           {visibleDocs.length === 0 && (
             <p className="py-10 text-center text-body-lg text-ink-4">
-              {docShelf === "archived" ? "Nothing archived." : "No attachments yet — add one above."}
+              {docShelf === "archived" ? "Nothing archived." : "No attachments yet. Add one above."}
             </p>
           )}
         </div>

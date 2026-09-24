@@ -98,6 +98,21 @@ function publishedFor(product: LibraryProduct): LibraryAsset[] {
 }
 
 /**
+ * A claim's reference, as somebody would write it in an email.
+ *
+ * The internal id is "affolmy-claim-1-2", which is a key rather than a name.
+ * A reviewer asking about one needs something they can say out loud and find
+ * again: the brand's three letters and its number in that brand's set.
+ */
+export function claimCode(claimId: string): string {
+  const match = claimId.match(/^(.+)-claim-(\d+)-(\d+)$/);
+  if (!match) return claimId.slice(0, 12).toUpperCase();
+  const [, brand, group, index] = match;
+  const n = Number(group) * 3 + Number(index) + 1;
+  return `${brand.replace(/[^a-z0-9]/gi, "").slice(0, 3).toUpperCase()}-C${String(n).padStart(2, "0")}`;
+}
+
+/**
  * When a claim last changed, without building its whole record.
  *
  * The shelf needs one line in a tile footer; buildClaimDetail assembles

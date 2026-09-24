@@ -52,6 +52,8 @@ export interface ProductClaim {
   id: string;
   text: string;
   source: string;
+  /** The public record the evidence sits in: FDA, PubMed, the trial registry. */
+  evidenceSource: string;
   dossierType: DossierTypeName;
   status: ClaimStatus;
 }
