@@ -88,7 +88,7 @@ interface NavGroup {
 
 const ASSET_GROUPS: NavGroup[] = [
   {
-    label: "Assets",
+    label: "Workspace",
     items: [
       { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library" },
       {
