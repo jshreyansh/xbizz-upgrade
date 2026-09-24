@@ -86,7 +86,7 @@ export function MediaPlaceholder({
       )}
       aria-hidden={!onScreen}
       aria-busy
-      aria-label={`${noun} generating — ${label}${timing ? ` — ${timing.inAt}s to ${timing.outAt}s, ${timing.transitionIn}` : ""}`}
+      aria-label={`${noun} generating, ${label}${timing ? `, ${timing.inAt}s to ${timing.outAt}s, ${timing.transitionIn}` : ""}`}
     >
       {/* The sweep says work in progress; the solid ground beneath it says the
           slot is real. Both are needed — the sweep alone on a transparent box
@@ -157,7 +157,7 @@ export function AudioGeneratingPill({
   return (
     <div
       aria-busy
-      aria-label={`${label} generating${timing ? ` — ${timing.inAt}s to ${timing.outAt}s` : ""}`}
+      aria-label={`${label} generating${timing ? `, ${timing.inAt}s to ${timing.outAt}s` : ""}`}
       className="relative inline-flex items-center gap-2.5 overflow-hidden rounded-chip bg-brand px-3.5 py-2 shadow-brand-lift"
     >
       <span aria-hidden className="shimmer pointer-events-none absolute inset-0" />

@@ -71,7 +71,7 @@ export function ArtSlot({
       role={interactive ? "button" : undefined}
       tabIndex={interactive ? 0 : undefined}
       aria-busy={!ready}
-      aria-label={ready ? layer.label : `${layer.label} generating — ${secondsLeft}s`}
+      aria-label={ready ? layer.label : `${layer.label} generating, ${secondsLeft}s`}
       onClick={(e) => {
         if (!interactive) return;
         e.stopPropagation();

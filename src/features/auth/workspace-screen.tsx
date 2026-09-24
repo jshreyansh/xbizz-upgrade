@@ -40,7 +40,7 @@ export function WorkspaceScreen() {
             <em style={{ fontStyle: "normal", background: "linear-gradient(96deg,#ffd8c6,#ff8654 48%,#ffcbb4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>set the rules.</em>
           </h1>
           <p style={{ fontSize: 16.5, lineHeight: 1.62, color: "rgba(255,255,255,.7)", maxWidth: "46ch", margin: 0 }}>
-            Pick every market you operate in. Each asset is written against the label and promotional guidance of the market it ships to — so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim.
+            Pick every market you operate in. Each asset is written against the label and promotional guidance of the market it ships to, so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim.
           </p>
         </div>
         <p style={{ margin: 0, fontSize: 11.5, color: "rgba(255,255,255,.34)", letterSpacing: ".01em" }}>

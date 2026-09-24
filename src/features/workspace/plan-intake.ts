@@ -57,7 +57,7 @@ export function buildIntakeQuestions(
     id: `file-${file.id}`,
     kind: "attachment",
     fileName: file.name,
-    prompt: `You attached **${file.name}** but didn't say what it's for. What should I take from it — ${roleOptions(file.kind)}?`,
+    prompt: `You attached **${file.name}** but didn't say what it's for. What should I take from it, ${roleOptions(file.kind)}?`,
   }));
 
   if (assetType === "infographic") {
@@ -71,7 +71,7 @@ export function buildIntakeQuestions(
       {
         id: "shape",
         kind: "shape",
-        prompt: "And what shape — A4 print, 3:4 tablet, or 16:9 screen?",
+        prompt: "And what shape, A4 print, 3:4 tablet, or 16:9 screen?",
       },
     ];
   }
@@ -98,7 +98,7 @@ export function intakeBundlePrompt(questions: IntakeQuestion[]): string {
   if (questions.length === 1) return questions[0].prompt;
   const lines = questions.map((question, index) => `**${index + 1}.** ${question.prompt}`);
   return [
-    `${questions.length} things and I can lay the plan out — answer them together or one line each.`,
+    `${questions.length} things and I can lay the plan out, answer them together or one line each.`,
     "",
     ...lines,
   ].join("\n");

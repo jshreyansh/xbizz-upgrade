@@ -48,7 +48,7 @@ export function LogoWatermark({
     <div
       role={onSelect ? "button" : undefined}
       tabIndex={onSelect ? 0 : undefined}
-      aria-label={`Brand mark — ${logo.name}`}
+      aria-label={`Brand mark, ${logo.name}`}
       data-logo-watermark
       onClick={(e) => {
         if (!onSelect) return;
@@ -141,9 +141,9 @@ export function collidesWithLogo(
 }
 
 export const LOGO_CORNERS: { id: LogoCorner | "none"; label: string; hint: string }[] = [
-  { id: "bottom-right", label: "Bottom right", hint: "Beside the job code — the usual place" },
+  { id: "bottom-right", label: "Bottom right", hint: "Beside the job code. The usual place" },
   { id: "bottom-left", label: "Bottom left", hint: "Footer, leading side" },
   { id: "top-right", label: "Top right", hint: "Trailing corner, above the content" },
   { id: "top-left", label: "Top left", hint: "Leading corner, above the content" },
-  { id: "none", label: "No logo", hint: "Ships unbranded — preflight will flag it" },
+  { id: "none", label: "No logo", hint: "Ships unbranded, preflight will flag it" },
 ];

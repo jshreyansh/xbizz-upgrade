@@ -47,7 +47,7 @@ export default function DossierDetailClient() {
   }
 
   return (
-    <AppShell pageTitle={`${activeType} dossier — ${product.name}`}>
+    <AppShell pageTitle={`${activeType} dossier, ${product.name}`}>
       <div className="page-enter space-y-6">
         <button
           onClick={() => router.push(`/product-library/${product.id}`)}

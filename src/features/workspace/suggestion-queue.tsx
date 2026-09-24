@@ -59,7 +59,7 @@ function Row({ item }: { item: SuggestionSnapshot }) {
       <Tick status={item.status} />
       <span className={cn("min-w-0 text-label", item.status === "done" ? "text-ink-4 line-through" : "text-ink")}>
         <span className="font-bold">{item.elementLabel}</span>
-        <span className="text-ink-3"> — </span>
+        <span className="text-ink-3">, </span>
         <span>{item.text}</span>
       </span>
     </li>
@@ -75,7 +75,7 @@ function Row({ item }: { item: SuggestionSnapshot }) {
  * chat message is prose; what the agent is holding is said, not drawn.
  */
 export function listSuggestions(items: Suggestion[]): string {
-  return items.map((item, i) => `${i + 1}. **${item.elementLabel}** — ${item.text}`).join("\n");
+  return items.map((item, i) => `${i + 1}. **${item.elementLabel}**, ${item.text}`).join("\n");
 }
 
 /**

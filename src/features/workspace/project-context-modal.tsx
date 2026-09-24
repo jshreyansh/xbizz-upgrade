@@ -33,7 +33,7 @@ export type ContextField = "brand" | "audience" | "topics" | "frame";
 const FIELD_TITLES: Record<ContextField, { title: string; hint: string }> = {
   brand: { title: "Brand", hint: "What the asset is grounded in. Claims are checked against this dossier." },
   audience: { title: "Audience", hint: "Who this is for. It decides the language, the claims and the topics offered." },
-  topics: { title: "Focus topics", hint: "The story pillars. One to three — more than that and none of them land." },
+  topics: { title: "Focus topics", hint: "The story pillars. One to three, more than that and none of them land." },
   frame: { title: "Frame size", hint: "The shape the asset is composed for." },
 };
 
@@ -190,7 +190,7 @@ export function ProjectContextModal({
                 <p className="text-label font-bold text-ink-2">
                   {draft.topics.length} of 3 selected
                   {draft.topics.length >= 3 && (
-                    <span className="ml-1.5 font-semibold text-ink-4">— deselect one to choose another</span>
+                    <span className="ml-1.5 font-semibold text-ink-4">. Deselect one to choose another.</span>
                   )}
                 </p>
                 <div className="grid gap-2">

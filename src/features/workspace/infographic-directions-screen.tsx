@@ -120,7 +120,7 @@ const CONTENT_ANGLES = [
 ];
 
 const LOGO_PLACEMENTS = [
-  { id: "bottom-right", label: "Bottom right", desc: "Beside the job code — the usual place" },
+  { id: "bottom-right", label: "Bottom right", desc: "Beside the job code. The usual place" },
   { id: "bottom-left", label: "Bottom left", desc: "Footer, leading side" },
   { id: "top-right", label: "Top right", desc: "Trailing corner, above the content" },
   { id: "top-left", label: "Top left", desc: "Leading corner, above the content" },
@@ -459,7 +459,7 @@ export function InfographicDirectionsScreen() {
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left — grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
+        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left, grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
       });
       setPlanPhase("plan");
     }, 650);
@@ -519,8 +519,8 @@ export function InfographicDirectionsScreen() {
           role: "swishx",
           text:
             attached.length === 1
-              ? `Got **${attached[0].name}**. Where should it go — a grounded source, page artwork, a creative reference for the look, or just context for this question?`
-              : `Got ${attached.length} files. Where should they go — grounded sources, page artwork, creative references for the look, or just context for this question?`,
+              ? `Got **${attached[0].name}**. Where should it go. A grounded source, page artwork, a creative reference for the look, or just context for this question?`
+              : `Got ${attached.length} files. Where should they go, grounded sources, page artwork, creative references for the look, or just context for this question?`,
         });
       }, 600);
       return;
@@ -563,7 +563,7 @@ export function InfographicDirectionsScreen() {
         ]);
         setOpenSection("references");
         say(
-          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual & creative references**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the layout — no claim will ground in it.`
+          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual & creative references**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the layout. No claim will ground in it.`
         );
         return;
       }
@@ -581,7 +581,7 @@ export function InfographicDirectionsScreen() {
       }
       if (/\b(context|just|only|nothing|ignore|question|message)\b/.test(lower)) {
         setPendingChatFiles([]);
-        say(`Understood — reading ${files.length === 1 ? "it" : "them"} for this question only. Nothing added to the plan.`);
+        say(`Understood, reading ${files.length === 1 ? "it" : "them"} for this question only. Nothing added to the plan.`);
         return;
       }
     }

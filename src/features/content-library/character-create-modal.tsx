@@ -241,7 +241,7 @@ export function CharacterCreateModal({
                         className="h-20 w-32 shrink-0 rounded-glyph border border-hair-2 object-cover"
                       />
                       <span className="text-caption text-ink-4">
-                        Example footage — this is the coverage a good take gives you.
+                        Example footage. This is the coverage a good take gives you.
                       </span>
                     </div>
                   </div>

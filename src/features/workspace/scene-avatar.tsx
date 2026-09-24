@@ -53,7 +53,7 @@ export function SceneAvatarLayer({
       role={onSelect ? "button" : undefined}
       tabIndex={onSelect ? 0 : undefined}
       aria-busy={!ready}
-      aria-label={ready ? `Presenter — ${avatar.name}` : `Presenter generating — ${avatar.name}`}
+      aria-label={ready ? `Presenter, ${avatar.name}` : `Presenter generating, ${avatar.name}`}
       onClick={(e) => {
         if (!onSelect) return;
         e.stopPropagation();

@@ -26,7 +26,7 @@ interface DossierPreviewChatProps {
   finishLabel?: string;
 }
 
-export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = "Looks good — finish" }: DossierPreviewChatProps) {
+export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = "Looks good, finish" }: DossierPreviewChatProps) {
   function findSectionMatch(lower: string) {
     return dossier.sections.find((s) =>
       s.title
@@ -47,7 +47,7 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
     const lower = text.toLowerCase();
 
     if (isQuestion(text)) {
-      return "I can fix a section's wording, flag a role for approval, or attach a supporting document as a cited source — just tell me what to do, or attach a file with the 📎 icon. Everything updates in the preview on the left instantly.";
+      return "I can fix a section's wording, flag a role for approval, or attach a supporting document as a cited source, just tell me what to do, or attach a file with the 📎 icon. Everything updates in the preview on the left instantly.";
     }
 
     if (/(fix|change|update|edit|revise|rewrite|correct)/.test(lower)) {
@@ -58,14 +58,14 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
           claimsCited: d.claimsCited + 1,
           sections: d.sections.map((s) =>
             s.id === section.id
-              ? { ...s, content: `${s.content} Revised per your note — "${text}".`, claimsCount: s.claimsCount + 1, edited: true }
+              ? { ...s, content: `${s.content} Revised per your note, "${text}".`, claimsCount: s.claimsCount + 1, edited: true }
               : s
           ),
         }));
-        return `Updated "${section.title}" — you'll see it marked as edited in the preview.`;
+        return `Updated "${section.title}", you'll see it marked as edited in the preview.`;
       }
       onChange((d) => ({ ...d, changeLog: [...(d.changeLog ?? []), text] }));
-      return "Got it — I've logged that as an open item for the medical writer to address.";
+      return "Got it, I've logged that as an open item for the medical writer to address.";
     }
 
     if (/(approv|pending review|reviewer|sign.?off)/.test(lower)) {
@@ -75,21 +75,21 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
           ...d,
           approvals: d.approvals.map((a) => (a.role === approval.role ? { ...a, status: "reviewing" } : a)),
         }));
-        return `Marked as pending review — ${approval.role} will see this in their approval queue below.`;
+        return `Marked as pending review, ${approval.role} will see this in their approval queue below.`;
       }
       return "All approvals are already cleared for this dossier.";
     }
 
     if (/(upload|attach|document|file|support)/.test(lower)) {
-      return "Sure — click the 📎 icon below and I'll attach it as a cited source right away.";
+      return "Sure, click the 📎 icon below and I'll attach it as a cited source right away.";
     }
 
     onChange((d) => ({ ...d, changeLog: [...(d.changeLog ?? []), text] }));
-    return "Noted — I've logged that for the review team.";
+    return "Noted, I've logged that for the review team.";
   }
 
   const { messages, thinking, send, pushUser, pushAssistant } = useAssistantChat(
-    `Here's the first draft of ${dossier.brandName}'s dossier. Tell me what to fix, flag for approval, or attach a supporting document — I'll update the preview on the left live.`,
+    `Here's the first draft of ${dossier.brandName}'s dossier. Tell me what to fix, flag for approval, or attach a supporting document, I'll update the preview on the left live.`,
     respond
   );
 
@@ -103,14 +103,14 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
         { id: `src-user-${d.sources.length + 1}`, name: file.name, type: "slides", date: "Just now", status: "approved", details: "Attached by you", citationCount: 0 },
       ],
     }));
-    pushAssistant(`Added "${file.name}" as a cited source — it now shows in Sources on the left.`);
+    pushAssistant(`Added "${file.name}" as a cited source. It now shows in Sources on the left.`);
   }
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 4 }}>
         <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: 0, color: "var(--ink)" }}>
-          Preview — {dossier.brandName}
+          Preview, {dossier.brandName}
         </h1>
         {dossier.generatedBy === "ai" ? (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, color: "var(--brand-deep)", background: "var(--tint)", border: "1px solid var(--tint-line)", padding: "3px 9px", borderRadius: 99, flexShrink: 0 }}>
@@ -129,7 +129,7 @@ export function DossierPreviewChat({ dossier, onChange, onFinish, finishLabel = 
         )}
       </div>
       <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "0 0 18px" }}>
-        {dossier.sectionsCount} sections drafted and grounded to {dossier.sourcesCount} sources. Ask for changes on the right — this is the exact view you&rsquo;d walk a client through.
+        {dossier.sectionsCount} sections drafted and grounded to {dossier.sourcesCount} sources. Ask for changes on the right. This is the exact view you&rsquo;d walk a client through.
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.35fr 1fr", gap: 20, alignItems: "start" }}>

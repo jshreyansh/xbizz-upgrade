@@ -58,7 +58,7 @@ const CREATION_OPTIONS: CreationOption[] = [
   {
     icon: WandSparkles,
     title: "Start Creating",
-    description: "Bring a brand or a brief — SwishX picks the right format.",
+    description: "Bring a brand or a brief. SwishX picks the right format.",
     href: "/dossiers",
     gradient: "linear-gradient(140deg,#ff7a3d,var(--brand) 55%,#d8320c)",
   },
@@ -72,7 +72,7 @@ const CREATION_OPTIONS: CreationOption[] = [
   {
     icon: LayoutTemplate,
     title: "Canvas & Creatives",
-    description: "Print and digital layouts — ads, leave-behinds, banners.",
+    description: "Print and digital layouts, ads, leave-behinds, banners.",
     href: "#",
     gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)",
     soon: true,

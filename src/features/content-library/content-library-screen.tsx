@@ -62,8 +62,7 @@ export function ContentLibraryScreen() {
           All Content
         </h1>
         <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-          Every asset you have published — open one to see exactly what the shared link shows, with
-          the comments your reviewers left on it.
+          Everything you have published, with the comments your reviewers left on it.
         </p>
       </div>
 

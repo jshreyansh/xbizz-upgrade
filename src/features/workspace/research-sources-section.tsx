@@ -151,7 +151,7 @@ export function ResearchSourcesContent({
               </p>
               <p className="mt-0.5 text-label leading-snug text-ink-2">
                 {conflictingMarkets.join(" and ")} approved sources are both attached. One label has
-                to govern this asset — choose which, and the others are removed.
+                to govern this asset, choose which, and the others are removed.
               </p>
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {conflictingMarkets.map((market) => (
@@ -489,7 +489,7 @@ export function ResearchSourcesContent({
           files={pending}
           title={pending.length === 1 ? "What is this file for?" : "What are these files for?"}
           prompt="A note travels with each file, so the plan grounds it in the right thing rather than guessing."
-          placeholder="e.g. the Week 16 efficacy table — use these numbers, not the ones in the brief"
+          placeholder="e.g. the Week 16 efficacy table, use these numbers, not the ones in the brief"
           onCancel={() => setPending([])}
           onConfirm={(notes) => {
             onSetUploadedDocs((prev) => [
@@ -512,7 +512,7 @@ export function ResearchSourcesContent({
           files={[{ id: "edit", name: editing.doc.name, kind: "doc", note: editing.doc.note ?? "" }]}
           title="What is this file for?"
           prompt="The note travels with the file wherever the plan uses it."
-          placeholder="e.g. the Week 16 efficacy table — use these numbers, not the ones in the brief"
+          placeholder="e.g. the Week 16 efficacy table, use these numbers, not the ones in the brief"
           onCancel={() => setEditing(null)}
           onConfirm={(notes) => {
             const next = notes.edit.trim();

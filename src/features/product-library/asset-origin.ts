@@ -2,5 +2,5 @@ import type { AssetOrigin } from "@/features/product-library/product-library-typ
 
 /** "Arjun Pillai — Marketing". A name on its own is not an answer. */
 export function originLabel(origin: AssetOrigin): string {
-  return `${origin.name} — ${origin.team}`;
+  return `${origin.name} · ${origin.team}`;
 }

@@ -68,7 +68,7 @@ function ViewAsSwitcher() {
           )}
         >
           {options.map((m) => (
-            <option key={m.id} value={m.id}>{m.name} — {m.role}</option>
+            <option key={m.id} value={m.id}>{m.name}, {m.role}</option>
           ))}
         </select>
         <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-ink-3" />

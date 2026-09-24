@@ -71,7 +71,7 @@ const VEEVA_LOGS: IntegrationLog[] = [
   { id: "v1", at: "Today, 09:14", direction: "pull", object: "Approved claims",   records: 214, status: "ok" },
   { id: "v2", at: "Today, 09:14", direction: "pull", object: "Product records",   records: 12,  status: "ok" },
   { id: "v3", at: "Yesterday, 18:02", direction: "push", object: "Asset metadata", records: 3,  status: "ok" },
-  { id: "v4", at: "Yesterday, 11:47", direction: "pull", object: "Approved claims", records: 0, status: "failed", detail: "Auth token expired — reconnect required" },
+  { id: "v4", at: "Yesterday, 11:47", direction: "pull", object: "Approved claims", records: 0, status: "failed", detail: "Auth token expired, reconnect required" },
   { id: "v5", at: "2 days ago, 09:10", direction: "pull", object: "Approved claims", records: 211, status: "ok" },
 ];
 
@@ -91,7 +91,7 @@ const CHANNELS: TeamsChannel[] = [
 
 const PRONUNCIATIONS: Pronunciation[] = [
   { id: "p1", term: "Velmora",     phonetic: "vel-MOR-uh",        notes: "Stress the second syllable",         addedBy: "Maya Kapoor",   addedAt: "12 Aug 2026" },
-  { id: "p2", term: "tirzelamide", phonetic: "tur-ZEL-uh-mide",   notes: "Molecule name — never abbreviated",  addedBy: "Dr. Anita Rao", addedAt: "12 Aug 2026" },
+  { id: "p2", term: "tirzelamide", phonetic: "tur-ZEL-uh-mide",   notes: "Molecule name, never abbreviated",  addedBy: "Dr. Anita Rao", addedAt: "12 Aug 2026" },
   { id: "p3", term: "DERMORA",     phonetic: "der-MOR-uh",        notes: "Matches Velmora's cadence",          addedBy: "Maya Kapoor",   addedAt: "20 Aug 2026" },
   { id: "p4", term: "eGFR",        phonetic: "ee-jee-eff-arr",    notes: "Spell it out, never 'egfr'",         addedBy: "Priya Nair",    addedAt: "2 Sep 2026" },
   { id: "p5", term: "EMBRACE-3",   phonetic: "em-BRACE three",    notes: "Trial name; say the numeral",        addedBy: "Dr. Anita Rao", addedAt: "2 Sep 2026" },
@@ -114,13 +114,13 @@ const TOPUPS: TopUpEntry[] = [
 
 const INVOICES: Invoice[] = [
   { id: "i1", number: "INV-2026-0912", at: "1 Sep 2026", period: "Sep 2026", amount: "$4,000.00", status: "paid",
-    lines: [{ description: "Enterprise plan — monthly", amount: "$2,000.00" }, { description: "Credit top-up — 50,000", amount: "$2,000.00" }] },
+    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 50,000", amount: "$2,000.00" }] },
   { id: "i2", number: "INV-2026-0844", at: "1 Aug 2026", period: "Aug 2026", amount: "$4,000.00", status: "paid",
-    lines: [{ description: "Enterprise plan — monthly", amount: "$2,000.00" }, { description: "Credit top-up — 50,000", amount: "$2,000.00" }] },
+    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 50,000", amount: "$2,000.00" }] },
   { id: "i3", number: "INV-2026-0771", at: "1 Jul 2026", period: "Jul 2026", amount: "$2,800.00", status: "paid",
-    lines: [{ description: "Enterprise plan — monthly", amount: "$2,000.00" }, { description: "Credit top-up — 10,000", amount: "$800.00" }] },
+    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 10,000", amount: "$800.00" }] },
   { id: "i4", number: "INV-2026-1001", at: "1 Oct 2026", period: "Oct 2026", amount: "$2,000.00", status: "due",
-    lines: [{ description: "Enterprise plan — monthly", amount: "$2,000.00" }] },
+    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }] },
 ];
 
 interface SettingsState {

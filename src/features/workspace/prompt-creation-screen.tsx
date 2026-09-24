@@ -297,7 +297,7 @@ export function PromptCreationScreen() {
                 )}
               </div>
               <span className="text-label text-ink-4">
-                {brand ? "Claims will cite this dossier only" : "Optional — leave open for a general script"}
+                {brand ? "Claims will cite this dossier only" : "Optional, leave open for a general script"}
               </span>
             </div>
 

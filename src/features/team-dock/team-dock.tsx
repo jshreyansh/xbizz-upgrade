@@ -77,7 +77,7 @@ export function TeamDock() {
     setTimeout(() => {
       let replyMember: TeamMember["key"] = "brand";
       let replyName = "Medical Writer";
-      let replyText = "On it — I will cross-reference the relevant section in the dossier and update the scene script.";
+      let replyText = "On it. I will cross-reference the relevant section in the dossier and update the scene script.";
 
       if (text.toLowerCase().includes("safety") || text.toLowerCase().includes("fda") || text.toLowerCase().includes("citation")) {
         replyMember = "green";

@@ -5,7 +5,7 @@ import type { BrandDossier, DossierSection, RegulatoryBody, UnverifiedClaim } fr
  *  that Video, Canvas, and Website studios read from. Kept verbatim so
  *  it stays auditable against whatever the product team hands us next. */
 export const DOSSIER_SYSTEM_PROMPT = `You are the Brand Dossier Generator for Content IQ. You convert whatever a
-user provides about their brand into a structured brand dossier — the single
+user provides about their brand into a structured brand dossier. The single
 source of truth that Video, Canvas, and Website studios will read from.
 
 You will be given:
@@ -18,7 +18,7 @@ Fill exactly these seven sections. For every field:
 - Use only what is stated or directly inferable from RAW_INPUT or
   EXISTING_DOSSIER. Do not invent facts, competitors, numbers, or claims.
 - If a field cannot be supported by the input, set its value to null and add
-  it to "needs_review" — never guess to fill a gap.
+  it to "needs_review", never guess to fill a gap.
 - Tag each filled field's confidence as "high" (stated directly),
   "medium" (reasonably inferred), or "low" (weak signal, should be
   user-confirmed).
@@ -44,15 +44,15 @@ SECTIONS AND FIELDS:
 
 06_guardrails: regulatory_constraints, restricted_claims,
   required_disclaimers, trademark_rules
-  — if the input signals a regulated category (health, finance, alcohol,
+ , if the input signals a regulated category (health, finance, alcohol,
     children's products, etc.), flag it explicitly here even if no
     guideline text was provided, and mark confidence "low" pending legal
     review.
 
 07_asset_library: provided_assets (list of {name, type, tag}) drawn only
-  from files actually referenced in RAW_INPUT — do not list placeholders.
+  from files actually referenced in RAW_INPUT, do not list placeholders.
 
-OUTPUT — return only this JSON, no prose outside it:
+OUTPUT, return only this JSON, no prose outside it:
 
 {
   "sections": {
@@ -111,7 +111,7 @@ function formatFieldValue(value: unknown): string {
   if (Array.isArray(value)) {
     if (value.length === 0) return "Not stated";
     return value
-      .map((v) => (typeof v === "object" && v !== null ? Object.values(v).join(" — ") : String(v)))
+      .map((v) => (typeof v === "object" && v !== null ? Object.values(v).join(", ") : String(v)))
       .join("; ");
   }
   if (typeof value === "object") return Object.values(value).join(", ");

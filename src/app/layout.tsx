@@ -24,7 +24,7 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "SwishX — Content Studio",
+  title: "SwishX Content Studio",
   description: "Evidence-native creative production for life sciences.",
 };
 

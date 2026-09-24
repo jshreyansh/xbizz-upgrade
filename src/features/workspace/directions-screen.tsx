@@ -679,7 +679,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     addChatMessage({ role: "user", text: next });
     addChatMessage({
       role: "swishx",
-      text: "Thanks — re-reading the plan against that. The parameters on the left have been updated.",
+      text: "Thanks, re-reading the plan against that. The parameters on the left have been updated.",
     });
   };
 
@@ -904,8 +904,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       addChatMessage({
         role: "swishx",
         text: requestTooVague
-          ? `Before I write anything: this request doesn't say what the asset has to do. Tell me the communication job — who it is for and what it has to land — with **Edit the prompt**, in Research and Sources.`
-          : `I can't build a script yet — there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Edit the prompt** in Research and Sources to give me the context in words.`,
+          ? `Before I write anything: this request doesn't say what the asset has to do. Tell me the communication job, who it is for and what it has to land, with **Edit the prompt**, in Research and Sources.`
+          : `I can't build a script yet, there's no approved **${brandName}** dossier for this request and nothing attached. Attach a source file, or use **Edit the prompt** in Research and Sources to give me the context in words.`,
       });
       return;
     }
@@ -931,7 +931,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         setOpenSection("sources");
         addChatMessage({
           role: "swishx",
-          text: `I read every attached file and found nothing a claim can be grounded in, so I've stopped before the script — they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Edit the prompt** in Research and Sources to supply the context directly.`,
+          text: `I read every attached file and found nothing a claim can be grounded in, so I've stopped before the script, they're flagged in **Research and Sources**. Replace them with clinical or label material, or use **Edit the prompt** in Research and Sources to supply the context directly.`,
         });
       }, 1400);
       return;
@@ -1010,7 +1010,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left — grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
+        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left, grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
       });
       setPlanPhase("plan");
     }, 650);
@@ -1043,8 +1043,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           role: "swishx",
           text:
             attached.length === 1
-              ? `Got **${attached[0].name}**. Where should it go — a grounded source, product media for the scenes, a creative reference for the look, or just context for this question?`
-              : `Got ${attached.length} files. Where should they go — grounded sources, product media for the scenes, creative references for the look, or just context for this question?`,
+              ? `Got **${attached[0].name}**. Where should it go. A grounded source, product media for the scenes, a creative reference for the look, or just context for this question?`
+              : `Got ${attached.length} files. Where should they go, grounded sources, product media for the scenes, creative references for the look, or just context for this question?`,
         });
       }, 600);
       return;
@@ -1111,13 +1111,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         ]);
         setOpenSection("references");
         say(
-          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual & creative references**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the treatment — no claim will ground in it.`
+          `Filed ${files.length === 1 ? `**${files[0].name}**` : `${files.length} files`} under **Visual & creative references**, with your note against ${files.length === 1 ? "it" : "them"}. It steers the treatment. No claim will ground in it.`
         );
         return;
       }
       if (/\b(context|just|only|nothing|ignore|question|message)\b/.test(lower)) {
         setPendingChatFiles([]);
-        say(`Understood — reading ${files.length === 1 ? "it" : "them"} for this question only. Nothing added to the plan.`);
+        say(`Understood, reading ${files.length === 1 ? "it" : "them"} for this question only. Nothing added to the plan.`);
         return;
       }
     }
@@ -1299,8 +1299,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           This request is too vague to plan from
                         </p>
                         <p className="mt-0.5 text-body leading-snug text-ink-2">
-                          Everything below is a guess. Say what the asset has to do — who it speaks
-                          to and what it has to land — and the plan will be built from that instead.
+                          Everything below is a guess. Say what the asset has to do, who it speaks
+                          to and what it has to land, and the plan will be built from that instead.
                         </p>
                         <div className="mt-3">
                           <Button size="sm" variant="primary" onClick={openPromptEditor} className="text-label font-bold cursor-pointer">
@@ -1549,7 +1549,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     title="Brand mark"
                     summary={
                       logoMark.position === "none"
-                        ? "No logo — the asset ships unbranded"
+                        ? "No logo. The asset ships unbranded"
                         : `${LOGO_CORNERS.find((c) => c.id === logoMark.position)?.label} · ${logoMark.name}`
                     }
                     state={planState(sectionNeedsYou("logo"))}
@@ -1570,7 +1570,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           <div className="truncate text-body font-bold text-ink">{logoMark.name}</div>
                           <p className="mt-0.5 text-label text-ink-3">
                             {logoMark.source === "brand-kit"
-                              ? "Pulled from your brand kit. Size and clear space follow the kit's rule — shown, not set."
+                              ? "Pulled from your brand kit. Size and clear space follow the kit's rule, shown, not set."
                               : "Uploaded for this project. Check it against the brand kit before publishing."}
                           </p>
                         </div>
@@ -1791,7 +1791,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                               type: "image",
                               preview: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
                               size: "4.2 MB",
-                              note: "Hero packshot — the pack as it should appear in product scenes",
+                              note: "Hero packshot. The pack as it should appear in product scenes",
                             },
                           ]);
                         }
@@ -2079,7 +2079,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 </span>
                               </div>
                               <p className="text-label leading-snug text-ink-3">
-                                Lifelike motion that stops the scroll — ideal for launches &amp; HCP presentations.
+                                Lifelike motion that stops the scroll, ideal for launches &amp; HCP presentations.
                               </p>
                             </div>
                             <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-hair text-caption text-ink-3">
@@ -2111,7 +2111,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 </span>
                               </div>
                               <p className="text-label leading-snug text-ink-3">
-                                Ultra-realistic, fully generated 3D anatomical scenes — for flagship congresses.
+                                Ultra-realistic, fully generated 3D anatomical scenes, for flagship congresses.
                               </p>
                             </div>
                             <div className="mt-2 flex items-center justify-between pt-1.5 border-t border-hair text-caption text-ink-3">
@@ -2312,11 +2312,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   description={isPlanReady
                     ? "Grounded against 214 approved claims"
                     : requestTooVague
-                    ? "The request is too vague to plan from — say what the asset has to do"
+                    ? "The request is too vague to plan from, say what the asset has to do"
                     : nothingToGroundIn
-                    ? "No approved dossier and no attachments — add context to continue"
+                    ? "No approved dossier and no attachments. Add context to continue"
                     : sourcesUnusable
-                    ? "Attached sources hold nothing usable — replace them or edit the prompt"
+                    ? "Attached sources hold nothing usable, replace them or edit the prompt"
                     : needsProductAssets
                     ? "Please attach product visual assets"
                     : needsPresenter && !presenter
@@ -2537,8 +2537,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 mediaKind: r.kind,
               }))}
               title="What should we take from this reference?"
-              prompt="A reference steers the treatment — pacing, grade, composition. Saying which part matters is what makes it usable."
-              placeholder="e.g. the pacing and the grade — match this, not the script"
+              prompt="A reference steers the treatment, pacing, grade, composition. Saying which part matters is what makes it usable."
+              placeholder="e.g. the pacing and the grade, match this, not the script"
               onCancel={() => setPendingReference([])}
               onConfirm={(notes) => {
                 setReferenceList((prev) => [
@@ -2562,7 +2562,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               }]}
               title="What should we take from this reference?"
               prompt="The note travels with the reference wherever the treatment uses it."
-              placeholder="e.g. the pacing and the grade — match this, not the script"
+              placeholder="e.g. the pacing and the grade, match this, not the script"
               onCancel={() => setEditingReference(null)}
               onConfirm={(notes) => {
                 const next = notes[editingReference.id].trim();

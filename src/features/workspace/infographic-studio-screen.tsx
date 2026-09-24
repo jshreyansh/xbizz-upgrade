@@ -74,7 +74,7 @@ function canvasOpenSteps(pageCount: number, blockCount: number): GenerationStep[
   const perPage: GenerationStep[] = [];
   for (let p = 1; p <= pageCount; p += 1) {
     for (let b = 1; b <= blockCount; b += 1) {
-      perPage.push({ label: `Page ${p} — composed block ${b} of ${blockCount}`, seconds: 0.3 });
+      perPage.push({ label: `Page ${p}, composed block ${b} of ${blockCount}`, seconds: 0.3 });
     }
   }
   return [
@@ -96,8 +96,8 @@ function proofRenderSteps(pageCount: number, artCount: number): GenerationStep[]
   }
   const perPage: GenerationStep[] = [];
   for (let p = 1; p <= pageCount; p += 1) {
-    perPage.push({ label: `Page ${p} — flattened vectors & type`, seconds: 0.36 });
-    perPage.push({ label: `Page ${p} — proofed colour for print`, seconds: 0.3 });
+    perPage.push({ label: `Page ${p}, flattened vectors & type`, seconds: 0.36 });
+    perPage.push({ label: `Page ${p}, proofed colour for print`, seconds: 0.3 });
   }
   return [
     { label: "Validated 214 approved dossier claims", seconds: 0.55 },
@@ -522,7 +522,7 @@ export function InfographicStudioScreen() {
       status: "resolved",
       closedBy: "user",
       closedInVersion: draftVersion,
-      closedReason: "No change needed — the cut-off already sits in the fair balance block.",
+      closedReason: "No change needed. The cut-off already sits in the fair balance block.",
       sentToChat: false,
     },
   ]);
@@ -742,7 +742,7 @@ export function InfographicStudioScreen() {
    */
   const handleSendToSwishXTeam = () => {
     setConfirmGenerateModalOpen(false);
-    showToast("Sent to the SwishX team — they will reach out to you");
+    showToast("Sent to the SwishX team. They will reach out to you");
   };
 
   const handleSendMessage = (directText?: string) => {
@@ -785,7 +785,7 @@ export function InfographicStudioScreen() {
         const open = suggestionQueue.queue.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: `Holding ${open.length > 1 ? `all ${open.length}` : "it"}. Keep marking up the page and send the next lot when you're ready — I'll run them together.`,
+          text: `Holding ${open.length > 1 ? `all ${open.length}` : "it"}. Keep marking up the page and send the next lot when you're ready, I'll run them together.`,
         });
         return;
       }
@@ -795,7 +795,7 @@ export function InfographicStudioScreen() {
         addChatMessage({
           role: "swishx",
           text: open.length
-            ? `Scoped ${open.length > 1 ? `all ${open.length}` : "it"} ${suggestionAnswer === "all" ? `to all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}` : "to the page each was left on"}. Nothing is changed yet — tell me to run ${open.length > 1 ? "them" : "it"}.`
+            ? `Scoped ${open.length > 1 ? `all ${open.length}` : "it"} ${suggestionAnswer === "all" ? `to all ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}` : "to the page each was left on"}. Nothing is changed yet, tell me to run ${open.length > 1 ? "them" : "it"}.`
             : "Nothing queued to scope.",
         });
         return;
@@ -937,8 +937,8 @@ export function InfographicStudioScreen() {
         role: "swishx",
         text:
           batch.length === 1
-            ? `Got it — one change to **${batch[0].elementLabel}**: ${batch[0].text}\n\nShould it hold across the other pages too, or just this one? Say the word and I'll run it.`
-            : `Got ${batch.length} — here's what I'm holding:\n\n${listSuggestions(batch)}\n\nShould these hold across the other pages too, or just the ones they were left on? Say the word and I'll work through them.`,
+            ? `Got it. One change to **${batch[0].elementLabel}**: ${batch[0].text}\n\nShould it hold across the other pages too, or just this one? Say the word and I'll run it.`
+            : `Got ${batch.length}, here's what I'm holding:\n\n${listSuggestions(batch)}\n\nShould these hold across the other pages too, or just the ones they were left on? Say the word and I'll work through them.`,
       });
     }, 700);
   };
@@ -967,10 +967,10 @@ export function InfographicStudioScreen() {
       start: (count, first) =>
         `Working through ${count === 1 ? "it" : `all ${count}`}. Starting with **${first.elementLabel}**.`,
       step: (item, left) =>
-        `**${item.elementLabel}** — applied${item.scope === "all" ? " across every page" : ""}. ${left} left.`,
+        `**${item.elementLabel}**, applied${item.scope === "all" ? " across every page" : ""}. ${left} left.`,
       /* The lead-in to the recap the queue appends under it. */
       finish: (count) =>
-        `That's ${count === 1 ? "it" : `all ${count}`} applied — every claim still resolves to an approved source. Here's what went in:`,
+        `That's ${count === 1 ? "it" : `all ${count}`} applied. Every claim still resolves to an approved source. Here's what went in:`,
     });
 
   /* Closing a comment. A team comment cannot close without a note — the
@@ -1259,7 +1259,7 @@ export function InfographicStudioScreen() {
               onDone={handleProofsRendered}
               footer={
                 <span className="flex items-center gap-1.5 font-medium">
-                  <span>Email notification queued — you can close this tab</span>
+                  <span>Email notification queued. You can close this tab</span>
                 </span>
               }
             />
@@ -1337,7 +1337,7 @@ export function InfographicStudioScreen() {
                 </div>
 
                 <span className="shrink-0 text-label font-semibold text-ink-3">
-                  Keep editing — the boxes are already final
+                  Keep editing. The boxes are already final
                 </span>
               </div>
             )}
@@ -1871,7 +1871,7 @@ export function InfographicStudioScreen() {
                     </div>
 
                     <p className="text-label leading-snug text-ink-3">
-                      Where it sits and how big it is come from the slot the layout reserved — the art fills
+                      Where it sits and how big it is come from the slot the layout reserved. The art fills
                       the box, it does not choose one.
                     </p>
                   </div>

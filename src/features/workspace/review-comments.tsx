@@ -133,7 +133,7 @@ export function ReviewComments({
           title="Open"
           count={open.length}
           items={open}
-          emptyLabel="Nothing open — every comment has been answered."
+          emptyLabel="Nothing open. Every comment has been answered."
           canClose={canClose}
           onAddAsSuggestion={onAddAsSuggestion}
           closing={closing}
@@ -339,7 +339,7 @@ function Group({
                     <span>
                       {comment.closedReason ?? "Closed without a reason recorded."}
                       {comment.closedBy === "agent" && (
-                        <span className="ml-1 font-bold text-ink-3">— SwishX</span>
+                        <span className="ml-1 font-bold text-ink-3">· SwishX</span>
                       )}
                     </span>
                   </p>

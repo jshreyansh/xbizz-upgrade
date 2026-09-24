@@ -174,7 +174,7 @@ export function templateCost(
     return { label: `Trims ${needs.body - bodyRoom} subject${needs.body - bodyRoom === 1 ? "" : "s"}`, severe: true };
   }
   if (needs.body > template.statSlots && template.statSlots < 2) {
-    return { label: "One figure only — the rest become body copy", severe: false };
+    return { label: "One figure only. The rest become body copy", severe: false };
   }
   return null;
 }

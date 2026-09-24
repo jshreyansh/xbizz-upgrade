@@ -16,7 +16,7 @@ export function SectionAppearance() {
       <SettingsCard
         title="Theme"
         description="Light, dark, or follow the system."
-        actions={<Chip tone="warn" size="sm">Mock — does not re-theme yet</Chip>}
+        actions={<Chip tone="warn" size="sm">Mock, does not re-theme yet</Chip>}
       >
         <div>
           <SettingRow label="Theme" hint="Remembers your choice">

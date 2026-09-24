@@ -70,7 +70,7 @@ export function SectionPronunciations() {
     <Stack gap={4}>
       <SettingsCard
         title="Dictionary"
-        description="Applies to the whole workspace — one person's spelling should not change everyone's narration, which is why this is admin-only."
+        description="Applies to the whole workspace. One person's spelling should not change everyone's narration, which is why this is admin-only."
       >
         <Stack gap={3}>
           <div className="flex flex-wrap items-end gap-2 rounded-panel border border-hair bg-canvas p-3">

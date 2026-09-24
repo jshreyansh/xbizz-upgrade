@@ -21,7 +21,7 @@ const STRUCTURES: { id: MVScriptStructure; type: string; title: string; desc: st
     id: "custom",
     type: "Your words",
     title: "Use my own script",
-    desc: "Paste your own narration — we skip AI writing and jump straight to voice and visuals.",
+    desc: "Paste your own narration. We skip AI writing and jump straight to voice and visuals.",
     flow: ["Your script", "Voice", "Visuals"],
   },
 ];
@@ -263,7 +263,7 @@ export function Step4ScriptReview() {
                 kept out
               </span>
               <span style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55 }}>
-                The MLR Reviewer removed these off-label / unsupported claims — they never reach the reel.
+                The MLR Reviewer removed these off-label / unsupported claims. They never reach the reel.
               </span>
             </div>
             <div style={{ display: "grid", gap: 8 }}>
@@ -310,7 +310,7 @@ export function Step4ScriptReview() {
               marginBottom: 14,
             }}
           >
-            I’ll draft only from <b>Velmora</b> — every line grounded in its cited claims.
+            I’ll draft only from <b>Velmora</b>. Every line grounded in its cited claims.
           </div>
           <div style={{ display: "grid", gap: 8 }}>
             {[

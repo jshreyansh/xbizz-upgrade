@@ -207,7 +207,7 @@ export function CreateBrandModal({
         <div className="relative flex shrink-0 items-center justify-between border-b border-hair px-7 py-5">
           <div>
             <span className="block text-display font-extrabold tracking-tight text-ink">Create a new brand</span>
-            <span className="text-body-lg text-ink-3">Everything in one place — fill in what you know, skip the rest.</span>
+            <span className="text-body-lg text-ink-3">Everything in one place, fill in what you know, skip the rest.</span>
           </div>
           <button
             type="button"
@@ -416,7 +416,7 @@ export function CreateBrandModal({
                 <span className="rounded-chip bg-subtle px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.03em] text-ink-4">Optional</span>
               </div>
               <p className="text-body text-ink-3">
-                I already write from trusted public sources, so you can skip this — but files, links, or a few typed lines make the brand far more yours.
+                I already write from trusted public sources, so you can skip this, but files, links, or a few typed lines make the brand far more yours.
               </p>
 
               <div className="flex flex-wrap gap-1.5">
@@ -451,7 +451,7 @@ export function CreateBrandModal({
                   <Upload size={16} />
                 </span>
                 <span className="text-body-lg font-bold text-ink">Drop files here, or browse</span>
-                <span className="text-caption text-ink-4">PDF, PPT, DOC, XLS, images — as many as you like.</span>
+                <span className="text-caption text-ink-4">PDF, PPT, DOC, XLS, images, as many as you like.</span>
               </button>
 
               {files.length > 0 && (
@@ -582,7 +582,7 @@ export function CreateBrandModal({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-ink-4">Sources</span>
-                <span className="font-bold text-ink">{sourcesCount > 0 ? `${sourcesCount} attached` : "None — public data only"}</span>
+                <span className="font-bold text-ink">{sourcesCount > 0 ? `${sourcesCount} attached` : "None, public data only"}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-ink-4">Photography</span>
@@ -598,7 +598,7 @@ export function CreateBrandModal({
                 <Lightbulb size={12} />
               </span>
               <p className="text-caption leading-relaxed text-ink-3">
-                Starts with all 6 dossier types ready to fill in — nothing here is final, every field stays editable from the brand&rsquo;s own page.
+                Starts with all 6 dossier types ready to fill in. Nothing here is final, every field stays editable from the brand&rsquo;s own page.
               </p>
             </div>
 

@@ -37,10 +37,10 @@ interface TopAsset {
 }
 
 const TOP_ASSETS: TopAsset[] = [
-  { title: "Velmora — MoA explainer", studio: "Video", metric: "1.2k views", status: "Approved" },
+  { title: "Velmora, MoA explainer", studio: "Video", metric: "1.2k views", status: "Approved" },
   { title: "Onkavia detail aid", studio: "Creatives", metric: "860 views", status: "Approved" },
   { title: "Nirvexa launch microsite", studio: "Web", metric: "540 visits", status: "In MLR" },
-  { title: "Dr. Rao — dosing update", studio: "Video", metric: "410 views", status: "Draft" },
+  { title: "Dr. Rao, dosing update", studio: "Video", metric: "410 views", status: "Draft" },
 ];
 
 const STATUS_STYLE: Record<TopAsset["status"], { bg: string; color: string }> = {
@@ -60,9 +60,6 @@ export function AnalyticsScreen() {
     <div className="page-enter space-y-7 max-w-[1140px] pb-12">
       {/* Header */}
       <div>
-        <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800, marginBottom: 5 }}>
-          Workspace Performance
-        </div>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>Analytics</h1>
         <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "64ch" }}>
           How your content studios and dossiers are performing, at a glance.

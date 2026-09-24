@@ -41,7 +41,7 @@ export function ProductLibraryScreen() {
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>Product Library</h1>
           <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-            Every product you own — its photography, its dossiers and its approved claims, held together so nothing gets built from a stray file again.
+            Every brand you own, with its photography, dossiers and approved claims in one place.
           </p>
         </div>
         {/* Create brand is hidden while brands are seeded rather than made

@@ -15,7 +15,7 @@ export function BeatOutputs() {
           <em style={{ fontStyle: "normal", color: "var(--brand)" }}>everything else</em>.
         </h2>
         <p style={{ fontSize: 16, lineHeight: 1.62, color: "var(--ink-3)", margin: "0 0 22px", maxWidth: "42ch" }}>
-          A video, a journal ad, an email, a leave-behind — each one written from that same record, for the market it ships to. You approve; you don&apos;t start over.
+          A video, a journal ad, an email, a leave-behind. Each one written from that same record, for the market it ships to. You approve; you don&apos;t start over.
         </p>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "13px 16px", borderRadius: "var(--r)", background: "var(--tint-2)", border: "1px solid var(--tint-line)", fontSize: 13.5, color: "var(--ink-2)", maxWidth: "44ch" }}>
           <span style={{ color: "var(--brand)", fontWeight: 800, flexShrink: 0 }}>✓</span>

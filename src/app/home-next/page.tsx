@@ -11,7 +11,7 @@ import { HomeScreenNext } from "@/features/workspace/home-screen-next";
  */
 export default function HomeNextPage() {
   return (
-    <AppShell pageTitle="Home — Next (preview)">
+    <AppShell pageTitle="Home, Next (preview)">
       <HomeScreenNext />
     </AppShell>
   );

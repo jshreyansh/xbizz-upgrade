@@ -93,7 +93,7 @@ export function Step3AudienceVoice() {
           CP
         </span>
         <span>
-          Last step. Tell me who is watching and whose voice they hear — I will match the reading level, the pace and the proof I lead with.
+          Last step. Tell me who is watching and whose voice they hear. I will match the reading level, the pace and the proof I lead with.
         </span>
       </div>
 
@@ -257,7 +257,7 @@ export function Step3AudienceVoice() {
                 cursor: "pointer",
               }}
             >
-              🎙 Clone a new voice — record or upload 5–10s
+              🎙 Clone a new voice, record or upload 5–10s
             </button>
           </div>
 
@@ -299,7 +299,7 @@ export function Step3AudienceVoice() {
               })}
             </div>
             <p style={{ margin: "14px 0 0", fontSize: 12.5, color: "var(--ink-4)", lineHeight: 1.55 }}>
-              Sixty seconds is roughly 120 spoken words — enough for the mechanism plus one pivotal result.
+              Sixty seconds is roughly 120 spoken words, enough for the mechanism plus one pivotal result.
             </p>
           </div>
         </div>
@@ -380,7 +380,7 @@ export function Step3AudienceVoice() {
           ← Previous
         </button>
         <span style={{ fontSize: 13.5, color: "var(--ink-3)" }}>
-          <b>Short Video</b> · {curAud.title} · {curVoice.name} · {length} — ready to write
+          <b>Short Video</b> · {curAud.title} · {curVoice.name} · {length}, ready to write
         </span>
         <button
           onClick={() => setStage(4)}

@@ -59,7 +59,7 @@ export function Step2Sources() {
           MW
         </span>
         <span>
-          Every video is written from a Brand Dossier, so nothing is invented. Give me a brand and I will build it from the label and the published evidence — you just approve.
+          Every video is written from a Brand Dossier, so nothing is invented. Give me a brand and I will build it from the label and the published evidence. You just approve.
         </span>
       </div>
 
@@ -111,7 +111,7 @@ export function Step2Sources() {
               </div>
             </div>
             <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.6 }}>
-              Everything true about your brand in one place: what the drug is, who it is for, what you are allowed to claim, and the source behind each claim. Build it once — every video, email and visual aid after this is written from it.
+              Everything true about your brand in one place: what the drug is, who it is for, what you are allowed to claim, and the source behind each claim. Build it once. Every video, email and visual aid after this is written from it.
             </p>
             <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
               <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)", border: "1px solid var(--ok-line)" }}>
@@ -171,7 +171,7 @@ export function Step2Sources() {
               </div>
             </div>
             <p style={{ margin: "0 0 16px", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.6 }}>
-              Use our fully-built Velmora dossier — 18 sections, 214 cited claims, FDA-anchored — to walk the whole flow now and see exactly what comes out the other end. Swap in your own brand whenever you are ready.
+              Use our fully-built Velmora dossier, 18 sections, 214 cited claims, FDA-anchored, to walk the whole flow now and see exactly what comes out the other end. Swap in your own brand whenever you are ready.
             </p>
             <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
               <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 9px", borderRadius: 99, background: "var(--tint)", color: "var(--brand-deep)", border: "1px solid var(--tint-line)" }}>

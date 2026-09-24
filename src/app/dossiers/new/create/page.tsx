@@ -100,14 +100,14 @@ export default function NewDossierCreatePage() {
 
     if (phase === "review") {
       if (isQuestion(text)) {
-        return "This is your draft, ready to edit — nothing here is final. Ask me to rewrite a section, add a new one, or just edit the text directly. Say \"continue\" when it looks good.";
+        return "This is your draft, ready to edit. Nothing here is final. Ask me to rewrite a section, add a new one, or just edit the text directly. Say \"continue\" when it looks good.";
       }
 
       const addSectionMatch = text.match(/add (?:a |another )?section (?:called |named |for |titled )?["“]?([a-z0-9 &/'-]+?)["”]?[.!]?$/i);
       if (addSectionMatch) {
         const title = addSectionMatch[1].trim().replace(/\b\w/g, (c) => c.toUpperCase());
         addDraftSection(title);
-        return `Added and auto-drafted a new section — "${title}". You'll see it at the bottom of the list.`;
+        return `Added and auto-drafted a new section, "${title}". You'll see it at the bottom of the list.`;
       }
 
       const rewriteMatch = /(rewrite|regenerate|redo|auto.?write|refresh)/.test(lower)
@@ -121,19 +121,19 @@ export default function NewDossierCreatePage() {
         : undefined;
       if (rewriteMatch) {
         regenerateDraftSection(rewriteMatch.id);
-        return `Auto-wrote "${rewriteMatch.title}" again — check the updated draft below.`;
+        return `Auto-wrote "${rewriteMatch.title}" again, check the updated draft below.`;
       }
 
       if (/\b(continue|next|looks good|done|proceed|finish)\b/.test(lower)) {
         setTimeout(() => continueToPreview(), 500);
-        return "Great — building the final preview now.";
+        return "Great, building the final preview now.";
       }
 
-      return 'Ask me to rewrite a section, add a new one, or edit the text directly — say "continue" when it looks good.';
+      return 'Ask me to rewrite a section, add a new one, or edit the text directly, say "continue" when it looks good.';
     }
 
     if (isQuestion(text)) {
-      return "Give me a short brief — what this brand is for and who it's for — and a regulatory anchor if you know it. I'll analyze approved label & literature, draft every section, and hand you an editable review before it's final.";
+      return "Give me a short brief, what this brand is for and who it's for, and a regulatory anchor if you know it. I'll analyze approved label & literature, draft every section, and hand you an editable review before it's final.";
     }
 
     const anchorMatch = REGULATORY_BODIES.find((b) => lower.includes(b.toLowerCase()));
@@ -150,16 +150,16 @@ export default function NewDossierCreatePage() {
     if (/\b(go|start|analy[sz]e)\b/i.test(lower)) {
       if (indication.trim() || looksLikeBrief) {
         setTimeout(() => startAnalysis(), 700);
-        return "On it — analyzing now.";
+        return "On it, analyzing now.";
       }
-      return "I need a brief first — tell me what this brand is for and who it's for.";
+      return "I need a brief first, tell me what this brand is for and who it's for.";
     }
-    if (notes.length) return `Done — set ${notes.join(" and ")}. Say "go" whenever you're ready to analyze.`;
-    return 'Tell me the brief (what it\'s for, who it\'s for) and the regulatory anchor — or just say "go" once the form is filled in.';
+    if (notes.length) return `Done, set ${notes.join(" and ")}. Say "go" whenever you're ready to analyze.`;
+    return 'Tell me the brief (what it\'s for, who it\'s for) and the regulatory anchor, or just say "go" once the form is filled in.';
   }
 
   const { messages, thinking, send, pushAssistant } = useAssistantChat(
-    `Tell me the brief for ${brandName}, and the regulatory anchor if you know it — I'll fill this step in for you.`,
+    `Tell me the brief for ${brandName}, and the regulatory anchor if you know it, I'll fill this step in for you.`,
     respond
   );
 
@@ -169,7 +169,7 @@ export default function NewDossierCreatePage() {
 
   async function startAnalysis() {
     setPhase("processing");
-    pushAssistant("Analyzing your brief now — I'll let you know the moment the draft's ready.");
+    pushAssistant("Analyzing your brief now, I'll let you know the moment the draft's ready.");
     // Run the real generation alongside a minimum display time so the
     // processing checklist always finishes its animation — whether the
     // API responds in 200ms or a few seconds.
@@ -180,7 +180,7 @@ export default function NewDossierCreatePage() {
     setDossier(generated);
     setDraftSections(generated.sections.map((s) => ({ id: s.id, title: s.title, content: s.content, claimsCount: s.claimsCount })));
     setPhase("review");
-    pushAssistant(`Here's the first draft of ${generated.brandName}'s dossier — edit anything, ask me to rewrite a section, or add another, then say "continue" when it's ready.`);
+    pushAssistant(`Here's the first draft of ${generated.brandName}'s dossier, edit anything, ask me to rewrite a section, or add another, then say "continue" when it's ready.`);
   }
 
   function continueToPreview() {
@@ -220,7 +220,7 @@ export default function NewDossierCreatePage() {
                   thinking={thinking}
                   onSend={send}
                   disabled={phase === "processing"}
-                  disabledNote="Analyzing — hang tight…"
+                  disabledNote="Analyzing, hang tight…"
                   placeholder={phase === "review" ? 'e.g. "rewrite the safety section"' : "Tell me the brief, or the anchor"}
                   subtitle={phase === "review" ? "Edit & rebuild by prompt" : "Fill this step by prompt"}
                   quickReplies={
@@ -238,7 +238,7 @@ export default function NewDossierCreatePage() {
           <>
             <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Create {brandName}&rsquo;s dossier</h1>
             <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "0 0 14px" }}>
-              Give us the brief — we&rsquo;ll draft every section, then hand you an editable review before it&rsquo;s final.
+              Give us the brief, we&rsquo;ll draft every section, then hand you an editable review before it&rsquo;s final.
             </p>
             {supportingFiles.length > 0 && (
               <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 13px", borderRadius: "var(--r)", background: "var(--tint-2)", border: "1px solid var(--tint-line)", fontSize: 12.5, color: "var(--brand-deep)", fontWeight: 650, marginBottom: 18 }}>
@@ -313,7 +313,7 @@ export default function NewDossierCreatePage() {
           <>
             <h1 style={{ fontSize: 19, fontWeight: 800, letterSpacing: "-.3px", margin: "0 0 4px", color: "var(--ink)" }}>Review {brandName}&rsquo;s draft</h1>
             <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "6px 0 20px" }}>
-              Every section is already drafted — edit anything, or ask the agent to rewrite a section.
+              Every section is already drafted, edit anything, or ask the agent to rewrite a section.
             </p>
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>

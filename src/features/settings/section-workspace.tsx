@@ -26,7 +26,7 @@ export function SectionWorkspace() {
       {/* Plan sits first and read-only: orientation, not a second billing surface. */}
       <SettingsCard
         title="Active plan"
-        description="Read-only here — every billing action lives in Billing & usage."
+        description="Read-only here. Every billing action lives in Billing & usage."
         actions={
           <Link
             href="/settings/billing"

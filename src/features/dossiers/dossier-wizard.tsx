@@ -72,7 +72,7 @@ export function DossierWizard({
         if (prev.sources.some((s) => s.type === req.type)) return prev;
         const newSource: DossierSource = {
           id: `src-${req.type}-${prev.sources.length + 1}`,
-          name: `${prev.brandName} — ${req.label(prev.regulatoryAnchor)}`,
+          name: `${prev.brandName} · ${req.label(prev.regulatoryAnchor)}`,
           type: req.type,
           date: "Just now",
           status: "approved",
@@ -244,7 +244,7 @@ export function DossierWizard({
                 Create a new Brand Dossier
               </h2>
               <p style={{ fontSize: 14, color: "var(--ink-3)", margin: 0 }}>
-                Pick a brand and a document type — I’ll ground every section in the sources you approve next.
+                Pick a brand and a document type, I’ll ground every section in the sources you approve next.
               </p>
             </div>
 
@@ -385,7 +385,7 @@ export function DossierWizard({
             {/* 2 · Document type */}
             <div style={{ background: "#fff", borderRadius: "var(--r-xl)", border: "1px solid var(--hair)", boxShadow: "var(--sh-1)", padding: 20 }} className="space-y-2">
               <div style={{ fontSize: 11, letterSpacing: ".1em", textTransform: "uppercase", fontWeight: 800, color: "var(--ink-4)", marginBottom: 4 }}>
-                2 · Document type — what am I building?
+                2 · Document type, what am I building?
               </div>
               {DOCUMENT_TYPES.map((dt) => (
                 <button
@@ -450,7 +450,7 @@ export function DossierWizard({
             <div style={{ background: "var(--tint-2)", border: "1px solid var(--tint-line)", borderRadius: "var(--r-l)", padding: 16, display: "flex", gap: 12 }}>
               <span style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(140deg,#ff7a3d,#c9310a)", flexShrink: 0, display: "grid", placeItems: "center", color: "#fff", fontSize: 11, fontWeight: 800 }}>MW</span>
               <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.55 }}>
-                <b>Medical Writer</b> —{" "}
+                <b>Medical Writer</b>{" · "}
                 {isNewBrand
                   ? "Tell me the brand and generic name, and I’ll ground everything I write in the sources you approve next."
                   : "Select a brand and I’ll do the groundwork: existing record first, then a fresh source scan."}
@@ -472,7 +472,7 @@ export function DossierWizard({
                 <div style={{ background: "#fff", border: "1px solid var(--hair)", borderRadius: "var(--r-l)", padding: 16, boxShadow: "var(--sh-1)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                     <span style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--warn)" }} />
-                    <b style={{ fontSize: 13.5, fontWeight: 750 }}>New product — no record yet</b>
+                    <b style={{ fontSize: 13.5, fontWeight: 750 }}>New product. No record yet</b>
                   </div>
                   <p style={{ margin: 0, fontSize: 13, color: "var(--ink-3)", lineHeight: 1.55 }}>
                     Nothing on file for {selectedBrandOption.name}. I’ll build the full dossier from the sources you upload next.
@@ -606,7 +606,7 @@ export function DossierWizard({
                   {activeDossier.initials}
                 </div>
                 <div style={{ minWidth: 0 }}>
-                  <b style={{ fontSize: 14.5, fontWeight: 800, display: "block" }}>{activeDossier.brandName} — Brand Dossier</b>
+                  <b style={{ fontSize: 14.5, fontWeight: 800, display: "block" }}>{activeDossier.brandName}, Brand Dossier</b>
                   <span style={{ fontSize: 12, color: "var(--ink-4)" }}>{activeDossier.regulatoryAnchor} anchored · {PHARMA_SECTIONS.length} sections planned</span>
                 </div>
               </div>
@@ -642,7 +642,7 @@ export function DossierWizard({
               <span style={{ fontSize: 11, fontWeight: 750, color: "var(--ink-4)" }}>Optional</span>
             </div>
             <p style={{ margin: "0 0 14px", fontSize: 12.5, color: "var(--ink-3)" }}>
-              Anything else worth grounding claims in — slide decks, competitor teardowns, reference images. Not required by law, just extra context for your team.
+              Anything else worth grounding claims in, slide decks, competitor teardowns, reference images. Not required by law, just extra context for your team.
             </p>
 
             <label
@@ -654,7 +654,7 @@ export function DossierWizard({
             >
               <svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
               <span style={{ fontSize: 13, fontWeight: 650, color: "var(--ink-2)" }}>Click to attach files or images</span>
-              <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>PDF, DOC, PNG, JPG — any size</span>
+              <span style={{ fontSize: 11.5, color: "var(--ink-4)" }}>PDF, DOC, PNG, JPG, any size</span>
               <input
                 type="file"
                 multiple

@@ -61,7 +61,7 @@ export default function NewDossierProductPage() {
     const lower = text.toLowerCase();
 
     if (isQuestion(text)) {
-      return "This step sets up the dossier's identity: which product it's for, its category (Patient/HCP/Payer/Commercial related), and who reads it. Tell me those three things, or fill them in below — either way I'll keep them in sync.";
+      return "This step sets up the dossier's identity: which product it's for, its category (Patient/HCP/Payer/Commercial related), and who reads it. Tell me those three things, or fill them in below, either way I'll keep them in sync.";
     }
 
     const notes: string[] = [];
@@ -87,17 +87,17 @@ export default function NewDossierProductPage() {
     if (/(next|continue|go|proceed)/.test(lower) && (productChosen || brandMatch)) {
       setTimeout(() => router.push("/dossiers/new/path"), 700);
       return notes.length
-        ? `Done — set ${notes.join(" and ")}. Moving to the next step now.`
+        ? `Done, set ${notes.join(" and ")}. Moving to the next step now.`
         : "Moving to the next step now.";
     }
 
-    if (notes.length) return `Done — set ${notes.join(" and ")}. Say "next" whenever you're ready to continue.`;
-    return 'Tell me the product, dossier category, or audience — e.g. "Renalis, patient related, for HCP and payer" — and I\'ll set it for you. You can also just fill in the fields directly.';
+    if (notes.length) return `Done, set ${notes.join(" and ")}. Say "next" whenever you're ready to continue.`;
+    return 'Tell me the product, dossier category, or audience, e.g. "Renalis, patient related, for HCP and payer", and I\'ll set it for you. You can also just fill in the fields directly.';
   }
 
   const { messages, thinking, send } = useAssistantChat(
     isFirstTime
-      ? `Welcome, ${PERSONA.firstName} — tell me the product and I'll set up the rest, or use the fields below.`
+      ? `Welcome, ${PERSONA.firstName}, tell me the product and I'll set up the rest, or use the fields below.`
       : "Tell me the product, category, or audience and I'll fill this step in for you.",
     respond
   );
@@ -135,7 +135,7 @@ export default function NewDossierProductPage() {
           >
             <span style={{ fontSize: 18, lineHeight: 1 }}>👋</span>
             <span style={{ fontSize: 13, fontWeight: 650, color: "var(--brand-deep)" }}>
-              Welcome, {PERSONA.firstName} — let&rsquo;s build your first brand dossier.
+              Welcome, {PERSONA.firstName}, let&rsquo;s build your first brand dossier.
             </span>
           </div>
         )}
@@ -147,7 +147,7 @@ export default function NewDossierProductPage() {
         </div>
         <p style={{ fontSize: 13.5, color: "var(--ink-3)", margin: "6px 0 22px" }}>
           {isFirstTime
-            ? "This becomes the single source of truth every studio reads from — let's set it up together."
+            ? "This becomes the single source of truth every studio reads from, let's set it up together."
             : "Which product is this for?"}
         </p>
 
@@ -173,7 +173,7 @@ export default function NewDossierProductPage() {
             </option>
             {brandOptions.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.name} — {b.therapyArea}
+                {b.name}, {b.therapyArea}
                 {b.hasDossier ? " (has a dossier)" : ""}
               </option>
             ))}
@@ -255,8 +255,8 @@ export default function NewDossierProductPage() {
           <Upload size={18} color={supportingFiles.length ? "var(--brand-deep)" : "var(--ink-4)"} />
           <span style={{ fontSize: 12.5, fontWeight: 650, color: supportingFiles.length ? "var(--brand-deep)" : "var(--ink-3)" }}>
             {supportingFiles.length
-              ? `${supportingFiles.length} file${supportingFiles.length > 1 ? "s" : ""} attached — click to add more`
-              : "Any label, deck, or reference doc — we'll bring it into the dossier flow"}
+              ? `${supportingFiles.length} file${supportingFiles.length > 1 ? "s" : ""} attached, click to add more`
+              : "Any label, deck, or reference doc, we'll bring it into the dossier flow"}
           </span>
         </button>
         <input ref={supportingFilesRef} type="file" multiple onChange={handleSupportingFilesPicked} style={{ display: "none" }} />

@@ -190,7 +190,7 @@ export function SectionBilling() {
                 <div className="rounded-control border border-warn-line bg-warn-bg px-3 py-2.5">
                   <Text size="body" weight="semibold" className="block text-warn">Billing details incomplete</Text>
                   <Text size="label" tone="muted" className="block">
-                    Add a tax ID and address above — an invoice without them is not usable.
+                    Add a tax ID and address above. An invoice without them is not usable.
                   </Text>
                 </div>
               )}
@@ -211,7 +211,7 @@ export function SectionBilling() {
         open={addMethod}
         onClose={() => setAddMethod(false)}
         title="Add a payment method"
-        description="In production this is the provider's own hosted field — card numbers never reach our inputs."
+        description="In production this is the provider's own hosted field, card numbers never reach our inputs."
         footer={
           <>
             <Button size="sm" variant="ghost" onClick={() => setAddMethod(false)}>Cancel</Button>

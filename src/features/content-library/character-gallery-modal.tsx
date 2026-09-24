@@ -54,7 +54,7 @@ export function CharacterGalleryModal({
       >
         <div className="flex items-center justify-between gap-3 border-b border-hair px-5 py-3">
           <span className="truncate text-body-lg font-extrabold text-ink">
-            {character.name} — identity gallery
+            {character.name}, identity gallery
           </span>
           <button
             type="button"

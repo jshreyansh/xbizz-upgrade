@@ -123,7 +123,7 @@ export const scenes: Scene[] = [
       { id: "s3-a", index: 1, startAt: 0,    endAt: 1.2,  label: "Title on clean plate",   transitionIn: "Cut", narrationFragment: 'In the pivotal CLEARSKIN study,', visualStory: 'Title on a clean plate; no media yet, so the claim reads before anything moves.' },
       { id: "s3-b", index: 2, startAt: 1.2,  endAt: 5.0,  label: "Bring in the still",     transitionIn: "Cross dissolve 400ms", narrationFragment: 'a greater proportion of patients', visualStory: 'The anatomical still cross-dissolves in beside the copy as the population is described.' },
       { id: "s3-c", index: 3, startAt: 5.0,  endAt: 6.4,  label: "Drop the title",         transitionIn: "Fade out 200ms", narrationFragment: 'achieved the primary endpoint', visualStory: 'Title fades out, leaving the still to hold the frame through the endpoint line.' },
-      { id: "s3-d", index: 4, startAt: 6.4,  endAt: 8.6,  label: "Wipe in the chart",      transitionIn: "Wipe from right 420ms", narrationFragment: 'at Week 16.', visualStory: 'The comparative chart wipes in from the right while the still is still on screen — both media overlap here.' },
+      { id: "s3-d", index: 4, startAt: 6.4,  endAt: 8.6,  label: "Wipe in the chart",      transitionIn: "Wipe from right 420ms", narrationFragment: 'at Week 16.', visualStory: 'The comparative chart wipes in from the right while the still is still on screen. Both media overlap here.' },
       { id: "s3-e", index: 5, startAt: 8.6,  endAt: 14.0, label: "Chart carries the read", transitionIn: "Fade out 300ms", narrationFragment: '', visualStory: 'Still fades out and the chart carries the read-out alone to the end of the scene.' },
     ],
     timings: [

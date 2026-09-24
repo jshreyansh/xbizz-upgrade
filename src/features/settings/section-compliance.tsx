@@ -130,7 +130,7 @@ export function SectionCompliance() {
     <Stack gap={4}>
       <SettingsCard
         title="Approval chains"
-        description="One chain per person, for everyone who creates work. Reviewers do not appear — they are the approvers."
+        description="One chain per person, for everyone who creates work. Reviewers do not appear. They are the approvers."
       >
         <DataTable
           columns={columns}
@@ -282,7 +282,7 @@ export function SectionCompliance() {
 
                       {st.narrowTo.kind === "seniority" && (
                         <label className="flex flex-col gap-1">
-                          <Text size="caption" tone="muted" weight="semibold">Floor — and above</Text>
+                          <Text size="caption" tone="muted" weight="semibold">Floor, and above</Text>
                           <select
                             value={st.narrowTo.floor}
                             onChange={(e) => s.setChainStages(editMember.id,

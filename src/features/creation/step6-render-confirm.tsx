@@ -103,7 +103,7 @@ export function Step6RenderConfirm() {
               >
                 <h3 style={{ margin: "0 0 4px", fontSize: 16.5, fontWeight: 800, color: videoMode === "hd" ? "var(--brand-deep)" : "var(--ink)" }}>HD</h3>
                 <p style={{ margin: "0 0 12px", fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5 }}>
-                  Lifelike motion that stops the scroll — for launches &amp; big moments.
+                  Lifelike motion that stops the scroll, for launches &amp; big moments.
                 </p>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <span style={{ fontSize: 11, fontWeight: 800, color: "var(--brand)", background: "rgba(253,72,22,.1)", padding: "2px 7px", borderRadius: 99 }}>
@@ -126,7 +126,7 @@ export function Step6RenderConfirm() {
               >
                 <h3 style={{ margin: "0 0 4px", fontSize: 16.5, fontWeight: 800, color: videoMode === "cinematic" ? "var(--brand-deep)" : "var(--ink)" }}>Cinematic</h3>
                 <p style={{ margin: "0 0 12px", fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.5 }}>
-                  Ultra-realistic, fully generated scenes — for flagship launches.
+                  Ultra-realistic, fully generated scenes, for flagship launches.
                 </p>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <span style={{ fontSize: 11, fontWeight: 800, color: "var(--ink-3)", background: "rgba(10,13,20,.06)", padding: "2px 7px", borderRadius: 99 }}>

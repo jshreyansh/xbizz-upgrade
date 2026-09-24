@@ -358,7 +358,7 @@ export function TemplateStepScreen({
           description={
             blocked
               ? "Choose a layout that can carry this brief, or shorten the request."
-              : "You can swap a single page\u2019s layout later in the studio — this sets the deck."
+              : "You can swap a single page\u2019s layout later in the studio. This sets the deck."
           }
           action={
             <Button

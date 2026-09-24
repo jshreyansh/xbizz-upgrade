@@ -176,7 +176,7 @@ export function SectionIntegrations() {
           <div>
             <Text size="label" weight="bold" className="mb-1 block">Channels</Text>
             <Text size="caption" tone="subtle" className="mb-2 block">
-              Read without send is how a team pilots the agent safely — so the two are separate.
+              Read without send is how a team pilots the agent safely, so the two are separate.
             </Text>
             <Stack gap={2}>
               {s.teamsChannels.map((c) => (

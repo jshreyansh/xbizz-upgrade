@@ -21,19 +21,19 @@ export default function NewDossierPathPage() {
   function respond(text: string): string {
     const lower = text.toLowerCase();
     if (isQuestion(text)) {
-      return "Create drafts every section for you — auto-written from approved sources when available, with an editable review step before you finish. Upload lets you bring an existing document in for verification instead. Either way it ends up MLR-ready.";
+      return "Create drafts every section for you, auto-written from approved sources when available, with an editable review step before you finish. Upload lets you bring an existing document in for verification instead. Either way it ends up MLR-ready.";
     }
     if (/(upload|existing|already have|deck|pdf|doc|file)/.test(lower)) {
       setPath("upload");
       setTimeout(() => router.push("/dossiers/new/upload"), 800);
-      return "Got it — taking you to Upload so you can bring your existing document.";
+      return "Got it, taking you to Upload so you can bring your existing document.";
     }
     if (/(create|scratch|ai|draft|generate|write)/.test(lower)) {
       setPath("create");
       setTimeout(() => router.push("/dossiers/new/create"), 800);
-      return "Got it — I'll draft it from approved sources, then hand you an editable review before finishing. Taking you to Create.";
+      return "Got it, I'll draft it from approved sources, then hand you an editable review before finishing. Taking you to Create.";
     }
-    return 'Let me know — should I draft this from scratch, or do you already have a document to upload? Just say "create" or "upload".';
+    return 'Let me know, should I draft this from scratch, or do you already have a document to upload? Just say "create" or "upload".';
   }
 
   const { messages, thinking, send } = useAssistantChat(

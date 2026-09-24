@@ -14,7 +14,7 @@ export type Seniority = (typeof SENIORITY)[number];
 export const PERMISSIONS = [
   { id: "studio",    label: "Studio access",                trailing: "Create and edit video, creative and infographic assets" },
   { id: "admin",     label: "Admin controls",                trailing: "Workspace, brand kit, team, integrations, approval chains" },
-  { id: "libraries", label: "Libraries — add, edit, update", trailing: "Claims, Products and Content" },
+  { id: "libraries", label: "Libraries, add, edit, update", trailing: "Claims, Products and Content" },
   { id: "analytics", label: "Analytics",                     trailing: "The Insights section" },
   { id: "comment",   label: "Comment on drafts & published", trailing: "Commenting without edit rights" },
   { id: "billing",   label: "Billing, plans & top-ups",      trailing: "Purchasing. Reading stays open to everyone" },

@@ -107,7 +107,7 @@ export function SectionTeam() {
 
       <SettingsCard
         title="Members"
-        description="Field-force reps are members with the Field Force role — filter to see just them."
+        description="Field-force reps are members with the Field Force role, filter to see just them."
         actions={
           <Button size="sm" onClick={() => setComposerOpen((v) => !v)}>
             <UserPlus className="size-3.5" /> Invite
@@ -120,7 +120,7 @@ export function SectionTeam() {
               <Stack gap={2}>
                 <Field
                   label="Email addresses"
-                  hint="Several at once — separate with commas or spaces"
+                  hint="Several at once, separate with commas or spaces"
                   value={inviteEmails}
                   onChange={(e) => setInviteEmails(e.target.value)}
                   placeholder="name@velmora.com, other@velmora.com"
@@ -150,7 +150,7 @@ export function SectionTeam() {
                 <div>
                   <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
                     <Text size="label" tone="muted" weight="semibold">
-                      Permissions — {invitePerms.length} of {PERMISSIONS.length}
+                      Permissions, {invitePerms.length} of {PERMISSIONS.length}
                     </Text>
                     {!sameSet(invitePerms, ROLE_PERMISSIONS[inviteRole]) && (
                       <button
@@ -254,7 +254,7 @@ export function SectionTeam() {
           <Stack gap={4}>
             {openMember.status === "deactivated" && openMember.deactivationReason && (
               <div className="rounded-control border border-hair bg-subtle px-3 py-2">
-                <Text size="label" tone="muted">Deactivated — {openMember.deactivationReason}</Text>
+                <Text size="label" tone="muted">Deactivated, {openMember.deactivationReason}</Text>
               </div>
             )}
 
@@ -282,7 +282,7 @@ export function SectionTeam() {
                 {SENIORITY.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
               <Text size="caption" tone="subtle" className="mt-1 block">
-                Carries no permissions itself — it is used for approval routing.
+                Carries no permissions itself. It is used for approval routing.
               </Text>
             </div>
 
@@ -301,7 +301,7 @@ export function SectionTeam() {
                 )}
               </div>
               <Text size="caption" tone="subtle" className="mb-2 block">
-                Seeded from {openMember.role}. Unselecting one affects only {openMember.name.split(" ")[0]} — it never changes the role for anyone else.
+                Seeded from {openMember.role}. Unselecting one affects only {openMember.name.split(" ")[0]}. It never changes the role for anyone else.
               </Text>
               <Stack gap={2}>
                 {PERMISSIONS.map((p) => (

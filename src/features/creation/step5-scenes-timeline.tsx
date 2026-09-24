@@ -100,7 +100,7 @@ export function Step5ScenesTimeline() {
               </div>
             </div>
             <p style={{ margin: "10px 0 0", fontSize: 11.5, color: "var(--ink-4)", textAlign: "center", lineHeight: 1.45 }}>
-              Scene visuals are generated on render — this preview shows timing, cards, and on-screen text.
+              Scene visuals are generated on render. This preview shows timing, cards, and on-screen text.
             </p>
           </div>
 
@@ -182,9 +182,9 @@ export function Step5ScenesTimeline() {
                   onChange={(e) => updateScene(activeSceneIndex, { overlayType: e.target.value })}
                   style={{ width: 220, padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 12.5 }}
                 >
-                  <option>Key term — middle, dark box</option>
-                  <option>Lower third — light</option>
-                  <option>Title card — centre</option>
+                  <option>Key term, middle, dark box</option>
+                  <option>Lower third, light</option>
+                  <option>Title card, centre</option>
                 </select>
               </div>
             </div>
@@ -244,7 +244,7 @@ export function Step5ScenesTimeline() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 18px", borderRadius: "var(--r)", background: "var(--ok-bg)", border: "1px solid var(--ok-line)", color: "var(--ok)", fontSize: 13 }}>
           <span style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--ok)", color: "#fff", display: "grid", placeItems: "center", fontSize: 10, fontWeight: 800, flexShrink: 0 }}>MLR</span>
-          <span>Every scene maps to a verified, on-label claim — and the ISI card is locked in before the outro.</span>
+          <span>Every scene maps to a verified, on-label claim, and the ISI card is locked in before the outro.</span>
         </div>
       </div>
 

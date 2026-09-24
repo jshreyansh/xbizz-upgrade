@@ -138,7 +138,7 @@ export function TemplatePreviewModal({
                   key={item.label}
                   type="button"
                   onClick={() => setPage(index)}
-                  aria-label={`Page ${index + 1} — ${item.label}`}
+                  aria-label={`Page ${index + 1} · ${item.label}`}
                   aria-current={index === page}
                   className={cn(
                     "h-1.5 rounded-full transition-all cursor-pointer",

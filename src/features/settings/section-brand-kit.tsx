@@ -107,7 +107,7 @@ export function SectionBrandKit() {
 
       <SettingsCard
         title="Typography"
-        description="One list. Position assigns the role — first is primary, second secondary, third tertiary. Drag to change it."
+        description="One list. Position assigns the role, first is primary, second secondary, third tertiary. Drag to change it."
       >
         <Stack gap={3}>
           {s.brandKit.typefaces.length > 0 ? (

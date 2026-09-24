@@ -162,7 +162,7 @@ export function GenerationProgress({
             <button
               type="button"
               onClick={() => setFinished(true)}
-              title="Demo only — jumps the wait so the team can see the next screen"
+              title="Demo only, jumps the wait so the team can see the next screen"
               className="cursor-pointer rounded-glyph px-2 py-1 text-caption font-bold text-ink-4 transition hover:bg-black/5 hover:text-ink-2"
             >
               Skip ahead ›

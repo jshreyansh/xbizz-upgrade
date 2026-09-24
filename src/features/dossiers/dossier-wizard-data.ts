@@ -11,8 +11,8 @@
 import type { BrandDossier, DocumentType, DossierApproval, RegulatoryBody } from "@/features/dossiers/dossier-types";
 
 export const DOCUMENT_TYPES: { type: DocumentType; label: string; description: string }[] = [
-  { type: "commercial", label: "Commercial dossier", description: "Sales-enablement dossier for HCPs — the default." },
-  { type: "patient-medication", label: "Patient Medication Information", description: "Regulated patient leaflet — its own mandated sections." },
+  { type: "commercial", label: "Commercial dossier", description: "Sales-enablement dossier for HCPs. The default." },
+  { type: "patient-medication", label: "Patient Medication Information", description: "Regulated patient leaflet. Its own mandated sections." },
   { type: "hcp-scientific", label: "HCP Scientific", description: "Non-promotional prescriber reference." },
 ];
 
@@ -63,7 +63,7 @@ export const REQUIRED_SOURCES: RequiredSource[] = [
     type: "label",
     badge: "PI",
     label: (anchor) => (anchor === "FDA" || anchor === "PMDA" ? "Approved Prescribing Information" : "Summary of Product Characteristics (SmPC)"),
-    detail: "The label governs every claim — nothing ships without it.",
+    detail: "The label governs every claim. Nothing ships without it.",
     tier: "required",
   },
   {
@@ -91,7 +91,7 @@ export const REQUIRED_SOURCES: RequiredSource[] = [
     type: "slides",
     badge: "CONG",
     label: () => "Congress / Symposium Materials",
-    detail: "Supplementary — strengthens context, not required to proceed.",
+    detail: "Supplementary, strengthens context, not required to proceed.",
     tier: "optional",
   },
 ];

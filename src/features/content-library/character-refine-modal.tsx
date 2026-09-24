@@ -115,7 +115,7 @@ export function CharacterRefineModal({
                 onChange={(e) => setInstruction(e.target.value)}
                 rows={3}
                 autoFocus
-                placeholder="e.g. lose the white coat, put him in a navy suit — same face, same build."
+                placeholder="e.g. lose the white coat, put him in a navy suit, same face, same build."
                 className="w-full resize-none rounded-control border border-hair-2 bg-canvas p-3 text-body text-ink outline-none transition placeholder:text-ink-4 focus:border-brand focus:bg-card focus:ring-2 focus:ring-brand/15"
               />
             </div>

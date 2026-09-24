@@ -99,7 +99,7 @@ export function citationsFor(tag: string, narration: string): SceneCitation[] {
   const cite = (claim: ApprovedClaim, at: number): SceneCitation => ({
     id: `cite-${claim.id}-${at}`,
     source: claim.tag,
-    title: `${claim.title} — ${claim.detail}`,
+    title: `${claim.title} · ${claim.detail}`,
     date: `${claim.status} · current`,
     anchor: at,
     claimId: claim.id,

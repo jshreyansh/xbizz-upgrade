@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid Anthropic API key." }, { status: 401 });
     }
     if (error instanceof Anthropic.RateLimitError) {
-      return NextResponse.json({ error: "Rate limited — try again shortly." }, { status: 429 });
+      return NextResponse.json({ error: "Rate limited, try again shortly." }, { status: 429 });
     }
     if (error instanceof Anthropic.APIError) {
       return NextResponse.json({ error: error.message }, { status: error.status ?? 500 });

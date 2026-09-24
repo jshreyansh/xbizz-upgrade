@@ -56,7 +56,7 @@ export function CharacterEditModal({
           <div>
             <h2 className="text-subhead font-[850] tracking-tight text-ink">Edit character</h2>
             <p className="mt-0.5 text-label text-ink-3">
-              Details only — the views stay as they are.
+              Details only. The views stay as they are.
             </p>
           </div>
           <button

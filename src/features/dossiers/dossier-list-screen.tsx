@@ -32,7 +32,7 @@ export function DossierListScreen({
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>Brand Dossiers</h1>
           <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "64ch" }}>
-            The single source of truth for your brand — grounded in approved prescribing info, clinical trial readouts, and HEOR models.
+            The single source of truth for your brand, grounded in approved prescribing info, clinical trial readouts, and HEOR models.
           </p>
         </div>
         <button
@@ -217,7 +217,7 @@ export function DossierListScreen({
                 >
                   <Clock size={12} />
                   {pendingCount > 0
-                    ? `${pendingCount} of ${dossier.approvals.length} approvals pending — ${pendingApprovals.map((a) => a.role).join(", ")}`
+                    ? `${pendingCount} of ${dossier.approvals.length} approvals pending, ${pendingApprovals.map((a) => a.role).join(", ")}`
                     : "All approvals cleared"}
                 </div>
               );

@@ -75,7 +75,7 @@ export function CharactersScreen() {
           Characters
         </h1>
         <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-          People your studios can cast — each one held as a set of views that agree with each
+          People your studios can cast. Each one held as a set of views that agree with each
           other, so the same face turns up in every asset.
         </p>
       </div>

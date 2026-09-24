@@ -19,7 +19,7 @@ export function BeatSources() {
         </p>
         <div style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "13px 16px", borderRadius: "var(--r)", background: "var(--tint-2)", border: "1px solid var(--tint-line)", fontSize: 13.5, color: "var(--ink-2)", maxWidth: "44ch" }}>
           <span style={{ color: "var(--brand)", fontWeight: 800, flexShrink: 0 }}>✓</span>
-          You don&apos;t upload anything to begin — we already know where to look.
+          You don&apos;t upload anything to begin. We already know where to look.
         </div>
       </div>
 

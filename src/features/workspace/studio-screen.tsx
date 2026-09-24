@@ -168,7 +168,7 @@ function masterRenderSteps(sceneCount: number, cinematic: boolean): GenerationSt
   return [
     { label: "Parsed storyboard scenes & timing", seconds: 0.5 },
     { label: "Allocated cloud render workers", seconds: 0.45 },
-    { label: `Set output profile — ${cinematic ? "Cinematic 4K" : "HD Motion"}`, seconds: 0.4 },
+    { label: `Set output profile, ${cinematic ? "Cinematic 4K" : "HD Motion"}`, seconds: 0.4 },
     ...perScene,
     { label: "Built 3D lighting and camera passes", seconds: 0.6 },
     { label: "Mixed the voiceover bed", seconds: 0.45 },
@@ -682,8 +682,8 @@ export function StudioScreen() {
         role: "swishx",
         text:
           batch.length === 1
-            ? `Got it — one change to **${batch[0].elementLabel}**: ${batch[0].text}\n\nShould it hold for the other scenes too, or just this one? Say the word and I'll run it.`
-            : `Got ${batch.length} — here's what I'm holding:\n\n${listSuggestions(batch)}\n\nShould these hold for the other scenes too, or just the ones they were left on? Say the word and I'll work through them.`,
+            ? `Got it. One change to **${batch[0].elementLabel}**: ${batch[0].text}\n\nShould it hold for the other scenes too, or just this one? Say the word and I'll run it.`
+            : `Got ${batch.length}, here's what I'm holding:\n\n${listSuggestions(batch)}\n\nShould these hold for the other scenes too, or just the ones they were left on? Say the word and I'll work through them.`,
       });
     }, 700);
   };
@@ -712,11 +712,11 @@ export function StudioScreen() {
       start: (count, first) =>
         `Working through ${count === 1 ? "it" : `all ${count}`}. Starting with **${first.elementLabel}**.`,
       step: (item, left) =>
-        `**${item.elementLabel}** — applied${item.scope === "all" ? " across every scene" : ""}. ${left} left.`,
+        `**${item.elementLabel}**, applied${item.scope === "all" ? " across every scene" : ""}. ${left} left.`,
       /* The lead-in to the recap: the queue appends the batch under it, which
          is the one place seeing all of them together earns the room. */
       finish: (count) =>
-        `That's ${count === 1 ? "it" : `all ${count}`} applied — every line still resolves to an approved source, and the source pill under a line says which. Here's what went in:`,
+        `That's ${count === 1 ? "it" : `all ${count}`} applied. Every line still resolves to an approved source, and the source pill under a line says which. Here's what went in:`,
     });
 
   /**
@@ -737,7 +737,7 @@ export function StudioScreen() {
       if (actionable) {
         addChatMessage({
           role: "swishx",
-          text: `Done — applied that to **${comment.containerLabel} · ${comment.elementLabel}** and marked the comment resolved. It stays in the list with my name against it, so you can check what I changed.`,
+          text: `Done, applied that to **${comment.containerLabel} · ${comment.elementLabel}** and marked the comment resolved. It stays in the list with my name against it, so you can check what I changed.`,
         });
         setComments((prev) =>
           prev.map((c) =>
@@ -757,7 +757,7 @@ export function StudioScreen() {
       } else {
         addChatMessage({
           role: "swishx",
-          text: `I can't act on **${comment.containerLabel} · ${comment.elementLabel}** from that — it doesn't say what should change. I've marked it rejected rather than guess; reopen it with more detail and I'll take another run.`,
+          text: `I can't act on **${comment.containerLabel} · ${comment.elementLabel}** from that. It doesn't say what should change. I've marked it rejected rather than guess; reopen it with more detail and I'll take another run.`,
         });
         setComments((prev) =>
           prev.map((c) =>
@@ -1056,7 +1056,7 @@ export function StudioScreen() {
    */
   const handleSendToSwishXTeam = () => {
     setGenerateVideoModalOpen(false);
-    showToast("Sent to the SwishX team — they will reach out to you");
+    showToast("Sent to the SwishX team. They will reach out to you");
   };
 
   const handleConfirmVideoGeneration = () => {
@@ -1285,7 +1285,7 @@ export function StudioScreen() {
     const targetIds = scopedSceneIds.filter((id) => sceneList.some((s) => s.id === id));
     if (targetIds.length > 0 && !isCommentIntent && !suggestionAnswer) {
       const targets = sceneList.filter((s) => targetIds.includes(s.id));
-      const nameOf = (s: Scene) => `Scene ${s.number} — ${s.title}`;
+      const nameOf = (s: Scene) => `Scene ${s.number} · ${s.title}`;
 
       setPendingSceneIds(targetIds);
       addChatMessage({
@@ -1305,7 +1305,7 @@ export function StudioScreen() {
           setPendingSceneIds((prev) => [...prev, ...dependents.map((d) => d.id)]);
           addChatMessage({
             role: "swishx",
-            text: `That changes what follows — **${dependents.map(nameOf).join("**, **")}** ${dependents.length > 1 ? "both build" : "builds"} on it, so ${dependents.length > 1 ? "they are" : "it is"} being updated to stay consistent.`,
+            text: `That changes what follows, **${dependents.map(nameOf).join("**, **")}** ${dependents.length > 1 ? "both build" : "builds"} on it, so ${dependents.length > 1 ? "they are" : "it is"} being updated to stay consistent.`,
           });
         }
 
@@ -1330,7 +1330,7 @@ export function StudioScreen() {
           setCreditsUsed((prev) => prev + changedIds.length * 400);
           addChatMessage({
             role: "swishx",
-            text: `Updated ${changedIds.length} scene${changedIds.length > 1 ? "s" : ""}. Every line resolves to an approved source — open the source pill under a line to see which.`,
+            text: `Updated ${changedIds.length} scene${changedIds.length > 1 ? "s" : ""}. Every line resolves to an approved source, open the source pill under a line to see which.`,
           });
         }, 1500);
       }, 1100);
@@ -1361,14 +1361,14 @@ export function StudioScreen() {
         const open = suggestionQueue.queue.filter((sg) => sg.status !== "done");
         addChatMessage({
           role: "swishx",
-          text: `Holding ${open.length > 1 ? `all ${open.length}` : "it"}. Keep marking up the canvas and send the next lot when you're ready — I'll run them together.`,
+          text: `Holding ${open.length > 1 ? `all ${open.length}` : "it"}. Keep marking up the canvas and send the next lot when you're ready, I'll run them together.`,
         });
       } else if (suggestionAnswer === "all" || suggestionAnswer === "one") {
         const open = suggestionQueue.scopeBatch(suggestionAnswer);
         addChatMessage({
           role: "swishx",
           text: open.length
-            ? `Scoped ${open.length > 1 ? `all ${open.length}` : "it"} ${suggestionAnswer === "all" ? `to all ${sceneList.length} scenes` : "to the scene each was left on"}. Nothing is changed yet — tell me to run ${open.length > 1 ? "them" : "it"}.`
+            ? `Scoped ${open.length > 1 ? `all ${open.length}` : "it"} ${suggestionAnswer === "all" ? `to all ${sceneList.length} scenes` : "to the scene each was left on"}. Nothing is changed yet, tell me to run ${open.length > 1 ? "them" : "it"}.`
             : `Nothing queued to scope.`,
         });
       } else if (suggestionAnswer === "run") {
@@ -1572,7 +1572,7 @@ export function StudioScreen() {
                 onDone={handleMasterRendered}
                 footer={
                   <span className="flex items-center gap-1.5 font-medium">
-                    <span>Email notification queued — you can close this tab</span>
+                    <span>Email notification queued. You can close this tab</span>
                   </span>
                 }
               />
@@ -2663,7 +2663,7 @@ export function StudioScreen() {
                             a hover that has to survive a click target is a
                             hover you lose. */}
                         <InfoTip label="What happens when I generate?">
-                          Every clip in this scene is still at its keyframes — the opening and
+                          Every clip in this scene is still at its keyframes. The opening and
                           closing frame of each shot. Generating renders them in full and spends
                           the credits for it, so this is the moment to change a shot.
                         </InfoTip>

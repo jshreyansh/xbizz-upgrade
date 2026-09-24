@@ -26,7 +26,7 @@ const FORMATS: FormatDef[] = [
     len: "30–180s",
     aud: "HCP · Patient",
     tok: "5,000",
-    desc: "A drug explainer — how the molecule works, what the evidence says, in 30 to 180 seconds. Built straight from your dossier for email, rep tablets and social.",
+    desc: "A drug explainer, how the molecule works, what the evidence says, in 30 to 180 seconds. Built straight from your dossier for email, rep tablets and social.",
     cap: "“How Velmora works in heart failure”",
     kb: "Drug explainer",
     aspect: "9:16 · 16:9",
@@ -40,7 +40,7 @@ const FORMATS: FormatDef[] = [
     len: "30–90s",
     aud: "Patient · HCP",
     tok: "8,000",
-    desc: "A doctor presents to camera — their face lip-synced to the script — with your explainer video playing behind them. It feels as if the physician recorded it themselves.",
+    desc: "A doctor presents to camera. Their face lip-synced to the script, with your explainer video playing behind them. It feels as if the physician recorded it themselves.",
     cap: "“In my practice, I start patients on…”",
     kb: "Presenter-led",
     aspect: "Lip-synced",
@@ -91,7 +91,7 @@ export function Step1Format() {
           CS
         </span>
         <span>
-          Two formats, both ready to make right now. If you are not sure, take the <b>Short Video</b> — it is what most brands start with.
+          Two formats, both ready to make right now. If you are not sure, take the <b>Short Video</b>. It is what most brands start with.
         </span>
       </div>
 
@@ -332,7 +332,7 @@ export function Step1Format() {
 
       {/* Explainer detail */}
       <div style={{ background: "#fff", border: "1px solid var(--hair)", borderRadius: "var(--r)", padding: "16px 18px", fontSize: 13, color: "var(--ink-3)", lineHeight: 1.6 }}>
-        <b style={{ color: "var(--ink)" }}>Not sure which one to pick?</b> Short Video is the workhorse — it explains the drug itself and works everywhere: email, a rep&apos;s tablet, congress screens, social. Digital Twin is for when the message lands better coming from a person: a KOL, an advisor, or a physician talking to patients. You can make the same script as both later, so this is not a one-way door.
+        <b style={{ color: "var(--ink)" }}>Not sure which one to pick?</b> Short Video is the workhorse. It explains the drug itself and works everywhere: email, a rep&apos;s tablet, congress screens, social. Digital Twin is for when the message lands better coming from a person: a KOL, an advisor, or a physician talking to patients. You can make the same script as both later, so this is not a one-way door.
       </div>
 
       {/* Bottom action bar */}

@@ -509,7 +509,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       type="button"
                       onClick={() => setEditingName(true)}
                       className="group flex items-center gap-2 text-left cursor-pointer max-w-full"
-                      aria-label={`Rename project — currently ${nameValue}`}
+                      aria-label={`Rename project, currently ${nameValue}`}
                     >
                       <span className="text-title font-[850] text-ink tracking-tight truncate">
                         {nameValue}

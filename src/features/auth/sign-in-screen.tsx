@@ -80,7 +80,7 @@ export function SignInScreen() {
           </h1>
 
           <p style={{ fontSize: 16.5, lineHeight: 1.62, color: "rgba(255,255,255,.7)", maxWidth: "46ch", margin: 0 }}>
-            A Content Strategist, Medical Writer, MLR Reviewer, Creative Producer and Project Manager — working from your dossier, citing every claim against the label that governs your market, and shipping review-ready assets in minutes.
+            A Content Strategist, Medical Writer, MLR Reviewer, Creative Producer and Project Manager, working from your dossier, citing every claim against the label that governs your market, and shipping review-ready assets in minutes.
           </p>
 
           {/* Stats */}
@@ -145,7 +145,7 @@ export function SignInScreen() {
         </div>
 
         <p className="relative z-10" style={{ margin: 0, fontSize: 11.5, color: "rgba(255,255,255,.34)", letterSpacing: ".01em" }}>
-          Every claim retrieved from allow-listed sources, cited, and fact-checked — or dropped. SOC 2 Type II · GDPR · HIPAA-aligned
+          Every claim retrieved from allow-listed sources, cited, and fact-checked, or dropped. SOC 2 Type II · GDPR · HIPAA-aligned
         </p>
       </div>
 

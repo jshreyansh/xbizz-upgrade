@@ -30,7 +30,7 @@ export const DEFAULT_MV_SCENES: MVScene[] = [
     visualPrompt: "A calm cardiology consult room in a US academic medical centre, late-morning window light across a walnut desk. The camera opens on a close-up of an echocardiogram printout, then pulls back to a clinician mid-thought.",
     negativePrompt: "cartoon, 3D render, CGI, animated character, illustration, sparkling eyes, waxy skin, product packaging, pill, tablet, capsule, logo text on screen, minors, distressed patient",
     overlayText: "Velmora · tirzelamide",
-    overlayType: "Key term — middle, dark box",
+    overlayType: "Key term, middle, dark box",
   },
   {
     id: "sc-2",
@@ -41,7 +41,7 @@ export const DEFAULT_MV_SCENES: MVScene[] = [
     visualPrompt: "Photorealistic molecular representation of cardiac microvasculature with subtle kinetic flow of oxygenated erythrocytes.",
     negativePrompt: "cartoon, 3D render, CGI, animated character, illustration, neon colors",
     overlayText: "Selective Oral Inhibitor",
-    overlayType: "Lower third — light",
+    overlayType: "Lower third, light",
   },
   {
     id: "sc-3",
@@ -52,7 +52,7 @@ export const DEFAULT_MV_SCENES: MVScene[] = [
     visualPrompt: "Clean, elegant clinical data visualization of Kaplan-Meier survival curves showing early divergence at day 30.",
     negativePrompt: "cartoon, 3D render, CGI, busy chart, tiny unreadable text",
     overlayText: "24% Relative Risk Reduction (p < 0.001)",
-    overlayType: "Key term — middle, dark box",
+    overlayType: "Key term, middle, dark box",
   },
   {
     id: "sc-4",
@@ -63,7 +63,7 @@ export const DEFAULT_MV_SCENES: MVScene[] = [
     visualPrompt: "Senior cardiologist consulting with an active adult patient in a bright, modern clinic environment.",
     negativePrompt: "distressed patient, cartoon, CGI",
     overlayText: "Tolerability & Safety Profile",
-    overlayType: "Lower third — light",
+    overlayType: "Lower third, light",
   },
   {
     id: "sc-5",
@@ -74,7 +74,7 @@ export const DEFAULT_MV_SCENES: MVScene[] = [
     visualPrompt: "Discreet packaging shot on minimalist frosted glass surface with clear prescribing guide iconography.",
     negativePrompt: "pill spilling, cartoon, dramatic lighting",
     overlayText: "Once Daily · No Titration Required",
-    overlayType: "Lower third — light",
+    overlayType: "Lower third, light",
   },
 ];
 

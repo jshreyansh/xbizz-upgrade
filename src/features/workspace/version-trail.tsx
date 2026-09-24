@@ -179,7 +179,7 @@ function VersionTrailModal({
                       )}
                       <span>
                         {r.text}
-                        <span className="ml-1 text-ink-4">— {r.by}</span>
+                        <span className="ml-1 text-ink-4">· {r.by}</span>
                       </span>
                     </li>
                   ))}
@@ -199,7 +199,7 @@ function VersionTrailModal({
         </ol>
 
         <footer className="border-t border-hair px-4 py-2.5 text-caption text-ink-4">
-          A published version is the record a reviewer approved — it is read here, not reopened.
+          A published version is the record a reviewer approved. It is read here, not reopened.
         </footer>
       </div>
     </div>

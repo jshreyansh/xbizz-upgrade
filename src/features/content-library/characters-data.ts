@@ -147,7 +147,7 @@ export const EXAMPLE_CHARACTERS: Character[] = [
     name: "Hema",
     type: "Patient",
     description:
-      "Woman in her early 60s, warm expression, soft knit cardigan — lives with a long-term condition.",
+      "Woman in her early 60s, warm expression, soft knit cardigan, lives with a long-term condition.",
     method: "prompt",
     views: derivedViews(
       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=900&q=80"

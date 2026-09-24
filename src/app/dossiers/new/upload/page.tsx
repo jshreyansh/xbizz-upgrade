@@ -40,20 +40,20 @@ export default function NewDossierUploadPage() {
     const lower = text.toLowerCase();
 
     if (isQuestion(text)) {
-      return "Attach your existing dossier document (PDF, DOCX, or PPTX) and I'll verify it against the regulatory anchor and cross-reference its citations — no need to rewrite anything.";
+      return "Attach your existing dossier document (PDF, DOCX, or PPTX) and I'll verify it against the regulatory anchor and cross-reference its citations. No need to rewrite anything.";
     }
 
     if (/\b(verify|validate|go|start)\b/.test(lower)) {
       if (fileName) {
         setTimeout(() => startVerification(), 700);
-        return "On it — verifying now.";
+        return "On it, verifying now.";
       }
-      return "Attach your file first — click the 📎 icon and I'll take it from there.";
+      return "Attach your file first, click the 📎 icon and I'll take it from there.";
     }
     if (/(upload|attach|document|file)/.test(lower)) {
       return "Click the 📎 icon below and I'll attach it and get it ready to verify.";
     }
-    return 'Attach your existing dossier document with the 📎 icon, then say "verify" — or use the dropzone below.';
+    return 'Attach your existing dossier document with the 📎 icon, then say "verify", or use the dropzone below.';
   }
 
   const { messages, thinking, send, pushAssistant, pushUser } = useAssistantChat(
@@ -73,7 +73,7 @@ export default function NewDossierUploadPage() {
   function startVerification() {
     setDossier(buildMockDossier({ brandName, genericName, indication: `Extracted from ${fileName}`, regulatoryAnchor: anchor, category, targetAudience: audiences }));
     setPhase("processing");
-    pushAssistant("Verifying your document now — I'll let you know the moment it's checked.");
+    pushAssistant("Verifying your document now, I'll let you know the moment it's checked.");
   }
 
   return (
@@ -96,12 +96,12 @@ export default function NewDossierUploadPage() {
                       ? (file) => {
                           setFileName(file.name);
                           pushUser(`📎 Attached ${file.name}`);
-                          pushAssistant(`Got "${file.name}" — say "verify" whenever you're ready, or I can start now.`);
+                          pushAssistant(`Got "${file.name}", say "verify" whenever you're ready, or I can start now.`);
                         }
                       : undefined
                   }
                   disabled={phase === "processing"}
-                  disabledNote="Verifying — hang tight…"
+                  disabledNote="Verifying, hang tight…"
                   placeholder='Attach a file, or say "verify"'
                   subtitle="Fill this step by prompt"
                   quickReplies={phase === "input" ? ["What does this step do?"] : undefined}
@@ -142,7 +142,7 @@ export default function NewDossierUploadPage() {
             >
               {fileName ? <FileText size={22} color="var(--brand-deep)" /> : <Upload size={22} color="var(--ink-4)" />}
               <span style={{ fontSize: 13, fontWeight: 650, color: fileName ? "var(--brand-deep)" : "var(--ink-3)" }}>
-                {fileName ?? "Click to browse — PDF, DOCX, or PPTX"}
+                {fileName ?? "Click to browse, PDF, DOCX, or PPTX"}
               </span>
             </button>
             <input ref={fileInputRef} type="file" onChange={handleFilePicked} style={{ display: "none" }} accept=".pdf,.doc,.docx,.ppt,.pptx" />

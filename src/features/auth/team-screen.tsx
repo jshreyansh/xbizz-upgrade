@@ -22,7 +22,7 @@ export function TeamScreen() {
         </div>
         <h2 style={{ fontSize: "clamp(32px,3.6vw,46px)", letterSpacing: "-1.9px", margin: "0 0 12px", fontWeight: 800 }}>Five specialists. One record of truth.</h2>
         <p style={{ color: "rgba(255,255,255,.68)", fontSize: 16, margin: "0 auto 46px", maxWidth: "58ch", lineHeight: 1.62 }}>
-          They don&apos;t improvise. Every line one of them writes is retrieved from an allow-listed source, cited, and checked by the next person in the chain — or it never reaches the asset.
+          They don&apos;t improvise. Every line one of them writes is retrieved from an allow-listed source, cited, and checked by the next person in the chain, or it never reaches the asset.
         </p>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 15 }}>

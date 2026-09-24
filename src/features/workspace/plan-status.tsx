@@ -99,7 +99,7 @@ export function PlanProgress({
             key={section.id}
             type="button"
             onClick={() => onJump?.(section.id)}
-            title={`${section.title} — ${STATE_LABEL[section.state].toLowerCase()}`}
+            title={`${section.title} · ${STATE_LABEL[section.state].toLowerCase()}`}
             aria-label={`${section.title}: ${STATE_LABEL[section.state]}`}
             className={cn(
               "h-1.5 flex-1 rounded-full transition-all",

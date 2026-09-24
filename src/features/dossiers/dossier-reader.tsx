@@ -202,7 +202,7 @@ export function DossierReader({
                 </span>
               </div>
               <p style={{ margin: "3px 0 0", fontSize: 13.5, color: "var(--ink-3)" }}>
-                {activeDossier.genericName} — {activeDossier.indication}
+                {activeDossier.genericName}, {activeDossier.indication}
               </p>
               {activeDossier.approvals.every((a) => a.status === "approved") && (
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>

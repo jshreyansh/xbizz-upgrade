@@ -104,8 +104,8 @@ const CREATION_TILES: TileOption[] = [
 ];
 
 const RECENT_PROJECTS: RecentProject[] = [
-  { studio: "Reel", status: "In MLR", title: "Velmora — MoA explainer", meta: "Cardiologists · US · 60s", progress: 85, updated: "Today, 09:15", action: "Open" },
-  { studio: "Avatar", status: "Draft", title: "Dr. Rao — dosing update", meta: "HCP · EU · 45s", progress: 35, updated: "Yesterday", action: "Resume" },
+  { studio: "Reel", status: "In MLR", title: "Velmora, MoA explainer", meta: "Cardiologists · US · 60s", progress: 85, updated: "Today, 09:15", action: "Open" },
+  { studio: "Avatar", status: "Draft", title: "Dr. Rao, dosing update", meta: "HCP · EU · 45s", progress: 35, updated: "Yesterday", action: "Resume" },
   { studio: "Docs", status: "Approved", title: "Onkavia detail aid", meta: "Field team · 8 panels", progress: 100, updated: "2 days ago", action: "Export" },
   { studio: "Web", status: "Draft", title: "Nirvexa launch microsite", meta: "HCP portal · 6 sections", progress: 55, updated: "3 days ago", action: "Resume" },
 ];
@@ -127,10 +127,10 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
   {
     label: "Video Samples",
     title: "Reels and avatars your team already shipped",
-    subtitle: "Real videos made on SwishX — two Reel cuts, two Avatar presenters. Play one before you build.",
+    subtitle: "Real videos made on SwishX. Two Reel cuts, two Avatar presenters. Play one before you build.",
     items: [
       {
-        title: "Mechanism of action — cardiology",
+        title: "Mechanism of action, cardiology",
         subtitle: "Cardiologists · US · FDA",
         meta: "1:00",
         aspect: "16/9",
@@ -217,7 +217,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
   {
     label: "Creatives Samples",
     title: "Print and digital, done right",
-    subtitle: "Layouts your reps actually use — journal ads, booth panels, and payer infographics.",
+    subtitle: "Layouts your reps actually use, journal ads, booth panels, and payer infographics.",
     items: [
       {
         title: "Velmora journal ad",
@@ -951,7 +951,7 @@ const EXAMPLE_DOSSIERS = MOCK_DOSSIERS.filter((d) => d.isSample);
 
 const EXAMPLE_STARTERS: ShowcaseItem[] = [
   {
-    title: "Mechanism of action — cardiology",
+    title: "Mechanism of action, cardiology",
     subtitle: "Example Video · Cardiologists",
     meta: "1:00",
     aspect: "16/9",

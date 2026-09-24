@@ -99,7 +99,7 @@ export function DossierDetailScreen({
           <EmptyBlock
             icon={ListChecks}
             title="Not started yet"
-            description="This dossier hasn't been started — its sections will appear here once it is."
+            description="This dossier hasn't been started. Its sections will appear here once it is."
           />
         ) : (
           <div className="flex flex-col gap-2">

@@ -81,14 +81,14 @@ export const MESSAGES: DemoMessage[] = [
   {
     memberKey: "green",
     memberName: "MLR Reviewer",
-    text: "Cleared the MOA section. One dosing claim needs an updated label reference — flagged in the dossier.",
+    text: "Cleared the MOA section. One dosing claim needs an updated label reference, flagged in the dossier.",
     time: "14m ago",
     unread: true,
   },
   {
     memberKey: "blue",
     memberName: "Creative Producer",
-    text: "Finished the Velmora MOA reel — 45 seconds, narrated, all claims on-screen. Ready to export.",
+    text: "Finished the Velmora MOA reel, 45 seconds, narrated, all claims on-screen. Ready to export.",
     time: "1h ago",
     unread: false,
   },
@@ -115,7 +115,7 @@ export interface SampleAsset {
 export const SAMPLE_VIDEOS: SampleAsset[] = [
   {
     type: "video",
-    title: "Velmora — MOA in 45 seconds",
+    title: "Velmora, MOA in 45 seconds",
     engine: "Video",
     duration: "0:45",
     audience: "Cardiologists · US",
@@ -125,7 +125,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
   },
   {
     type: "video",
-    title: "Dr. Alvarez — digital twin",
+    title: "Dr. Alvarez, digital twin",
     engine: "Avatar Video",
     duration: "0:58",
     audience: "Patients · US",
@@ -135,7 +135,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
   },
   {
     type: "video",
-    title: "Onkavia — congress recap",
+    title: "Onkavia, congress recap",
     engine: "Video",
     duration: "1:12",
     audience: "Oncologists · EU",
@@ -145,7 +145,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
   },
   {
     type: "video",
-    title: "Nirvexa — access & value",
+    title: "Nirvexa, access & value",
     engine: "Video",
     duration: "1:30",
     audience: "Payers · UK",
@@ -158,7 +158,7 @@ export const SAMPLE_VIDEOS: SampleAsset[] = [
 export const SAMPLE_CANVAS: SampleAsset[] = [
   {
     type: "canvas",
-    title: "Velmora — journal ad",
+    title: "Velmora, journal ad",
     engine: "Infographic",
     duration: "A4",
     audience: "Cardiologists · US",
@@ -168,7 +168,7 @@ export const SAMPLE_CANVAS: SampleAsset[] = [
   },
   {
     type: "canvas",
-    title: "Onkavia — congress panel",
+    title: "Onkavia, congress panel",
     engine: "Infographic",
     duration: "2×1m",
     audience: "Oncologists · EU",
@@ -178,7 +178,7 @@ export const SAMPLE_CANVAS: SampleAsset[] = [
   },
   {
     type: "canvas",
-    title: "Nirvexa — payer infographic",
+    title: "Nirvexa, payer infographic",
     engine: "Infographic",
     duration: "1:1",
     audience: "Payers · UK",
@@ -188,7 +188,7 @@ export const SAMPLE_CANVAS: SampleAsset[] = [
   },
   {
     type: "canvas",
-    title: "Glucenta — savings card",
+    title: "Glucenta, savings card",
     engine: "Infographic",
     duration: "3.5×2in",
     audience: "Patients · US",
