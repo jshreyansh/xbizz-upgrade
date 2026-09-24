@@ -323,6 +323,17 @@ export function ProductDetailScreen({
           </div>
 
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+            {/* First, not last. The way in belongs where you look before
+                you have scrolled past everything already there. */}
+            <button
+              onClick={handleUpload}
+              className="flex min-h-[178px] flex-col items-center justify-center gap-1.5 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
+            >
+              <Upload size={18} />
+              <span className="text-body font-bold">Add product image</span>
+              <span className="text-caption text-ink-4">JPG, PNG or WebP (max 10MB)</span>
+            </button>
+
             {visibleImages.map((img) => (
               <div
                 key={img.id}
@@ -402,14 +413,6 @@ export function ProductDetailScreen({
               </div>
             ))}
 
-            <button
-              onClick={handleUpload}
-              className="flex min-h-[178px] flex-col items-center justify-center gap-1.5 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
-            >
-              <Upload size={18} />
-              <span className="text-body font-bold">Add product image</span>
-              <span className="text-caption text-ink-4">JPG, PNG or WebP (max 10MB)</span>
-            </button>
           </div>
 
           {visibleImages.length === 0 && (
