@@ -63,7 +63,10 @@ export function useChatAttachments() {
           id: `att-${Date.now()}-${i}`,
           name: file.name,
           kind,
-          previewUrl: kind === "doc" ? undefined : URL.createObjectURL(file),
+          /* Documents get a URL too. They used to be left without one because
+             nothing could open them; the viewer can, and a chip that opens an
+             empty frame is worse than one that does not open. */
+          previewUrl: URL.createObjectURL(file),
         } satisfies LocalAttachment;
       }),
     ]);
@@ -115,7 +118,9 @@ export function ChatAttachmentRow({
             <AttachmentChip
               key={file.id}
               file={file}
-              onOpen={file.kind === "doc" ? undefined : () => setPreview(file)}
+              /* Documents open too: there is a viewer for one now, and a
+                 chip you cannot open is a filename you have to trust. */
+              onOpen={() => setPreview(file)}
               onRemove={() => remove(file)}
             />
           ))}
@@ -156,9 +161,20 @@ export function AttachmentChip({
           </span>
         </button>
       ) : (
-        <span className="grid size-7 shrink-0 place-items-center rounded-glyph border border-hair bg-canvas">
-          <Paperclip className="size-3.5 opacity-75" />
-        </span>
+        <button
+          type="button"
+          onClick={onOpen}
+          disabled={!onOpen}
+          className="focus-ring group relative grid size-7 shrink-0 place-items-center rounded-glyph border border-hair bg-canvas transition enabled:cursor-pointer enabled:hover:border-brand enabled:hover:text-brand"
+          aria-label={onOpen ? `Preview ${file.name}` : undefined}
+        >
+          <Paperclip className="size-3.5 opacity-75 transition-opacity group-hover:opacity-0" />
+          {onOpen && (
+            <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity group-hover:opacity-100">
+              <Maximize2 className="size-3" />
+            </span>
+          )}
+        </button>
       )}
       <span className="max-w-[180px] truncate">{file.name}</span>
       <button

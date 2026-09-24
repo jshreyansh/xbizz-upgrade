@@ -38,7 +38,6 @@ import {
   Plus,
   RotateCcw,
   ScanLine,
-  Send,
   Share2,
   Sliders,
   SlidersHorizontal,
@@ -77,6 +76,7 @@ import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/sc
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { APPROVED_CLAIMS, citationsFor, claimUsage } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
+import { ChatComposer } from "@/components/patterns/chat-composer";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { BackgroundKeyframes } from "@/features/workspace/background-keyframes";
@@ -3158,12 +3158,113 @@ export function StudioScreen() {
                     <SuggestionChecklist items={suggestionQueue.drafts} onSend={sendSuggestions} />
                   )}
 
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSendChatMessage();
-                    }}
-                    className="flex flex-col gap-2 rounded-panel border border-hair bg-card p-2.5 shadow-xs focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15"
+                  <ChatComposer
+                    value={directorInput}
+                    onChange={setDirectorInput}
+                    onSubmit={handleSendChatMessage}
+                    /**
+                     * Held shut until every scene has its structure. There is
+                     * nothing to direct before that: an instruction about copy
+                     * or timing has no copy or timing to land on, and it would
+                     * be silently dropped by the generation that overwrites it
+                     * a second later. It opens the moment pass 1 finishes,
+                     * while the media is still rendering.
+                     */
+                    disabled={isEditor && !structureReady}
+                    placeholder={
+                      isEditor && !structureReady
+                        ? "Generating your scenes..."
+                        : isReview
+                        ? "Ask SwishX or type 'Add comment at 0:24 that...'..."
+                        : "Direct SwishX to modify scenes, copy, or timing..."
+                    }
+                    note={isReview ? "Ask questions or add comments via AI" : "Grounded against FDA Dossier"}
+                    attachControl={
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setChatContextMenuOpen(!chatContextMenuOpen)}
+                          className="grid size-7 shrink-0 cursor-pointer place-items-center rounded-chip border border-hair-2 bg-card text-brand shadow-2xs transition-colors hover:bg-tint hover:text-brand-deep"
+                          title="Add context (Scenes, Files, Citations)"
+                        >
+                          <Plus className="size-3.5" />
+                        </button>
+                        {chatContextMenuOpen && (
+                        <div className="absolute bottom-full left-0 mb-2 w-64 rounded-panel border border-hair-2 bg-card p-1.5 shadow-xl z-50 space-y-1">
+                          <div className="px-2 py-1 text-micro font-extrabold uppercase tracking-wider text-ink-4">
+                            Attach Context to Chat
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              /* The shared picker, so a packshot dropped
+                                 in here gets the same thumbnail it gets on
+                                 the brief screen. */
+                              chatFiles.open();
+                              setChatContextMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-body font-medium text-ink hover:bg-tint hover:text-brand-deep rounded-control transition text-left cursor-pointer"
+                          >
+                            <Paperclip className="size-3.5 text-brand" />
+                            <span>Upload file from computer</span>
+                          </button>
+
+                          <div className="border-t border-hair my-1" />
+                          <div className="px-2 py-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4">
+                            Attach Scene Scope
+                          </div>
+                          <div className="max-h-40 overflow-y-auto space-y-0.5">
+                            {sceneList.map((sc) => {
+                              const inScope = scopedSceneIds.includes(sc.id);
+                              return (
+                                <button
+                                  key={sc.id}
+                                  type="button"
+                                  /* Toggles the same list the canvas ticks write to, and
+                                     stays open so several scenes can be picked in one go. */
+                                  onClick={() => toggleSceneScope(sc)}
+                                  aria-pressed={inScope}
+                                  className={cn(
+                                    "w-full flex items-center gap-1.5 px-2.5 py-1 text-label font-medium rounded-chip transition text-left cursor-pointer",
+                                    inScope ? "bg-tint text-brand-deep font-bold" : "text-ink-2 hover:bg-subtle"
+                                  )}
+                                >
+                                  <span className={cn(
+                                    "grid size-3.5 shrink-0 place-items-center rounded-full border transition-colors",
+                                    inScope ? "border-brand bg-brand text-white" : "border-hair-3 text-transparent"
+                                  )}>
+                                    <Check className="size-2 stroke-[3]" />
+                                  </span>
+                                  <span className="truncate flex-1">Scene {sc.number}: {sc.title}</span>
+                                  <span className="text-micro text-ink-4 font-bold shrink-0">({sc.narrativeTag || "Evidence"})</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAttachedContexts((prev) => [
+                                ...prev,
+                                {
+                                  id: `all-scenes-${Date.now()}`,
+                                  type: "scene",
+                                  label: "All Scenes",
+                                  detail: `All ${sceneList.length} storyboard scenes`,
+                                },
+                              ]);
+                              setChatContextMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 text-label font-bold text-brand-deep bg-tint/70 hover:bg-tint rounded-control transition text-left cursor-pointer"
+                          >
+                            <Layers className="size-3 text-brand" />
+                            <span>Attach All Scenes Scope</span>
+                          </button>
+                        </div>
+                      )}
+                      </div>
+                    }
                   >
                     {/* Attached Context Chips */}
                     {/* The files on this message — the same chips the brief
@@ -3201,139 +3302,7 @@ export function StudioScreen() {
                       </div>
                     )}
 
-                    <textarea
-                      value={directorInput}
-                      onChange={(e) => setDirectorInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendChatMessage();
-                        }
-                      }}
-                      /**
-                       * Held shut until every scene has its structure. There is
-                       * nothing to direct before that — an instruction about
-                       * copy or timing has no copy or timing to land on, and it
-                       * would be silently dropped by the generation that
-                       * overwrites it a second later. It opens the moment pass 1
-                       * finishes, while the media is still rendering.
-                       */
-                      disabled={isEditor && !structureReady}
-                      placeholder={
-                        isEditor && !structureReady
-                          ? "Generating your scenes..."
-                          : isReview
-                          ? "Ask SwishX or type 'Add comment at 0:24 that...'..."
-                          : "Direct SwishX to modify scenes, copy, or timing..."
-                      }
-                      rows={2}
-                      className="w-full resize-none text-body text-ink placeholder:text-ink-3 focus:outline-none disabled:cursor-not-allowed"
-                    />
-
-                    <div className="flex items-center justify-between pt-1 border-t border-hair">
-                      <div className="flex items-center gap-2">
-                        {/* Plus Context Menu Button */}
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setChatContextMenuOpen(!chatContextMenuOpen)}
-                            className="size-7 rounded-chip text-ink-3 hover:text-ink hover:bg-black/5 flex items-center justify-center transition-colors cursor-pointer border border-hair-2 bg-card shadow-2xs"
-                            title="Add context (Scenes, Files, Citations)"
-                          >
-                            <Plus className="size-3.5 text-brand" />
-                          </button>
-
-                          {chatContextMenuOpen && (
-                            <div className="absolute bottom-full left-0 mb-2 w-64 rounded-panel border border-hair-2 bg-card p-1.5 shadow-xl z-50 space-y-1">
-                              <div className="px-2 py-1 text-micro font-extrabold uppercase tracking-wider text-ink-4">
-                                Attach Context to Chat
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  /* The shared picker, so a packshot dropped
-                                     in here gets the same thumbnail it gets on
-                                     the brief screen. */
-                                  chatFiles.open();
-                                  setChatContextMenuOpen(false);
-                                }}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-body font-medium text-ink hover:bg-tint hover:text-brand-deep rounded-control transition text-left cursor-pointer"
-                              >
-                                <Paperclip className="size-3.5 text-brand" />
-                                <span>Upload file from computer</span>
-                              </button>
-
-                              <div className="border-t border-hair my-1" />
-                              <div className="px-2 py-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4">
-                                Attach Scene Scope
-                              </div>
-                              <div className="max-h-40 overflow-y-auto space-y-0.5">
-                                {sceneList.map((sc) => {
-                                  const inScope = scopedSceneIds.includes(sc.id);
-                                  return (
-                                    <button
-                                      key={sc.id}
-                                      type="button"
-                                      /* Toggles the same list the canvas ticks write to, and
-                                         stays open so several scenes can be picked in one go. */
-                                      onClick={() => toggleSceneScope(sc)}
-                                      aria-pressed={inScope}
-                                      className={cn(
-                                        "w-full flex items-center gap-1.5 px-2.5 py-1 text-label font-medium rounded-chip transition text-left cursor-pointer",
-                                        inScope ? "bg-tint text-brand-deep font-bold" : "text-ink-2 hover:bg-subtle"
-                                      )}
-                                    >
-                                      <span className={cn(
-                                        "grid size-3.5 shrink-0 place-items-center rounded-full border transition-colors",
-                                        inScope ? "border-brand bg-brand text-white" : "border-hair-3 text-transparent"
-                                      )}>
-                                        <Check className="size-2 stroke-[3]" />
-                                      </span>
-                                      <span className="truncate flex-1">Scene {sc.number}: {sc.title}</span>
-                                      <span className="text-micro text-ink-4 font-bold shrink-0">({sc.narrativeTag || "Evidence"})</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAttachedContexts((prev) => [
-                                    ...prev,
-                                    {
-                                      id: `all-scenes-${Date.now()}`,
-                                      type: "scene",
-                                      label: "All Scenes",
-                                      detail: `All ${sceneList.length} storyboard scenes`,
-                                    },
-                                  ]);
-                                  setChatContextMenuOpen(false);
-                                }}
-                                className="w-full flex items-center gap-2 px-2.5 py-1.5 text-label font-bold text-brand-deep bg-tint/70 hover:bg-tint rounded-control transition text-left cursor-pointer"
-                              >
-                                <Layers className="size-3 text-brand" />
-                                <span>Attach All Scenes Scope</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="text-caption text-ink-3">
-                          {isReview ? "Ask questions or add comments via AI" : "Grounded against FDA Dossier"}
-                        </div>
-                      </div>
-
-                      <Button
-                        type="submit"
-                        size="sm"
-                        disabled={!directorInput.trim() && attachedContexts.length === 0}
-                        className="size-7 rounded-full bg-brand hover:bg-brand-deep text-white p-0 flex items-center justify-center cursor-pointer shadow-xs disabled:opacity-30"
-                      >
-                        <Send className="size-3.5" />
-                      </Button>
-                    </div>
-                  </form>
+                  </ChatComposer>
                 </div>
               </div>
             )}

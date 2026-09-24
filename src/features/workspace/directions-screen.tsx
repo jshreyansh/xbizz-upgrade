@@ -32,8 +32,6 @@ import {
   PanelRightOpen,
   Pause,
   Play,
-  Plus,
-  Send,
   ShieldCheck,
   Target,
   Upload,
@@ -52,6 +50,7 @@ import { displayIntendedUses } from "@/features/workspace/intended-use";
 // Destinations (parked): import { parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { ChatComposer, ComposerAttachButton } from "@/components/patterns/chat-composer";
 import { InfographicDirectionsScreen } from "@/features/workspace/infographic-directions-screen";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { IntakePlaceholder } from "@/features/workspace/intake-checklist";
@@ -2519,46 +2518,19 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
             )}
 
-            <div className="relative">
+            <ChatComposer
+              value={chatInput}
+              onChange={setChatInput}
+              onSubmit={handleSendChatMessage}
+              disabled={isGenerating}
+              placeholder={isGenerating ? "Generating scenes..." : "Ask SwishX or request a change to the plan..."}
+              attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
+              note={`Grounded against the ${brandName} dossier`}
+            >
               {/* The files on this message, above the field they were added
-                  from — the same chips the brief screen uses, because it is
-                  the same gesture. */}
+                  from, as chips you can open and drop. */}
               <ChatAttachmentRow attachments={chatFiles} />
-              <div className="flex items-center gap-1.5 rounded-control border border-hair-2 bg-subtle px-2.5 py-1.5 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
-                {/* One thing: attach a file. This was a menu of two canned
-                    prompts wearing an attach icon. */}
-                <button
-                  type="button"
-                  onClick={chatFiles.open}
-                  className="grid size-6 place-items-center rounded-chip text-ink-3 hover:text-ink hover:bg-black/5 transition cursor-pointer"
-                  title="Attach a file"
-                  aria-label="Attach a file"
-                >
-                  <Plus className="size-3.5" />
-                </button>
-
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSendChatMessage();
-                  }}
-                  disabled={isGenerating}
-                  placeholder={isGenerating ? "Generating scenes..." : "Ask or request changes..."}
-                  className="flex-1 bg-transparent text-body outline-none text-ink placeholder:text-ink-4 disabled:opacity-50"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => handleSendChatMessage()}
-                  disabled={(!chatInput.trim() && chatFiles.files.length === 0) || isGenerating}
-                  className="grid size-6 place-items-center rounded-chip bg-brand text-white disabled:opacity-30 hover:bg-brand-deep transition cursor-pointer disabled:cursor-not-allowed"
-                >
-                  <Send className="size-3" />
-                </button>
-              </div>
-            </div>
+            </ChatComposer>
           </div>
         </>
       }
