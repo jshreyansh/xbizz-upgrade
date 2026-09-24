@@ -77,8 +77,11 @@ function ExampleFrame({
             !controls && "pointer-events-none"
           )}
         />
-        {/* What kind of thing this is, and what shape it comes out in. */}
-        {(example.badge || example.aspect) && (
+        {/* What kind of thing this is, and what shape it comes out in. Only
+            in the preview: on a tile they sat over the frame, which is the
+            one part of a starting point that has to be seen, and the name
+            under the tile already answers what it is. */}
+        {large && (example.badge || example.aspect) && (
           <div className="pointer-events-none absolute inset-x-0 top-0 flex min-w-0 items-center justify-between gap-2 p-4">
             {example.badge ? (
               <span className="inline-flex min-w-0 items-center gap-1.5 rounded-chip border border-white/10 bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md">
@@ -105,7 +108,7 @@ function ExampleFrame({
      the caption below it is the one thing it must not do. */
   return (
     <div className={cn("pointer-events-none absolute inset-0 flex flex-col justify-between", large ? "gap-4 p-8" : "gap-2 p-4")}>
-      <div className="flex min-w-0 items-center justify-between gap-2">
+      <div className={cn("flex min-w-0 items-center justify-between gap-2", !large && "hidden")}>
         {example.badge && (
           <span className="inline-flex min-w-0 items-center gap-1.5 rounded-chip border border-white/10 bg-black/60 px-2.5 py-1 text-label font-bold text-white backdrop-blur-md">
             {badgeIcon}
