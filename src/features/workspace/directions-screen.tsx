@@ -36,6 +36,7 @@ import {
   Send,
   ShieldCheck,
   Target,
+  Upload,
   Users,
   Volume2,
   X,
@@ -357,6 +358,26 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   /* Kept as the record of what was answered; nothing renders it, because the
      plan below IS what the answers produced. */
   const [, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
+  /**
+   * A track the team already owns.
+   *
+   * The four presets are stand-ins for a library nobody has yet; the music a
+   * brand actually ships with is a file somebody hands you. It joins the same
+   * list as the presets rather than sitting in a panel of its own, because
+   * choosing between it and them is one decision.
+   *
+   * Declared up here with the rest: the infographic early return is a few
+   * lines below, and a hook under it is a hook this component only sometimes
+   * calls.
+   */
+  const [customMusic, setCustomMusic] = useState<{ name: string; url: string } | null>(null);
+  const musicInputRef = useRef<HTMLInputElement>(null);
+  const musicAudioRef = useRef<HTMLAudioElement | null>(null);
+  const musicOptions = useMemo(
+    () => ["No music", "Calm clinical", "Warm", "Uplifting", ...(customMusic ? [customMusic.name] : [])],
+    [customMusic]
+  );
+
   const flowSteps = useVideoSteps({});
   const backStep = previousStep(flowSteps, "plan");
 
@@ -865,13 +886,45 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       return next;
     });
 
+  const stopCustomMusic = () => {
+    const node = musicAudioRef.current;
+    if (!node) return;
+    node.pause();
+    node.currentTime = 0;
+  };
+
+  const pickMusicFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    /* Reset first: picking the same file twice fires no change event
+       otherwise, and the second attempt silently does nothing. */
+    event.target.value = "";
+    if (!file) return;
+    stopCustomMusic();
+    if (customMusic) URL.revokeObjectURL(customMusic.url);
+    const track = { name: file.name, url: URL.createObjectURL(file) };
+    setCustomMusic(track);
+    setMusic(track.name);
+    setEditingDecision(null);
+  };
+
   const previewAudio = (kind: "voice" | "music", label: string) => {
     stopAudioPreview();
+    stopCustomMusic();
     if (previewingAudio === label) {
       setPreviewingAudio(null);
       return;
     }
     setPreviewingAudio(label);
+    /* A real file plays as itself. The presets are a synthesised tone, which
+       is honest for a stand-in and wrong for something somebody uploaded. */
+    if (kind === "music" && customMusic && label === customMusic.name) {
+      const node = musicAudioRef.current ?? new Audio();
+      musicAudioRef.current = node;
+      node.src = customMusic.url;
+      node.onended = () => setPreviewingAudio(null);
+      void node.play().catch(() => setPreviewingAudio(null));
+      return;
+    }
     if (kind === "voice" && "speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(`${brandName} brings approved evidence into a clear clinical story.`);
       utterance.rate = label.includes("Riya") || label.includes("Maya") ? 0.95 : 0.9;
@@ -1453,13 +1506,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           <AudioChoices
                             label="Choose and preview music"
                             value={music}
-                            options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                            options={musicOptions}
                             onChange={(next) => {
                               setMusic(next);
                               setEditingDecision(null);
                             }}
                             previewing={previewingAudio}
                             onPreview={(option) => previewAudio("music", option)}
+                            onUpload={() => musicInputRef.current?.click()}
+                            uploadedName={customMusic?.name}
                             music
                           />
                         </DecisionRow>
@@ -2001,6 +2056,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     onToggle={() => toggleSection("delivery")}
                   >
                     <div className="space-y-3">
+                      {/* Destinations, parked rather than deleted. Where an
+                          asset goes changes the spec, so this comes back, but
+                          it is not a decision the plan acts on yet.
                       <DecisionRow
                         label="Destinations"
                         value={displayIntendedUses(intendedUse)}
@@ -2017,6 +2075,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           icon={(next) => <ChannelIcon value={next} />}
                         />
                       </DecisionRow>
+                      */}
                       <DecisionRow
                         label={assetType === "video" ? "Frame" : "Format"}
                         value={effectiveFormat}
@@ -2261,13 +2320,15 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           <AudioChoices
                             label="Choose and preview music"
                             value={music}
-                            options={["No music", "Calm clinical", "Warm", "Uplifting"]}
+                            options={musicOptions}
                             onChange={(next) => {
                               setMusic(next);
                               setEditingDecision(null);
                             }}
                             previewing={previewingAudio}
                             onPreview={(option) => previewAudio("music", option)}
+                            onUpload={() => musicInputRef.current?.click()}
+                            uploadedName={customMusic?.name}
                             music
                           />
                         </DecisionRow>
@@ -2686,6 +2747,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               onClose={() => setPresenterLibraryOpen(false)}
             />
           )}
+          <input
+            ref={musicInputRef}
+            type="file"
+            accept="audio/*"
+            hidden
+            onChange={pickMusicFile}
+          />
           {voiceLibraryOpen && (
             <VoiceLibrary
               selected={voice}
@@ -2960,6 +3028,8 @@ function AudioChoices({
   previewing,
   onPreview,
   onOpenLibrary,
+  onUpload,
+  uploadedName,
   music = false,
 }: {
   label: string;
@@ -2969,6 +3039,10 @@ function AudioChoices({
   previewing?: string | null;
   onPreview?: (option: string) => void;
   onOpenLibrary?: () => void;
+  /** Music only: opens the file picker for a track the team owns. */
+  onUpload?: () => void;
+  /** Which row in the list is that track, so it can say where it came from. */
+  uploadedName?: string;
   music?: boolean;
 }) {
   return (
@@ -3001,9 +3075,14 @@ function AudioChoices({
               <button
                 type="button"
                 onClick={() => onChange(base)}
-                className="flex-1 text-left text-body-lg font-medium text-ink cursor-pointer"
+                className="flex min-w-0 flex-1 items-center gap-2 text-left text-body-lg font-medium text-ink cursor-pointer"
               >
-                {option}
+                <span className="truncate">{option}</span>
+                {uploadedName === option && (
+                  <span className="shrink-0 rounded-chip bg-tint px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide text-brand-deep">
+                    Your track
+                  </span>
+                )}
               </button>
               {onPreview && (
                 <Button
@@ -3019,6 +3098,17 @@ function AudioChoices({
             </div>
           );
         })}
+
+        {onUpload && (
+          <button
+            type="button"
+            onClick={onUpload}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-hair-3 p-2.5 text-body font-bold text-ink-3 transition hover:border-brand hover:bg-tint hover:text-brand-deep"
+          >
+            <Upload className="size-3.5" />
+            {uploadedName ? "Replace with another track" : "Use your own track"}
+          </button>
+        )}
       </div>
     </div>
   );
