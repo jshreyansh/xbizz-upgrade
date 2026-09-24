@@ -210,27 +210,63 @@ function TileButton({
 }
 
 /**
- * The corner button that takes an asset into account.
+ * The control that takes an asset into the project.
  *
  * It used to move the tile into My files, which read as an upload that had
- * already happened — the same file in two places, and no way to tell that the
+ * already happened: the same file in two places, and no way to tell that the
  * shelf item was the one you took. It stays where it is and turns green
  * instead, so the strip shows what has been counted in.
+ *
+ * And it says what it does. A bare plus in the corner of a tile is a shape,
+ * not an instruction, and the one thing a suggestion strip has to communicate
+ * is that these are things you can take. So it is a labelled control across
+ * the foot of the tile, in the brand tint at rest and filled on hover, which
+ * is how everything else here says "press me".
  */
-function AddButton({ onClick, label, added = false }: { onClick: () => void; label: string; added?: boolean }) {
+function AddToProjectButton({
+  onClick,
+  label,
+  added = false,
+}: {
+  onClick: () => void;
+  label: string;
+  added?: boolean;
+}) {
   return (
-    <TileButton
-      onClick={onClick}
-      label={label}
-      pressed={added}
-      className={
+    <span
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      aria-pressed={added}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={cn(
+        "flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-glyph border px-2 py-1.5 text-micro font-extrabold uppercase tracking-[.04em] transition",
         added
           ? "border-ok-line bg-ok-bg text-ok"
-          : "border-hair-2 bg-card text-ink-3 group-hover:border-brand group-hover:text-brand"
-      }
+          : "border-tint-line bg-tint text-brand-deep hover:border-brand hover:bg-brand hover:text-white"
+      )}
     >
-      {added ? <Check className="size-3.5 stroke-[3]" /> : <Plus className="size-3.5" />}
-    </TileButton>
+      {added ? (
+        <>
+          <Check className="size-3 stroke-[3]" />
+          Added to project
+        </>
+      ) : (
+        <>
+          <Plus className="size-3 stroke-[3]" />
+          Add to project
+        </>
+      )}
+    </span>
   );
 }
 
@@ -311,15 +347,7 @@ export function DocAssetTile({
               <Eye className="size-3.5" />
             </TileButton>
           )}
-          {onAdd ? (
-            <AddButton
-              onClick={onAdd}
-              added={added}
-              label={added ? `Remove ${name} from the grounding` : `Use ${name} for grounding`}
-            />
-          ) : (
-            action
-          )}
+          {!onAdd && action}
         </span>
       </div>
       <div className="flex min-w-0 items-start gap-1.5">
@@ -336,6 +364,13 @@ export function DocAssetTile({
           {origin && <span className="block truncate text-micro text-ink-4">{origin}</span>}
         </span>
       </div>
+      {onAdd && (
+        <AddToProjectButton
+          onClick={onAdd}
+          added={added}
+          label={added ? `Remove ${name} from the grounding` : `Use ${name} for grounding`}
+        />
+      )}
     </div>
   );
 }
@@ -391,23 +426,25 @@ export function MediaAssetTile({
             <OriginTag source={source} />
           </span>
         )}
-        {onAdd && (
-          <span className="absolute right-1.5 top-1.5">
-            <AddButton onClick={onAdd} label={`Add ${name}`} />
-          </span>
-        )}
       </div>
-      <div className="min-w-0 p-2">
-        <span className="block truncate text-body font-bold text-ink">{name}</span>
-        {variation && (
-          <span className="mt-0.5 inline-flex max-w-full items-center rounded-glyph border border-tint-line bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">
-            <span className="truncate">{variation}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-2">
+        <div className="min-w-0">
+          <span className="block truncate text-body font-bold text-ink">{name}</span>
+          {variation && (
+            <span className="mt-0.5 inline-flex max-w-full items-center rounded-glyph border border-tint-line bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">
+              <span className="truncate">{variation}</span>
+            </span>
+          )}
+          <span className="block truncate text-caption text-ink-3" title={note}>
+            {note}
+          </span>
+          {origin && <span className="block truncate text-micro text-ink-4">{origin}</span>}
+        </div>
+        {onAdd && (
+          <span className="mt-auto block">
+            <AddToProjectButton onClick={onAdd} label={`Add ${name} to the project`} />
           </span>
         )}
-        <span className="block truncate text-caption text-ink-3" title={note}>
-          {note}
-        </span>
-        {origin && <span className="block truncate text-micro text-ink-4">{origin}</span>}
       </div>
     </div>
   );
