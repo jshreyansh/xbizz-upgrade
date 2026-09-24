@@ -13,9 +13,6 @@ import { DossierReader } from "@/features/dossiers/dossier-reader";
  * claims and a list of attachments — which meant the thing a claim traced
  * back to looked nothing like the dossier you would find by navigating to
  * it. The document is the document; this is a window onto it.
- *
- * No Create Magic Video here: you are checking a citation mid-edit, not
- * starting a project.
  */
 export function DossierReaderModal({
   dossier,
@@ -61,7 +58,7 @@ export function DossierReaderModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
-          <DossierReader dossier={dossier} onCreateVideo={null} />
+          <DossierReader dossier={dossier} />
         </div>
       </div>
     </div>,

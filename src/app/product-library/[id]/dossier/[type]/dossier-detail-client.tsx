@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
@@ -11,6 +11,7 @@ import { AppShell } from "@/features/workspace/app-shell";
 import { DossierReader } from "@/features/dossiers/dossier-reader";
 import { dossierFor } from "@/features/dossiers/dossier-for";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { DOSSIER_TYPES, type DossierTypeName } from "@/features/product-library/product-library-types";
 
 // Client-rendered for the same reason the product detail page is: a brand
@@ -20,6 +21,26 @@ import { DOSSIER_TYPES, type DossierTypeName } from "@/features/product-library/
 export default function DossierDetailClient() {
   const { id, type } = useParams<{ id: string; type: string }>();
   const router = useRouter();
+  const setNavCollapsed = useWorkspaceStore((s) => s.setNavCollapsed);
+
+  /**
+   * The rail closes itself on the way in.
+   *
+   * A master document is three columns of its own — the index, the section,
+   * and the claims rail when a citation opens it — and 252px of navigation
+   * beside them is 252px the section is not getting. It is a reading screen,
+   * so it takes the width; leaving is one click on the rail, which is still
+   * there as icons.
+   *
+   * Only on arrival, and only once: reopening it here and having it slam
+   * shut again would be the screen arguing with you.
+   */
+  const collapsedOnArrival = useRef(false);
+  useEffect(() => {
+    if (collapsedOnArrival.current) return;
+    collapsedOnArrival.current = true;
+    setNavCollapsed(true);
+  }, [setNavCollapsed]);
   const product = useProductLibraryStore((s) => s.products.find((p) => p.id === id));
   const activeType = (DOSSIER_TYPES as readonly string[]).includes(type) ? (type as DossierTypeName) : null;
   /* Each of the six types is a dossier in its own right — its own sections,

@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
-import { DOCUMENT_TYPES, PHARMA_SECTIONS } from "@/features/dossiers/dossier-wizard-data";
 import { citationSource } from "@/features/dossiers/citation-sources";
 import { CitationPill } from "@/features/workspace/script-scene-card";
 import type { SceneCitation } from "@/types/content";
@@ -22,23 +20,12 @@ import { ExternalLink, X } from "lucide-react";
  * flagged claims have been dealt with. None of that belongs to the wizard,
  * and a modal needs it as much as a page does.
  */
-export function DossierReader({
-  dossier: activeDossier,
-  onCreateVideo,
-}: {
-  dossier: BrandDossier;
-  /** Absent in the modal, where there is no room to start a project. */
-  onCreateVideo?: (() => void) | null;
-}) {
-  const router = useRouter();
+export function DossierReader({ dossier: activeDossier }: { dossier: BrandDossier }) {
   const [activeSectionId, setActiveSectionId] = useState<string>(
     activeDossier.sections[0]?.id || "sec-a1"
   );
   /** The subsection last jumped to, so the index shows where you are. */
   const [activeSubId, setActiveSubId] = useState<string | null>(null);
-  const [showSendMenu, setShowSendMenu] = useState(false);
-  const [sendRecipients, setSendRecipients] = useState<string[]>([]);
-  const [sentAt, setSentAt] = useState<string | null>(null);
   const [claimsPanelOpen, setClaimsPanelOpen] = useState(false);
   const [highlightedClaimId, setHighlightedClaimId] = useState<string | null>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
@@ -48,16 +35,6 @@ export function DossierReader({
   useEffect(() => {
     if (highlightedClaimId) highlightRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [highlightedClaimId]);
-
-  function toggleSendRecipient(role: string) {
-    setSendRecipients((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]));
-  }
-
-  function sendToTeam() {
-    if (sendRecipients.length === 0) return;
-    setSentAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }));
-    setShowSendMenu(false);
-  }
 
   const activeSection = useMemo(
     () => activeDossier.sections.find((s) => s.id === activeSectionId) ?? activeDossier.sections[0],
@@ -158,188 +135,14 @@ export function DossierReader({
     requestAnimationFrame(() => requestAnimationFrame(scroll));
   }
 
-  const createMagicVideo = onCreateVideo ?? (() => router.push("/create"));
-
   return (
 
       <div className="rise-in space-y-6">
-        {/* Top Dossier Summary Card */}
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: "var(--r-xl)",
-            border: "1px solid var(--hair)",
-            padding: "26px 28px",
-            boxShadow: "var(--sh-1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 20,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div
-              style={{
-                width: 54,
-                height: 54,
-                borderRadius: 16,
-                background: activeDossier.gradient,
-                color: "#fff",
-                display: "grid",
-                placeItems: "center",
-                fontSize: 20,
-                fontWeight: 800,
-              }}
-            >
-              {activeDossier.initials}
-            </div>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: "-.8px", margin: 0 }}>{activeDossier.brandName}</h1>
-                <span style={{ fontSize: 11, fontWeight: 800, padding: "2px 8px", borderRadius: 99, background: "var(--ok-bg)", color: "var(--ok)", border: "1px solid var(--ok-line)" }}>
-                  {activeDossier.regulatoryAnchor} Anchor · {activeDossier.status === "complete" ? "Approved" : "Live"}
-                </span>
-              </div>
-              <p style={{ margin: "3px 0 0", fontSize: 13.5, color: "var(--ink-3)" }}>
-                {activeDossier.genericName}, {activeDossier.indication}
-              </p>
-              {activeDossier.approvals.every((a) => a.status === "approved") && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-                  <div style={{ display: "flex" }}>
-                    {activeDossier.approvals.map((a, i) => (
-                      <span
-                        key={a.role}
-                        title={`${a.name} · ${a.role}`}
-                        style={{
-                          width: 20, height: 20, borderRadius: "50%", background: a.gradient,
-                          display: "grid", placeItems: "center", color: "#fff", fontSize: 8.5, fontWeight: 800,
-                          border: "2px solid #fff", marginLeft: i === 0 ? 0 : -6,
-                        }}
-                      >
-                        {a.initials}
-                      </span>
-                    ))}
-                  </div>
-                  <span style={{ fontSize: 12, color: "var(--ink-4)" }}>
-                    Approved by {activeDossier.approvals.map((a) => a.name).join(", ")}
-                  </span>
-                </div>
-              )}
-
-              {/* Document meta strip — makes this read as a formal master document, not a screen */}
-              <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--hair)" }}>
-                {[
-                  ["Document type", DOCUMENT_TYPES.find((d) => d.type === activeDossier.documentType)?.label || "Commercial dossier"],
-                  ["Sections", `${activeDossier.sections.length} of ${PHARMA_SECTIONS.length}`],
-                  ["Claims cited", String(activeDossier.claimsCited)],
-                  ["Last updated", activeDossier.lastUpdated],
-                ].map(([k, v]) => (
-                  <div key={k}>
-                    <span style={{ display: "block", fontSize: 10, letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 700 }}>{k}</span>
-                    <b style={{ fontSize: 12.5, fontWeight: 700, color: "var(--ink-2)" }}>{v}</b>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 10, position: "relative" }}>
-            <div style={{ position: "relative" }}>
-              <button
-                onClick={() => setShowSendMenu((v) => !v)}
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 7,
-                  padding: "11px 16px", borderRadius: "var(--r)", fontWeight: 700, fontSize: 14,
-                  background: "#fff", border: "1px solid var(--hair-2)", color: "var(--ink-2)", cursor: "pointer",
-                }}
-              >
-                <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4z" /></svg>
-                Send to team
-                <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
-              </button>
-
-              {showSendMenu && (
-                <div
-                  style={{
-                    position: "absolute", top: "calc(100% + 8px)", right: 0, width: 260, zIndex: 20,
-                    background: "#fff", borderRadius: "var(--r-l)", border: "1px solid var(--hair)", boxShadow: "var(--sh-3)", overflow: "hidden",
-                  }}
-                >
-                  <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--hair)", fontSize: 11.5, fontWeight: 800, letterSpacing: ".05em", textTransform: "uppercase", color: "var(--ink-4)" }}>
-                    Notify internal team
-                  </div>
-                  <div style={{ padding: "6px 0" }}>
-                    {activeDossier.approvals.map((a) => (
-                      <label key={a.role} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 16px", cursor: "pointer" }}>
-                        <input
-                          type="checkbox"
-                          checked={sendRecipients.includes(a.role)}
-                          onChange={() => toggleSendRecipient(a.role)}
-                          style={{ accentColor: "var(--brand)", width: 15, height: 15 }}
-                        />
-                        <span style={{ width: 24, height: 24, borderRadius: "50%", background: a.gradient, color: "#fff", fontSize: 9, fontWeight: 800, display: "grid", placeItems: "center", flexShrink: 0 }}>{a.initials}</span>
-                        <span style={{ fontSize: 13, fontWeight: 600 }}>{a.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <div style={{ padding: 12, borderTop: "1px solid var(--hair)" }}>
-                    <button
-                      onClick={sendToTeam}
-                      disabled={sendRecipients.length === 0}
-                      style={{
-                        width: "100%", padding: "10px", borderRadius: "var(--r)", fontWeight: 700, fontSize: 13,
-                        background: sendRecipients.length ? "var(--ink)" : "var(--hair-2)",
-                        color: sendRecipients.length ? "#fff" : "var(--ink-4)",
-                        border: "none", cursor: sendRecipients.length ? "pointer" : "default",
-                      }}
-                    >
-                      Send {sendRecipients.length > 0 ? `to ${sendRecipients.length}` : ""}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {onCreateVideo !== null && (
-            <button
-              onClick={createMagicVideo}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "11px 20px",
-                borderRadius: "var(--r)",
-                fontWeight: 700,
-                fontSize: 14,
-                background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-                color: "#fff",
-                border: "none",
-                boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
-                cursor: "pointer",
-              }}
-            >
-              <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round">
-                <path d="M5 3l14 9-14 9z" />
-              </svg>
-              Create Magic Video from Dossier
-            </button>
-            )}
-          </div>
-        </div>
-
-        {sentAt && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 16px", borderRadius: "var(--r)", background: "var(--ok-bg)", border: "1px solid var(--ok-line)", color: "var(--ok)", fontSize: 13, fontWeight: 650 }}>
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12l6 6L20 5" /></svg>
-            Sent to {sendRecipients.join(", ")} at {sentAt}
-          </div>
-        )}
-
         {/* Master document: Collapsible Index (left) + Section preview (middle) + Claims Verification Drawer (right) */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: claimsPanelOpen ? "72px minmax(0, 1fr) 340px" : "320px minmax(0, 1fr)",
+            gridTemplateColumns: claimsPanelOpen ? "64px minmax(0, 1fr) 330px" : "256px minmax(0, 1fr)",
             gap: 20,
             alignItems: "start",
             transition: "grid-template-columns 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -358,24 +161,54 @@ export function DossierReader({
               transition: "all 0.3s ease",
             }}
           >
-            {/* Header */}
+            {/* Who the document is about, where the index used to start.
+                It had a card of its own across the top of the screen, which
+                spent a third of the height on four facts you read once and
+                then scrolled past for the rest of the session. The section
+                you are reading is what the screen is for, so the identity
+                moves in here and the reading column gets the room. */}
+            {!claimsPanelOpen && (
+              <div style={{ padding: "13px 14px 12px", borderBottom: "1px solid var(--hair)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span
+                    style={{
+                      width: 34, height: 34, borderRadius: 11, background: activeDossier.gradient,
+                      color: "#fff", display: "grid", placeItems: "center", fontSize: 12.5, fontWeight: 800, flexShrink: 0,
+                    }}
+                  >
+                    {activeDossier.initials}
+                  </span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <b style={{ display: "block", fontSize: 14.5, fontWeight: 800, letterSpacing: "-.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {activeDossier.brandName}
+                    </b>
+                    <span style={{ display: "block", fontSize: 11, color: "var(--ink-4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {activeDossier.genericName}
+                    </span>
+                  </div>
+                </div>
+
+                <span style={{ display: "block", marginTop: 8, fontSize: 10.5, color: "var(--ink-4)" }}>
+                  Updated {activeDossier.lastUpdated}
+                </span>
+              </div>
+            )}
+
+            {/* Index */}
             <div
               style={{
-                padding: claimsPanelOpen ? "16px 8px" : "16px 18px",
+                padding: claimsPanelOpen ? "13px 6px" : "12px 14px 10px",
                 borderBottom: "1px solid var(--hair)",
                 textAlign: claimsPanelOpen ? "center" : "left",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
               }}
             >
               {!claimsPanelOpen ? (
-                <div>
-                  <span style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 800, color: "var(--brand)" }}>Index</span>
-                  <b style={{ fontSize: 15, fontWeight: 800, display: "block", marginTop: 2 }}>{activeDossier.sections.length} sections</b>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}>
+                  <span style={{ fontSize: 10, letterSpacing: ".14em", textTransform: "uppercase", fontWeight: 800, color: "var(--brand)" }}>Index</span>
+                  <b style={{ fontSize: 11.5, fontWeight: 700, color: "var(--ink-4)" }}>{activeDossier.sections.length} sections</b>
                 </div>
               ) : (
-                <span style={{ fontSize: 11, fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", width: "100%", display: "block" }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: "var(--brand)", textTransform: "uppercase", width: "100%", display: "block" }}>
                   Secs
                 </span>
               )}
