@@ -51,6 +51,7 @@ import { displayIntendedUses } from "@/features/workspace/intended-use";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ChatComposer, ComposerAttachButton } from "@/components/patterns/chat-composer";
+import { Toast, useToast } from "@/components/patterns/toast";
 import { InfographicDirectionsScreen } from "@/features/workspace/infographic-directions-screen";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { IntakePlaceholder } from "@/features/workspace/intake-checklist";
@@ -378,6 +379,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     () => ["No music", "Calm clinical", "Warm", "Uplifting", ...(customMusic ? [customMusic.name] : [])],
     [customMusic]
   );
+
+  /* Taking something into the project moves nothing on screen — the tile
+     ticks green and stays where it is — so the confirmation has to say what
+     was taken and what it is for. */
+  const { message: toastMessage, open: toastOpen, showToast } = useToast();
 
   const flowSteps = useVideoSteps({});
   const backStep = previousStep(flowSteps, "plan");
@@ -1367,7 +1373,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 )}
 
                 {/* ─── Rich Accordion Sections with Dynamic Focus Enlargement & Dimming ─── */}
-                <div className="space-y-3 min-w-0 w-full">
+                {/* Staggered, because these arrive the moment the questions
+                    are answered and eight of them in one frame reads as a
+                    repaint rather than as the plan being laid out. */}
+                <div className="stagger-children space-y-3 min-w-0 w-full">
                   {/* 1. Research & Sources (Unified Top Starting Tile) */}
                   <PlanSection
                     icon={ShieldCheck}
@@ -1402,6 +1411,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       sourcesUnusable={sourcesUnusable}
                       conflictingMarkets={sourceConflictResolved ? [] : conflictingMarkets}
                       onResolveConflict={resolveSourceConflict}
+                      onToast={showToast}
                     />
                   </PlanSection>
 
@@ -1810,7 +1820,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                   previewUrl={asset.previewUrl}
                                   kind={asset.kind}
                                   variation={asset.variation}
-                                  onAdd={() =>
+                                  onAdd={() => {
                                     setProductMediaList((prev) => [
                                       ...prev,
                                       {
@@ -1822,8 +1832,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                         note: asset.note,
                                         variation: asset.variation,
                                       },
-                                    ])
-                                  }
+                                    ]);
+                                    showToast(`${asset.name} added to the project context for generation`);
+                                  }}
                                 />
                               ))}
                             </AssetStrip>
@@ -1936,7 +1947,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                   origin={asset.origin}
                                   previewUrl={asset.previewUrl}
                                   kind={asset.kind}
-                                  onAdd={() =>
+                                  onAdd={() => {
                                     setReferenceList((prev) => [
                                       ...prev,
                                       {
@@ -1946,8 +1957,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                         note: asset.note,
                                         previewUrl: asset.previewUrl,
                                       },
-                                    ])
-                                  }
+                                    ]);
+                                    showToast(`${asset.name} added to the project context for generation`);
+                                  }}
                                 />
                               ))}
                             </AssetStrip>
@@ -2536,6 +2548,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       }
       overlay={
         <>
+          <Toast message={toastMessage} open={toastOpen} />
+
           {/* ── Modals & Drawers ── */}
           {pendingMedia.length > 0 && (
             <FileNoteDialog

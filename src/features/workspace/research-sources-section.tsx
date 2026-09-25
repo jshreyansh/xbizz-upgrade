@@ -58,6 +58,8 @@ export interface ResearchSourcesSectionProps {
   conflictingMarkets?: string[];
   /** Keep one market's label and drop the others. */
   onResolveConflict?: (market: string) => void;
+  /** Confirm what was taken in, since the strip does not move. */
+  onToast?: (message: string) => void;
 }
 
 export function ResearchSourcesContent({
@@ -70,6 +72,7 @@ export function ResearchSourcesContent({
   sourcesUnusable = false,
   conflictingMarkets = [],
   onResolveConflict,
+  onToast,
 }: ResearchSourcesSectionProps) {
   /* Files picked but not yet attached — they are waiting on their note. */
   const [pending, setPending] = useState<Array<PendingFile & { size: string }>>([]);
@@ -343,13 +346,17 @@ export function ResearchSourcesContent({
                       note={asset.note}
                       origin={asset.origin}
                       added={considered.includes(asset.id)}
-                      onAdd={() =>
+                      onAdd={() => {
+                        const taken = considered.includes(asset.id);
                         setConsidered((prev) =>
-                          prev.includes(asset.id)
-                            ? prev.filter((id) => id !== asset.id)
-                            : [...prev, asset.id]
-                        )
-                      }
+                          taken ? prev.filter((id) => id !== asset.id) : [...prev, asset.id]
+                        );
+                        onToast?.(
+                          taken
+                            ? `${asset.name} removed from the project context`
+                            : `${asset.name} added to the project context for generation`
+                        );
+                      }}
                       onPreview={() => setPreviewFile(asset)}
                     />
                   ))}

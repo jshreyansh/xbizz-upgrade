@@ -106,6 +106,7 @@ import { PreflightPanel } from "@/features/workspace/preflight-panel";
 import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
 
 import { Portal } from "@/components/ui/portal";
+import { Toast, useToast } from "@/components/patterns/toast";
 
 /**
  * The generation schedule, in milliseconds from the moment the editor opens.
@@ -293,15 +294,7 @@ export function StudioScreen() {
   const genStartRef = useRef(0);
   const [genElapsed, setGenElapsed] = useState(0);
 
-  const [toastMessage, setToMessage] = useState<string | null>(null);
-  /* One helper rather than a setTimeout beside every call: a second toast
-     raised while the first was up used to clear both on the first timer. */
-  const toastTimer = useRef<number | null>(null);
-  const showToast = (message: string) => {
-    setToMessage(message);
-    if (toastTimer.current) window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToMessage(null), 2600);
-  };
+  const { message: toastMessage, open: toastOpen, showToast } = useToast();
 
   const [sceneList, setSceneList] = useState<Scene[]>(() =>
     // Every line of an approved script IS grounded — the badges are not a
@@ -894,10 +887,16 @@ export function StudioScreen() {
 
   const toggleSceneScope = (scene: Scene) => {
     const key = `scene-${scene.id}`;
+    const attached = attachedContexts.some((c) => c.id === key);
     setAttachedContexts((prev) =>
-      prev.some((c) => c.id === key)
+      attached
         ? prev.filter((c) => c.id !== key)
         : [...prev, { id: key, type: "scene" as const, label: `Scene ${scene.number}`, detail: scene.title }]
+    );
+    showToast(
+      attached
+        ? `Scene ${scene.number} removed from the chat`
+        : `Scene ${scene.number} added to the chat · ${scene.title}`
     );
   };
 
@@ -1029,6 +1028,10 @@ export function StudioScreen() {
       ...prev.filter((c) => c.type !== "element"),
       { id: `element-${elementId}-${Date.now()}`, type: "element" as const, label, detail },
     ]);
+    /* Adding to chat changes a panel you may not be looking at. Every other
+       way of handing something to the agent says it landed; this one did
+       not. */
+    showToast(`${label} added to the chat`);
   };
 
 
@@ -1084,8 +1087,7 @@ export function StudioScreen() {
        describing. */
     genStartRef.current = Date.now();
     setActiveTab("assistant");
-    setToMessage(`Video editor ready in ${selectedQuality === "hd" ? "HD" : "Cinematic"}`);
-    setTimeout(() => setToMessage(null), 2500);
+    showToast(`Video editor ready in ${selectedQuality === "hd" ? "HD" : "Cinematic"}`);
 
     /**
      * Two passes over every scene, not one pass per scene.
@@ -1175,8 +1177,7 @@ export function StudioScreen() {
       role: "swishx",
       text: `⚡ Video generation initiated in **${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}** (${creditsDeducted} credits deducted). Neural rendering is processing in the cloud. You will receive an email once your final video is ready. Feel free to continue chatting with me about your project.`,
     });
-    setToMessage(`Video generation queued · ${creditsDeducted} credits deducted`);
-    setTimeout(() => setToMessage(null), 3500);
+    showToast(`Video generation queued · ${creditsDeducted} credits deducted`);
   };
 
   const handleMasterRendered = () => {
@@ -1239,8 +1240,7 @@ export function StudioScreen() {
     setActiveTab("comments");
     setMasterCurrentTime(0);
     setMasterPlaying(true);
-    setToMessage("Final Master Video ready for review & comments");
-    setTimeout(() => setToMessage(null), 3000);
+    showToast("Final Master Video ready for review & comments");
   };
 
   const handleReturnToScript = () => { setStudioMode("scenes"); setActiveTab("assistant"); };
@@ -1263,8 +1263,7 @@ export function StudioScreen() {
     const updated = [...sceneList, newScene].map((s, idx) => ({ ...s, number: idx + 1 }));
     setSceneList(updated);
     setSelectedSceneId(newScene.id);
-    setToMessage(`Added Script Scene ${nextNum} (${defaultTag})`);
-    setTimeout(() => setToMessage(null), 2500);
+    showToast(`Added Script Scene ${nextNum} (${defaultTag})`);
   };
 
 
@@ -1321,8 +1320,7 @@ export function StudioScreen() {
     setSceneList(renumbered);
     setSelectedSceneId(newScene.id);
     setAddSceneModalOpen(false);
-    setToMessage(`Scene ${targetPos} added (${tag})`);
-    setTimeout(() => setToMessage(null), 2800);
+    showToast(`Scene ${targetPos} added (${tag})`);
   };
 
 
@@ -2457,8 +2455,7 @@ export function StudioScreen() {
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setToMessage("Replaced with anatomical vascular model");
-                                      setTimeout(() => setToMessage(null), 2000);
+                                      showToast("Replaced with anatomical vascular model");
                                     }}
                                     className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
                                   >
@@ -2573,8 +2570,7 @@ export function StudioScreen() {
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setToMessage("Swapped to receptor binding 3D animation");
-                                      setTimeout(() => setToMessage(null), 2000);
+                                      showToast("Swapped to receptor binding 3D animation");
                                     }}
                                     className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
                                   >
@@ -2668,8 +2664,7 @@ export function StudioScreen() {
                             <button
                               type="button"
                               onClick={() => {
-                                setToMessage("Rephrased headline with clinical clarity");
-                                setTimeout(() => setToMessage(null), 2000);
+                                showToast("Rephrased headline with clinical clarity");
                               }}
                               className="text-brand hover:underline flex items-center gap-0.5 cursor-pointer"
                             >
@@ -3465,8 +3460,7 @@ export function StudioScreen() {
                     },
                     ...prev,
                   ]);
-                  setToMessage("Comment posted to the project owner");
-                  setTimeout(() => setToMessage(null), 2500);
+                  showToast("Comment posted to the project owner");
                 }}
               />
             )}
@@ -3654,9 +3648,7 @@ export function StudioScreen() {
           />
         )}
 
-        {toastMessage && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-control bg-ink text-white px-4 py-2 text-body font-bold shadow-lg">{toastMessage}</div>
-        )}
+        <Toast message={toastMessage} open={toastOpen} />
 
         {generateVideoModalOpen && (
           <Portal>
@@ -3811,12 +3803,10 @@ export function StudioScreen() {
           brandName={brandName}
           durationSeconds={totalDurationSeconds}
           onExportDirect={() => {
-            setToMessage("Preparing high-res 1080p MP4 master download...");
-            setTimeout(() => setToMessage(null), 2500);
+            showToast("Preparing high-res 1080p MP4 master download...");
           }}
           onShowToast={(msg) => {
-            setToMessage(msg);
-            setTimeout(() => setToMessage(null), 3000);
+            showToast(msg);
           }}
         />
         </>

@@ -787,7 +787,9 @@ export function InfographicDirectionsScreen() {
                     rows already say which sections want something. */}
 
                 {/* ─── Rich Accordion Sections with Distinct Icons & Zoom Animation ─── */}
-                <div className="space-y-3 min-w-0 w-full">
+                {/* Same stagger as the video plan: this screen is shared
+                    in spirit and the list arrives the same way. */}
+                <div className="stagger-children space-y-3 min-w-0 w-full">
                   {/* 1. Research & Sources (Unified Top Starting Tile) */}
                   <CreativePlanSection
                     icon={ShieldCheck}

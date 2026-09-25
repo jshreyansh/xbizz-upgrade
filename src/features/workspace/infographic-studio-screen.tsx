@@ -68,6 +68,7 @@ import { GenerationProgress, type GenerationStep } from "@/features/workspace/ge
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 
 import { Portal } from "@/components/ui/portal";
+import { Toast, useToast } from "@/components/patterns/toast";
 
 /* Layout → Canvas Editor, reported per page and per block. */
 function canvasOpenSteps(pageCount: number, blockCount: number): GenerationStep[] {
@@ -434,7 +435,7 @@ export function InfographicStudioScreen() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const [confirmGenerateModalOpen, setConfirmGenerateModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { message: toastMessage, open: toastOpen, showToast } = useToast();
 
   // Multi-page management
   /**
@@ -535,11 +536,6 @@ export function InfographicStudioScreen() {
   /** Where the in-place composer is anchored — a note about a run is written
    *  next to the run, the same as on the video canvas. */
   const [commentComposerAt, setCommentComposerAt] = useState<{ x: number; y: number } | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 2500);
-  };
 
   // Add Page Handler
   const handleAddPage = () => {
@@ -2241,12 +2237,7 @@ export function InfographicStudioScreen() {
         )}
 
         {/* ── TOAST NOTIFICATION ── */}
-        {toastMessage && (
-          <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-control bg-ink text-white px-4 py-2 text-body font-bold shadow-2xl border border-white/15 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <CheckCircle2 className="size-4 text-ok-on-dark" />
-            <span>{toastMessage}</span>
-          </div>
-        )}
+        <Toast message={toastMessage} open={toastOpen} />
         </>
       }
     />
