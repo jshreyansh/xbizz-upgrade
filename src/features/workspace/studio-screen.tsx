@@ -1844,7 +1844,7 @@ export function StudioScreen() {
                          down two columns — what is seen, and what is said —
                          so the columns are named once at the top instead of
                          on every scene. */
-                      <div className="@container rounded-panel border border-hair bg-card shadow-2xs [&>article:last-child]:rounded-b-panel">
+                      <div className="@container overflow-clip rounded-panel border border-hair bg-card shadow-2xs">
                         <ScriptPlanHeader />
                         {sceneList.map((sc) => (
                           <ScriptSceneCard

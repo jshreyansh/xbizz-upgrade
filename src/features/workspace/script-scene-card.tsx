@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   Stamp,
   UserRound,
+  Volume2,
   Video,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -287,35 +288,33 @@ export function ScriptSceneCard({
   }
 
   const elementNames = sceneElements(scene).map((part) => part.label);
+  const odd = scene.number % 2 === 1;
 
   return (
-    <article
-      // Clicking the row aims the chat at it. Suppressed while editing, so
-      // working in the text never changes what the next instruction targets.
-      onClick={editing ? undefined : onToggleSelect}
-      className={cn(
-        /* Banding across the full width, not a hairline between rows. A plan
-           is read across, and a tinted band carries the eye from the
-           narration to the scene beside it where a rule only divides them.
-           Warm, not grey: the page ground behind this table is a cool
-           off-green, and a grey band sat close enough to it that the table
-           looked like it had holes in it. */
-        "group/row relative transition-all",
-        !editing && "cursor-pointer",
-        selected
-          /* Scope is a state you should feel, not squint for. The deeper
-             tint alone reads as another band, so the selected row also
-             lifts: an inset brand ring to draw its edge, and a shadow that
-             bleeds onto the rows above and below it. */
-          ? "z-10 bg-tint-strong shadow-soft ring-2 ring-inset ring-brand/45"
-          : "even:bg-tint-2 hover:bg-tint"
-      )}
-    >
-      {/* ── The scene's own line ──
-          Spanning both columns rather than sitting inside one: the scene is
-          the row. Putting its name in a cell made that cell a different
-          shape from the one beside it. */}
-      <header className="flex min-w-0 items-center gap-2.5 px-5 pt-4 pb-2.5">
+    <article className="px-2 py-1 first:pt-2 last:pb-2">
+      {/* The tile, inside a gutter rather than bled to the table's edges.
+          A full-width band told you two rows apart only by shade; a shape
+          with air around it tells you at a glance, and gives a scoped row
+          somewhere to cast its lift. */}
+      <div
+        // Clicking the row aims the chat at it. Suppressed while editing, so
+        // working in the text never changes what the next instruction targets.
+        onClick={editing ? undefined : onToggleSelect}
+        className={cn(
+          "rounded-card transition-all",
+          !editing && "cursor-pointer",
+          selected
+            /* Scope is a state you should feel, not squint for. The deeper
+               tint alone reads as another stripe, so a scoped scene also
+               lifts, off a brand ring that draws the tile's edge. */
+            ? "bg-tint-strong shadow-soft ring-2 ring-brand/45"
+            /* Alternation runs off the scene's own number, not its position
+               among siblings: the header is a sibling too, and nth-child
+               counted it, so scene 1 came out as the even one. */
+            : cn(odd && "bg-tint", "hover:bg-tint-strong/70")
+        )}
+      >
+      <header className="flex min-w-0 items-center gap-2.5 px-3 pt-4 pb-2.5">
         <button
           type="button"
           onClick={(e) => { stop(e); onToggleSelect(); }}
@@ -337,14 +336,22 @@ export function ScriptSceneCard({
         <span className="shrink-0 text-subhead font-[850] tracking-tight text-ink">
           Scene {scene.number}:
         </span>
-        <input
-          type="text"
-          value={scene.title}
-          onChange={(e) => onTitleChange(e.target.value)}
-          onClick={stop}
-          placeholder="Scene Title"
-          className="min-w-0 flex-1 rounded-glyph border-b border-transparent bg-transparent py-0.5 text-body-lg font-medium text-ink-2 transition-all hover:border-hair-3 focus:border-brand focus:outline-none"
-        />
+        {/* A field only where the plan is editable. Rendered as an input
+            regardless, it invited a caret into a title nothing would save. */}
+        {SCRIPT_EDITING_ENABLED ? (
+          <input
+            type="text"
+            value={scene.title}
+            onChange={(e) => onTitleChange(e.target.value)}
+            onClick={stop}
+            placeholder="Scene Title"
+            className="min-w-0 flex-1 rounded-glyph border-b border-transparent bg-transparent py-0.5 text-body-lg font-medium text-ink-2 transition-all hover:border-hair-3 focus:border-brand focus:outline-none"
+          />
+        ) : (
+          <span className="min-w-0 flex-1 truncate py-0.5 text-body-lg font-medium text-ink-2">
+            {scene.title || "Untitled scene"}
+          </span>
+        )}
 
         <span className="shrink-0 rounded-glyph bg-hair/60 px-2 py-0.5 text-caption font-semibold text-ink-3">
           {scene.narrativeTag || "Evidence"}
@@ -353,7 +360,7 @@ export function ScriptSceneCard({
 
       {/* The rule between the cells does the dividing, so neither cell needs
           a heading of its own to say which one it is. */}
-      <div className="grid min-w-0 gap-y-4 px-5 pb-4 @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] @2xl:gap-y-0">
+      <div className="grid min-w-0 gap-y-4 px-3 pb-4 @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] @2xl:gap-y-0">
         {/* ── Narration ── */}
         <div className="flex min-w-0 flex-col gap-2 @2xl:pr-7">
           <span className="text-caption font-semibold text-ink-4 @2xl:hidden">Narration</span>
@@ -457,6 +464,7 @@ export function ScriptSceneCard({
           )}
         </div>
       </div>
+      </div>
     </article>
   );
 }
@@ -475,10 +483,18 @@ export function ScriptPlanHeader() {
        scrollport of its own, so the header stuck to a box that never
        scrolled and rode away with the rows. The negative offset is that
        column's own padding: pinned at top-0 the header left a 4px slot
-       above itself for rows to scroll through. */
-    <div className="sticky -top-1 z-20 hidden rounded-t-panel border-b border-hair-2 bg-card px-5 py-2.5 @2xl:grid @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <span className="pr-7 text-caption font-extrabold uppercase tracking-[.09em] text-ink-4">Narration</span>
-      <span className="pl-7 text-caption font-extrabold uppercase tracking-[.09em] text-ink-4">Scene and style</span>
+       above itself for rows to scroll through. Its corners are square and
+       the table clips them, so the rounding belongs to the table's own top
+       edge and does not travel down the page with the header. */
+    <div className="sticky -top-1 z-20 hidden border-b border-hair-2 bg-card px-5 py-2.5 @2xl:grid @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <span className="inline-flex items-center gap-1.5 pr-7 text-caption font-extrabold uppercase tracking-[.09em] text-ink-4">
+        <Volume2 className="size-3.5" />
+        Narration
+      </span>
+      <span className="inline-flex items-center gap-1.5 pl-7 text-caption font-extrabold uppercase tracking-[.09em] text-ink-4">
+        <ImageIcon className="size-3.5" />
+        Scene and style
+      </span>
     </div>
   );
 }
