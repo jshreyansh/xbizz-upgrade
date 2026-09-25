@@ -91,9 +91,11 @@ import {
   type AssetComment,
 } from "@/features/workspace/asset-comments";
 import { ReviewComments } from "@/features/workspace/review-comments";
-import { AudioGeneratingPill, MediaPlaceholder } from "@/features/workspace/media-placeholder";
+import { MediaPlaceholder } from "@/features/workspace/media-placeholder";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { ShotCards } from "@/features/workspace/shot-cards";
+import { sceneAssets, shotIdsOf } from "@/features/workspace/scene-generation";
+import { SceneProgressStrip } from "@/features/workspace/scene-progress-strip";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 import { SubtitleStrip, SubtitleSyncPanel } from "@/features/workspace/subtitle-sync";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -104,6 +106,20 @@ import { PreflightPanel } from "@/features/workspace/preflight-panel";
 import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
 
 import { Portal } from "@/components/ui/portal";
+
+/**
+ * The generation schedule, in milliseconds from the moment the editor opens.
+ *
+ * Structure lands across every scene inside the first ten seconds; the media
+ * arrives in sequence between twenty and fifty. Real render durations rather
+ * than a demo tempo: an image or a motion asset is tens of seconds of work,
+ * and pretending otherwise would design the UI around a wait that does not
+ * exist. Module scope because the scene strip reports against the same clock
+ * the generator runs on, and two copies would drift.
+ */
+const STRUCTURE_BY = 10_000;
+const MEDIA_FIRST = 20_000;
+const MEDIA_LAST = 50_000;
 
 const evidenceConfig: Record<EvidenceState, { label: string; className: string }> = {
   approved: { label: "Approved", className: "bg-[#e5f1e9] text-[#2d6749]" },
@@ -251,15 +267,31 @@ export function StudioScreen() {
    */
   const [scenePhase, setScenePhase] = useState<Record<string, 0 | 1 | 2>>({});
   /**
-   * Where each scene's background footage has got to.
+   * Where each SHOT's footage has got to.
    *
    * Separate from the phase because it no longer follows it. Phase 2 means
    * the image and the graph have arrived; the footage stops at its keyframes
    * and waits to be asked, because rendering it is the expensive, hard to
    * undo half of a scene and the moment before it is the moment to change
    * your mind.
+   *
+   * Keyed by shot, not scene. A scene is three or four shots and they are
+   * separately worth keeping or recutting — rendering all of them to judge
+   * one is the thing the keyframes exist to avoid. A scene is rendered when
+   * every shot in it is.
    */
-  const [sceneBg, setSceneBg] = useState<Record<string, "keyframes" | "generating" | "ready">>({});
+  const [shotRender, setShotRender] = useState<Record<string, "keyframes" | "generating" | "ready">>({});
+
+  /**
+   * When generation started, so a scene can report its own progress.
+   *
+   * The creative editor keeps one elapsed clock and derives everything from
+   * it. The video kept a per-scene phase enum, which cannot produce a count,
+   * a rolling label or a countdown — the three things that made the other
+   * editor's strip readable. Same clock here.
+   */
+  const genStartRef = useRef(0);
+  const [genElapsed, setGenElapsed] = useState(0);
 
   const [toastMessage, setToMessage] = useState<string | null>(null);
   /* One helper rather than a setTimeout beside every call: a second toast
@@ -313,39 +345,72 @@ export function StudioScreen() {
 
 
   const phaseOf = (sceneId: string) => scenePhase[sceneId] ?? 0;
-  const bgOf = (sceneId: string) => sceneBg[sceneId] ?? "keyframes";
+  const shotStateOf = (shotId: string) => shotRender[shotId] ?? "keyframes";
+
+  /** Every shot in a scene, whether the scene declares them or is one shot. */
+  const shotsOf = (scene: Scene) => shotIdsOf(scene);
+
+  const sceneRenderState = (scene: Scene): "none" | "partial" | "full" => {
+    const ids = shotsOf(scene);
+    /* A scene with no footage has nothing to render, so it never holds up a
+       count or a publish. */
+    if (ids.length === 0) return "full";
+    const ready = ids.filter((id) => shotStateOf(id) === "ready").length;
+    if (ready === 0) return "none";
+    return ready === ids.length ? "full" : "partial";
+  };
 
   /**
-   * Scenes still at their keyframes.
+   * Shots still at their keyframes.
    *
    * The whole film cannot be watched while any of it is two still frames —
    * playing it then shows a slideshow and calls it a preview, which is a
    * worse answer than not playing at all.
    */
-  const scenesAwaitingFootage = sceneList.filter(
-    (sc) => sc.backgroundKind === "video" && bgOf(sc.id) !== "ready"
+  const shotsAwaitingFootage = sceneList.flatMap((sc) =>
+    shotsOf(sc).filter((id) => shotStateOf(id) !== "ready")
   );
-  const filmIsWatchable = scenesAwaitingFootage.length === 0;
-
-  /** What one scene's footage costs to render. */
-  const BG_RENDER_COST = 320;
+  const filmIsWatchable = shotsAwaitingFootage.length === 0;
+  /** Publishing is the finished film, so it waits for the last shot. */
+  const filmFullyRendered = filmIsWatchable;
 
   /**
-   * Render one scene's background, from its keyframes.
+   * Render one shot, from its keyframes.
    *
-   * Charged, because it is real render spend and a quote that moves only at
-   * publish would hide where the money went.
+   * One shot, not the scene: three shots in a scene are three separate
+   * decisions, and rendering all of them to judge one is what the keyframes
+   * exist to avoid.
    */
-  const generateSceneBackground = (scene: Scene) => {
-    if (bgOf(scene.id) !== "keyframes") return;
-    setSceneBg((prev) => ({ ...prev, [scene.id]: "generating" }));
-    setCreditsUsed((prev) => prev + BG_RENDER_COST);
-    showToast(`Rendering scene ${scene.number} footage · ${BG_RENDER_COST} credits`);
+  const generateShot = (scene: Scene, shotId: string, announce = true) => {
+    if (shotStateOf(shotId) !== "keyframes") return;
+    setShotRender((prev) => ({ ...prev, [shotId]: "generating" }));
+    const shot = (scene.shots ?? []).find((s) => s.id === shotId);
+    const name = shot ? `Shot ${shot.index}` : "Footage";
+    if (announce) showToast(`Rendering ${name.toLowerCase()} of scene ${scene.number}`);
     window.setTimeout(() => {
-      setSceneBg((prev) => ({ ...prev, [scene.id]: "ready" }));
-      showToast(`Scene ${scene.number} footage ready`);
+      setShotRender((prev) => ({ ...prev, [shotId]: "ready" }));
+      if (announce) showToast(`${name} of scene ${scene.number} is rendered`);
     }, 4200);
   };
+
+  /** Every remaining shot in one scene. */
+  const generateSceneFully = (scene: Scene) => {
+    const pending = shotsOf(scene).filter((id) => shotStateOf(id) === "keyframes");
+    if (pending.length === 0) return;
+    pending.forEach((id) => generateShot(scene, id, false));
+    showToast(`Rendering scene ${scene.number} · ${pending.length} shot${pending.length === 1 ? "" : "s"}`);
+  };
+
+  /** Every remaining shot in the film, so publishing is one press away. */
+  const generateAllScenes = () => {
+    const pending = sceneList.flatMap((sc) =>
+      shotsOf(sc).filter((id) => shotStateOf(id) === "keyframes").map((id) => ({ sc, id }))
+    );
+    if (pending.length === 0) return;
+    pending.forEach(({ sc, id }) => generateShot(sc, id, false));
+    showToast(`Rendering ${pending.length} shot${pending.length === 1 ? "" : "s"} across the film`);
+  };
+
   /**
    * Editing opens when every scene has its structure, not when everything has
    * finished. Waiting for the media would keep the user idle through the slow
@@ -353,6 +418,7 @@ export function StudioScreen() {
    */
   const structureReady = sceneList.length > 0 && sceneList.every((sc) => phaseOf(sc.id) >= 1);
   const selectedScenePhase = phaseOf(selectedScene.id);
+
 
   const isScenes = studioMode === "scenes";
   const isEditor = studioMode === "editor";
@@ -438,6 +504,27 @@ export function StudioScreen() {
   /* The editor's canvas shows one scene to edit, or the whole film to watch. */
   const [previewMode, setPreviewMode] = useState<"scene" | "full">("scene");
   const [sceneCurrentTime, setSceneCurrentTime] = useState(2.4);
+
+  /**
+   * The shot the playhead is in, which is the one the canvas is showing and
+   * therefore the one its Generate button acts on.
+   */
+  const activeShot = (selectedScene.shots ?? []).find(
+    (shot) => sceneCurrentTime >= shot.startAt && sceneCurrentTime < shot.endAt
+  ) ?? (selectedScene.shots ?? [])[0];
+  const activeShotId = activeShot?.id ?? `${selectedScene.id}-whole`;
+  const activeShotLabel = activeShot ? `Shot ${activeShot.index}` : "Footage";
+
+  /* What this scene is making, on the film's own schedule. */
+  const selectedSceneAssets = useMemo(() => {
+    const index = sceneList.findIndex((sc) => sc.id === selectedScene.id);
+    const count = Math.max(1, sceneList.length);
+    const step = count > 1 ? (MEDIA_LAST - MEDIA_FIRST) / (count - 1) : 0;
+    const to = MEDIA_FIRST + Math.max(0, index) * step;
+    return sceneAssets(selectedScene, STRUCTURE_BY, to);
+  }, [selectedScene, sceneList]);
+
+  const sceneAssetsPending = genElapsed < (selectedSceneAssets[selectedSceneAssets.length - 1]?.readyAt ?? 0);
   /**
    * The in/out motion for the two media slots, shared by the generating
    * placeholder and the finished asset. One slot, two renderings — so the
@@ -991,6 +1078,11 @@ export function StudioScreen() {
 
   const handleEditorReady = () => {
     setStudioMode("editor");
+    /* One clock for the whole session, read from Date.now rather than
+       counted in ticks: a background tab throttles its timers to about once
+       a second and an accumulator quietly falls behind the wait it is
+       describing. */
+    genStartRef.current = Date.now();
     setActiveTab("assistant");
     setToMessage(`Video editor ready in ${selectedQuality === "hd" ? "HD" : "Cinematic"}`);
     setTimeout(() => setToMessage(null), 2500);
@@ -1022,9 +1114,6 @@ export function StudioScreen() {
      */
     setCreditsUsed(creditBudget - finalRenderCost);
 
-    const STRUCTURE_BY = 10_000;
-    const MEDIA_FIRST = 20_000;
-    const MEDIA_LAST = 50_000;
     const count = sceneList.length;
 
     sceneList.forEach((sc, idx) => {
@@ -1049,6 +1138,16 @@ export function StudioScreen() {
 
   const handleOpenGenerateVideoModal = () => setGenerateVideoModalOpen(true);
 
+  useEffect(() => {
+    if (studioMode !== "editor" || genStartRef.current === 0) return;
+    const tick = window.setInterval(() => {
+      const elapsed = Date.now() - genStartRef.current;
+      setGenElapsed(elapsed);
+      if (elapsed >= MEDIA_LAST) window.clearInterval(tick);
+    }, 200);
+    return () => window.clearInterval(tick);
+  }, [studioMode]);
+
   /**
    * Hand the asset to the people who do this for a living. Nothing is sent
    * anywhere in this build; the toast is the same one every other hand-off on
@@ -1064,11 +1163,9 @@ export function StudioScreen() {
     /* Any scene still on its keyframes is rendered as part of the final
        render. Keyframes are a half-made preview, not an incomplete asset —
        so publishing is never blocked on having pressed a button five times. */
-    setSceneBg((prev) => {
+    setShotRender((prev) => {
       const next = { ...prev };
-      sceneList.forEach((sc) => {
-        if (sc.backgroundKind === "video") next[sc.id] = "ready";
-      });
+      sceneList.forEach((sc) => shotIdsOf(sc).forEach((id) => { next[id] = "ready"; }));
       return next;
     });
     setStudioMode("generating");
@@ -1528,7 +1625,33 @@ export function StudioScreen() {
 
             {isEditor && (
               <>
-                <Button size="sm" onClick={handleOpenGenerateVideoModal} className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"><LogoMark size={14} /> <span>Publish</span></Button>
+                {/* Publishing is the finished film, so it waits for the last
+                    shot. The way to get there sits beside it rather than
+                    being something you have to go and find scene by scene. */}
+                {!filmFullyRendered && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={generateAllScenes}
+                    className="cursor-pointer gap-1.5 font-bold"
+                  >
+                    <LogoMark size={14} className="text-brand" />
+                    <span>Generate All Scenes</span>
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  onClick={handleOpenGenerateVideoModal}
+                  disabled={!filmFullyRendered}
+                  title={
+                    filmFullyRendered
+                      ? undefined
+                      : `${shotsAwaitingFootage.length} shot${shotsAwaitingFootage.length === 1 ? "" : "s"} still at keyframes`
+                  }
+                  className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  <LogoMark size={14} /> <span>Publish</span>
+                </Button>
               </>
             )}
             {isReview && (
@@ -1607,7 +1730,7 @@ export function StudioScreen() {
                         title={
                           filmIsWatchable
                             ? "Play the whole film"
-                            : `${scenesAwaitingFootage.length} scene${scenesAwaitingFootage.length === 1 ? "" : "s"} still at keyframes. Generate ${scenesAwaitingFootage.length === 1 ? "it" : "them"} to watch the whole film.`
+                            : `${shotsAwaitingFootage.length} shot${shotsAwaitingFootage.length === 1 ? "" : "s"} still at keyframes. Generate ${shotsAwaitingFootage.length === 1 ? "it" : "them"} to watch the whole film.`
                         }
                         className={cn(
                           "focus-ring grid size-6 shrink-0 place-items-center rounded-full border shadow-2xs transition",
@@ -1822,6 +1945,51 @@ export function StudioScreen() {
                ══════════════════════════════════════════════════════════════════ */}
             {isEditor && (
               <div className="relative flex min-h-0 flex-1 flex-col bg-[#e6e9e6]">
+                {/* What this scene is still making, or what is left to render
+                    once it has finished making it. One row, two states, in
+                    the place the creative editor puts the same thing. */}
+                {previewMode === "scene" && (
+                  sceneAssetsPending ? (
+                    <SceneProgressStrip assets={selectedSceneAssets} elapsed={genElapsed} />
+                  ) : sceneRenderState(selectedScene) !== "full" ? (
+                    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-tint-line bg-tint px-3 py-1.5 sm:px-4">
+                      {/* Said plainly, so a scene of stills is never mistaken
+                          for a finished one. */}
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-chip border border-brand/25 bg-card px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-brand-deep">
+                        <Film className="size-3" />
+                        {sceneRenderState(selectedScene) === "partial"
+                          ? "Scene partially rendered"
+                          : "Scene at keyframes"}
+                      </span>
+                      {/* The count leads, because it is the part that is true
+                          at any width. The sentence after it explains what a
+                          keyframe is and goes first when the pane is narrow —
+                          truncating it to "0…" said nothing at all. */}
+                      <span className="flex min-w-0 flex-1 items-baseline gap-1.5 text-label text-ink-2">
+                        <span className="shrink-0 tabular-nums">
+                          {shotsOf(selectedScene).filter((id) => shotStateOf(id) === "ready").length} of{" "}
+                          {shotsOf(selectedScene).length} shots rendered
+                        </span>
+                        <span className="hidden truncate text-ink-3 xl:inline">
+                          The rest are opening and closing frames.
+                        </span>
+                      </span>
+                      <InfoTip label="What happens when I generate?">
+                        A shot still at its keyframes is two still frames standing in for the footage.
+                        Generating renders it in full, so this is the moment to change a shot.
+                      </InfoTip>
+                      <button
+                        type="button"
+                        onClick={() => generateSceneFully(selectedScene)}
+                        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control bg-brand px-3 py-1.5 text-label font-extrabold text-white shadow-xs transition hover:bg-brand-deep"
+                      >
+                        <LogoMark size={13} />
+                        Generate Scene Fully
+                      </button>
+                    </div>
+                  ) : null
+                )}
+
                 {/* Sub-header */}
                 <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair-3/70 bg-white/60 px-4 backdrop-blur-sm">
                   <div className="flex items-center gap-2.5 text-label font-bold text-ink">
@@ -2000,11 +2168,13 @@ export function StudioScreen() {
                     {selectedScene.backgroundKind === "video" && (
                       selectedScenePhase >= 2 &&
                       selectedScene.bgVideoSrc &&
-                      bgOf(selectedScene.id) !== "ready" ? (
+                      shotStateOf(activeShotId) !== "ready" ? (
                         /* Keyframes, not footage: the shot's first and last
-                           frame, each holding half the scene. The decision
+                           frame, each holding half the shot. The decision
                            worth making is whether this is the right shot, and
-                           that decision is cheaper now than after the render. */
+                           that decision is cheaper now than after the render.
+                           Per shot, because the playhead is in one at a time
+                           and each is separately worth keeping. */
                         <>
                           <BackgroundKeyframes
                             src={selectedScene.bgVideoSrc}
@@ -2014,14 +2184,37 @@ export function StudioScreen() {
                             className="z-[1]"
                           />
                           <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-[#06100d]/85 via-[#06100d]/55 to-[#06100d]/20" />
-                          {bgOf(selectedScene.id) === "generating" && (
-                            <div className="pointer-events-none absolute inset-0 z-[2] grid place-items-center bg-black/35 backdrop-blur-[1px]">
-                              <span className="inline-flex items-center gap-2 rounded-chip border border-white/15 bg-black/70 px-3 py-1.5 text-label font-bold text-white">
-                                <LogoMark size={13} className="animate-spin text-brand" />
-                                Rendering footage…
+
+                          {/* The action, on the thing it acts on. A still that
+                              only says "opening frame" leaves you to find the
+                              button; the button in the middle of the still
+                              says what the still is for. */}
+                          <div className="absolute inset-0 z-[3] grid place-items-center">
+                            <div className="flex flex-col items-center gap-2 text-center">
+                              <span className="text-label font-extrabold uppercase tracking-[.14em] text-white/70">
+                                {activeShotLabel} Preview
                               </span>
+                              <button
+                                type="button"
+                                disabled={shotStateOf(activeShotId) === "generating"}
+                                onClick={() => generateShot(selectedScene, activeShotId)}
+                                className={cn(
+                                  "focus-ring inline-flex items-center gap-2 rounded-control px-4 py-2.5 text-body font-extrabold shadow-float transition",
+                                  shotStateOf(activeShotId) === "generating"
+                                    ? "cursor-not-allowed bg-white/15 text-white/60"
+                                    : "cursor-pointer bg-brand text-white hover:bg-brand-deep"
+                                )}
+                              >
+                                <LogoMark
+                                  size={15}
+                                  className={shotStateOf(activeShotId) === "generating" ? "animate-spin" : undefined}
+                                />
+                                {shotStateOf(activeShotId) === "generating"
+                                  ? `Rendering ${activeShotLabel.toLowerCase()}…`
+                                  : `Generate ${activeShotLabel}`}
+                              </button>
                             </div>
-                          )}
+                          </div>
                         </>
                       ) : selectedScenePhase >= 2 && selectedScene.bgVideoSrc ? (
                         <>
@@ -2315,7 +2508,7 @@ export function StudioScreen() {
                                   stitched into the frame is rendered on the
                                   same terms as the background: keyframes
                                   first, the clip when you ask for it. */}
-                              {bgOf(selectedScene.id) !== "ready" ? (
+                              {shotStateOf(activeShotId) !== "ready" ? (
                                 <BackgroundKeyframes
                                   src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
                                   duration={selectedScene.duration || 10}
@@ -2626,71 +2819,6 @@ export function StudioScreen() {
                     onSelect={() => handleSelectCanvasElement("narration")}
                   />
 
-                  {/* Render this scene's footage.
-                      It lived in the sub-header as a small chip, where it was
-                      the least prominent thing on a bar of labels — and it is
-                      the one action this scene is waiting for. It sits under
-                      the track instead, at the size of the decision it is. */}
-                  {selectedScene.backgroundKind === "video" &&
-                    selectedScenePhase >= 2 &&
-                    bgOf(selectedScene.id) !== "ready" && (
-                      <div className="flex w-full flex-wrap items-center gap-3 rounded-control border border-brand/30 bg-tint px-3.5 py-3 shadow-2xs">
-                        <button
-                          type="button"
-                          disabled={bgOf(selectedScene.id) === "generating"}
-                          onClick={() => generateSceneBackground(selectedScene)}
-                          className={cn(
-                            "focus-ring inline-flex items-center gap-2 rounded-control border px-4 py-2 text-body font-extrabold shadow-xs transition",
-                            bgOf(selectedScene.id) === "generating"
-                              ? "cursor-not-allowed border-hair-2 bg-canvas text-ink-4"
-                              : "cursor-pointer border-brand bg-brand text-white hover:bg-brand-deep"
-                          )}
-                        >
-                          {bgOf(selectedScene.id) === "generating" ? (
-                            <>
-                              <LogoMark size={15} className="animate-spin" />
-                              Rendering…
-                            </>
-                          ) : (
-                            <>
-                              <LogoMark size={15} />
-                              Generate videos
-                            </>
-                          )}
-                        </button>
-                        {/* Beside the button, not inside it: it explains the
-                            button rather than being part of pressing it, and
-                            a hover that has to survive a click target is a
-                            hover you lose. */}
-                        <InfoTip label="What happens when I generate?">
-                          Every clip in this scene is still at its keyframes. The opening and
-                          closing frame of each shot. Generating renders them in full and spends
-                          the credits for it, so this is the moment to change a shot.
-                        </InfoTip>
-                        <span className="ml-auto text-label text-ink-3">
-                          Still at keyframes
-                        </span>
-                      </div>
-                    )}
-
-                  {/* Audio renders after the visuals, so it is still in flight
-                      when the frame is already workable. Gone once the take
-                      lands — a finished asset needs no label. */}
-                  {selectedScenePhase < 2 && (
-                    <div className="flex flex-col items-start gap-2">
-                      {(["voiceover", "sfx"] as const).map((elementId) => {
-                        const timing = timingFor(selectedScene, elementId);
-                        if (!timing) return null;
-                        return (
-                          <AudioGeneratingPill
-                            key={elementId}
-                            label={ELEMENT_LABELS[elementId] ?? elementId}
-                            timing={timing}
-                          />
-                        );
-                      })}
-                    </div>
-                  )}
                  </div>
                 </div>
                 )}
@@ -3447,9 +3575,8 @@ export function StudioScreen() {
                     scene={selectedScene}
                     currentTime={sceneCurrentTime}
                     highlightedShotId={highlightedShotId}
-                    videosReady={bgOf(selectedScene.id) === "ready"}
-                    generating={bgOf(selectedScene.id) === "generating"}
-                    onGenerateVideos={() => generateSceneBackground(selectedScene)}
+                    shotState={shotStateOf}
+                    onGenerateShot={(shot) => generateShot(selectedScene, shot.id)}
                     onScrub={(seconds) => {
                       setSceneCurrentTime(seconds);
                       setScenePlaying(false);

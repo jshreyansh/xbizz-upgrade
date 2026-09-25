@@ -99,9 +99,8 @@ export function ShotCards({
   onScrub,
   onAddToChat,
   onReplaceMedia,
-  videosReady = true,
-  onGenerateVideos,
-  generating = false,
+  shotState,
+  onGenerateShot,
 }: {
   scene: Scene;
   currentTime: number;
@@ -111,12 +110,10 @@ export function ShotCards({
   /** Hand this shot to the agent to change. */
   onAddToChat: (shot: Shot) => void;
   onReplaceMedia: (shot: Shot, elementId: string, kind: "image" | "video") => void;
-  /** Whether this scene's footage has been rendered past its keyframes. */
-  videosReady?: boolean;
-  /** Render this scene's footage, from a shot card. */
-  onGenerateVideos?: () => void;
-  /** True while that render is running. */
-  generating?: boolean;
+  /** Where one shot's footage has got to. */
+  shotState?: (shotId: string) => "keyframes" | "generating" | "ready";
+  /** Render this one shot, from its card. */
+  onGenerateShot?: (shot: Shot) => void;
 }) {
   const shots = scene.shots ?? [];
 
@@ -146,6 +143,10 @@ export function ShotCards({
       {shots.map((shot) => {
         const media = mediaInShot(scene, shot);
         const active = currentTime >= shot.startAt && currentTime < shot.endAt;
+
+        const state = shotState?.(shot.id) ?? "ready";
+        const rendered = state === "ready";
+        const rendering = state === "generating";
 
         return (
           <div
@@ -219,26 +220,25 @@ export function ShotCards({
                 <div className="mb-2">
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="text-micro font-bold uppercase tracking-wide text-ink-4">
-                      {videosReady ? "Footage" : "Footage keyframes"}
+                      {rendered ? "Footage" : "Footage keyframes"}
                     </span>
-                    {/* The background is footage like any other clip, and a
-                        scene whose only video IS the background had nothing to
-                        press — the render was offered beside layers it did not
-                        have. */}
-                    {!videosReady && (
+                    {/* One shot, not the scene. Three shots are three
+                        decisions, and rendering all of them to judge one is
+                        what the keyframes exist to avoid. */}
+                    {!rendered && (
                       <button
                         type="button"
-                        disabled={generating}
-                        onClick={() => onGenerateVideos?.()}
+                        disabled={rendering}
+                        onClick={() => onGenerateShot?.(shot)}
                         className={cn(
                           "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-2 py-0.5 text-micro font-bold transition-colors",
-                          generating
+                          rendering
                             ? "cursor-not-allowed border-hair-2 bg-card text-ink-4"
                             : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand"
                         )}
                       >
-                        <LogoMark size={9} className={generating ? "animate-spin" : undefined} />
-                        {generating ? "Rendering" : "Generate"}
+                        <LogoMark size={9} className={rendering ? "animate-spin" : undefined} />
+                        {rendering ? "Rendering" : `Generate Shot ${shot.index}`}
                       </button>
                     )}
                   </div>
@@ -247,13 +247,13 @@ export function ShotCards({
                       src={scene.bgVideoSrc}
                       at={shot.startAt}
                       duration={scene.duration || 10}
-                      label={videosReady ? "Opens" : "Opening keyframe"}
+                      label={rendered ? "Opens" : "Opening keyframe"}
                     />
                     <FrameThumb
                       src={scene.bgVideoSrc}
                       at={shot.endAt}
                       duration={scene.duration || 10}
-                      label={videosReady ? "Ends" : "Closing keyframe"}
+                      label={rendered ? "Ends" : "Closing keyframe"}
                     />
                   </div>
                 </div>
@@ -272,7 +272,7 @@ export function ShotCards({
                     /* A clip that has not been rendered shows the same two
                        keyframes the canvas shows, and offers the same render.
                        A still is a still: it is there, so it is shown. */
-                    const pending = layer.kind === "video" && !videosReady;
+                    const pending = layer.kind === "video" && !rendered;
                     return (
                       <li
                         key={`${shot.id}-${layer.elementId}`}
@@ -294,17 +294,17 @@ export function ShotCards({
                           {pending ? (
                             <button
                               type="button"
-                              disabled={generating}
-                              onClick={() => onGenerateVideos?.()}
+                              disabled={rendering}
+                              onClick={() => onGenerateShot?.(shot)}
                               className={cn(
                                 "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-2 py-1 text-micro font-bold transition-colors",
-                                generating
+                                rendering
                                   ? "cursor-not-allowed border-hair-2 bg-card text-ink-4"
                                   : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand"
                               )}
                             >
-                              <LogoMark size={9} className={generating ? "animate-spin" : undefined} />
-                              {generating ? "Rendering" : "Generate"}
+                              <LogoMark size={9} className={rendering ? "animate-spin" : undefined} />
+                              {rendering ? "Rendering" : `Generate Shot ${shot.index}`}
                             </button>
                           ) : (
                             <button
