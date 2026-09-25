@@ -147,6 +147,34 @@ export function ShotCards({
         const state = shotState?.(shot.id) ?? "ready";
         const rendered = state === "ready";
         const rendering = state === "generating";
+        const hasFootage = scene.backgroundKind === "video" && Boolean(scene.bgVideoSrc);
+
+        /**
+         * One button per shot, because generating a shot renders everything
+         * in it: the background footage and any clip stitched over it. It sat
+         * on the footage row and again on every pending clip — the same
+         * action, drawn as many times as the shot had layers.
+         *
+         * Where it sits follows where the shot's footage is: on the footage
+         * row when there is one, on the media header when the shot is clips
+         * only, so it never disappears.
+         */
+        const generateButton = rendered ? null : (
+          <button
+            type="button"
+            disabled={rendering}
+            onClick={() => onGenerateShot?.(shot)}
+            className={cn(
+              "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-2 py-0.5 text-micro font-bold transition-colors",
+              rendering
+                ? "cursor-not-allowed border-hair-2 bg-card text-ink-4"
+                : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand"
+            )}
+          >
+            <LogoMark size={9} className={rendering ? "animate-spin" : undefined} />
+            {rendering ? "Rendering" : `Generate Shot ${shot.index}`}
+          </button>
+        );
 
         return (
           <div
@@ -208,8 +236,11 @@ export function ShotCards({
                   <Layers className="size-3 text-brand" />
                   <span>Attached Scene Media</span>
                 </span>
-                <span className="shrink-0 rounded-glyph bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">
-                  {media.length} Media {media.length === 1 ? "Layer" : "Layers"}
+                <span className="flex shrink-0 items-center gap-1.5">
+                  <span className="rounded-glyph bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">
+                    {media.length} Media {media.length === 1 ? "Layer" : "Layers"}
+                  </span>
+                  {!hasFootage && generateButton}
                 </span>
               </div>
 
@@ -225,22 +256,7 @@ export function ShotCards({
                     {/* One shot, not the scene. Three shots are three
                         decisions, and rendering all of them to judge one is
                         what the keyframes exist to avoid. */}
-                    {!rendered && (
-                      <button
-                        type="button"
-                        disabled={rendering}
-                        onClick={() => onGenerateShot?.(shot)}
-                        className={cn(
-                          "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-2 py-0.5 text-micro font-bold transition-colors",
-                          rendering
-                            ? "cursor-not-allowed border-hair-2 bg-card text-ink-4"
-                            : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand"
-                        )}
-                      >
-                        <LogoMark size={9} className={rendering ? "animate-spin" : undefined} />
-                        {rendering ? "Rendering" : `Generate Shot ${shot.index}`}
-                      </button>
-                    )}
+                    {generateButton}
                   </div>
                   <div className="flex gap-1.5">
                     <FrameThumb
@@ -292,20 +308,19 @@ export function ShotCards({
                             </span>
                           </span>
                           {pending ? (
-                            <button
-                              type="button"
-                              disabled={rendering}
-                              onClick={() => onGenerateShot?.(shot)}
-                              className={cn(
-                                "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-2 py-1 text-micro font-bold transition-colors",
-                                rendering
-                                  ? "cursor-not-allowed border-hair-2 bg-card text-ink-4"
-                                  : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand"
+                            /* No button: generating the shot renders this
+                               clip with it. It says where it has got to
+                               instead. */
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-glyph bg-subtle px-2 py-1 text-micro font-bold text-ink-4">
+                              {rendering ? (
+                                <>
+                                  <LogoMark size={9} className="animate-spin" />
+                                  Rendering
+                                </>
+                              ) : (
+                                "At keyframes"
                               )}
-                            >
-                              <LogoMark size={9} className={rendering ? "animate-spin" : undefined} />
-                              {rendering ? "Rendering" : `Generate Shot ${shot.index}`}
-                            </button>
+                            </span>
                           ) : (
                             <button
                               type="button"
