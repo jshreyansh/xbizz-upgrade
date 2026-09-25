@@ -1846,11 +1846,10 @@ export function StudioScreen() {
                          on every scene. */
                       <div className="@container overflow-hidden rounded-panel border border-hair bg-card shadow-2xs">
                         <ScriptPlanHeader />
-                        {sceneList.map((sc, i) => (
+                        {sceneList.map((sc) => (
                           <ScriptSceneCard
                             key={sc.id}
                             scene={sc}
-                            startsAt={sceneList.slice(0, i).reduce((sum, s) => sum + (s.duration || 10), 0)}
                             selected={scopedSceneIds.includes(sc.id)}
                             onToggleSelect={() => toggleSceneScope(sc)}
                             editing={editingSceneIds.includes(sc.id)}

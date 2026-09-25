@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  AudioLines,
   BarChart3,
   Captions,
+  AudioLines,
   Check,
   ChevronLeft,
   ChevronRight,
-  Clock,
   ExternalLink,
   Image as ImageIcon,
   Palette,
@@ -232,8 +231,6 @@ export const SCRIPT_EDITING_ENABLED = false;
 
 export interface ScriptSceneCardProps {
   scene: Scene;
-  /** Where this scene starts in the film, so the row can print its window. */
-  startsAt: number;
   /** In the chat's scope, so the next instruction applies to it. */
   selected: boolean;
   onToggleSelect: () => void;
@@ -258,11 +255,10 @@ export interface ScriptSceneCardProps {
  * Concentric radii: shell 24 with 10px padding puts the inner blocks at 14.
  */
 export function ScriptSceneCard({
-  scene, startsAt,
+  scene,
   selected, onToggleSelect, editing, onToggleEdit, pending, onCitationDetails,
   onTitleChange, onNarrationChange, onVisualChange,
 }: ScriptSceneCardProps) {
-  const words = scene.narration ? scene.narration.split(" ").filter(Boolean).length : 0;
   const stop = (e: React.SyntheticEvent) => e.stopPropagation();
 
   /**
@@ -290,177 +286,166 @@ export function ScriptSceneCard({
     }
   }
 
+  const elementNames = sceneElements(scene).map((part) => part.label);
+
   return (
     <article
       // Clicking the row aims the chat at it. Suppressed while editing, so
       // working in the text never changes what the next instruction targets.
       onClick={editing ? undefined : onToggleSelect}
       className={cn(
-        /* A container query, not a viewport one: the plan lives in a pane
-           whose width the chat panel changes, and a table that splits on the
-           window's width stacks on a wide screen with the panel open. */
-        "relative grid min-w-0 gap-x-5 gap-y-3 border-b border-hair px-3 py-4 transition-colors @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
+        /* Banding across the full width, not a hairline between rows. A plan
+           is read across, and a tinted band carries the eye from the
+           narration to the scene beside it where a rule only divides them. */
+        "group/row relative transition-colors",
         !editing && "cursor-pointer",
-        selected ? "bg-tint/50" : "hover:bg-canvas"
+        selected ? "bg-tint" : "even:bg-hair/60 hover:bg-tint/50"
       )}
     >
-      {/* ── Scene and style ── */}
-      <div className="flex min-w-0 flex-col gap-2">
-        <div className="flex min-w-0 items-start gap-2">
-          {/* The scope tick. Always drawn, so the affordance is discoverable
-              rather than appearing only on hover. */}
-          <button
-            type="button"
-            onClick={(e) => { stop(e); onToggleSelect(); }}
-            aria-pressed={selected}
-            aria-label={selected ? `Remove scene ${scene.number} from chat scope` : `Add scene ${scene.number} to chat scope`}
-            className={cn(
-              "mt-1 grid size-5 shrink-0 cursor-pointer place-items-center rounded-full border transition-all",
-              selected
-                ? "border-brand bg-brand text-white"
-                : "border-hair-3 bg-card text-transparent hover:border-brand hover:text-brand/40"
-            )}
-          >
-            <Check className="size-3 stroke-[3]" />
-          </button>
+      {/* ── The scene's own line ──
+          Spanning both columns rather than sitting inside one: the scene is
+          the row. Putting its name in a cell made that cell a different
+          shape from the one beside it. */}
+      <header className="flex min-w-0 items-center gap-2.5 px-5 pt-4 pb-2.5">
+        <button
+          type="button"
+          onClick={(e) => { stop(e); onToggleSelect(); }}
+          aria-pressed={selected}
+          aria-label={selected ? `Remove scene ${scene.number} from chat scope` : `Add scene ${scene.number} to chat scope`}
+          className={cn(
+            "grid size-4.5 shrink-0 cursor-pointer place-items-center rounded-full border transition-all",
+            selected
+              ? "border-brand bg-brand text-white"
+              : "border-hair-3 bg-card text-transparent hover:border-brand hover:text-brand/40"
+          )}
+        >
+          <Check className="size-2.5 stroke-[3]" />
+        </button>
 
-          <div className="min-w-0 flex-1">
-            {/* The number leads and leads loudly. A plan is walked through in
-                order, so "Scene 3" is what you are looking for and the title
-                is what confirms you found it. */}
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="shrink-0 text-subhead font-[850] tracking-tight text-ink">
-                Scene {scene.number}
-              </span>
-              <input
-                type="text"
-                value={scene.title}
-                onChange={(e) => onTitleChange(e.target.value)}
-                onClick={stop}
-                placeholder="Scene Title"
-                className="min-w-0 flex-1 rounded-glyph border-b border-transparent bg-transparent py-0.5 text-body-lg font-semibold text-ink-2 transition-all hover:border-hair-3 focus:border-brand focus:outline-none"
-              />
+        {/* The number leads and leads loudly. A plan is walked in order, so
+            "Scene 3" is what you are hunting and the title only confirms
+            you found it. */}
+        <span className="shrink-0 text-subhead font-[850] tracking-tight text-ink">
+          Scene {scene.number}:
+        </span>
+        <input
+          type="text"
+          value={scene.title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          onClick={stop}
+          placeholder="Scene Title"
+          className="min-w-0 flex-1 rounded-glyph border-b border-transparent bg-transparent py-0.5 text-body-lg font-medium text-ink-2 transition-all hover:border-hair-3 focus:border-brand focus:outline-none"
+        />
+
+        <span className="shrink-0 rounded-glyph bg-hair/60 px-2 py-0.5 text-caption font-semibold text-ink-3">
+          {scene.narrativeTag || "Evidence"}
+        </span>
+      </header>
+
+      {/* The rule between the cells does the dividing, so neither cell needs
+          a heading of its own to say which one it is. */}
+      <div className="grid min-w-0 gap-y-4 px-5 pb-4 @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] @2xl:gap-y-0">
+        {/* ── Narration ── */}
+        <div className="flex min-w-0 flex-col gap-2 @2xl:pr-7">
+          <span className="text-caption font-semibold text-ink-4 @2xl:hidden">Narration</span>
+
+          {pending ? (
+            /* Withheld, not half-shown: a line mid-rewrite is not the line. */
+            <div className="space-y-2" aria-live="polite" aria-busy>
+              <div className="shimmer h-4 w-full rounded-glyph bg-hair" />
+              <div className="shimmer h-4 w-[82%] rounded-glyph bg-hair" />
+              <span className="block pt-0.5 text-caption font-bold text-brand">Rewriting…</span>
             </div>
+          ) : editing ? (
+            <textarea
+              value={scene.narration}
+              onChange={(e) => onNarrationChange(e.target.value)}
+              onClick={stop}
+              placeholder="Enter clinical voiceover script for this scene..."
+              rows={3}
+              autoFocus
+              className="w-full resize-none rounded-control border border-brand bg-card p-2 text-body-lg leading-relaxed text-ink focus:outline-none"
+            />
+          ) : (
+            <p className="text-body-lg leading-relaxed text-ink">
+              {scene.narration
+                ? sentences.map((sentence, i) => (
+                    <span key={i}>
+                      {sentence}
+                      {byAnchor.get(i) && <CitationPill citations={byAnchor.get(i)!} onDetails={onCitationDetails} />}
+                    </span>
+                  ))
+                : <span className="text-ink-4">No narration yet.</span>}
+            </p>
+          )}
 
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-ink-4">
-              <span className="inline-flex items-center gap-1 tabular-nums">
-                <Clock className="size-2.5" />
-                {startsAt.toFixed(0)}–{(startsAt + (scene.duration || 10)).toFixed(0)}s
-              </span>
-              <span aria-hidden>·</span>
-              <span className="truncate">{scene.narrativeTag || "Evidence"}</span>
+          {/* Inline badges cannot live inside a textarea, and a source whose
+              anchor no longer matches a sentence would otherwise vanish — both
+              fall back to a row under the field. */}
+          {!pending && unanchored.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-caption text-ink-4">Sources</span>
+              <CitationPill citations={unanchored} onDetails={onCitationDetails} />
             </div>
-          </div>
-        </div>
+          )}
 
-        {pending ? (
-          <div className="space-y-2" aria-busy>
-            <div className="shimmer h-3.5 w-full rounded-glyph bg-hair" />
-            <div className="shimmer h-3.5 w-[70%] rounded-glyph bg-hair" />
-          </div>
-        ) : editing ? (
-          <textarea
-            value={scene.visual}
-            onChange={(e) => onVisualChange(e.target.value)}
-            onClick={stop}
-            placeholder="Describe roughly what this scene shows…"
-            rows={2}
-            className="w-full resize-none rounded-control border border-brand bg-card p-2 text-body leading-relaxed text-ink-2 focus:outline-none"
-          />
-        ) : (
-          <p className="text-body leading-relaxed text-ink-2">
-            {scene.visual || <span className="text-ink-4">No visual direction yet.</span>}
-          </p>
-        )}
-
-        {/* The parts list, under the description of the look. */}
-        {!pending && (
-          <div className="flex flex-wrap gap-1">
-            {sceneElements(scene).map((part) => (
-              <span
-                key={part.id}
-                className="inline-flex max-w-full items-center gap-1 rounded-glyph border border-hair-2 bg-card px-1.5 py-0.5 text-micro font-bold text-ink-3"
-              >
-                <part.icon className="size-2.5 shrink-0 text-brand" />
-                <span className="truncate">{part.label}</span>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Script and voiceover ── */}
-      <div className="flex min-w-0 flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-wider text-brand">
-            <AudioLines className="size-3" />
-            Voiceover
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-caption font-semibold tabular-nums text-ink-4">{words} words</span>
-            {SCRIPT_EDITING_ENABLED && (
-              <button
-                type="button"
-                onClick={(e) => { stop(e); onToggleEdit(); }}
-                disabled={pending}
-                className={cn(
-                  "inline-flex cursor-pointer items-center gap-1 rounded-glyph px-2 py-0.5 text-caption font-bold transition-colors disabled:pointer-events-none disabled:opacity-40",
-                  editing ? "bg-brand text-white hover:bg-brand-deep" : "text-ink-3 hover:bg-tint hover:text-brand"
-                )}
-              >
-                {editing ? <Check className="size-3" /> : <Pencil className="size-3" />}
-                <span>{editing ? "Save" : "Edit"}</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {pending ? (
-          /* Withheld, not half-shown: a line mid-rewrite is not the line. */
-          <div className="space-y-2" aria-live="polite" aria-busy>
-            <div className="shimmer h-4 w-full rounded-glyph bg-hair" />
-            <div className="shimmer h-4 w-[82%] rounded-glyph bg-hair" />
-            <span className="block pt-0.5 text-caption font-bold text-brand">Rewriting…</span>
-          </div>
-        ) : editing ? (
-          <textarea
-            value={scene.narration}
-            onChange={(e) => onNarrationChange(e.target.value)}
-            onClick={stop}
-            placeholder="Enter clinical voiceover script for this scene..."
-            rows={3}
-            autoFocus
-            className="w-full resize-none rounded-control border border-brand bg-card p-2 text-subhead leading-relaxed text-ink focus:outline-none"
-          />
-        ) : (
-          <p className="text-subhead leading-relaxed text-ink">
-            {scene.narration
-              ? sentences.map((sentence, i) => (
-                  <span key={i}>
-                    {sentence}
-                    {byAnchor.get(i) && <CitationPill citations={byAnchor.get(i)!} onDetails={onCitationDetails} />}
-                  </span>
-                ))
-              : <span className="text-ink-4">No narration yet. Choose Edit to write it.</span>}
-          </p>
-        )}
-
-        {/* Inline badges cannot live inside a textarea, and a source whose
-            anchor no longer matches a sentence would otherwise vanish — both
-            fall back to a row under the field. */}
-        {!pending && unanchored.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-caption font-extrabold uppercase tracking-wider text-ink-4">Sources</span>
-            <CitationPill citations={unanchored} onDetails={onCitationDetails} />
-          </div>
-        )}
-
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-0.5 text-caption">
-          <span className="inline-flex min-w-0 items-center gap-1.5 rounded-glyph border border-ok-line/60 bg-ok-bg px-2 py-0.5 font-semibold text-ok">
+          {/* Quiet, and pinned to the foot of the cell so the badge sits on
+              one line down the table. Every scene here is grounded, and a
+              filled green pill on all eight rows is a colour that has
+              stopped meaning anything. */}
+          <span className="mt-auto inline-flex min-w-0 items-center gap-1.5 pt-1 text-caption text-ink-4">
             <ShieldCheck className="size-3 shrink-0 text-ok" />
             <span className="truncate">{scene.claim}</span>
           </span>
-          {selected && <span className="shrink-0 font-bold text-brand">In chat scope</span>}
+
+          {SCRIPT_EDITING_ENABLED && (
+            <button
+              type="button"
+              onClick={(e) => { stop(e); onToggleEdit(); }}
+              disabled={pending}
+              className={cn(
+                "inline-flex w-fit cursor-pointer items-center gap-1 rounded-glyph px-1.5 py-0.5 text-caption font-bold transition-colors disabled:pointer-events-none disabled:opacity-40",
+                editing ? "bg-brand text-white hover:bg-brand-deep" : "text-ink-4 hover:bg-tint hover:text-brand"
+              )}
+            >
+              {editing ? <Check className="size-3" /> : <Pencil className="size-3" />}
+              <span>{editing ? "Save" : "Edit"}</span>
+            </button>
+          )}
+        </div>
+
+        {/* ── Scene and style ── */}
+        <div className="flex min-w-0 flex-col gap-2 border-t border-hair pt-4 @2xl:border-t-0 @2xl:border-l @2xl:pt-0 @2xl:pl-7">
+          <span className="text-caption font-semibold text-ink-4 @2xl:hidden">Scene and style</span>
+
+          {pending ? (
+            <div className="space-y-2" aria-busy>
+              <div className="shimmer h-3.5 w-full rounded-glyph bg-hair" />
+              <div className="shimmer h-3.5 w-[70%] rounded-glyph bg-hair" />
+            </div>
+          ) : editing ? (
+            <textarea
+              value={scene.visual}
+              onChange={(e) => onVisualChange(e.target.value)}
+              onClick={stop}
+              placeholder="Describe roughly what this scene shows…"
+              rows={2}
+              className="w-full resize-none rounded-control border border-brand bg-card p-2 text-body-lg leading-relaxed text-ink-2 focus:outline-none"
+            />
+          ) : (
+            <p className="text-body-lg leading-relaxed text-ink-2">
+              {scene.visual || <span className="text-ink-4">No visual direction yet.</span>}
+            </p>
+          )}
+
+          {/* One line, not five bordered chips. The parts of a scene are a
+              list you read, and boxing each of them turned every row into a
+              wall of little rectangles wrapping onto a second line. */}
+          {!pending && elementNames.length > 0 && (
+            <span className="mt-auto pt-1 text-caption leading-relaxed text-ink-4">
+              {elementNames.join(" · ")}
+            </span>
+          )}
         </div>
       </div>
     </article>
@@ -476,13 +461,9 @@ export function ScriptSceneCard({
  */
 export function ScriptPlanHeader() {
   return (
-    <div className="sticky top-0 z-10 hidden gap-x-5 border-b border-hair-2 bg-canvas px-3 py-2 @2xl:grid @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <span className="text-caption font-extrabold uppercase tracking-[.1em] text-ink-4">
-        Scene and style
-      </span>
-      <span className="text-caption font-extrabold uppercase tracking-[.1em] text-ink-4">
-        Script and voiceover
-      </span>
+    <div className="sticky top-0 z-10 hidden border-b border-hair-2 bg-card px-5 py-2.5 @2xl:grid @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <span className="pr-7 text-caption font-extrabold uppercase tracking-[.09em] text-ink-4">Narration</span>
+      <span className="pl-7 text-caption font-extrabold uppercase tracking-[.09em] text-ink-4">Scene and style</span>
     </div>
   );
 }
