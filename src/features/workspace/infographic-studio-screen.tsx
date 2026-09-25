@@ -435,7 +435,7 @@ export function InfographicStudioScreen() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const [confirmGenerateModalOpen, setConfirmGenerateModalOpen] = useState(false);
-  const { message: toastMessage, open: toastOpen, showToast } = useToast();
+  const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
 
   // Multi-page management
   /**
@@ -2237,7 +2237,7 @@ export function InfographicStudioScreen() {
         )}
 
         {/* ── TOAST NOTIFICATION ── */}
-        <Toast message={toastMessage} open={toastOpen} />
+        <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
         </>
       }
     />

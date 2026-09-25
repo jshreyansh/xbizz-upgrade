@@ -59,7 +59,7 @@ export interface ResearchSourcesSectionProps {
   /** Keep one market's label and drop the others. */
   onResolveConflict?: (market: string) => void;
   /** Confirm what was taken in, since the strip does not move. */
-  onToast?: (message: string) => void;
+  onToast?: (message: string, tone?: "done" | "undone") => void;
 }
 
 export function ResearchSourcesContent({
@@ -354,7 +354,8 @@ export function ResearchSourcesContent({
                         onToast?.(
                           taken
                             ? `${asset.name} removed from the project context`
-                            : `${asset.name} added to the project context for generation`
+                            : `${asset.name} added to the project context for generation`,
+                          taken ? "undone" : "done"
                         );
                       }}
                       onPreview={() => setPreviewFile(asset)}
@@ -509,6 +510,11 @@ export function ResearchSourcesContent({
                 origin: "new" as const,
               })),
             ]);
+            onToast?.(
+              pending.length === 1
+                ? `${pending[0].name} added to the project context for generation`
+                : `${pending.length} files added to the project context for generation`
+            );
             setPending([]);
           }}
         />

@@ -294,7 +294,7 @@ export function StudioScreen() {
   const genStartRef = useRef(0);
   const [genElapsed, setGenElapsed] = useState(0);
 
-  const { message: toastMessage, open: toastOpen, showToast } = useToast();
+  const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
 
   const [sceneList, setSceneList] = useState<Scene[]>(() =>
     // Every line of an approved script IS grounded — the badges are not a
@@ -559,6 +559,11 @@ export function StudioScreen() {
   const [editorVersion, setEditorVersion] = useState<"v1" | "future">("v1");
   const canDragElements = editorVersion === "future";
   const showElementToolbar = editorVersion === "future";
+  /* The layer stack is the other thing V1 subtracts. Layers are for reaching
+     past what is on top of what, which is a manipulation problem; in V1 you
+     select a thing and say what should change, and the bar was a drawer that
+     never had a reason to open. */
+  const showProductionLayers = editorVersion === "future";
 
   // Sync canvas video element playback with scenePlaying
   useEffect(() => {
@@ -896,7 +901,8 @@ export function StudioScreen() {
     showToast(
       attached
         ? `Scene ${scene.number} removed from the chat`
-        : `Scene ${scene.number} added to the chat · ${scene.title}`
+        : `Scene ${scene.number} added to the chat · ${scene.title}`,
+      attached ? "undone" : "done"
     );
   };
 
@@ -1709,37 +1715,6 @@ export function StudioScreen() {
                     <span className="min-w-0 truncate text-micro font-bold uppercase tracking-[0.12em] text-[#77817c]">
                       Scenes · {totalDurationSeconds} sec
                     </span>
-                    {/* Watching the whole film belongs to the list of scenes,
-                        not to the header of the one you are editing. */}
-                    {previewMode === "scene" && (
-                      /* Not `disabled`: a disabled button takes no pointer
-                         events, so the one thing it needs to do while it
-                         cannot be pressed — say why — would stop working
-                         too. It stays hoverable and refuses the click. */
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!filmIsWatchable) return;
-                          setPreviewMode("full");
-                          setScenePlaying(false);
-                        }}
-                        aria-disabled={!filmIsWatchable}
-                        aria-label="Play the whole film"
-                        title={
-                          filmIsWatchable
-                            ? "Play the whole film"
-                            : `${shotsAwaitingFootage.length} shot${shotsAwaitingFootage.length === 1 ? "" : "s"} still at keyframes. Generate ${shotsAwaitingFootage.length === 1 ? "it" : "them"} to watch the whole film.`
-                        }
-                        className={cn(
-                          "focus-ring grid size-6 shrink-0 place-items-center rounded-full border shadow-2xs transition",
-                          filmIsWatchable
-                            ? "cursor-pointer border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
-                            : "cursor-not-allowed border-hair-2 bg-subtle text-ink-4"
-                        )}
-                      >
-                        <Play className="size-3 fill-current" />
-                      </button>
-                    )}
                   </div>
                 ) : (
                   <div className="flex items-center justify-between pb-4 shrink-0">
@@ -2016,9 +1991,21 @@ export function StudioScreen() {
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-label">
-                    {/* Full preview now sits over the scene list, where the
-                        whole film is the thing being listed. This header is
-                        about the scene on screen. */}
+                    {/* Only once there is a whole film to watch. Over the
+                        scene list it spent its life refusing clicks and
+                        explaining why — a control whose normal state is
+                        "no". It arrives here when Publish does, which is the
+                        same moment and the same reason. */}
+                    {previewMode === "scene" && filmFullyRendered && (
+                      <button
+                        type="button"
+                        onClick={() => { setPreviewMode("full"); setScenePlaying(false); }}
+                        className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-glyph border border-brand/30 bg-tint px-2.5 py-1 text-caption font-extrabold text-brand-deep shadow-2xs transition hover:border-brand hover:bg-brand hover:text-white"
+                      >
+                        <Play className="size-3 fill-current" />
+                        Full preview
+                      </button>
+                    )}
                     <span className="rounded-glyph bg-card border border-hair-2 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
                       Fit 16:9
                     </span>
@@ -2187,9 +2174,18 @@ export function StudioScreen() {
                               only says "opening frame" leaves you to find the
                               button; the button in the middle of the still
                               says what the still is for. */}
-                          <div className="absolute inset-0 z-[3] grid place-items-center">
-                            <div className="flex flex-col items-center gap-2 text-center">
-                              <span className="text-label font-extrabold uppercase tracking-[.14em] text-white/70">
+                          {/* Above every layer, and letting them through.
+                              At z-3 it sat under the clip inset and the copy,
+                              which put it behind the frame's own content on
+                              the scenes that have any — a button you cannot
+                              see is bad, one you cannot click is a dead end.
+                              z-[35] clears the content and stays under the
+                              player chrome; the panel is glass so what it
+                              covers is still readable, and only the pill
+                              takes clicks. */}
+                          <div className="pointer-events-none absolute inset-0 z-[35] grid place-items-center p-6">
+                            <div className="pointer-events-auto flex flex-col items-center gap-2.5 rounded-card border border-white/20 bg-black/45 px-5 py-4 text-center shadow-float backdrop-blur-md">
+                              <span className="text-label font-extrabold uppercase tracking-[.14em] text-white/75">
                                 {activeShotLabel} Preview
                               </span>
                               <button
@@ -2197,10 +2193,10 @@ export function StudioScreen() {
                                 disabled={shotStateOf(activeShotId) === "generating"}
                                 onClick={() => generateShot(selectedScene, activeShotId)}
                                 className={cn(
-                                  "focus-ring inline-flex items-center gap-2 rounded-control px-4 py-2.5 text-body font-extrabold shadow-float transition",
+                                  "focus-ring inline-flex items-center gap-2 rounded-control border px-4 py-2 text-body font-extrabold shadow-xs transition",
                                   shotStateOf(activeShotId) === "generating"
-                                    ? "cursor-not-allowed bg-white/15 text-white/60"
-                                    : "cursor-pointer bg-brand text-white hover:bg-brand-deep"
+                                    ? "cursor-not-allowed border-white/20 bg-white/10 text-white/60"
+                                    : "cursor-pointer border-white/40 bg-white/10 text-white hover:border-white hover:bg-white/90 hover:text-ink"
                                 )}
                               >
                                 <LogoMark
@@ -2819,6 +2815,7 @@ export function StudioScreen() {
                 )}
 
                 {/* ── Multi-Layer Production Timeline Bar (Collapsible) ── */}
+                {showProductionLayers && (
                 <div className="border-t border-hair bg-canvas text-ink shrink-0">
                   <div className="flex h-9 items-center justify-between px-4 border-b border-hair bg-card">
                     <div className="flex items-center gap-2.5 text-label font-bold text-ink">
@@ -3019,6 +3016,7 @@ export function StudioScreen() {
                     </div>
                   )}
                 </div>
+                )}
               </div>
             )}
 
@@ -3648,7 +3646,7 @@ export function StudioScreen() {
           />
         )}
 
-        <Toast message={toastMessage} open={toastOpen} />
+        <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
 
         {generateVideoModalOpen && (
           <Portal>

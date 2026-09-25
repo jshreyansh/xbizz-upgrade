@@ -383,7 +383,16 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   /* Taking something into the project moves nothing on screen — the tile
      ticks green and stays where it is — so the confirmation has to say what
      was taken and what it is for. */
-  const { message: toastMessage, open: toastOpen, showToast } = useToast();
+  const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
+
+  /**
+   * True once the accordions have finished their staggered entrance.
+   *
+   * The list is the thing arriving; opening one of its rows is what happens
+   * next. Doing both at once made the plan look like it glitched rather than
+   * assembled.
+   */
+  const [planLanded, setPlanLanded] = useState(false);
 
   const flowSteps = useVideoSteps({});
   const backStep = previousStep(flowSteps, "plan");
@@ -847,11 +856,17 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   /* Arrive on the first thing that actually needs an answer. Opening
      "Research and Sources" every time means the one blocking section sits
      several clicks away on a plan that is otherwise fine. Derived, so it
-     cannot fight what the user then opens. */
+     cannot fight what the user then opens.
+
+     Held shut until the list has finished arriving: a section springing open
+     while the rows below it are still rising reads as two animations fighting
+     rather than as one list settling. */
   const openSection =
     openOverride === undefined
-      ? ((planSections.find((entry) => entry.state === "needs-you")?.id as PlanSectionId | undefined) ??
-        "sources")
+      ? planLanded
+        ? ((planSections.find((entry) => entry.state === "needs-you")?.id as PlanSectionId | undefined) ??
+          "sources")
+        : null
       : openOverride;
 
   const advanceFrom = (section: PlanSectionId) => {
@@ -1029,6 +1044,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const intakeQuestions = buildIntakeQuestions(briefAttachments, "video");
   const currentIntake = planPhase === "intake" ? intakeQuestions[intakeIndex] : undefined;
 
+
   /** The wait between the brief and the first question. */
   const intakeStepList = intakeSteps(briefAttachments, brandName);
 
@@ -1073,6 +1089,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
         text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left, grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
       });
       setPlanPhase("plan");
+      /* The rows take about a second and a half to finish arriving. Nothing
+         opens until they have: a section springing open while the ones below
+         it are still rising reads as two animations fighting. */
+      setPlanLanded(false);
+      window.setTimeout(() => setPlanLanded(true), 1500);
     }, 650);
   };
 
@@ -2548,7 +2569,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       }
       overlay={
         <>
-          <Toast message={toastMessage} open={toastOpen} />
+          <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
 
           {/* ── Modals & Drawers ── */}
           {pendingMedia.length > 0 && (
@@ -2574,6 +2595,13 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     variation: variations[m.id],
                   })),
                 ]);
+                /* A file you uploaded joins the project the same way one you
+                   took off the shelf does, so it says so the same way. */
+                showToast(
+                  pendingMedia.length === 1
+                    ? `${pendingMedia[0].name} added to the project context for generation`
+                    : `${pendingMedia.length} files added to the project context for generation`
+                );
                 setPendingMedia([]);
               }}
             />
@@ -2597,6 +2625,11 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   ...prev,
                   ...pendingReference.map((r) => ({ ...r, note: notes[r.id].trim() })),
                 ]);
+                showToast(
+                  pendingReference.length === 1
+                    ? `${pendingReference[0].name} added to the project context for generation`
+                    : `${pendingReference.length} references added to the project context for generation`
+                );
                 setPendingReference([]);
               }}
             />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { cn } from "@/lib/cn";
 
@@ -18,6 +18,9 @@ import { cn } from "@/lib/cn";
  * of travel are what make it register as an answer to what you did.
  */
 const ENTER_MS = 260;
+
+/** Something was taken in, or something was taken back out. */
+export type ToastTone = "done" | "undone";
 
 export function useToast(duration = 2600) {
   const [message, setMessage] = useState<string | null>(null);
@@ -38,8 +41,11 @@ export function useToast(duration = 2600) {
     []
   );
 
+  const [tone, setTone] = useState<ToastTone>("done");
+
   const showToast = useCallback(
-    (text: string) => {
+    (text: string, nextTone: ToastTone = "done") => {
+      setTone(nextTone);
       if (hideTimer.current) window.clearTimeout(hideTimer.current);
       if (clearTimer.current) window.clearTimeout(clearTimer.current);
 
@@ -61,11 +67,23 @@ export function useToast(duration = 2600) {
     [duration]
   );
 
-  return { message, open, showToast };
+  return { message, open, tone, showToast };
 }
 
-export function Toast({ message, open }: { message: string | null; open: boolean }) {
+export function Toast({
+  message,
+  open,
+  tone = "done",
+}: {
+  message: string | null;
+  open: boolean;
+  tone?: ToastTone;
+}) {
   if (!message) return null;
+
+  /* A tick on "removed from the chat" says the opposite of what happened.
+     The mark reports the act, not the fact that the act succeeded. */
+  const Icon = tone === "undone" ? XCircle : CheckCircle2;
 
   return (
     <Portal>
@@ -82,7 +100,7 @@ export function Toast({ message, open }: { message: string | null; open: boolean
         style={{ transitionDuration: `${ENTER_MS}ms` }}
       >
         <span className="pointer-events-auto inline-flex max-w-[min(90vw,520px)] items-center gap-2 rounded-control border border-white/15 bg-ink px-4 py-2 text-body font-bold text-white shadow-float">
-          <CheckCircle2 className="size-4 shrink-0 text-ok-on-dark" />
+          <Icon className={cn("size-4 shrink-0", tone === "undone" ? "text-white/60" : "text-ok-on-dark")} />
           <span className="truncate">{message}</span>
         </span>
       </div>
