@@ -296,10 +296,19 @@ export function ScriptSceneCard({
       className={cn(
         /* Banding across the full width, not a hairline between rows. A plan
            is read across, and a tinted band carries the eye from the
-           narration to the scene beside it where a rule only divides them. */
-        "group/row relative transition-colors",
+           narration to the scene beside it where a rule only divides them.
+           Warm, not grey: the page ground behind this table is a cool
+           off-green, and a grey band sat close enough to it that the table
+           looked like it had holes in it. */
+        "group/row relative transition-all",
         !editing && "cursor-pointer",
-        selected ? "bg-tint" : "even:bg-hair/60 hover:bg-tint/50"
+        selected
+          /* Scope is a state you should feel, not squint for. The deeper
+             tint alone reads as another band, so the selected row also
+             lifts: an inset brand ring to draw its edge, and a shadow that
+             bleeds onto the rows above and below it. */
+          ? "z-10 bg-tint-strong shadow-soft ring-2 ring-inset ring-brand/45"
+          : "even:bg-tint-2 hover:bg-tint"
       )}
     >
       {/* ── The scene's own line ──
@@ -461,7 +470,13 @@ export function ScriptSceneCard({
  */
 export function ScriptPlanHeader() {
   return (
-    <div className="sticky top-0 z-10 hidden border-b border-hair-2 bg-card px-5 py-2.5 @2xl:grid @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    /* Sticky against the plan column, which is why the table around it no
+       longer clips its overflow: an `overflow-hidden` ancestor made this a
+       scrollport of its own, so the header stuck to a box that never
+       scrolled and rode away with the rows. The negative offset is that
+       column's own padding: pinned at top-0 the header left a 4px slot
+       above itself for rows to scroll through. */
+    <div className="sticky -top-1 z-20 hidden rounded-t-panel border-b border-hair-2 bg-card px-5 py-2.5 @2xl:grid @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <span className="pr-7 text-caption font-extrabold uppercase tracking-[.09em] text-ink-4">Narration</span>
       <span className="pl-7 text-caption font-extrabold uppercase tracking-[.09em] text-ink-4">Scene and style</span>
     </div>
