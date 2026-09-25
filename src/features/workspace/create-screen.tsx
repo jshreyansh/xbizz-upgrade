@@ -33,6 +33,8 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { useProjectExit } from "@/features/workspace/project-exit";
+import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { useVideoSteps, useCreativeSteps } from "@/features/workspace/flow-steps";
@@ -144,6 +146,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setBriefAttachments,
     setBriefFromScenario,
   } = useWorkspaceStore();
+  const exit = useProjectExit();
 
   const isInfographic = assetType === "infographic";
   const activeHeadlines = isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
@@ -372,7 +375,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="min-h-screen flex flex-col bg-subtle" onClick={() => setActivePopover(null)}>
       {/* ─── Top Studio-Matched Header Bar ─── */}
-      <ScreenHeader>
+      <ScreenHeader onClose={() => exit.requestExit()}>
         {/* The first step of the trail, so Back leaves it for the mode
             picker — there is nothing behind Brief inside the flow. */}
         <button
@@ -720,6 +723,13 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           onClose={() => setScenarioLibraryOpen(false)}
         />
       )}
+      <SaveOrDiscardDialog
+        open={!!exit.pending}
+        destinationLabel={exit.pending?.label ?? "home"}
+        onSaveDraft={() => exit.resolve(true)}
+        onDiscard={() => exit.resolve(false)}
+        onCancel={exit.cancel}
+      />
     </div>
   );
 }

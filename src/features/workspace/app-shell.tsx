@@ -6,6 +6,8 @@ import { Sidebar } from "@/features/workspace/sidebar";
 import { Topbar } from "@/features/workspace/topbar";
 import { TeamDock } from "@/features/team-dock/team-dock";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { takeQueuedToast } from "@/features/workspace/project-exit";
+import { Toast, useToast } from "@/components/patterns/toast";
 
 interface AppShellProps {
   children: ReactNode;
@@ -23,6 +25,17 @@ export function AppShell({ children, pageTitle }: AppShellProps) {
   // page was really landing on a nav row underneath (e.g. "Video" then
   // "Home"), reading as the view randomly toggling between the two.
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // A "saved as draft" or "discarded" toast is triggered by leaving the page
+  // that asked the question — by the time it would show, the router has
+  // already torn that page down. Whatever page is landed on instead reads
+  // the queued message once, here, since every page mounts through this shell.
+  const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
+  useEffect(() => {
+    const queued = takeQueuedToast();
+    if (queued) showToast(queued.message, queued.tone);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per navigation (pathname), not on every showToast identity change.
+  }, [pathname]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -73,6 +86,7 @@ export function AppShell({ children, pageTitle }: AppShellProps) {
         <main className="flex-1 overflow-y-auto px-4 pt-5 pb-16 sm:px-8 sm:pt-7 sm:pb-20">{children}</main>
       </div>
       <TeamDock />
+      <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
     </div>
   );
 }

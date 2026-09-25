@@ -99,6 +99,8 @@ import { SceneProgressStrip } from "@/features/workspace/scene-progress-strip";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 import { SubtitleStrip, SubtitleSyncPanel } from "@/features/workspace/subtitle-sync";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { useProjectExit } from "@/features/workspace/project-exit";
+import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
@@ -216,6 +218,7 @@ export function StudioScreen() {
     logoMark,
     setLogoMark,
   } = useWorkspaceStore();
+  const exit = useProjectExit();
 
   /* Arriving from the Content Library means the asset is already published:
      it opens on its shared review, on the comments its reviewers left, with
@@ -1552,7 +1555,7 @@ export function StudioScreen() {
          size leaves ~140px of canvas. */
       panelMinCanvas={isReview ? 240 + 360 : isEditor ? 220 + 360 : 360}
       header={
-        <ScreenHeader>
+        <ScreenHeader onClose={() => exit.requestExit()}>
           {/* One step back along the trail, not out of the project. This went
               to the app home from every mode, so the control shaped like
               "back" was the one that lost your place — while the crumb beside
@@ -3651,6 +3654,13 @@ export function StudioScreen() {
         )}
 
         <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
+        <SaveOrDiscardDialog
+          open={!!exit.pending}
+          destinationLabel={exit.pending?.label ?? "home"}
+          onSaveDraft={() => exit.resolve(true)}
+          onDiscard={() => exit.resolve(false)}
+          onCancel={exit.cancel}
+        />
 
         {generateVideoModalOpen && (
           <Portal>

@@ -30,6 +30,8 @@ import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { useProjectExit } from "@/features/workspace/project-exit";
+import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
 import { useCreativeSteps } from "@/features/workspace/flow-steps";
@@ -169,6 +171,7 @@ export function InfographicDirectionsScreen() {
     toggleCopilotPanel,
     setCopilotPanelOpen,
   } = useWorkspaceStore();
+  const exit = useProjectExit();
 
   /* From the catalogue, not from two hard-coded ids and a "Velmora" default. */
   const brandName = useBrandName(sourcePayload?.dossierId);
@@ -641,7 +644,7 @@ export function InfographicDirectionsScreen() {
          re-open sticks. Tablet portrait is review-only by design. */
       autoCollapsePanelBelow="laptop"
       header={
-        <ScreenHeader>
+        <ScreenHeader onClose={() => exit.requestExit()}>
           <button
             type="button"
             onClick={() => {
@@ -1688,6 +1691,13 @@ export function InfographicDirectionsScreen() {
               onClose={() => setPreviewDossier(null)}
             />
           )}
+          <SaveOrDiscardDialog
+            open={!!exit.pending}
+            destinationLabel={exit.pending?.label ?? "home"}
+            onSaveDraft={() => exit.resolve(true)}
+            onDiscard={() => exit.resolve(false)}
+            onCancel={exit.cancel}
+          />
         </>
       }
     />

@@ -60,6 +60,8 @@ import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcru
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { useProjectExit } from "@/features/workspace/project-exit";
+import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
 import { PreflightPanel } from "@/features/workspace/preflight-panel";
@@ -294,6 +296,7 @@ const DEFAULT_PAGE_2: InfographicPageData = {
 
 export function InfographicStudioScreen() {
   const router = useRouter();
+  const exit = useProjectExit();
   const {
     brief,
     audience,
@@ -1029,7 +1032,7 @@ export function InfographicStudioScreen() {
          re-open sticks. Tablet portrait is review-only by design. */
       autoCollapsePanelBelow="laptop"
       header={
-        <ScreenHeader spread>
+        <ScreenHeader spread onClose={() => exit.requestExit()}>
           <div className="flex items-center gap-2 min-w-0">
             {/* One step back along the trail. This skipped the Layout step it
                 came through, and used different logic from the video studio
@@ -2238,6 +2241,13 @@ export function InfographicStudioScreen() {
 
         {/* ── TOAST NOTIFICATION ── */}
         <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
+        <SaveOrDiscardDialog
+          open={!!exit.pending}
+          destinationLabel={exit.pending?.label ?? "home"}
+          onSaveDraft={() => exit.resolve(true)}
+          onDiscard={() => exit.resolve(false)}
+          onCancel={exit.cancel}
+        />
         </>
       }
     />

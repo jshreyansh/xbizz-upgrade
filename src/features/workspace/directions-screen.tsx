@@ -98,6 +98,9 @@ import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
+import { useProjectExit } from "@/features/workspace/project-exit";
+import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
+import { LibraryModalHeader, LibraryModalGoTo } from "@/components/patterns/library-modal";
 
 import { Portal } from "@/components/ui/portal";
 
@@ -288,6 +291,7 @@ function scriptBuildSteps(sceneCount: number): GenerationStep[] {
 
 export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
+  const exit = useProjectExit();
   const assetType = useWorkspaceStore((state) => state.assetType);
   // Above the early return on purpose: below it these are conditional hooks.
   const research = usePlanResearch();
@@ -797,9 +801,12 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     "references",
     "message",
     "delivery",
-    // Visual-only has nothing to voice, and avatar mode already voiced it in
-    // slot 2 — either way there is no Voice section to advance into.
-    ...(isMagicAvatar || treatmentId === "visual-only" ? [] : (["voice"] as PlanSectionId[])),
+    // Avatar mode already voiced it in slot 2, so there is no separate Voice
+    // section to advance into there. Visual-only still gets one: a
+    // character can appear inside a scene under any treatment, not only a
+    // presenter narrating to camera, so the choice belongs here regardless
+    // of which treatment is picked.
+    ...(isMagicAvatar ? [] : (["voice"] as PlanSectionId[])),
     "story",
   ];
 
@@ -1252,7 +1259,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
          re-open sticks. Tablet portrait is review-only by design. */
       autoCollapsePanelBelow="laptop"
       header={
-        <ScreenHeader>
+        <ScreenHeader onClose={() => exit.requestExit()}>
           <button
             onClick={() => backStep?.onGo?.()}
             disabled={!backStep?.onGo}
@@ -1479,7 +1486,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                                 <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
                               ))}
                             </span>
-                            <span className="ml-1 text-body-lg text-ink-2">Avatar Library</span>
+                            <span className="ml-1 text-body-lg text-ink-2">Character Library</span>
                             <ArrowRight className="ml-auto size-4 text-ink-3" />
                           </button>
                         </div>
@@ -2249,61 +2256,64 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     <PlanSectionContinue onClick={() => advanceFrom("delivery")} />
                   </PlanSection>
 
-                  {/* 5. Presenter, Voice and Sound (for standard video mode) */}
+                  {/* 5. Character, Voice and Sound (for standard video mode)
+                      Who appears on screen used to be asked only when the
+                      treatment was presenter-led — every other treatment
+                      hid the picker entirely. A character is not only a
+                      presenter narrating to camera; a patient or physician
+                      can appear inside a scene under any treatment, so the
+                      choice belongs here regardless of which one is picked.
+                      Being required to finish the section is a separate
+                      question from being visible in it — `needsPresenter`
+                      still gates the former (unchanged), not the latter. */}
                   {shows("voice") && assetType === "video" && (
                     <PlanSection
                       icon={Mic2}
-                      title={needsPresenter ? "Presenter, voice and sound" : "Voice and sound"}
-                      summary={
-                        needsPresenter
-                          ? `${presenter || "Choose presenter"} · ${language} · ${music}`
-                          : `${voice} · ${language} · ${music}`
-                      }
+                      title="Character, voice and sound"
+                      summary={`${presenter || "Choose character"} · ${language} · ${music}`}
                       state={planState(sectionNeedsYou("voice"))}
                       source={presenter ?? undefined}
                       open={openSection === "voice"}
                       onToggle={() => toggleSection("voice")}
                     >
-                      {needsPresenter && (
-                        <div className="mb-4">
-                          <div className="text-body-lg font-semibold text-ink-3 mb-2.5">
-                            Who appears on screen?
-                          </div>
-                          <div className="grid gap-2.5 sm:grid-cols-3">
-                            {presenters.slice(0, 2).map((person) => (
-                              <button
-                                key={person.name}
-                                onClick={() => setPresenter(person.name)}
-                                className={cn(
-                                  "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
-                                  presenter === person.name
-                                    ? "border-brand bg-tint ring-2 ring-brand/15 text-brand-deep shadow-xs"
-                                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                                )}
-                              >
-                                <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
-                                <div className="min-w-0 flex-1">
-                                  <span className="block truncate font-bold text-body-lg">{person.name}</span>
-                                  <span className="block text-label text-ink-3 font-normal">{person.role}</span>
-                                </div>
-                                {presenter === person.name && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />}
-                              </button>
-                            ))}
-                            <button
-                              onClick={() => setPresenterLibraryOpen(true)}
-                              className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-hair-2 bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-3 hover:bg-canvas cursor-pointer"
-                            >
-                              <span className="flex -space-x-2.5">
-                                {presenters.slice(2).map((person) => (
-                                  <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
-                                ))}
-                              </span>
-                              <span className="ml-1 text-body-lg text-ink-2">Avatar Library</span>
-                              <ArrowRight className="ml-auto size-4 text-ink-3" />
-                            </button>
-                          </div>
+                      <div className="mb-4">
+                        <div className="text-body-lg font-semibold text-ink-3 mb-2.5">
+                          Add characters for the video
                         </div>
-                      )}
+                        <div className="grid gap-2.5 sm:grid-cols-3">
+                          {presenters.slice(0, 2).map((person) => (
+                            <button
+                              key={person.name}
+                              onClick={() => setPresenter(person.name)}
+                              className={cn(
+                                "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
+                                presenter === person.name
+                                  ? "border-brand bg-tint ring-2 ring-brand/15 text-brand-deep shadow-xs"
+                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                              )}
+                            >
+                              <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <span className="block truncate font-bold text-body-lg">{person.name}</span>
+                                <span className="block text-label text-ink-3 font-normal">{person.role}</span>
+                              </div>
+                              {presenter === person.name && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />}
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => setPresenterLibraryOpen(true)}
+                            className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-hair-2 bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-3 hover:bg-canvas cursor-pointer"
+                          >
+                            <span className="flex -space-x-2.5">
+                              {presenters.slice(2).map((person) => (
+                                <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+                              ))}
+                            </span>
+                            <span className="ml-1 text-body-lg text-ink-2">Character Library</span>
+                            <ArrowRight className="ml-auto size-4 text-ink-3" />
+                          </button>
+                        </div>
+                      </div>
                       <div className="space-y-2">
                         <DecisionRow
                           label="Language"
@@ -2761,13 +2771,16 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             />
           )}
           {presenterLibraryOpen && (
-            <PresenterLibrary
+            <CharacterLibrary
               selected={presenter}
               onSelect={(name) => {
                 setPresenter(name);
                 setPresenterLibraryOpen(false);
               }}
               onClose={() => setPresenterLibraryOpen(false)}
+              onGoToLibrary={() =>
+                exit.requestExit({ href: "/content-library/characters", label: "the Character Library" })
+              }
             />
           )}
           <input
@@ -2787,8 +2800,18 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               onClose={() => setVoiceLibraryOpen(false)}
               previewing={previewingAudio}
               onPreview={(name) => previewAudio("voice", name)}
+              onGoToLibrary={() =>
+                exit.requestExit({ href: "/content-library/voices", label: "the Voice Library" })
+              }
             />
           )}
+          <SaveOrDiscardDialog
+            open={!!exit.pending}
+            destinationLabel={exit.pending?.label ?? "home"}
+            onSaveDraft={() => exit.resolve(true)}
+            onDiscard={() => exit.resolve(false)}
+            onCancel={exit.cancel}
+          />
           {sourceManagerOpen && (
             <SourceManager
               selectedIds={selectedSourceIds}
@@ -3198,28 +3221,23 @@ function FacePhoto({ person, className }: { person: (typeof presenters)[number];
   return <img src={person.image} alt={person.name} className={cn("object-cover", className)} />;
 }
 
-function PresenterLibrary({
+function CharacterLibrary({
   selected,
   onSelect,
   onClose,
+  onGoToLibrary,
 }: {
   selected: string;
   onSelect: (name: string) => void;
   onClose: () => void;
+  /** The full shelf lives on its own page — this modal is a shortlist. */
+  onGoToLibrary: () => void;
 }) {
   return (
     <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-[680px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
-        <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
-          <div>
-            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Presenter Library</div>
-            <h2 className="mt-1 text-display font-bold tracking-tight">Choose clinical avatar presenter</h2>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="size-4" />
-          </Button>
-        </div>
+        <LibraryModalHeader title="Choose characters for your video" onClose={onClose} />
         <div className="max-h-[460px] overflow-y-auto grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
           {presenters.map((person) => {
             const active = selected === person.name;
@@ -3243,6 +3261,7 @@ function PresenterLibrary({
             );
           })}
         </div>
+        <LibraryModalGoTo label="Go to Character Library" onClick={onGoToLibrary} />
       </div>
     </div>
     </Portal>
@@ -3255,26 +3274,21 @@ function VoiceLibrary({
   onClose,
   previewing,
   onPreview,
+  onGoToLibrary,
 }: {
   selected: string;
   onSelect: (name: string) => void;
   onClose: () => void;
   previewing?: string | null;
   onPreview: (name: string) => void;
+  /** The full shelf lives on its own page — this modal is a shortlist. */
+  onGoToLibrary: () => void;
 }) {
   return (
     <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-[620px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
-        <div className="flex items-start justify-between border-b border-hair p-5 sm:px-6">
-          <div>
-            <div className="text-label font-bold uppercase tracking-[0.12em] text-brand">Voice Library</div>
-            <h2 className="mt-1 text-display font-bold tracking-tight">Select narrator voice</h2>
-          </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="size-4" />
-          </Button>
-        </div>
+        <LibraryModalHeader title="Select narrator voice" onClose={onClose} />
         <div className="max-h-[460px] overflow-y-auto space-y-2 p-4 sm:p-6">
           {voiceList.map((v) => {
             const active = selected.includes(v.name);
@@ -3308,6 +3322,7 @@ function VoiceLibrary({
             );
           })}
         </div>
+        <LibraryModalGoTo label="Go to Voice Library" onClick={onGoToLibrary} />
       </div>
     </div>
     </Portal>
