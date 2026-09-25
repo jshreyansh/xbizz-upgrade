@@ -2558,7 +2558,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               disabled={isGenerating}
               placeholder={isGenerating ? "Generating scenes..." : "Ask SwishX or request a change to the plan..."}
               attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
-              note={`Grounded against the ${brandName} dossier`}
             >
               {/* The files on this message, above the field they were added
                   from, as chips you can open and drop. */}

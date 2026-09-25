@@ -28,8 +28,6 @@ export function ChatComposer({
   children,
   /** The control that adds context: a plain button, or one that opens a menu. */
   attachControl,
-  /** What the reply will be checked against. */
-  note,
   className,
 }: {
   value: string;
@@ -40,7 +38,6 @@ export function ChatComposer({
   rows?: number;
   children?: React.ReactNode;
   attachControl?: React.ReactNode;
-  note?: React.ReactNode;
   className?: string;
 }) {
   const canSend = !disabled && value.trim().length > 0;
@@ -75,11 +72,11 @@ export function ChatComposer({
         className="w-full resize-none bg-transparent text-body text-ink outline-none placeholder:text-ink-3 disabled:cursor-not-allowed disabled:opacity-60"
       />
 
-      <div className="flex items-center justify-between gap-2 border-t border-hair pt-1.5">
-        <div className="flex min-w-0 items-center gap-2">
-          {attachControl}
-          {note && <div className="truncate text-caption text-ink-3">{note}</div>}
-        </div>
+      {/* The plus on the left, send on the right, and nothing between them.
+          A status line across the foot of the field made the composer read
+          as a panel with a caption rather than as somewhere to type. */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">{attachControl}</div>
         <button
           type="submit"
           disabled={!canSend}

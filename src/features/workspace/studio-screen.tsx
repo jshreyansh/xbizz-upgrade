@@ -72,7 +72,7 @@ import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
 import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
-import { ScriptSceneCard, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
+import { ScriptSceneCard, ScriptPlanHeader, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { APPROVED_CLAIMS, citationsFor, claimUsage } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
@@ -1840,11 +1840,17 @@ export function StudioScreen() {
                         );
                       })
                     : (
-                      <>
-                        {sceneList.map((sc) => (
+                      /* One table, not a stack of cards. The scenes are read
+                         down two columns — what is seen, and what is said —
+                         so the columns are named once at the top instead of
+                         on every scene. */
+                      <div className="@container overflow-hidden rounded-panel border border-hair bg-card shadow-2xs">
+                        <ScriptPlanHeader />
+                        {sceneList.map((sc, i) => (
                           <ScriptSceneCard
                             key={sc.id}
                             scene={sc}
+                            startsAt={sceneList.slice(0, i).reduce((sum, s) => sum + (s.duration || 10), 0)}
                             selected={scopedSceneIds.includes(sc.id)}
                             onToggleSelect={() => toggleSceneScope(sc)}
                             editing={editingSceneIds.includes(sc.id)}
@@ -1856,8 +1862,10 @@ export function StudioScreen() {
                             onVisualChange={(v) => handleUpdateSceneVisual(sc.id, v)}
                           />
                         ))}
+                      </div>
+                    )}
 
-                        {SCRIPT_EDITING_ENABLED && (
+                    {!isEditor && SCRIPT_EDITING_ENABLED && (
                           <button
                             type="button"
                             onClick={handleAddDirectScriptScene}
@@ -1866,8 +1874,6 @@ export function StudioScreen() {
                             <Plus className="size-4 text-brand" />
                             <span>Add Script Scene</span>
                           </button>
-                        )}
-                      </>
                     )}
                 </div>
 
@@ -3299,7 +3305,6 @@ export function StudioScreen() {
                         ? "Ask SwishX or type 'Add comment at 0:24 that...'..."
                         : "Direct SwishX to modify scenes, copy, or timing..."
                     }
-                    note={isReview ? "Ask questions or add comments via AI" : "Grounded against FDA Dossier"}
                     attachControl={
                       <div className="relative">
                         <button

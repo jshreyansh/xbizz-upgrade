@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FileText, Maximize2, Paperclip, X } from "lucide-react";
+import { Clapperboard, FileText, X } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 
 /**
@@ -113,7 +113,7 @@ export function ChatAttachmentRow({
         }}
       />
       {files.length > 0 && (
-        <div className={className ?? "flex flex-wrap gap-1.5 pb-1.5"}>
+        <div className={className ?? "flex flex-wrap gap-2 pb-0.5 pt-0.5"}>
           {files.map((file) => (
             <AttachmentChip
               key={file.id}
@@ -131,6 +131,19 @@ export function ChatAttachmentRow({
   );
 }
 
+/**
+ * One attached thing, as a card above the field.
+ *
+ * It was a chip: a paperclip, a filename, a cross. That works for one file
+ * and stops working for three, because a filename truncated to twenty
+ * characters is not a way to tell two screen recordings apart. A card shows
+ * what the thing is — the image itself, or a plate carrying the file type —
+ * which is what you are checking when you glance up at what you have
+ * attached.
+ *
+ * Every card opens. There is a viewer for each kind now, and a card you
+ * cannot open is a filename you have to take on trust.
+ */
 export function AttachmentChip({
   file,
   onOpen,
@@ -140,47 +153,49 @@ export function AttachmentChip({
   onOpen?: () => void;
   onRemove: () => void;
 }) {
-  const isMedia = file.kind !== "doc" && Boolean(file.previewUrl);
+  const isImage = file.kind === "image" && Boolean(file.previewUrl);
+  const isVideo = file.kind === "video" && Boolean(file.previewUrl);
+  const TypeIcon = file.kind === "video" ? Clapperboard : FileText;
+  const ext = file.name.includes(".") ? file.name.split(".").pop()!.toUpperCase() : "FILE";
+
   return (
-    <span className="flex min-h-9 items-center gap-2 rounded-chip border border-hair bg-[#edf1f4] py-1 pl-1 pr-1.5 text-body font-medium text-ink-3">
-      {isMedia ? (
-        <button
-          type="button"
-          onClick={onOpen}
-          className="focus-ring group relative grid size-7 shrink-0 place-items-center overflow-hidden rounded-glyph border border-hair bg-canvas cursor-pointer"
-          aria-label={`Preview ${file.name}`}
-        >
-          {file.kind === "image" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={file.previewUrl} alt="" className="size-full object-cover" />
-          ) : (
-            <video src={file.previewUrl} muted playsInline className="size-full object-cover" />
-          )}
-          <span className="absolute inset-0 grid place-items-center bg-ink/40 opacity-0 transition-opacity group-hover:opacity-100">
-            <Maximize2 className="size-3 text-white" />
-          </span>
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={onOpen}
-          disabled={!onOpen}
-          className="focus-ring group relative grid size-7 shrink-0 place-items-center rounded-glyph border border-hair bg-canvas transition enabled:cursor-pointer enabled:hover:border-brand enabled:hover:text-brand"
-          aria-label={onOpen ? `Preview ${file.name}` : undefined}
-        >
-          <Paperclip className="size-3.5 opacity-75 transition-opacity group-hover:opacity-0" />
-          {onOpen && (
-            <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity group-hover:opacity-100">
-              <Maximize2 className="size-3" />
-            </span>
-          )}
-        </button>
-      )}
-      <span className="max-w-[180px] truncate">{file.name}</span>
+    <span className="group/att relative block size-[74px] shrink-0">
       <button
+        type="button"
+        onClick={onOpen}
+        disabled={!onOpen}
+        aria-label={onOpen ? `Preview ${file.name}` : file.name}
+        title={file.name}
+        className="focus-ring block size-full overflow-hidden rounded-control border border-hair-2 bg-[#12161c] text-left transition enabled:cursor-pointer enabled:hover:border-brand"
+      >
+        {isImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={file.previewUrl} alt="" className="size-full object-cover" />
+        ) : isVideo ? (
+          <video src={file.previewUrl} muted playsInline className="size-full object-cover" />
+        ) : (
+          /* No picture to show, so the plate says what it is instead of
+             pretending to be a thumbnail of nothing. */
+          <span className="grid size-full place-items-center">
+            <TypeIcon className="size-6 text-white/55" />
+          </span>
+        )}
+
+        {/* The name over the foot of the card, on a gradient, because a
+            caption underneath would make every card a different height. */}
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/85 to-transparent px-1.5 pb-1 pt-4">
+          <TypeIcon className="size-2.5 shrink-0 text-white/70" />
+          <span className="truncate text-micro font-bold text-white">
+            {isImage || isVideo ? file.name : ext}
+          </span>
+        </span>
+      </button>
+
+      <button
+        type="button"
         onClick={onRemove}
-        className="grid size-5 shrink-0 place-items-center rounded-full opacity-60 transition hover:bg-white/70 hover:opacity-100 cursor-pointer"
         aria-label={`Remove ${file.name}`}
+        className="absolute -right-1.5 -top-1.5 grid size-5 cursor-pointer place-items-center rounded-full border border-hair-2 bg-card text-ink-3 opacity-0 shadow-xs transition hover:text-ink group-hover/att:opacity-100 focus-visible:opacity-100"
       >
         <X className="size-3" />
       </button>

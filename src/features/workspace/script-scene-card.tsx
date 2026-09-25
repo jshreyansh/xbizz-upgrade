@@ -6,7 +6,6 @@ import {
   AudioLines,
   BarChart3,
   Captions,
-  Clapperboard,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -233,6 +232,8 @@ export const SCRIPT_EDITING_ENABLED = false;
 
 export interface ScriptSceneCardProps {
   scene: Scene;
+  /** Where this scene starts in the film, so the row can print its window. */
+  startsAt: number;
   /** In the chat's scope, so the next instruction applies to it. */
   selected: boolean;
   onToggleSelect: () => void;
@@ -257,7 +258,7 @@ export interface ScriptSceneCardProps {
  * Concentric radii: shell 24 with 10px padding puts the inner blocks at 14.
  */
 export function ScriptSceneCard({
-  scene,
+  scene, startsAt,
   selected, onToggleSelect, editing, onToggleEdit, pending, onCitationDetails,
   onTitleChange, onNarrationChange, onVisualChange,
 }: ScriptSceneCardProps) {
@@ -291,21 +292,21 @@ export function ScriptSceneCard({
 
   return (
     <article
-      // Clicking the card aims the chat at it. Suppressed while editing, so
+      // Clicking the row aims the chat at it. Suppressed while editing, so
       // working in the text never changes what the next instruction targets.
       onClick={editing ? undefined : onToggleSelect}
       className={cn(
-        "relative flex flex-col gap-2 rounded-card border bg-card p-2.5 transition-all duration-200",
+        /* A container query, not a viewport one: the plan lives in a pane
+           whose width the chat panel changes, and a table that splits on the
+           window's width stacks on a wide screen with the panel open. */
+        "relative grid min-w-0 gap-x-5 gap-y-3 border-b border-hair px-3 py-4 transition-colors @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
         !editing && "cursor-pointer",
-        selected
-          ? "border-brand ring-2 ring-brand/15 shadow-sm"
-          : "border-hair shadow-2xs hover:border-hair-3 hover:shadow-xs"
+        selected ? "bg-tint/50" : "hover:bg-canvas"
       )}
     >
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-2 px-1 pb-2 border-b border-hair">
-        <div className="flex min-w-0 items-center gap-1.5">
-
+      {/* ── Scene and style ── */}
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex min-w-0 items-start gap-2">
           {/* The scope tick. Always drawn, so the affordance is discoverable
               rather than appearing only on hover. */}
           <button
@@ -314,7 +315,7 @@ export function ScriptSceneCard({
             aria-pressed={selected}
             aria-label={selected ? `Remove scene ${scene.number} from chat scope` : `Add scene ${scene.number} to chat scope`}
             className={cn(
-              "grid size-5 shrink-0 place-items-center rounded-full border transition-all cursor-pointer",
+              "mt-1 grid size-5 shrink-0 cursor-pointer place-items-center rounded-full border transition-all",
               selected
                 ? "border-brand bg-brand text-white"
                 : "border-hair-3 bg-card text-transparent hover:border-brand hover:text-brand/40"
@@ -323,47 +324,77 @@ export function ScriptSceneCard({
             <Check className="size-3 stroke-[3]" />
           </button>
 
-          <span className={cn(
-            "grid size-6 shrink-0 place-items-center rounded-chip text-label font-bold shadow-2xs",
-            selected ? "bg-brand text-white" : "bg-ink text-white"
-          )}>
-            {scene.number}
-          </span>
+          <div className="min-w-0 flex-1">
+            {/* The number leads and leads loudly. A plan is walked through in
+                order, so "Scene 3" is what you are looking for and the title
+                is what confirms you found it. */}
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span className="shrink-0 text-subhead font-[850] tracking-tight text-ink">
+                Scene {scene.number}
+              </span>
+              <input
+                type="text"
+                value={scene.title}
+                onChange={(e) => onTitleChange(e.target.value)}
+                onClick={stop}
+                placeholder="Scene Title"
+                className="min-w-0 flex-1 rounded-glyph border-b border-transparent bg-transparent py-0.5 text-body-lg font-semibold text-ink-2 transition-all hover:border-hair-3 focus:border-brand focus:outline-none"
+              />
+            </div>
 
-          <input
-            type="text"
-            value={scene.title}
-            onChange={(e) => onTitleChange(e.target.value)}
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-ink-4">
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <Clock className="size-2.5" />
+                {startsAt.toFixed(0)}–{(startsAt + (scene.duration || 10)).toFixed(0)}s
+              </span>
+              <span aria-hidden>·</span>
+              <span className="truncate">{scene.narrativeTag || "Evidence"}</span>
+            </div>
+          </div>
+        </div>
+
+        {pending ? (
+          <div className="space-y-2" aria-busy>
+            <div className="shimmer h-3.5 w-full rounded-glyph bg-hair" />
+            <div className="shimmer h-3.5 w-[70%] rounded-glyph bg-hair" />
+          </div>
+        ) : editing ? (
+          <textarea
+            value={scene.visual}
+            onChange={(e) => onVisualChange(e.target.value)}
             onClick={stop}
-            placeholder="Scene Title"
-            className="min-w-0 flex-1 rounded-glyph border-b border-transparent bg-transparent px-1 py-0.5 text-body-lg font-[850] text-ink transition-all hover:border-hair-3 focus:border-brand focus:outline-none"
+            placeholder="Describe roughly what this scene shows…"
+            rows={2}
+            className="w-full resize-none rounded-control border border-brand bg-card p-2 text-body leading-relaxed text-ink-2 focus:outline-none"
           />
-        </div>
+        ) : (
+          <p className="text-body leading-relaxed text-ink-2">
+            {scene.visual || <span className="text-ink-4">No visual direction yet.</span>}
+          </p>
+        )}
 
-        <div className="flex shrink-0 items-center gap-1.5">
-
-          <span className="flex items-center gap-1 rounded-glyph border border-hair bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
-            <Clock className="size-2.5" />
-            {scene.duration || 10}s
-          </span>
-
-        </div>
+        {/* The parts list, under the description of the look. */}
+        {!pending && (
+          <div className="flex flex-wrap gap-1">
+            {sceneElements(scene).map((part) => (
+              <span
+                key={part.id}
+                className="inline-flex max-w-full items-center gap-1 rounded-glyph border border-hair-2 bg-card px-1.5 py-0.5 text-micro font-bold text-ink-3"
+              >
+                <part.icon className="size-2.5 shrink-0 text-brand" />
+                <span className="truncate">{part.label}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* ── The two halves of a scene, side by side ──
-          What is said and what is seen are written against each other, so they
-          are read against each other. Stacked, the visual direction sat below
-          the fold of its own card and you scrolled between a line and the
-          picture it belongs to. */}
-      <div className="grid min-w-0 gap-2 lg:grid-cols-2">
-      {/* ── Narration ── */}
-      <div className={cn(
-        "flex min-w-0 flex-col rounded-control border p-3 transition-colors",
-        editing ? "border-brand bg-card" : "border-hair-2 bg-canvas"
-      )}>
-        <div className="mb-1.5 flex items-center justify-between gap-2">
-          <span className="text-caption font-extrabold uppercase tracking-wider text-ink-3">
-            Narration
+      {/* ── Script and voiceover ── */}
+      <div className="flex min-w-0 flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-wider text-brand">
+            <AudioLines className="size-3" />
+            Voiceover
           </span>
           <div className="flex items-center gap-2">
             <span className="text-caption font-semibold tabular-nums text-ink-4">{words} words</span>
@@ -373,10 +404,8 @@ export function ScriptSceneCard({
                 onClick={(e) => { stop(e); onToggleEdit(); }}
                 disabled={pending}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-glyph px-2 py-0.5 text-caption font-bold transition-colors cursor-pointer disabled:pointer-events-none disabled:opacity-40",
-                  editing
-                    ? "bg-brand text-white hover:bg-brand-deep"
-                    : "text-ink-3 hover:bg-tint hover:text-brand"
+                  "inline-flex cursor-pointer items-center gap-1 rounded-glyph px-2 py-0.5 text-caption font-bold transition-colors disabled:pointer-events-none disabled:opacity-40",
+                  editing ? "bg-brand text-white hover:bg-brand-deep" : "text-ink-3 hover:bg-tint hover:text-brand"
                 )}
               >
                 {editing ? <Check className="size-3" /> : <Pencil className="size-3" />}
@@ -401,7 +430,7 @@ export function ScriptSceneCard({
             placeholder="Enter clinical voiceover script for this scene..."
             rows={3}
             autoFocus
-            className="w-full resize-none bg-transparent text-subhead leading-relaxed text-ink focus:outline-none"
+            className="w-full resize-none rounded-control border border-brand bg-card p-2 text-subhead leading-relaxed text-ink focus:outline-none"
           />
         ) : (
           <p className="text-subhead leading-relaxed text-ink">
@@ -420,87 +449,40 @@ export function ScriptSceneCard({
             anchor no longer matches a sentence would otherwise vanish — both
             fall back to a row under the field. */}
         {!pending && unanchored.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 border-t border-hair pt-2.5">
-            <span className="text-caption font-extrabold uppercase tracking-wider text-ink-4">
-              Sources
-            </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-caption font-extrabold uppercase tracking-wider text-ink-4">Sources</span>
             <CitationPill citations={unanchored} onDetails={onCitationDetails} />
           </div>
         )}
-      </div>
 
-      {/* ── What the scene looks like ──
-          The script stage was words only, so the visual half of every scene
-          was invented later in the studio with nobody having read it. A rough
-          description here is what makes this a plan rather than a transcript —
-          and it is the half a reviewer can still change cheaply, because
-          nothing has been rendered against it yet. */}
-      <div className="flex min-w-0 flex-col rounded-control border border-hair-2 bg-canvas p-3">
-        <div className="mb-1.5 flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-wider text-ink-3">
-            <Clapperboard className="size-3 text-ink-4" />
-            Visual
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-0.5 text-caption">
+          <span className="inline-flex min-w-0 items-center gap-1.5 rounded-glyph border border-ok-line/60 bg-ok-bg px-2 py-0.5 font-semibold text-ok">
+            <ShieldCheck className="size-3 shrink-0 text-ok" />
+            <span className="truncate">{scene.claim}</span>
           </span>
+          {selected && <span className="shrink-0 font-bold text-brand">In chat scope</span>}
         </div>
-
-        {pending ? (
-          <div className="space-y-2" aria-busy>
-            <div className="shimmer h-3.5 w-full rounded-glyph bg-hair" />
-            <div className="shimmer h-3.5 w-[70%] rounded-glyph bg-hair" />
-          </div>
-        ) : editing ? (
-          <textarea
-            value={scene.visual}
-            onChange={(e) => onVisualChange(e.target.value)}
-            onClick={stop}
-            placeholder="Describe roughly what this scene shows…"
-            rows={2}
-            className="w-full resize-none bg-transparent text-body leading-relaxed text-ink-2 focus:outline-none"
-          />
-        ) : (
-          <p className="text-body leading-relaxed text-ink-2">
-            {scene.visual || <span className="text-ink-4">No visual direction yet.</span>}
-          </p>
-        )}
-
-        {/* The parts list, under the description of the look. Not a third tile
-            of its own: it describes the visual, and a scene reads as two
-            halves — what is said, and what is seen. */}
-        {!pending && (
-          <div className="mt-auto border-t border-hair pt-2">
-            <span className="text-caption font-extrabold uppercase tracking-wider text-ink-4">
-              Scene elements
-            </span>
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {sceneElements(scene).map((part) => (
-                <span
-                  key={part.id}
-                  className="inline-flex max-w-full items-center gap-1 rounded-glyph border border-hair-2 bg-card px-1.5 py-0.5 text-micro font-bold text-ink-3"
-                >
-                  <part.icon className="size-2.5 shrink-0 text-brand" />
-                  <span className="truncate">{part.label}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-      </div>
-
-      {/* ── Footer ── */}
-      <div className="flex items-center justify-between gap-2 px-1 text-caption">
-        <span className="inline-flex items-center gap-1.5 rounded-glyph border border-ok-line/60 bg-ok-bg px-2 py-0.5 font-semibold text-ok">
-          <ShieldCheck className="size-3 text-ok" />
-          <span className="truncate">{scene.claim}</span>
-        </span>
-        {selected ? (
-          <span className="shrink-0 font-bold text-brand">In chat scope</span>
-        ) : (
-          <span className="shrink-0 text-ink-4">
-            Tag: <strong>({scene.narrativeTag || "Evidence"})</strong>
-          </span>
-        )}
       </div>
     </article>
+  );
+}
+
+/**
+ * The two columns every scene is read across, named once at the top.
+ *
+ * The plan was a stack of self-contained cards, each repeating its own
+ * NARRATION and VISUAL labels — eight scenes meant sixteen headings for two
+ * ideas. A table says it twice: once.
+ */
+export function ScriptPlanHeader() {
+  return (
+    <div className="sticky top-0 z-10 hidden gap-x-5 border-b border-hair-2 bg-canvas px-3 py-2 @2xl:grid @2xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <span className="text-caption font-extrabold uppercase tracking-[.1em] text-ink-4">
+        Scene and style
+      </span>
+      <span className="text-caption font-extrabold uppercase tracking-[.1em] text-ink-4">
+        Script and voiceover
+      </span>
+    </div>
   );
 }
