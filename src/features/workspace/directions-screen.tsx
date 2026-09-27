@@ -726,6 +726,17 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   const approvedEvidenceCount = selectedSourceIds.filter((id) => id !== "dermora-reference").length;
   const needsPresenter = presentationMode === "presenter" || treatmentId === "presenter" || creationMode === "magic-avatar";
+  /**
+   * Presenter-led requires one — a video with nobody on screen and a
+   * presenter-led treatment disagree with each other. Every other treatment
+   * only offers a character; it never demands one back. Clicking the tile
+   * that is already selected re-picks it when required (a no-op, so the
+   * requirement holds) and clears it otherwise, which is the only way an
+   * optional choice can be undone once made.
+   */
+  const selectPresenter = (name: string) => {
+    setPresenter((current) => (current === name && !needsPresenter ? "" : name));
+  };
   const needsProductAssets = isProductFocus && productMediaList.length === 0;
 
   /**
@@ -1461,7 +1472,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           {presenters.slice(0, 2).map((person) => (
                             <button
                               key={person.name}
-                              onClick={() => setPresenter(person.name)}
+                              onClick={() => selectPresenter(person.name)}
                               className={cn(
                                 "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
                                 presenter === person.name
@@ -2284,7 +2295,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                           {presenters.slice(0, 2).map((person) => (
                             <button
                               key={person.name}
-                              onClick={() => setPresenter(person.name)}
+                              onClick={() => selectPresenter(person.name)}
                               className={cn(
                                 "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
                                 presenter === person.name
@@ -2774,7 +2785,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             <CharacterLibrary
               selected={presenter}
               onSelect={(name) => {
-                setPresenter(name);
+                selectPresenter(name);
                 setPresenterLibraryOpen(false);
               }}
               onClose={() => setPresenterLibraryOpen(false)}
