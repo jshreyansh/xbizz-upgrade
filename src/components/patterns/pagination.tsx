@@ -68,7 +68,7 @@ export function PaginationBar<T>({ paged, className }: { paged: Paged<T>; classN
     <div className={cn("flex flex-wrap items-center justify-between gap-3 px-4 py-2.5", className)}>
       <div className="flex items-center gap-2 text-caption text-ink-3">
         <span className="font-bold text-ink-4">Rows</span>
-        <div className="flex gap-0.5 rounded-glyph border border-hair-2 bg-subtle p-0.5">
+        <div className="squircle flex gap-0.5 rounded-glyph border border-hair-2 bg-subtle p-0.5">
           {PAGE_SIZES.map((size) => (
             <button
               key={size}

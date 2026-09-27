@@ -67,7 +67,7 @@ import {
   useSuggestionQueue,
   type Suggestion,
 } from "@/features/workspace/suggestion-queue";
-import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
+import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
@@ -108,6 +108,7 @@ import { SceneProgressStrip } from "@/features/workspace/scene-progress-strip";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 import { SubtitleStrip, SubtitleSyncPanel } from "@/features/workspace/subtitle-sync";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -1671,32 +1672,26 @@ export function StudioScreen() {
                 Future is the opt-in preview of what it grows into. Editor
                 only — a reviewer on a shared link is not choosing an editor. */}
             {isEditor && (
-              <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-1 sm:flex">
+              <Segmented className="hidden bg-card sm:flex" aria-label="Editor version">
                 {([
                   { id: "v1" as const, label: "Version 1" },
                   { id: "future" as const, label: "Future" },
                 ]).map((option) => (
-                  <button
+                  <SegmentedButton
                     key={option.id}
-                    type="button"
+                    active={editorVersion === option.id}
                     onClick={() => setEditorVersion(option.id)}
-                    aria-pressed={editorVersion === option.id}
                     title={
                       option.id === "v1"
                         ? "Ships today: select and direct, no direct manipulation"
                         : "Preview: drag elements and use the inline element toolbar"
                     }
-                    className={cn(
-                      "rounded-glyph px-2.5 py-1 text-caption font-bold transition-colors cursor-pointer",
-                      editorVersion === option.id
-                        ? "bg-brand text-white"
-                        : "text-ink-3 hover:text-ink"
-                    )}
+                    className={cn("px-2.5 py-1 text-caption", editorVersion === option.id && "bg-brand text-white shadow-none")}
                   >
                     {option.label}
-                  </button>
+                  </SegmentedButton>
                 ))}
-              </div>
+              </Segmented>
             )}
 
             {/* DEV ONLY — remove before release. Landscape / portrait, so
@@ -3196,7 +3191,7 @@ export function StudioScreen() {
           <div className="p-2.5 border-b border-hair bg-subtle">
             {studioMode === "scenes" ? (
               /* ── SCRIPT STAGE: Only Chat & Claims Tabs (No Edit Tab) ── */
-              <div className="flex gap-1 p-1 bg-[#e6ebe6] rounded-panel border border-hair shadow-inner-xs">
+              <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#e6ebe6] shadow-inner-xs")}>
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}
@@ -3222,7 +3217,7 @@ export function StudioScreen() {
                  agent resolves a reviewer's note, and the place to go and see
                  that is the same list the note was left in — not a counter in
                  the top bar that opens a different surface. */
-              <div className="flex gap-1 p-1 bg-[#e6ebe6] rounded-panel border border-hair shadow-inner-xs">
+              <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#e6ebe6] shadow-inner-xs")}>
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}

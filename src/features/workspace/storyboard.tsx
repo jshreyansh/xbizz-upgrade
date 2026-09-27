@@ -12,6 +12,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { Scene, SceneCitation, Shot } from "@/types/content";
 import { splitSegments } from "@/features/workspace/script-claims";
 import { CitationPill } from "@/features/workspace/script-scene-card";
@@ -130,29 +131,23 @@ export function StoryboardSummary({
 
       {/* The marketer's call, so it sits with the board it changes rather
           than in a settings menu: narration beside the shots, or above them. */}
-      {/* Concentric corners: a 14px shell inset by 4px holds 10px segments.
-          Mismatched radii read as the selected segment not belonging to it. */}
-      <div role="group" aria-label="Scene layout" className="ml-auto inline-flex items-center gap-0.5 rounded-control border border-hair-2 bg-card p-1">
+      <Segmented role="group" aria-label="Scene layout" className="ml-auto bg-card">
         {([
           { id: "side" as const, label: "Side by side", icon: Columns2, hint: "Narration beside the shots" },
           { id: "stacked" as const, label: "Stacked", icon: Rows2, hint: "Narration above the shots" },
         ]).map((option) => (
-          <button
+          <SegmentedButton
             key={option.id}
-            type="button"
+            active={layout === option.id}
             title={option.hint}
-            aria-pressed={layout === option.id}
             onClick={() => onLayout(option.id)}
-            className={cn(
-              "inline-flex cursor-pointer items-center gap-1.5 rounded-chip px-2.5 py-1 text-label font-bold transition-colors",
-              layout === option.id ? "bg-ink text-white" : "text-ink-3 hover:text-ink"
-            )}
+            className={cn("px-2.5 py-1", layout === option.id && "bg-ink text-white shadow-none")}
           >
             <option.icon className="size-3.5" />
             {option.label}
-          </button>
+          </SegmentedButton>
         ))}
-      </div>
+      </Segmented>
     </div>
   );
 }

@@ -16,10 +16,14 @@ import { cn } from "@/lib/cn";
  * plainly-rounded shell no matter what the radii said. The shell is a
  * squircle too here.
  *
+ * The rule is inner radius + padding + border = outer radius. The 1px
+ * border counts: leaving it out put an 11px chip in a 10px slot.
+ *
  * One constant, one place: change PAD or the radius and every segmented
  * control in the app stays nested.
  */
 const PAD = 3;
+const BORDER = 1;
 
 export function Segmented({
   children,
@@ -58,7 +62,7 @@ export function SegmentedButton({
         className
       )}
       style={{
-        borderRadius: `calc(var(--radius-control) - ${PAD}px)`,
+        borderRadius: `calc(var(--radius-control) - ${PAD + BORDER}px)`,
         ...rest.style,
       }}
     >

@@ -55,11 +55,12 @@ import {
   listSuggestions,
   useSuggestionQueue,
 } from "@/features/workspace/suggestion-queue";
-import { InspectorTabButton } from "@/features/workspace/inspector-tabs";
+import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -1097,30 +1098,26 @@ export function InfographicStudioScreen() {
                 of what it grows into. Editor only — a reviewer on a shared
                 link is not choosing an editor. */}
             {studioMode === "editor" && (
-              <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-1 sm:flex">
+              <Segmented className="hidden bg-card sm:flex" aria-label="Editor version">
                 {([
                   { id: "v1" as const, label: "Version 1" },
                   { id: "future" as const, label: "Future" },
                 ]).map((option) => (
-                  <button
+                  <SegmentedButton
                     key={option.id}
-                    type="button"
+                    active={editorVersion === option.id}
                     onClick={() => setEditorVersion(option.id)}
-                    aria-pressed={editorVersion === option.id}
                     title={
                       option.id === "v1"
                         ? "Ships today: select and direct, no formatting bar"
                         : "Preview: set type on the canvas from the formatting bar"
                     }
-                    className={cn(
-                      "cursor-pointer rounded-glyph px-2.5 py-1 text-caption font-bold transition-colors",
-                      editorVersion === option.id ? "bg-brand text-white" : "text-ink-3 hover:text-ink"
-                    )}
+                    className={cn("px-2.5 py-1 text-caption", editorVersion === option.id && "bg-brand text-white shadow-none")}
                   >
                     {option.label}
-                  </button>
+                  </SegmentedButton>
                 ))}
-              </div>
+              </Segmented>
             )}
             {studioMode === "editor" && (
               <Button
@@ -1686,7 +1683,7 @@ export function InfographicStudioScreen() {
                   Comments live here in the editor too, not only in review:
                   the agent resolves a reviewer's note while you are editing,
                   and this is where you go to see that. */}
-              <div className="flex gap-1 rounded-control bg-[#edeef0] p-1">
+              <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#edeef0]")}>
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}

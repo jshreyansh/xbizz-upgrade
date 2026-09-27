@@ -11,6 +11,10 @@ import { cn } from "@/lib/cn";
  * already know. So the closed ones keep their glyph, which is what you scan
  * for, and the open one takes the space back to spell itself out.
  */
+/** The strip every InspectorTabButton sits in: 18px, 1px border, 4px in. */
+export const INSPECTOR_TAB_STRIP = "squircle flex gap-1 rounded-panel border border-hair p-1";
+const INSPECTOR_TAB_RADIUS = "calc(var(--radius-panel) - 5px)";
+
 export function InspectorTabButton({
   tab,
   current,
@@ -40,9 +44,12 @@ export function InspectorTabButton({
       type="button"
       onClick={() => onClick(tab)}
       title={typeof children === "string" ? children : undefined}
+      /* Nested in its strip: panel radius minus the strip's 4px padding and
+         1px border, so the open tab's corner follows the strip's. */
+      style={{ borderRadius: INSPECTOR_TAB_RADIUS }}
       aria-label={typeof children === "string" ? children : undefined}
       className={cn(
-        "group relative flex items-center justify-center gap-1.5 h-8.5 rounded-control text-body transition-all duration-150 cursor-pointer font-[800] select-none whitespace-nowrap",
+        "group relative flex items-center justify-center gap-1.5 h-8.5 text-body transition-all duration-150 cursor-pointer font-[800] select-none whitespace-nowrap",
         active ? "flex-1 px-2.5" : "shrink-0 px-2.5",
         active
           ? "bg-card text-ink shadow-xs border border-hair"
