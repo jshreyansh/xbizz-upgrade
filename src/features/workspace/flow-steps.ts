@@ -39,7 +39,7 @@ function useFlowNav() {
 }
 
 export function useVideoSteps(opts: {
-  /** Set in the studio, where Production Plan and Editor are modes, not views. */
+  /** Set in the studio, where Storyboard and Editor are modes, not views. */
   toProduction?: () => void;
   toEditor?: () => void;
 }): FlowStep[] {
@@ -47,7 +47,7 @@ export function useVideoSteps(opts: {
   return [
     { id: "brief", label: "Brief", onGo: nav.toBrief },
     { id: "plan", label: "Need your input", onGo: nav.toPlan },
-    { id: "production", label: "Production Plan", onGo: opts.toProduction },
+    { id: "production", label: "Storyboard", onGo: opts.toProduction },
     { id: "editor", label: "Video Editor", onGo: opts.toEditor },
     // The end of the trail. Nothing navigates back TO a published review.
     { id: "review", label: "Review" },

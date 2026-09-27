@@ -8,6 +8,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Clapperboard,
   ChevronUp,
   Download,
   Expand,
@@ -71,16 +72,23 @@ import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcru
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
-import type { EvidenceState, InspectorTab, Scene } from "@/types/content";
-import { ScriptSceneCard, ScriptPlanHeader, SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
+import type { EvidenceState, InspectorTab, Scene, Shot } from "@/types/content";
+import { SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
+import {
+  StoryboardSceneTile,
+  StoryboardSummary,
+  storyShots,
+  type StoryboardLayout,
+} from "@/features/workspace/storyboard";
+import { useShotPreviews } from "@/features/workspace/use-shot-previews";
+import { DevShapeMenu } from "@/features/workspace/dev-shape-menu";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { APPROVED_CLAIMS, citationsFor, claimUsage } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { ChatComposer } from "@/components/patterns/chat-composer";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
-import { BackgroundKeyframes } from "@/features/workspace/background-keyframes";
-import { InfoTip } from "@/features/workspace/info-tip";
+import { ShotRenderingFrame } from "@/features/workspace/background-keyframes";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
 import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
@@ -158,7 +166,7 @@ const TAG_DEPENDENTS: Record<string, string[]> = {
   "Outro":         [],
 };
 
-/* Production Plan → Video Editor, reported per scene. */
+/* Storyboard → Video Editor, reported per scene. */
 function editorOpenSteps(sceneCount: number): GenerationStep[] {
   const perScene: GenerationStep[] = [];
   for (let i = 1; i <= sceneCount; i += 1) {
@@ -166,7 +174,7 @@ function editorOpenSteps(sceneCount: number): GenerationStep[] {
     perScene.push({ label: `Timed scene ${i} entrances and exits`, seconds: 0.26 });
   }
   return [
-    { label: "Parsed the production plan", seconds: 0.5 },
+    { label: "Parsed the storyboard", seconds: 0.5 },
     { label: "Resolved frame size and safe areas", seconds: 0.4 },
     ...perScene,
     { label: "Placed the presenter avatar", seconds: 0.45 },
@@ -310,6 +318,21 @@ export function StudioScreen() {
   );
   const isScriptComplete = sceneList.length > 0 && sceneList.every((s) => s.narration && s.narration.trim().length > 0);
 
+  /* The project's shape. Set on the brief; the header's dev-only menu can
+     flip it so both shapes can be checked on the storyboard and the editor. */
+  const format = useWorkspaceStore((s) => s.format);
+  const isPortrait = format === "9:16";
+
+  /** Narration beside the shots, or above them. The marketer's choice. */
+  const [storyLayout, setStoryLayout] = useState<StoryboardLayout>("side");
+  const storyShotIds = useMemo(
+    () => sceneList.flatMap((sc) => storyShots(sc).map((shot) => shot.id)),
+    [sceneList]
+  );
+  const previews = useShotPreviews(storyShotIds);
+  /** Generate video waits for the last preview: the board is what gets approved. */
+  const storyboardReady = isScriptComplete && previews.allReady && previews.drawingCount === 0;
+
   const [directorInput, setDirectorInput] = useState("");
   const chatMessages = useWorkspaceStore((s) => s.chatMessages);
   const setChatMessages = useWorkspaceStore((s) => s.setChatMessages);
@@ -387,24 +410,6 @@ export function StudioScreen() {
       setShotRender((prev) => ({ ...prev, [shotId]: "ready" }));
       if (announce) showToast(`${name} of scene ${scene.number} is rendered`);
     }, 4200);
-  };
-
-  /** Every remaining shot in one scene. */
-  const generateSceneFully = (scene: Scene) => {
-    const pending = shotsOf(scene).filter((id) => shotStateOf(id) === "keyframes");
-    if (pending.length === 0) return;
-    pending.forEach((id) => generateShot(scene, id, false));
-    showToast(`Rendering scene ${scene.number} · ${pending.length} shot${pending.length === 1 ? "" : "s"}`);
-  };
-
-  /** Every remaining shot in the film, so publishing is one press away. */
-  const generateAllScenes = () => {
-    const pending = sceneList.flatMap((sc) =>
-      shotsOf(sc).filter((id) => shotStateOf(id) === "keyframes").map((id) => ({ sc, id }))
-    );
-    if (pending.length === 0) return;
-    pending.forEach(({ sc, id }) => generateShot(sc, id, false));
-    showToast(`Rendering ${pending.length} shot${pending.length === 1 ? "" : "s"} across the film`);
   };
 
   /**
@@ -509,7 +514,6 @@ export function StudioScreen() {
     (shot) => sceneCurrentTime >= shot.startAt && sceneCurrentTime < shot.endAt
   ) ?? (selectedScene.shots ?? [])[0];
   const activeShotId = activeShot?.id ?? `${selectedScene.id}-whole`;
-  const activeShotLabel = activeShot ? `Shot ${activeShot.index}` : "Footage";
 
   /* What this scene is making, on the film's own schedule. */
   const selectedSceneAssets = useMemo(() => {
@@ -616,14 +620,12 @@ export function StudioScreen() {
 
   interface AttachedChatContext {
     id: string;
-    type: "element" | "scene" | "file" | "dossier";
+    type: "element" | "scene" | "shot" | "file" | "dossier";
     label: string;
     detail?: string;
   }
 
   const [attachedContexts, setAttachedContexts] = useState<AttachedChatContext[]>([]);
-  /** Cards whose narration is unlocked. Read-only is the default. */
-  const [editingSceneIds, setEditingSceneIds] = useState<string[]>([]);
   /** Cards being rewritten right now. Drives the shimmer. */
   const [pendingSceneIds, setPendingSceneIds] = useState<string[]>([]);
   /**
@@ -893,12 +895,24 @@ export function StudioScreen() {
     .filter((c) => c.id.startsWith("scene-"))
     .map((c) => c.id.slice("scene-".length));
 
+  /** Shot chips carry their scene's id, so a shot always travels with it. */
+  const shotKey = (sceneId: string, shotId: string) => `shot-${sceneId}::${shotId}`;
+  const scopedShots = attachedContexts
+    .filter((c) => c.id.startsWith("shot-"))
+    .map((c) => {
+      const [sceneId, shotId] = c.id.slice("shot-".length).split("::");
+      return { sceneId, shotId };
+    });
+  /** Removing a scene takes its shots with it — a shot has no meaning alone. */
+  const withoutScene = (list: AttachedChatContext[], sceneId: string) =>
+    list.filter((c) => c.id !== `scene-${sceneId}` && !c.id.startsWith(`shot-${sceneId}::`));
+
   const toggleSceneScope = (scene: Scene) => {
     const key = `scene-${scene.id}`;
     const attached = attachedContexts.some((c) => c.id === key);
     setAttachedContexts((prev) =>
       attached
-        ? prev.filter((c) => c.id !== key)
+        ? withoutScene(prev, scene.id)
         : [...prev, { id: key, type: "scene" as const, label: `Scene ${scene.number}`, detail: scene.title }]
     );
     showToast(
@@ -909,8 +923,30 @@ export function StudioScreen() {
     );
   };
 
-  const toggleSceneEditing = (id: string) =>
-    setEditingSceneIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  /**
+   * A shot goes into the chat WITH its scene: two chips, the scene and the
+   * shot. Clicking the shot again takes the shot out and leaves the scene,
+   * so the next instruction falls back to the whole scene rather than to
+   * nothing.
+   */
+  const toggleShotScope = (scene: Scene, shot: Shot) => {
+    const key = shotKey(scene.id, shot.id);
+    const number = storyShots(scene).findIndex((s) => s.id === shot.id) + 1;
+    const attached = attachedContexts.some((c) => c.id === key);
+    setAttachedContexts((prev) => {
+      if (attached) return prev.filter((c) => c.id !== key);
+      const next = prev.some((c) => c.id === `scene-${scene.id}`)
+        ? prev
+        : [...prev, { id: `scene-${scene.id}`, type: "scene" as const, label: `Scene ${scene.number}`, detail: scene.title }];
+      return [...next, { id: key, type: "shot" as const, label: `Shot ${number}`, detail: shot.label }];
+    });
+    showToast(
+      attached
+        ? `Shot ${number} removed. Scene ${scene.number} stays in the chat`
+        : `Scene ${scene.number} and its shot ${number} added to the chat`,
+      attached ? "undone" : "done"
+    );
+  };
 
   /**
    * A citation is only useful if you can reach the claim behind it. Details
@@ -1135,9 +1171,24 @@ export function StudioScreen() {
 
     const step = count > 1 ? (MEDIA_LAST - MEDIA_FIRST) / (count - 1) : 0;
     sceneList.forEach((sc, idx) => {
+      const mediaAt = Math.round(MEDIA_FIRST + idx * step);
       setTimeout(() => {
         setScenePhase((prev) => ({ ...prev, [sc.id]: 2 }));
-      }, Math.round(MEDIA_FIRST + idx * step));
+      }, mediaAt);
+
+      /**
+       * Then the shots, on their own. They were approved as stills on the
+       * storyboard, so there is no second decision to wait for here — each
+       * one starts once its scene's media is in, and swaps in as it lands.
+       */
+      shotsOf(sc).forEach((shotId, j) => {
+        setTimeout(() => {
+          setShotRender((prev) => (prev[shotId] === "ready" ? prev : { ...prev, [shotId]: "generating" }));
+        }, mediaAt + j * 700);
+        setTimeout(() => {
+          setShotRender((prev) => ({ ...prev, [shotId]: "ready" }));
+        }, mediaAt + 3600 + j * 1400);
+      });
     });
   };
 
@@ -1277,30 +1328,6 @@ export function StudioScreen() {
 
 
 
-  const handleUpdateSceneTitle = (id: string, nextTitle: string) => {
-    setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, title: nextTitle } : s)));
-  };
-
-  /* The visual direction carries no claim, so it needs no re-grounding when
-     it changes — which is the whole reason it can be edited freely here while
-     the narration recomputes its citations on every keystroke. */
-  const handleUpdateSceneVisual = (id: string, nextVisual: string) => {
-    setSceneList((prev) => prev.map((s) => (s.id === id ? { ...s, visual: nextVisual } : s)));
-  };
-
-  const handleUpdateSceneNarration = (id: string, nextNarration: string) => {
-    // Anchors are sentence indices, so editing the text can strand them past
-    // the end of the line. Recomputed on every edit rather than left to rot.
-    setSceneList((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? { ...s, narration: nextNarration, citations: citationsFor(s.narrativeTag ?? "Evidence", nextNarration) }
-          : s
-      )
-    );
-  };
-
-
   const handleCreateSceneFromModal = (sceneData: {
     insertPosition: number;
     title: string;
@@ -1386,7 +1413,40 @@ export function StudioScreen() {
      * for the scenes they picked; the extra ones are the agent's call and it
      * should say so before changing them.
      */
-    const targetIds = scopedSceneIds.filter((id) => sceneList.some((s) => s.id === id));
+    /**
+     * A shot in scope aims the instruction at that shot. A change to what it
+     * shows redraws only its preview. A change to what it SAYS is a change
+     * to the scene's narration, which can change how the whole scene is cut,
+     * so that falls through to the scene rewrite below — every preview in
+     * the scene redraws with it.
+     */
+    const shotTargets = scopedShots
+      .map(({ sceneId, shotId }) => {
+        const scene = sceneList.find((s) => s.id === sceneId);
+        const shot = scene ? storyShots(scene).find((x) => x.id === shotId) : undefined;
+        return scene && shot ? { scene, shot, number: storyShots(scene).indexOf(shot) + 1 } : null;
+      })
+      .filter((t): t is { scene: Scene; shot: Shot; number: number } => t !== null);
+    const narrationIntent = /narration|voice ?over|line|shorten|reword|rephrase|say|words|script/i.test(rawInput);
+    if (shotTargets.length > 0 && !narrationIntent && !isCommentIntent && !suggestionAnswer) {
+      const names = shotTargets.map((t) => `shot ${t.number} of scene ${t.scene.number}`);
+      const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+      addChatMessage({ role: "swishx", text: `Redrawing **${list}**. The narration stays as it is.` });
+      previews.redraw(shotTargets.map((t) => t.shot.id), () =>
+        addChatMessage({
+          role: "swishx",
+          text: `Done. ${list.charAt(0).toUpperCase()}${list.slice(1)} ${shotTargets.length > 1 ? "are" : "is"} updated and marked on the storyboard. Nothing renders until you generate the video.`,
+        })
+      );
+      return;
+    }
+
+    const targetIds = [
+      ...new Set([
+        ...scopedSceneIds,
+        ...shotTargets.map((t) => t.scene.id),
+      ]),
+    ].filter((id) => sceneList.some((s) => s.id === id));
     if (targetIds.length > 0 && !isCommentIntent && !suggestionAnswer) {
       const targets = sceneList.filter((s) => targetIds.includes(s.id));
       const nameOf = (s: Scene) => `Scene ${s.number} · ${s.title}`;
@@ -1414,17 +1474,32 @@ export function StudioScreen() {
         }
 
         const changedIds = [...targetIds, ...dependents.map((d) => d.id)];
+        /* A new line changes what the scene's shots carry, so every preview
+           in a rewritten scene is redrawn, not just the one that was aimed at. */
+        previews.redraw(
+          sceneList.filter((sc) => changedIds.includes(sc.id)).flatMap((sc) => storyShots(sc).map((shot) => shot.id))
+        );
         setTimeout(() => {
           setSceneList((prev) =>
             prev.map((sc) => {
               if (!changedIds.includes(sc.id)) return sc;
               const tag = sc.narrativeTag || "Evidence";
               const clause = REWRITE_CLAUSE_BY_TAG[tag] ?? "";
-              const nextNarration = sc.narration.includes(clause.trim()) ? sc.narration : `${sc.narration}${clause}`;
+              const added = !sc.narration.includes(clause.trim());
+              const nextNarration = added ? `${sc.narration}${clause}` : sc.narration;
+              /* The added words belong to the last shot that speaks, so the
+                 shot that carries them says so on the storyboard. */
+              const lastSpeaking = (sc.shots ?? []).map((shot) => !!shot.narrationFragment?.trim()).lastIndexOf(true);
               return {
                 ...sc,
                 narration: nextNarration,
                 citations: citationsFor(tag, nextNarration),
+                shots:
+                  added && sc.shots && lastSpeaking >= 0
+                    ? sc.shots.map((shot, i) =>
+                        i === lastSpeaking ? { ...shot, narrationFragment: `${shot.narrationFragment}${clause}` } : shot
+                      )
+                    : sc.shots,
               };
             })
           );
@@ -1614,6 +1689,10 @@ export function StudioScreen() {
               </div>
             )}
 
+            {/* DEV ONLY — remove before release. Landscape / portrait, so
+                the storyboard and the editor can be checked in both shapes. */}
+            {!isReview && <DevShapeMenu />}
+
             {/* Toggle Right Sidebar Panel Button (Icon Only) */}
             <button
               type="button"
@@ -1633,19 +1712,8 @@ export function StudioScreen() {
             {isEditor && (
               <>
                 {/* Publishing is the finished film, so it waits for the last
-                    shot. The way to get there sits beside it rather than
-                    being something you have to go and find scene by scene. */}
-                {!filmFullyRendered && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={generateAllScenes}
-                    className="cursor-pointer gap-1.5 font-bold"
-                  >
-                    <LogoMark size={14} className="text-brand" />
-                    <span>Generate All Scenes</span>
-                  </Button>
-                )}
+                    shot. Nothing needs pressing to get there: the shots were
+                    approved on the storyboard and render on their own. */}
                 <Button
                   size="sm"
                   onClick={handleOpenGenerateVideoModal}
@@ -1653,7 +1721,7 @@ export function StudioScreen() {
                   title={
                     filmFullyRendered
                       ? undefined
-                      : `${shotsAwaitingFootage.length} shot${shotsAwaitingFootage.length === 1 ? "" : "s"} still at keyframes`
+                      : `${shotsAwaitingFootage.length} shot${shotsAwaitingFootage.length === 1 ? "" : "s"} still rendering`
                   }
                   className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5 disabled:cursor-not-allowed disabled:opacity-45"
                 >
@@ -1720,13 +1788,13 @@ export function StudioScreen() {
                     </span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between pb-4 shrink-0">
+                  <div className="flex items-center justify-between pb-3 shrink-0">
                     <div>
                       <h2 className="text-display font-[850] text-ink tracking-tight">
-                        Production Plan
+                        Storyboard
                       </h2>
-                      <p className="text-body text-ink-3 mt-0.5">
-                        Review the clinical narrative before generating the full visual canvas.
+                      <p className="text-body text-ink-3 mt-0.5 max-w-[62ch]">
+                        Each scene, shot by shot, before anything is rendered. Select a scene or a shot to change it in the chat.
                       </p>
                     </div>
                     {SCRIPT_EDITING_ENABLED && (
@@ -1843,27 +1911,39 @@ export function StudioScreen() {
                         );
                       })
                     : (
-                      /* One table, not a stack of cards. The scenes are read
-                         down two columns — what is seen, and what is said —
-                         so the columns are named once at the top instead of
-                         on every scene. */
-                      <div className="@container overflow-clip rounded-panel border border-hair bg-card shadow-2xs">
-                        <ScriptPlanHeader />
-                        {sceneList.map((sc) => (
-                          <ScriptSceneCard
-                            key={sc.id}
-                            scene={sc}
-                            selected={scopedSceneIds.includes(sc.id)}
-                            onToggleSelect={() => toggleSceneScope(sc)}
-                            editing={editingSceneIds.includes(sc.id)}
-                            onToggleEdit={() => toggleSceneEditing(sc.id)}
-                            pending={pendingSceneIds.includes(sc.id)}
-                            onCitationDetails={handleCitationDetails}
-                            onTitleChange={(v) => handleUpdateSceneTitle(sc.id, v)}
-                            onNarrationChange={(v) => handleUpdateSceneNarration(sc.id, v)}
-                            onVisualChange={(v) => handleUpdateSceneVisual(sc.id, v)}
-                          />
-                        ))}
+                      /* The storyboard: a tile per scene, narration beside (or
+                         above) a strip of shot previews. The container query
+                         is on the list, not the window, because the chat
+                         panel decides how wide this column is. */
+                      <div className="pb-24">
+                        <StoryboardSummary
+                          sceneCount={sceneList.length}
+                          previews={previews}
+                          grounded={isScriptComplete}
+                          layout={storyLayout}
+                          onLayout={setStoryLayout}
+                        />
+                        <div className="@container flex flex-col gap-3.5">
+                          {sceneList.map((sc) => {
+                            const shotInScope = scopedShots.find((x) => x.sceneId === sc.id);
+                            return (
+                              <StoryboardSceneTile
+                                key={sc.id}
+                                scene={sc}
+                                brandName={brandName}
+                                portrait={isPortrait}
+                                layout={storyLayout}
+                                previews={previews}
+                                selected={scopedSceneIds.includes(sc.id) && !shotInScope}
+                                selectedShotId={shotInScope?.shotId ?? null}
+                                pending={pendingSceneIds.includes(sc.id)}
+                                onToggleScene={() => toggleSceneScope(sc)}
+                                onToggleShot={(shot) => toggleShotScope(sc, shot)}
+                                onCitationDetails={handleCitationDetails}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 
@@ -1882,23 +1962,36 @@ export function StudioScreen() {
                 {!isEditor && !isReview && !isGenerating && (
                   <ActionBar
                     gutter={false}
-                    icon={isScriptComplete
+                    icon={!previews.allReady || previews.drawingCount > 0
+                      ? <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      : isScriptComplete
                       ? <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
                       : <AlertCircle className="size-4.5 text-warn-on-dark shrink-0" />}
-                    title={isScriptComplete ? "Script approved & claims grounded" : "Script incomplete"}
+                    title={
+                      previews.drawingCount > 0
+                        ? `Redrawing ${previews.drawingCount} preview${previews.drawingCount === 1 ? "" : "s"}`
+                        : !previews.allReady
+                        ? "Drawing shot previews"
+                        : isScriptComplete ? "Storyboard ready" : "Script incomplete"
+                    }
+                    description={
+                      !previews.allReady || previews.drawingCount > 0
+                        ? `${previews.readyCount} of ${previews.total} ready. You can read and change scenes meanwhile.`
+                        : `${previews.total} shot previews · claims grounded`
+                    }
                     action={
                       <Button
                         onClick={handleStartSceneEditor}
-                        disabled={!isScriptComplete}
+                        disabled={!storyboardReady}
                         size="sm"
                         className={cn(
                           "h-9.5 px-5 rounded-control text-body-lg font-bold shadow-sm transition-all duration-200 shrink-0",
-                          isScriptComplete
+                          storyboardReady
                             ? "bg-brand hover:bg-brand-deep text-white hover:-translate-y-0.5 cursor-pointer"
                             : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
                         )}
                       >
-                        <LogoMark size={14} className="mr-1.5" /> <span>Generate Scenes</span>
+                        <LogoMark size={14} className="mr-1.5" /> <span>Generate video</span>
                       </Button>
                     }
                   />
@@ -1933,40 +2026,17 @@ export function StudioScreen() {
                   sceneAssetsPending ? (
                     <SceneProgressStrip assets={selectedSceneAssets} elapsed={genElapsed} />
                   ) : sceneRenderState(selectedScene) !== "full" ? (
-                    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-tint-line bg-tint px-3 py-1.5 sm:px-4">
-                      {/* Said plainly, so a scene of stills is never mistaken
-                          for a finished one. */}
-                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-chip border border-brand/25 bg-card px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-brand-deep">
-                        <Film className="size-3" />
-                        {sceneRenderState(selectedScene) === "partial"
-                          ? "Scene partially rendered"
-                          : "Scene at keyframes"}
+                    /* Progress only. The shots were approved on the storyboard,
+                       so there is nothing left to decide here — they render on
+                       their own and swap in as each one lands. */
+                    <div className="flex shrink-0 items-center gap-2.5 border-b border-tint-line bg-tint px-3 py-2 text-label text-ink-2 sm:px-4">
+                      <LogoMark size={13} className="shrink-0 animate-spin text-brand" />
+                      <span className="font-bold text-ink">Rendering scene {selectedScene.number}</span>
+                      <span className="tabular-nums text-ink-3">
+                        {shotsOf(selectedScene).filter((id) => shotStateOf(id) === "ready").length} of{" "}
+                        {shotsOf(selectedScene).length} shots ready
                       </span>
-                      {/* The count leads, because it is the part that is true
-                          at any width. The sentence after it explains what a
-                          keyframe is and goes first when the pane is narrow —
-                          truncating it to "0…" said nothing at all. */}
-                      <span className="flex min-w-0 flex-1 items-baseline gap-1.5 text-label text-ink-2">
-                        <span className="shrink-0 tabular-nums">
-                          {shotsOf(selectedScene).filter((id) => shotStateOf(id) === "ready").length} of{" "}
-                          {shotsOf(selectedScene).length} shots rendered
-                        </span>
-                        <span className="hidden truncate text-ink-3 xl:inline">
-                          The rest are opening and closing frames.
-                        </span>
-                      </span>
-                      <InfoTip label="What happens when I generate?">
-                        A shot still at its keyframes is two still frames standing in for the footage.
-                        Generating renders it in full, so this is the moment to change a shot.
-                      </InfoTip>
-                      <button
-                        type="button"
-                        onClick={() => generateSceneFully(selectedScene)}
-                        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-control bg-brand px-3 py-1.5 text-label font-extrabold text-white shadow-xs transition hover:bg-brand-deep"
-                      >
-                        <LogoMark size={13} />
-                        Generate Scene Fully
-                      </button>
+                      <span className="ml-auto hidden text-ink-3 lg:inline">Keep editing. Each shot swaps in as it lands.</span>
                     </div>
                   ) : null
                 )}
@@ -2015,7 +2085,7 @@ export function StudioScreen() {
                       </button>
                     )}
                     <span className="rounded-glyph bg-card border border-hair-2 px-2 py-0.5 text-caption font-bold text-[#64726b] shadow-2xs">
-                      Fit 16:9
+                      Fit {format}
                     </span>
                     <Button variant="ghost" size="icon" className="size-7" aria-label="Full screen">
                       <Expand className="size-3.5" />
@@ -2029,7 +2099,7 @@ export function StudioScreen() {
                      published review plays — not a second renderer that could
                      disagree with it about what the video looks like. */
                   <div className="flex min-h-0 flex-1 items-center justify-center bg-[#0d1411] p-4 lg:p-8">
-                    <div className="relative flex aspect-video w-full max-w-[860px] flex-col justify-between overflow-hidden rounded-card bg-black shadow-on-dark ring-1 ring-white/10">
+                    <div className={cn("relative flex w-full flex-col justify-between overflow-hidden rounded-card bg-black shadow-on-dark ring-1 ring-white/10", isPortrait ? "aspect-[9/16] max-w-[calc((100dvh-14rem)*9/16)]" : "aspect-video max-w-[860px]")}>
                       <div className="absolute inset-0">
                         <MasterVideoSequenceComposition
                           sceneList={sceneList}
@@ -2089,7 +2159,7 @@ export function StudioScreen() {
                 <div
                   className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden"
                 >
-                 <div className="flex w-full max-w-[840px] flex-col items-start gap-3">
+                 <div className={cn("flex w-full flex-col gap-3", isPortrait ? "max-w-[calc((100dvh-18rem)*9/16)] items-center" : "max-w-[840px] items-start")}>
                   <div
                     /**
                      * Only a click on the stage ITSELF deselects. It used to
@@ -2104,7 +2174,7 @@ export function StudioScreen() {
                     }}
                     data-canvas-stage
                     ref={stageRef}
-                    className="relative aspect-video w-full rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none"
+                    className={cn("relative w-full rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none", isPortrait ? "aspect-[9/16]" : "aspect-video")}
                   >
                     {/* The presenter, when this scene has one. A generated
                         layer like the rest, so it carries the scene's own in
@@ -2162,61 +2232,19 @@ export function StudioScreen() {
                       selectedScenePhase >= 2 &&
                       selectedScene.bgVideoSrc &&
                       shotStateOf(activeShotId) !== "ready" ? (
-                        /* Keyframes, not footage: the shot's first and last
-                           frame, each holding half the shot. The decision
-                           worth making is whether this is the right shot, and
-                           that decision is cheaper now than after the render.
-                           Per shot, because the playhead is in one at a time
-                           and each is separately worth keeping. */
+                        /* The approved still, not footage: it holds the
+                           shot's place until the motion lands. Nothing to
+                           press — shots render on their own. */
                         <>
-                          <BackgroundKeyframes
+                          <ShotRenderingFrame
                             src={selectedScene.bgVideoSrc}
                             duration={selectedScene.duration || 10}
                             currentTime={sceneCurrentTime}
                             shots={selectedScene.shots}
+                            rendering={shotStateOf(activeShotId) === "generating"}
                             className="z-[1]"
                           />
                           <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-[#06100d]/85 via-[#06100d]/55 to-[#06100d]/20" />
-
-                          {/* The action, on the thing it acts on. A still that
-                              only says "opening frame" leaves you to find the
-                              button; the button in the middle of the still
-                              says what the still is for. */}
-                          {/* Above every layer, and letting them through.
-                              At z-3 it sat under the clip inset and the copy,
-                              which put it behind the frame's own content on
-                              the scenes that have any — a button you cannot
-                              see is bad, one you cannot click is a dead end.
-                              z-[35] clears the content and stays under the
-                              player chrome; the panel is glass so what it
-                              covers is still readable, and only the pill
-                              takes clicks. */}
-                          <div className="pointer-events-none absolute inset-0 z-[35] grid place-items-center p-6">
-                            <div className="pointer-events-auto flex flex-col items-center gap-2.5 rounded-card border border-white/20 bg-black/45 px-5 py-4 text-center shadow-float backdrop-blur-md">
-                              <span className="text-label font-extrabold uppercase tracking-[.14em] text-white/75">
-                                {activeShotLabel} Preview
-                              </span>
-                              <button
-                                type="button"
-                                disabled={shotStateOf(activeShotId) === "generating"}
-                                onClick={() => generateShot(selectedScene, activeShotId)}
-                                className={cn(
-                                  "focus-ring inline-flex items-center gap-2 rounded-control border px-4 py-2 text-body font-extrabold shadow-xs transition",
-                                  shotStateOf(activeShotId) === "generating"
-                                    ? "cursor-not-allowed border-white/20 bg-white/10 text-white/60"
-                                    : "cursor-pointer border-white/40 bg-white/10 text-white hover:border-white hover:bg-white/90 hover:text-ink"
-                                )}
-                              >
-                                <LogoMark
-                                  size={15}
-                                  className={shotStateOf(activeShotId) === "generating" ? "animate-spin" : undefined}
-                                />
-                                {shotStateOf(activeShotId) === "generating"
-                                  ? `Rendering ${activeShotLabel.toLowerCase()}…`
-                                  : `Generate ${activeShotLabel}`}
-                              </button>
-                            </div>
-                          </div>
                         </>
                       ) : selectedScenePhase >= 2 && selectedScene.bgVideoSrc ? (
                         <>
@@ -2506,15 +2534,16 @@ export function StudioScreen() {
                               )}
                             >
                               {/* Footage is footage, wherever it sits. A clip
-                                  stitched into the frame is rendered on the
-                                  same terms as the background: keyframes
-                                  first, the clip when you ask for it. */}
+                                  stitched into the frame renders on the same
+                                  terms as the background: the approved still
+                                  holds its place until the shot lands. */}
                               {shotStateOf(activeShotId) !== "ready" ? (
-                                <BackgroundKeyframes
+                                <ShotRenderingFrame
                                   src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
                                   duration={selectedScene.duration || 10}
                                   currentTime={sceneCurrentTime}
                                   shots={selectedScene.shots}
+                                  rendering={shotStateOf(activeShotId) === "generating"}
                                 />
                               ) : (
                                 <video
@@ -3035,7 +3064,7 @@ export function StudioScreen() {
               <div className="relative flex min-h-0 flex-1 flex-col bg-[#0d1411]">
                 {/* Master Video Container */}
                 <div className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-8">
-                  <div className="relative aspect-video w-full max-w-[920px] rounded-card bg-black shadow-on-dark ring-1 ring-white/10 overflow-hidden flex flex-col justify-between">
+                  <div className={cn("relative w-full rounded-card bg-black shadow-on-dark ring-1 ring-white/10 overflow-hidden flex flex-col justify-between", isPortrait ? "aspect-[9/16] max-w-[calc((100dvh-12rem)*9/16)]" : "aspect-video max-w-[920px]")}>
                     {/* Master Video Canvas */}
                     <div className="absolute inset-0">
                       <MasterVideoSequenceComposition
@@ -3254,27 +3283,27 @@ export function StudioScreen() {
                         </div>
                         <div className="min-w-0">
                           <div className="text-label font-bold text-ink truncate">
-                            {isScriptComplete ? "Script approved & claims grounded" : "Script in progress"}
+                            {storyboardReady ? "Storyboard ready" : previews.allReady ? "Script in progress" : "Drawing shot previews"}
                           </div>
                           <div className="text-micro text-ink-3 truncate">
-                            {sceneList.length} scenes structured · ready for canvas
+                            {sceneList.length} scenes · {previews.readyCount} of {previews.total} shot previews
                           </div>
                         </div>
                       </div>
                       <Button
                         type="button"
                         onClick={handleStartSceneEditor}
-                        disabled={!isScriptComplete}
+                        disabled={!storyboardReady}
                         size="sm"
                         className={cn(
                           "h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer",
-                          isScriptComplete
+                          storyboardReady
                             ? "bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                             : "bg-black/10 text-black/40 cursor-not-allowed"
                         )}
                       >
                         <LogoMark size={12} className="mr-1" />
-                        <span>Generate Scenes</span>
+                        <span>Generate video</span>
                       </Button>
                     </div>
                   )}
@@ -3410,6 +3439,8 @@ export function StudioScreen() {
                               <LogoMark size={12} className="text-brand shrink-0" />
                             ) : ctx.type === "scene" ? (
                               <Film className="size-3 text-brand shrink-0" />
+                            ) : ctx.type === "shot" ? (
+                              <Clapperboard className="size-3 text-brand shrink-0" />
                             ) : ctx.type === "file" ? (
                               <Paperclip className="size-3 text-brand shrink-0" />
                             ) : (
@@ -3420,7 +3451,13 @@ export function StudioScreen() {
                             </span>
                             <button
                               type="button"
-                              onClick={() => setAttachedContexts((prev) => prev.filter((c) => c.id !== ctx.id))}
+                              onClick={() =>
+                                setAttachedContexts((prev) =>
+                                  ctx.type === "scene"
+                                    ? withoutScene(prev, ctx.id.slice("scene-".length))
+                                    : prev.filter((c) => c.id !== ctx.id)
+                                )
+                              }
                               className="size-3.5 rounded-full hover:bg-black/10 flex items-center justify-center text-ink-4 hover:text-black cursor-pointer"
                             >
                               <X className="size-2.5" />

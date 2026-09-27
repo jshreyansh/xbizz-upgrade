@@ -264,7 +264,7 @@ const DRAFT_ONLY: AssetVersion[] = [
   { label: "Draft v1", state: "current", at: "Saved just now" },
 ];
 
-/* Plan → Production Plan. Reported at the granularity the work actually
+/* Plan → Storyboard. Reported at the granularity the work actually
    happens at — per scene, per section — rather than as a tidy five. */
 function scriptBuildSteps(sceneCount: number): GenerationStep[] {
   const scenes: GenerationStep[] = [];
@@ -285,7 +285,7 @@ function scriptBuildSteps(sceneCount: number): GenerationStep[] {
     { label: "Matched every statement to an approved claim", seconds: 0.6 },
     { label: "Linked citations to FDA label §5.1", seconds: 0.5 },
     { label: "Checked fair balance coverage", seconds: 0.45 },
-    { label: "Assembled the production plan", seconds: 0.5 },
+    { label: "Assembled the storyboard", seconds: 0.5 },
   ];
 }
 
@@ -1339,7 +1339,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           >
             {isGenerating ? (
               <GenerationProgress
-                title="Building the production plan..."
+                title="Building the storyboard..."
                 subtitle="Structuring clinical narrative, scene-by-scene script narration, and visual grounding against 214 approved claims."
                 steps={scriptBuildStepList}
                 onDone={handleScriptBuilt}
@@ -1376,7 +1376,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       Need your input
                     </h2>
                     <p className="text-body text-ink-3 mt-0.5">
-                      Answer below to help us refine the production plan for you.
+                      Answer below to help us refine the storyboard for you.
                     </p>
                   </div>
                 </div>

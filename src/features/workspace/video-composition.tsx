@@ -42,12 +42,17 @@ export function DynamicSceneComposition({
      reviewer asking why the share link does not match what was approved. */
   const logoMark = useWorkspaceStore((state) => state.logoMark);
   const frameRef = React.useRef<HTMLDivElement>(null);
-  const [frameHeight, setFrameHeight] = React.useState(0);
+  const [frame, setFrame] = React.useState({ width: 0, height: 0 });
+  const frameHeight = frame.height;
+  /* A 9:16 frame keeps the same parts but not the same places: the media
+     column that sits right of the copy in a wide frame has no room beside
+     it in a tall one, so it moves under the copy instead. */
+  const portrait = frame.width > 0 && frame.width < frame.height;
 
   React.useEffect(() => {
     const node = frameRef.current;
     if (!node) return;
-    const observer = new ResizeObserver(() => setFrameHeight(node.clientHeight));
+    const observer = new ResizeObserver(() => setFrame({ width: node.clientWidth, height: node.clientHeight }));
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
@@ -82,29 +87,46 @@ export function DynamicSceneComposition({
     };
   };
 
-  /* Paused means paused on a frame, not on a black box: a video parked at
-     exactly 0 paints nothing in some browsers, so a still is nudged off it. */
-  const holdFrame = (node: HTMLVideoElement | null) => {
+  /**
+   * Paused means paused on a frame, not on a black box: a video parked at
+   * exactly 0 paints nothing in some browsers, so a still is nudged off it.
+   *
+   * With a playhead, paused means paused on THAT moment — a storyboard
+   * preview of a shot, or a scrub while stopped, should show the footage at
+   * that point rather than its first frame. `toClip` maps the scene second
+   * onto the clip's own length once that length is known.
+   */
+  const holdFrame = (node: HTMLVideoElement | null, toClip?: (clipSeconds: number) => number) => {
     if (!node) return;
     node.pause();
     const park = () => {
-      if (node.currentTime < 0.05) node.currentTime = 0.1;
+      const clip = node.duration || 0;
+      if (toClip && Number.isFinite(clip) && clip > 0) {
+        node.currentTime = Math.min(Math.max(0.1, toClip(clip)), Math.max(0.1, clip - 0.05));
+      } else if (node.currentTime < 0.05) {
+        node.currentTime = 0.1;
+      }
     };
     if (node.readyState >= 2) park();
     else node.addEventListener("loadeddata", park, { once: true });
   };
 
+  /* Where each clip should be parked when stopped with a playhead. */
+  const sceneLength = scene.duration || 10;
+  const clipIn = scene.timings?.find((entry) => entry.elementId === "video-clip")?.inAt ?? 0;
+  const parkAt = isPlaying ? undefined : sceneTime;
+
   React.useEffect(() => {
     if (!videoRef.current) return;
     if (isPlaying) videoRef.current.play().catch(() => {});
-    else holdFrame(videoRef.current);
-  }, [isPlaying, scene.mediaVideoSrc]);
+    else holdFrame(videoRef.current, parkAt === undefined ? undefined : () => Math.max(0, parkAt - clipIn));
+  }, [isPlaying, scene.mediaVideoSrc, parkAt, clipIn]);
 
   React.useEffect(() => {
     if (!bgVideoRef.current) return;
     if (isPlaying) bgVideoRef.current.play().catch(() => {});
-    else holdFrame(bgVideoRef.current);
-  }, [isPlaying, scene.bgVideoSrc]);
+    else holdFrame(bgVideoRef.current, parkAt === undefined ? undefined : (clip) => (parkAt / sceneLength) * clip);
+  }, [isPlaying, scene.bgVideoSrc, parkAt, sceneLength]);
 
   return (
     <div
@@ -186,6 +208,8 @@ export function DynamicSceneComposition({
           borderRadius: "50%",
           border: "1px solid rgba(255,255,255,.14)",
           animation: "spin 20s linear infinite",
+          /* A still is still: the orbit only turns while the scene plays. */
+          animationPlayState: isPlaying ? "running" : "paused",
         }}
       >
         <div
@@ -207,12 +231,10 @@ export function DynamicSceneComposition({
         <div
           style={{
             position: "absolute",
-            right: 48,
-            top: 40,
-            bottom: 40,
-            width: "42%",
+            ...(portrait
+              ? { left: 24, right: 24, top: "50%", bottom: 64, flexDirection: "row" as const }
+              : { right: 48, top: 40, bottom: 40, width: "42%", flexDirection: "column" as const }),
             display: "flex",
-            flexDirection: "column",
             gap: 14,
             zIndex: 10,
           }}
@@ -379,10 +401,9 @@ export function DynamicSceneComposition({
       <div
         style={{
           position: "absolute",
-          top: 40,
-          left: 48,
-          right: scene.mediaType && scene.mediaType !== "none" ? "46%" : 48,
-          bottom: 40,
+          ...(portrait
+            ? { top: 32, left: 24, right: 24, bottom: 28 }
+            : { top: 40, left: 48, right: scene.mediaType && scene.mediaType !== "none" ? "46%" : 48, bottom: 40 }),
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
@@ -413,7 +434,13 @@ export function DynamicSceneComposition({
         </div>
 
         {/* Center Headline and Narration Script */}
-        <div style={{ marginTop: "auto", marginBottom: "auto", maxWidth: 520 }}>
+        <div
+          style={
+            portrait && scene.mediaType && scene.mediaType !== "none"
+              ? { marginTop: 22, marginBottom: "auto", maxWidth: 520 }
+              : { marginTop: "auto", marginBottom: "auto", maxWidth: 520 }
+          }
+        >
           <h2
             style={{
               ...motionOf("headline"),
@@ -464,6 +491,8 @@ export function DynamicSceneComposition({
             borderTop: "1px solid rgba(255,255,255,0.12)",
             paddingTop: 10,
             display: "flex",
+            flexWrap: "wrap",
+            gap: portrait ? 4 : 8,
             alignItems: "center",
             justifyContent: "space-between",
             fontSize: 9.5,
