@@ -12,6 +12,12 @@ import { cn } from "@/lib/cn";
  * It is `sticky mt-auto` rather than fixed on purpose: it belongs to the
  * scrolling canvas, so it rides the bottom of that region and never floats
  * over the inspector.
+ *
+ * The CTA nests in the pill: inner radius + padding + border = outer. That
+ * only holds if the button is inset the same on every side it faces, so the
+ * right padding matches the vertical padding when there is an action, and
+ * the button's corner is set here rather than by each caller — the pill is
+ * a squircle to match, because every <button> is one.
  */
 export interface ActionBarProps {
   /** Leading icon. Callers supply it because the three sites use three. */
@@ -37,7 +43,12 @@ export function ActionBar({ icon, title, description, action, gutter = true, cla
         className,
       )}
     >
-      <div className="pointer-events-auto flex max-w-full items-center justify-between gap-4 rounded-card border border-white/12 bg-ink px-4 py-2.5 shadow-on-dark backdrop-blur-sm sm:gap-6 sm:px-5">
+      <div
+        className={cn(
+          "squircle pointer-events-auto flex max-w-full items-center justify-between gap-4 rounded-card border border-white/12 bg-ink py-2.5 pl-4 shadow-on-dark backdrop-blur-sm sm:gap-6 sm:pl-5",
+          action ? "pr-2.5" : "pr-4 sm:pr-5"
+        )}
+      >
         <div className="flex min-w-0 items-center gap-2.5 pr-1">
           {icon}
           <div className="min-w-0">
@@ -45,7 +56,12 @@ export function ActionBar({ icon, title, description, action, gutter = true, cla
             {description && <p className="truncate text-label text-white/70">{description}</p>}
           </div>
         </div>
-        {action}
+        {action && (
+          /* 24px pill − 10px inset − 1px border = 13px for the CTA. */
+          <div className="flex shrink-0 items-center gap-2 [&_button]:[border-radius:calc(var(--radius-card)_-_11px)]">
+            {action}
+          </div>
+        )}
       </div>
     </div>
   );

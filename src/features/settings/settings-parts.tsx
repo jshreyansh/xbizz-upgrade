@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { ActionBar } from "@/components/patterns/action-bar";
 import { Check } from "lucide-react";
 import { Surface } from "@/components/ui/surface";
 import { Text } from "@/components/ui/text";
@@ -161,22 +162,25 @@ export function Segmented<T extends string>({
  */
 export function SaveBar({ dirty, onSave, onDiscard }: { dirty: boolean; onSave: () => void; onDiscard: () => void }) {
   if (!dirty) return null;
+  /* The same floating bar as every canvas, so its CTA nests the same way. */
   return (
-    <div className="sticky bottom-4 z-30 mt-6 flex justify-center">
-      <div className="flex items-center gap-4 rounded-card border border-white/12 bg-ink px-4 py-2.5 shadow-on-dark">
-        <Text size="body" weight="bold" className="text-white">Unsaved changes</Text>
-        <div className="flex items-center gap-2">
+    <ActionBar
+      gutter={false}
+      className="mt-6"
+      title="Unsaved changes"
+      action={
+        <>
           <button
             type="button"
             onClick={onDiscard}
-            className="rounded-control px-3 py-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
+            className="px-3 py-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white cursor-pointer"
           >
             <span className="text-label font-bold">Discard</span>
           </button>
           <Button size="sm" onClick={onSave}>Save changes</Button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }
 
