@@ -1905,7 +1905,7 @@ export function StudioScreen() {
                                  width at 9:16 would make each card taller than
                                  the screen, so it sits beside the title. */
                               <div className="flex items-start gap-2.5">
-                                <div className="relative aspect-[9/16] w-16 shrink-0 overflow-hidden rounded-chip border border-hair-2 bg-[#173d31]">
+                                <div className="relative aspect-[9/16] w-16 shrink-0 overflow-hidden squircle rounded-[calc(var(--radius-control)_-_9px)] border border-hair-2 bg-[#173d31]">
                                   <FramePreview scene={sc} portrait brandName={brandName} />
                                 </div>
                                 <div className="min-w-0 pt-0.5">
@@ -1917,7 +1917,8 @@ export function StudioScreen() {
                               </div>
                             ) : (
                               <>
-                                <div className="relative aspect-video w-full rounded-chip overflow-hidden border border-hair-2 bg-[#173d31]">
+                                {/* Nested in the card: 14px − 8px padding − 1px border = 5px. */}
+                                <div className="relative aspect-video w-full squircle rounded-[calc(var(--radius-control)_-_9px)] overflow-hidden border border-hair-2 bg-[#173d31]">
                                   {/* Stills. Five clips playing in a 100px rail
                                       is five decoders running to show nothing
                                       you can read. */}
