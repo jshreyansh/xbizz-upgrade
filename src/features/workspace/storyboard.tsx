@@ -180,6 +180,35 @@ export function ShotPreview({
   portrait: boolean;
   brandName: string;
 }) {
+  return (
+    <FramePreview
+      scene={scene}
+      portrait={portrait}
+      brandName={brandName}
+      sceneTime={(shot.startAt + shot.endAt) / 2}
+    />
+  );
+}
+
+/**
+ * A scene frame as a true miniature: the composition laid out at full frame
+ * size in the project's shape, then scaled to whatever box holds it. Used
+ * for shot previews and for the editor's scene rail, so a small picture of
+ * a portrait scene is a small portrait scene rather than a landscape one
+ * squeezed into a tall box.
+ */
+export function FramePreview({
+  scene,
+  portrait,
+  brandName,
+  sceneTime,
+}: {
+  scene: Scene;
+  portrait: boolean;
+  brandName: string;
+  /** A moment in the scene. Without one, every element is shown. */
+  sceneTime?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
   const width = portrait ? 360 : 640;
@@ -200,12 +229,7 @@ export function ShotPreview({
         className="pointer-events-none absolute left-0 top-0 origin-top-left transition-opacity duration-500"
         style={{ width, height, transform: `scale(${scale})`, opacity: scale ? 1 : 0 }}
       >
-        <DynamicSceneComposition
-          scene={scene}
-          brandName={brandName}
-          isPlaying={false}
-          sceneTime={(shot.startAt + shot.endAt) / 2}
-        />
+        <DynamicSceneComposition scene={scene} brandName={brandName} isPlaying={false} sceneTime={sceneTime} />
       </div>
     </div>
   );

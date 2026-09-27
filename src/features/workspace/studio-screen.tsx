@@ -75,6 +75,7 @@ import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps
 import type { EvidenceState, InspectorTab, Scene, Shot } from "@/types/content";
 import { SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import {
+  FramePreview,
   StoryboardSceneTile,
   StoryboardSummary,
   storyShots,
@@ -1904,18 +1905,35 @@ export function StudioScreen() {
                               </div>
                             </div>
 
-                            <div className="relative aspect-video w-full rounded-chip overflow-hidden border border-hair-2 bg-[#173d31]">
-                              {/* Stills. Five clips playing in a 100px rail
-                                  is five decoders running to show nothing you
-                                  can read, and while a scene is on keyframes
-                                  it would be playing footage that does not
-                                  exist yet. */}
-                              <DynamicSceneComposition scene={sc} compact isPlaying={false} />
-                            </div>
+                            {isPortrait ? (
+                              /* A tall scene as a tall thumbnail. Full rail
+                                 width at 9:16 would make each card taller than
+                                 the screen, so it sits beside the title. */
+                              <div className="flex items-start gap-2.5">
+                                <div className="relative aspect-[9/16] w-16 shrink-0 overflow-hidden rounded-chip border border-hair-2 bg-[#173d31]">
+                                  <FramePreview scene={sc} portrait brandName={brandName} />
+                                </div>
+                                <div className="min-w-0 pt-0.5">
+                                  <div className="text-label font-semibold text-ink-2 line-clamp-3">{sc.title}</div>
+                                  <div className="mt-1 text-micro font-bold uppercase tracking-wide text-ink-4">
+                                    {sc.narrativeTag || "Evidence"}
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="relative aspect-video w-full rounded-chip overflow-hidden border border-hair-2 bg-[#173d31]">
+                                  {/* Stills. Five clips playing in a 100px rail
+                                      is five decoders running to show nothing
+                                      you can read. */}
+                                  <DynamicSceneComposition scene={sc} compact isPlaying={false} />
+                                </div>
 
-                            <div className="mt-1.5 text-label font-semibold text-ink-2 line-clamp-1">
-                              {sc.title}
-                            </div>
+                                <div className="mt-1.5 text-label font-semibold text-ink-2 line-clamp-1">
+                                  {sc.title}
+                                </div>
+                              </>
+                            )}
                           </button>
                         );
                       })
