@@ -1,28 +1,27 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 import type { Shot } from "@/types/content";
 
 /**
- * A shot's background while its footage renders.
+ * A shot's footage while it generates.
  *
- * The shot was approved as a still on the storyboard, so that is what holds
- * its place here: the clip's own frame at the middle of the shot, and a
- * label saying the motion is on its way. There is nothing to press. Shots
- * render on their own once the video is generated, and each one swaps in
- * as it lands.
+ * The shot was approved on the storyboard as a still, so that still holds
+ * its place here: the clip's own frame at the middle of the shot, dimmed,
+ * with a sweep across it and "Generating…" on top. There is nothing to
+ * press. Generating the video renders every shot on its own, and each one
+ * swaps in for its still the moment it lands.
  *
- * The frame is the clip's, taken at the time the shot occupies, so the
- * placeholder cannot disagree with the footage that replaces it.
+ * The frame is the clip's, taken at the time the shot occupies, so what
+ * holds the place cannot disagree with the footage that replaces it.
  */
-export function ShotRenderingFrame({
+export function ShotGeneratingFrame({
   src,
   duration,
   currentTime,
   shots,
-  rendering,
+  label = "center",
   className,
 }: {
   src: string;
@@ -32,8 +31,11 @@ export function ShotRenderingFrame({
   currentTime: number;
   /** The scene's beats. Without them the scene is treated as one shot. */
   shots?: Shot[];
-  /** Rendering now, rather than still queued behind other shots. */
-  rendering: boolean;
+  /**
+   * Where "Generating…" sits. Centred inside a clip's own box; in a corner
+   * when this is the whole frame, so it does not land under the headline.
+   */
+  label?: "center" | "corner";
   className?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -42,7 +44,6 @@ export function ShotRenderingFrame({
     shots && shots.length > 0
       ? shots
       : ([{ id: "whole", index: 1, startAt: 0, endAt: duration || 10, label: "" }] as Shot[]);
-
   const active =
     beats.find((shot) => currentTime >= shot.startAt && currentTime < shot.endAt) ??
     beats[beats.length - 1];
@@ -64,7 +65,7 @@ export function ShotRenderingFrame({
   }, [src, duration, middle]);
 
   return (
-    <div className={cn("absolute inset-0 overflow-hidden", className)}>
+    <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
       <video
         ref={ref}
         src={src}
@@ -73,13 +74,42 @@ export function ShotRenderingFrame({
         preload="metadata"
         className="absolute inset-0 size-full object-cover"
       />
-
-      {/* Said plainly, so a still is never mistaken for the finished shot. */}
-      <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-chip border border-white/15 bg-black/65 px-2 py-1 text-caption font-bold text-white backdrop-blur-xs">
-        <LogoMark size={11} className={cn("text-brand", rendering && "animate-spin")} />
-        {beats.length > 1 ? `Shot ${active.index} · ` : ""}
-        {rendering ? "rendering" : "queued to render"}
-      </span>
+      {/* Dimmed, so the still reads as waiting rather than as the result. */}
+      <div className="absolute inset-0 bg-[#06100d]/45" />
+      {/* The sweep is what says "working": a still that does not move reads
+          as done, or as stuck. */}
+      <div
+        className="absolute inset-0 motion-reduce:hidden"
+        style={{
+          backgroundImage:
+            "linear-gradient(100deg, transparent 20%, rgba(255,255,255,.07) 42%, rgba(255,255,255,.16) 50%, rgba(255,255,255,.07) 58%, transparent 80%)",
+          backgroundSize: "220% 100%",
+          backgroundRepeat: "no-repeat",
+          animation: "shimmer 1.6s linear infinite",
+        }}
+      />
+      <div
+        className={cn(
+          "absolute",
+          label === "center" ? "inset-0 grid place-items-center" : "right-4 top-4"
+        )}
+      >
+        <span
+          role="status"
+          className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-label font-extrabold text-white backdrop-blur-sm"
+        >
+          Generating
+          <span className="inline-flex items-end gap-0.5 pb-0.5" aria-hidden>
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="size-1 rounded-full bg-white/90"
+                style={{ animation: `typing-bounce 1.1s ease-in-out ${i * 0.16}s infinite` }}
+              />
+            ))}
+          </span>
+        </span>
+      </div>
     </div>
   );
 }

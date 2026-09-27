@@ -1097,7 +1097,7 @@ export function InfographicStudioScreen() {
                 of what it grows into. Editor only — a reviewer on a shared
                 link is not choosing an editor. */}
             {studioMode === "editor" && (
-              <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-0.5 sm:flex">
+              <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-1 sm:flex">
                 {([
                   { id: "v1" as const, label: "Version 1" },
                   { id: "future" as const, label: "Future" },

@@ -88,7 +88,7 @@ import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { ChatComposer } from "@/components/patterns/chat-composer";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
-import { ShotRenderingFrame } from "@/features/workspace/background-keyframes";
+import { ShotGeneratingFrame } from "@/features/workspace/background-keyframes";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
 import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
@@ -514,6 +514,8 @@ export function StudioScreen() {
     (shot) => sceneCurrentTime >= shot.startAt && sceneCurrentTime < shot.endAt
   ) ?? (selectedScene.shots ?? [])[0];
   const activeShotId = activeShot?.id ?? `${selectedScene.id}-whole`;
+  /** The shot under the playhead has its footage, not its still. */
+  const activeShotReady = shotStateOf(activeShotId) === "ready";
 
   /* What this scene is making, on the film's own schedule. */
   const selectedSceneAssets = useMemo(() => {
@@ -572,7 +574,14 @@ export function StudioScreen() {
      never had a reason to open. */
   const showProductionLayers = editorVersion === "future";
 
-  // Sync canvas video element playback with scenePlaying
+  /**
+   * Sync canvas video element playback with scenePlaying.
+   *
+   * Keyed on the shot's footage landing as well: the clip element only
+   * exists once its shot is ready, and one that mounted while the scene was
+   * already playing sat paused on its first frame — "stuck on the preview"
+   * — because nothing told it to play.
+   */
   useEffect(() => {
     if (!canvasVideoRef.current) return;
     if (scenePlaying) {
@@ -580,7 +589,7 @@ export function StudioScreen() {
     } else {
       canvasVideoRef.current.pause();
     }
-  }, [scenePlaying]);
+  }, [scenePlaying, activeShotReady, selectedScenePhase]);
 
   /**
    * The footage background follows the play button like every other layer.
@@ -591,7 +600,7 @@ export function StudioScreen() {
     if (!bgVideoRef.current) return;
     if (scenePlaying) bgVideoRef.current.play().catch(() => {});
     else bgVideoRef.current.pause();
-  }, [scenePlaying, selectedScene.bgVideoSrc, selectedScenePhase]);
+  }, [scenePlaying, selectedScene.bgVideoSrc, selectedScenePhase, activeShotReady]);
 
   // Sync canvas video element currentTime with scene scrubber
   useEffect(() => {
@@ -1661,7 +1670,7 @@ export function StudioScreen() {
                 Future is the opt-in preview of what it grows into. Editor
                 only — a reviewer on a shared link is not choosing an editor. */}
             {isEditor && (
-              <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-0.5 sm:flex">
+              <div className="hidden items-center rounded-chip border border-hair-2 bg-card p-1 sm:flex">
                 {([
                   { id: "v1" as const, label: "Version 1" },
                   { id: "future" as const, label: "Future" },
@@ -2159,7 +2168,9 @@ export function StudioScreen() {
                 <div
                   className="flex min-h-0 flex-1 items-center justify-center p-4 lg:p-6 overflow-hidden"
                 >
-                 <div className={cn("flex w-full flex-col gap-3", isPortrait ? "max-w-[calc((100dvh-18rem)*9/16)] items-center" : "max-w-[840px] items-start")}>
+                 {/* Landscape takes the width, so the subtitle track sits under
+                     the frame. Portrait takes the height, so it sits beside it. */}
+                 <div className={cn("flex w-full gap-3", isPortrait ? "h-full max-w-[60rem] flex-row items-stretch justify-center gap-4" : "max-w-[840px] flex-col items-start")}>
                   <div
                     /**
                      * Only a click on the stage ITSELF deselects. It used to
@@ -2174,7 +2185,7 @@ export function StudioScreen() {
                     }}
                     data-canvas-stage
                     ref={stageRef}
-                    className={cn("relative w-full rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none", isPortrait ? "aspect-[9/16]" : "aspect-video")}
+                    className={cn("relative rounded-panel bg-[#173d31] shadow-float ring-1 ring-black/20 overflow-hidden select-none", isPortrait ? "aspect-[9/16] h-full max-h-full w-auto shrink-0" : "aspect-video w-full")}
                   >
                     {/* The presenter, when this scene has one. A generated
                         layer like the rest, so it carries the scene's own in
@@ -2229,24 +2240,22 @@ export function StudioScreen() {
                         straight over it. z-[1] keeps it under every content
                         layer. */}
                     {selectedScene.backgroundKind === "video" && (
-                      selectedScenePhase >= 2 &&
-                      selectedScene.bgVideoSrc &&
-                      shotStateOf(activeShotId) !== "ready" ? (
-                        /* The approved still, not footage: it holds the
-                           shot's place until the motion lands. Nothing to
-                           press — shots render on their own. */
+                      selectedScene.bgVideoSrc && !activeShotReady ? (
+                        /* The storyboard's still, dimmed and sweeping, until
+                           the shot lands. Nothing to press: generating the
+                           video renders every shot on its own. */
                         <>
-                          <ShotRenderingFrame
+                          <ShotGeneratingFrame
                             src={selectedScene.bgVideoSrc}
                             duration={selectedScene.duration || 10}
                             currentTime={sceneCurrentTime}
                             shots={selectedScene.shots}
-                            rendering={shotStateOf(activeShotId) === "generating"}
+                            label="corner"
                             className="z-[1]"
                           />
                           <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-[#06100d]/85 via-[#06100d]/55 to-[#06100d]/20" />
                         </>
-                      ) : selectedScenePhase >= 2 && selectedScene.bgVideoSrc ? (
+                      ) : selectedScene.bgVideoSrc ? (
                         <>
                           <video
                             ref={bgVideoRef}
@@ -2290,7 +2299,8 @@ export function StudioScreen() {
                       onMouseEnter={() => setHoveredCanvasElementId("visual-3d")}
                       onMouseLeave={() => setHoveredCanvasElementId(null)}
                       className={cn(
-                        "absolute right-4 top-4 size-56 sm:size-72 rounded-full transition-all cursor-pointer",
+                        "absolute right-4 top-4 rounded-full transition-all cursor-pointer",
+                        isPortrait ? "size-40" : "size-56 sm:size-72",
                         selectedCanvasElementId === "moa"
                           ? "border-2 border-dashed border-brand ring-4 ring-brand/20"
                           : hoveredCanvasElementId === "visual-3d"
@@ -2306,7 +2316,7 @@ export function StudioScreen() {
                     </div>
 
                     {/* Structured Canvas Content Overlay */}
-                    <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8 text-white pointer-events-none">
+                    <div className={cn("relative z-10 flex h-full flex-col justify-between text-white pointer-events-none", isPortrait ? "p-5" : "p-6 sm:p-8")}>
                       {/* Top Narrative Pillar Tag */}
                       <div
                         onClick={(e) => {
@@ -2334,7 +2344,7 @@ export function StudioScreen() {
 
                       {/* Right-Side Media Showcase (Draggable real Image and Video Clip Elements for ~60% of scenes) */}
                       {selectedScene.mediaType && selectedScene.mediaType !== "none" && (
-                        <div className="absolute right-5 top-11 bottom-14 w-[40%] flex flex-col gap-3 z-20 pointer-events-none">
+                        <div className={cn("absolute flex flex-col gap-3 z-20 pointer-events-none", isPortrait ? "left-4 right-4 top-[40%] bottom-28" : "right-5 top-11 bottom-14 w-[40%]")}>
                           {/* Until phase 2, the media slots hold placeholders that
                               already know their box, their seconds and their
                               transition — so the layout is settled and the arriving
@@ -2353,15 +2363,25 @@ export function StudioScreen() {
                                 />
                               )}
                               {(selectedScene.mediaType === "video" || selectedScene.mediaType === "both") && (
-                                <MediaPlaceholder
-                                  kind="video"
-                                  label={selectedScene.visual || "Motion asset"}
-                                  timing={timingFor(selectedScene, "video-clip")}
-                                  currentTime={sceneCurrentTime}
-                                  selected={selectedCanvasElementId === "video-clip"}
-                                  onSelect={() => handleSelectCanvasElement("video-clip")}
-                                  className="flex-1"
-                                />
+                                <div
+                                  onClick={(e) => { e.stopPropagation(); handleSelectCanvasElement("video-clip"); }}
+                                  style={{
+                                    opacity: motionVideoClip.opacity,
+                                    transform: motionVideoClip.transform || undefined,
+                                    ...motionTransition(motionVideoClip.durationMs),
+                                  }}
+                                  className={cn(
+                                    "pointer-events-auto relative flex-1 cursor-pointer overflow-hidden rounded-panel border bg-black/70",
+                                    selectedCanvasElementId === "video-clip" ? "border-2 border-dashed border-brand" : "border-white/20"
+                                  )}
+                                >
+                                  <ShotGeneratingFrame
+                                    src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
+                                    duration={selectedScene.duration || 10}
+                                    currentTime={sceneCurrentTime}
+                                    shots={selectedScene.shots}
+                                  />
+                                </div>
                               )}
                             </>
                           )}
@@ -2537,13 +2557,12 @@ export function StudioScreen() {
                                   stitched into the frame renders on the same
                                   terms as the background: the approved still
                                   holds its place until the shot lands. */}
-                              {shotStateOf(activeShotId) !== "ready" ? (
-                                <ShotRenderingFrame
+                              {!activeShotReady ? (
+                                <ShotGeneratingFrame
                                   src={selectedScene.mediaVideoSrc || "/reel-moa.mp4"}
                                   duration={selectedScene.duration || 10}
                                   currentTime={sceneCurrentTime}
                                   shots={selectedScene.shots}
-                                  rendering={shotStateOf(activeShotId) === "generating"}
                                 />
                               ) : (
                                 <video
@@ -2645,7 +2664,9 @@ export function StudioScreen() {
                         className={cn(
                           "pointer-events-auto relative p-2.5 rounded-control transition-shadow",
                           canDragElements && "cursor-grab active:cursor-grabbing",
-                          selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[54%]" : "max-w-[80%]",
+                          isPortrait
+                            ? cn("max-w-full", selectedScene.mediaType && selectedScene.mediaType !== "none" && "mb-auto mt-3")
+                            : selectedScene.mediaType && selectedScene.mediaType !== "none" ? "max-w-[54%]" : "max-w-[80%]",
                           selectedCanvasElementId === "headline"
                             ? "border-2 border-dashed border-brand bg-black/40 ring-4 ring-brand/20"
                             : hoveredCanvasElementId === "headline"
@@ -2653,7 +2674,7 @@ export function StudioScreen() {
                             : ""
                         )}
                       >
-                        <h3 className="text-display sm:text-display-lg font-[850] tracking-tight leading-tight text-white drop-shadow-md select-none">
+                        <h3 className={cn("font-[850] tracking-tight leading-tight text-white drop-shadow-md select-none", isPortrait ? "text-display" : "text-display sm:text-display-lg")}>
                           {selectedScene.title}
                         </h3>
 
@@ -2753,7 +2774,7 @@ export function StudioScreen() {
                           handleSelectCanvasElement("claim");
                         }}
                         className={cn(
-                          "pointer-events-auto flex items-center justify-between pt-2 border-t border-white/10 text-caption text-white/60 cursor-pointer p-1 rounded-glyph transition-colors",
+                          "pointer-events-auto flex flex-wrap items-center justify-between gap-1 pt-2 border-t border-white/10 text-caption text-white/60 cursor-pointer p-1 rounded-glyph transition-colors",
                           selectedCanvasElementId === "claim" && "ring-1 ring-ok bg-black/20"
                         )}
                       >
@@ -2839,13 +2860,15 @@ export function StudioScreen() {
                       is playing rather than being part of the picture, the
                       same reason a transcript sits beside a video and not on
                       top of it. */}
-                  <SubtitleSyncPanel
-                    scene={selectedScene}
-                    currentTime={sceneCurrentTime}
-                    playing={scenePlaying}
-                    selected={selectedCanvasElementId === "narration"}
-                    onSelect={() => handleSelectCanvasElement("narration")}
-                  />
+                  <div className={cn(isPortrait ? "min-w-0 max-w-sm flex-1 self-start overflow-y-auto" : "w-full")}>
+                    <SubtitleSyncPanel
+                      scene={selectedScene}
+                      currentTime={sceneCurrentTime}
+                      playing={scenePlaying}
+                      selected={selectedCanvasElementId === "narration"}
+                      onSelect={() => handleSelectCanvasElement("narration")}
+                    />
+                  </div>
 
                  </div>
                 </div>

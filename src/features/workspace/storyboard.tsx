@@ -130,7 +130,9 @@ export function StoryboardSummary({
 
       {/* The marketer's call, so it sits with the board it changes rather
           than in a settings menu: narration beside the shots, or above them. */}
-      <div role="group" aria-label="Scene layout" className="ml-auto inline-flex items-center gap-0.5 rounded-control border border-hair-2 bg-card p-0.5">
+      {/* Concentric corners: a 14px shell inset by 4px holds 10px segments.
+          Mismatched radii read as the selected segment not belonging to it. */}
+      <div role="group" aria-label="Scene layout" className="ml-auto inline-flex items-center gap-0.5 rounded-control border border-hair-2 bg-card p-1">
         {([
           { id: "side" as const, label: "Side by side", icon: Columns2, hint: "Narration beside the shots" },
           { id: "stacked" as const, label: "Stacked", icon: Rows2, hint: "Narration above the shots" },
@@ -142,7 +144,7 @@ export function StoryboardSummary({
             aria-pressed={layout === option.id}
             onClick={() => onLayout(option.id)}
             className={cn(
-              "inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-2.5 py-1 text-label font-bold transition-colors",
+              "inline-flex cursor-pointer items-center gap-1.5 rounded-chip px-2.5 py-1 text-label font-bold transition-colors",
               layout === option.id ? "bg-ink text-white" : "text-ink-3 hover:text-ink"
             )}
           >
@@ -349,7 +351,9 @@ function ShotStrip({
     if (!node) return;
     const update = () =>
       setEdges({
-        left: node.scrollLeft > 2,
+        /* Snapping parks the first card a few pixels in; anything under
+           the strip's own padding is still the start. */
+        left: node.scrollLeft > 8,
         right: node.scrollLeft + node.clientWidth < node.scrollWidth - 2,
       });
     const observer = new ResizeObserver(update);
@@ -390,7 +394,7 @@ function ShotStrip({
     <div className="relative min-w-0">
       <div
         ref={ref}
-        className="relative flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2.5 pl-1 pr-4 pt-1 [scrollbar-width:thin]"
+        className="relative flex snap-x snap-mandatory scroll-pl-1 gap-3 overflow-x-auto pb-2.5 pl-1 pr-4 pt-1 [scrollbar-width:thin]"
         style={mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined}
       >
         {children}
