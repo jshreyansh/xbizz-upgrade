@@ -91,7 +91,7 @@ export function MediaPlaceholder({
       {/* The sweep says work in progress; the solid ground beneath it says the
           slot is real. Both are needed — the sweep alone on a transparent box
           just looks like a broken asset shimmering. */}
-      <span aria-hidden className="shimmer pointer-events-none absolute inset-0" />
+      <span aria-hidden className="shimmer-strong pointer-events-none absolute inset-0" />
 
       {/* ── What it is, in the middle ── */}
       <div className="relative flex flex-1 flex-col items-center justify-center gap-2 px-3 py-4 text-center">

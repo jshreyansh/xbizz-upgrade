@@ -76,6 +76,7 @@ import type { EvidenceState, InspectorTab, Scene, Shot } from "@/types/content";
 import { SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import {
   FramePreview,
+  ShotPreviewModal,
   StoryboardSceneTile,
   StoryboardSummary,
   storyShots,
@@ -327,6 +328,8 @@ export function StudioScreen() {
 
   /** Narration beside the shots, or above them. The marketer's choice. */
   const [storyLayout, setStoryLayout] = useState<StoryboardLayout>("side");
+  /** The shot open in the large preview, if any. */
+  const [previewAt, setPreviewAt] = useState<{ sceneId: string; shotId: string } | null>(null);
   const storyShotIds = useMemo(
     () => sceneList.flatMap((sc) => storyShots(sc).map((shot) => shot.id)),
     [sceneList]
@@ -1962,6 +1965,7 @@ export function StudioScreen() {
                                 pending={pendingSceneIds.includes(sc.id)}
                                 onToggleScene={() => toggleSceneScope(sc)}
                                 onToggleShot={(shot) => toggleShotScope(sc, shot)}
+                                onExpandShot={(shot) => setPreviewAt({ sceneId: sc.id, shotId: shot.id })}
                                 onCitationDetails={handleCitationDetails}
                               />
                             );
@@ -3728,6 +3732,16 @@ export function StudioScreen() {
         )}
 
         <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
+        {previewAt && (
+          <ShotPreviewModal
+            scenes={sceneList}
+            at={previewAt}
+            portrait={isPortrait}
+            brandName={brandName}
+            onNavigate={setPreviewAt}
+            onClose={() => setPreviewAt(null)}
+          />
+        )}
         <SaveOrDiscardDialog
           open={!!exit.pending}
           destinationLabel={exit.pending?.label ?? "home"}

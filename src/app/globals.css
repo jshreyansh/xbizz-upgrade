@@ -660,6 +660,24 @@ button.rounded-full {
   animation: shimmer 1.4s linear infinite;
 }
 
+/* The sweep over something still generating on a dark frame — footage,
+   a clip, a still. .shimmer is tuned for light tiles and all but vanished
+   over video, which made a generating shot look finished or stuck. Brand
+   on both flanks with a light core, so it reads as the product working. */
+.shimmer-strong {
+  background-image: linear-gradient(
+    100deg,
+    transparent 12%,
+    color-mix(in srgb, var(--color-brand) 26%, transparent) 36%,
+    rgba(255, 255, 255, 0.3) 50%,
+    color-mix(in srgb, var(--color-brand) 26%, transparent) 64%,
+    transparent 88%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.5s linear infinite;
+}
+
 /* The waiting bars on the plan screen while the questions are unanswered.
    They sweep toward the chat on the right rather than filling up: nothing is
    loading, so a bar that fills would be a lie about progress. The

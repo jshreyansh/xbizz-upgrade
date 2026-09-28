@@ -8,9 +8,12 @@ import {
   Clapperboard,
   Columns2,
   Rows2,
+  Maximize2,
   ShieldCheck,
   Volume2,
+  X,
 } from "lucide-react";
+import { Portal } from "@/components/ui/portal";
 import { cn } from "@/lib/cn";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { Scene, SceneCitation, Shot } from "@/types/content";
@@ -244,6 +247,7 @@ function ShotCard({
   lit,
   onToggle,
   onHover,
+  onExpand,
 }: {
   scene: Scene;
   shot: Shot;
@@ -256,6 +260,8 @@ function ShotCard({
   lit: boolean;
   onToggle: () => void;
   onHover: (id: string | null) => void;
+  /** Open this shot in the large preview. */
+  onExpand: () => void;
 }) {
   const status = previews.statusOf(shot.id);
   /* Portrait beside the narration turns the card sideways: a tall card there
@@ -269,7 +275,7 @@ function ShotCard({
       tabIndex={0}
       data-shot={shot.id}
       aria-pressed={selected}
-      aria-label={`Shot ${number} preview, ${shot.label}`}
+      aria-label={`Shot ${number}`}
       onClick={(e) => { e.stopPropagation(); onToggle(); }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onToggle(); }
@@ -278,7 +284,7 @@ function ShotCard({
       onMouseLeave={() => onHover(null)}
       className={cn(
         "focus-ring flex shrink-0 snap-start cursor-pointer overflow-hidden rounded-control border bg-card text-left transition-all duration-200",
-        sideways ? "w-80 flex-row" : portrait ? "w-46 flex-col" : "w-62 flex-col",
+        sideways ? "w-96 flex-row" : portrait ? "w-56 flex-col" : "w-80 flex-col",
         selected
           ? "border-brand shadow-soft ring-2 ring-brand"
           : lit
@@ -290,7 +296,7 @@ function ShotCard({
         className={cn(
           "relative shrink-0 overflow-hidden bg-[#0d1411]",
           portrait ? "aspect-[9/16]" : "aspect-video",
-          sideways ? "w-28" : "w-full"
+          sideways ? "w-36" : "w-full"
         )}
       >
         {status === "ready" ? (
@@ -308,14 +314,17 @@ function ShotCard({
             ) : null}
           </div>
         )}
-        <span
-          className={cn(
-            "absolute left-2 top-2 z-10 rounded-full border border-white/15 bg-black/55 font-extrabold text-white backdrop-blur-sm",
-            sideways ? "px-1.5 py-0.5 text-micro" : "px-2 py-0.5 text-caption"
-          )}
+        {/* Open it large. Its own button so it never scopes the shot into
+            the chat, which is what a click anywhere else on the card does. */}
+        <button
+          type="button"
+          aria-label={`Preview shot ${number} large`}
+          title="Preview"
+          onClick={(e) => { e.stopPropagation(); onExpand(); }}
+          className="absolute right-2 top-2 z-10 grid size-8 cursor-pointer place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm transition hover:bg-brand"
         >
-          Shot {number} preview
-        </span>
+          <Maximize2 className="size-3.5" />
+        </button>
         {status === "ready" && previews.isUpdated(shot.id) && (
           <span className="absolute bottom-2 left-2 z-10 rounded-full bg-ok px-2 py-0.5 text-caption font-extrabold text-white">
             Updated
@@ -323,15 +332,14 @@ function ShotCard({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-3 pb-3 pt-2.5">
-        <span className="text-body font-extrabold text-ink">{shot.label}</span>
-        <p className={cn("text-body leading-snug text-ink-2", sideways ? "line-clamp-5" : portrait ? "line-clamp-4" : "line-clamp-3")}>
-          {shot.visualStory}
-        </p>
-        <div className="mt-auto flex items-start gap-1.5 border-t border-hair pt-2 text-label leading-snug text-ink-3">
+      {/* One heading and what the shot says. What it shows is the picture
+          above; the prose version of that lives in the large preview. */}
+      <div className="flex min-w-0 flex-1 flex-col gap-2 px-3.5 pb-3.5 pt-3">
+        <span className="text-body-lg font-extrabold text-ink">Shot {number}</span>
+        <div className="flex items-start gap-1.5 text-body leading-snug text-ink-2">
           {shot.narrationFragment?.trim() ? (
             <>
-              <Volume2 className="mt-0.5 size-3 shrink-0 text-ink-4" />
+              <Volume2 className="mt-0.5 size-3.5 shrink-0 text-ink-4" />
               <span>“{shot.narrationFragment.trim()}”</span>
             </>
           ) : (
@@ -397,7 +405,7 @@ function ShotStrip({
     const node = ref.current;
     if (!node) return;
     const card = node.querySelector<HTMLElement>("[data-shot]");
-    node.scrollBy({ left: dir * 2 * ((card?.offsetWidth ?? 248) + 12), behavior: "smooth" });
+    node.scrollBy({ left: dir * 2 * ((card?.offsetWidth ?? 320) + 12), behavior: "smooth" });
   };
 
   const mask =
@@ -455,6 +463,7 @@ export function StoryboardSceneTile({
   pending,
   onToggleScene,
   onToggleShot,
+  onExpandShot,
   onCitationDetails,
 }: {
   scene: Scene;
@@ -470,6 +479,7 @@ export function StoryboardSceneTile({
   pending: boolean;
   onToggleScene: () => void;
   onToggleShot: (shot: Shot) => void;
+  onExpandShot: (shot: Shot) => void;
   onCitationDetails?: (claimId: string) => void;
 }) {
   const shots = storyShots(scene);
@@ -599,7 +609,7 @@ export function StoryboardSceneTile({
         <ShotStrip
           focusId={focusId}
           layoutKey={`${layout}-${portrait}-${shots.length}`}
-          arrowTop={portrait ? (side ? "top-20" : "top-36") : "top-13"}
+          arrowTop={portrait ? (side ? "top-27" : "top-45") : "top-18"}
         >
           {shots.map((shot, i) => (
             <ShotCard
@@ -614,11 +624,170 @@ export function StoryboardSceneTile({
               selected={selectedShotId === shot.id}
               lit={lit === shot.id}
               onToggle={() => onToggleShot(shot)}
+              onExpand={() => onExpandShot(shot)}
               onHover={setLit}
             />
           ))}
         </ShotStrip>
       </div>
     </article>
+  );
+}
+
+/* ────────────────────────────── Large preview ────────────────────────────── */
+
+/**
+ * One shot, as large as the screen allows, with the rest of the board a
+ * step away on either side.
+ *
+ * The picture gets the room: the card is a thumbnail for scanning, and this
+ * is where you actually look at a frame. The words that did not fit on the
+ * card — what the shot shows, as well as what it says — sit under it in
+ * landscape and beside it in portrait. The arrows (and the arrow keys) walk
+ * across scene boundaries, so the whole film can be read in order from here.
+ */
+export function ShotPreviewModal({
+  scenes,
+  at,
+  portrait,
+  brandName,
+  onNavigate,
+  onClose,
+}: {
+  scenes: Scene[];
+  at: { sceneId: string; shotId: string };
+  portrait: boolean;
+  brandName: string;
+  onNavigate: (to: { sceneId: string; shotId: string }) => void;
+  onClose: () => void;
+}) {
+  const order = scenes.flatMap((scene) =>
+    storyShots(scene).map((shot, i, all) => ({ scene, shot, number: i + 1, count: all.length }))
+  );
+  const index = Math.max(0, order.findIndex((o) => o.scene.id === at.sceneId && o.shot.id === at.shotId));
+  const current = order[index];
+  const prev = order[index - 1];
+  const next = order[index + 1];
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" && prev) onNavigate({ sceneId: prev.scene.id, shotId: prev.shot.id });
+      if (e.key === "ArrowRight" && next) onNavigate({ sceneId: next.scene.id, shotId: next.shot.id });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [prev, next, onNavigate, onClose]);
+
+  if (!current) return null;
+  const { scene, shot, number, count } = current;
+
+  const arrow = (dir: "prev" | "next") => {
+    const target = dir === "prev" ? prev : next;
+    const Icon = dir === "prev" ? ChevronLeft : ChevronRight;
+    return (
+      <button
+        type="button"
+        aria-label={dir === "prev" ? "Previous shot" : "Next shot"}
+        disabled={!target}
+        onClick={() => target && onNavigate({ sceneId: target.scene.id, shotId: target.shot.id })}
+        className={cn(
+          "absolute top-1/2 z-10 grid size-11 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-hair-2 bg-card text-ink-2 shadow-float transition hover:border-brand hover:text-brand-deep disabled:pointer-events-none disabled:opacity-0",
+          dir === "prev" ? "left-3" : "right-3"
+        )}
+      >
+        <Icon className="size-5" />
+      </button>
+    );
+  };
+
+  const words = (
+    <div className="flex min-w-0 flex-col gap-2.5">
+      <div className="flex items-baseline gap-2">
+        <span className="text-subhead font-[850] tracking-tight text-ink">Shot {number}</span>
+        <span className="text-label font-semibold text-ink-4">of {count} in scene {scene.number}</span>
+      </div>
+      <p className="text-body-lg leading-relaxed text-ink-2">{shot.visualStory}</p>
+      <div className="flex items-start gap-1.5 border-t border-hair pt-2.5 text-body leading-snug text-ink-3">
+        {shot.narrationFragment?.trim() ? (
+          <>
+            <Volume2 className="mt-0.5 size-3.5 shrink-0 text-ink-4" />
+            <span>“{shot.narrationFragment.trim()}”</span>
+          </>
+        ) : (
+          <span className="text-ink-4">No narration. The frame holds.</span>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <Portal>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Scene ${scene.number}, shot ${number}`}
+        onClick={onClose}
+        className="fixed inset-0 z-[9999] grid place-items-center bg-ink/75 p-4 backdrop-blur-sm sm:p-6"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex max-h-full w-full max-w-[min(1200px,100%)] flex-col overflow-hidden rounded-card border border-hair bg-card shadow-modal"
+        >
+          <div className="flex items-center gap-3 border-b border-hair px-5 py-3">
+            <span className="min-w-0 truncate text-body-lg font-bold text-ink">
+              <span className="font-[850]">Scene {scene.number}:</span> {scene.title}
+            </span>
+            <span className="ml-auto shrink-0 text-label tabular-nums text-ink-4">
+              {index + 1} of {order.length} shots
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close preview"
+              className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          {portrait ? (
+            <div className="flex min-h-0 flex-1 gap-5 p-5">
+              <div className="relative shrink-0">
+                <div className="relative aspect-[9/16] h-[min(76vh,900px)] overflow-hidden rounded-panel bg-[#0d1411]">
+                  <FramePreview
+                    key={shot.id}
+                    scene={scene}
+                    portrait
+                    brandName={brandName}
+                    sceneTime={(shot.startAt + shot.endAt) / 2}
+                  />
+                </div>
+                {arrow("prev")}
+                {arrow("next")}
+              </div>
+              <div className="min-w-0 flex-1 overflow-y-auto pt-1">{words}</div>
+            </div>
+          ) : (
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
+              <div className="relative mx-auto w-full max-w-[calc(66vh*16/9)]">
+                <div className="relative aspect-video w-full overflow-hidden rounded-panel bg-[#0d1411]">
+                  <FramePreview
+                    key={shot.id}
+                    scene={scene}
+                    portrait={false}
+                    brandName={brandName}
+                    sceneTime={(shot.startAt + shot.endAt) / 2}
+                  />
+                </div>
+                {arrow("prev")}
+                {arrow("next")}
+              </div>
+              <div className="mx-auto w-full max-w-[calc(66vh*16/9)]">{words}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Portal>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
+import { LogoMark } from "@/components/ui/logo-mark";
 import type { Shot } from "@/types/content";
 
 /**
@@ -78,26 +79,20 @@ export function ShotGeneratingFrame({
       <div className="absolute inset-0 bg-[#06100d]/45" />
       {/* The sweep is what says "working": a still that does not move reads
           as done, or as stuck. */}
-      <div
-        className="absolute inset-0 motion-reduce:hidden"
-        style={{
-          backgroundImage:
-            "linear-gradient(100deg, transparent 20%, rgba(255,255,255,.07) 42%, rgba(255,255,255,.16) 50%, rgba(255,255,255,.07) 58%, transparent 80%)",
-          backgroundSize: "220% 100%",
-          backgroundRepeat: "no-repeat",
-          animation: "shimmer 1.6s linear infinite",
-        }}
-      />
+      <div className="shimmer-strong absolute inset-0" />
       <div
         className={cn(
           "absolute",
           label === "center" ? "inset-0 grid place-items-center" : "right-4 top-4"
         )}
       >
+        {/* In the brand's colour: this is SwishX at work, and a grey chip on
+            dark footage read as a caption rather than as a status. */}
         <span
           role="status"
-          className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-label font-extrabold text-white backdrop-blur-sm"
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-label font-extrabold text-white shadow-brand-lift"
         >
+          <LogoMark size={12} className="animate-spin text-white" />
           Generating
           <span className="inline-flex items-end gap-0.5 pb-0.5" aria-hidden>
             {[0, 1, 2].map((i) => (
