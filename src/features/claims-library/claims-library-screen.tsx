@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus, SlidersHorizontal, X } from "lucide-react";
+import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus, SlidersHorizontal, FileSearch, X } from "lucide-react";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
 import { TileList } from "@/components/patterns/tile-list";
 import { ClaimRow } from "@/features/claims-library/claim-row";
-import { ProductFilterModal } from "@/features/claims-library/product-filter-modal";
+import { FilterPickerModal } from "@/features/claims-library/filter-picker-modal";
+import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { cn } from "@/lib/cn";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { ClaimStatus, LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
@@ -35,6 +36,68 @@ const STATUS_TABS: { id: StatusFilter; label: string }[] = [
   { id: "pending", label: "Pending" },
   { id: "held out", label: "Held out" },
 ];
+
+/** Where the evidence behind a claim can be checked, most-cited first. */
+const SOURCE_ORDER = ["FDA", "PubMed", "ClinicalTrials.gov", "Data on file"];
+const SOURCE_DETAIL: Record<string, string> = {
+  FDA: "Prescribing information and approved labelling",
+  PubMed: "Peer-reviewed literature",
+  "ClinicalTrials.gov": "Registered trial records",
+  "Data on file": "The company's own data on file",
+};
+
+/** "Affolmy", or "Affolmy +2" once there is more than one. */
+function pickedLabel(names: string[], all: string) {
+  if (names.length === 0) return all;
+  return names.length === 1 ? names[0] : `${names[0]} +${names.length - 1}`;
+}
+
+/**
+ * The button that opens a filter, and the × that clears it. Outlined while
+ * showing everything, tinted once it narrows the list, so a filtered shelf
+ * never looks like the whole one.
+ */
+function FilterTrigger({
+  label,
+  active,
+  onOpen,
+  onClear,
+  clearLabel,
+}: {
+  label: string;
+  active: boolean;
+  onOpen: () => void;
+  onClear: () => void;
+  clearLabel: string;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <button
+        type="button"
+        onClick={onOpen}
+        className={cn(
+          "inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border px-3 py-2 text-body font-bold transition-colors",
+          active
+            ? "border-brand bg-tint text-brand-deep"
+            : "border-hair-2 bg-card text-ink-2 hover:border-hair-3 hover:bg-canvas"
+        )}
+      >
+        <SlidersHorizontal size={14} />
+        {label}
+      </button>
+      {active && (
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label={clearLabel}
+          className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-control text-ink-4 transition hover:bg-subtle hover:text-ink"
+        >
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  );
+}
 
 function StatTile({
   icon: Icon,
@@ -69,50 +132,67 @@ export function ClaimsLibraryScreen() {
   const products = useProductLibraryStore((s) => s.products);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
-  /** Which brand's claims, picked in its own dialog rather than typed. */
-  const [productId, setProductId] = useState<string | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  /**
+   * Which brands, and which evidence sources — each picked in its own
+   * dialog, any number of each, and the two narrow the shelf together.
+   * Nothing picked means everything, the same as picking every one.
+   */
+  const [productIds, setProductIds] = useState<string[]>([]);
+  const [sources, setSources] = useState<string[]>([]);
+  const [picker, setPicker] = useState<"product" | "source" | null>(null);
 
   const allClaims: LibraryClaim[] = useMemo(
     () => products.flatMap((product) => buildProductDetail(product).claims.map((claim) => ({ ...claim, product }))),
     [products]
   );
 
-  const claimCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const c of allClaims) counts[c.product.id] = (counts[c.product.id] ?? 0) + 1;
-    return counts;
-  }, [allClaims]);
-
-  const activeProduct = productId ? products.find((p) => p.id === productId) ?? null : null;
-
-  const filtered = useMemo(() => {
+  /**
+   * Every filter but one. Each dialog counts its rows against the filters it
+   * does not own, so picking a brand shows how many of that brand's claims
+   * come from each source — the two filters answer each other rather than
+   * each pretending the other is not set.
+   */
+  const passes = (c: LibraryClaim, skip?: "product" | "source") => {
+    if (skip !== "product" && productIds.length > 0 && !productIds.includes(c.product.id)) return false;
+    if (skip !== "source" && sources.length > 0 && !sources.includes(c.evidenceSource)) return false;
+    if (status !== "all" && c.status !== status) return false;
     const q = query.trim().toLowerCase();
-    return allClaims.filter((c) => {
-      if (productId && c.product.id !== productId) return false;
-      if (status !== "all" && c.status !== status) return false;
-      if (!q) return true;
-      return (
-        c.text.toLowerCase().includes(q) ||
-        c.product.name.toLowerCase().includes(q) ||
-        c.dossierType.toLowerCase().includes(q)
-      );
-    });
-  }, [allClaims, query, status, productId]);
+    if (!q) return true;
+    return (
+      c.text.toLowerCase().includes(q) ||
+      c.product.name.toLowerCase().includes(q) ||
+      c.dossierType.toLowerCase().includes(q)
+    );
+  };
+
+  const filtered = allClaims.filter((c) => passes(c));
+
+  const productCounts: Record<string, number> = {};
+  const sourceCounts: Record<string, number> = {};
+  for (const c of allClaims) {
+    if (passes(c, "product")) productCounts[c.product.id] = (productCounts[c.product.id] ?? 0) + 1;
+    if (passes(c, "source")) sourceCounts[c.evidenceSource] = (sourceCounts[c.evidenceSource] ?? 0) + 1;
+  }
+
+  /* The sources that actually back a claim here, in a fixed order so the
+     list does not reshuffle as the other filters change. */
+  const allSources = [...new Set(allClaims.map((c) => c.evidenceSource))].sort(
+    (x, y) => (SOURCE_ORDER.indexOf(x) + 1 || 99) - (SOURCE_ORDER.indexOf(y) + 1 || 99)
+  );
+
+  const pickedProducts = products.filter((p) => productIds.includes(p.id)).map((p) => p.name);
+  const anyFilter = !!query || status !== "all" || productIds.length > 0 || sources.length > 0;
 
   /* Counted over what is on screen. Totals that ignore the filter read as a
      bug the moment you pick a brand and the number above the list disagrees
      with the list. */
-  const stats = useMemo(
-    () => ({
+  const stats = {
       total: filtered.length,
       approved: filtered.filter((c) => c.status === "approved").length,
       pending: filtered.filter((c) => c.status === "pending").length,
       heldOut: filtered.filter((c) => c.status === "held out").length,
       brands: new Set(filtered.map((c) => c.product.id)).size,
-    }),
-    [filtered]
-  );
+    };
 
   /* Two zeroed tiles and two empty tabs are worse than none. */
   const mixedStatuses = stats.pending > 0 || stats.heldOut > 0;
@@ -146,30 +226,22 @@ export function ClaimsLibraryScreen() {
 
             {/* Picking a brand is not the same act as searching the
                 sentences — typing "Affolmy" into the search also returned
-                every other brand's claim that happened to mention it. */}
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              className={cn(
-                "inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border px-3 py-2 text-body font-bold transition-colors",
-                activeProduct
-                  ? "border-brand bg-tint text-brand-deep"
-                  : "border-hair-2 bg-card text-ink-2 hover:border-hair-3 hover:bg-canvas"
-              )}
-            >
-              <SlidersHorizontal size={14} />
-              {activeProduct ? activeProduct.name : "All products"}
-            </button>
-            {activeProduct && (
-              <button
-                type="button"
-                onClick={() => setProductId(null)}
-                aria-label="Clear product filter"
-                className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-control text-ink-4 transition hover:bg-subtle hover:text-ink"
-              >
-                <X size={14} />
-              </button>
-            )}
+                every other brand's claim that happened to mention it. The
+                source is the same kind of pick: where the evidence lives. */}
+            <FilterTrigger
+              label={pickedLabel(pickedProducts, "All products")}
+              active={productIds.length > 0}
+              onOpen={() => setPicker("product")}
+              onClear={() => setProductIds([])}
+              clearLabel="Clear product filter"
+            />
+            <FilterTrigger
+              label={pickedLabel(allSources.filter((x) => sources.includes(x)), "All sources")}
+              active={sources.length > 0}
+              onOpen={() => setPicker("source")}
+              onClear={() => setSources([])}
+              clearLabel="Clear source filter"
+            />
 
             {/* Only where there is something to filter. Every claim in the
                 library is approved — one that has not cleared review is still
@@ -223,14 +295,21 @@ export function ClaimsLibraryScreen() {
       ) : filtered.length === 0 ? (
         <EmptyState
           title="No claims match"
-          description={query ? `Nothing found for "${query}", try a different search or clear the filter.` : "No claims have this status yet."}
-          actionLabel={query || status !== "all" || productId ? "Clear filters" : undefined}
+          description={
+            query
+              ? `Nothing found for "${query}", try a different search or clear the filters.`
+              : productIds.length > 0 || sources.length > 0
+              ? "No claim matches both the brands and the sources you picked."
+              : "No claims have this status yet."
+          }
+          actionLabel={anyFilter ? "Clear filters" : undefined}
           onAction={
-            query || status !== "all" || productId
+            anyFilter
               ? () => {
                   setQuery("");
                   setStatus("all");
-                  setProductId(null);
+                  setProductIds([]);
+                  setSources([]);
                 }
               : undefined
           }
@@ -249,16 +328,56 @@ export function ClaimsLibraryScreen() {
         />
       )}
 
-      {pickerOpen && (
-        <ProductFilterModal
-          products={products}
-          claimCounts={claimCounts}
-          selectedId={productId}
-          onSelect={(next) => {
-            setProductId(next);
-            setPickerOpen(false);
-          }}
-          onClose={() => setPickerOpen(false)}
+      {picker === "product" && (
+        <FilterPickerModal
+          title="Filter by product"
+          description="Show the claims that belong to the brands you pick."
+          allLabel="All products"
+          allSublabel={`Every claim across ${products.length} brands`}
+          searchPlaceholder="Search by brand, molecule or therapy area…"
+          items={products.map((product) => ({
+            id: product.id,
+            label: product.name,
+            sublabel: product.genericName,
+            keywords: [product.genericName, ...(product.therapyAreas ?? [])],
+            count: productCounts[product.id] ?? 0,
+            leading: (
+              <span
+                className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-control"
+                style={{ background: product.gradient }}
+              >
+                <ProductArtwork kind={product.type} photoUrl={product.referenceImageUrl} className="relative h-6 w-6" />
+              </span>
+            ),
+          }))}
+          selectedIds={productIds}
+          onChange={setProductIds}
+          resultCount={filtered.length}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === "source" && (
+        <FilterPickerModal
+          title="Filter by source"
+          description="Show the claims whose evidence comes from the sources you pick."
+          allLabel="All sources"
+          allSublabel={`Every claim across ${allSources.length} sources`}
+          searchPlaceholder="Search sources…"
+          items={allSources.map((source) => ({
+            id: source,
+            label: source,
+            sublabel: SOURCE_DETAIL[source],
+            count: sourceCounts[source] ?? 0,
+            leading: (
+              <span className="grid size-9 shrink-0 place-items-center rounded-control bg-tint-2 text-brand-deep">
+                <FileSearch size={16} />
+              </span>
+            ),
+          }))}
+          selectedIds={sources}
+          onChange={setSources}
+          resultCount={filtered.length}
+          onClose={() => setPicker(null)}
         />
       )}
     </div>
