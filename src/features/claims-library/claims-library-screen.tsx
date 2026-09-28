@@ -2,14 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, ListChecks, CheckCircle2, Clock, XCircle, PackagePlus, SlidersHorizontal, FileSearch, X } from "lucide-react";
+import { ListChecks, CheckCircle2, Clock, XCircle, PackagePlus } from "lucide-react";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { buildProductDetail } from "@/features/product-library/mock-product-detail";
 import { TileList } from "@/components/patterns/tile-list";
 import { ClaimRow } from "@/features/claims-library/claim-row";
 import { FilterPickerModal } from "@/features/claims-library/filter-picker-modal";
+import {
+  ClaimSearchInput,
+  FilterTrigger,
+  SourceFilterModal,
+  orderedSources,
+  pickedLabel,
+} from "@/features/claims-library/claim-filters";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
-import { cn } from "@/lib/cn";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { ClaimStatus, LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
 
@@ -36,68 +42,6 @@ const STATUS_TABS: { id: StatusFilter; label: string }[] = [
   { id: "pending", label: "Pending" },
   { id: "held out", label: "Held out" },
 ];
-
-/** Where the evidence behind a claim can be checked, most-cited first. */
-const SOURCE_ORDER = ["FDA", "PubMed", "ClinicalTrials.gov", "Data on file"];
-const SOURCE_DETAIL: Record<string, string> = {
-  FDA: "Prescribing information and approved labelling",
-  PubMed: "Peer-reviewed literature",
-  "ClinicalTrials.gov": "Registered trial records",
-  "Data on file": "The company's own data on file",
-};
-
-/** "Affolmy", or "Affolmy +2" once there is more than one. */
-function pickedLabel(names: string[], all: string) {
-  if (names.length === 0) return all;
-  return names.length === 1 ? names[0] : `${names[0]} +${names.length - 1}`;
-}
-
-/**
- * The button that opens a filter, and the × that clears it. Outlined while
- * showing everything, tinted once it narrows the list, so a filtered shelf
- * never looks like the whole one.
- */
-function FilterTrigger({
-  label,
-  active,
-  onOpen,
-  onClear,
-  clearLabel,
-}: {
-  label: string;
-  active: boolean;
-  onOpen: () => void;
-  onClear: () => void;
-  clearLabel: string;
-}) {
-  return (
-    <div className="flex shrink-0 items-center gap-1">
-      <button
-        type="button"
-        onClick={onOpen}
-        className={cn(
-          "inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-control border px-3 py-2 text-body font-bold transition-colors",
-          active
-            ? "border-brand bg-tint text-brand-deep"
-            : "border-hair-2 bg-card text-ink-2 hover:border-hair-3 hover:bg-canvas"
-        )}
-      >
-        <SlidersHorizontal size={14} />
-        {label}
-      </button>
-      {active && (
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label={clearLabel}
-          className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-control text-ink-4 transition hover:bg-subtle hover:text-ink"
-        >
-          <X size={14} />
-        </button>
-      )}
-    </div>
-  );
-}
 
 function StatTile({
   icon: Icon,
@@ -176,9 +120,7 @@ export function ClaimsLibraryScreen() {
 
   /* The sources that actually back a claim here, in a fixed order so the
      list does not reshuffle as the other filters change. */
-  const allSources = [...new Set(allClaims.map((c) => c.evidenceSource))].sort(
-    (x, y) => (SOURCE_ORDER.indexOf(x) + 1 || 99) - (SOURCE_ORDER.indexOf(y) + 1 || 99)
-  );
+  const allSources = orderedSources(allClaims.map((c) => c.evidenceSource));
 
   const pickedProducts = products.filter((p) => productIds.includes(p.id)).map((p) => p.name);
   const anyFilter = !!query || status !== "all" || productIds.length > 0 || sources.length > 0;
@@ -214,15 +156,7 @@ export function ClaimsLibraryScreen() {
       {products.length > 0 && (
         <>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <div style={{ position: "relative", flex: 1, minWidth: 220, maxWidth: 420 }}>
-              <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)" }} />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search claims or brands…"
-                style={{ width: "100%", padding: "10px 13px 10px 36px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)", background: "#fff" }}
-              />
-            </div>
+            <ClaimSearchInput value={query} onChange={setQuery} placeholder="Search claims or brands…" />
 
             {/* Picking a brand is not the same act as searching the
                 sentences — typing "Affolmy" into the search also returned
@@ -357,24 +291,10 @@ export function ClaimsLibraryScreen() {
         />
       )}
       {picker === "source" && (
-        <FilterPickerModal
-          title="Filter by source"
-          description="Show the claims whose evidence comes from the sources you pick."
-          allLabel="All sources"
-          allSublabel={`Every claim across ${allSources.length} sources`}
-          searchPlaceholder="Search sources…"
-          items={allSources.map((source) => ({
-            id: source,
-            label: source,
-            sublabel: SOURCE_DETAIL[source],
-            count: sourceCounts[source] ?? 0,
-            leading: (
-              <span className="grid size-9 shrink-0 place-items-center rounded-control bg-tint-2 text-brand-deep">
-                <FileSearch size={16} />
-              </span>
-            ),
-          }))}
-          selectedIds={sources}
+        <SourceFilterModal
+          sources={allSources}
+          counts={sourceCounts}
+          selected={sources}
           onChange={setSources}
           resultCount={filtered.length}
           onClose={() => setPicker(null)}

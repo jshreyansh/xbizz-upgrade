@@ -33,6 +33,14 @@ import { DetailHeader, type DetailTab } from "@/components/patterns/detail-heade
 import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 import { ClaimRow } from "@/features/claims-library/claim-row";
+import { claimCode } from "@/features/claims-library/claim-detail";
+import {
+  ClaimSearchInput,
+  FilterTrigger,
+  SourceFilterModal,
+  orderedSources,
+  pickedLabel,
+} from "@/features/claims-library/claim-filters";
 import { DOSSIER_STATUS_STYLE as STATUS_STYLE } from "@/features/product-library/dossier-status";
 
 /** 1.8 MB, 420 KB — the way the seeded attachments already read. */
@@ -121,6 +129,31 @@ export function ProductDetailScreen({
    */
   const [pendingImages, setPendingImages] = useState<PendingFile[] | null>(null);
   const [pendingDocs, setPendingDocs] = useState<PendingFile[] | null>(null);
+
+  /* The Claims tab's search and source filter — the same controls as the
+     Claims Library, scoped to this brand. */
+  const [claimQuery, setClaimQuery] = useState("");
+  const [claimSources, setClaimSources] = useState<string[]>([]);
+  const [sourcePickerOpen, setSourcePickerOpen] = useState(false);
+  const matchesClaimQuery = (c: (typeof detail.claims)[number]) => {
+    const q = claimQuery.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      c.text.toLowerCase().includes(q) ||
+      c.dossierType.toLowerCase().includes(q) ||
+      c.evidenceSource.toLowerCase().includes(q) ||
+      claimCode(c.id).toLowerCase().includes(q)
+    );
+  };
+  const visibleClaims = detail.claims.filter(
+    (c) => matchesClaimQuery(c) && (claimSources.length === 0 || claimSources.includes(c.evidenceSource))
+  );
+  const claimSourceList = orderedSources(detail.claims.map((c) => c.evidenceSource));
+  /* Counted against the search, not against the source picks themselves. */
+  const claimSourceCounts: Record<string, number> = {};
+  for (const c of detail.claims) {
+    if (matchesClaimQuery(c)) claimSourceCounts[c.evidenceSource] = (claimSourceCounts[c.evidenceSource] ?? 0) + 1;
+  }
   const imageInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
   /** File sizes, kept from the pick so the row can print one. */
@@ -477,13 +510,45 @@ export function ProductDetailScreen({
               <p className="max-w-[36ch] text-body text-ink-4">Dossiers for this product haven&rsquo;t started, claims appear here once a dossier cites them.</p>
             </div>
           ) : (
+            <>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <ClaimSearchInput value={claimQuery} onChange={setClaimQuery} placeholder="Search claims, IDs or dossiers…" />
+              <FilterTrigger
+                label={pickedLabel(claimSourceList.filter((x) => claimSources.includes(x)), "All sources")}
+                active={claimSources.length > 0}
+                onOpen={() => setSourcePickerOpen(true)}
+                onClear={() => setClaimSources([])}
+                clearLabel="Clear source filter"
+              />
+              <span className="ml-auto text-label tabular-nums text-ink-4">
+                {visibleClaims.length === detail.claims.length
+                  ? `${detail.claims.length} claims`
+                  : `${visibleClaims.length} of ${detail.claims.length} claims`}
+              </span>
+            </div>
+
+            {visibleClaims.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 rounded-panel border border-dashed border-hair-2 py-14 text-center">
+                <p className="text-body-lg font-bold text-ink-2">No claims match</p>
+                <p className="max-w-[40ch] text-body text-ink-4">
+                  {claimQuery ? `Nothing found for "${claimQuery}" in the sources you picked.` : "No claim here comes from the sources you picked."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setClaimQuery(""); setClaimSources([]); }}
+                  className="mt-1 cursor-pointer rounded-control bg-brand px-4 py-2 text-body-lg font-bold text-white shadow-brand-lift transition hover:bg-brand-deep"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
             /* Rows, like the dossiers and the attachments above. A claim is a
                sentence and a way in; a card gave it a picture's worth of room
                and let eighteen of them fill the screen. Same row as the
                Claims Library, without the brand chip — every row here is
                this brand's. */
             <div className="flex flex-col gap-2">
-              {detail.claims.map((c) => (
+              {visibleClaims.map((c) => (
                 <div
                   key={c.id}
                   role="button"
@@ -496,6 +561,19 @@ export function ProductDetailScreen({
                 </div>
               ))}
             </div>
+            )}
+            </>
+          )}
+
+          {sourcePickerOpen && (
+            <SourceFilterModal
+              sources={claimSourceList}
+              counts={claimSourceCounts}
+              selected={claimSources}
+              onChange={setClaimSources}
+              resultCount={visibleClaims.length}
+              onClose={() => setSourcePickerOpen(false)}
+            />
           )}
         </div>
       )}
