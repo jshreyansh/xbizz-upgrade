@@ -62,6 +62,7 @@ import { dossierFor } from "@/features/dossiers/dossier-for";
 import { moleculeFor } from "@/features/workspace/grounding-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { ResearchSourcesContent, researchSummary, type UploadedDoc } from "@/features/workspace/research-sources-section";
+import { PRESENTERS as presenters } from "@/features/workspace/presenters";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
 import {
   AssetStrip,
@@ -122,14 +123,6 @@ const SECTION_TITLES: Record<PlanSectionId, string> = {
 const audienceOptions: Audience[] = ["HCP", "Patient", "Field team", "Hospital", "Distributor", "Consumer"];
 // Destinations (parked): const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
 const topics = ["Product introduction", "Mechanism", "Pivotal evidence", "Dosing & safety", "Patient impact"];
-const presenters = [
-  { name: "Dr. Maya Kapoor", role: "Dermatologist · warm, reassuring", image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=160&q=80" },
-  { name: "Dr. Rohan Mehta", role: "Physician · clear, authoritative", image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=160&q=80" },
-  { name: "Dr. Aisha Shah", role: "Medical presenter · calm, precise", image: "https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=160&q=80" },
-  { name: "Dr. Daniel Lee", role: "Physician · conversational", image: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=160&q=80" },
-  { name: "Dr. Elena Rostova", role: "Oncology specialist · measured", image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=160&q=80" },
-  { name: "Dr. Marcus Thorne", role: "Cardiology lead · authoritative", image: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=160&q=80" },
-];
 
 const voiceList = [
   { name: "Rohan", role: "clear and measured", accent: "Indian / US English", tag: "Authoritative" },
@@ -438,6 +431,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setDuration,
     setLanguage,
     setPresentationMode,
+    setPlanChoices,
     setVoice,
     setMusic,
     toggleSource,
@@ -1033,6 +1027,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     }
 
     setIsGenerating(true);
+    /* What the editor's Video section will show: confirmed here, once. */
+    setPlanChoices({ characters: presenter ? [presenter] : [], storyStructure });
 
     addChatMessage({
       role: "user",

@@ -49,7 +49,9 @@ export function InspectorTabButton({
       style={{ borderRadius: INSPECTOR_TAB_RADIUS }}
       aria-label={typeof children === "string" ? children : undefined}
       className={cn(
-        "group relative flex items-center justify-center gap-1.5 h-8.5 text-body transition-all duration-150 cursor-pointer font-[800] select-none whitespace-nowrap",
+        /* No browser outline on click: the open tab is already lifted and
+           white. A keyboard user still gets a ring, in the brand. */
+        "group relative flex items-center justify-center gap-1.5 h-8.5 text-body transition-all duration-150 cursor-pointer font-[800] select-none whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
         active ? "flex-1 px-2.5" : "shrink-0 px-2.5",
         active
           ? "bg-card text-ink shadow-xs border border-hair"

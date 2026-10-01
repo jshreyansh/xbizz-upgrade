@@ -38,6 +38,14 @@ interface WorkspaceState {
   presentationMode: PresentationMode;
   voice: string;
   music: string;
+  /**
+   * The plan's choices the editor shows but the store did not hold: who is
+   * on screen, and the shape of the story. Written when the plan is
+   * confirmed, so the Edit tab's Video section shows what was actually
+   * picked rather than a default.
+   */
+  characters: string[];
+  storyStructure: string;
   selectedSourceIds: string[];
   demoScenarioId: string;
   /**
@@ -117,6 +125,7 @@ interface WorkspaceState {
   setPresentationMode: (presentationMode: PresentationMode) => void;
   setVoice: (voice: string) => void;
   setMusic: (music: string) => void;
+  setPlanChoices: (choices: { characters: string[]; storyStructure: string }) => void;
   toggleSource: (sourceId: string) => void;
   setSelectedSourceIds: (sourceIds: string[]) => void;
   setDemoScenarioId: (scenarioId: string) => void;
@@ -169,6 +178,8 @@ const initialState = {
   presentationMode: "narrated" as PresentationMode,
   voice: "Rohan · clear and measured",
   music: "No music",
+  characters: [] as string[],
+  storyStructure: "",
   selectedSourceIds: [],
   demoScenarioId: "hcp-launch",
   studioEntry: "create" as StudioEntry,
@@ -249,6 +260,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setPresentationMode: (presentationMode) => set({ presentationMode }),
   setVoice: (voice) => set({ voice }),
   setMusic: (music) => set({ music }),
+  setPlanChoices: ({ characters, storyStructure }) => set({ characters, storyStructure }),
   toggleSource: (sourceId) => set((state) => ({ selectedSourceIds: state.selectedSourceIds.includes(sourceId) ? state.selectedSourceIds.filter((id) => id !== sourceId) : [...state.selectedSourceIds, sourceId] })),
   setSelectedSourceIds: (selectedSourceIds) => set({ selectedSourceIds }),
   setDemoScenarioId: (demoScenarioId) => set({ demoScenarioId }),

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Film, ImageIcon, Layers, MessageSquarePlus, RefreshCw, Video } from "lucide-react";
+import { Film, ImageIcon, Layers, MessageSquarePlus, Video } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 import type { Scene, Shot } from "@/types/content";
@@ -100,7 +100,6 @@ export function ShotCards({
   onAddToChat,
   onReplaceMedia,
   shotState,
-  onGenerateShot,
 }: {
   scene: Scene;
   currentTime: number;
@@ -110,10 +109,8 @@ export function ShotCards({
   /** Hand this shot to the agent to change. */
   onAddToChat: (shot: Shot) => void;
   onReplaceMedia: (shot: Shot, elementId: string, kind: "image" | "video") => void;
-  /** Where one shot's footage has got to. */
+  /** Where one shot's footage has got to. Shots render on their own. */
   shotState?: (shotId: string) => "keyframes" | "generating" | "ready";
-  /** Render this one shot, from its card. */
-  onGenerateShot?: (shot: Shot) => void;
 }) {
   const shots = scene.shots ?? [];
 
@@ -149,31 +146,13 @@ export function ShotCards({
         const rendering = state === "generating";
         const hasFootage = scene.backgroundKind === "video" && Boolean(scene.bgVideoSrc);
 
-        /**
-         * One button per shot, because generating a shot renders everything
-         * in it: the background footage and any clip stitched over it. It sat
-         * on the footage row and again on every pending clip — the same
-         * action, drawn as many times as the shot had layers.
-         *
-         * Where it sits follows where the shot's footage is: on the footage
-         * row when there is one, on the media header when the shot is clips
-         * only, so it never disappears.
-         */
-        const generateButton = rendered ? null : (
-          <button
-            type="button"
-            disabled={rendering}
-            onClick={() => onGenerateShot?.(shot)}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-1 rounded-glyph border px-2 py-0.5 text-micro font-bold transition-colors",
-              rendering
-                ? "cursor-not-allowed border-hair-2 bg-card text-ink-4"
-                : "cursor-pointer border-brand/30 bg-tint text-brand-deep hover:border-brand"
-            )}
-          >
-            <LogoMark size={9} className={rendering ? "animate-spin" : undefined} />
-            {rendering ? "Rendering" : `Generate Shot ${shot.index}`}
-          </button>
+        /* Shots render on their own once the video is generated; there is
+           nothing to press. The card says where this one has got to. */
+        const status = rendered ? null : (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-glyph bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">
+            {rendering && <LogoMark size={9} className="animate-spin" />}
+            {rendering ? "Rendering" : "Queued"}
+          </span>
         );
 
         return (
@@ -240,38 +219,24 @@ export function ShotCards({
                   <span className="rounded-glyph bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">
                     {media.length} Media {media.length === 1 ? "Layer" : "Layers"}
                   </span>
-                  {!hasFootage && generateButton}
+                  {!hasFootage && status}
                 </span>
               </div>
 
-              {/* This shot's own opening and closing frame, off the scene's
-                  footage. A shot is a stretch of film and its two ends are
-                  what you can actually judge before it is rendered. */}
-              {scene.backgroundKind === "video" && scene.bgVideoSrc && (
+              {/* The shot's own frame, off the scene's footage — the picture
+                  approved on the storyboard, until its render replaces it. */}
+              {hasFootage && (
                 <div className="mb-2">
                   <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="text-micro font-bold uppercase tracking-wide text-ink-4">
-                      {rendered ? "Footage" : "Footage keyframes"}
-                    </span>
-                    {/* One shot, not the scene. Three shots are three
-                        decisions, and rendering all of them to judge one is
-                        what the keyframes exist to avoid. */}
-                    {generateButton}
+                    <span className="text-micro font-bold uppercase tracking-wide text-ink-4">Footage</span>
+                    {status}
                   </div>
-                  <div className="flex gap-1.5">
-                    <FrameThumb
-                      src={scene.bgVideoSrc}
-                      at={shot.startAt}
-                      duration={scene.duration || 10}
-                      label={rendered ? "Opens" : "Opening keyframe"}
-                    />
-                    <FrameThumb
-                      src={scene.bgVideoSrc}
-                      at={shot.endAt}
-                      duration={scene.duration || 10}
-                      label={rendered ? "Ends" : "Closing keyframe"}
-                    />
-                  </div>
+                  <FrameThumb
+                    src={scene.bgVideoSrc}
+                    at={(shot.startAt + shot.endAt) / 2}
+                    duration={scene.duration || 10}
+                    label={rendered ? "Rendered" : rendering ? "Rendering…" : "Storyboard frame"}
+                  />
                 </div>
               )}
 
@@ -285,9 +250,8 @@ export function ShotCards({
                     const Icon = layer.kind === "video" ? Video : ImageIcon;
                     const clipSrc = scene.mediaVideoSrc;
                     const stillSrc = scene.mediaImageSrc;
-                    /* A clip that has not been rendered shows the same two
-                       keyframes the canvas shows, and offers the same render.
-                       A still is a still: it is there, so it is shown. */
+                    /* A clip still rendering shows its storyboard frame and
+                       says so. A still is a still: it is there, so it is shown. */
                     const pending = layer.kind === "video" && !rendered;
                     return (
                       <li
@@ -308,27 +272,19 @@ export function ShotCards({
                             </span>
                           </span>
                           {pending ? (
-                            /* No button: generating the shot renders this
-                               clip with it. It says where it has got to
-                               instead. */
-                            <span className="inline-flex shrink-0 items-center gap-1 rounded-glyph bg-subtle px-2 py-1 text-micro font-bold text-ink-4">
-                              {rendering ? (
-                                <>
-                                  <LogoMark size={9} className="animate-spin" />
-                                  Rendering
-                                </>
-                              ) : (
-                                "At keyframes"
-                              )}
-                            </span>
+                            /* It renders with the shot; it says where it has
+                               got to instead of offering a button. */
+                            status
                           ) : (
+                            /* A change to the clip is described, so it goes
+                               to the chat like every other edit here. */
                             <button
                               type="button"
                               onClick={() => onReplaceMedia(shot, layer.elementId, layer.kind)}
-                              className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-glyph border border-hair-2 bg-card px-2 py-1 text-micro font-bold text-ink-2 transition-colors hover:border-brand hover:text-brand"
+                              className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-glyph px-1.5 py-1 text-micro font-bold text-brand transition-colors hover:bg-tint"
                             >
-                              <RefreshCw className="size-2.5" />
-                              Regenerate
+                              <MessageSquarePlus className="size-2.5" />
+                              Add to chat
                             </button>
                           )}
                         </div>
@@ -338,20 +294,12 @@ export function ShotCards({
                           {layer.kind === "image" ? (
                             <FrameThumb at={0} duration={1} label="Still" image={stillSrc} />
                           ) : pending ? (
-                            <>
-                              <FrameThumb
-                                src={clipSrc}
-                                at={layer.inAt}
-                                duration={scene.duration || 10}
-                                label="Opening keyframe"
-                              />
-                              <FrameThumb
-                                src={clipSrc}
-                                at={layer.outAt}
-                                duration={scene.duration || 10}
-                                label="Closing keyframe"
-                              />
-                            </>
+                            <FrameThumb
+                              src={clipSrc}
+                              at={(layer.inAt + layer.outAt) / 2}
+                              duration={scene.duration || 10}
+                              label={rendering ? "Rendering…" : "Storyboard frame"}
+                            />
                           ) : (
                             <FrameThumb
                               src={clipSrc}

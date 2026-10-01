@@ -18,6 +18,11 @@ import {
   Image as ImageIcon,
   Layers,
   Stamp,
+  Languages,
+  Music,
+  RectangleHorizontal,
+  ListOrdered,
+  Gauge,
   UserRound,
   LayoutPanelTop,
   Maximize2,
@@ -92,6 +97,8 @@ import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { ShotGeneratingFrame } from "@/features/workspace/background-keyframes";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
+import { VideoSettings, type VideoSettingRow } from "@/features/workspace/video-settings";
+import { presenterImage } from "@/features/workspace/presenters";
 import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
   CommentsModal,
@@ -227,7 +234,6 @@ export function StudioScreen() {
     setCopilotPanelOpen,
     toggleCopilotPanel,
     logoMark,
-    setLogoMark,
   } = useWorkspaceStore();
   const exit = useProjectExit();
 
@@ -326,6 +332,14 @@ export function StudioScreen() {
   const format = useWorkspaceStore((s) => s.format);
   const isPortrait = format === "9:16";
 
+  /* The whole video's choices, for the Edit tab's Video section. */
+  const voice = useWorkspaceStore((s) => s.voice);
+  const language = useWorkspaceStore((s) => s.language);
+  const music = useWorkspaceStore((s) => s.music);
+  const presentationMode = useWorkspaceStore((s) => s.presentationMode);
+  const characters = useWorkspaceStore((s) => s.characters);
+  const storyStructure = useWorkspaceStore((s) => s.storyStructure);
+
   /** Narration beside the shots, or above them. The marketer's choice. */
   const [storyLayout, setStoryLayout] = useState<StoryboardLayout>("side");
   /** The shot open in the large preview, if any. */
@@ -397,25 +411,6 @@ export function StudioScreen() {
   const filmIsWatchable = shotsAwaitingFootage.length === 0;
   /** Publishing is the finished film, so it waits for the last shot. */
   const filmFullyRendered = filmIsWatchable;
-
-  /**
-   * Render one shot, from its keyframes.
-   *
-   * One shot, not the scene: three shots in a scene are three separate
-   * decisions, and rendering all of them to judge one is what the keyframes
-   * exist to avoid.
-   */
-  const generateShot = (scene: Scene, shotId: string, announce = true) => {
-    if (shotStateOf(shotId) !== "keyframes") return;
-    setShotRender((prev) => ({ ...prev, [shotId]: "generating" }));
-    const shot = (scene.shots ?? []).find((s) => s.id === shotId);
-    const name = shot ? `Shot ${shot.index}` : "Footage";
-    if (announce) showToast(`Rendering ${name.toLowerCase()} of scene ${scene.number}`);
-    window.setTimeout(() => {
-      setShotRender((prev) => ({ ...prev, [shotId]: "ready" }));
-      if (announce) showToast(`${name} of scene ${scene.number} is rendered`);
-    }, 4200);
-  };
 
   /**
    * Editing opens when every scene has its structure, not when everything has
@@ -1079,6 +1074,81 @@ export function StudioScreen() {
    */
   const handleSelectCanvasElement = (elementId: string) => {
     setSelectedCanvasElementId(elementId);
+  };
+
+  const totalCredits = Math.round((totalDurationSeconds / 60) * (selectedQuality === "cinematic" ? 7500 : 2500));
+  const videoSettingRows: VideoSettingRow[] = [
+    {
+      id: "characters",
+      icon: UserRound,
+      label: "Characters",
+      value: characters.length > 0 ? characters.join(", ") : "No on-screen character",
+      avatars: characters.map(presenterImage).filter((src): src is string => !!src),
+    },
+    {
+      id: "voice",
+      icon: Mic2,
+      label: "Voice",
+      value: presentationMode === "visual-only" ? "No narration" : voice,
+    },
+    { id: "language", icon: Languages, label: "Language", value: language },
+    { id: "music", icon: Music, label: "Background music", value: music },
+    {
+      id: "treatment",
+      icon: Clapperboard,
+      label: "Creative treatment",
+      value:
+        presentationMode === "presenter"
+          ? "Presenter-led"
+          : presentationMode === "visual-only"
+          ? "Visual-only"
+          : "Narrated visual story",
+    },
+    {
+      id: "frame",
+      icon: RectangleHorizontal,
+      label: "Frame and length",
+      value: `${isPortrait ? "9:16 Portrait" : "16:9 Landscape"} · ${totalDurationSeconds} sec`,
+    },
+    {
+      id: "structure",
+      icon: ListOrdered,
+      label: "Story structure",
+      value: `${storyStructure ? `${storyStructure} · ` : ""}${sceneList.length} scenes`,
+    },
+    {
+      id: "brand-mark",
+      icon: Stamp,
+      label: "Brand mark",
+      value:
+        logoMark.position === "none"
+          ? "No logo"
+          : `${LOGO_CORNERS.find((c) => c.id === logoMark.position)?.label ?? "Bottom right"} · ${logoMark.name}`,
+    },
+    {
+      id: "quality",
+      icon: Gauge,
+      label: "Output quality",
+      value: `${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"} · ${totalCredits.toLocaleString()} credits`,
+    },
+    {
+      id: "sources",
+      icon: ShieldCheck,
+      label: "Sources",
+      value: `${brandName} approved dossier · ${APPROVED_CLAIMS.length} claims`,
+    },
+  ];
+
+  /* A video-wide choice handed to the chat, the way the scene's copy is:
+     the context chip names it, and the prompt is started for you. */
+  const attachVideoSettingToChat = (row: VideoSettingRow) => {
+    setActiveTab("assistant");
+    setAttachedContexts((prev) => [
+      ...prev.filter((c) => c.type !== "element"),
+      { id: `video-${row.id}-${Date.now()}`, type: "element" as const, label: `Video · ${row.label}`, detail: row.value },
+    ]);
+    setDirectorInput(`Change the ${row.label.toLowerCase()} to `);
+    showToast(`${row.label} added to the chat`);
   };
 
   const attachElementToChat = (elementId: string) => {
@@ -3238,7 +3308,6 @@ export function StudioScreen() {
                     current={activeTab}
                     onClick={setActiveTab}
                     icon={PenLine}
-                    chip={selectedScene ? `Scene ${selectedScene.number}` : undefined}
                   >
                     Edit
                   </InspectorTabButton>
@@ -3549,60 +3618,26 @@ export function StudioScreen() {
             )}
             {activeTab === "edit" && !isReview && (
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="border-b border-hair pb-3 flex items-center justify-between">
-                  <div>
-                    <div className="text-micro font-extrabold uppercase tracking-wider text-ink-3">
-                      Scene Inspector
-                    </div>
-                    <h3 className="text-subhead font-[850] text-ink mt-0.5">
-                      Scene {selectedScene.number}: {selectedScene.title}
-                    </h3>
-                  </div>
-                  <span className="rounded-chip bg-tint border border-brand/20 px-2.5 py-0.5 text-caption font-extrabold text-brand-deep">
-                    ({selectedScene.narrativeTag || "Evidence"})
+                <VideoSettings
+                  rows={videoSettingRows}
+                  highlightId={selectedCanvasElementId === "logo" ? "brand-mark" : undefined}
+                  onAddToChat={attachVideoSettingToChat}
+                />
+
+                {/* The selected scene. Its number lives here, on the scene's
+                    own heading, not on the tab: the tab holds the whole video
+                    as well. */}
+                <div className="flex items-center justify-between gap-2 border-t border-hair pt-4">
+                  <h3 className="flex min-w-0 items-center gap-2 text-subhead font-[850] text-ink">
+                    <span className="shrink-0 rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-caption font-extrabold text-brand-deep">
+                      Scene {selectedScene.number}
+                    </span>
+                    <span className="truncate">{selectedScene.title}</span>
+                  </h3>
+                  <span className="shrink-0 rounded-chip border border-hair-2 bg-canvas px-2 py-0.5 text-caption font-bold text-ink-3">
+                    {selectedScene.narrativeTag || "Evidence"}
                   </span>
                 </div>
-
-                {/**
-                 * The brand mark, when it is what you have selected.
-                 *
-                 * A placement setting rather than content, which is why it is
-                 * still editable here while the copy is not — and why changing
-                 * it changes the project rather than this scene. There is one
-                 * mark on the asset, so there is one control for it.
-                 */}
-                {selectedCanvasElementId === "logo" && (
-                  <div className="space-y-2.5 rounded-panel border border-hair-2 bg-canvas p-3">
-                    <div className="flex items-center gap-2">
-                      <Stamp className="size-3.5 shrink-0 text-brand" />
-                      <span className="text-body font-bold text-ink">Brand mark</span>
-                      <span className="ml-auto rounded-glyph bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">
-                        Every scene
-                      </span>
-                    </div>
-                    <p className="text-label leading-snug text-ink-3">
-                      {logoMark.name}. Size follows the brand kit&rsquo;s clear-space rule, so it is shown
-                      rather than set. Its corner is kept clear on every scene.
-                    </p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {LOGO_CORNERS.map((corner) => (
-                        <button
-                          key={corner.id}
-                          type="button"
-                          onClick={() => setLogoMark({ position: corner.id })}
-                          className={cn(
-                            "cursor-pointer rounded-control border px-2 py-1.5 text-left text-label font-bold transition",
-                            logoMark.position === corner.id
-                              ? "border-brand bg-tint text-brand-deep"
-                              : "border-hair-2 bg-card text-ink-2 hover:border-hair-3"
-                          )}
-                        >
-                          {corner.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 <div className="space-y-3.5">
                   {/**
@@ -3653,7 +3688,6 @@ export function StudioScreen() {
                     currentTime={sceneCurrentTime}
                     highlightedShotId={highlightedShotId}
                     shotState={shotStateOf}
-                    onGenerateShot={(shot) => generateShot(selectedScene, shot.id)}
                     onScrub={(seconds) => {
                       setSceneCurrentTime(seconds);
                       setScenePlaying(false);
