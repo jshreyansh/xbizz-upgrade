@@ -332,20 +332,18 @@ function ShotCard({
         )}
       </div>
 
-      {/* One heading and what the shot says. What it shows is the picture
-          above; the prose version of that lives in the large preview. */}
-      <div className="flex min-w-0 flex-1 flex-col gap-2 px-3.5 pb-3.5 pt-3">
+      {/* One heading and what the shot shows. The picture is the shot at a
+          glance; the direction under it says what you are looking at. What it
+          says is the narration beside the strip, which lights up while this
+          card is hovered — so the words stay in one place, read in order. */}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 px-3.5 pb-3.5 pt-3">
         <span className="text-body-lg font-extrabold text-ink">Shot {number}</span>
-        <div className="flex items-start gap-1.5 text-body leading-snug text-ink-2">
-          {shot.narrationFragment?.trim() ? (
-            <>
-              <Volume2 className="mt-0.5 size-3.5 shrink-0 text-ink-4" />
-              <span>“{shot.narrationFragment.trim()}”</span>
-            </>
-          ) : (
-            <span className="text-ink-4">No narration. The frame holds.</span>
-          )}
-        </div>
+        <p
+          title={shot.visualStory || scene.visual}
+          className="line-clamp-3 text-body leading-snug text-ink-2"
+        >
+          {shot.visualStory || scene.visual}
+        </p>
       </div>
     </div>
   );
@@ -575,7 +573,7 @@ export function StoryboardSceneTile({
                       setFocusId(linked[0]);
                     }}
                     onMouseLeave={() => setLit(null)}
-                    className={cn("rounded-glyph transition-colors", on && "bg-tint-strong ring-2 ring-tint-strong")}
+                    className={cn("rounded-glyph transition-colors", on && "bg-brand/15 text-brand-deep ring-2 ring-brand/15")}
                   >
                     {segment}
                   </span>
