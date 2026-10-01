@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DetailHeader, type DetailTab } from "@/components/patterns/detail-header";
-import { ProductArtwork } from "@/features/product-library/product-artwork";
+import { ProductMark } from "@/features/product-library/product-mark";
 import { CLAIM_STATUS_STYLE } from "@/features/product-library/claim-card";
 import { AssetVideo } from "@/features/workspace/asset-video";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
@@ -112,16 +112,7 @@ export function ClaimDetailScreen({ detail }: { detail: ClaimDetail }) {
           <section className="rounded-panel border border-hair bg-card p-4 shadow-hair">
             <h2 className="text-body font-extrabold uppercase tracking-[.05em] text-ink-4">Product</h2>
             <div className="mt-3 flex flex-wrap items-center gap-3.5">
-              <span
-                className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-control"
-                style={{ background: product.gradient }}
-              >
-                <ProductArtwork
-                  kind={product.type}
-                  photoUrl={product.referenceImageUrl}
-                  className="relative h-8 w-8"
-                />
-              </span>
+              <ProductMark product={product} size="lg" />
               <div className="min-w-0 flex-1">
                 <div className="text-body-lg font-extrabold text-ink">{product.name}</div>
                 <span className="text-body italic text-ink-3">{product.genericName}</span>

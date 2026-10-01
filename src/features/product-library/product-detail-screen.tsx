@@ -562,7 +562,7 @@ export function ProductDetailScreen({
                   onKeyDown={(e) => { if (e.key === "Enter") router.push(`/claims-library/${c.id}`); }}
                   className="group flex cursor-pointer flex-wrap items-center gap-3.5 rounded-panel border border-hair bg-card p-3.5 shadow-hair transition-all hover:border-hair-3 hover:shadow-soft"
                 >
-                  <ClaimRow claim={c} />
+                  <ClaimRow claim={c} product={product} />
                 </div>
               ))}
             </div>

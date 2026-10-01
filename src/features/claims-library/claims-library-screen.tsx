@@ -15,7 +15,7 @@ import {
   orderedSources,
   pickedLabel,
 } from "@/features/claims-library/claim-filters";
-import { ProductArtwork } from "@/features/product-library/product-artwork";
+import { ProductMark } from "@/features/product-library/product-mark";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { ClaimStatus, LibraryProduct, ProductClaim } from "@/features/product-library/product-library-types";
 
@@ -275,14 +275,7 @@ export function ClaimsLibraryScreen() {
             sublabel: product.genericName,
             keywords: [product.genericName, ...(product.therapyAreas ?? [])],
             count: productCounts[product.id] ?? 0,
-            leading: (
-              <span
-                className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-control"
-                style={{ background: product.gradient }}
-              >
-                <ProductArtwork kind={product.type} photoUrl={product.referenceImageUrl} className="relative h-6 w-6" />
-              </span>
-            ),
+            leading: <ProductMark product={product} size="sm" />,
           }))}
           selectedIds={productIds}
           onChange={setProductIds}
