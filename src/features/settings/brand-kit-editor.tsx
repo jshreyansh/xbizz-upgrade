@@ -50,21 +50,32 @@ export function BrandKitEditor({
   slots = SLOTS.map((slot) => slot.id),
   slotCopy = {},
   copy = {},
+  maxTypefaces = MAX_TYPEFACES,
+  colorRoles = COLOR_ROLES.map((role) => ({ id: role.id as ColorRole, label: role.label, trailing: role.trailing })),
 }: {
   kit: BrandKit;
   onChange: (next: BrandKit) => void;
   /** Which logo slots this kit has. A product has no favicon of its own. */
   slots?: LogoSlot[];
-  /** A slot's name and use, where this kit calls it something else. */
-  slotCopy?: Partial<Record<LogoSlot, { label?: string; hint?: string }>>;
+  /**
+   * A slot's name and use, where this kit calls it something else — and
+   * whether it is the one the kit cannot do without, or one it can.
+   */
+  slotCopy?: Partial<Record<LogoSlot, { label?: string; hint?: string; priority?: "primary" | "optional" }>>;
   /** Card descriptions, where the default wording does not fit. */
   copy?: Partial<Record<"logos" | "typography" | "palette", string>>;
+  /** How many typeface roles this kit has, from the top: primary, secondary, tertiary. */
+  maxTypefaces?: number;
+  /** The palette roles this kit has, named as this kit names them. */
+  colorRoles?: { id: ColorRole; label: string; trailing: string }[];
 }) {
   /* In the order asked for, so a kit can lead with what matters to it. */
   const shown = slots.flatMap((id) => {
     const slot = SLOTS.find((x) => x.id === id);
-    return slot ? [{ ...slot, ...slotCopy[id] }] : [];
+    return slot ? [{ ...slot, priority: undefined, ...slotCopy[id] }] : [];
   });
+  const hasPrimary = shown.some((slot) => slot.priority === "primary");
+  const shownRoles = new Set(colorRoles.map((role) => role.id));
   const setLogo = (slot: LogoSlot, file: { fileName: string; size: string } | null) => {
     const logos = { ...kit.logos };
     if (file) logos[slot] = file;
@@ -79,15 +90,30 @@ export function BrandKitEditor({
         title="Logos"
         description={copy.logos ?? "Each slot previews on the ground it is used against, so a light logo in a dark slot is obvious."}
       >
-        {/* Three across only when the slots fill the rows; four sit two by two. */}
-        <div className={cn("grid gap-3 sm:grid-cols-2", shown.length % 3 === 0 && "lg:grid-cols-3")}>
+        {/* Three across only when the slots fill the rows; four sit two by
+            two. A primary slot takes a whole row, with the optional ones
+            under it, so the one that matters reads first. */}
+        <div className={cn("grid gap-3 sm:grid-cols-2", !hasPrimary && shown.length % 3 === 0 && "lg:grid-cols-3")}>
           {shown.map((slot) => {
             const file = kit.logos[slot.id];
             return (
-              <div key={slot.id} className="flex flex-col gap-2 rounded-panel border border-hair bg-canvas p-3">
+              <div
+                key={slot.id}
+                className={cn(
+                  "flex flex-col gap-2 rounded-panel border border-hair bg-canvas p-3",
+                  slot.priority === "primary" && "sm:col-span-2"
+                )}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <Text size="body" weight="bold" className="block">{slot.label}</Text>
+                    <span className="flex flex-wrap items-center gap-1.5">
+                      <Text size="body" weight="bold">{slot.label}</Text>
+                      {slot.priority && (
+                        <Chip tone={slot.priority === "primary" ? "brand" : "default"} size="xs">
+                          {slot.priority === "primary" ? "Primary" : "Optional"}
+                        </Chip>
+                      )}
+                    </span>
                     <Text size="caption" tone="subtle" className="block">{slot.hint}</Text>
                   </div>
                   {/* The "dark" chip tone is for chips ON a dark surface; this
@@ -186,7 +212,7 @@ export function BrandKitEditor({
             <Text size="body" tone="muted">No typefaces yet. Add one below.</Text>
           )}
 
-          {kit.typefaces.length < MAX_TYPEFACES ? (
+          {kit.typefaces.length < maxTypefaces ? (
             <div className="flex flex-wrap items-center gap-3">
               <FontPicker
                 exclude={kit.typefaces.map((t) => t.name)}
@@ -199,13 +225,13 @@ export function BrandKitEditor({
                 placeholder={`Add the ${ROLE_LABELS[kit.typefaces.length]?.toLowerCase() ?? "next"} typeface`}
               />
               <Text size="label" tone="subtle">
-                {MAX_TYPEFACES - kit.typefaces.length} slot
-                {MAX_TYPEFACES - kit.typefaces.length === 1 ? "" : "s"} left
+                {maxTypefaces - kit.typefaces.length} slot
+                {maxTypefaces - kit.typefaces.length === 1 ? "" : "s"} left
               </Text>
             </div>
           ) : (
             <Text size="label" tone="subtle">
-              All three roles filled. Remove one to add another.
+              {maxTypefaces === 2 ? "Both" : "All three"} roles filled. Remove one to add another.
             </Text>
           )}
         </Stack>
@@ -216,7 +242,7 @@ export function BrandKitEditor({
         description={copy.palette ?? "Four roles, named for where each colour lands. Contrast is checked against both grounds."}
       >
         <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-          {COLOR_ROLES.map((role) => {
+          {colorRoles.map((role) => {
             const value = kit.colors[role.id];
             return (
               <div key={role.id}>
@@ -253,7 +279,7 @@ export function BrandKitEditor({
           <Text size="label" tone="muted" weight="semibold">Contrast</Text>
           <Chip tone="ok" size="sm">Primary passes on light</Chip>
           <Chip tone="warn" size="sm">Primary needs checking on dark</Chip>
-          <Chip tone="ok" size="sm">Text passes on callout</Chip>
+          {shownRoles.has("callout") && <Chip tone="ok" size="sm">Text passes on callout</Chip>}
         </div>
       </SettingsCard>
     </Stack>

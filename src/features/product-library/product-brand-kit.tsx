@@ -7,30 +7,39 @@ import { SaveBar } from "@/features/settings/settings-parts";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import type { BrandKit, LogoSlot } from "@/features/settings/settings-types";
 
-/** A product's four logos: one per theme, the small mark, and the sting. */
-const PRODUCT_SLOTS: LogoSlot[] = ["lockup-light", "lockup-dark", "favicon", "animated"];
-const PRODUCT_SLOT_COPY: Partial<Record<LogoSlot, { label?: string; hint?: string }>> = {
-  "lockup-light": { label: "Light theme logo", hint: "Documents, leave-behinds, light scenes" },
-  "lockup-dark": { label: "Dark theme logo", hint: "Video scenes, dark overlays" },
-  favicon: { label: "Favicon / logomark", hint: "Corners, watermarks, shared links" },
-  animated: { label: "Animated brand logo", hint: "Intro and outro stings in video" },
+/**
+ * A product's logos: the one every asset needs, and two it can do without.
+ * Anything empty falls back to the workspace kit.
+ */
+const PRODUCT_SLOTS: LogoSlot[] = ["lockup-light", "favicon", "animated"];
+const PRODUCT_SLOT_COPY: Partial<
+  Record<LogoSlot, { label?: string; hint?: string; priority?: "primary" | "optional" }>
+> = {
+  "lockup-light": { label: "Logo", hint: "Every asset: documents, leave-behinds, video", priority: "primary" },
+  favicon: { label: "Favicon / logomark", hint: "Corners, watermarks, shared links", priority: "optional" },
+  animated: { label: "Animated brand logo", hint: "Intro and outro stings in video", priority: "optional" },
 };
 
+/** Two typefaces and two colours: what one brand needs, without a system's worth of roles. */
+const PRODUCT_TYPEFACES = 2;
+const PRODUCT_COLOR_ROLES = [
+  { id: "primary" as const, label: "Primary", trailing: "Headlines, buttons, the brand mark" },
+  { id: "accent" as const, label: "Secondary", trailing: "Highlights and supporting emphasis" },
+];
+
 /**
- * Where a product's kit starts: its own lockups, the workspace typefaces, and
- * a palette led by the colours of its own artwork. The logomark and the
- * animated logo start empty, so the page shows from the first look what a kit
- * with a gap looks like.
+ * Where a product's kit starts: its own logo, the workspace's first two
+ * typefaces, and a palette taken from its own artwork. The optional logos
+ * start empty, so the page shows from the first look what a gap looks like.
  */
 function seedKit(product: LibraryProduct, workspace: BrandKit): BrandKit {
   const slug = product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const hexes = product.gradient.match(/#[0-9a-f]{6}/gi) ?? [];
   return {
     logos: {
-      "lockup-light": { fileName: `${slug}-lockup-light.svg`, size: "22 KB" },
-      "lockup-dark": { fileName: `${slug}-lockup-dark.svg`, size: "22 KB" },
+      "lockup-light": { fileName: `${slug}-logo.svg`, size: "22 KB" },
     },
-    typefaces: workspace.typefaces.map((t) => ({ ...t })),
+    typefaces: workspace.typefaces.slice(0, PRODUCT_TYPEFACES).map((t) => ({ ...t })),
     colors: {
       ...workspace.colors,
       primary: hexes[0] ?? workspace.colors.primary,
@@ -61,9 +70,12 @@ export function ProductBrandKit({ product }: { product: LibraryProduct }) {
         onChange={setKit}
         slots={PRODUCT_SLOTS}
         slotCopy={PRODUCT_SLOT_COPY}
+        maxTypefaces={PRODUCT_TYPEFACES}
+        colorRoles={PRODUCT_COLOR_ROLES}
         copy={{
-          logos: `${product.name}'s logos, each previewed on the ground it is used against.`,
-          palette: `Four roles, named for where each colour lands in ${product.name}'s assets. Contrast is checked against both grounds.`,
+          logos: `${product.name}'s logo, and two optional versions of it. Each previews on the ground it is used against.`,
+          typography: "Two roles. First is primary, second secondary. Drag to swap them.",
+          palette: `Two colours, named for where each lands in ${product.name}'s assets. Contrast is checked against both grounds.`,
         }}
       />
 
