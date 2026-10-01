@@ -13,7 +13,6 @@ import {
   PanelRight,
   Pencil,
   Plus,
-  Send,
   Share2,
   ShieldCheck,
   Expand,
@@ -25,6 +24,7 @@ import {
   MessageSquareQuote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChatComposer, ComposerAttachButton } from "@/components/patterns/chat-composer";
 import {
   CommentsModal,
   ElementActionBar,
@@ -295,6 +295,16 @@ const DEFAULT_PAGE_2: InfographicPageData = {
   },
 };
 
+/** The most pages a document can be planned at — the plan screen's ceiling too. */
+const MAX_PAGES = 12;
+
+/** Page n, after the first: the evidence layout, numbered and named for its place. */
+function evidencePage(n: number): InfographicPageData {
+  return n === 2
+    ? DEFAULT_PAGE_2
+    : { ...DEFAULT_PAGE_2, id: n, name: `Page ${n}: Clinical Evidence & Tolerability` };
+}
+
 export function InfographicStudioScreen() {
   const router = useRouter();
   const exit = useProjectExit();
@@ -464,10 +474,15 @@ export function InfographicStudioScreen() {
   const creditBudget = pagesList.length * 300;
   const activePageId = infographicActivePage || 1;
 
-  // Sync with store pages
+  /* As many pages as the plan asked for, one to twelve. The first is the
+     summary; every page after it starts from the evidence layout. */
   useEffect(() => {
-    if (infographicPages === "2" && pagesList.length === 1) {
-      setPagesList([DEFAULT_PAGE_1, DEFAULT_PAGE_2]);
+    const planned = Math.min(MAX_PAGES, Math.max(1, Number(infographicPages) || 1));
+    if (planned > pagesList.length) {
+      setPagesList((prev) => [
+        ...prev,
+        ...Array.from({ length: planned - prev.length }, (_, i) => evidencePage(prev.length + i + 1)),
+      ]);
     }
   }, [infographicPages, pagesList.length]);
 
@@ -543,16 +558,12 @@ export function InfographicStudioScreen() {
 
   // Add Page Handler
   const handleAddPage = () => {
-    if (pagesList.length >= 3) {
-      showToast("Maximum 3 pages supported for this archetype");
+    if (pagesList.length >= MAX_PAGES) {
+      showToast(`A document runs to ${MAX_PAGES} pages at most`);
       return;
     }
     const newPageNum = pagesList.length + 1;
-    const newPage: InfographicPageData = {
-      ...DEFAULT_PAGE_2,
-      id: newPageNum,
-      name: `Page ${newPageNum}: Clinical Evidence & Tolerability`,
-    };
+    const newPage = evidencePage(newPageNum);
     setPagesList((prev) => [...prev, newPage]);
     // A page added after the quote is work that was not quoted for.
     setCreditsUsed((prev) => prev + 300);
@@ -1060,7 +1071,7 @@ export function InfographicStudioScreen() {
                 <VersionChip versions={assetVersions} />
               </div>
               <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
-                Saved just now · Canvas Studio · {pagesList.length} {pagesList.length === 1 ? "Page" : "Pages"} ({pageGeometry.label})
+                Saved just now · {pagesList.length} {pagesList.length === 1 ? "page" : "pages"} ({pageGeometry.label})
               </div>
             </div>
 
@@ -1771,38 +1782,20 @@ export function InfographicStudioScreen() {
                       of you while you work. */}
                   {studioMode === "editor" && <SuggestionChecklist items={suggestionQueue.drafts} onSend={sendSuggestions} />}
 
-                  <ChatAttachmentRow attachments={chatFiles} />
-                  <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
-                    {/* The + attaches a file, the same as every other chat
-                        input. It was a drawn icon that did nothing. */}
-                    <button
-                      type="button"
-                      onClick={chatFiles.open}
-                      className="grid size-5 shrink-0 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
-                      title="Attach a file"
-                      aria-label="Attach a file"
-                    >
-                      <Plus className="size-3.5" />
-                    </button>
-                    <input
-                      type="text"
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSendMessage();
-                      }}
-                      placeholder="Ask SwishX to rephrase, highlight endpoints..."
-                      className="flex-1 bg-transparent text-body outline-none text-ink placeholder:text-ink-3"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleSendMessage()}
-                      disabled={!chatInput.trim()}
-                      className="grid size-6 place-items-center rounded-chip bg-brand text-white disabled:opacity-30 hover:bg-brand-deep transition cursor-pointer disabled:cursor-not-allowed shrink-0"
-                    >
-                      <Send className="size-3" />
-                    </button>
-                  </div>
+                  {/* The same composer as every other chat in the product. */}
+                  <ChatComposer
+                    value={chatInput}
+                    onChange={setChatInput}
+                    onSubmit={() => handleSendMessage()}
+                    placeholder={
+                      studioMode === "review"
+                        ? "Ask SwishX or type 'Add comment on the hero stat that...'..."
+                        : "Ask SwishX to rephrase, highlight endpoints..."
+                    }
+                    attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
+                  >
+                    <ChatAttachmentRow attachments={chatFiles} />
+                  </ChatComposer>
                 </div>
               </div>
             )}

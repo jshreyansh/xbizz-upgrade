@@ -36,8 +36,8 @@ import {
   Target,
   Upload,
   Users,
-  Volume2,
   X,
+  Stethoscope,
 } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -46,7 +46,7 @@ import { SwishXMark } from "@/components/ui/swishx-mark";
 import { AudienceIcon } from "@/components/ui/select-icons";
 // Destinations (parked): import { ChannelIcon } from "@/components/ui/select-icons";
 import { deriveContentPlan, isRequestSpecific } from "@/features/workspace/content-plan";
-import { displayIntendedUses } from "@/features/workspace/intended-use";
+// Destinations (parked): import { displayIntendedUses } from "@/features/workspace/intended-use";
 // Destinations (parked): import { parseIntendedUses, serializeIntendedUses } from "@/features/workspace/intended-use";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -63,6 +63,17 @@ import { moleculeFor } from "@/features/workspace/grounding-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { ResearchSourcesContent, researchSummary, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { PRESENTERS as presenters } from "@/features/workspace/presenters";
+import {
+  AUDIENCE_OPTIONS,
+  BrandMarkContent,
+  ChipChoices,
+  ChoiceGroup,
+  DecisionRow,
+  FormatChoices,
+  FrameGlyph,
+  HCP_SPECIALITIES,
+  specialityLabel,
+} from "@/features/workspace/plan-decisions";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
 import {
   AssetStrip,
@@ -120,7 +131,6 @@ const SECTION_TITLES: Record<PlanSectionId, string> = {
   story: "Story structure",
 };
 
-const audienceOptions: Audience[] = ["HCP", "Patient", "Field team", "Hospital", "Distributor", "Consumer"];
 // Destinations (parked): const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
 const topics = ["Product introduction", "Mechanism", "Pivotal evidence", "Dosing & safety", "Patient impact"];
 
@@ -317,7 +327,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   /* Above the early return, unlike most of this file's hooks — a new one
      added below it would be a new instance of the bug, not a continuation of
      the old one. */
-  const logoUploadRef = useRef<HTMLInputElement>(null);
   const scriptBuildStepList = useMemo(() => scriptBuildSteps(5), []);
   /* The intake conversation. Above the early return with the rest of the
      hoisted hooks — a hook added below it would be a new instance of that
@@ -432,6 +441,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setLanguage,
     setPresentationMode,
     setPlanChoices,
+    specialities,
+    setSpecialities,
     setVoice,
     setMusic,
     toggleSource,
@@ -449,7 +460,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     setCopilotPanelOpen,
     toggleCopilotPanel,
     logoMark,
-    setLogoMark,
   } = useWorkspaceStore();
 
   // Keyboard shortcut: ⌘\ or Ctrl+\ to toggle right panel
@@ -1663,104 +1673,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     onToggle={() => setOpenSection(openSection === "logo" ? null : "logo")}
                   >
                     <div className="space-y-4">
-                      {/* The artwork, and the one thing you can do to it */}
-                      <div className="flex flex-wrap items-center gap-3 rounded-control border border-hair bg-subtle p-3">
-                        <span className="grid h-11 w-[112px] shrink-0 place-items-center rounded-control border border-hair-2 bg-card">
-                          <span className="inline-flex items-center gap-1.5">
-                            <span aria-hidden className="size-4 rounded-[3px] bg-[linear-gradient(135deg,#fd4816_0%,#b82f0c_100%)]" />
-                            <span className="text-body font-[850] tracking-tight text-ink">Meridian</span>
-                          </span>
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-body font-bold text-ink">{logoMark.name}</div>
-                          <p className="mt-0.5 text-label text-ink-3">
-                            {logoMark.source === "brand-kit"
-                              ? "Pulled from your brand kit. Size and clear space follow the kit's rule, shown, not set."
-                              : "Uploaded for this project. Check it against the brand kit before publishing."}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => logoUploadRef.current?.click()}
-                          className="focus-ring shrink-0 cursor-pointer rounded-chip border border-hair-2 bg-card px-3 py-1.5 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand"
-                        >
-                          Replace
-                        </button>
-                        {logoMark.source === "custom" && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setLogoMark({ source: "brand-kit", name: "Meridian Therapeutics · primary mark" })
-                            }
-                            className="shrink-0 cursor-pointer text-label font-bold text-brand hover:underline"
-                          >
-                            Use brand kit
-                          </button>
-                        )}
-                        <input
-                          ref={logoUploadRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            setLogoMark({ source: "custom", name: file.name });
-                            e.target.value = "";
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <div className="mb-1 text-label font-extrabold uppercase tracking-wider text-brand-deep">
-                          Placement
-                        </div>
-                        <p className="mb-2 text-body text-ink-2">
-                          Every scene keeps this corner clear, and the mark is placed into it. Nothing else is
-                          laid out there, so the logo can never end up over a claim or its citation.
-                        </p>
-                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                          {LOGO_CORNERS.map((corner) => {
-                            const active = logoMark.position === corner.id;
-                            return (
-                              <button
-                                key={corner.id}
-                                type="button"
-                                onClick={() => setLogoMark({ position: corner.id })}
-                                className={cn(
-                                  "flex cursor-pointer items-start gap-2 rounded-control border p-2.5 text-left transition",
-                                  active
-                                    ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
-                                    : "border-hair-2 bg-card hover:border-hair-3"
-                                )}
-                              >
-                                {/* A frame with the mark in the corner it means */}
-                                <span className="relative mt-0.5 h-8 w-[52px] shrink-0 overflow-hidden rounded-[4px] border border-hair-2 bg-[#101826]">
-                                  {corner.id !== "none" && (
-                                    <span
-                                      aria-hidden
-                                      className={cn(
-                                        "absolute h-1.5 w-4 rounded-[2px] bg-white/85",
-                                        corner.id === "top-left" && "left-1 top-1",
-                                        corner.id === "top-right" && "right-1 top-1",
-                                        corner.id === "bottom-left" && "bottom-1 left-1",
-                                        corner.id === "bottom-right" && "bottom-1 right-1"
-                                      )}
-                                    />
-                                  )}
-                                </span>
-                                <span className="min-w-0">
-                                  <span className="block text-body font-bold text-ink">{corner.label}</span>
-                                  <span className="mt-0.5 block text-label leading-snug text-ink-3">
-                                    {corner.hint}
-                                  </span>
-                                </span>
-                                {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <BrandMarkContent unit="scene" />
 
                       <PlanSectionContinue onClick={() => advanceFrom("logo")} />
                     </div>
@@ -2017,7 +1930,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   <PlanSection
                     icon={Target}
                     title="Message and audience"
-                    summary={`${audience} · ${goal} · ${selectedTopics.length} topics`}
+                    summary={`${audience}${audience === "HCP" && specialities.length > 0 ? ` · ${specialityLabel(specialities)}` : ""} · ${selectedTopics.length} topics`}
                     state={planState(sectionNeedsYou("message"))}
                     source="from brief"
                     open={openSection === "message"}
@@ -2038,29 +1951,36 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                             setAudience(next as Audience);
                             setEditingDecision(null);
                           }}
-                          options={audienceOptions}
+                          options={AUDIENCE_OPTIONS}
                           icon={(next) => <AudienceIcon value={next} />}
                         />
                       </DecisionRow>
-                      <DecisionRow
-                        label="Objective"
-                        value={goal}
-                        icon={<Target className="size-4" />}
-                        editing={editingDecision === "objective"}
-                        onEdit={() => setEditingDecision(editingDecision === "objective" ? null : "objective")}
-                      >
-                        <ChoiceGroup
-                          label="What should this accomplish?"
-                          value={goal}
-                          onChange={(next) => {
-                            setGoal(next);
-                            setStoreGoal(next);
-                            setEditingDecision(null);
-                          }}
-                          options={["New launch", "Awareness", "Adoption", "Retention", "Education"]}
-                          icon={() => <Target className="size-4" />}
-                        />
-                      </DecisionRow>
+                      {/* The speciality only narrows an HCP asset; for anyone
+                          else there is nothing to narrow, so the row is not asked. */}
+                      {audience === "HCP" && (
+                        <DecisionRow
+                          label="Specialty"
+                          value={specialityLabel(specialities)}
+                          icon={<Stethoscope className="size-4" />}
+                          editing={editingDecision === "specialty"}
+                          onEdit={() => setEditingDecision(editingDecision === "specialty" ? null : "specialty")}
+                        >
+                          <ChipChoices
+                            label="Narrow to a specialty (optional)"
+                            options={HCP_SPECIALITIES}
+                            values={specialities}
+                            onToggle={(spec) =>
+                              setSpecialities(
+                                specialities.includes(spec)
+                                  ? specialities.filter((x) => x !== spec)
+                                  : [...specialities, spec]
+                              )
+                            }
+                            onDone={() => setEditingDecision(null)}
+                            footnote="Decides which endpoints and terms count as key messages."
+                          />
+                        </DecisionRow>
+                      )}
                       <DecisionRow
                         label="Topics"
                         value={selectedTopics.join(" · ")}
@@ -2101,7 +2021,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   <PlanSection
                     icon={MonitorPlay}
                     title="Delivery & Cost"
-                    summary={`${displayIntendedUses(intendedUse)} · ${effectiveFormat} · ${duration} · ${selectedQuality === "cinematic" ? "Cinematic" : "HD"} (⚡ ${estimatedCredits.toLocaleString()} credits)`}
+                    summary={`${effectiveFormat} · ${duration} · ${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}`}
                     state={planState(sectionNeedsYou("delivery"))}
                     source={`${estimatedCredits.toLocaleString()} credits`}
                     open={openSection === "delivery"}
@@ -2845,111 +2765,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 /** The shared shell, under the name this file has always called it. */
 const PlanSection = PlanSectionShell;
 
-function DecisionRow({
-  label,
-  value,
-  icon,
-  editing,
-  onEdit,
-  onPreview,
-  playing = false,
-  children,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  editing: boolean;
-  onEdit: () => void;
-  onPreview?: () => void;
-  playing?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "squircle-panel overflow-hidden border transition-[opacity,border-color,box-shadow,background-color] duration-300 ease-entrance rounded-control",
-        editing
-          ? "border-hair-3 bg-[#fbfdfc] opacity-100 shadow-soft"
-          : "border-hair bg-card opacity-75 hover:opacity-100"
-      )}
-    >
-      <div className="flex min-h-[58px] items-center gap-3 px-3.5">
-        <span className="squircle-control grid size-8 shrink-0 place-items-center rounded-chip bg-[#edf3ef] text-brand">
-          {icon}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-label font-medium text-ink-3">{label}</span>
-          <span className="mt-0.5 block truncate text-body-lg font-medium">{value}</span>
-        </span>
-        <div className="flex items-center gap-1.5">
-          {onPreview && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onPreview}
-              className={cn("size-8 p-0 rounded-full", playing && "text-brand")}
-              aria-label="Preview sound"
-            >
-              {playing ? <Pause className="size-4" /> : <Volume2 className="size-4" />}
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onEdit}
-            className="text-body font-semibold text-brand"
-          >
-            {editing ? "Close" : "Change"}
-          </Button>
-        </div>
-      </div>
-      {editing && <div className="border-t border-hair bg-card p-3.5">{children}</div>}
-    </div>
-  );
-}
-
-function ChoiceGroup({
-  label,
-  value,
-  options,
-  onChange,
-  icon,
-  className,
-}: {
-  label: string;
-  value: string;
-  options: readonly string[];
-  onChange: (value: string) => void;
-  icon: (value: string) => React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <div className="text-body-lg font-semibold text-ink-3">{label}</div>
-      <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
-        {options.map((option) => {
-          const active = value === option;
-          return (
-            <button
-              key={option}
-              type="button"
-              onClick={() => onChange(option)}
-              className={cn(
-                "focus-ring flex min-h-[50px] items-center gap-2.5 rounded-control border p-2.5 text-left text-body-lg font-medium transition cursor-pointer",
-                active ? "border-hair-3 bg-subtle text-brand font-semibold shadow-2xs" : "border-hair-2 hover:border-hair-3"
-              )}
-            >
-              <span className="grid size-6 place-items-center text-current">{icon(option)}</span>
-              <span className="flex-1">{option}</span>
-              {active && <Check className="size-3.5 text-brand shrink-0" strokeWidth={3} />}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 /* Destinations (parked): the only caller is the commented-out Destinations
    row in Delivery & Cost. It comes back with that row.
 function MultiChoiceGroup({
@@ -3000,49 +2815,6 @@ function MultiChoiceGroup({
   );
 }
 */
-
-function FormatChoices({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: readonly string[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div>
-      <div className="text-body-lg font-semibold text-ink-3">{label}</div>
-      <div className="mt-2.5 grid gap-2 sm:grid-cols-3">
-        {options.map((option) => {
-          const active = value === option;
-          return (
-            <button
-              key={option}
-              type="button"
-              onClick={() => onChange(option)}
-              className={cn(
-                "focus-ring flex flex-col items-center justify-center gap-1.5 rounded-control border py-3 px-2 text-center text-body-lg font-medium transition cursor-pointer",
-                active ? "border-hair-3 bg-subtle text-brand font-bold shadow-2xs" : "border-hair-2 hover:border-hair-3"
-              )}
-            >
-              <FrameGlyph value={option} />
-              <span>{option}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function FrameGlyph({ value }: { value: string }) {
-  if (value.includes("9:16") || value.includes("Vertical")) return <span className="inline-block h-5 w-3 rounded-[2px] border-2 border-current" />;
-  if (value.includes("1:1") || value.includes("Square")) return <span className="inline-block size-4 rounded-[2px] border-2 border-current" />;
-  return <span className="inline-block h-3.5 w-5 rounded-[2px] border-2 border-current" />;
-}
 
 function SteppedControl({
   label,

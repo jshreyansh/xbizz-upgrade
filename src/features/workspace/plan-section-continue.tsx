@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
  * confirm button, four had none, and each one decided for itself which section
  * to open next — which is why the flow had dead ends you had to hunt out of.
  * Sections advance through one ordered `advance()`; this is what triggers it.
+ *
+ * Primary, because it is the one thing each open section asks you to do
+ * next. White on a white card it disappeared into the section around it.
  */
 export interface PlanSectionContinueProps {
   onClick: () => void;
@@ -27,7 +30,7 @@ export function PlanSectionContinue({ onClick, label = "Save & Continue", disabl
       {hint && <span className="text-label text-ink-3">{hint}</span>}
       <Button
         size="sm"
-        variant="secondary"
+        variant="primary"
         onClick={onClick}
         disabled={disabled}
         className="text-body font-bold gap-1 cursor-pointer"

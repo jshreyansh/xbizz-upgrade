@@ -26,6 +26,8 @@ interface WorkspaceState {
   /** Suggested from the opening choices, editable in the modal header. */
   projectName: string;
   audience: Audience;
+  /** HCP specialities the asset narrows to. Empty means any. */
+  specialities: string[];
   goal: string;
   topics: string[];
   /** Which presentations of the brand this project covers. Empty means all. */
@@ -113,6 +115,7 @@ interface WorkspaceState {
   setBrief: (brief: string) => void;
   setProjectName: (projectName: string) => void;
   setAudience: (audience: Audience) => void;
+  setSpecialities: (specialities: string[]) => void;
   setGoal: (goal: string) => void;
   setTopics: (topics: string[]) => void;
   toggleTopic: (topic: string) => void;
@@ -167,6 +170,7 @@ const initialState = {
   projectName: "",
   brief: "Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for DERMORA.",
   audience: "" as Audience,
+  specialities: [] as string[],
   goal: "",
   topics: [] as string[],
   variations: [] as string[],
@@ -243,6 +247,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setBrief: (brief) => set({ brief }),
   setProjectName: (projectName) => set({ projectName }),
   setAudience: (audience) => set({ audience }),
+  setSpecialities: (specialities) => set({ specialities }),
   setGoal: (goal) => set({ goal }),
   setTopics: (topics) => set({ topics }),
   toggleTopic: (topic) =>

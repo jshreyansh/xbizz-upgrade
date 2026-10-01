@@ -66,7 +66,7 @@ export function buildIntakeQuestions(
       {
         id: "pages",
         kind: "pages",
-        prompt: "How many pages should this run to? One page holds a single figure well; two or three give room for evidence and safety.",
+        prompt: "How many pages should this run to, anywhere from one to twelve? One page holds a single figure well; more give room for evidence, safety and a page per message.",
       },
       {
         id: "shape",
@@ -134,10 +134,14 @@ function seconds(text: string): number {
   return 60;
 }
 
-const WORD_NUMBERS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4 };
+const WORD_NUMBERS: Record<string, number> = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6,
+  seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12,
+};
 
 function pageCount(text: string): number {
-  const digit = text.match(/\b([1-6])\b/);
+  /* One to twelve — the same ceiling as the plan's Pages row. */
+  const digit = text.match(/\b(1[0-2]|[1-9])\b/);
   if (digit) return parseInt(digit[1], 10);
   const word = Object.keys(WORD_NUMBERS).find((w) => new RegExp(`\\b${w}\\b`, "i").test(text));
   if (word) return WORD_NUMBERS[word];

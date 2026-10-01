@@ -11,9 +11,9 @@ import {
   X,
   FileText,
   Loader2,
-  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { cn } from "@/lib/cn";
 import { FileNoteDialog, type PendingFile } from "@/features/workspace/file-note-dialog";
 import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
@@ -490,18 +490,7 @@ export function ResearchSourcesContent({
         />
       )}
 
-      {/* Continue action */}
-      <div className="flex justify-end pt-0.5">
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={onContinue}
-          className="text-body font-bold gap-1 cursor-pointer"
-        >
-          <span>Save &amp; Continue</span>
-          <ArrowRight className="size-3" />
-        </Button>
-      </div>
+      <PlanSectionContinue onClick={onContinue} />
     </div>
   );
 }

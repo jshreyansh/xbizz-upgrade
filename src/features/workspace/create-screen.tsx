@@ -11,7 +11,6 @@ import {
   Image as ImageIcon,
   Info,
   Layers,
-  MoreHorizontal,
   Paperclip,
   Search,
   ShieldCheck,
@@ -418,9 +417,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <span>Sample Briefs</span>
           </Button>
 
-          <Button variant="ghost" size="icon" aria-label="More">
-            <MoreHorizontal className="size-4" />
-          </Button>
         </div>
       </ScreenHeader>
 

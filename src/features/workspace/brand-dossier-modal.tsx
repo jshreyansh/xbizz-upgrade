@@ -408,6 +408,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setSourcePayload({ dossierId: selectedDiseaseIds.join(",") });
     }
     setAudienceStore(audience);
+    /* Kept, so the plan's Specialty row starts where the modal left it. */
+    useWorkspaceStore.getState().setSpecialities(audience === "HCP" ? selectedSpecialities : []);
     setTopicsStore(selectedTopics);
     // Stored as a concrete list either way, so everything downstream asks
     // about this brand's presentations rather than a generic set.

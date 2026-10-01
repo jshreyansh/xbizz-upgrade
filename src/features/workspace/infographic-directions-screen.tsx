@@ -12,14 +12,17 @@ import {
   Layers,
   LayoutGrid,
   PanelRight,
-  Plus,
-  Send,
   ShieldCheck,
-  Target,
   Palette,
   Users,
+  Stamp,
+  Stethoscope,
+  LayoutList,
+  Languages,
+  Files,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChatComposer, ComposerAttachButton } from "@/components/patterns/chat-composer";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -38,6 +41,23 @@ import { useCreativeSteps } from "@/features/workspace/flow-steps";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
+import {
+  AUDIENCE_OPTIONS as PLAN_AUDIENCES,
+  BrandMarkContent,
+  ChipChoices,
+  ChoiceGroup,
+  CountChoices,
+  DecisionRow,
+  FormatChoices,
+  FrameGlyph,
+  DOC_CREDITS_PER_PAGE,
+  HCP_SPECIALITIES,
+  pageCountLabel,
+  specialityLabel,
+} from "@/features/workspace/plan-decisions";
+import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
+import { AudienceIcon } from "@/components/ui/select-icons";
+import type { Audience } from "@/types/content";
 import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
@@ -69,47 +89,12 @@ import {
 } from "@/features/workspace/plan-intake";
 
 type InfographicSubStep = "brief" | "template";
-type PlanSectionId = "sources" | "treatment" | "audience" | "format" | "design" | "objective" | "assets" | "references";
-
-/** One name per section, so the progress bar and the tiles agree. */
-interface AudienceOption {
-  id: string;
-  title: string;
-  desc: string;
-  whyFits: string;
-}
-
-const AUDIENCE_OPTIONS: AudienceOption[] = [
-  { id: "hcp", title: "Doctor / HCP", desc: "Clinical detail, peer-to-peer tone", whyFits: "Deep mechanistic clarity with primary clinical endpoints & prescribing limits." },
-  { id: "rep", title: "Sales Rep / Medical Rep", desc: "30-sec pitch, objection handling", whyFits: "Rapid 3-point value proposition and head-to-head objection handling." },
-  { id: "patient", title: "Patient", desc: "Plain-language, what to expect", whyFits: "Clear, reassuring everyday language focusing on symptom relief and safety." },
-  { id: "consumer", title: "Consumer", desc: "Benefit-led, everyday language", whyFits: "Accessible benefit-driven narrative without heavy clinical jargon." },
-  { id: "procurement", title: "Hospital Procurement", desc: "Formulary value, evidence, supply & cost", whyFits: "Cost-effectiveness, hospital formulary integration, and supply reliability." },
-  { id: "retailer", title: "Retailer / Stockist", desc: "Demand, margins, stocking decisions", whyFits: "Prescription velocity, stock turn rates, and pharmacy dispensing margins." },
-];
-
-const SPECIALTIES = [
-  "Any specialty",
-  "Dermatology",
-  "Cardiology",
-  "Oncology",
-  "Endocrinology",
-  "Neurology",
-  "Rheumatology",
-  "General Medicine",
-];
+type PlanSectionId = "sources" | "logo" | "treatment" | "audience" | "format" | "design" | "assets" | "references";
 
 const FORMAT_OPTIONS = [
   { id: "16:9", label: "Landscape 16:9", sub: "Screens, laptops, projected", whyFits: "Best for Veeva digital detailers and slide deck presentations." },
   { id: "3:4", label: "Portrait 3:4", sub: "Held upright, and prints well", whyFits: "Ideal for iPad clinical discussions and vertical digital reading." },
   { id: "A4", label: "A4 Document", sub: "Printed and left behind", whyFits: "Standard clinic leave-behind format with high-density evidence layout." },
-];
-
-const OBJECTIVE_OPTIONS = [
-  { id: "awareness", label: "Awareness", desc: "They may not know the problem exists", whyFits: "Highlights disease burden and unmet clinical need in current treatment pathways." },
-  { id: "consideration", label: "Consideration", desc: "They know it and are weighing it up", whyFits: "Compares novel mechanism and Phase III endpoints against current standard of care." },
-  { id: "adoption", label: "Adoption", desc: "They are ready to prescribe or order", whyFits: "Focuses on dosing titration, eGFR cut-offs, and first-line prescription protocols." },
-  { id: "retention", label: "Retention", desc: "They already use it", whyFits: "Reiterates 52-week durable skin clearance and long-term tolerability." },
 ];
 
 const CONTENT_ANGLES = [
@@ -121,19 +106,10 @@ const CONTENT_ANGLES = [
   "Side Effects",
 ];
 
-const LOGO_PLACEMENTS = [
-  { id: "bottom-right", label: "Bottom right", desc: "Beside the job code. The usual place" },
-  { id: "bottom-left", label: "Bottom left", desc: "Footer, leading side" },
-  { id: "top-right", label: "Top right", desc: "Trailing corner, above the content" },
-  { id: "top-left", label: "Top left", desc: "Leading corner, above the content" },
-  { id: "none", label: "No logo", desc: "Leave every page unbranded" },
-];
-
-
-
-
-
-
+const LANGUAGES = ["English", "Hindi", "Spanish", "French"];
+/** A document runs one to twelve pages; the editor builds as many as are planned. */
+const MAX_PAGES = 12;
+const CREDITS_PER_PAGE = DOC_CREDITS_PER_PAGE;
 
 /* Nothing has been published yet on the way in, so the trail is one entry. */
 const DRAFT_ONLY: AssetVersion[] = [
@@ -147,7 +123,6 @@ export function InfographicDirectionsScreen() {
     pageShape,
     infographicPages,
     infographicTemplate,
-    infographicLogoPlacement,
     sourcePayload,
     chatMessages,
     setChatMessages,
@@ -156,7 +131,11 @@ export function InfographicDirectionsScreen() {
     setPageShape,
     setInfographicPages,
     setInfographicTemplate,
-    setInfographicLogoPlacement,
+    specialities,
+    setSpecialities,
+    language,
+    setLanguage,
+    logoMark,
     setBrief,
     setMarket,
     setIntendedUse,
@@ -220,7 +199,8 @@ export function InfographicDirectionsScreen() {
   /* No "design" here: the layout archetype became its own step, because it
      decides the page's whole composition and because the twelve hundred
      variants behind the five families need room the accordion never had. */
-  const sectionOrder: PlanSectionId[] = ["sources", "format", "audience", "objective", "assets", "references"];
+  /* The video plan's order, so the two read the same way down. */
+  const sectionOrder: PlanSectionId[] = ["sources", "logo", "assets", "references", "audience", "format"];
 
   const advanceFrom = (section: PlanSectionId) => {
     // Working a section through is what confirms it; the status then reads as
@@ -386,10 +366,10 @@ export function InfographicDirectionsScreen() {
 
 
   // Local state for brief questions
-  const [selectedAudienceId, setSelectedAudienceId] = useState<string>(audience === "Patient" ? "patient" : audience === "Consumer" ? "consumer" : "hcp");
-  const [specialty, setSpecialty] = useState<string>("Dermatology");
-  const [language, setLanguage] = useState<string>("English");
-  const [objective, setObjective] = useState<string>("adoption");
+  /** The one decision row open at a time, as in the video plan. */
+  const [editingDecision, setEditingDecision] = useState<string | null>(null);
+  const formatLabel = FORMAT_OPTIONS.find((f) => f.id === pageShape)?.label ?? "Portrait 3:4";
+  const pageCount = Math.min(MAX_PAGES, Math.max(1, Number(infographicPages) || 1));
   const [selectedAngles, setSelectedAngles] = useState<string[]>(["Product Introduction", "Mechanism of Action", "Indications"]);
   /** Reference material: how it should look, not what it may say. */
   const [referenceList, setReferenceList] = useState<
@@ -675,7 +655,7 @@ export function InfographicDirectionsScreen() {
               <VersionChip versions={DRAFT_ONLY} />
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
-              Saved just now · Canvas Studio · MLR Ready
+              Saved just now · MLR Ready
             </div>
           </div>
 
@@ -819,305 +799,35 @@ export function InfographicDirectionsScreen() {
                     />
                   </CreativePlanSection>
 
-                  {/* 2. Format & Page Shape */}
+                  {/* Brand mark — one corner, every page. Its own section, as
+                      in the video plan, rather than tucked into the visuals. */}
                   <CreativePlanSection
-                    icon={LayoutGrid}
-                    title="Format & Page shape"
-                    summary={`${FORMAT_OPTIONS.find((f) => f.id === pageShape)?.label || "Portrait 3:4"}`}
-                    state={planState(sectionNeedsYou("format"), sectionOptional("format"))}
-                    source="from brief"
-                    open={openSection === "format"}
-                    onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
+                    icon={Stamp}
+                    title="Brand mark"
+                    summary={
+                      logoMark.position === "none"
+                        ? "No logo. The asset ships unbranded"
+                        : `${LOGO_CORNERS.find((c) => c.id === logoMark.position)?.label} · ${logoMark.name}`
+                    }
+                    state={planState(sectionNeedsYou("logo"), sectionOptional("logo"))}
+                    source={logoMark.source === "brand-kit" ? "from brand kit" : "replaced"}
+                    open={openSection === "logo"}
+                    onToggle={() => setOpenSection(openSection === "logo" ? null : "logo")}
                   >
-                    <div className="space-y-4">
-                      <div className="rounded-control bg-subtle p-3 border border-hair">
-                        <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
-                          Why this fits
-                        </div>
-                        <p className="text-body text-ink-2">
-                          {FORMAT_OPTIONS.find((f) => f.id === pageShape)?.whyFits || "Ideal for iPad clinical discussions and vertical digital reading."}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {FORMAT_OPTIONS.map((fmt) => {
-                          const isSelected = pageShape === fmt.id;
-                          return (
-                            <button
-                              key={fmt.id}
-                              type="button"
-                              onClick={() => setPageShape(fmt.id as any)}
-                              className={cn(
-                                "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[85px]",
-                                isSelected
-                                  ? "border-brand bg-card text-ink shadow-xs ring-2 ring-brand/15"
-                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                              )}
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="font-bold text-body-lg">{fmt.label}</div>
-                                <div
-                                  className={cn(
-                                    "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
-                                    isSelected
-                                      ? "border-brand bg-brand text-white"
-                                      : "border-hair-3"
-                                  )}
-                                >
-                                  {isSelected && <Check className="size-2.5 stroke-[3]" />}
-                                </div>
-                              </div>
-                              <div className="text-label text-ink-3 mt-1">{fmt.sub}</div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <PlanSectionContinue onClick={() => advanceFrom("format")} />
-                  </CreativePlanSection>
-
-                  {/* 2. Message and Audience */}
-                  <CreativePlanSection
-                    icon={Users}
-                    title="Message and audience"
-                    summary={`${AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.title || "Doctor / HCP"} · ${specialty} · ${language}`}
-                    state={planState(sectionNeedsYou("audience"), sectionOptional("audience"))}
-                    source="from brief"
-                    open={openSection === "audience"}
-                    onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
-                  >
-                    <div className="space-y-4">
-                      <div className="rounded-control bg-subtle p-3 border border-hair">
-                        <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
-                          Why this fits
-                        </div>
-                        <p className="text-body text-ink-2">
-                          {AUDIENCE_OPTIONS.find((a) => a.id === selectedAudienceId)?.whyFits || "Deep mechanistic clarity with primary clinical endpoints & prescribing limits."}
-                        </p>
-                      </div>
-
-                      <div>
-                        <div className="text-body-lg font-bold text-ink mb-2.5">Who is this for?</div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                          {AUDIENCE_OPTIONS.map((opt) => {
-                            const isSelected = selectedAudienceId === opt.id;
-                            return (
-                              <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedAudienceId(opt.id);
-                                  setAudience(opt.title.split("/")[0].trim() as any);
-                                }}
-                                className={cn(
-                                  "relative p-3.5 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[90px]",
-                                  isSelected
-                                    ? "border-brand bg-card text-ink shadow-xs ring-2 ring-brand/15"
-                                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                                )}
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="font-bold text-body-lg text-ink">{opt.title}</div>
-                                  <div
-                                    className={cn(
-                                      "size-4.5 rounded-full border-2 grid place-items-center shrink-0 mt-0.5",
-                                      isSelected
-                                        ? "border-brand bg-brand text-white"
-                                        : "border-hair-3"
-                                    )}
-                                  >
-                                    {isSelected && <Check className="size-2.5 stroke-[3]" />}
-                                  </div>
-                                </div>
-                                <div className="text-label text-ink-3 mt-1.5 leading-snug">{opt.desc}</div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        <div>
-                          <label className="block text-body font-bold text-ink mb-1">
-                            Specialty (optional)
-                          </label>
-                          <select
-                            value={specialty}
-                            onChange={(e) => setSpecialty(e.target.value)}
-                            className="w-full h-10 rounded-control border border-hair-2 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
-                          >
-                            {SPECIALTIES.map((sp) => (
-                              <option key={sp} value={sp}>
-                                {sp}
-                              </option>
-                            ))}
-                          </select>
-                          <p className="text-caption text-ink-3 mt-1">
-                            Decides which endpoints and terminology count as key messages.
-                          </p>
-                        </div>
-
-                        <div>
-                          <label className="block text-body font-bold text-ink mb-1">Language</label>
-                          <select
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
-                            className="w-full h-10 rounded-control border border-hair-2 bg-subtle px-3 text-body-lg font-semibold text-ink outline-none focus:border-brand"
-                          >
-                            <option value="English">English</option>
-                            <option value="Hindi">Hindi</option>
-                            <option value="Spanish">Spanish</option>
-                            <option value="French">French</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <PlanSectionContinue onClick={() => advanceFrom("audience")} />
-                  </CreativePlanSection>
-
-                  {/* The layout archetype used to sit here. It became its own
-                      step: it decides the page's whole composition, and the
-                      twelve hundred variants behind the five families need
-                      room an accordion never had. */}
-                  {/* 4. What should this deck achieve? (Objective & Angle) */}
-                  <CreativePlanSection
-                    icon={Target}
-                    title="What should this deck achieve? (Objective & Angle)"
-                    summary={`${OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.label || "Adoption"} · ${selectedAngles.length} topics`}
-                    state={planState(sectionNeedsYou("objective"), sectionOptional("objective"))}
-                    source="recommended"
-                    open={openSection === "objective"}
-                    onToggle={() => setOpenSection(openSection === "objective" ? null : "objective")}
-                  >
-                    <div className="space-y-4">
-                      <div className="rounded-control bg-subtle p-3 border border-hair">
-                        <div className="text-label font-extrabold uppercase tracking-wider text-brand-deep mb-0.5">
-                          Why this fits
-                        </div>
-                        <p className="text-body text-ink-2">
-                          {OBJECTIVE_OPTIONS.find((o) => o.id === objective)?.whyFits || "Focuses on dosing titration, eGFR cut-offs, and first-line prescription protocols."}
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-body font-bold text-ink mb-1.5">
-                          Campaign Objective
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
-                          {OBJECTIVE_OPTIONS.map((obj) => {
-                            const isSelected = objective === obj.id;
-                            return (
-                              <button
-                                key={obj.id}
-                                type="button"
-                                onClick={() => setObjective(obj.id)}
-                                className={cn(
-                                  "relative p-3 rounded-control border text-left transition-all duration-200 cursor-pointer flex flex-col justify-between min-h-[80px]",
-                                  isSelected
-                                    ? "border-brand bg-card text-ink shadow-xs ring-2 ring-brand/15"
-                                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                                )}
-                              >
-                                <div className="flex items-start justify-between">
-                                  <div className="font-bold text-body-lg">{obj.label}</div>
-                                  <div
-                                    className={cn(
-                                      "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
-                                      isSelected
-                                        ? "border-brand bg-brand text-white"
-                                        : "border-hair-3"
-                                    )}
-                                  >
-                                    {isSelected && <Check className="size-2.5 stroke-[3]" />}
-                                  </div>
-                                </div>
-                                <div className="text-caption text-ink-3 mt-1 leading-tight">{obj.desc}</div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-body font-bold text-ink mb-1.5">
-                          Content Angles (Select topics to prioritize)
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                          {CONTENT_ANGLES.map((ang) => {
-                            const isSelected = selectedAngles.includes(ang);
-                            return (
-                              <button
-                                key={ang}
-                                type="button"
-                                onClick={() => toggleAngle(ang)}
-                                className={cn(
-                                  "px-3.5 py-1.5 rounded-control border text-body font-bold transition cursor-pointer flex items-center gap-1.5",
-                                  isSelected
-                                    ? "bg-brand text-white border-brand shadow-2xs hover:bg-brand-deep"
-                                    : "bg-card text-ink-2 border-hair-2 hover:border-hair-3 hover:bg-canvas"
-                                )}
-                              >
-                                {isSelected && <Check className="size-3 stroke-[3]" />}
-                                <span>{ang}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                    <PlanSectionContinue onClick={() => advanceFrom("objective")} />
+                    <BrandMarkContent unit="page" />
+                    <PlanSectionContinue onClick={() => advanceFrom("logo")} />
                   </CreativePlanSection>
 
                   {/* 5. Product & Brand Visual Assets */}
                   <CreativePlanSection
                     icon={ImageIcon}
                     title="Product & Device Visual Assets"
-                    summary={`${LOGO_PLACEMENTS.find((l) => l.id === infographicLogoPlacement)?.label || "Bottom right"} · ${infographicPages === "2" ? "2 pages" : "1 page"}`}
+                    summary={packshots.length > 0 ? `${packshots.length} packshot${packshots.length === 1 ? "" : "s"} attached` : "Packshots and device media"}
                     state={planState(sectionNeedsYou("assets"), sectionOptional("assets"))}
                     open={openSection === "assets"}
                     onToggle={() => setOpenSection(openSection === "assets" ? null : "assets")}
                   >
                     <div className="space-y-4">
-                      <div>
-                        <div className="text-body font-bold text-ink mb-1">Logo placement</div>
-                        <p className="text-label text-ink-3 mb-2">
-                          Every page keeps this corner clear, and your approved logo is placed into it after the page is drawn.
-                        </p>
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                          {LOGO_PLACEMENTS.map((lp) => {
-                            const isSelected = infographicLogoPlacement === lp.id;
-                            return (
-                              <button
-                                key={lp.id}
-                                type="button"
-                                onClick={() => setInfographicLogoPlacement(lp.id as any)}
-                                className={cn(
-                                  "p-2.5 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
-                                  isSelected
-                                    ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
-                                    : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                                )}
-                              >
-                                <div className="flex items-start justify-between">
-                                  <div className="font-bold text-body">{lp.label}</div>
-                                  <div
-                                    className={cn(
-                                      "size-4 rounded-full border-2 grid place-items-center shrink-0",
-                                      isSelected
-                                        ? "border-brand bg-brand text-white"
-                                        : "border-hair-3"
-                                    )}
-                                  >
-                                    {isSelected && <Check className="size-2.5 stroke-[3]" />}
-                                  </div>
-                                </div>
-                                <div className="text-micro text-ink-3 mt-0.5 leading-tight">{lp.desc}</div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
                       <div>
                         <div className="text-body font-bold text-ink mb-1">Product packshots (Optional)</div>
                         <MediaAttachmentGrid
@@ -1195,62 +905,6 @@ export function InfographicDirectionsScreen() {
                         })()}
                       </div>
 
-                      <div>
-                        <div className="text-body font-bold text-ink mb-1.5">How many pages?</div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[460px]">
-                          <button
-                            type="button"
-                            onClick={() => setInfographicPages("1")}
-                            className={cn(
-                              "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
-                              infographicPages === "1"
-                                ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
-                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                            )}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="font-bold text-body-lg">One page</div>
-                              <div
-                                className={cn(
-                                  "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
-                                  infographicPages === "1"
-                                    ? "border-brand bg-brand text-white"
-                                    : "border-hair-3"
-                                )}
-                              >
-                                {infographicPages === "1" && <Check className="size-3 stroke-[3]" />}
-                              </div>
-                            </div>
-                            <div className="text-label text-ink-3 mt-0.5">A single concise surface</div>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setInfographicPages("2")}
-                            className={cn(
-                              "p-3 rounded-control border text-left transition cursor-pointer flex flex-col justify-between min-h-[75px]",
-                              infographicPages === "2"
-                                ? "border-brand bg-card text-ink shadow-2xs ring-2 ring-brand/15"
-                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                            )}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="font-bold text-body-lg">Two pages</div>
-                              <div
-                                className={cn(
-                                  "size-4.5 rounded-full border-2 grid place-items-center shrink-0",
-                                  infographicPages === "2"
-                                    ? "border-brand bg-brand text-white"
-                                    : "border-hair-3"
-                                )}
-                              >
-                                {infographicPages === "2" && <Check className="size-3 stroke-[3]" />}
-                              </div>
-                            </div>
-                            <div className="text-label text-ink-3 mt-0.5">A front summary and back evidence spread</div>
-                          </button>
-                        </div>
-                      </div>
                     </div>
                     <PlanSectionContinue onClick={() => advanceFrom("assets")} />
                   </CreativePlanSection>
@@ -1355,6 +1009,148 @@ export function InfographicDirectionsScreen() {
                       label={referenceList.length === 0 ? "Skip & Continue" : "Save & Continue"}
                       onClick={() => advanceFrom("references")}
                     />
+                  </CreativePlanSection>
+
+                  {/* Message and audience — decision rows, closed until
+                      changed, the same as the video plan. */}
+                  <CreativePlanSection
+                    icon={Users}
+                    title="Message and audience"
+                    summary={`${audience || "HCP"}${audience === "HCP" && specialities.length > 0 ? ` · ${specialityLabel(specialities)}` : ""} · ${selectedAngles.length} topics · ${language}`}
+                    state={planState(sectionNeedsYou("audience"), sectionOptional("audience"))}
+                    source="from brief"
+                    open={openSection === "audience"}
+                    onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
+                  >
+                    <div className="space-y-2">
+                      <DecisionRow
+                        label="Audience"
+                        value={audience || "HCP"}
+                        icon={<AudienceIcon value={audience || "HCP"} />}
+                        editing={editingDecision === "audience"}
+                        onEdit={() => setEditingDecision(editingDecision === "audience" ? null : "audience")}
+                      >
+                        <ChoiceGroup
+                          label="Choose the primary audience"
+                          value={audience || "HCP"}
+                          onChange={(next) => {
+                            setAudience(next as Audience);
+                            setEditingDecision(null);
+                          }}
+                          options={PLAN_AUDIENCES}
+                          icon={(next) => <AudienceIcon value={next} />}
+                        />
+                      </DecisionRow>
+                      {(audience || "HCP") === "HCP" && (
+                        <DecisionRow
+                          label="Specialty"
+                          value={specialityLabel(specialities)}
+                          icon={<Stethoscope className="size-4" />}
+                          editing={editingDecision === "specialty"}
+                          onEdit={() => setEditingDecision(editingDecision === "specialty" ? null : "specialty")}
+                        >
+                          <ChipChoices
+                            label="Narrow to a specialty (optional)"
+                            options={HCP_SPECIALITIES}
+                            values={specialities}
+                            onToggle={(spec) =>
+                              setSpecialities(
+                                specialities.includes(spec)
+                                  ? specialities.filter((x) => x !== spec)
+                                  : [...specialities, spec]
+                              )
+                            }
+                            onDone={() => setEditingDecision(null)}
+                            footnote="Decides which endpoints and terms count as key messages."
+                          />
+                        </DecisionRow>
+                      )}
+                      <DecisionRow
+                        label="Topics"
+                        value={selectedAngles.join(" · ") || "None picked"}
+                        icon={<LayoutList className="size-4" />}
+                        editing={editingDecision === "topics"}
+                        onEdit={() => setEditingDecision(editingDecision === "topics" ? null : "topics")}
+                      >
+                        <ChipChoices
+                          label="Include only what matters"
+                          options={CONTENT_ANGLES}
+                          values={selectedAngles}
+                          onToggle={toggleAngle}
+                          onDone={() => setEditingDecision(null)}
+                        />
+                      </DecisionRow>
+                      <DecisionRow
+                        label="Language"
+                        value={language}
+                        icon={<Languages className="size-4" />}
+                        editing={editingDecision === "language"}
+                        onEdit={() => setEditingDecision(editingDecision === "language" ? null : "language")}
+                      >
+                        <ChoiceGroup
+                          label="Write it in"
+                          value={language}
+                          onChange={(next) => {
+                            setLanguage(next);
+                            setEditingDecision(null);
+                          }}
+                          options={LANGUAGES}
+                          icon={() => <Languages className="size-4" />}
+                        />
+                      </DecisionRow>
+                    </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("audience")} />
+                  </CreativePlanSection>
+
+                  {/* Format and pages — the document's shape, together. Page
+                      count used to sit under the visual assets; it is part of
+                      the shape, not something attached to it. */}
+                  <CreativePlanSection
+                    icon={LayoutGrid}
+                    title="Format & pages"
+                    summary={`${formatLabel} · ${pageCountLabel(pageCount)}`}
+                    state={planState(sectionNeedsYou("format"), sectionOptional("format"))}
+                    source="from brief"
+                    open={openSection === "format"}
+                    onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
+                  >
+                    <div className="space-y-2">
+                      <DecisionRow
+                        label="Format"
+                        value={formatLabel}
+                        icon={<FrameGlyph value={formatLabel} />}
+                        editing={editingDecision === "format"}
+                        onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
+                      >
+                        <FormatChoices
+                          label="Choose the page shape"
+                          value={formatLabel}
+                          options={FORMAT_OPTIONS.map((f) => f.label)}
+                          hint={(label) => FORMAT_OPTIONS.find((f) => f.label === label)?.sub}
+                          onChange={(label) => {
+                            const next = FORMAT_OPTIONS.find((f) => f.label === label);
+                            if (next) setPageShape(next.id as never);
+                            setEditingDecision(null);
+                          }}
+                        />
+                      </DecisionRow>
+                      <DecisionRow
+                        label="Pages"
+                        value={pageCountLabel(pageCount)}
+                        icon={<Files className="size-4" />}
+                        editing={editingDecision === "pages"}
+                        onEdit={() => setEditingDecision(editingDecision === "pages" ? null : "pages")}
+                      >
+                        <CountChoices
+                          label="How many pages?"
+                          value={pageCount}
+                          max={MAX_PAGES}
+                          costPerUnit={CREDITS_PER_PAGE}
+                          onChange={(count) => setInfographicPages(String(count))}
+                        />
+                      </DecisionRow>
+                    </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("format")} />
                   </CreativePlanSection>
 
                 </div>
@@ -1504,7 +1300,7 @@ export function InfographicDirectionsScreen() {
                   </div>
                   <div className="min-w-0">
                     <div className="text-label font-bold text-ink truncate">
-                      Ready to generate blueprint
+                      Plan ready
                     </div>
                     <div className="text-micro text-ink-3 truncate">
                       Grounded against 214 approved claims
@@ -1526,41 +1322,17 @@ export function InfographicDirectionsScreen() {
             {/* ── Sub-step 2 Action Bar ── */}
             
 
-            {/* Input Bar */}
-            <div className="relative">
+            {/* The same composer as the video plan: the files on this
+                message above the field, the plus and send under it. */}
+            <ChatComposer
+              value={chatInput}
+              onChange={setChatInput}
+              onSubmit={() => handleSendChat()}
+              placeholder="Ask SwishX or request a change to the plan..."
+              attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
+            >
               <ChatAttachmentRow attachments={chatFiles} />
-              <div className="flex items-center gap-2 rounded-control border border-hair-2 bg-subtle px-3 py-2 focus-within:border-brand focus-within:bg-card focus-within:shadow-xs transition">
-                {/* The + was a drawn icon that did nothing. It attaches a file,
-                    the same as every other chat input. */}
-                <button
-                  type="button"
-                  onClick={chatFiles.open}
-                  className="grid size-5 shrink-0 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 hover:text-ink cursor-pointer"
-                  title="Attach a file"
-                  aria-label="Attach a file"
-                >
-                  <Plus className="size-3.5" />
-                </button>
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleSendChat();
-                  }}
-                  placeholder="Ask or request changes..."
-                  className="flex-1 bg-transparent text-body outline-none text-ink placeholder:text-ink-3"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleSendChat()}
-                  disabled={!chatInput.trim()}
-                  className="grid size-6 place-items-center rounded-chip bg-brand text-white disabled:opacity-30 hover:bg-brand-deep transition cursor-pointer disabled:cursor-not-allowed shrink-0"
-                >
-                  <Send className="size-3" />
-                </button>
-              </div>
-            </div>
+            </ChatComposer>
           </div>
         </>
       }
