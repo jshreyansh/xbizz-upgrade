@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatComposer, ComposerAttachButton } from "@/components/patterns/chat-composer";
+import { ComposerTray } from "@/components/patterns/composer-tray";
 import {
   CommentsModal,
   ElementActionBar,
@@ -51,7 +52,6 @@ import { ClaimsPanel } from "@/features/workspace/claims-panel";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import {
-  SuggestionChecklist,
   listSuggestions,
   useSuggestionQueue,
 } from "@/features/workspace/suggestion-queue";
@@ -335,6 +335,10 @@ export function InfographicStudioScreen() {
 
   /** What the author has asked for and the agent has not done yet. */
   const suggestionQueue = useSuggestionQueue(addChatMessage);
+  /** Elements added to the chat — chips in the composer's tray until sent. */
+  const [chatContexts, setChatContexts] = useState<Array<{ id: string; label: string; detail: string }>>([]);
+  const attachToChat = (ctx: { id: string; label: string; detail: string }) =>
+    setChatContexts((prev) => [...prev.filter((c) => c.id !== ctx.id), ctx]);
 
   // Studio Mode: Editor -> Generating -> Shared Review View
   /* Arriving from the Content Library means the asset is already published:
@@ -612,8 +616,9 @@ export function InfographicStudioScreen() {
     const layer = currentPage.art.find((a) => a.id === id);
     if (!layer) return;
     setActiveTab("assistant");
+    attachToChat({ id: `art-${layer.id}`, label: `Page ${activePageId} · ${layer.label}`, detail: layer.kind === "graph" ? "Chart layer" : layer.kind === "background" ? "Background layer" : "Image layer" });
     setChatInput(`Change the ${layer.label.toLowerCase()} so that `);
-    showToast(`${layer.label} attached to chat`);
+    showToast(`${layer.label} added to the chat`);
   };
 
   const pageGeometry = PAGE_GEOMETRY[pageShape] ?? PAGE_GEOMETRY["3:4"];
@@ -757,17 +762,25 @@ export function InfographicStudioScreen() {
   };
 
   const handleSendMessage = (directText?: string) => {
+    /* Suggestions in the tray go with whatever was typed, as one message —
+       the composer's send is the only send. */
+    if (!directText && suggestionQueue.draftCount > 0 && chatFiles.files.length === 0) {
+      sendSuggestions(chatInput.trim());
+      return;
+    }
     const attached = directText ? [] : chatFiles.take();
     const text = directText || chatInput.trim();
     if (!text && attached.length === 0) return;
 
+    const context = directText ? [] : chatContexts.map((c) => `[Context: ${c.label} - ${c.detail}]`);
     addChatMessage({
       role: "user",
-      text: attached.length
-        ? [text, ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n")
-        : text,
+      text: [...context, text, ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n"),
     });
-    if (!directText) setChatInput("");
+    if (!directText) {
+      setChatInput("");
+      setChatContexts([]);
+    }
 
     /* In the editor there is no source list to file a document into, so the
        question is what the file is FOR rather than where it goes. */
@@ -935,14 +948,17 @@ export function InfographicStudioScreen() {
    * strip empties because the list is in the chat now. The agent asks the one
    * thing it cannot infer once, for the batch, rather than after every note.
    */
-  const sendSuggestions = () => {
+  const sendSuggestions = (note = "") => {
     const batch = suggestionQueue.submit();
     if (batch.length === 0) return;
     setActiveTab("assistant");
+    const context = chatContexts.map((c) => `[Context: ${c.label} - ${c.detail}]`);
     addChatMessage({
       role: "user",
-      text: batch.map((sg) => `[${sg.elementLabel}] ${sg.text}`).join("\n"),
+      text: [...context, ...batch.map((sg) => `[${sg.elementLabel}] ${sg.text}`), note.trim()].filter(Boolean).join("\n"),
     });
+    setChatInput("");
+    setChatContexts([]);
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
@@ -1780,21 +1796,45 @@ export function InfographicStudioScreen() {
                       Publish button used to sit. That button was already in
                       the header; this is the thing you actually need in front
                       of you while you work. */}
-                  {studioMode === "editor" && <SuggestionChecklist items={suggestionQueue.drafts} onSend={sendSuggestions} />}
 
                   {/* The same composer as every other chat in the product. */}
                   <ChatComposer
                     value={chatInput}
                     onChange={setChatInput}
                     onSubmit={() => handleSendMessage()}
+                    canSendEmpty={suggestionQueue.draftCount > 0}
                     placeholder={
                       studioMode === "review"
                         ? "Ask SwishX or type 'Add comment on the hero stat that...'..."
+                        : suggestionQueue.draftCount > 0
+                        ? "Add a note, or send as is"
                         : "Ask SwishX to rephrase, highlight endpoints..."
                     }
                     attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
                   >
                     <ChatAttachmentRow attachments={chatFiles} />
+                    {/* What goes with this message: elements added to the
+                        chat and suggestions left on the page, in one list. */}
+                    <ComposerTray
+                      items={[
+                        ...chatContexts.map((c) => ({
+                          id: c.id,
+                          icon: <MessageSquare className="size-3" />,
+                          label: c.label,
+                          detail: c.detail,
+                        })),
+                        ...suggestionQueue.drafts.map((sg) => ({
+                          id: sg.id,
+                          icon: <MessageSquareQuote className="size-3" />,
+                          label: sg.elementLabel,
+                          quote: sg.text,
+                        })),
+                      ]}
+                      onRemove={(id) => {
+                        if (suggestionQueue.drafts.some((sg) => sg.id === id)) suggestionQueue.remove(id);
+                        else setChatContexts((prev) => prev.filter((c) => c.id !== id));
+                      }}
+                    />
                   </ChatComposer>
                 </div>
               </div>
@@ -1902,8 +1942,9 @@ export function InfographicStudioScreen() {
                                 onClick={() => {
                                   setSelectedElementId(el.id);
                                   setActiveTab("assistant");
-                                  setChatInput(`Rewrite the ${el.label.toLowerCase()} ("${runValue(el.id)}") `);
-                                  showToast(`${el.label} attached to chat`);
+                                  attachToChat({ id: `run-${el.id}`, label: `Page ${activePageId} · ${el.label}`, detail: `"${runValue(el.id)}"` });
+                                  setChatInput(`Rewrite the ${el.label.toLowerCase()} `);
+                                  showToast(`${el.label} added to the chat`);
                                 }}
                                 className="inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"
                               >

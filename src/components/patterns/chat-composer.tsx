@@ -23,6 +23,7 @@ export function ChatComposer({
   onSubmit,
   placeholder,
   disabled = false,
+  canSendEmpty = false,
   rows = 2,
   /** The attachment chips, and anything else attached to this message. */
   children,
@@ -35,12 +36,14 @@ export function ChatComposer({
   onSubmit: () => void;
   placeholder: string;
   disabled?: boolean;
+  /** Send is live with nothing typed — when the tray already holds the message. */
+  canSendEmpty?: boolean;
   rows?: number;
   children?: React.ReactNode;
   attachControl?: React.ReactNode;
   className?: string;
 }) {
-  const canSend = !disabled && value.trim().length > 0;
+  const canSend = !disabled && (value.trim().length > 0 || canSendEmpty);
 
   return (
     <form

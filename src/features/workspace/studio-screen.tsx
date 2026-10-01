@@ -67,7 +67,6 @@ import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { cn } from "@/lib/cn";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import {
-  SuggestionChecklist,
   listSuggestions,
   useSuggestionQueue,
   type Suggestion,
@@ -98,6 +97,7 @@ import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat
 import { ShotGeneratingFrame } from "@/features/workspace/background-keyframes";
 import { LOGO_CORNERS, LogoWatermark } from "@/features/workspace/logo-watermark";
 import { VideoSettings, type VideoSettingRow } from "@/features/workspace/video-settings";
+import { ComposerTray } from "@/components/patterns/composer-tray";
 import { presenterImage } from "@/features/workspace/presenters";
 import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import {
@@ -768,14 +768,17 @@ export function StudioScreen() {
    * rather than four, and the thing it cannot infer — whether they hold for
    * the other scenes — is asked once, here, rather than after every note.
    */
-  const sendSuggestions = () => {
+  const sendSuggestions = (note = "") => {
     const batch = suggestionQueue.submit();
     if (batch.length === 0) return;
     setActiveTab("assistant");
+    const context = attachedContexts.map((c) => `[Context: ${c.label} - ${c.detail}]`);
     addChatMessage({
       role: "user",
-      text: batch.map((s) => `[${s.elementLabel}] ${s.text}`).join("\n"),
+      text: [...context, ...batch.map((s) => `[${s.elementLabel}] ${s.text}`), note.trim()].filter(Boolean).join("\n"),
     });
+    setDirectorInput("");
+    setAttachedContexts([]);
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
@@ -1450,6 +1453,12 @@ export function StudioScreen() {
   const handleSendChatMessage = (presetText?: string) => {
     const attached = presetText ? [] : chatFiles.take();
     const rawInput = (presetText || directorInput).trim();
+    /* Suggestions in the tray go with whatever was typed, as one message —
+       the composer's send is the only send. */
+    if (!presetText && attached.length === 0 && suggestionQueue.draftCount > 0) {
+      sendSuggestions(rawInput);
+      return;
+    }
     if (!rawInput && attached.length === 0) return;
 
     /* In the editor there is no source list to file a document into, so the
@@ -3418,18 +3427,11 @@ export function StudioScreen() {
                     </div>
                   )}
 
-                  {/* What is still owed, pinned where the second Generate and
-                      Publish button used to sit. That button was already in
-                      the header; this is the thing you actually need in front
-                      of you while you work. */}
-                  {isEditor && (
-                    <SuggestionChecklist items={suggestionQueue.drafts} onSend={sendSuggestions} />
-                  )}
-
                   <ChatComposer
                     value={directorInput}
                     onChange={setDirectorInput}
                     onSubmit={handleSendChatMessage}
+                    canSendEmpty={suggestionQueue.draftCount > 0}
                     /**
                      * Held shut until every scene has its structure. There is
                      * nothing to direct before that: an instruction about copy
@@ -3444,6 +3446,8 @@ export function StudioScreen() {
                         ? "Generating your scenes..."
                         : isReview
                         ? "Ask SwishX or type 'Add comment at 0:24 that...'..."
+                        : suggestionQueue.draftCount > 0
+                        ? "Add a note, or send as is"
                         : "Direct SwishX to modify scenes, copy, or timing..."
                     }
                     attachControl={
@@ -3538,44 +3542,46 @@ export function StudioScreen() {
                         screen uses, with previews for images and clips. */}
                     <ChatAttachmentRow attachments={chatFiles} />
 
-                    {attachedContexts.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 p-1.5 bg-subtle rounded-control border border-hair">
-                        {attachedContexts.map((ctx) => (
-                          <span
-                            key={ctx.id}
-                            className="inline-flex items-center gap-1.5 rounded-chip bg-card border border-brand/20 px-2 py-0.5 text-label font-bold text-brand-deep shadow-2xs"
-                          >
-                            {ctx.type === "element" ? (
-                              <LogoMark size={12} className="text-brand shrink-0" />
+                    {/* What goes with this message: elements added to the
+                        chat and suggestions left on the canvas, in one list. */}
+                    <ComposerTray
+                      items={[
+                        ...attachedContexts.map((ctx) => ({
+                          id: ctx.id,
+                          icon:
+                            ctx.type === "element" ? (
+                              <LogoMark size={12} className="text-brand" />
                             ) : ctx.type === "scene" ? (
-                              <Film className="size-3 text-brand shrink-0" />
+                              <Film className="size-3" />
                             ) : ctx.type === "shot" ? (
-                              <Clapperboard className="size-3 text-brand shrink-0" />
+                              <Clapperboard className="size-3" />
                             ) : ctx.type === "file" ? (
-                              <Paperclip className="size-3 text-brand shrink-0" />
+                              <Paperclip className="size-3" />
                             ) : (
-                              <FileCheck2 className="size-3 text-brand shrink-0" />
-                            )}
-                            <span className="truncate max-w-[200px]">
-                              <strong>{ctx.label}:</strong> {ctx.detail}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setAttachedContexts((prev) =>
-                                  ctx.type === "scene"
-                                    ? withoutScene(prev, ctx.id.slice("scene-".length))
-                                    : prev.filter((c) => c.id !== ctx.id)
-                                )
-                              }
-                              className="size-3.5 rounded-full hover:bg-black/10 flex items-center justify-center text-ink-4 hover:text-black cursor-pointer"
-                            >
-                              <X className="size-2.5" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                              <FileCheck2 className="size-3" />
+                            ),
+                          label: ctx.label,
+                          detail: ctx.detail,
+                        })),
+                        ...suggestionQueue.drafts.map((sg) => ({
+                          id: sg.id,
+                          icon: <MessageSquareQuote className="size-3" />,
+                          label: sg.elementLabel,
+                          quote: sg.text,
+                        })),
+                      ]}
+                      onRemove={(id) => {
+                        if (suggestionQueue.drafts.some((sg) => sg.id === id)) {
+                          suggestionQueue.remove(id);
+                          return;
+                        }
+                        setAttachedContexts((prev) =>
+                          id.startsWith("scene-")
+                            ? withoutScene(prev, id.slice("scene-".length))
+                            : prev.filter((c) => c.id !== id)
+                        );
+                      }}
+                    />
 
                   </ChatComposer>
                 </div>

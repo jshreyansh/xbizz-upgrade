@@ -1,8 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/cn";
 
 /**
  * Suggestions the author leaves on their own draft.
@@ -11,8 +9,8 @@ import { cn } from "@/lib/cn";
  * answered. A suggestion is your own instruction, and instructions go to the
  * agent — but five of them dropped into a chat scroll away, and then neither
  * side knows what is still owed. So they are a list: the agent reprints it
- * under every reply, and the same list sits above the input while anything
- * is open. Nothing to click in it — it is a checklist, not a menu.
+ * under every reply. Unsent drafts sit in the composer's tray, one row each
+ * with an ×, and go with the next message.
  */
 export type SuggestionStatus = "open" | "working" | "done";
 
@@ -34,39 +32,6 @@ export function snapshot(items: Suggestion[]): SuggestionSnapshot[] {
 }
 
 /**
- * Two states, never three.
- *
- * A chat message is a record of a moment, and a spinner inside one keeps
- * spinning long after that moment has passed — the message that said "starting
- * with the headline" was still animating an hour later, as if the work had
- * never finished. So a row is ticked or it is not: unticked in the message
- * that starts it, ticked in the message that reports it done.
- */
-function Tick({ status }: { status: SuggestionStatus }) {
-  if (status === "done") {
-    return (
-      <span className="grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-ok bg-ok text-white">
-        <Check className="size-2.5" strokeWidth={3.5} />
-      </span>
-    );
-  }
-  return <span className="mt-px size-3.5 shrink-0 rounded-[4px] border border-hair-3 bg-card" />;
-}
-
-function Row({ item }: { item: SuggestionSnapshot }) {
-  return (
-    <li className="flex items-start gap-2 leading-snug">
-      <Tick status={item.status} />
-      <span className={cn("min-w-0 text-label", item.status === "done" ? "text-ink-4 line-through" : "text-ink")}>
-        <span className="font-bold">{item.elementLabel}</span>
-        <span className="text-ink-3">, </span>
-        <span>{item.text}</span>
-      </span>
-    </li>
-  );
-}
-
-/**
  * The batch, written out as lines of a message.
  *
  * This was a checkbox panel rendered inside the chat bubble, reprinted in
@@ -76,45 +41,6 @@ function Row({ item }: { item: SuggestionSnapshot }) {
  */
 export function listSuggestions(items: Suggestion[]): string {
   return items.map((item, i) => `${i + 1}. **${item.elementLabel}**, ${item.text}`).join("\n");
-}
-
-/**
- * The drafts, pinned above the chat input, with the one control that sends
- * them. Nothing reaches the agent until this button is pressed — which is
- * what lets you mark up a whole page before saying anything.
- */
-export function SuggestionChecklist({
-  items,
-  onSend,
-  sendLabel = "Resolve",
-}: {
-  items: Suggestion[];
-  onSend: () => void;
-  /** "Resolve" here, so the button reads "Resolve all 3" / "Resolve it". */
-  sendLabel?: string;
-}) {
-  if (items.length === 0) return null;
-  return (
-    <div className="rounded-panel border border-brand/20 bg-gradient-to-r from-tint via-white to-tint p-2.5 shadow-2xs">
-      <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className="text-label font-extrabold text-brand-deep">
-          {items.length} suggestion{items.length > 1 ? "s" : ""} to send
-        </span>
-        <button
-          type="button"
-          onClick={onSend}
-          className="focus-ring shrink-0 cursor-pointer rounded-chip bg-brand px-2.5 py-1 text-label font-bold text-white shadow-2xs transition hover:bg-brand-deep"
-        >
-          {items.length > 1 ? `${sendLabel} all ${items.length}` : `${sendLabel} it`}
-        </button>
-      </div>
-      <ul className="max-h-28 space-y-1.5 overflow-y-auto">
-        {items.map((item) => (
-          <Row key={item.id} item={snapshot([item])[0]} />
-        ))}
-      </ul>
-    </div>
-  );
 }
 
 /**
@@ -133,7 +59,7 @@ export function SuggestionChecklist({
  * that moment the strip empties because the list now lives in the chat.
  */
 export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; text: string; chips?: string[] }) => void) {
-  /** Written but not sent — the strip above the input. */
+  /** Written but not sent — rows in the composer's tray. */
   const [drafts, setDrafts] = useState<Suggestion[]>([]);
   /** Sent, and being worked — the list the agent reprints in its replies. */
   const [queue, setQueue] = useState<Suggestion[]>([]);
@@ -157,6 +83,9 @@ export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; te
     setDrafts((prev) => [...prev, item]);
     return item;
   };
+
+  /** Drop one draft before it is sent — the × on its row in the tray. */
+  const remove = (id: string) => setDrafts((prev) => prev.filter((d) => d.id !== id));
 
   /**
    * Hand the drafts over. Returns them so the caller can write the one
@@ -225,7 +154,7 @@ export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; te
   };
 
   return {
-    /** The strip's contents. */
+    /** The tray's suggestion rows. */
     drafts,
     /** How many are waiting to be sent. */
     draftCount: drafts.length,
@@ -233,6 +162,7 @@ export function useSuggestionQueue(post: (message: { role: "user" | "swishx"; te
     queue,
     pendingCount: queue.filter((s) => s.status !== "done").length,
     add,
+    remove,
     submit,
     scopeBatch,
     resolveAll,
