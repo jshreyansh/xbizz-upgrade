@@ -48,16 +48,23 @@ export function BrandKitEditor({
   kit,
   onChange,
   slots = SLOTS.map((slot) => slot.id),
+  slotCopy = {},
   copy = {},
 }: {
   kit: BrandKit;
   onChange: (next: BrandKit) => void;
   /** Which logo slots this kit has. A product has no favicon of its own. */
   slots?: LogoSlot[];
+  /** A slot's name and use, where this kit calls it something else. */
+  slotCopy?: Partial<Record<LogoSlot, { label?: string; hint?: string }>>;
   /** Card descriptions, where the default wording does not fit. */
   copy?: Partial<Record<"logos" | "typography" | "palette", string>>;
 }) {
-  const shown = SLOTS.filter((slot) => slots.includes(slot.id));
+  /* In the order asked for, so a kit can lead with what matters to it. */
+  const shown = slots.flatMap((id) => {
+    const slot = SLOTS.find((x) => x.id === id);
+    return slot ? [{ ...slot, ...slotCopy[id] }] : [];
+  });
   const setLogo = (slot: LogoSlot, file: { fileName: string; size: string } | null) => {
     const logos = { ...kit.logos };
     if (file) logos[slot] = file;
@@ -83,7 +90,14 @@ export function BrandKitEditor({
                     <Text size="body" weight="bold" className="block">{slot.label}</Text>
                     <Text size="caption" tone="subtle" className="block">{slot.hint}</Text>
                   </div>
-                  <Chip tone={slot.ground === "dark" ? "dark" : "default"} size="xs">
+                  {/* The "dark" chip tone is for chips ON a dark surface; this
+                      one sits on the light card, so it is filled ink instead —
+                      a white-on-white chip that said "On dark" was invisible. */}
+                  <Chip
+                    tone="default"
+                    size="xs"
+                    className={slot.ground === "dark" ? "border-ink bg-ink text-white" : undefined}
+                  >
                     {slot.ground === "dark" ? "On dark" : "On light"}
                   </Chip>
                 </div>
