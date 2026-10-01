@@ -48,7 +48,7 @@ export function useVideoSteps(opts: {
     { id: "brief", label: "Brief", onGo: nav.toBrief },
     { id: "plan", label: "Need your input", onGo: nav.toPlan },
     { id: "production", label: "Storyboard", onGo: opts.toProduction },
-    { id: "editor", label: "Video Editor", onGo: opts.toEditor },
+    { id: "editor", label: "Video editor", onGo: opts.toEditor },
     // The end of the trail. Nothing navigates back TO a published review.
     { id: "review", label: "Review" },
   ];
@@ -60,7 +60,7 @@ export function useCreativeSteps(opts: { toCanvas?: () => void }): FlowStep[] {
     { id: "brief", label: "Brief", onGo: nav.toBrief },
     { id: "plan", label: "Need your input", onGo: nav.toPlan },
     { id: "layout", label: "Layout", onGo: nav.toLayout },
-    { id: "canvas", label: "Canvas Editor", onGo: opts.toCanvas },
+    { id: "canvas", label: "Document editor", onGo: opts.toCanvas },
     { id: "review", label: "Review" },
   ];
 }

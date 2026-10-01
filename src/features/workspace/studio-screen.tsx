@@ -349,7 +349,7 @@ export function StudioScreen() {
     [sceneList]
   );
   const previews = useShotPreviews(storyShotIds);
-  /** Generate video waits for the last preview: the board is what gets approved. */
+  /** Create video waits for the last preview: the board is what gets approved. */
   const storyboardReady = isScriptComplete && previews.allReady && previews.drawingCount === 0;
 
   const [directorInput, setDirectorInput] = useState("");
@@ -1616,7 +1616,7 @@ export function StudioScreen() {
       } else if (rawInput.includes("Keep remaining")) {
         addChatMessage({
           role: "swishx",
-          text: `Understood! Preserving individual scene customizations. You can continue editing in the canvas or click **Generate Video** on top right when ready.`,
+          text: `Understood! Preserving individual scene customizations. You can continue editing in the canvas or click **Create video** when ready.`,
         });
       } else if (suggestionAnswer === "more") {
         /* Holding. The whole point of asking was to apply a batch once rather
@@ -2074,7 +2074,7 @@ export function StudioScreen() {
                     description={
                       !previews.allReady || previews.drawingCount > 0
                         ? `${previews.readyCount} of ${previews.total} ready. You can read and change scenes meanwhile.`
-                        : `${previews.total} shot previews · claims grounded`
+                        : `Opens the editor · ${previews.total} shots · ${totalCredits.toLocaleString()} credits`
                     }
                     action={
                       <Button
@@ -2088,7 +2088,7 @@ export function StudioScreen() {
                             : "bg-white/10 text-white/40 cursor-not-allowed border border-white/5"
                         )}
                       >
-                        <LogoMark size={14} className="mr-1.5" /> <span>Generate video</span>
+                        <LogoMark size={14} className="mr-1.5" /> <span>Create video</span>
                       </Button>
                     }
                   />
@@ -3413,7 +3413,7 @@ export function StudioScreen() {
                         )}
                       >
                         <LogoMark size={12} className="mr-1" />
-                        <span>Generate video</span>
+                        <span>Create video</span>
                       </Button>
                     </div>
                   )}

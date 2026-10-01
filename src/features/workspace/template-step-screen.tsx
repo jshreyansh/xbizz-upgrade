@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ActionBar } from "@/components/patterns/action-bar";
+import { DOC_CREDITS_PER_PAGE } from "@/features/workspace/plan-decisions";
 import { cn } from "@/lib/cn";
 import { TEMPLATE_ARCHETYPES, type TemplateArchetype } from "@/features/workspace/template-archetypes";
 import {
@@ -358,7 +359,7 @@ export function TemplateStepScreen({
           description={
             blocked
               ? "Choose a layout that can carry this brief, or shorten the request."
-              : "You can swap a single page\u2019s layout later in the studio. This sets the deck."
+              : `Opens the editor · ${pages} ${pages === 1 ? "page" : "pages"} · ${(pages * DOC_CREDITS_PER_PAGE).toLocaleString()} credits`
           }
           action={
             <Button
@@ -366,7 +367,7 @@ export function TemplateStepScreen({
               disabled={blocked}
               className="h-9 shrink-0 cursor-pointer gap-1.5 rounded-control bg-brand px-5 text-body font-bold text-white hover:bg-brand-deep disabled:opacity-40"
             >
-              Open canvas studio
+              Create document
               <ArrowRight className="size-3.5" />
             </Button>
           }
