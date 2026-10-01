@@ -27,7 +27,7 @@ import { DossierReaderModal } from "@/features/dossiers/dossier-reader-modal";
 import { dossierFor } from "@/features/dossiers/dossier-for";
 import { moleculeFor } from "@/features/workspace/grounding-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
-import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
+import { ResearchSourcesContent, researchSummary, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { cn } from "@/lib/cn";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { useProjectExit } from "@/features/workspace/project-exit";
@@ -300,6 +300,8 @@ export function InfographicDirectionsScreen() {
   };
 
 
+  /* The verified dossier is offered, not pre-added: the user takes it in. */
+  const [dossierInUse, setDossierInUse] = useState(false);
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([
     {
       name: `${brandName}_Clinical_Summary_LeaveBehind.pdf`,
@@ -797,7 +799,7 @@ export function InfographicDirectionsScreen() {
                   <CreativePlanSection
                     icon={ShieldCheck}
                     title="Research and Sources"
-                    summary={`${brandName} Approved Dossier + ${uploadedDocs.length} custom files active`}
+                    summary={researchSummary(brandName, dossierInUse, uploadedDocs.length)}
                     state={planState(sectionNeedsYou("sources"))}
                     source={research.researching ? `researching ${research.current}/${research.total}` : "from source"}
                     error={foundBlock?.section === "sources" ? foundBlock : null}
@@ -812,6 +814,8 @@ export function InfographicDirectionsScreen() {
                       onPreviewDossier={() => setPreviewDossier(dossierFor(brandName, moleculeFor(brandName)))}
                       onContinue={() => advanceFrom("sources")}
                       research={research}
+                      dossierInUse={dossierInUse}
+                      onDossierInUseChange={setDossierInUse}
                     />
                   </CreativePlanSection>
 

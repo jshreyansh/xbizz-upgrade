@@ -170,7 +170,7 @@ export function workspaceAssets(brandName: string, role: WorkspaceAssetRole): Wo
 }
 
 /** A round icon control in a tile's corner. */
-function TileButton({
+export function TileButton({
   onClick,
   label,
   pressed,
@@ -223,14 +223,18 @@ function TileButton({
  * the foot of the tile, in the brand tint at rest and filled on hover, which
  * is how everything else here says "press me".
  */
-function AddToProjectButton({
+export function AddToProjectButton({
   onClick,
   label,
   added = false,
+  idleText = "Add to project",
+  addedText = "Added to project",
 }: {
   onClick: () => void;
   label: string;
   added?: boolean;
+  idleText?: string;
+  addedText?: string;
 }) {
   return (
     <span
@@ -249,21 +253,26 @@ function AddToProjectButton({
         }
       }}
       className={cn(
-        "flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-glyph border px-2 py-1.5 text-micro font-extrabold uppercase tracking-[.04em] transition",
+        /* mt-auto: tiles in a strip stretch to the tallest, and the button
+           belongs on the shared foot line, not under each tile's own text. */
+        "mt-auto flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-glyph border px-2 py-2 text-label font-extrabold uppercase tracking-[.04em] transition",
+        /* At rest it is a raised button, not a tinted band: a brand edge, a
+           lift, and text in the brand itself. A pale fill with pale text sat
+           level with the tile and read as a label. */
         added
           ? "border-ok-line bg-ok-bg text-ok"
-          : "border-tint-line bg-tint text-brand-deep hover:border-brand hover:bg-brand hover:text-white"
+          : "border-brand/50 bg-card text-brand shadow-xs hover:border-brand hover:bg-brand hover:text-white active:translate-y-px"
       )}
     >
       {added ? (
         <>
           <Check className="size-3 stroke-[3]" />
-          Added to project
+          {addedText}
         </>
       ) : (
         <>
           <Plus className="size-3 stroke-[3]" />
-          Add to project
+          {idleText}
         </>
       )}
     </span>

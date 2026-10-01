@@ -61,7 +61,7 @@ import { DossierReaderModal } from "@/features/dossiers/dossier-reader-modal";
 import { dossierFor } from "@/features/dossiers/dossier-for";
 import { moleculeFor } from "@/features/workspace/grounding-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
-import { ResearchSourcesContent, type UploadedDoc } from "@/features/workspace/research-sources-section";
+import { ResearchSourcesContent, researchSummary, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
 import {
   AssetStrip,
@@ -296,6 +296,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   // Above the early return on purpose: below it these are conditional hooks.
   const research = usePlanResearch();
   const [useCaseDrawerOpen, setUseCaseDrawerOpen] = useState(false);
+  /* The verified dossier is offered, not pre-added: the user takes it in. */
+  const [dossierInUse, setDossierInUse] = useState(false);
   /**
    * Two different things, deliberately not one.
    *
@@ -1420,7 +1422,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                   <PlanSection
                     icon={ShieldCheck}
                     title="Research and Sources"
-                    summary={`${brandName} Approved Dossier + ${uploadedDocs.length} custom files active`}
+                    summary={researchSummary(brandName, dossierInUse, uploadedDocs.length)}
                     state={planState(sectionNeedsYou("sources"))}
                     source={
                       research.researching
@@ -1451,6 +1453,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                       conflictingMarkets={sourceConflictResolved ? [] : conflictingMarkets}
                       onResolveConflict={resolveSourceConflict}
                       onToast={showToast}
+                      dossierInUse={dossierInUse}
+                      onDossierInUseChange={setDossierInUse}
                     />
                   </PlanSection>
 

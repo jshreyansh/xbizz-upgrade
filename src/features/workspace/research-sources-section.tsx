@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import {
-  Check,
   Eye,
   Pencil,
   ShieldCheck,
@@ -40,7 +39,14 @@ export interface UploadedDoc {
 }
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
 import { groundingDossiers } from "@/features/workspace/grounding-dossiers";
-import { AssetStrip, DocAssetTile, workspaceAssets, type WorkspaceAsset } from "@/features/workspace/workspace-assets";
+import {
+  AddToProjectButton,
+  AssetStrip,
+  DocAssetTile,
+  TileButton,
+  workspaceAssets,
+  type WorkspaceAsset,
+} from "@/features/workspace/workspace-assets";
 import { LogoMark } from "@/components/ui/logo-mark";
 
 export interface ResearchSourcesSectionProps {
@@ -60,6 +66,21 @@ export interface ResearchSourcesSectionProps {
   onResolveConflict?: (market: string) => void;
   /** Confirm what was taken in, since the strip does not move. */
   onToast?: (message: string, tone?: "done" | "undone") => void;
+  /**
+   * Whether the verified dossier is in the grounding. Held by the screen, so
+   * the section's summary can say so. It starts out: the dossier is a
+   * suggestion like the rest of the strip, and the user is the one who adds
+   * it.
+   */
+  dossierInUse: boolean;
+  onDossierInUseChange: (inUse: boolean) => void;
+}
+
+/** The Research and Sources summary line: only what has actually been added. */
+export function researchSummary(brandName: string, dossierInUse: boolean, fileCount: number) {
+  const files = `${fileCount} custom ${fileCount === 1 ? "file" : "files"}`;
+  if (dossierInUse) return `${brandName} Approved Dossier + ${files} active`;
+  return fileCount > 0 ? `${files} active · approved dossier not added` : "No sources added yet";
 }
 
 export function ResearchSourcesContent({
@@ -73,6 +94,8 @@ export function ResearchSourcesContent({
   conflictingMarkets = [],
   onResolveConflict,
   onToast,
+  dossierInUse,
+  onDossierInUseChange,
 }: ResearchSourcesSectionProps) {
   /* Files picked but not yet attached — they are waiting on their note. */
   const [pending, setPending] = useState<Array<PendingFile & { size: string }>>([]);
@@ -89,15 +112,6 @@ export function ResearchSourcesContent({
      and dressing it as one said it had sections and approved claims that
      nobody had written. */
   const [previewFile, setPreviewFile] = useState<WorkspaceAsset | null>(null);
-  /**
-   * Verified dossiers taken OUT of the grounding.
-   *
-   * The dossier is not an opt-in the way a workspace file is — it is what the
-   * project was grounded in the moment the brand was chosen, and the plan
-   * above already says so. Starting it unticked asked the user to opt into
-   * the thing that was already true.
-   */
-  const [dossiersOut, setDossiersOut] = useState<string[]>([]);
   const researching = Boolean(research?.researching);
   // The research plays INSIDE this tray, so it is held open for the duration
   // and cannot be collapsed out from under itself.
@@ -174,89 +188,6 @@ export function ResearchSourcesContent({
         </div>
       )}
 
-      {/* ── The verified dossier, on its own ──
-          It was one tile in a horizontal strip, sized and shaped like the
-          four uploads beside it. It is not one of those: it is the record
-          every claim in this asset will be traced back to, and the only
-          thing here that has been through regulatory review. So it takes the
-          top of the section at full width, with the sweep, and the strip
-          below it is the brand's own material. */}
-      {prebuiltDossiers.map((dossier, idx) => {
-        const id = `sx-${idx}`;
-        const inUse = !dossiersOut.includes(id);
-        return (
-          <div
-            key={id}
-            className={cn(
-              "verified-sheen relative overflow-hidden rounded-panel border p-3.5 shadow-xs transition-colors",
-              inUse
-                ? "border-ok-line bg-ok-bg/50 ring-1 ring-ok/20"
-                : "border-brand/35 bg-gradient-to-br from-tint via-card to-tint ring-1 ring-brand/10"
-            )}
-          >
-            <div className="relative z-10 flex flex-wrap items-center gap-3">
-              <div
-                className="relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-control"
-                style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand) 55%,var(--brand-deep))" }}
-              >
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0"
-                  style={{ background: "linear-gradient(155deg,rgba(255,255,255,.45),transparent 45%)" }}
-                />
-                <LogoMark size={20} className="relative text-white" title="" />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-extrabold uppercase tracking-wide text-ok">
-                    <ShieldCheck className="size-3" /> Verified from FDA
-                  </span>
-                  <span className="text-caption font-bold text-ink-4">
-                    {dossier.claims} approved claims · {dossier.sections} sections
-                  </span>
-                </div>
-                <div className="mt-1 truncate text-body-lg font-extrabold text-ink">
-                  {dossier.name}
-                </div>
-                <p className="mt-0.5 text-label leading-snug text-ink-3">
-                  Every claim written from this traces back to an approved source.
-                </p>
-              </div>
-
-              <div className="flex shrink-0 items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={onPreviewDossier}
-                  className="focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 py-1.5 text-label font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand-deep"
-                >
-                  <Eye className="size-3.5" />
-                  <span>Preview</span>
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={inUse}
-                  onClick={() =>
-                    setDossiersOut((prev) =>
-                      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-                    )
-                  }
-                  className={cn(
-                    "focus-ring inline-flex cursor-pointer items-center gap-1.5 rounded-chip border px-3 py-1.5 text-label font-extrabold shadow-2xs transition",
-                    inUse
-                      ? "border-ok-line bg-ok-bg text-ok hover:brightness-95"
-                      : "border-brand bg-brand text-white hover:bg-brand-deep"
-                  )}
-                >
-                  {inUse ? <Check className="size-3.5 stroke-[3]" /> : <Plus className="size-3.5" />}
-                  <span>{inUse ? "Dossier in use" : "Use Verified Dossier"}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-
       {/* What the platform has for this brand — our approved dossier and the
           brand's own documents from earlier projects — offered first, because
           it is the material you did not have to supply. There is no mode to
@@ -282,7 +213,7 @@ export function ResearchSourcesContent({
                 are none" is information, where a missing tray reads as a
                 section that failed to load. */}
             <span className="shrink-0 rounded-chip border border-hair-2 bg-card px-2 py-0.2 text-caption font-bold tabular-nums text-ink-3">
-              {reusableDocs.length} suggested
+              {prebuiltDossiers.length + reusableDocs.length} suggested
             </span>
             {researching && (
               <span className="shrink-0 rounded-chip border border-brand/20 bg-tint px-2 py-0.2 text-caption font-bold text-brand">
@@ -320,12 +251,34 @@ export function ResearchSourcesContent({
             </div>
           )}
           {/* Ours and yours in one strip, tagged by where each came from.
-              These were two stacked panels, which made one question — what can
-              this be grounded in — look like two. It scrolls sideways rather
-              than growing down the accordion. */}
+              The verified dossier was a full-width card above this tray,
+              which made one question — what can this be grounded in — look
+              like two lists of suggestions. It leads the strip instead, set
+              apart by its mark and its verified state rather than by a
+              component of its own. It scrolls sideways rather than growing
+              down the accordion. */}
           <AssetStrip>
+            {prebuiltDossiers.map((dossier) => (
+              <DossierTile
+                key={dossier.name}
+                name={dossier.name}
+                claims={dossier.claims}
+                sections={dossier.sections}
+                inUse={dossierInUse}
+                onPreview={onPreviewDossier}
+                onToggle={() => {
+                  onDossierInUseChange(!dossierInUse);
+                  onToast?.(
+                    dossierInUse
+                      ? `${dossier.name} removed from the project context`
+                      : `${dossier.name} added to the project context for generation`,
+                    dossierInUse ? "undone" : "done"
+                  );
+                }}
+              />
+            ))}
             {researching
-              ? prebuiltDossiers.map((_, idx) => (
+              ? [0, 1].map((idx) => (
                   <div
                     key={idx}
                     aria-hidden
@@ -548,6 +501,86 @@ export function ResearchSourcesContent({
           <span>Save &amp; Continue</span>
           <ArrowRight className="size-3" />
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Our approved dossier, as the first tile of the suggestions strip.
+ *
+ * It is the one tile that has been through regulatory review and the record
+ * every claim traces back to, so it is set apart inside the row — the brand
+ * mark, the verified chip, the sweep — rather than given a row of its own.
+ * Like everything else in the strip it is offered, not assumed: the user
+ * adds it.
+ */
+function DossierTile({
+  name,
+  claims,
+  sections,
+  inUse,
+  onPreview,
+  onToggle,
+}: {
+  name: string;
+  claims: number;
+  sections: number;
+  inUse: boolean;
+  onPreview: () => void;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "verified-sheen relative flex w-[280px] shrink-0 flex-col gap-1.5 overflow-hidden rounded-control border p-2.5 shadow-2xs transition",
+        inUse
+          ? "border-ok-line bg-ok-bg/50 ring-1 ring-ok/20"
+          : "border-brand/35 bg-tint/50 ring-1 ring-brand/10 hover:border-brand/60"
+      )}
+    >
+      <div className="relative z-10 flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1 rounded-glyph border border-ok-line bg-ok-bg px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide text-ok">
+          <ShieldCheck className="size-3" /> Verified from FDA
+        </span>
+        <TileButton
+          onClick={onPreview}
+          label={`Preview ${name}`}
+          className="border-hair-2 bg-card text-ink-3 hover:border-brand hover:text-brand"
+        >
+          <Eye className="size-3.5" />
+        </TileButton>
+      </div>
+      <div className="relative z-10 flex min-w-0 items-start gap-2">
+        <span
+          className="relative grid size-8 shrink-0 place-items-center overflow-hidden rounded-glyph"
+          style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand) 55%,var(--brand-deep))" }}
+        >
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{ background: "linear-gradient(155deg,rgba(255,255,255,.45),transparent 45%)" }}
+          />
+          <LogoMark size={15} className="relative text-white" title="" />
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-body font-bold text-ink" title={name}>
+            {name}
+          </span>
+          <span className="block truncate text-caption text-ink-3">
+            {claims} approved claims · {sections} sections
+          </span>
+          <span className="block truncate text-micro text-ink-4">SwishX verified dossier</span>
+        </span>
+      </div>
+      <div className="relative z-10 mt-auto">
+        <AddToProjectButton
+          onClick={onToggle}
+          added={inUse}
+          idleText="Use verified dossier"
+          addedText="Dossier in use"
+          label={inUse ? `Stop grounding in ${name}` : `Ground the project in ${name}`}
+        />
       </div>
     </div>
   );
