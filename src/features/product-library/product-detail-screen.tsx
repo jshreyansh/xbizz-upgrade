@@ -15,6 +15,7 @@ import {
   Eye,
   Layers,
   MoreHorizontal,
+  Palette,
 } from "lucide-react";
 import type {
   LibraryProduct,
@@ -42,6 +43,7 @@ import {
   pickedLabel,
 } from "@/features/claims-library/claim-filters";
 import { DOSSIER_STATUS_STYLE as STATUS_STYLE } from "@/features/product-library/dossier-status";
+import { ProductBrandKit } from "@/features/product-library/product-brand-kit";
 
 /** 1.8 MB, 420 KB — the way the seeded attachments already read. */
 function formatSize(bytes: number): string {
@@ -69,8 +71,8 @@ const ANGLE_TRANSFORM: Record<ProductImageAngle, string> = {
   Lifestyle: "none",
 };
 
-export type Tab = "dossier" | "claims" | "documents" | "images";
-export const TAB_IDS: Tab[] = ["dossier", "claims", "documents", "images"];
+export type Tab = "dossier" | "claims" | "documents" | "images" | "brand-kit";
+export const TAB_IDS: Tab[] = ["dossier", "claims", "documents", "images", "brand-kit"];
 
 const FILE_TONE: Record<string, string> = {
   PDF: "bg-danger-bg text-danger",
@@ -184,6 +186,7 @@ export function ProductDetailScreen({
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
     { key: "documents", label: "Team Attachments", icon: Paperclip, count: documents.filter((d) => !d.archived).length },
     { key: "images", label: "Product Images", icon: ImageIcon, count: activeImageTotal },
+    { key: "brand-kit", label: "Brand Kit", icon: Palette },
   ];
 
 
@@ -282,7 +285,7 @@ export function ProductDetailScreen({
         Product Library
       </button>
 
-      {/* What this brand is, and the four ways of looking at it — one card,
+      {/* What this brand is, and the five ways of looking at it — one card,
           because the tabs belong to the brand rather than to the page. */}
       <DetailHeader tabs={TABS} active={tab} onSelect={setTab}>
         <div className="flex flex-wrap items-center gap-4">
@@ -316,6 +319,8 @@ export function ProductDetailScreen({
       </DetailHeader>
 
       {/* Tab content */}
+      {tab === "brand-kit" && <ProductBrandKit product={product} />}
+
       {tab === "images" && (
         <div className="space-y-4" onClick={() => setOpenImageMenuId(null)}>
           {/* Section header */}

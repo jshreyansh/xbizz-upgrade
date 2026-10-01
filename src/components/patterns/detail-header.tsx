@@ -41,7 +41,7 @@ export function DetailHeader<K extends string>({
     <div className="overflow-hidden rounded-panel border border-hair bg-card shadow-hair">
       <div className="p-4">{children}</div>
 
-      <div className="flex border-t border-hair bg-canvas" role="tablist">
+      <div className="flex overflow-x-auto border-t border-hair bg-canvas" role="tablist">
         {tabs.map((tab) => {
           const on = tab.key === active;
           return (
@@ -56,8 +56,10 @@ export function DetailHeader<K extends string>({
                 on ? "bg-card text-brand-deep" : "text-ink-3 hover:bg-card/60 hover:text-ink"
               )}
             >
-              <tab.icon size={15} />
-              {tab.label}
+              <tab.icon size={15} className="shrink-0" />
+              {/* One line: a label that wraps doubles one tab's height and
+                  throws the strip's baseline. Narrow screens scroll instead. */}
+              <span className="whitespace-nowrap">{tab.label}</span>
               {tab.count !== undefined && (
                 <span
                   className={cn(

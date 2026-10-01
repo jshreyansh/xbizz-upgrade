@@ -141,6 +141,7 @@ interface SettingsState {
 
   // 2 — brand kit
   brandKit: BrandKit;
+  setBrandKit: (kit: BrandKit) => void;
   setLogo: (slot: keyof BrandKit["logos"], file: { fileName: string; size: string } | null) => void;
   setTypefaces: (t: Typeface[]) => void;
   addTypeface: (name: string) => void;
@@ -264,6 +265,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       text: "#0a0d14",
     },
   },
+  setBrandKit: (brandKit) => set({ brandKit }),
   setLogo: (slot, file) => set((s) => {
     const logos = { ...s.brandKit.logos };
     if (file) logos[slot] = file; else delete logos[slot];
