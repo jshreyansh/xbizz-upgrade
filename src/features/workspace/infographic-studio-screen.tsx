@@ -617,7 +617,7 @@ export function InfographicStudioScreen() {
     if (!layer) return;
     setActiveTab("assistant");
     attachToChat({ id: `art-${layer.id}`, label: `Page ${activePageId} · ${layer.label}`, detail: layer.kind === "graph" ? "Chart layer" : layer.kind === "background" ? "Background layer" : "Image layer" });
-    setChatInput(`Change the ${layer.label.toLowerCase()} so that `);
+    setChatInput((prev) => (prev.trim() ? prev : `Change the ${layer.label.toLowerCase()} so that `));
     showToast(`${layer.label} added to the chat`);
   };
 
@@ -1943,7 +1943,7 @@ export function InfographicStudioScreen() {
                                   setSelectedElementId(el.id);
                                   setActiveTab("assistant");
                                   attachToChat({ id: `run-${el.id}`, label: `Page ${activePageId} · ${el.label}`, detail: `"${runValue(el.id)}"` });
-                                  setChatInput(`Rewrite the ${el.label.toLowerCase()} `);
+                                  setChatInput((prev) => (prev.trim() ? prev : `Rewrite the ${el.label.toLowerCase()} `));
                                   showToast(`${el.label} added to the chat`);
                                 }}
                                 className="inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"

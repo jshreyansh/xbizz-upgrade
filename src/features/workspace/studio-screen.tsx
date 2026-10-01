@@ -1142,28 +1142,38 @@ export function StudioScreen() {
     },
   ];
 
-  /* A video-wide choice handed to the chat, the way the scene's copy is:
-     the context chip names it, and the prompt is started for you. */
-  const attachVideoSettingToChat = (row: VideoSettingRow) => {
+  /**
+   * Add one thing to the chat's tray.
+   *
+   * It adds; it does not replace. Each Add to chat used to clear whatever
+   * element was already there, so building up a message from three places
+   * on the Edit tab kept only the last — while suggestions stacked fine.
+   * Adding the same thing twice keeps one row. The prompt is only started
+   * when the field is empty, so a second add never wipes what you typed.
+   */
+  const addToChat = (ctx: { id: string; label: string; detail: string }, prompt?: string) => {
     setActiveTab("assistant");
     setAttachedContexts((prev) => [
-      ...prev.filter((c) => c.type !== "element"),
-      { id: `video-${row.id}-${Date.now()}`, type: "element" as const, label: `Video · ${row.label}`, detail: row.value },
+      ...prev.filter((c) => c.id !== ctx.id),
+      { ...ctx, type: "element" as const },
     ]);
-    setDirectorInput(`Change the ${row.label.toLowerCase()} to `);
-    showToast(`${row.label} added to the chat`);
+    if (prompt) setDirectorInput((prev) => (prev.trim() ? prev : prompt));
+    /* Adding to chat changes a panel you may not be looking at, so it says
+       it landed. */
+    showToast(`${ctx.label} added to the chat`);
   };
+
+  /* A video-wide choice handed to the chat, the way the scene's copy is:
+     the context chip names it, and the prompt is started for you. */
+  const attachVideoSettingToChat = (row: VideoSettingRow) =>
+    addToChat(
+      { id: `video-${row.id}`, label: `Video · ${row.label}`, detail: row.value },
+      `Change the ${row.label.toLowerCase()} to `
+    );
 
   const attachElementToChat = (elementId: string) => {
     const { label, detail } = describeElement(elementId);
-    setAttachedContexts((prev) => [
-      ...prev.filter((c) => c.type !== "element"),
-      { id: `element-${elementId}-${Date.now()}`, type: "element" as const, label, detail },
-    ]);
-    /* Adding to chat changes a panel you may not be looking at. Every other
-       way of handing something to the agent says it landed; this one did
-       not. */
-    showToast(`${label} added to the chat`);
+    addToChat({ id: `element-${selectedScene.id}-${elementId}`, label, detail });
   };
 
 
@@ -3698,36 +3708,28 @@ export function StudioScreen() {
                       setSceneCurrentTime(seconds);
                       setScenePlaying(false);
                     }}
-                    onAddToChat={(shot) => {
-                      setActiveTab("assistant");
-                      setAttachedContexts((prev) => [
-                        ...prev.filter((c) => c.type !== "element"),
+                    onAddToChat={(shot) =>
+                      addToChat(
                         {
                           id: `shot-${shot.id}`,
-                          type: "element" as const,
                           label: `Scene ${selectedScene.number} · Shot ${shot.index}`,
                           detail: `${shot.startAt.toFixed(1)}s–${shot.endAt.toFixed(1)}s · ${shot.label}`,
                         },
-                      ]);
-                      setDirectorInput(`In shot ${shot.index} of scene ${selectedScene.number}, `);
-                    }}
-                    onReplaceMedia={(shot, elementId, kind) => {
-                      setActiveTab("assistant");
-                      setAttachedContexts((prev) => [
-                        ...prev.filter((c) => c.type !== "element"),
+                        `In shot ${shot.index} of scene ${selectedScene.number}, `
+                      )
+                    }
+                    onReplaceMedia={(shot, elementId, kind) =>
+                      addToChat(
                         {
                           id: `shot-media-${shot.id}-${elementId}`,
-                          type: "element" as const,
-                          label: `Scene ${selectedScene.number} · Shot ${shot.index} · ${kind === "video" ? "Video Clip" : "Image Asset"}`,
+                          label: `Scene ${selectedScene.number} · Shot ${shot.index} · ${kind === "video" ? "Video clip" : "Image"}`,
                           detail: selectedScene.mediaLabel || "Scene media",
                         },
-                      ]);
-                      setDirectorInput(
                         kind === "video"
                           ? `Swap the video clip in shot ${shot.index} for `
                           : `Replace the image in shot ${shot.index} with `
-                      );
-                    }}
+                      )
+                    }
                   />
 
                 </div>

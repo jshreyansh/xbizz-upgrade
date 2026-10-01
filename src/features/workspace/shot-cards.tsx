@@ -189,10 +189,10 @@ export function ShotCards({
               <button
                 type="button"
                 onClick={() => onAddToChat(shot)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-control bg-brand px-2.5 py-1 text-caption font-bold text-white transition-colors hover:bg-brand-deep cursor-pointer"
+                className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-glyph px-2 py-1 text-caption font-bold text-brand transition-colors hover:bg-tint"
               >
                 <MessageSquarePlus className="size-3" />
-                <span>Add in chat to edit</span>
+                <span>Add to chat</span>
               </button>
             </div>
 
