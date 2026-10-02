@@ -3850,7 +3850,9 @@ export function StudioScreen() {
                 <div
                   className={cn(
                     "relative flex w-full flex-col justify-between overflow-hidden rounded-card bg-black shadow-on-dark ring-1 ring-white/10",
-                    isPortrait ? "aspect-[9/16] max-h-full w-auto" : "aspect-video"
+                    /* Portrait fills the height and takes its width from it;
+                       sized by its contents it shrank to a thumbnail. */
+                    isPortrait ? "aspect-[9/16] h-full w-auto max-w-full" : "aspect-video"
                   )}
                 >
                   <div className="absolute inset-0">
@@ -3862,11 +3864,11 @@ export function StudioScreen() {
                       sceneTime={Math.max(0, masterCurrentTime - (activeMasterChapter?.start ?? 0))}
                     />
                   </div>
-                  <div className="relative z-[40] flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-3 text-label text-white">
-                    <span className="font-extrabold">
+                  <div className="relative z-[40] flex items-center justify-between gap-3 bg-gradient-to-b from-black/80 to-transparent p-3 text-label text-white">
+                    <span className="min-w-0 truncate font-extrabold">
                       {activeMasterChapter?.number}. {activeMasterChapter?.title}
                     </span>
-                    <span className="font-semibold text-white/70">
+                    <span className="shrink-0 font-semibold text-white/70">
                       Chapter {activeMasterChapter?.number} of {chapters.length}
                     </span>
                   </div>
