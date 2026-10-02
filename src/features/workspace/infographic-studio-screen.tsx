@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   Check,
-  CheckCircle2,
   Download,
   Image as ImageIcon,
   MessageSquare,
@@ -65,8 +64,9 @@ import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
-import { PreflightPanel } from "@/features/workspace/preflight-panel";
-import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
+import { PreviewPublishModal } from "@/features/workspace/preview-publish-modal";
+import { DocPagePreview } from "@/features/workspace/doc-page-preview";
+import { useMlrReview } from "@/features/workspace/mlr-review";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 
@@ -344,12 +344,15 @@ export function InfographicStudioScreen() {
   /* Arriving from the Content Library means the asset is already published:
      it opens on its shared review rather than composing a canvas again. */
   const openedForReview = useWorkspaceStore.getState().studioEntry === "review";
+  /* Back into a document whose MLR review is still running: the editor, with
+     Preview and Publish open and frozen. */
+  const openedForMlr = useWorkspaceStore.getState().studioEntry === "mlr-review";
   // As in the video studio: a published asset opens under its own title.
   const storedProjectName = useWorkspaceStore((s) => s.projectName);
   const creativeTitle = storedProjectName.trim() || `${brandName} HCP Infographic`;
 
   const [studioMode, setStudioMode] = useState<CreativeStudioMode>(
-    openedForReview ? "review" : "opening"
+    openedForReview ? "review" : openedForMlr ? "editor" : "opening"
   );
 
   // Tab State in Review/Editor right panel
@@ -375,11 +378,12 @@ export function InfographicStudioScreen() {
   // Stamped in the effect, not during render: Date.now() in a render body is
   // an impure read, and the clock should start when the studio mounts anyway.
   const genStartRef = useRef(0);
-  const [genElapsed, setGenElapsed] = useState(0);
+  /* A restored document was fully drawn before its review started. */
+  const [genElapsed, setGenElapsed] = useState(openedForMlr ? ART_LAST : 0);
 
   useEffect(() => {
     if (studioMode === "opening") return;
-    genStartRef.current = Date.now();
+    genStartRef.current = Date.now() - (openedForMlr ? ART_LAST : 0);
     const tick = setInterval(() => {
       const elapsed = Date.now() - genStartRef.current;
       setGenElapsed(elapsed);
@@ -452,7 +456,9 @@ export function InfographicStudioScreen() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
-  const [confirmGenerateModalOpen, setConfirmGenerateModalOpen] = useState(false);
+  const [confirmGenerateModalOpen, setConfirmGenerateModalOpen] = useState(openedForMlr);
+  /** The page as drawn, mirrored read-only by Preview and Publish. */
+  const pageCanvasRef = useRef<HTMLDivElement>(null);
   const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
 
   // Multi-page management
@@ -474,8 +480,6 @@ export function InfographicStudioScreen() {
   /* Still accumulated — the toasts quote what each render spends — but no
      longer read back: the dialog shows the budget, not a running total. */
   const [, setCreditsUsed] = useState(() => pagesListInitialCost);
-  /** The budget agreed on the plan screen: 300 credits a page. */
-  const creditBudget = pagesList.length * 300;
   const activePageId = infographicActivePage || 1;
 
   /* As many pages as the plan asked for, one to twelve. The first is the
@@ -748,8 +752,6 @@ export function InfographicStudioScreen() {
 
   const [mlrCheckResolved, setMlrCheckResolved] = useState(false);
   const [qaCheckResolved, setQaCheckResolved] = useState(false);
-  const hasBlockers = !mlrCheckResolved || !qaCheckResolved;
-  const blockerCount = (!mlrCheckResolved ? 1 : 0) + (!qaCheckResolved ? 1 : 0);
 
   /**
    * Hand the asset to the people who do this for a living. Nothing is sent
@@ -760,6 +762,12 @@ export function InfographicStudioScreen() {
     setConfirmGenerateModalOpen(false);
     showToast("Sent to the SwishX team. They will reach out to you");
   };
+
+  /* Publishing is the finished document, so it waits for the last art. */
+  const docFullyRendered = genElapsed >= ART_LAST;
+  /* Edits since the last MLR review: every instruction sent to the agent. */
+  const editCount = chatMessages.filter((m) => m.role === "user" && !m.seeded).length;
+  const mlrReview = useMlrReview(`document:${creativeTitle}`, editCount);
 
   const handleSendMessage = (directText?: string) => {
     /* Suggestions in the tray go with whatever was typed, as one message —
@@ -1150,10 +1158,12 @@ export function InfographicStudioScreen() {
               <Button
                 size="sm"
                 onClick={() => setConfirmGenerateModalOpen(true)}
-                className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4.5 hover:scale-[1.02] transition-transform"
+                disabled={!docFullyRendered}
+                title={docFullyRendered ? undefined : "Art is still being drawn"}
+                className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4.5 transition-transform enabled:hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <LogoMark size={14} />
-                <span>Publish</span>
+                <span>Preview and Publish</span>
               </Button>
             )}
 
@@ -1458,6 +1468,7 @@ export function InfographicStudioScreen() {
               className="relative shrink-0"
             >
               <div
+                ref={pageCanvasRef}
                 style={{
                   width: pageGeometry.width,
                   height: pageGeometry.height,
@@ -2087,150 +2098,52 @@ export function InfographicStudioScreen() {
 
         {/* ── CONFIRM CREATIVE GENERATION MODAL (Matching Exact Form & Rate Spec with Quality & MLR Layer) ── */}
         {confirmGenerateModalOpen && (
-          <Portal>
-          <div
-            className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm animate-in fade-in duration-200"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Confirm Creative Generation"
-          >
-            <div className="rise-in flex max-h-[86vh] w-full max-w-[560px] flex-col overflow-hidden rounded-card border border-white/50 bg-card text-left shadow-float">
-              <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
-                <div>
-                  <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-                    <LogoMark size={14} /> Generation Engine
-                  </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                    <h2 className="text-display font-[850] tracking-tight text-ink">
-                      Confirm Creative Generation
-                    </h2>
-                    {/* Which version this becomes. Publishing is what creates
-                        one, and a person about to spend credits on it should
-                        be told what they are about to put a reviewer's name
-                        against. */}
-                    <span className="rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-caption font-bold text-brand-deep">
-                      Publishing as Version {draftVersion}
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setConfirmGenerateModalOpen(false)}
-                  className="size-8 rounded-full hover:bg-black/5 cursor-pointer"
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
-                {/* Cost & Spec Card */}
-                <GenerationCostCard
-                  budget={creditBudget}
-                  qualityLabel={"Vector 300 DPI"}
-                  facts={[
-                    { label: "Format", value: `${pagesList.length} ${pagesList.length === 1 ? "Page" : "Pages"} · ${pageGeometry.label}` },
-                    { label: "Render", value: "~30–45 sec" },
-                  ]}
-                />
-
-                {/* Automated Quality & MLR Pre-Flight Verification */}
-                {/* Flags, not gates. The checks say what a reviewer will
-                    query; whether that is worth stopping for is the author's
-                    call, and a dialog that refuses to publish until an agent
-                    has rewritten the line makes it the agent's. */}
-                <PreflightPanel
-                  checks={[
-                    mlrCheckResolved
-                      ? {
-                          id: "mlr",
-                          source: "MLR",
-                          title: "24 verified claims cited",
-                          detail: "EMBRACE-3 §2.4 grounded (p < 0.001)",
-                        }
-                      : {
-                          id: "mlr",
-                          source: "MLR",
-                          severity: "blocker" as const,
-                          title: "Unverified comparative claim",
-                          detail: "Hero card compares efficacy without citing the comparator placebo cohort.",
-                        },
-                    qaCheckResolved
-                      ? {
-                          id: "qa",
-                          source: "Quality",
-                          title: "Editorial and spelling clear",
-                          detail: "Nomenclature and syntax verified",
-                        }
-                      : {
-                          id: "qa",
-                          source: "Quality",
-                          severity: "warning" as const,
-                          title: "Subtitle phrasing redundancy",
-                          detail: "Tagline contains redundant descriptors and unstandardised dosing syntax.",
-                        },
-                    { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "eGFR ≥25 and box warnings verified" },
-                    { id: "vector", source: "Quality", title: "Vector layout and contrast", detail: "300 DPI CMYK ready hierarchy" },
-                    { id: "terms", source: "Quality", title: "Medical terminology clear", detail: "Generic name and dosing accurate" },
-                    { id: "refs", source: "MLR", title: "Reference list complete", detail: "All citations resolve to approved sources" },
-                  ]}
-                />
-
-                {/* Informational Notice */}
-                <p className="text-body text-ink-3 leading-relaxed">
-                  Generation renders in the background using publication vector models. You will receive an email notification when processing completes, and can continue working in SwishX.
-                </p>
-
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-hair">
-                  {hasBlockers ? (
-                    <span className="text-label text-warn font-semibold flex items-center gap-1">
-                      <AlertTriangle className="size-3 shrink-0" />
-                      {blockerCount} {blockerCount === 1 ? "item" : "items"} flagged for review
-                    </span>
-                  ) : (
-                    <span className="text-label text-ok font-bold flex items-center gap-1">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0" />
-                      All Quality &amp; MLR checks verified
-                    </span>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* The other way out of a flag: hand the whole thing to
-                        the people who do this for a living, rather than fix
-                        it here or publish past it. */}
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={handleSendToSwishXTeam}
-                      className="font-bold cursor-pointer"
-                    >
-                      Send to SwishX Team for Edits
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setConfirmGenerateModalOpen(false)}
-                      className="font-bold cursor-pointer"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        setConfirmGenerateModalOpen(false);
-                        handlePublishCreative();
-                      }}
-                      className="font-bold px-5 gap-1.5 bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
-                    >
-                      <LogoMark size={14} />
-                      <span>Publish</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </Portal>
+          <PreviewPublishModal
+            title={creativeTitle}
+            version={`Version ${draftVersion}`}
+            kind="document"
+            review={mlrReview}
+            checks={[
+              mlrCheckResolved
+                ? { id: "mlr", source: "MLR", title: "24 verified claims cited", detail: "EMBRACE-3 §2.4 grounded (p < 0.001)" }
+                : {
+                    id: "mlr",
+                    source: "MLR",
+                    severity: "blocker" as const,
+                    title: "Unverified comparative claim",
+                    detail: "Hero card compares efficacy without citing the comparator placebo cohort.",
+                  },
+              qaCheckResolved
+                ? { id: "qa", source: "Quality", title: "Editorial and spelling clear", detail: "Nomenclature and syntax verified" }
+                : {
+                    id: "qa",
+                    source: "Quality",
+                    severity: "warning" as const,
+                    title: "Subtitle phrasing redundancy",
+                    detail: "Tagline contains redundant descriptors and unstandardised dosing syntax.",
+                  },
+              { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "eGFR ≥25 and box warnings verified" },
+              { id: "vector", source: "Quality", title: "Vector layout and contrast", detail: "300 DPI CMYK ready hierarchy" },
+              { id: "terms", source: "Quality", title: "Medical terminology clear", detail: "Generic name and dosing accurate" },
+              { id: "refs", source: "MLR", title: "Reference list complete", detail: "All citations resolve to approved sources" },
+            ]}
+            onClose={() => setConfirmGenerateModalOpen(false)}
+            onSendToTeam={handleSendToSwishXTeam}
+            onPublish={() => {
+              setConfirmGenerateModalOpen(false);
+              handlePublishCreative();
+            }}
+            preview={
+              <DocPagePreview
+                sourceRef={pageCanvasRef}
+                pageSize={{ width: pageGeometry.width, height: pageGeometry.height }}
+                pages={pagesList.map((pg) => ({ id: pg.id, name: pg.name }))}
+                activePage={activePageId}
+                onSelectPage={setInfographicActivePage}
+                frozen={mlrReview.status === "running"}
+              />
+            }
+          />
         )}
 
         {/* ── WHAT YOU CAN DO TO THE SELECTED ELEMENT ──

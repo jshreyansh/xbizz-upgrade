@@ -77,8 +77,12 @@ export function WorkbenchLayout({
     }
   }, [layout, autoCollapsePanelBelow, onPanelOpenChange]);
 
+  /* `isolate` keeps every z-index inside the editor local to it. Without it
+     the player chrome's z-50 ties with a dialog's z-50 at the page root, and
+     whichever React inserted last — after a reload, sometimes the editor —
+     paints over the dialog. */
   return (
-    <div className={cn("flex h-screen flex-col overflow-hidden bg-canvas", className)}>
+    <div className={cn("isolate flex h-screen flex-col overflow-hidden bg-canvas", className)}>
       {header}
 
       <div className="relative flex min-h-0 flex-1 overflow-hidden">

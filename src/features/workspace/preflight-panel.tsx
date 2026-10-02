@@ -65,19 +65,21 @@ export function PreflightPanel({ checks, onFixAll, className }: PreflightPanelPr
       )}
     >
       <div className="flex items-center justify-between gap-3 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {allClear ? (
             <ShieldCheck className="size-4 shrink-0 text-ok" />
           ) : (
             <AlertTriangle className="size-4 shrink-0 text-danger" />
           )}
-          <span className="truncate text-body font-bold text-ink">Quality and regulatory check</span>
+          {/* The window around it already names the check. */}
+          <span className="text-body font-bold text-ink">Findings</span>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2.5">
+        {/* When room is short the segments narrow; the words never clip. */}
+        <div className="flex min-w-0 items-center gap-2.5">
           {/* One segment per check. Reading the state should not require
               reading a sentence. */}
-          <div className="flex items-center gap-1" role="img"
+          <div className="flex min-w-0 items-center gap-1" role="img"
                aria-label={allClear ? "All checks passed" : `${failing.length} of ${checks.length} checks blocking`}>
             {checks.map((c) => (
               <span
@@ -89,7 +91,7 @@ export function PreflightPanel({ checks, onFixAll, className }: PreflightPanelPr
               />
             ))}
           </div>
-          <span className={cn("text-label font-bold tabular-nums", allClear ? "text-ok" : "text-warn")}>
+          <span className={cn("shrink-0 text-label font-bold tabular-nums", allClear ? "text-ok" : "text-warn")}>
             {allClear ? "All clear" : `${failing.length} flagged`}
           </span>
         </div>

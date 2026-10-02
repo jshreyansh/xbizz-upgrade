@@ -7,12 +7,14 @@ import type { BriefAttachment } from "@/features/workspace/plan-intake";
 export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
 export type VideoSubStage = "mode-select" | "source-select" | "intake" | "directions" | "studio";
-export type StudioEntry = "create" | "review";
+export type StudioEntry = "create" | "review" | "mlr-review";
 /** The plan screen's three states — see planPhase. */
 export type PlanPhase = "research" | "intake" | "plan";
 /** Which half of the creative plan screen is showing — its own step in the
  *  trail, so the breadcrumb can send you back to it from the canvas. */
 export type CreativeStep = "brief" | "template";
+
+export type ChatMessage = { role: "user" | "swishx"; text: string; chips?: string[]; seeded?: boolean };
 
 interface WorkspaceState {
   view: AppView;
@@ -61,7 +63,9 @@ interface WorkspaceState {
   selectedSceneId: string;
   inspectorTab: InspectorTab;
   selectedQuality: "hd" | "cinematic";
-  chatMessages: Array<{ role: "user" | "swishx"; text: string; chips?: string[] }>;
+  /** `seeded` marks the opening transcript a studio writes for itself — not
+      something the user said, so not an edit. */
+  chatMessages: Array<ChatMessage>;
   // Auth & onboarding
   authView: AuthView;
   onboardingBeat: OnboardingBeat;
@@ -105,8 +109,8 @@ interface WorkspaceState {
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
-  setChatMessages: (messages: Array<{ role: "user" | "swishx"; text: string; chips?: string[] }>) => void;
-  addChatMessage: (message: { role: "user" | "swishx"; text: string; chips?: string[] }) => void;
+  setChatMessages: (messages: Array<ChatMessage>) => void;
+  addChatMessage: (message: ChatMessage) => void;
   setCreationMode: (mode: CreationMode) => void;
   setSourceType: (type: SourceSelectionType) => void;
   setSourcePayload: (payload: { dossierId?: string; url?: string; text?: string }) => void;
@@ -192,7 +196,7 @@ const initialState = {
   selectedSceneId: "scene-3",
   inspectorTab: "edit" as InspectorTab,
   selectedQuality: "hd" as "hd" | "cinematic",
-  chatMessages: [] as Array<{ role: "user" | "swishx"; text: string }>,
+  chatMessages: [] as Array<ChatMessage>,
   authView: "signin" as AuthView,
   onboardingBeat: 1 as OnboardingBeat,
   isFirstRun: true,

@@ -2,7 +2,6 @@
 
 import {
   AlertCircle,
-  AlertTriangle,
   ArrowLeft,
   BookOpenCheck,
   Check,
@@ -52,7 +51,6 @@ import {
   Type,
   Volume2,
   VolumeX,
-  X,
 } from "lucide-react";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -122,8 +120,8 @@ import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialo
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { WorkbenchLayout } from "@/components/patterns/workbench-layout";
-import { PreflightPanel } from "@/features/workspace/preflight-panel";
-import { GenerationCostCard } from "@/features/workspace/generation-cost-card";
+import { PreviewPublishModal } from "@/features/workspace/preview-publish-modal";
+import { useMlrReview } from "@/features/workspace/mlr-review";
 
 import { Portal } from "@/components/ui/portal";
 import { Toast, useToast } from "@/components/patterns/toast";
@@ -241,14 +239,18 @@ export function StudioScreen() {
      it opens on its shared review, on the comments its reviewers left, with
      no walk through the wizard to get there. */
   const openedForReview = useWorkspaceStore.getState().studioEntry === "review";
+  /* Back into a project whose MLR review is still running — after a refresh,
+     or returning to it — lands on the editor with Preview and Publish open
+     and frozen, not on the storyboard. */
+  const openedForMlr = useWorkspaceStore.getState().studioEntry === "mlr-review";
   const [studioMode, setStudioMode] = useState<"scenes" | "opening-editor" | "editor" | "generating" | "review">(
-    openedForReview ? "review" : "scenes"
+    openedForReview ? "review" : openedForMlr ? "editor" : "scenes"
   );
   const [activeTab, setActiveTab] = useState<"assistant" | "edit" | "comments" | "evidence">(
     openedForReview ? "comments" : "assistant"
   );
 
-  const [generateVideoModalOpen, setGenerateVideoModalOpen] = useState(false);
+  const [generateVideoModalOpen, setGenerateVideoModalOpen] = useState(openedForMlr);
   const [preflightOpen, setPreflightOpen] = useState(false);
   const [relatedOpen, setRelatedOpen] = useState(false);
   const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
@@ -286,7 +288,9 @@ export function StudioScreen() {
    * finished one scene entirely before starting the next — so scene 5 was
    * untouchable for twenty seconds while scene 1 was already idle.
    */
-  const [scenePhase, setScenePhase] = useState<Record<string, 0 | 1 | 2>>({});
+  const [scenePhase, setScenePhase] = useState<Record<string, 0 | 1 | 2>>(() =>
+    openedForMlr ? Object.fromEntries(scenes.map((sc) => [sc.id, 2 as const])) : {}
+  );
   /**
    * Where each SHOT's footage has got to.
    *
@@ -301,7 +305,9 @@ export function StudioScreen() {
    * one is the thing the keyframes exist to avoid. A scene is rendered when
    * every shot in it is.
    */
-  const [shotRender, setShotRender] = useState<Record<string, "keyframes" | "generating" | "ready">>({});
+  const [shotRender, setShotRender] = useState<Record<string, "keyframes" | "generating" | "ready">>(() =>
+    openedForMlr ? Object.fromEntries(scenes.flatMap((sc) => shotIdsOf(sc)).map((id) => [id, "ready" as const])) : {}
+  );
 
   /**
    * When generation started, so a scene can report its own progress.
@@ -312,7 +318,8 @@ export function StudioScreen() {
    * editor's strip readable. Same clock here.
    */
   const genStartRef = useRef(0);
-  const [genElapsed, setGenElapsed] = useState(0);
+  /* A restored project was fully rendered before its review started. */
+  const [genElapsed, setGenElapsed] = useState(openedForMlr ? MEDIA_LAST : 0);
 
   const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
 
@@ -449,10 +456,10 @@ export function StudioScreen() {
   useEffect(() => {
     if (chatMessages.length === 0) {
       setChatMessages([
-        { role: "user", text: `Create a concise ${brandName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.` },
-        { role: "swishx", text: `I've structured a 5-scene video plan grounded in the **${brandName}** dossier and approved claims.` },
-        { role: "user", text: "Confirm plan & build script" },
-        { role: "swishx", text: `Script & storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.` },
+        { role: "user", text: `Create a concise ${brandName} HCP launch video explaining clinical need, mechanism, and pivotal risk reduction.`, seeded: true },
+        { role: "swishx", text: `I've structured a 5-scene video plan grounded in the **${brandName}** dossier and approved claims.`, seeded: true },
+        { role: "user", text: "Confirm plan & build script", seeded: true },
+        { role: "swishx", text: `Script & storyboard scenes generated for **${brandName}**! You can review or edit script narration in-place on the left canvas, or chat with me to make adjustments.`, seeded: true },
       ]);
     }
   }, [chatMessages.length, brandName, setChatMessages]);
@@ -1292,10 +1299,37 @@ export function StudioScreen() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [mlrCheckResolved, setMlrCheckResolved] = useState(false);
   const [qaCheckResolved, setQaCheckResolved] = useState(false);
-  const hasBlockers = !mlrCheckResolved || !qaCheckResolved;
-  const blockerCount = (!mlrCheckResolved ? 1 : 0) + (!qaCheckResolved ? 1 : 0);
 
   const handleOpenGenerateVideoModal = () => setGenerateVideoModalOpen(true);
+
+  /* Edits since the last MLR review: every instruction sent to the agent is
+     one. A run records the count it saw, so a later edit marks it stale. */
+  const editCount = chatMessages.filter((m) => m.role === "user" && !m.seeded).length;
+  const mlrReview = useMlrReview(`video:${projectTitle}`, editCount);
+  const videoChecks = [
+    mlrCheckResolved
+      ? { id: "mlr", source: "MLR", title: "24 verified claims cited", detail: "EMBRACE-3 §2.4 grounded (p < 0.001)" }
+      : {
+          id: "mlr",
+          source: "MLR",
+          severity: "blocker" as const,
+          title: "Unverified comparative claim",
+          detail: "Scene 3 claims superiority without citing a head-to-head trial comparator.",
+        },
+    qaCheckResolved
+      ? { id: "qa", source: "Quality", title: "Script pacing and audio sync", detail: "Optimal 135 wpm speech cadence" }
+      : {
+          id: "qa",
+          source: "Quality",
+          severity: "warning" as const,
+          title: "Narration density over 150 wpm",
+          detail: "Scene 3 voiceover exceeds speech pacing limits with redundant words.",
+        },
+    { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "Contraindication footnotes verified" },
+    { id: "terms", source: "Quality", title: "Medical terminology clear", detail: "Generic name and dosing accurate" },
+    { id: "refs", source: "MLR", title: "Reference list complete", detail: "All citations resolve to approved sources" },
+    { id: "sync", source: "Quality", title: "Scene timing within budget", detail: `${sceneList.length} scenes fit the runtime` },
+  ];
 
   useEffect(() => {
     if (studioMode !== "editor" || genStartRef.current === 0) return;
@@ -1822,7 +1856,7 @@ export function StudioScreen() {
                   }
                   className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5 disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  <LogoMark size={14} /> <span>Publish</span>
+                  <LogoMark size={14} /> <span>Preview and Publish</span>
                 </Button>
               </>
             )}
@@ -3793,147 +3827,74 @@ export function StudioScreen() {
         />
 
         {generateVideoModalOpen && (
-          <Portal>
-          <div
-            className="fixed inset-0 z-50 grid place-items-center bg-ink/50 p-4 backdrop-blur-sm"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Confirm Video Generation"
-          >
-            <div className="rise-in flex max-h-[86vh] w-full max-w-[560px] flex-col overflow-hidden rounded-card border border-white/50 bg-card shadow-float">
-              <div className="flex items-center justify-between border-b border-hair px-6 py-4.5 bg-canvas">
-                <div>
-                  <div className="flex items-center gap-1.5 text-caption font-extrabold uppercase tracking-[0.14em] text-brand">
-                    <LogoMark size={14} /> Generation Engine
-                  </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
-                    <h2 className="text-display font-[850] tracking-tight text-ink">
-                      Confirm Video Generation
-                    </h2>
-                    {/* Which version this becomes. Publishing is what creates
-                        one, and a person about to spend credits on it should
-                        be told what they are about to put a reviewer's name
-                        against. */}
-                    <span className="rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-caption font-bold text-brand-deep">
-                      Publishing as Version {draftVersion}
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setGenerateVideoModalOpen(false)}
-                  className="size-8 rounded-full hover:bg-black/5 cursor-pointer"
-                >
-                  <X className="size-4" />
-                </Button>
-              </div>
-
-              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
-                {/* Cost & Spec Card */}
-                <GenerationCostCard
-                  budget={creditBudget}
-                  qualityLabel={selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}
-                  facts={[
-                    { label: "Length", value: `${totalDurationSeconds}s · ${sceneList.length} scenes` },
-                    { label: "Render", value: `~${selectedQuality === "cinematic" ? "12–14 min" : "7–9 min"}` },
-                  ]}
-                />
-
-                {/* Automated Quality & MLR Pre-Flight Verification */}
-                {/* Flags, not gates. The checks say what a reviewer will
-                    query; whether that is worth stopping for is the author's
-                    call, and a dialog that refuses to publish until an agent
-                    has rewritten the line makes it the agent's. */}
-                <PreflightPanel
-                  checks={[
-                    mlrCheckResolved
-                      ? {
-                          id: "mlr",
-                          source: "MLR",
-                          title: "24 verified claims cited",
-                          detail: "EMBRACE-3 §2.4 grounded (p < 0.001)",
-                        }
-                      : {
-                          id: "mlr",
-                          source: "MLR",
-                          severity: "blocker" as const,
-                          title: "Unverified comparative claim",
-                          detail: "Scene 3 claims superiority without citing a head-to-head trial comparator.",
-                        },
-                    qaCheckResolved
-                      ? {
-                          id: "qa",
-                          source: "Quality",
-                          title: "Script pacing and audio sync",
-                          detail: "Optimal 135 wpm speech cadence",
-                        }
-                      : {
-                          id: "qa",
-                          source: "Quality",
-                          severity: "warning" as const,
-                          title: "Narration density over 150 wpm",
-                          detail: "Scene 3 voiceover exceeds speech pacing limits with redundant words.",
-                        },
-                    { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "Contraindication footnotes verified" },
-                    { id: "terms", source: "Quality", title: "Medical terminology clear", detail: "Generic name and dosing accurate" },
-                    { id: "refs", source: "MLR", title: "Reference list complete", detail: "All citations resolve to approved sources" },
-                    { id: "sync", source: "Quality", title: "Scene timing within budget", detail: "5 scenes fit the 60 second runtime" },
-                  ]}
-                />
-
-                {/* Informational Notice */}
-                <p className="text-body text-ink-3 leading-relaxed">
-                  Generation renders in the background using neural motion models. You will receive an email notification when processing completes, and can continue working in SwishX.
-                </p>
-
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-hair">
-                  {hasBlockers ? (
-                    <span className="text-label text-warn font-semibold flex items-center gap-1">
-                      <AlertTriangle className="size-3 shrink-0" />
-                      {blockerCount} {blockerCount === 1 ? "item" : "items"} flagged for review
-                    </span>
-                  ) : (
-                    <span className="text-label text-ok font-bold flex items-center gap-1">
-                      <CheckCircle2 className="size-3.5 text-ok shrink-0" />
-                      All Quality &amp; MLR checks verified
-                    </span>
+          <PreviewPublishModal
+            title={projectTitle}
+            version={`Version ${draftVersion}`}
+            kind="video"
+            checks={videoChecks}
+            review={{
+              ...mlrReview,
+              /* The film stops where it is: the review is of this frame on. */
+              start: () => {
+                setMasterPlaying(false);
+                mlrReview.start();
+              },
+            }}
+            onClose={() => setGenerateVideoModalOpen(false)}
+            onSendToTeam={handleSendToSwishXTeam}
+            onPublish={handleConfirmVideoGeneration}
+            preview={
+              /* The whole film, from the composition engine the published
+                 review plays, with its chapters to step through. */
+              <div className="flex h-full items-center justify-center p-4">
+                <div
+                  className={cn(
+                    "relative flex w-full flex-col justify-between overflow-hidden rounded-card bg-black shadow-on-dark ring-1 ring-white/10",
+                    isPortrait ? "aspect-[9/16] max-h-full w-auto" : "aspect-video"
                   )}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* The other way out of a flag: hand the whole thing to
-                        the people who do this for a living, rather than fix
-                        it here or publish past it. */}
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={handleSendToSwishXTeam}
-                      className="font-bold cursor-pointer"
-                    >
-                      Send to SwishX Team for Edits
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setGenerateVideoModalOpen(false)}
-                      className="font-bold"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleConfirmVideoGeneration}
-                      className="font-bold px-5 gap-1.5 bg-brand hover:bg-brand-deep text-white cursor-pointer shadow-xs"
-                    >
-                      <LogoMark size={14} />
-                      <span>Publish</span>
-                    </Button>
+                >
+                  <div className="absolute inset-0">
+                    <MasterVideoSequenceComposition
+                      sceneList={sceneList}
+                      activeScene={activeMasterChapter}
+                      brandName={brandName}
+                      isPlaying={masterPlaying && mlrReview.status !== "running"}
+                      sceneTime={Math.max(0, masterCurrentTime - (activeMasterChapter?.start ?? 0))}
+                    />
+                  </div>
+                  <div className="relative z-[40] flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-3 text-label text-white">
+                    <span className="font-extrabold">
+                      {activeMasterChapter?.number}. {activeMasterChapter?.title}
+                    </span>
+                    <span className="font-semibold text-white/70">
+                      Chapter {activeMasterChapter?.number} of {chapters.length}
+                    </span>
+                  </div>
+                  <div className="relative z-[40] space-y-2.5 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-3 pt-8 text-white">
+                    <ChapterScrubber
+                      chapters={chapters}
+                      currentTime={masterCurrentTime}
+                      totalDuration={totalDurationSeconds}
+                      onSeek={setMasterCurrentTime}
+                    />
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setMasterPlaying(!masterPlaying)}
+                        className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-brand text-white shadow-md transition-transform hover:bg-brand-deep active:scale-95"
+                        aria-label={masterPlaying ? "Pause" : "Play"}
+                      >
+                        {masterPlaying ? <Pause className="size-4 fill-current" /> : <Play className="ml-0.5 size-4 fill-current" />}
+                      </button>
+                      <span className="font-mono text-label font-bold tabular-nums text-white/90">
+                        0:{Math.floor(masterCurrentTime).toString().padStart(2, "0")} / 0:{totalDurationSeconds}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-          </Portal>
+            }
+          />
         )}
 
         {/* Share & Distribute Modal */}
