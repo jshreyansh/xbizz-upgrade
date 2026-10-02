@@ -436,24 +436,27 @@ function EvidencePackCard({
         </button>
       </div>
 
-      {/* The numbers that matter, at a glance. */}
-      <div className="grid grid-cols-3 border-y border-white/10 text-center">
-        {[
-          { value: pack.totalClaims, label: "Approved claims" },
-          { value: pack.dossiers.length, label: "Verified dossiers" },
-          { value: pack.verifiedOn.replace(/, \d{4}$/, ""), label: "Last checked" },
-        ].map((stat, i) => (
-          <div key={stat.label} className={cn("px-2 py-2", i > 0 && "border-l border-white/10")}>
-            <div className="text-subhead font-[850] tabular-nums tracking-tight">{stat.value}</div>
-            <div className="text-micro font-bold uppercase tracking-wider text-white/45">{stat.label}</div>
-          </div>
-        ))}
-      </div>
+      {/* The numbers that matter, at a glance — once there are numbers. While
+          the research runs they would be figures for dossiers not yet read. */}
+      {!research && (
+        <div className="grid grid-cols-3 border-y border-white/10 text-center">
+          {[
+            { value: pack.totalClaims, label: "Approved claims" },
+            { value: pack.dossiers.length, label: "Verified dossiers" },
+            { value: pack.verifiedOn.replace(/, \d{4}$/, ""), label: "Last checked" },
+          ].map((stat, i) => (
+            <div key={stat.label} className={cn("px-2 py-2", i > 0 && "border-l border-white/10")}>
+              <div className="text-subhead font-[850] tabular-nums tracking-tight">{stat.value}</div>
+              <div className="text-micro font-bold uppercase tracking-wider text-white/45">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {research ? (
         /* The research plays here while the plan is built, so there is
            something to watch rather than a pack that appears from nowhere. */
-        <div className="space-y-2 px-4 py-3">
+        <div className="space-y-2 border-t border-white/10 px-4 py-3">
           <div className="flex items-center gap-2 text-label">
             <Loader2 className="size-3.5 shrink-0 animate-spin text-brand" />
             <span className="font-semibold text-white/80">{research.label}</span>
