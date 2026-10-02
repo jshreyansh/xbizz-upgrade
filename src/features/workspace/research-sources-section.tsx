@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Eye, Pencil, TriangleAlert, Plus, X, FileText, Loader2, Upload } from "lucide-react";
+import { Check, Eye, Pencil, TriangleAlert, Plus, X, FileText, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Portal } from "@/components/ui/portal";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
@@ -355,10 +355,11 @@ export function ResearchSourcesContent({
  * SwishX's evidence pack, as the head of the section.
  *
  * Dark, like the product's action bars, so it reads as ours and not as one
- * more file. One decision — use the pack — with each dossier on its own line
- * to be read (View), and a read of what the pack lets the asset claim beside
- * them. The bars are scaled to the largest area, so they compare areas rather
- * than all reading full.
+ * more file. It has to earn trust at a glance, so it says who made it (SwishX
+ * Science), what it is in one plain sentence, and what was checked and when —
+ * the things an MLR reviewer would ask before anything else. One decision,
+ * use the pack, with each dossier there to read (View) and its claims coverage
+ * beside them, area by area.
  */
 function EvidencePackCard({
   pack,
@@ -374,11 +375,15 @@ function EvidencePackCard({
   onView: () => void;
   onToggle: () => void;
 }) {
-  const largest = Math.max(...pack.areas.map((a) => a.claims));
+  const overall = Math.round(pack.areas.reduce((sum, a) => sum + a.coverage, 0) / pack.areas.length);
+  const accent = inUse ? "text-ok-on-dark" : "text-[#ff8a5c]";
   return (
     <div
-      className="relative overflow-hidden rounded-panel bg-ink text-white shadow-float"
-      style={{ backgroundImage: "radial-gradient(120% 140% at 0% 0%, rgba(255,255,255,.07), transparent 55%)" }}
+      className="relative overflow-hidden rounded-panel bg-ink text-white shadow-float ring-1 ring-white/5"
+      style={{
+        backgroundImage:
+          "radial-gradient(90% 120% at 100% 0%, rgba(253,72,22,.14), transparent 55%), radial-gradient(120% 140% at 0% 0%, rgba(255,255,255,.06), transparent 55%)",
+      }}
     >
       <span
         aria-hidden
@@ -389,19 +394,31 @@ function EvidencePackCard({
             : "linear-gradient(90deg,#ff8a52,var(--brand),var(--brand-deep))",
         }}
       />
-      <div className="flex items-center gap-2.5 border-b border-white/10 px-3.5 pb-2.5 pt-3">
-        <span
-          className="grid size-7.5 shrink-0 place-items-center rounded-glyph"
-          style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand) 55%,var(--brand-deep))" }}
-        >
-          <LogoMark size={15} className="text-white" title="" />
+
+      {/* Who made it and what it is — the first thing to trust. */}
+      <div className="flex items-start gap-3 px-4 pb-3 pt-3.5">
+        <span className="relative grid size-10 shrink-0 place-items-center">
+          <span
+            aria-hidden
+            className="absolute inset-0 rounded-[12px] shadow-brand-lift"
+            style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand) 55%,var(--brand-deep))" }}
+          />
+          <LogoMark size={18} className="relative text-white" title="" />
+          {/* The seal: reviewed, not just uploaded. */}
+          <span className="absolute -bottom-1 -right-1 grid size-4.5 place-items-center rounded-full bg-ok-on-dark text-ink ring-2 ring-ink">
+            <Check className="size-3" strokeWidth={3.5} />
+          </span>
         </span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-body-lg font-extrabold tracking-tight">{pack.name}</div>
-          <div className="truncate text-caption tabular-nums text-white/60">
-            <span className="font-bold text-ok-on-dark">✓ Curated by SwishX</span> · FDA label · {pack.totalClaims} claims ·{" "}
-            {pack.areas.length}/{pack.areas.length} areas
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="text-subhead font-[850] tracking-tight">{pack.name}</span>
+            <span className="rounded-chip bg-white/10 px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wider text-white/80">
+              by SwishX Science
+            </span>
           </div>
+          <p className="mt-0.5 text-label leading-snug text-white/65">
+            Pre-approved claims your asset can use. Every line it writes cites one of them.
+          </p>
         </div>
         <button
           type="button"
@@ -409,7 +426,7 @@ function EvidencePackCard({
           disabled={Boolean(research)}
           aria-pressed={inUse}
           className={cn(
-            "shrink-0 cursor-pointer rounded-control px-3 py-1.5 text-label font-extrabold transition disabled:cursor-not-allowed disabled:opacity-50",
+            "shrink-0 cursor-pointer rounded-control px-3.5 py-2 text-label font-extrabold transition disabled:cursor-not-allowed disabled:opacity-50",
             inUse
               ? "bg-ok-on-dark/15 text-ok-on-dark ring-1 ring-inset ring-ok-on-dark/45"
               : "bg-brand text-white shadow-brand-lift hover:bg-brand-deep"
@@ -419,10 +436,24 @@ function EvidencePackCard({
         </button>
       </div>
 
+      {/* The numbers that matter, at a glance. */}
+      <div className="grid grid-cols-3 border-y border-white/10 text-center">
+        {[
+          { value: pack.totalClaims, label: "Approved claims" },
+          { value: pack.dossiers.length, label: "Verified dossiers" },
+          { value: pack.verifiedOn.replace(/, \d{4}$/, ""), label: "Last checked" },
+        ].map((stat, i) => (
+          <div key={stat.label} className={cn("px-2 py-2", i > 0 && "border-l border-white/10")}>
+            <div className="text-subhead font-[850] tabular-nums tracking-tight">{stat.value}</div>
+            <div className="text-micro font-bold uppercase tracking-wider text-white/45">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
       {research ? (
         /* The research plays here while the plan is built, so there is
            something to watch rather than a pack that appears from nowhere. */
-        <div className="space-y-2 px-3.5 py-3">
+        <div className="space-y-2 px-4 py-3">
           <div className="flex items-center gap-2 text-label">
             <Loader2 className="size-3.5 shrink-0 animate-spin text-brand" />
             <span className="font-semibold text-white/80">{research.label}</span>
@@ -443,9 +474,9 @@ function EvidencePackCard({
             {pack.dossiers.map((dossier) => (
               <div
                 key={dossier.id}
-                className="grid grid-cols-[22px_minmax(0,1fr)_auto_auto] items-center gap-2.5 border-b border-white/[0.06] px-3.5 py-2 last:border-b-0 hover:bg-white/[0.04]"
+                className="grid grid-cols-[22px_minmax(0,1fr)_auto_auto] items-center gap-2.5 border-b border-white/[0.06] px-4 py-2 last:border-b-0 hover:bg-white/[0.04]"
               >
-                <FileText className={cn("size-4.5", inUse ? "text-ok-on-dark" : "text-[#ff8a5c]")} />
+                <FileText className={cn("size-4.5", accent)} />
                 <span className="min-w-0">
                   <span className="block truncate text-body font-bold">{dossier.name}</span>
                   <span className="block truncate text-caption text-white/55">{dossier.source}</span>
@@ -465,28 +496,47 @@ function EvidencePackCard({
               </div>
             ))}
           </div>
-          <div className="space-y-2 px-3.5 py-2.5">
-            <div className="text-micro font-extrabold uppercase tracking-wider text-white/50">What it lets you claim</div>
+          {/* Claims coverage: how much of what each area usually needs to say
+              the pack can back. Green from the start — it describes the pack,
+              which is good whether or not it is in use yet. */}
+          <div className="space-y-2 px-4 py-2.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-micro font-extrabold uppercase tracking-wider text-white/50">Claims coverage</span>
+              <span className="text-caption font-bold tabular-nums text-ok-on-dark">{overall}% · Strong</span>
+            </div>
             {pack.areas.map((area) => (
-              <div key={area.label} className="grid grid-cols-[104px_minmax(0,1fr)_22px] items-center gap-2 text-label">
+              <div
+                key={area.label}
+                title={`${area.claims} approved claims`}
+                className="grid grid-cols-[104px_minmax(0,1fr)_34px] items-center gap-2 text-label"
+              >
                 <span className="truncate font-semibold text-white/80">{area.label}</span>
                 <span className="h-1.5 overflow-hidden rounded-full bg-white/10">
                   <span
-                    className="block h-full rounded-full transition-[width] duration-300"
+                    className="block h-full rounded-full"
                     style={{
-                      width: `${Math.round((area.claims / largest) * 100)}%`,
-                      background: inUse
-                        ? "linear-gradient(90deg,var(--ok),var(--color-ok-on-dark))"
-                        : "linear-gradient(90deg,#ff8a52,var(--brand))",
+                      width: `${area.coverage}%`,
+                      background: "linear-gradient(90deg,var(--ok),var(--color-ok-on-dark))",
                     }}
                   />
                 </span>
-                <span className="text-right tabular-nums text-white/55">{area.claims}</span>
+                <span className="text-right font-bold tabular-nums text-ok-on-dark">{area.coverage}%</span>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* What was checked, so "verified" means something specific. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 bg-white/[0.03] px-4 py-2 text-caption text-white/60">
+        {["Checked against the FDA label", "Every claim cited to its source", "Re-checked when the label changes"].map((item) => (
+          <span key={item} className="inline-flex items-center gap-1.5">
+            <Check className="size-3 text-ok-on-dark" strokeWidth={3} />
+            {item}
+          </span>
+        ))}
+        <span className="ml-auto text-white/40">{pack.reviewedBy}</span>
+      </div>
     </div>
   );
 }
