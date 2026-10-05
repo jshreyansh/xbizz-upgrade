@@ -358,8 +358,7 @@ export function ResearchSourcesContent({
  * more file. It has to earn trust at a glance, so it says who made it (SwishX
  * Science), what it is in one plain sentence, and what was checked and when —
  * the things an MLR reviewer would ask before anything else. One decision,
- * use the pack, with each dossier there to read (View) and its claims coverage
- * beside them, area by area.
+ * use the pack, with each dossier there to read (View).
  */
 function EvidencePackCard({
   pack,
@@ -375,7 +374,6 @@ function EvidencePackCard({
   onView: () => void;
   onToggle: () => void;
 }) {
-  const overall = Math.round(pack.areas.reduce((sum, a) => sum + a.coverage, 0) / pack.areas.length);
   const accent = inUse ? "text-ok-on-dark" : "text-[#ff8a5c]";
   return (
     <div
@@ -472,61 +470,32 @@ function EvidencePackCard({
           </div>
         </div>
       ) : (
-        <div className="grid sm:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
-          <div className="border-b border-white/10 sm:border-b-0 sm:border-r">
-            {pack.dossiers.map((dossier) => (
-              <div
-                key={dossier.id}
-                className="grid grid-cols-[22px_minmax(0,1fr)_auto_auto] items-center gap-2.5 border-b border-white/[0.06] px-4 py-2 last:border-b-0 hover:bg-white/[0.04]"
+        /* The dossiers as tiles, two to a row: a pack of three reads at a
+           glance, and a pack of eight still fits without a long list. */
+        <div className="grid gap-2 px-4 py-3 sm:grid-cols-2">
+          {pack.dossiers.map((dossier) => (
+            <div
+              key={dossier.id}
+              className="flex min-w-0 items-center gap-2.5 rounded-control border border-white/10 bg-white/[0.04] px-3 py-2.5 transition-colors hover:border-white/20 hover:bg-white/[0.07]"
+            >
+              <FileText className={cn("size-4.5 shrink-0", accent)} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-body font-bold">{dossier.name}</span>
+                <span className="block truncate text-caption text-white/55">
+                  <b className="font-extrabold text-white">{dossier.claims}</b> claims · {dossier.source}
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={onView}
+                aria-label={`View ${dossier.name}`}
+                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-glyph border border-white/15 bg-white/5 px-2 py-1 text-label font-bold transition-colors hover:border-brand hover:text-[#ff8a5c]"
               >
-                <FileText className={cn("size-4.5", accent)} />
-                <span className="min-w-0">
-                  <span className="block truncate text-body font-bold">{dossier.name}</span>
-                  <span className="block truncate text-caption text-white/55">{dossier.source}</span>
-                </span>
-                <span className="whitespace-nowrap text-label tabular-nums text-white/55">
-                  <b className="font-extrabold text-white">{dossier.claims}</b> claims
-                </span>
-                <button
-                  type="button"
-                  onClick={onView}
-                  aria-label={`View ${dossier.name}`}
-                  className="inline-flex cursor-pointer items-center gap-1 rounded-glyph border border-white/15 bg-white/5 px-2 py-1 text-label font-bold transition-colors hover:border-brand hover:text-[#ff8a5c]"
-                >
-                  <Eye className="size-3.5" />
-                  View
-                </button>
-              </div>
-            ))}
-          </div>
-          {/* Claims coverage: how much of what each area usually needs to say
-              the pack can back. Green from the start — it describes the pack,
-              which is good whether or not it is in use yet. */}
-          <div className="space-y-2 px-4 py-2.5">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-micro font-extrabold uppercase tracking-wider text-white/50">Claims coverage</span>
-              <span className="text-caption font-bold tabular-nums text-ok-on-dark">{overall}% · Strong</span>
+                <Eye className="size-3.5" />
+                View
+              </button>
             </div>
-            {pack.areas.map((area) => (
-              <div
-                key={area.label}
-                title={`${area.claims} approved claims`}
-                className="grid grid-cols-[104px_minmax(0,1fr)_34px] items-center gap-2 text-label"
-              >
-                <span className="truncate font-semibold text-white/80">{area.label}</span>
-                <span className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <span
-                    className="block h-full rounded-full"
-                    style={{
-                      width: `${area.coverage}%`,
-                      background: "linear-gradient(90deg,var(--ok),var(--color-ok-on-dark))",
-                    }}
-                  />
-                </span>
-                <span className="text-right font-bold tabular-nums text-ok-on-dark">{area.coverage}%</span>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
       )}
 
