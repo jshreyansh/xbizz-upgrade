@@ -256,6 +256,7 @@ export function InfographicDirectionsScreen() {
               date: "Today",
               note: "Endpoint figures for the hero stat",
               origin: "new" as const,
+              previewUrl: "/documents/sample-clinical-study-report.pdf",
             },
             {
               name: `${brandName}_Visual_Claims_Master.docx`,
@@ -289,6 +290,7 @@ export function InfographicDirectionsScreen() {
       date: "Today",
       note: "Endpoint figures for the hero stat",
       origin: "new",
+      previewUrl: "/documents/sample-clinical-study-report.pdf",
     },
     {
       name: `${brandName}_Visual_Claims_Master.docx`,

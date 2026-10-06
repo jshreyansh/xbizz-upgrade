@@ -32,7 +32,7 @@ export function evidencePack(brandName: string): EvidencePack {
     { id: "safety", name: "Safety dossier", source: "ISI and fair balance", claims: 19, sections: 7 },
   ];
   return {
-    name: `${brandName} evidence pack`,
+    name: `${brandName} evidence dossier`,
     dossiers,
     totalClaims: dossiers.reduce((sum, d) => sum + d.claims, 0),
     reviewedBy: "SwishX Science medical review",

@@ -240,6 +240,7 @@ function defaultUploadedDocs(brand: string): UploadedDoc[] {
       date: "Today",
       note: "Primary endpoint tables, for the efficacy claims",
       origin: "new" as const,
+      previewUrl: "/documents/sample-clinical-study-report.pdf",
     },
     {
       name: `${brand || "Brand"}_Core_Visual_Aid_Brief.docx`,

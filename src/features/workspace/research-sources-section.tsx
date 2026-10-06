@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { Check, Eye, Pencil, TriangleAlert, Plus, X, FileText, Loader2, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { AttachmentPreviewModal } from "@/features/workspace/chat-attachments";
 import { Portal } from "@/components/ui/portal";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
@@ -28,10 +30,11 @@ export interface UploadedDoc {
    * has not, and that is worth a glance rather than a memory.
    */
   origin?: "new" | "previous";
+  /** Where the file can be opened, if it can be. */
+  previewUrl?: string;
 }
 import type { PlanResearch } from "@/features/workspace/use-plan-research";
 import { workspaceAssets, type WorkspaceAsset } from "@/features/workspace/workspace-assets";
-import { LogoMark } from "@/components/ui/logo-mark";
 
 export interface ResearchSourcesSectionProps {
   brandName: string;
@@ -62,8 +65,8 @@ export interface ResearchSourcesSectionProps {
 /** The Research and Sources summary line: only what has actually been added. */
 export function researchSummary(brandName: string, dossierInUse: boolean, fileCount: number) {
   const files = `${fileCount} ${fileCount === 1 ? "file" : "files"}`;
-  if (dossierInUse) return `${brandName} evidence pack + ${files}`;
-  return fileCount > 0 ? `${files} · evidence pack not added` : "No sources added yet";
+  if (dossierInUse) return `${brandName} evidence dossier + ${files}`;
+  return fileCount > 0 ? `${files} · evidence dossier not added` : "No sources added yet";
 }
 
 export function ResearchSourcesContent({
@@ -81,12 +84,16 @@ export function ResearchSourcesContent({
   onDossierInUseChange,
 }: ResearchSourcesSectionProps) {
   /* Files picked but not yet attached — they are waiting on their note. */
-  const [pending, setPending] = useState<Array<PendingFile & { size: string }>>([]);
+  const [pending, setPending] = useState<Array<PendingFile & { size: string; previewUrl?: string }>>([]);
   const [editing, setEditing] = useState<{ index: number; doc: UploadedDoc } | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const docUploadRef = useRef<HTMLInputElement>(null);
+  const [viewing, setViewing] = useState<UploadedDoc | null>(null);
   const researching = Boolean(research?.researching);
   const pack = evidencePack(brandName);
+  const audience = useWorkspaceStore((st) => st.audience);
+  const market = useWorkspaceStore((st) => st.market);
+  const dossierPhrase = dossierFor(market, audience);
   /* What earlier projects on this brand used. Ones already in your files
      stay in the list, marked added, so the list doesn't shift as you pick. */
   const reusableDocs = workspaceAssets(brandName, "source");
@@ -145,40 +152,33 @@ export function ResearchSourcesContent({
         </div>
       )}
 
-      {/* SwishX's own evidence first and on its own: the curated pack is
-          the one thing here that has been through review, so it is set apart
-          from files people uploaded rather than mixed in with them. */}
-      <EvidencePackCard
-        pack={pack}
-        inUse={dossierInUse}
-        research={researching ? research : undefined}
-        onView={onPreviewDossier}
-        onToggle={() => {
-          onDossierInUseChange(!dossierInUse);
-          onToast?.(
-            dossierInUse ? `${pack.name} removed from the project` : `${pack.name} in use for this project`,
-            dossierInUse ? "undone" : "done"
-          );
-        }}
-      />
+      {/* One card, in the order the work is grounded: what SwishX already
+          verified, then what you brought. Numbered because it is an order —
+          the dossier is the base, your files narrow or add to it. */}
+      <div className="overflow-hidden rounded-card border border-brand/30 bg-card">
+        <StepBand number={1} tone="brand">
+          {researching
+            ? `SwishX is preparing ${dossierPhrase} for you`
+            : `SwishX has already made ${dossierPhrase} for you`}
+        </StepBand>
+        <DossierRow
+          pack={pack}
+          inUse={dossierInUse}
+          research={researching ? research : undefined}
+          onView={onPreviewDossier}
+          onToggle={() => {
+            onDossierInUseChange(!dossierInUse);
+            onToast?.(
+              dossierInUse ? `${pack.name} removed from the project` : `${pack.name} in use for this project`,
+              dossierInUse ? "undone" : "done"
+            );
+          }}
+        />
 
-      {/* What you added yourself — uploaded now, or reused from an earlier
-          project through the same Add files window. */}
-      <div className="space-y-1.5 pt-1">
-          <div className="flex items-center justify-between">
-            <span className="text-label font-bold uppercase tracking-wider text-ink-3">
-              Your files for this project ({uploadedDocs.length})
-            </span>
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-glyph px-1.5 py-1 text-label font-bold text-brand transition-colors hover:bg-tint"
-            >
-              <Plus className="size-3.5" />
-              <span>Add files</span>
-            </button>
-          </div>
-
+        <StepBand number={2} tone="neutral">
+          Your files for this project <span className="font-semibold text-ink-3">({uploadedDocs.length})</span>
+        </StepBand>
+        <div className="@container space-y-3 p-4">
           <input
             ref={docUploadRef}
             type="file"
@@ -195,6 +195,7 @@ export function ResearchSourcesContent({
                     name: f.name,
                     kind: "doc" as const,
                     size: `${(f.size / (1024 * 1024)).toFixed(1)} MB`,
+                    previewUrl: URL.createObjectURL(f),
                   }))
                 );
               }
@@ -202,82 +203,37 @@ export function ResearchSourcesContent({
             }}
           />
 
-          {uploadedDocs.length === 0 && (
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="w-full cursor-pointer rounded-control border border-dashed border-hair-3 px-3 py-4 text-center text-label text-ink-3 transition-colors hover:border-brand hover:text-brand"
-            >
-              Add a label, study readout or brief, or reuse one from an earlier project
-            </button>
+          {uploadedDocs.length > 0 && (
+            /* Two columns that fill the card, one when the card is too narrow
+               for a readable file name (the chat panel open beside it). */
+            <div className="grid grid-cols-1 gap-3 @2xl:grid-cols-2">
+              {uploadedDocs.map((doc, idx) => (
+                <FileTile
+                  key={idx}
+                  doc={doc}
+                  unusable={sourcesUnusable}
+                  onView={() => setViewing(doc)}
+                  onEditNote={() => setEditing({ index: idx, doc })}
+                  onRemove={() => onSetUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
+                />
+              ))}
+            </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {uploadedDocs.map((doc, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "flex items-center justify-between gap-2 rounded-control border px-2.5 py-1.5 text-body",
-                  // The file that failed verification is marked where the file
-                  // is, not only in a banner above it.
-                  sourcesUnusable ? "border-danger-line bg-danger-bg" : "bg-card border-hair-2"
-                )}
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <FileText className={cn("size-3.5 shrink-0", sourcesUnusable ? "text-danger" : "text-brand")} />
-                  <span className="min-w-0">
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      <span className="truncate font-semibold text-ink">{doc.name}</span>
-                      {/* Where it came from, so a reused file is not mistaken
-                          for one you attached today. */}
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-glyph border px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide",
-                          doc.origin === "previous"
-                            ? "border-hair-2 bg-subtle text-ink-3"
-                            : "border-tint-line bg-tint text-brand-deep"
-                        )}
-                      >
-                        {doc.origin === "previous" ? "Added previously" : "New"}
-                      </span>
-                    </span>
-                    {/* What you said the file is for, where the file is. */}
-                    {doc.note && (
-                      <span className="block truncate text-caption text-ink-3" title={doc.note}>
-                        {doc.note}
-                      </span>
-                    )}
-                    {sourcesUnusable && (
-                      <span className="block text-caption font-bold text-danger">No usable clinical content</span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-caption text-ink-3">{doc.size}</span>
-                  {/* Changing a sentence should not mean losing the file and
-                      finding it on disk again. */}
-                  <button
-                    type="button"
-                    onClick={() => setEditing({ index: idx, doc })}
-                    className="grid size-5 place-items-center rounded-full text-ink-3 transition-colors hover:bg-black/5 hover:text-brand cursor-pointer"
-                    aria-label={`Edit note on ${doc.name}`}
-                    title="Edit note"
-                  >
-                    <Pencil className="size-3" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSetUploadedDocs((prev) => prev.filter((_, i) => i !== idx))}
-                    className="grid size-5 place-items-center rounded-full text-ink-3 hover:bg-black/5 hover:text-danger transition-colors cursor-pointer"
-                    aria-label="Remove"
-                  >
-                    <X className="size-3" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
+          <button
+            type="button"
+            onClick={() => setAddOpen(true)}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-brand/45 bg-tint/50 px-3 py-3 text-body-lg font-bold text-brand-deep transition-colors hover:border-brand hover:bg-tint"
+          >
+            <Plus className="size-3.5" />
+            Add files
+          </button>
+          {uploadedDocs.length === 0 && (
+            <p className="text-center text-label text-ink-3">
+              A label, a study readout or a brief, or one reused from an earlier project.
+            </p>
+          )}
+        </div>
       </div>
 
       {addOpen && (
@@ -294,7 +250,14 @@ export function ResearchSourcesContent({
             if (inProject.includes(asset.name)) return;
             onSetUploadedDocs((prev) => [
               ...prev,
-              { name: asset.name, size: "—", date: "Earlier project", note: asset.note, origin: "previous" },
+              {
+                name: asset.name,
+                size: "—",
+                date: "Earlier project",
+                note: asset.note,
+                origin: "previous",
+                previewUrl: asset.previewUrl,
+              },
             ]);
             onToast?.(`${asset.name} added to the project`);
           }}
@@ -317,6 +280,7 @@ export function ResearchSourcesContent({
                 date: "Just now",
                 note: notes[f.id].trim(),
                 origin: "new" as const,
+                previewUrl: f.previewUrl,
               })),
             ]);
             onToast?.(
@@ -346,21 +310,75 @@ export function ResearchSourcesContent({
         />
       )}
 
+      {viewing && (
+        <AttachmentPreviewModal
+          file={{ id: viewing.name, name: viewing.name, kind: "doc", previewUrl: viewing.previewUrl }}
+          onClose={() => setViewing(null)}
+        />
+      )}
+
       <PlanSectionContinue onClick={onContinue} />
     </div>
   );
 }
 
+/** "an FDA-approved HCP dossier", from the project's market and audience. */
+function dossierFor(market: string, audience: string) {
+  const m = market.toLowerCase();
+  const regulator = /united states|^us\b|usa/.test(m)
+    ? "FDA"
+    : /united kingdom|^uk\b|britain/.test(m)
+    ? "MHRA"
+    : /europe|^eu\b/.test(m)
+    ? "EMA"
+    : /japan/.test(m)
+    ? "PMDA"
+    : /india/.test(m)
+    ? "CDSCO"
+    : /australia/.test(m)
+    ? "TGA"
+    : /brazil/.test(m)
+    ? "ANVISA"
+    : "";
+  const who = audience === "HCP" ? "HCP" : audience ? audience.toLowerCase() : "";
+  const kind = [regulator && `${regulator}-approved`, who, "dossier"].filter(Boolean).join(" ");
+  /* Said the way it is read aloud: "an FDA", "an MHRA", "a PMDA". */
+  return `${/^[AEFHILMNORSX]/.test(kind) ? "an" : "a"} ${kind}`;
+}
+
+/** A numbered part of the card. The number says what comes first. */
+function StepBand({ number, tone, children }: { number: number; tone: "brand" | "neutral"; children: ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 border-b px-4 py-2.5",
+        tone === "brand" ? "border-brand/20 bg-tint" : "border-t border-hair bg-subtle"
+      )}
+    >
+      <span
+        className={cn(
+          "grid size-6 shrink-0 place-items-center rounded-full text-label font-extrabold text-white",
+          tone === "brand" ? "bg-brand" : "bg-ink"
+        )}
+      >
+        {number}
+      </span>
+      <span className={cn("min-w-0 text-body-lg font-extrabold tracking-tight", tone === "brand" ? "text-brand-deep" : "text-ink")}>
+        {children}
+      </span>
+    </div>
+  );
+}
+
+/* The dark button the reference uses for View: a one-off, not a variant. */
+const VIEW_BUTTON = "gap-1.5 border-transparent bg-ink font-bold text-white hover:bg-ink-2";
+
 /**
- * SwishX's evidence pack, as the head of the section.
- *
- * Dark, like the product's action bars, so it reads as ours and not as one
- * more file. It has to earn trust at a glance, so it says who made it (SwishX
- * Science), what it is in one plain sentence, and what was checked and when —
- * the things an MLR reviewer would ask before anything else. One decision,
- * use the pack, with each dossier there to read (View).
+ * SwishX's evidence dossier: who made it is said in the band above, so the
+ * row is only what it is, how much it holds, and the one decision — use it.
+ * It is offered, not pre-added; once in use it can be taken out again.
  */
-function EvidencePackCard({
+function DossierRow({
   pack,
   inUse,
   research,
@@ -374,95 +392,34 @@ function EvidencePackCard({
   onView: () => void;
   onToggle: () => void;
 }) {
-  const accent = inUse ? "text-ok-on-dark" : "text-[#ff8a5c]";
   return (
-    <div
-      className="relative overflow-hidden rounded-panel bg-ink text-white shadow-float ring-1 ring-white/5"
-      style={{
-        backgroundImage:
-          "radial-gradient(90% 120% at 100% 0%, rgba(253,72,22,.14), transparent 55%), radial-gradient(120% 140% at 0% 0%, rgba(255,255,255,.06), transparent 55%)",
-      }}
-    >
-      <span
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-0.5"
-        style={{
-          background: inUse
-            ? "linear-gradient(90deg,var(--color-ok-on-dark),var(--ok))"
-            : "linear-gradient(90deg,#ff8a52,var(--brand),var(--brand-deep))",
-        }}
-      />
-
-      {/* Who made it and what it is — the first thing to trust. */}
-      <div className="flex items-start gap-3 px-4 pb-3 pt-3.5">
-        <span className="relative grid size-10 shrink-0 place-items-center">
-          <span
-            aria-hidden
-            className="absolute inset-0 rounded-[12px] shadow-brand-lift"
-            style={{ background: "linear-gradient(155deg,#ff8a52,var(--brand) 55%,var(--brand-deep))" }}
-          />
-          <LogoMark size={18} className="relative text-white" title="" />
-          {/* The seal: reviewed, not just uploaded. */}
-          <span className="absolute -bottom-1 -right-1 grid size-4.5 place-items-center rounded-full bg-ok-on-dark text-ink ring-2 ring-ink">
-            <Check className="size-3" strokeWidth={3.5} />
-          </span>
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 px-4 py-4">
+      <span className="relative grid size-12 shrink-0 place-items-center rounded-panel bg-brand text-white shadow-brand-lift">
+        <FileText className="size-5.5" />
+        {/* The seal: reviewed, not just uploaded. */}
+        <span className="absolute -bottom-1 -right-1 grid size-5 place-items-center rounded-full bg-ok text-white ring-2 ring-card">
+          <Check className="size-3" strokeWidth={3.5} />
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-subhead font-[850] tracking-tight">{pack.name}</span>
-            <span className="rounded-chip bg-white/10 px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wider text-white/80">
-              by SwishX Science
-            </span>
-          </div>
-          <p className="mt-0.5 text-label leading-snug text-white/65">
-            Pre-approved claims your asset can use. Every line it writes cites one of them.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          disabled={Boolean(research)}
-          aria-pressed={inUse}
-          className={cn(
-            "shrink-0 cursor-pointer rounded-control px-3.5 py-2 text-label font-extrabold transition disabled:cursor-not-allowed disabled:opacity-50",
-            inUse
-              ? "bg-ok-on-dark/15 text-ok-on-dark ring-1 ring-inset ring-ok-on-dark/45"
-              : "bg-brand text-white shadow-brand-lift hover:bg-brand-deep"
-          )}
-        >
-          {inUse ? "✓ In use" : "+ Use pack"}
-        </button>
+      </span>
+      <div className="min-w-[11rem] flex-1">
+        <div className="text-subhead font-[850] tracking-tight text-ink">{pack.name}</div>
+        <p className="text-body leading-snug text-ink-2">
+          Every line in your script will cite one of its approved claims.
+        </p>
       </div>
 
-      {/* The numbers that matter, at a glance — once there are numbers. While
-          the research runs they would be figures for dossiers not yet read. */}
-      {!research && (
-        <div className="grid grid-cols-3 border-y border-white/10 text-center">
-          {[
-            { value: pack.totalClaims, label: "Approved claims" },
-            { value: pack.dossiers.length, label: "Verified dossiers" },
-            { value: pack.verifiedOn.replace(/, \d{4}$/, ""), label: "Last checked" },
-          ].map((stat, i) => (
-            <div key={stat.label} className={cn("px-2 py-2", i > 0 && "border-l border-white/10")}>
-              <div className="text-subhead font-[850] tabular-nums tracking-tight">{stat.value}</div>
-              <div className="text-micro font-bold uppercase tracking-wider text-white/45">{stat.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {research ? (
-        /* The research plays here while the plan is built, so there is
-           something to watch rather than a pack that appears from nowhere. */
-        <div className="space-y-2 border-t border-white/10 px-4 py-3">
+        /* The research plays here while the plan is built. The figures wait
+           for it: they would be counts of dossiers not yet read. */
+        <div className="w-full space-y-1.5 sm:w-64" aria-live="polite">
           <div className="flex items-center gap-2 text-label">
             <Loader2 className="size-3.5 shrink-0 animate-spin text-brand" />
-            <span className="font-semibold text-white/80">{research.label}</span>
-            <span className="ml-auto tabular-nums text-white/50">
+            <span className="min-w-0 truncate font-semibold text-ink-2">{research.label}</span>
+            <span className="ml-auto shrink-0 tabular-nums text-ink-3">
               Step {research.current} of {research.total}
             </span>
           </div>
-          <div className="h-1 overflow-hidden rounded-full bg-white/10">
+          <div className="h-1.5 overflow-hidden rounded-full bg-subtle">
             <div
               className="h-full rounded-full bg-brand transition-[width] duration-150 ease-linear"
               style={{ width: `${research.progress ?? 0}%` }}
@@ -470,45 +427,106 @@ function EvidencePackCard({
           </div>
         </div>
       ) : (
-        /* The dossiers as tiles, two to a row: a pack of three reads at a
-           glance, and a pack of eight still fits without a long list. */
-        <div className="grid gap-2 px-4 py-3 sm:grid-cols-2">
-          {pack.dossiers.map((dossier) => (
-            <div
-              key={dossier.id}
-              className="flex min-w-0 items-center gap-2.5 rounded-control border border-white/10 bg-white/[0.04] px-3 py-2.5 transition-colors hover:border-white/20 hover:bg-white/[0.07]"
-            >
-              <FileText className={cn("size-4.5 shrink-0", accent)} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-body font-bold">{dossier.name}</span>
-                <span className="block truncate text-caption text-white/55">
-                  <b className="font-extrabold text-white">{dossier.claims}</b> claims · {dossier.source}
-                </span>
-              </span>
-              <button
-                type="button"
-                onClick={onView}
-                aria-label={`View ${dossier.name}`}
-                className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-glyph border border-white/15 bg-white/5 px-2 py-1 text-label font-bold transition-colors hover:border-brand hover:text-[#ff8a5c]"
-              >
-                <Eye className="size-3.5" />
-                View
-              </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="grid grid-cols-2 divide-x divide-hair rounded-panel border border-hair bg-card">
+            <div className="px-4 py-1.5">
+              <div className="text-subhead font-[850] tabular-nums leading-tight text-brand-deep">{pack.totalClaims}</div>
+              <div className="text-label text-ink-3">Approved claims</div>
             </div>
-          ))}
+            <div className="px-4 py-1.5">
+              <div className="text-subhead font-[850] tabular-nums leading-tight text-ink">
+                {pack.verifiedOn.replace(/, \d{4}$/, "")}
+              </div>
+              <div className="text-label text-ink-3">Last updated</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" onClick={onView} className={cn(VIEW_BUTTON, "h-10 px-4")}>
+              <Eye className="size-4" />
+              View
+            </Button>
+            {inUse ? (
+              <IconButton
+                aria-label={`Remove ${pack.name} from the project`}
+                title="Remove from the project"
+                onClick={onToggle}
+                size={9}
+                className="size-10 rounded-control border border-hair-2 hover:text-danger"
+              >
+                <X className="size-4" />
+              </IconButton>
+            ) : (
+              <Button size="sm" onClick={onToggle} className="h-10 gap-1.5 px-4 font-bold">
+                <Plus className="size-3.5" />
+                Use dossier
+              </Button>
+            )}
+          </div>
         </div>
       )}
+    </div>
+  );
+}
 
-      {/* What was checked, so "verified" means something specific. */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 bg-white/[0.03] px-4 py-2 text-caption text-white/60">
-        {["Checked against the FDA label", "Every claim cited to its source", "Re-checked when the label changes"].map((item) => (
-          <span key={item} className="inline-flex items-center gap-1.5">
-            <Check className="size-3 text-ok-on-dark" strokeWidth={3} />
-            {item}
+/** A file you brought: what it is for, and the means to read, re-note or drop it. */
+function FileTile({
+  doc,
+  unusable,
+  onView,
+  onEditNote,
+  onRemove,
+}: {
+  doc: UploadedDoc;
+  /** The file was checked and holds nothing usable. Marked where the file is. */
+  unusable: boolean;
+  onView: () => void;
+  onEditNote: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 items-center gap-3 rounded-panel border px-3.5 py-3",
+        unusable ? "border-danger-line bg-danger-bg" : "border-hair-2 bg-card"
+      )}
+    >
+      <FileText className={cn("size-4 shrink-0", unusable ? "text-danger" : "text-brand")} />
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-body font-bold text-ink" title={doc.name}>
+            {doc.name}
           </span>
-        ))}
-        <span className="ml-auto text-white/40">{pack.reviewedBy}</span>
+          {/* Where it came from: with the brief, or reused from an earlier
+              project, so one is not mistaken for the other. */}
+          <span className="shrink-0 rounded-chip bg-subtle px-1.5 py-0.5 text-caption font-bold text-ink-3">
+            {doc.origin === "previous" ? "Reused" : "Brief"}
+          </span>
+        </div>
+        {/* What you said it is for, which is also where you change it. */}
+        <button
+          type="button"
+          onClick={onEditNote}
+          title="Edit note"
+          className="group flex max-w-full cursor-pointer items-center gap-1 text-left text-label text-ink-3 hover:text-ink"
+        >
+          <span className="truncate">{[doc.note, doc.size !== "—" && doc.size].filter(Boolean).join(" · ")}</span>
+          <Pencil className="size-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+        </button>
+        {unusable && <span className="block text-caption font-bold text-danger">No usable clinical content</span>}
       </div>
+      <Button size="sm" onClick={onView} className={cn(VIEW_BUTTON, "h-9")}>
+        <Eye className="size-3.5" />
+        View
+      </Button>
+      <IconButton
+        aria-label={`Remove ${doc.name}`}
+        title="Remove"
+        onClick={onRemove}
+        size={9}
+        className="rounded-control border border-hair-2 hover:text-danger"
+      >
+        <X className="size-3.5" />
+      </IconButton>
     </div>
   );
 }
