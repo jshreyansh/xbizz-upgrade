@@ -215,7 +215,10 @@ export function AttachmentPreviewModal({ file, onClose }: { file: LocalAttachmen
   return (
     <Portal>
       <div
-        className="fixed inset-0 z-50 grid place-items-center bg-ink/60 p-6 backdrop-blur-[2px]"
+        /* Above every other window: it is opened from inside them (Add files,
+           the product page), and a preview that opens behind its opener
+           looks like a click that did nothing. */
+        className="fixed inset-0 z-[10001] grid place-items-center bg-ink/60 p-6 backdrop-blur-[2px]"
         role="dialog"
         aria-modal="true"
         aria-label={file.name}

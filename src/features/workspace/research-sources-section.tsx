@@ -557,6 +557,7 @@ function AddFilesModal({
 }) {
   const [tab, setTab] = useState<"workspace" | "upload">(docs.length > 0 ? "workspace" : "upload");
   const [added, setAdded] = useState<string[]>([]);
+  const [viewing, setViewing] = useState<WorkspaceAsset | null>(null);
   return (
     <Portal>
       <div
@@ -613,6 +614,17 @@ function AddFilesModal({
                           {asset.origin ? ` · used in ${asset.origin}` : ""}
                         </span>
                       </span>
+                      {/* Read it before taking it in: a file from another
+                          project is only worth adding if it says what you need. */}
+                      <Button
+                        size="sm"
+                        onClick={() => setViewing(asset)}
+                        aria-label={`View ${asset.name}`}
+                        className={cn(VIEW_BUTTON, "h-7 px-2.5 text-label")}
+                      >
+                        <Eye className="size-3" />
+                        View
+                      </Button>
                       <button
                         type="button"
                         disabled={isAdded}
@@ -660,6 +672,12 @@ function AddFilesModal({
           </div>
         </div>
       </div>
+      {viewing && (
+        <AttachmentPreviewModal
+          file={{ id: viewing.id, name: viewing.name, kind: "doc", previewUrl: viewing.previewUrl }}
+          onClose={() => setViewing(null)}
+        />
+      )}
     </Portal>
   );
 }
