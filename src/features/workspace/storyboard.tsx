@@ -9,11 +9,14 @@ import {
   Columns2,
   Rows2,
   Maximize2,
+  RotateCcw,
   ShieldCheck,
   Volume2,
   X,
 } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
+import { Button, IconButton } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { Scene, SceneCitation, Shot } from "@/types/content";
@@ -248,6 +251,7 @@ function ShotCard({
   onToggle,
   onHover,
   onExpand,
+  onRegenerate,
 }: {
   scene: Scene;
   shot: Shot;
@@ -262,6 +266,8 @@ function ShotCard({
   onHover: (id: string | null) => void;
   /** Open this shot in the large preview. */
   onExpand: () => void;
+  /** Ask for this shot's picture again, with a note on what to change. */
+  onRegenerate: () => void;
 }) {
   const status = previews.statusOf(shot.id);
   /* Portrait beside the narration turns the card sideways: a tall card there
@@ -314,8 +320,19 @@ function ShotCard({
             ) : null}
           </div>
         )}
-        {/* Open it large. Its own button so it never scopes the shot into
-            the chat, which is what a click anywhere else on the card does. */}
+        {/* Its own buttons, so neither scopes the shot into the chat, which
+            is what a click anywhere else on the card does. Regenerate waits
+            for the picture it would replace. */}
+        <button
+          type="button"
+          aria-label={`Regenerate shot ${number}`}
+          title="Regenerate"
+          disabled={status !== "ready"}
+          onClick={(e) => { e.stopPropagation(); onRegenerate(); }}
+          className="absolute right-11 top-2 z-10 grid size-8 cursor-pointer place-items-center rounded-full bg-black/55 text-white backdrop-blur-sm transition hover:bg-brand disabled:pointer-events-none disabled:opacity-40"
+        >
+          <RotateCcw className="size-3.5" />
+        </button>
         <button
           type="button"
           aria-label={`Preview shot ${number} large`}
@@ -462,6 +479,7 @@ export function StoryboardSceneTile({
   onToggleScene,
   onToggleShot,
   onExpandShot,
+  onRegenerateShot,
   onCitationDetails,
 }: {
   scene: Scene;
@@ -478,6 +496,7 @@ export function StoryboardSceneTile({
   onToggleScene: () => void;
   onToggleShot: (shot: Shot) => void;
   onExpandShot: (shot: Shot) => void;
+  onRegenerateShot: (shot: Shot) => void;
   onCitationDetails?: (claimId: string) => void;
 }) {
   const shots = storyShots(scene);
@@ -623,6 +642,7 @@ export function StoryboardSceneTile({
               lit={lit === shot.id}
               onToggle={() => onToggleShot(shot)}
               onExpand={() => onExpandShot(shot)}
+              onRegenerate={() => onRegenerateShot(shot)}
               onHover={setLit}
             />
           ))}
@@ -784,6 +804,149 @@ export function ShotPreviewModal({
               <div className="mx-auto w-full max-w-[calc(66vh*16/9)]">{words}</div>
             </div>
           )}
+        </div>
+      </div>
+    </Portal>
+  );
+}
+
+/**
+ * A shot attached to a chat message — the frame the message is about, the
+ * way a picture sits in a message thread.
+ */
+export function ShotReference({
+  scene,
+  shot,
+  number,
+  portrait,
+  brandName,
+}: {
+  scene: Scene;
+  shot: Shot;
+  number: number;
+  portrait: boolean;
+  brandName: string;
+}) {
+  return (
+    <div className="mb-2 w-fit overflow-hidden rounded-control bg-[#0d1411] ring-1 ring-white/30">
+      <div className={cn("relative", portrait ? "aspect-[9/16] w-24" : "aspect-video w-44")}>
+        <FramePreview scene={scene} portrait={portrait} brandName={brandName} sceneTime={(shot.startAt + shot.endAt) / 2} />
+      </div>
+      <div className="bg-black/40 px-2 py-1 text-caption font-bold text-white">
+        Scene {scene.number} · Shot {number}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────────── Regenerate a shot ─────────────────────────── */
+
+/**
+ * Ask for one shot's picture again.
+ *
+ * The shot as it is now, what it shows, and a line on what should change —
+ * then it goes to the chat like anything else you ask SwishX, with the frame
+ * attached so the conversation shows what it is about. SwishX checks one
+ * thing before redrawing, because "warmer" or "closer" can mean the whole
+ * frame or one part of it. The note is optional: without one it is a fresh
+ * take on the same direction.
+ */
+export function RegenerateShotModal({
+  scene,
+  shot,
+  number,
+  portrait,
+  brandName,
+  onClose,
+  onSubmit,
+}: {
+  scene: Scene;
+  shot: Shot;
+  number: number;
+  portrait: boolean;
+  brandName: string;
+  onClose: () => void;
+  onSubmit: (note: string) => void;
+}) {
+  const [note, setNote] = useState("");
+  const label = `Scene ${scene.number} · Shot ${number}`;
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const frame = (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-panel bg-[#0d1411]",
+        /* Capped by the screen's height, so the note and the button stay in
+           view without scrolling the picture away. */
+        portrait ? "aspect-[9/16] h-[min(62vh,620px)]" : "mx-auto aspect-video w-full max-w-[calc(40vh*16/9)]"
+      )}
+    >
+      <FramePreview scene={scene} portrait={portrait} brandName={brandName} sceneTime={(shot.startAt + shot.endAt) / 2} />
+      <span className="absolute left-2 top-2 rounded-chip bg-black/60 px-2 py-0.5 text-caption font-bold text-white backdrop-blur-sm">
+        Current
+      </span>
+    </div>
+  );
+
+  return (
+    <Portal>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Regenerate ${label}`}
+        onClick={onClose}
+        className="fixed inset-0 z-[9999] grid place-items-center bg-ink/75 p-4 backdrop-blur-sm sm:p-6"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={cn(
+            "flex max-h-full w-full flex-col overflow-hidden rounded-card border border-hair bg-card shadow-modal",
+            portrait ? "max-w-[760px]" : "max-w-[640px]"
+          )}
+        >
+          <div className="flex items-center gap-3 border-b border-hair px-5 py-3">
+            <RotateCcw className="size-4 shrink-0 text-brand" />
+            <span className="min-w-0 truncate text-body-lg font-bold text-ink">
+              <span className="font-[850]">Regenerate</span> · {label}
+            </span>
+            <IconButton aria-label="Close" onClick={onClose} className="ml-auto">
+              <X className="size-4" />
+            </IconButton>
+          </div>
+
+          <div className={cn("min-h-0 overflow-y-auto p-5", portrait ? "flex gap-5" : "space-y-4")}>
+            {portrait ? <div className="shrink-0">{frame}</div> : frame}
+            <div className="flex min-w-0 flex-1 flex-col gap-4">
+              <div className="space-y-1">
+                <div className="text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">Shows now</div>
+                <p className="text-body leading-relaxed text-ink-2">{shot.visualStory || scene.visual}</p>
+              </div>
+              <Field
+                multiline
+                rows={3}
+                autoFocus
+                label="What should change?"
+                hint="Optional. Leave it empty for a fresh take on the same direction. The narration stays as it is."
+                placeholder="e.g. Warmer light, and bring the presenter closer"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSubmit(note.trim());
+                }}
+              />
+              <Button onClick={() => onSubmit(note.trim())} className="mt-auto gap-1.5 self-end font-bold">
+                <RotateCcw className="size-4" />
+                Regenerate {label}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </Portal>

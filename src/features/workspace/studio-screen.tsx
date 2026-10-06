@@ -78,7 +78,9 @@ import type { EvidenceState, InspectorTab, Scene, Shot } from "@/types/content";
 import { SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import {
   FramePreview,
+  RegenerateShotModal,
   ShotPreviewModal,
+  ShotReference,
   StoryboardSceneTile,
   StoryboardSummary,
   storyShots,
@@ -351,6 +353,20 @@ export function StudioScreen() {
   const [storyLayout, setStoryLayout] = useState<StoryboardLayout>("side");
   /** The shot open in the large preview, if any. */
   const [previewAt, setPreviewAt] = useState<{ sceneId: string; shotId: string } | null>(null);
+  /** The shot whose Regenerate window is open. */
+  const [regenAt, setRegenAt] = useState<{ sceneId: string; shotId: string } | null>(null);
+  /**
+   * A regeneration SwishX has asked about and is waiting on: the next reply
+   * in the chat answers its question, and the shot is redrawn.
+   */
+  const [regenAsk, setRegenAsk] = useState<{ shotId: string; name: string } | null>(null);
+  /** A shot by reference, with its place in its scene. */
+  const findShot = (ref: { sceneId: string; shotId: string }) => {
+    const scene = sceneList.find((s) => s.id === ref.sceneId);
+    const shots = scene ? storyShots(scene) : [];
+    const index = shots.findIndex((x) => x.id === ref.shotId);
+    return scene && index >= 0 ? { scene, shot: shots[index], number: index + 1 } : null;
+  };
   const storyShotIds = useMemo(
     () => sceneList.flatMap((sc) => storyShots(sc).map((shot) => shot.id)),
     [sceneList]
@@ -1537,6 +1553,20 @@ export function StudioScreen() {
     setAttachedContexts([]);
     addChatMessage({ role: "user", text: fullPrompt });
 
+    /* The answer to the question a regeneration asked: redraw the shot. */
+    if (regenAsk) {
+      const { shotId, name } = regenAsk;
+      setRegenAsk(null);
+      addChatMessage({ role: "swishx", text: `Redrawing **${name}**. The narration stays as it is.` });
+      previews.redraw([shotId], () =>
+        addChatMessage({
+          role: "swishx",
+          text: `Done. ${name.charAt(0).toUpperCase()}${name.slice(1)} is updated and marked on the storyboard. Nothing renders until you generate the video.`,
+        })
+      );
+      return;
+    }
+
     const isCommentIntent = rawInput.toLowerCase().includes("comment") || rawInput.toLowerCase().includes("note") || rawInput.toLowerCase().includes("feedback");
     /* Read before the scene-rewrite path can claim it: with suggestions open,
        "apply across all scenes" is an answer to the question the agent just
@@ -2089,6 +2119,7 @@ export function StudioScreen() {
                                 onToggleScene={() => toggleSceneScope(sc)}
                                 onToggleShot={(shot) => toggleShotScope(sc, shot)}
                                 onExpandShot={(shot) => setPreviewAt({ sceneId: sc.id, shotId: shot.id })}
+                                onRegenerateShot={(shot) => setRegenAt({ sceneId: sc.id, shotId: shot.id })}
                                 onCitationDetails={handleCitationDetails}
                               />
                             );
@@ -3427,6 +3458,10 @@ export function StudioScreen() {
                             : "bg-card text-ink border border-hair rounded-bl-xs font-normal"
                         )}
                       >
+                        {msg.shotRef && (() => {
+                          const ref = findShot(msg.shotRef);
+                          return ref ? <ShotReference {...ref} portrait={isPortrait} brandName={brandName} /> : null;
+                        })()}
                         <FormattedMessageText text={msg.text} />
                         <ChatChips chips={msg.chips} onPick={(chip) => handleSendChatMessage(chip)} />
                       </div>
@@ -3808,6 +3843,49 @@ export function StudioScreen() {
         )}
 
         <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
+        {regenAt && (() => {
+          const ref = findShot(regenAt);
+          if (!ref) return null;
+          const { scene, number } = ref;
+          return (
+            <RegenerateShotModal
+              {...ref}
+              portrait={isPortrait}
+              brandName={brandName}
+              onClose={() => setRegenAt(null)}
+              onSubmit={(note) => {
+                /* It goes to the chat like anything else asked of SwishX,
+                   with the frame attached, and SwishX checks one thing
+                   before it redraws. */
+                const name = `shot ${number} of scene ${scene.number}`;
+                setRegenAt(null);
+                setActiveTab("assistant");
+                setCopilotPanelOpen(true);
+                addChatMessage({
+                  role: "user",
+                  text: note ? `Regenerate scene ${scene.number} · shot ${number}: ${note}` : `Regenerate scene ${scene.number} · shot ${number}`,
+                  shotRef: regenAt,
+                });
+                setRegenAsk({ shotId: regenAt.shotId, name });
+                setTimeout(() => {
+                  addChatMessage(
+                    note
+                      ? {
+                          role: "swishx",
+                          text: `Before I redraw **${name}**: should that change only what you described, keeping the headline, the claim and the presenter as they are, or can the whole frame change with it?`,
+                          chips: ["Only that, keep the rest", "The whole frame can change"],
+                        }
+                      : {
+                          role: "swishx",
+                          text: `A fresh take on **${name}**, same direction and a new picture. Keep the headline, the claim and the presenter as they are?`,
+                          chips: ["Yes, keep them", "Change the whole frame"],
+                        }
+                  );
+                }, 600);
+              }}
+            />
+          );
+        })()}
         {previewAt && (
           <ShotPreviewModal
             scenes={sceneList}

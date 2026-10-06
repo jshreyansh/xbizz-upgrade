@@ -14,7 +14,14 @@ export type PlanPhase = "research" | "intake" | "plan";
  *  trail, so the breadcrumb can send you back to it from the canvas. */
 export type CreativeStep = "brief" | "template";
 
-export type ChatMessage = { role: "user" | "swishx"; text: string; chips?: string[]; seeded?: boolean };
+export type ChatMessage = {
+  role: "user" | "swishx";
+  text: string;
+  chips?: string[];
+  seeded?: boolean;
+  /** A storyboard shot the message is about, shown as its frame. */
+  shotRef?: { sceneId: string; shotId: string };
+};
 
 interface WorkspaceState {
   view: AppView;
