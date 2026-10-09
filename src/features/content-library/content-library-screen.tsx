@@ -29,15 +29,15 @@ const STATUS_STYLE: Record<LibraryAsset["status"], { bg: string; fg: string; lin
 };
 
 type KindFilter = "all" | "video" | "infographic";
-type StageFilter = "all" | "draft" | "published" | "archived";
+export type StageFilter = "all" | "draft" | "published" | "archived";
 
-export function ContentLibraryScreen() {
+export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: StageFilter }) {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [kind, setKind] = useState<KindFilter>("all");
   /* Where a thing is in its life, which the review status does not answer:
      a draft can be in MLR, and an archived asset was published once. */
-  const [stage, setStage] = useState<StageFilter>("all");
+  const [stage, setStage] = useState<StageFilter>(initialStage);
 
   const openReview = useOpenPublishedAsset();
 

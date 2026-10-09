@@ -8,17 +8,22 @@ import type { ToastTone } from "@/components/patterns/toast";
 /**
  * Where a project gets left — closed from the header's ✕, or handed off to
  * the Character or Voice library mid-flow. Every one of those moments asks
- * the same question ("keep this as a draft, or throw it away?") and does the
- * same two things afterward (drop the workspace state, go to `destination`),
- * so it happens once here instead of five times with five different toasts.
+ * the same question ("keep this as a draft, or discard and archive it?") and
+ * does the same two things afterward (drop the workspace state, go to
+ * `destination`), so it happens once here instead of five times with five
+ * different toasts.
  */
 export interface ExitDestination {
   href: string;
-  /** Named in the confirm dialog's body: "the Character Library", "home". */
-  label: string;
+  /** Named in the confirm dialog's body: "the Character Library". */
+  label?: string;
 }
 
-const HOME: ExitDestination = { href: "/", label: "home" };
+const CONTENT_LIBRARY = "/content-library";
+
+/* Closing a project lands where it went: Drafts if it was kept, Archived if
+   it was discarded. */
+const LIBRARY: ExitDestination = { href: CONTENT_LIBRARY };
 
 const QUEUED_TOAST_KEY = "swishx:queued-toast";
 
@@ -53,7 +58,7 @@ export function useProjectExit() {
   const reset = useWorkspaceStore((s) => s.reset);
   const [pending, setPending] = useState<ExitDestination | null>(null);
 
-  const requestExit = useCallback((destination: ExitDestination = HOME) => {
+  const requestExit = useCallback((destination: ExitDestination = LIBRARY) => {
     setPending(destination);
   }, []);
 
@@ -64,12 +69,16 @@ export function useProjectExit() {
       if (!pending) return;
       const destination = pending;
       queueToast(
-        keepAsDraft ? "Saved as draft" : "Project discarded",
+        keepAsDraft ? "Saved as draft" : "Project archived",
         keepAsDraft ? "done" : "undone"
       );
       reset();
       setPending(null);
-      router.push(destination.href);
+      router.push(
+        destination.href === CONTENT_LIBRARY
+          ? `${CONTENT_LIBRARY}?stage=${keepAsDraft ? "draft" : "archived"}`
+          : destination.href
+      );
     },
     [pending, reset, router]
   );

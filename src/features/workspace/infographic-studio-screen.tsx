@@ -2187,7 +2187,7 @@ export function InfographicStudioScreen() {
         <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
         <SaveOrDiscardDialog
           open={!!exit.pending}
-          destinationLabel={exit.pending?.label ?? "home"}
+          destinationLabel={exit.pending?.label}
           onSaveDraft={() => exit.resolve(true)}
           onDiscard={() => exit.resolve(false)}
           onCancel={exit.cancel}
