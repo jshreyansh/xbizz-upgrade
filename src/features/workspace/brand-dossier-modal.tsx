@@ -1,5 +1,6 @@
 "use client";
 
+import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components/patterns/pick-list";
 import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -765,17 +766,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           below is the answer, and leaving a half-filled search
                           box above it read as if nothing had been picked. */}
                       {!selectedBrand && (
-                        <div className="relative flex items-center">
-                          <Search className="absolute left-3.5 size-4 text-ink-4" />
-                          <input
-                            type="text"
-                            value={brandSearch}
-                            onChange={(e) => setBrandSearch(e.target.value)}
-                            placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
-                            className="w-full rounded-control border border-hair-2 bg-card pl-10 pr-4 py-2.5 text-body-lg font-medium text-ink-2 placeholder:text-ink-4 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 shadow-2xs transition-all"
-                            autoFocus
-                          />
-                        </div>
+                        <PickSearch
+                          value={brandSearch}
+                          onChange={setBrandSearch}
+                          placeholder="Search brand name or molecule (e.g. Velmora, Onkavia, Nirvexa)..."
+                          autoFocus
+                        />
                       )}
 
                       {selectedBrand ? (
@@ -792,33 +788,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           </p>
                         </div>
                       ) : (
-                        <div className="rounded-panel border border-hair-2/90 bg-card shadow-2xs divide-y divide-hair max-h-[220px] overflow-y-auto">
+                        <PickList>
                           {filteredBrands.map((brand) => (
-                            <button
+                            <PickRow
                               key={brand.id}
-                              type="button"
-                              onClick={() => handleSelectBrand(brand)}
-                              className="group flex w-full cursor-pointer items-center justify-between px-3.5 py-2.5 text-left text-ink-2 transition-colors hover:bg-subtle"
-                            >
-                              <div className="flex items-center gap-3 min-w-0">
-                                <BrandThumb brand={brand} className="size-10 shrink-0" />
-                                <div className="min-w-0">
-                                  <div className="text-body font-bold">{brand.name}</div>
-                                  <div className="text-label text-ink-3 italic truncate">
-                                    {[brand.genericName, brand.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2 shrink-0 ml-2">
-                                <span className="text-caption font-bold text-ok bg-ok-bg px-2 py-0.5 rounded-chip border border-ok-line">
-                                  Verified
-                                </span>
-                                <span className="flex items-center gap-0.5 text-label font-bold text-brand transition-transform duration-150 group-hover:translate-x-0.5">
-                                  Select <ChevronRight className="size-3" />
-                                </span>
-                              </div>
-                            </button>
+                              onSelect={() => handleSelectBrand(brand)}
+                              thumb={<BrandThumb brand={brand} className="size-10 shrink-0" />}
+                              title={brand.name}
+                              detail={[brand.genericName, brand.therapyAreas.join(", ")].filter(Boolean).join(" · ")}
+                              chip={<PickChip tone="ok">Verified</PickChip>}
+                            />
                           ))}
                           {filteredBrands.length === 0 && (
                             /* Naming where a brand comes from, without trying
@@ -826,17 +805,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                job — it is not finished until the dossier is
                                verified, and that is not a step to bury inside
                                starting a project. */
-                            <div className="px-4 py-6 text-center">
-                              <p className="text-body font-bold text-ink-2">
-                                No verified brand matching &quot;{brandSearch}&quot;
-                              </p>
-                              <p className="mt-0.5 text-label text-ink-4">
-                                Only products with a verified dossier can ground an asset. Add or verify one
-                                in the Product Library, and it will appear here.
-                              </p>
-                            </div>
+                            <PickEmpty title={<>No verified brand matching &quot;{brandSearch}&quot;</>}>
+                              Only products with a verified dossier can ground an asset. Add or verify one in the
+                              Product Library, and it will appear here.
+                            </PickEmpty>
                           )}
-                        </div>
+                        </PickList>
                       )}
 
                       {/* ── Which presentations, asked the way the speciality
