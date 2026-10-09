@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
+import { useWorkspaceStore, type CreationMode, type DocumentType } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
-import { CreateTile } from "@/components/patterns/create-tile";
 
 /**
  * Where a creative starts. The same tile the video screen uses: the example
@@ -60,15 +59,15 @@ const DECK_EXAMPLES: StartingPointExample[] = [
     bg: "linear-gradient(135deg, #101c2e 0%, #182d4b 60%, #24426e 100%)",
   },
   {
-    id: "deck-poster",
-    badge: "2×1m Scientific Panel",
-    aspect: "Vector CMYK",
-    eyebrow: "Scientific Congress Poster Readout",
-    metric: "N=613 Patients",
-    metricLabel: "Kaplan-Meier Curves",
-    caption: "High-density clinical study readouts with automated statistical footnotes and bleed marks.",
-    citation: "AAD Congress 2026 Poster Readout",
-    bg: "linear-gradient(135deg, #1c1428 0%, #2d1f42 60%, #442d65 100%)",
+    id: "deck-advisory",
+    badge: "Advisory Board Deck",
+    aspect: "16:9 Screen",
+    eyebrow: "KOL Advisory Board · Discussion Flow",
+    metric: "12 Slides",
+    metricLabel: "Unmet Need to Pivotal Data",
+    caption: "Moderated slide flow with discussion prompts and a cited evidence appendix.",
+    citation: "EMBRACE-3 Clinical Study Report §11",
+    bg: "linear-gradient(135deg, #1a1d2e 0%, #262b45 60%, #353d63 100%)",
   },
   {
     id: "deck-journal",
@@ -83,14 +82,55 @@ const DECK_EXAMPLES: StartingPointExample[] = [
   },
 ];
 
+/* A congress poster is its own document: one large page, read standing up,
+   led by the trial result and dense with footnotes. */
+const POSTER_EXAMPLES: StartingPointExample[] = [
+  {
+    id: "poster-readout",
+    badge: "Scientific Poster",
+    aspect: "A0 Portrait",
+    eyebrow: "Congress Poster · Pivotal Readout",
+    metric: "N=613 Patients",
+    metricLabel: "Kaplan-Meier Curves",
+    caption: "High-density clinical study readout with statistical footnotes and bleed marks.",
+    citation: "AAD Congress 2026 Poster Readout",
+    bg: "linear-gradient(135deg, #1c1428 0%, #2d1f42 60%, #442d65 100%)",
+  },
+  {
+    id: "poster-eposter",
+    badge: "ePoster",
+    aspect: "16:9 Screen",
+    eyebrow: "Digital ePoster · Congress Kiosk",
+    metric: "Week 52",
+    metricLabel: "Durability of Response",
+    caption: "Screen-first poster with a headline result, one figure per panel and a QR to the full data.",
+    citation: "EADV Congress 2026 ePoster",
+    bg: "linear-gradient(135deg, #0f1f2a 0%, #183244 60%, #234862 100%)",
+  },
+  {
+    id: "poster-encore",
+    badge: "Encore Poster",
+    aspect: "A0 Landscape",
+    eyebrow: "Encore Presentation · Subgroup Analysis",
+    metric: "4 Subgroups",
+    metricLabel: "Consistent Treatment Effect",
+    caption: "Forest plot led poster re-presenting approved data, with the original citation carried over.",
+    citation: "Originally presented at AAD 2026",
+    bg: "linear-gradient(135deg, #2a1712 0%, #43251b 60%, #613626 100%)",
+  },
+];
+
 export function CreativesModeScreen() {
   const setCreationMode = useWorkspaceStore((s) => s.setCreationMode);
   const setAssetType = useWorkspaceStore((s) => s.setAssetType);
   const setBrief = useWorkspaceStore((s) => s.setBrief);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
 
-  const handleSelectMode = (mode: CreationMode, brief: string) => {
+  const handleSelectMode = (mode: CreationMode, brief: string, documentType: DocumentType) => {
     setAssetType("infographic");
+    /* A new project: whatever congress the last poster chose does not carry over. */
+    useWorkspaceStore.getState().setDocumentType(documentType);
+    useWorkspaceStore.getState().setCongress(null, null);
     setCreationMode(mode);
     setBrief(brief);
     setDossierModalOpen(true);
@@ -113,15 +153,9 @@ export function CreativesModeScreen() {
         </p>
       </div>
 
-      {/* Three across, the same grid the video screen uses — two wide tiles
-          beside a blank one was a different screen for the same decision. */}
+      {/* Three document types, three across: the same grid the video screen
+          uses. Each starts from its own brief and follows the same steps. */}
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
-        <CreateTile
-          title="Create From Scratch"
-          subtitle="A blank page and your own direction, grounded in the same approved claims."
-          delayMs={80}
-          onSelect={() => handleSelectMode("scratch", "")}
-        />
         <StartingPointCard
           title="Infographic / Chart"
           subtitle="One page led by a figure, for HCPs or patients"
@@ -130,7 +164,8 @@ export function CreativesModeScreen() {
           onSelect={() =>
             handleSelectMode(
               "magic-chart",
-              "Create a high-impact clinical leave-behind infographic summarizing pivotal efficacy endpoints, mechanism of action, and licensed indication cut-offs."
+              "Create a high-impact clinical leave-behind infographic summarizing pivotal efficacy endpoints, mechanism of action, and licensed indication cut-offs.",
+              "infographic"
             )
           }
         />
@@ -142,7 +177,21 @@ export function CreativesModeScreen() {
           onSelect={() =>
             handleSelectMode(
               "magic-chart",
-              "Create an interactive visual detail aid (VDA) slide deck for field representatives covering pivotal Phase III efficacy, safety, and objection handling."
+              "Create an interactive visual detail aid (VDA) slide deck for field representatives covering pivotal Phase III efficacy, safety, and objection handling.",
+              "deck"
+            )
+          }
+        />
+        <StartingPointCard
+          title="Congress Poster"
+          subtitle="A scientific poster for a congress, from the trial readout"
+          examples={POSTER_EXAMPLES}
+          delayMs={170}
+          onSelect={() =>
+            handleSelectMode(
+              "magic-chart",
+              "Create a scientific congress poster presenting the pivotal Phase III results, with the primary endpoint as the headline figure, key secondary endpoints, safety summary and full references.",
+              "poster"
             )
           }
         />

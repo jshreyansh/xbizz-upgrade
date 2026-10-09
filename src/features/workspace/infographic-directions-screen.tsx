@@ -80,6 +80,7 @@ import {
   type LocalAttachment,
 } from "@/features/workspace/chat-attachments";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
+import { CongressSectionContent, congressSummary, useChosenCongress } from "@/features/workspace/congress-section";
 import {
   buildIntakeQuestions,
   intakeSteps,
@@ -312,6 +313,13 @@ export function InfographicDirectionsScreen() {
    */
   const hasGrounding = (sourcePayload?.dossierId ?? "").length > 0 || uploadedDocs.length > 0;
 
+  /* A poster takes its format and page count from a congress, so it cannot be
+     planned until one is chosen — and, where the congress accepts both,
+     printed or ePoster. */
+  const isPoster = useWorkspaceStore((st) => st.documentType) === "poster";
+  const { congress, format: posterFormat } = useChosenCongress();
+  const posterUnset = isPoster && (!congress || !posterFormat);
+
   /**
    * Whether a section is still asking something of you.
    *
@@ -322,7 +330,7 @@ export function InfographicDirectionsScreen() {
    * makes the count say nothing.
    */
   const sectionNeedsYou = (section: PlanSectionId) =>
-    section === "sources" ? !hasGrounding || sourcesUnusable : false;
+    section === "sources" ? !hasGrounding || sourcesUnusable : section === "format" ? posterUnset : false;
 
   /* References are always optional: a page blocked for want of a mood board
      is a plan refusing to start over a nice-to-have. */
@@ -341,10 +349,24 @@ export function InfographicDirectionsScreen() {
           title: "Those attachments hold nothing usable",
           detail: "The files verified as having no approved claim text. Attach the label or the study readout, or edit the request to something they can support.",
         }
-      : null;
+      : posterUnset
+        ? {
+            section: "format",
+            title: congress ? "Choose printed or ePoster" : "Choose the congress",
+            detail: congress
+              ? `${congress.name} accepts both. Pick the one you are submitting.`
+              : "A poster takes its size, orientation and type rules from the congress it is for.",
+          }
+        : null;
 
   /* Verification happens on Confirm, not on arrival — and a failure sends you
      back to the offending section with everything else still Confirmed. */
+  /* What the bar reports: a block found on Confirm, or — for a poster — the
+     congress still to choose, said before anyone clicks into it. */
+  const barBlock =
+    (foundBlock && !(foundBlock.section === "format" && !posterUnset) ? foundBlock : null) ??
+    (posterUnset ? planBlock : null);
+
   const handleConfirmPlan = () => {
     if (verifyingSources) return;
     setVerifyingSources(true);
@@ -354,7 +376,7 @@ export function InfographicDirectionsScreen() {
       const unusable = sourcesWillFail;
       if (unusable) setSourcesUnusable(true);
 
-      const block = !hasGrounding || unusable ? "sources" : null;
+      const block = !hasGrounding || unusable ? "sources" : posterUnset ? "format" : null;
 
       if (block) {
         setFoundBlock(planBlock);
@@ -398,11 +420,21 @@ export function InfographicDirectionsScreen() {
   /* Kept as the record of what was answered; nothing renders it, because the
      plan below IS what the answers produced. */
   const [, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
-  const intakeQuestions = buildIntakeQuestions(briefAttachments, "infographic");
+  const intakeQuestions = buildIntakeQuestions(briefAttachments, "infographic", { poster: isPoster });
   const currentIntake = planPhase === "intake" ? intakeQuestions[intakeIndex] : undefined;
   const intakeStepList = intakeSteps(briefAttachments, brandName);
 
   const handleIntakeResearched = () => {
+    /* A poster has nothing to ask in chat: its size and pages come from the
+       congress, which is chosen on the plan itself. */
+    if (intakeQuestions.length === 0) {
+      addChatMessage({
+        role: "swishx",
+        text: `I've read the brief against the **${brandName}** dossier. Choose the congress on the left: its guidelines set the poster's size, orientation and type sizes, and the plan follows from that.`,
+      });
+      setPlanPhase("plan");
+      return;
+    }
     setPlanPhase("intake");
     const count = briefAttachments.length;
     addChatMessage({
@@ -584,7 +616,10 @@ export function InfographicDirectionsScreen() {
       const lower = text.toLowerCase();
       let reply = `Understood. I have updated the creative parameters grounded in the **${brandName}** dossier.`;
 
-      if (lower.includes("16:9") || lower.includes("landscape")) {
+      if (isPoster && /16:9|landscape|3:4|portrait|\ba4\b|print|\bpages?\b/.test(lower)) {
+        /* The congress decides these for a poster; chat does not overrule it. */
+        reply = `This poster's size, orientation and page count come from the congress. To change them, edit its rules in **Congress, format and pages**.`;
+      } else if (lower.includes("16:9") || lower.includes("landscape")) {
         setPageShape("16:9");
         reply = `Updated page shape to **Landscape 16:9** (optimized for screen projection and desktop detailers).`;
       } else if (lower.includes("3:4") || lower.includes("portrait")) {
@@ -1104,56 +1139,74 @@ export function InfographicDirectionsScreen() {
                     <PlanSectionContinue onClick={() => advanceFrom("audience")} />
                   </CreativePlanSection>
 
-                  {/* Format and pages — the document's shape, together. Page
-                      count used to sit under the visual assets; it is part of
-                      the shape, not something attached to it. */}
-                  <CreativePlanSection
-                    icon={LayoutGrid}
-                    title="Format & pages"
-                    summary={`${formatLabel} · ${pageCountLabel(pageCount)}`}
-                    state={planState(sectionNeedsYou("format"), sectionOptional("format"))}
-                    source="from brief"
-                    open={openSection === "format"}
-                    onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
-                  >
-                    <div className="space-y-2">
-                      <DecisionRow
-                        label="Format"
-                        value={formatLabel}
-                        icon={<FrameGlyph value={formatLabel} />}
-                        editing={editingDecision === "format"}
-                        onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
-                      >
-                        <FormatChoices
-                          label="Choose the page shape"
+                  {isPoster ? (
+                    /* A poster's shape is the congress's: one decision, and
+                       Format and Pages follow from it. */
+                    <CreativePlanSection
+                      icon={LayoutGrid}
+                      title="Congress, format and pages"
+                      summary={congressSummary(congress, posterFormat)}
+                      state={planState(sectionNeedsYou("format"))}
+                      source="from congress"
+                      open={openSection === "format"}
+                      onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
+                    >
+                      <CongressSectionContent onContinue={() => advanceFrom("format")} />
+                    </CreativePlanSection>
+                  ) : (
+                    <>
+                    {/* Format and pages — the document's shape, together. Page
+                        count used to sit under the visual assets; it is part of
+                        the shape, not something attached to it. */}
+                    <CreativePlanSection
+                      icon={LayoutGrid}
+                      title="Format & pages"
+                      summary={`${formatLabel} · ${pageCountLabel(pageCount)}`}
+                      state={planState(sectionNeedsYou("format"), sectionOptional("format"))}
+                      source="from brief"
+                      open={openSection === "format"}
+                      onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
+                    >
+                      <div className="space-y-2">
+                        <DecisionRow
+                          label="Format"
                           value={formatLabel}
-                          options={FORMAT_OPTIONS.map((f) => f.label)}
-                          hint={(label) => FORMAT_OPTIONS.find((f) => f.label === label)?.sub}
-                          onChange={(label) => {
-                            const next = FORMAT_OPTIONS.find((f) => f.label === label);
-                            if (next) setPageShape(next.id as never);
-                            setEditingDecision(null);
-                          }}
-                        />
-                      </DecisionRow>
-                      <DecisionRow
-                        label="Pages"
-                        value={pageCountLabel(pageCount)}
-                        icon={<Files className="size-4" />}
-                        editing={editingDecision === "pages"}
-                        onEdit={() => setEditingDecision(editingDecision === "pages" ? null : "pages")}
-                      >
-                        <CountChoices
-                          label="How many pages?"
-                          value={pageCount}
-                          max={MAX_PAGES}
-                          costPerUnit={CREDITS_PER_PAGE}
-                          onChange={(count) => setInfographicPages(String(count))}
-                        />
-                      </DecisionRow>
-                    </div>
-                    <PlanSectionContinue onClick={() => advanceFrom("format")} />
-                  </CreativePlanSection>
+                          icon={<FrameGlyph value={formatLabel} />}
+                          editing={editingDecision === "format"}
+                          onEdit={() => setEditingDecision(editingDecision === "format" ? null : "format")}
+                        >
+                          <FormatChoices
+                            label="Choose the page shape"
+                            value={formatLabel}
+                            options={FORMAT_OPTIONS.map((f) => f.label)}
+                            hint={(label) => FORMAT_OPTIONS.find((f) => f.label === label)?.sub}
+                            onChange={(label) => {
+                              const next = FORMAT_OPTIONS.find((f) => f.label === label);
+                              if (next) setPageShape(next.id as never);
+                              setEditingDecision(null);
+                            }}
+                          />
+                        </DecisionRow>
+                        <DecisionRow
+                          label="Pages"
+                          value={pageCountLabel(pageCount)}
+                          icon={<Files className="size-4" />}
+                          editing={editingDecision === "pages"}
+                          onEdit={() => setEditingDecision(editingDecision === "pages" ? null : "pages")}
+                        >
+                          <CountChoices
+                            label="How many pages?"
+                            value={pageCount}
+                            max={MAX_PAGES}
+                            costPerUnit={CREDITS_PER_PAGE}
+                            onChange={(count) => setInfographicPages(String(count))}
+                          />
+                        </DecisionRow>
+                      </div>
+                      <PlanSectionContinue onClick={() => advanceFrom("format")} />
+                    </CreativePlanSection>
+                    </>
+                  )}
 
                 </div>
               </>
@@ -1172,7 +1225,7 @@ export function InfographicDirectionsScreen() {
             {(currentStep !== "brief" || planPhase === "plan") && (
             <ActionBar
               icon={
-                foundBlock && currentStep === "brief" ? (
+                barBlock && currentStep === "brief" ? (
                   <AlertTriangle className="size-4.5 shrink-0 text-warn-on-dark" />
                 ) : (
                   <CheckCircle2 className="size-4.5 text-ok-on-dark shrink-0" />
@@ -1181,15 +1234,15 @@ export function InfographicDirectionsScreen() {
               title={
                 verifyingSources
                   ? "Checking your sources…"
-                  : foundBlock && currentStep === "brief"
-                    ? foundBlock.title
+                  : barBlock && currentStep === "brief"
+                    ? barBlock.title
                     : currentStep === "brief"
                       ? "Ready to create creative"
                       : "Ready to generate canvas"
               }
               description={
-                foundBlock && currentStep === "brief" && !verifyingSources
-                  ? foundBlock.detail
+                barBlock && currentStep === "brief" && !verifyingSources
+                  ? barBlock.detail
                   : "Grounded against 214 approved claims"
               }
               action={
@@ -1268,12 +1321,10 @@ export function InfographicDirectionsScreen() {
                       something that had not been drawn yet. */}
                   {msg.role === "swishx" && idx === chatMessages.length - 1 && planPhase === "plan" && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {[
-                        "Switch to Portrait 3:4",
-                        "Use Stat Hero Template",
-                        "Elevate MoA in Section 2",
-                        "Set to 2 Pages",
-                      ].map((chip) => (
+                      {(isPoster
+                        ? ["Use Stat Hero Template", "Elevate MoA in Section 2"]
+                        : ["Switch to Portrait 3:4", "Use Stat Hero Template", "Elevate MoA in Section 2", "Set to 2 Pages"]
+                      ).map((chip) => (
                         <button
                           key={chip}
                           type="button"
@@ -1311,7 +1362,10 @@ export function InfographicDirectionsScreen() {
                 </div>
                 <Button
                   type="button"
-                  onClick={() => setCurrentStep("template")}
+                  /* A poster cannot leave the plan without its congress, so
+                     this runs the plan's own Confirm check for posters. */
+                  onClick={isPoster ? handleConfirmPlan : () => setCurrentStep("template")}
+                  disabled={isPoster && verifyingSources}
                   size="sm"
                   className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                 >

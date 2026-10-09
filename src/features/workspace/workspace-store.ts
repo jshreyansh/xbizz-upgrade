@@ -13,6 +13,7 @@ export type PlanPhase = "research" | "intake" | "plan";
 /** Which half of the creative plan screen is showing — its own step in the
  *  trail, so the breadcrumb can send you back to it from the canvas. */
 export type CreativeStep = "brief" | "template";
+export type DocumentType = "infographic" | "deck" | "poster";
 
 export type ChatMessage = {
   role: "user" | "swishx";
@@ -113,6 +114,11 @@ interface WorkspaceState {
   infographicTemplate: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease";
   infographicLogoPlacement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none";
   infographicActivePage: number;
+  /** Which kind of document a Docs project is. A poster takes its format from a congress. */
+  documentType: DocumentType;
+  /** The congress a poster is for, and which of its formats it uses. */
+  congressId: string | null;
+  posterFormat: "print" | "eposter" | null;
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
@@ -168,6 +174,9 @@ interface WorkspaceState {
   setStudioEntry: (entry: StudioEntry) => void;
   setCreativeStep: (step: CreativeStep) => void;
   setInfographicActivePage: (page: number) => void;
+  setDocumentType: (documentType: DocumentType) => void;
+  setCongress: (congressId: string | null, posterFormat: "print" | "eposter" | null) => void;
+  setPosterFormat: (posterFormat: "print" | "eposter") => void;
   reset: () => void;
 }
 
@@ -229,6 +238,9 @@ const initialState = {
     scale: 0.085,
   } as LogoMark,
   infographicActivePage: 1 as 1 | 2,
+  documentType: "infographic" as DocumentType,
+  congressId: null as string | null,
+  posterFormat: null as "print" | "eposter" | null,
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -305,6 +317,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setInfographicLogoPlacement: (infographicLogoPlacement) => set({ infographicLogoPlacement }),
   setLogoMark: (patch) => set((state) => ({ logoMark: { ...state.logoMark, ...patch } })),
   setInfographicActivePage: (infographicActivePage) => set({ infographicActivePage }),
+  setDocumentType: (documentType) => set({ documentType }),
+  setCongress: (congressId, posterFormat) => set({ congressId, posterFormat }),
+  setPosterFormat: (posterFormat) => set({ posterFormat }),
   reset: () => set(initialState),
 }));
 

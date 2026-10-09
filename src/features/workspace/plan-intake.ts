@@ -51,7 +51,9 @@ const roleOptions = (kind: BriefAttachment["kind"]) =>
 
 export function buildIntakeQuestions(
   attachments: BriefAttachment[],
-  assetType: AssetType
+  assetType: AssetType,
+  /** A poster's pages and shape come from its congress, so they are not asked. */
+  options: { poster?: boolean } = {}
 ): IntakeQuestion[] {
   const perFile = attachments.map<IntakeQuestion>((file) => ({
     id: `file-${file.id}`,
@@ -59,6 +61,8 @@ export function buildIntakeQuestions(
     fileName: file.name,
     prompt: `You attached **${file.name}** but didn't say what it's for. What should I take from it, ${roleOptions(file.kind)}?`,
   }));
+
+  if (assetType === "infographic" && options.poster) return perFile;
 
   if (assetType === "infographic") {
     return [
