@@ -116,9 +116,12 @@ interface WorkspaceState {
   infographicActivePage: number;
   /** Which kind of document a Docs project is. A poster takes its format from a congress. */
   documentType: DocumentType;
-  /** The congress a poster is for, and which of its formats it uses. */
+  /** The congress a poster is for, its presentation type, and which allowed size it uses. */
   congressId: string | null;
-  posterFormat: "print" | "eposter" | null;
+  posterType: "poster" | "tip" | "eposter" | "encore" | null;
+  posterSizeIndex: number | null;
+  /** Values for the congress's required items: acceptance code, contact email… */
+  posterFields: Record<string, string>;
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
@@ -175,8 +178,14 @@ interface WorkspaceState {
   setCreativeStep: (step: CreativeStep) => void;
   setInfographicActivePage: (page: number) => void;
   setDocumentType: (documentType: DocumentType) => void;
-  setCongress: (congressId: string | null, posterFormat: "print" | "eposter" | null) => void;
-  setPosterFormat: (posterFormat: "print" | "eposter") => void;
+  setCongress: (
+    congressId: string | null,
+    posterType: "poster" | "tip" | "eposter" | "encore" | null,
+    posterSizeIndex: number | null
+  ) => void;
+  setPosterType: (posterType: "poster" | "tip" | "eposter" | "encore") => void;
+  setPosterSizeIndex: (posterSizeIndex: number) => void;
+  setPosterField: (id: string, value: string) => void;
   reset: () => void;
 }
 
@@ -240,7 +249,9 @@ const initialState = {
   infographicActivePage: 1 as 1 | 2,
   documentType: "infographic" as DocumentType,
   congressId: null as string | null,
-  posterFormat: null as "print" | "eposter" | null,
+  posterType: null as "poster" | "tip" | "eposter" | "encore" | null,
+  posterSizeIndex: null as number | null,
+  posterFields: {} as Record<string, string>,
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -318,8 +329,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setLogoMark: (patch) => set((state) => ({ logoMark: { ...state.logoMark, ...patch } })),
   setInfographicActivePage: (infographicActivePage) => set({ infographicActivePage }),
   setDocumentType: (documentType) => set({ documentType }),
-  setCongress: (congressId, posterFormat) => set({ congressId, posterFormat }),
-  setPosterFormat: (posterFormat) => set({ posterFormat }),
+  setCongress: (congressId, posterType, posterSizeIndex) =>
+    set({ congressId, posterType, posterSizeIndex, posterFields: {} }),
+  setPosterType: (posterType) => set({ posterType }),
+  setPosterSizeIndex: (posterSizeIndex) => set({ posterSizeIndex }),
+  setPosterField: (id, value) => set((state) => ({ posterFields: { ...state.posterFields, [id]: value } })),
   reset: () => set(initialState),
 }));
 

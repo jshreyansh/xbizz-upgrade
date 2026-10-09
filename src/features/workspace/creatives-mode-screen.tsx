@@ -130,7 +130,7 @@ export function CreativesModeScreen() {
     setAssetType("infographic");
     /* A new project: whatever congress the last poster chose does not carry over. */
     useWorkspaceStore.getState().setDocumentType(documentType);
-    useWorkspaceStore.getState().setCongress(null, null);
+    useWorkspaceStore.getState().setCongress(null, null, null);
     setCreationMode(mode);
     setBrief(brief);
     setDossierModalOpen(true);

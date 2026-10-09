@@ -60,6 +60,8 @@ export interface ResearchSourcesSectionProps {
    */
   dossierInUse: boolean;
   onDossierInUseChange: (inUse: boolean) => void;
+  /** A rule from elsewhere that changes how these sources are used, if any. */
+  notice?: string | null;
 }
 
 /** The Research and Sources summary line: only what has actually been added. */
@@ -82,6 +84,7 @@ export function ResearchSourcesContent({
   onToast,
   dossierInUse,
   onDossierInUseChange,
+  notice,
 }: ResearchSourcesSectionProps) {
   /* Files picked but not yet attached — they are waiting on their note. */
   const [pending, setPending] = useState<Array<PendingFile & { size: string; previewUrl?: string }>>([]);
@@ -101,6 +104,10 @@ export function ResearchSourcesContent({
 
   return (
     <div className="space-y-3">
+      {notice && (
+        <p className="rounded-control border border-hair-2 bg-subtle px-3.5 py-2.5 text-label leading-snug text-ink-2">{notice}</p>
+      )}
+
       {sourcesUnusable && (
         /* The files are present but were checked and hold nothing usable. */
         <div className="rounded-panel border border-danger-line bg-danger-bg p-3.5">

@@ -80,7 +80,13 @@ import {
   type LocalAttachment,
 } from "@/features/workspace/chat-attachments";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
-import { CongressSectionContent, congressSummary, useChosenCongress } from "@/features/workspace/congress-section";
+import {
+  CongressSectionContent,
+  congressBrandingNotes,
+  congressSummary,
+  posterMissing,
+  useChosenCongress,
+} from "@/features/workspace/congress-section";
 import {
   buildIntakeQuestions,
   intakeSteps,
@@ -317,8 +323,11 @@ export function InfographicDirectionsScreen() {
      planned until one is chosen — and, where the congress accepts both,
      printed or ePoster. */
   const isPoster = useWorkspaceStore((st) => st.documentType) === "poster";
-  const { congress, format: posterFormat } = useChosenCongress();
-  const posterUnset = isPoster && (!congress || !posterFormat);
+  const { congress, posterType, sizeIndex } = useChosenCongress();
+  const posterGap = isPoster ? posterMissing(congress, posterType, sizeIndex) : null;
+  const posterUnset = posterGap !== null;
+  /* Where the congress's rules change other sections: logos, drug names. */
+  const brandNotes = isPoster ? congressBrandingNotes(congress) : { noLogo: null, genericNames: null };
 
   /**
    * Whether a section is still asking something of you.
@@ -352,10 +361,18 @@ export function InfographicDirectionsScreen() {
       : posterUnset
         ? {
             section: "format",
-            title: congress ? "Choose printed or ePoster" : "Choose the congress",
-            detail: congress
-              ? `${congress.name} accepts both. Pick the one you are submitting.`
-              : "A poster takes its size, orientation and type rules from the congress it is for.",
+            title:
+              posterGap === "type"
+                ? "Choose the presentation type"
+                : posterGap === "size"
+                  ? "Choose the poster size"
+                  : "Choose the congress",
+            detail:
+              posterGap === "type"
+                ? `${congress?.acronym} offers more than one. It decides what you deliver and what the poster may contain.`
+                : posterGap === "size"
+                  ? `${congress?.acronym} accepts more than one size. Pick the one you are printing.`
+                  : "A poster takes its size, delivery and branding rules from the congress it is for.",
           }
         : null;
 
@@ -833,6 +850,7 @@ export function InfographicDirectionsScreen() {
                       research={research}
                       dossierInUse={dossierInUse}
                       onDossierInUseChange={setDossierInUse}
+                      notice={brandNotes.genericNames}
                     />
                   </CreativePlanSection>
 
@@ -842,16 +860,26 @@ export function InfographicDirectionsScreen() {
                     icon={Stamp}
                     title="Brand mark"
                     summary={
-                      logoMark.position === "none"
-                        ? "No logo. The asset ships unbranded"
-                        : `${LOGO_CORNERS.find((c) => c.id === logoMark.position)?.label} · ${logoMark.name}`
+                      brandNotes.noLogo && congress
+                        ? `No logo · not allowed by ${congress.acronym}`
+                        : logoMark.position === "none"
+                          ? "No logo. The asset ships unbranded"
+                          : `${LOGO_CORNERS.find((c) => c.id === logoMark.position)?.label} · ${logoMark.name}`
                     }
                     state={planState(sectionNeedsYou("logo"), sectionOptional("logo"))}
-                    source={logoMark.source === "brand-kit" ? "from brand kit" : "replaced"}
+                    source={brandNotes.noLogo ? "from congress" : logoMark.source === "brand-kit" ? "from brand kit" : "replaced"}
                     open={openSection === "logo"}
                     onToggle={() => setOpenSection(openSection === "logo" ? null : "logo")}
                   >
-                    <BrandMarkContent unit="page" />
+                    {brandNotes.noLogo ? (
+                      /* The congress decides this one; offering corners would
+                         offer a poster it would reject. */
+                      <p className="rounded-control border border-hair-2 bg-subtle px-3.5 py-3 text-body leading-snug text-ink-2">
+                        {brandNotes.noLogo}
+                      </p>
+                    ) : (
+                      <BrandMarkContent unit="page" />
+                    )}
                     <PlanSectionContinue onClick={() => advanceFrom("logo")} />
                   </CreativePlanSection>
 
@@ -1145,7 +1173,7 @@ export function InfographicDirectionsScreen() {
                     <CreativePlanSection
                       icon={LayoutGrid}
                       title="Congress, format and pages"
-                      summary={congressSummary(congress, posterFormat)}
+                      summary={congressSummary(congress, posterType, sizeIndex)}
                       state={planState(sectionNeedsYou("format"))}
                       source="from congress"
                       open={openSection === "format"}
