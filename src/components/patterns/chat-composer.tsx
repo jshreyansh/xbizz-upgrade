@@ -59,6 +59,7 @@ export function ChatComposer({
       {children}
 
       <textarea
+        data-chat-composer
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => {

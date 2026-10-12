@@ -11,14 +11,11 @@ import {
   BarChart3,
   BarChartHorizontal,
   Blend,
-  BookOpen,
   Bold,
   CalendarRange,
-  CaseSensitive,
   CaseUpper,
   ChevronDown,
   Filter,
-  FlaskConical,
   FolderOpen,
   Hash,
   Heading,
@@ -41,12 +38,10 @@ import {
   ScanText,
   ScatterChart,
   Shapes,
-  ShieldCheck,
   Sparkles,
   Table2,
   Trash2,
   TrendingDown,
-  TrendingUp,
   Type,
   Underline,
   Upload,
@@ -84,13 +79,15 @@ import {
 
 /* ───────────────────────────────── Insert ───────────────────────────────── */
 
-export type InsertMenuId = "text" | "evidence" | "image" | "layout" | "chart" | "diagram";
+export type InsertMenuId = "text" | "image" | "layout" | "chart" | "diagram";
 
 type FrameKind = "two" | "three" | "imageText" | "statRow" | "steps" | "table";
 
 interface InsertOption {
   label: string;
   hint?: string;
+  /** What choosing it does, in a sentence. Sent with the request to the chat. */
+  explain?: string;
   icon?: LucideIcon;
   frame?: FrameKind;
 }
@@ -105,8 +102,7 @@ interface InsertMenu {
   foot?: string;
 }
 
-/* Chosen for medical documents, not a general catalogue. Evidence is filled
-   from the brand's approved claims, so it arrives verified. */
+/* Chosen for medical documents, not a general catalogue. */
 export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
   text: {
     label: "Text",
@@ -134,31 +130,6 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       },
     ],
   },
-  evidence: {
-    label: "Evidence",
-    icon: BadgeCheck,
-    tip: "Claims, stats, safety, references",
-    sub: "Filled from the brand's approved claims and dossier, so it arrives verified.",
-    groups: [
-      {
-        title: "From approved claims",
-        options: [
-          { label: "Approved claim", icon: BadgeCheck, hint: "Pick a claim, cited" },
-          { label: "Big number", icon: TrendingUp, hint: "A stat with its claim" },
-          { label: "Study design", icon: FlaskConical, hint: "Population, arms, endpoints" },
-        ],
-      },
-      {
-        title: "Required matter",
-        options: [
-          { label: "Safety information", icon: ShieldCheck, hint: "Required on every page" },
-          { label: "References", icon: BookOpen, hint: "From the claims you cite" },
-          { label: "Abbreviations", icon: CaseSensitive, hint: "Built from the page" },
-        ],
-      },
-    ],
-    foot: "Evidence keeps its claim link. Changing its words sends the claim for re-verification.",
-  },
   image: {
     label: "Image",
     icon: Package,
@@ -168,10 +139,10 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       {
         title: "Images",
         options: [
-          { label: "Product image", icon: Package, hint: "Pack shots from the brand kit" },
-          { label: "Media library", icon: FolderOpen, hint: "Your workspace assets" },
+          { label: "Brand images library", icon: Package, hint: "Images attached to this drug" },
+          { label: "Workspace media library", icon: FolderOpen, hint: "From every drug and project" },
           { label: "Upload", icon: Upload, hint: "PNG, JPG or SVG" },
-          { label: "Generate image", icon: Sparkles, hint: "From a description" },
+          { label: "Generate image", icon: Sparkles, hint: "Describe it, SwishX draws it" },
           { label: "Icon", icon: Shapes, hint: "Line icons in brand colour" },
           { label: "QR code", icon: QrCode, hint: "To the PI or a poster copy" },
         ],
@@ -187,12 +158,12 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       {
         title: "Layouts",
         options: [
-          { label: "Two columns", frame: "two" },
-          { label: "Three columns", frame: "three" },
-          { label: "Image and text", frame: "imageText" },
-          { label: "Stat row", frame: "statRow", hint: "Three numbers side by side" },
-          { label: "Process steps", frame: "steps", hint: "Numbered, left to right" },
-          { label: "Comparison table", frame: "table", hint: "Drug vs comparator" },
+          { label: "Two columns", frame: "two", explain: "Two columns side by side, under one heading" },
+          { label: "Three columns", frame: "three", explain: "Three equal columns, under one heading" },
+          { label: "Image and text", frame: "imageText", explain: "An image on the left with the text beside it" },
+          { label: "Stat row", frame: "statRow", explain: "Three numbers side by side, each with its claim", hint: "Three numbers side by side" },
+          { label: "Process steps", frame: "steps", explain: "Numbered steps, read left to right", hint: "Numbered, left to right" },
+          { label: "Comparison table", frame: "table", explain: "The drug against its comparator, row by row", hint: "Drug vs comparator" },
         ],
       },
     ],
@@ -238,6 +209,15 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
 };
 
 const MENU_IDS = Object.keys(INSERT_MENUS) as InsertMenuId[];
+
+/** One option, looked up by its menu and name. */
+export function insertOption(menu: InsertMenuId, label: string): InsertOption | undefined {
+  for (const group of INSERT_MENUS[menu].groups) {
+    const found = group.options.find((o) => o.label === label);
+    if (found) return found;
+  }
+  return undefined;
+}
 
 /** A layout drawn small, so the choice is made by eye. */
 function Frame({ kind }: { kind: FrameKind }) {
@@ -469,12 +449,18 @@ export function textOptions({
   onStyle,
   onReset,
   onCite,
+  onEdit,
+  onDelete,
 }: {
   element: CanvasTextElement;
   style: TextStyle | undefined;
   onStyle: (patch: Partial<TextStyle>) => void;
   onReset: () => void;
-  onCite: () => void;
+  /** Runs that can carry a claim; added text has none. */
+  onCite?: () => void;
+  /** Added text only: typed into directly, and removable. */
+  onEdit?: () => void;
+  onDelete?: () => void;
 }): ToolbarItem[] {
   const size = style?.size ?? element.baseSize;
   const weight = style?.weight ?? element.baseWeight;
@@ -628,16 +614,12 @@ export function textOptions({
       ),
     },
     divider("d2"),
-    {
-      key: "claim",
-      node: element.citation ? (
-        <Note icon={BadgeCheck} tone="ok">
-          Claim {element.citation}
-        </Note>
-      ) : (
-        <ToolButton icon={Link2} label="Cite a claim" onClick={onCite} />
-      ),
-    },
+    ...(onEdit ? [{ key: "edit", node: <ToolButton icon={Type} label="Edit text" onClick={onEdit} /> }] : []),
+    ...(element.citation
+      ? [{ key: "claim", node: <Note icon={BadgeCheck} tone="ok">Claim {element.citation}</Note> }]
+      : onCite
+        ? [{ key: "claim", node: <ToolButton icon={Link2} label="Cite a claim" onClick={onCite} /> }]
+        : []),
     {
       key: "reset",
       node: (
@@ -650,6 +632,7 @@ export function textOptions({
         />
       ),
     },
+    ...(onDelete ? [{ key: "delete", node: <ToolButton icon={Trash2} label="Delete" onClick={onDelete} tone="danger" /> }] : []),
   ];
 }
 

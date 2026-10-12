@@ -275,6 +275,8 @@ export function EditableCanvasText({
   locked,
   onSelect,
   onReposition,
+  offset,
+  onMovePointerDown,
 }: {
   element: CanvasTextElement;
   value: string;
@@ -293,6 +295,10 @@ export function EditableCanvasText({
    * bar that is already open.
    */
   onReposition?: (rect: DOMRect) => void;
+  /** Where it has been dragged to, from its place in the layout. */
+  offset?: { x: number; y: number };
+  /** Starts a drag; a press that does not travel stays a click. */
+  onMovePointerDown?: (e: React.PointerEvent<HTMLElement>) => void;
 }) {
   const Tag = as;
   const ref = useRef<HTMLElement | null>(null);
@@ -318,9 +324,15 @@ export function EditableCanvasText({
     };
   }, [selected, onSelect, onReposition]);
 
+  /* Moved runs stay moved in review, where nothing else can change. */
+  const moved =
+    offset && (offset.x || offset.y)
+      ? { transform: `translate(${offset.x}px, ${offset.y}px)`, display: as === "span" ? "inline-block" : undefined }
+      : {};
+
   if (locked) {
     return (
-      <Tag className={className} style={textStyleCss(style)}>
+      <Tag className={className} style={{ ...textStyleCss(style), ...moved }}>
         {value}
       </Tag>
     );
@@ -333,11 +345,12 @@ export function EditableCanvasText({
       role="button"
       tabIndex={0}
       aria-label={`${element.label}: ${value}`}
-      style={textStyleCss(style)}
-      onPointerDown={(e: React.PointerEvent) => {
+      style={{ ...textStyleCss(style), ...moved }}
+      onPointerDown={(e: React.PointerEvent<HTMLElement>) => {
         // Beat the block's own handler — selecting a run must not also read as
         // selecting the band it sits in.
         e.stopPropagation();
+        onMovePointerDown?.(e);
       }}
       onClick={(e: React.MouseEvent<HTMLElement>) => {
         e.stopPropagation();

@@ -22,6 +22,8 @@ export type ChatMessage = {
   seeded?: boolean;
   /** A storyboard shot the message is about, shown as its frame. */
   shotRef?: { sceneId: string; shotId: string };
+  /** A piece of document art the message is about, shown as itself. */
+  artRef?: { pageId: number; layerId: string };
 };
 
 interface WorkspaceState {

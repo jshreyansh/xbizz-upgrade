@@ -54,6 +54,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { RequestModal } from "@/components/patterns/request-modal";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { scenes } from "@/features/workspace/mock-data";
 import {
@@ -255,7 +256,8 @@ export function StudioScreen() {
   const [generateVideoModalOpen, setGenerateVideoModalOpen] = useState(openedForMlr);
   const [preflightOpen, setPreflightOpen] = useState(false);
   const [relatedOpen, setRelatedOpen] = useState(false);
-  const [addSceneModalOpen, setAddSceneModalOpen] = useState(false);
+  /* Adding a scene asks what it should be about, then goes to the chat. */
+  const [addSceneOpen, setAddSceneOpen] = useState(false);
   const selectedQuality = useWorkspaceStore((s) => s.selectedQuality);
 
   // Keyboard shortcut: ⌘\ or Ctrl+\ to toggle right panel
@@ -1357,16 +1359,6 @@ export function StudioScreen() {
     return () => window.clearInterval(tick);
   }, [studioMode]);
 
-  /**
-   * Hand the asset to the people who do this for a living. Nothing is sent
-   * anywhere in this build; the toast is the same one every other hand-off on
-   * this screen uses.
-   */
-  const handleSendToSwishXTeam = () => {
-    setGenerateVideoModalOpen(false);
-    showToast("Sent to the SwishX team. They will reach out to you");
-  };
-
   const handleConfirmVideoGeneration = () => {
     setGenerateVideoModalOpen(false);
     /* Any scene still on its keyframes is rendered as part of the final
@@ -1502,7 +1494,6 @@ export function StudioScreen() {
     const renumbered = updated.map((s, idx) => ({ ...s, number: idx + 1 }));
     setSceneList(renumbered);
     setSelectedSceneId(newScene.id);
-    setAddSceneModalOpen(false);
     showToast(`Scene ${targetPos} added (${tag})`);
   };
 
@@ -1947,6 +1938,15 @@ export function StudioScreen() {
                     <span className="min-w-0 truncate text-micro font-bold uppercase tracking-[0.12em] text-[#77817c]">
                       Scenes · {totalDurationSeconds} sec
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setAddSceneOpen(true)}
+                      className="focus-ring shrink-0 cursor-pointer rounded-glyph p-1 text-brand transition-colors hover:bg-tint"
+                      title="Add a scene"
+                      aria-label="Add a scene"
+                    >
+                      <Plus className="size-4 stroke-[2.5]" />
+                    </button>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between pb-3 shrink-0">
@@ -3843,6 +3843,44 @@ export function StudioScreen() {
         )}
 
         <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
+        {addSceneOpen && (() => {
+          /* After the scene you are on, the way a slide is added after the current one. */
+          const at = Math.max(0, sceneList.findIndex((sc) => sc.id === selectedScene?.id)) + 2;
+          return (
+            <RequestModal
+              icon={Clapperboard}
+              action="Add a scene"
+              subject={`Scene ${at}`}
+              label="What should this scene be about?"
+              hint={`It goes after scene ${at - 1}. SwishX writes the narration and visuals from the approved claims; you can change anything after.`}
+              placeholder="e.g. Long-term safety at week 52, with the adverse event rates"
+              submitLabel={`Add scene ${at}`}
+              required
+              onClose={() => setAddSceneOpen(false)}
+              onSubmit={(note) => {
+                setAddSceneOpen(false);
+                handleCreateSceneFromModal({
+                  insertPosition: at,
+                  title: `Scene ${at}: ${note.length > 48 ? `${note.slice(0, 45).trimEnd()}…` : note}`,
+                  script: "",
+                  visualText: note,
+                  negativeVisual: "",
+                  category: "normal",
+                });
+                setActiveTab("assistant");
+                setCopilotPanelOpen(true);
+                addChatMessage({ role: "user", text: `Add scene ${at}: ${note}` });
+                setTimeout(() => {
+                  addChatMessage({
+                    role: "swishx",
+                    text: `Added **Scene ${at}** after scene ${at - 1}. I'm writing its narration and visuals around that, from the approved claims. Tell me what to change.`,
+                  });
+                }, 700);
+              }}
+            />
+          );
+        })()}
+
         {regenAt && (() => {
           const ref = findShot(regenAt);
           if (!ref) return null;
@@ -3919,7 +3957,6 @@ export function StudioScreen() {
               },
             }}
             onClose={() => setGenerateVideoModalOpen(false)}
-            onSendToTeam={handleSendToSwishXTeam}
             onPublish={handleConfirmVideoGeneration}
             preview={
               /* The whole film, from the composition engine the published
@@ -3995,22 +4032,5 @@ export function StudioScreen() {
         </>
       }
     />
-  );
-}
-
-
-function AddSceneModal({ sceneCount, onClose, onAdd }: any) {
-  const [category, setCategory] = useState<"normal" | "intro" | "outro" | "product">("normal");
-  const [title, setTitle] = useState("");
-  return (
-    <Portal>
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-      <div className="w-full max-w-[500px] bg-card rounded-card p-6 space-y-4">
-        <h2 className="text-title font-extrabold">Add New Scene</h2>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Scene Title" className="w-full rounded-control border p-2 text-body-lg" />
-        <div className="flex justify-end gap-2"><Button variant="secondary" onClick={onClose}>Cancel</Button><Button onClick={() => onAdd({ title, category })} className="bg-brand text-white">Add</Button></div>
-      </div>
-    </div>
-    </Portal>
   );
 }

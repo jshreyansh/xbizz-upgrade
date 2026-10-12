@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { ShieldCheck, Lock, X, RotateCcw } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { ShieldCheck, Lock, X } from "lucide-react";
 import { Button, IconButton } from "@/components/ui/button";
 import { Portal } from "@/components/ui/portal";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -17,11 +17,12 @@ import { timeAgo, type MlrReview } from "@/features/workspace/mlr-review";
  * and regulatory check, with when it last ran and whether anything has
  * changed since, and the MLR review that refreshes it.
  *
- * An MLR review is a checkpoint. While it runs the preview is frozen and
- * nothing in this window can be pressed — not even the close — because
- * the review is of exactly this version. It survives a refresh; see
- * mlr-review.ts. When it finishes, its findings replace the old list and
- * Publish opens again.
+ * An MLR review is a checkpoint, and every opening of this window starts
+ * one fresh: earlier findings are of an earlier version, so they are not
+ * shown. One button runs it; while it runs the preview is frozen and nothing
+ * here can be pressed — not even the close — because the review is of
+ * exactly this version. It survives a refresh; see mlr-review.ts. When it
+ * finishes, its findings show and the button goes, until the next opening.
  *
  * There is no cost card. The credits were agreed when the asset was created;
  * this window is about whether it is ready to go, not what it cost.
@@ -34,7 +35,6 @@ export function PreviewPublishModal({
   checks,
   review,
   onClose,
-  onSendToTeam,
   onPublish,
 }: {
   title: string;
@@ -47,12 +47,14 @@ export function PreviewPublishModal({
   checks: PreflightCheck[];
   review: MlrReview;
   onClose: () => void;
-  onSendToTeam: () => void;
   onPublish: () => void;
 }) {
   const running = review.status === "running";
   const flagged = checks.filter((c) => c.severity).length;
-  const stale = review.status === "done" && review.changesSince > 0;
+  /* Run in this opening of the window — or already running when it opened,
+     after a refresh — so its findings are of this version. */
+  const [ranHere, setRanHere] = useState(running);
+  const showFindings = ranHere && review.status === "done";
 
   return (
     <Portal>
@@ -109,11 +111,9 @@ export function PreviewPublishModal({
                     <div className="text-label text-ink-3">
                       {running
                         ? "Running now"
-                        : review.status === "never"
-                        ? "Not run on this version yet"
-                        : stale
-                        ? `Last run ${timeAgo(review.lastRunAt ?? 0)} · ${review.changesSince} ${review.changesSince === 1 ? "change" : "changes"} since`
-                        : `Last run ${timeAgo(review.lastRunAt ?? 0)} · up to date`}
+                        : showFindings
+                        ? `Run ${timeAgo(review.lastRunAt ?? 0)} on this version`
+                        : "Not run on this version yet"}
                     </div>
                   </div>
                 </div>
@@ -135,55 +135,38 @@ export function PreviewPublishModal({
                       {`${reviewStep(review.progress)}. The ${kind} is frozen until it finishes, and leaving or refreshing won't stop it.`}
                     </p>
                   </div>
-                ) : review.status === "never" ? (
-                  <div className="rounded-panel border border-dashed border-hair-3 p-3.5 text-label leading-snug text-ink-3">
-                    Run an MLR review to check every claim against its source, the fair balance and the ISI before
-                    this goes out.
-                  </div>
+                ) : showFindings ? (
+                  <PreflightPanel checks={checks} />
                 ) : (
                   <>
-                    {stale && (
-                      <div className="flex items-start gap-2 rounded-control border border-warn-line bg-warn-bg px-3 py-2 text-label text-warn">
-                        <RotateCcw className="mt-0.5 size-3.5 shrink-0" />
-                        The {kind} changed after the last review. Run it again to check the changes.
-                      </div>
-                    )}
-                    <PreflightPanel checks={checks} />
+                    <div className="rounded-panel border border-dashed border-hair-3 p-3.5 text-label leading-snug text-ink-3">
+                      SwishX checks every claim against its source, the fair balance and the ISI, and reads for
+                      promotional tone, before this goes out.
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setRanHere(true);
+                        review.start();
+                      }}
+                      className="w-full gap-1.5 font-bold"
+                    >
+                      <ShieldCheck className="size-4" />
+                      Run SwishX MLR review
+                    </Button>
                   </>
-                )}
-
-                {!running && (
-                  <Button
-                    type="button"
-                    variant={review.status === "done" && !stale ? "secondary" : "primary"}
-                    onClick={review.start}
-                    className="w-full gap-1.5 font-bold"
-                  >
-                    <ShieldCheck className="size-4" />
-                    {review.status === "never" ? "MLR Review (Recommended)" : "Run MLR Review again"}
-                  </Button>
                 )}
               </div>
 
               {/* What to do with it */}
               <div className="space-y-2 border-t border-hair bg-canvas p-4">
-                {review.status === "done" && flagged > 0 && !running && (
+                {showFindings && flagged > 0 && (
                   <p className="text-label font-semibold text-warn">
-                    {flagged} {flagged === 1 ? "item" : "items"} flagged. You can still publish, or hand it to the
-                    SwishX team.
+                    {flagged} {flagged === 1 ? "item" : "items"} flagged. You can still publish.
                   </p>
                 )}
                 {/* No Cancel: the close in the header is the way out. */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={onSendToTeam}
-                    disabled={running}
-                    className="h-auto min-h-10 min-w-0 flex-1 px-3 py-1.5 font-bold leading-tight whitespace-normal"
-                  >
-                    Send to SwishX Team for Edits
-                  </Button>
+                <div className="flex items-center justify-end gap-2">
                   <Button type="button" onClick={onPublish} disabled={running} className="gap-1.5 px-6 font-bold">
                     <LogoMark size={14} />
                     Publish

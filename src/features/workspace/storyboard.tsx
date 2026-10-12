@@ -15,8 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
-import { Button, IconButton } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
+import { CurrentTag, RequestModal } from "@/components/patterns/request-modal";
 import { cn } from "@/lib/cn";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import type { Scene, SceneCitation, Shot } from "@/types/content";
@@ -868,87 +867,33 @@ export function RegenerateShotModal({
   onClose: () => void;
   onSubmit: (note: string) => void;
 }) {
-  const [note, setNote] = useState("");
   const label = `Scene ${scene.number} · Shot ${number}`;
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  const frame = (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-panel bg-[#0d1411]",
-        /* Capped by the screen's height, so the note and the button stay in
-           view without scrolling the picture away. */
-        portrait ? "aspect-[9/16] h-[min(62vh,620px)]" : "mx-auto aspect-video w-full max-w-[calc(40vh*16/9)]"
-      )}
-    >
-      <FramePreview scene={scene} portrait={portrait} brandName={brandName} sceneTime={(shot.startAt + shot.endAt) / 2} />
-      <span className="absolute left-2 top-2 rounded-chip bg-black/60 px-2 py-0.5 text-caption font-bold text-white backdrop-blur-sm">
-        Current
-      </span>
-    </div>
-  );
-
   return (
-    <Portal>
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Regenerate ${label}`}
-        onClick={onClose}
-        className="fixed inset-0 z-[9999] grid place-items-center bg-ink/75 p-4 backdrop-blur-sm sm:p-6"
-      >
+    <RequestModal
+      icon={RotateCcw}
+      action="Regenerate"
+      subject={label}
+      previewBeside={portrait}
+      preview={
         <div
-          onClick={(e) => e.stopPropagation()}
           className={cn(
-            "flex max-h-full w-full flex-col overflow-hidden rounded-card border border-hair bg-card shadow-modal",
-            portrait ? "max-w-[760px]" : "max-w-[640px]"
+            "relative overflow-hidden rounded-panel bg-[#0d1411]",
+            /* Capped by the screen's height, so the note and the button stay in
+               view without scrolling the picture away. */
+            portrait ? "aspect-[9/16] h-[min(62vh,620px)]" : "mx-auto aspect-video w-full max-w-[calc(40vh*16/9)]"
           )}
         >
-          <div className="flex items-center gap-3 border-b border-hair px-5 py-3">
-            <RotateCcw className="size-4 shrink-0 text-brand" />
-            <span className="min-w-0 truncate text-body-lg font-bold text-ink">
-              <span className="font-[850]">Regenerate</span> · {label}
-            </span>
-            <IconButton aria-label="Close" onClick={onClose} className="ml-auto">
-              <X className="size-4" />
-            </IconButton>
-          </div>
-
-          <div className={cn("min-h-0 overflow-y-auto p-5", portrait ? "flex gap-5" : "space-y-4")}>
-            {portrait ? <div className="shrink-0">{frame}</div> : frame}
-            <div className="flex min-w-0 flex-1 flex-col gap-4">
-              <div className="space-y-1">
-                <div className="text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">Shows now</div>
-                <p className="text-body leading-relaxed text-ink-2">{shot.visualStory || scene.visual}</p>
-              </div>
-              <Field
-                multiline
-                rows={3}
-                autoFocus
-                label="What should change?"
-                hint="Optional. Leave it empty for a fresh take on the same direction. The narration stays as it is."
-                placeholder="e.g. Warmer light, and bring the presenter closer"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) onSubmit(note.trim());
-                }}
-              />
-              <Button onClick={() => onSubmit(note.trim())} className="mt-auto gap-1.5 self-end font-bold">
-                <RotateCcw className="size-4" />
-                Regenerate {label}
-              </Button>
-            </div>
-          </div>
+          <FramePreview scene={scene} portrait={portrait} brandName={brandName} sceneTime={(shot.startAt + shot.endAt) / 2} />
+          <CurrentTag />
         </div>
-      </div>
-    </Portal>
+      }
+      current={shot.visualStory || scene.visual}
+      label="What should change?"
+      hint="Optional. Leave it empty for a fresh take on the same direction. The narration stays as it is."
+      placeholder="e.g. Warmer light, and bring the presenter closer"
+      submitLabel={`Regenerate ${label}`}
+      onSubmit={onSubmit}
+      onClose={onClose}
+    />
   );
 }

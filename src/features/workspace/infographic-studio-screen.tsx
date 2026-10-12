@@ -14,7 +14,12 @@ import {
   MessageSquare,
   PanelRight,
   Pencil,
+  FilePlus2,
+  FolderOpen,
+  Package,
   Plus,
+  Sparkles,
+  RotateCcw,
   Redo2,
   Share2,
   ShieldCheck,
@@ -67,6 +72,7 @@ import {
   artOptions,
   blockOptions,
   chartExtras,
+  insertOption,
   textOptions,
   type InsertMenuId,
   type ToolbarSelection,
@@ -80,6 +86,25 @@ import { DocPagePreview } from "@/features/workspace/doc-page-preview";
 import { useMlrReview } from "@/features/workspace/mlr-review";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
+import { CurrentTag, RequestModal } from "@/components/patterns/request-modal";
+import {
+  IconPickerModal,
+  MediaPickerModal,
+  QrCodeModal,
+  brandImageItems,
+  workspaceMediaItems,
+} from "@/features/workspace/insert-pickers";
+import { useProductLibraryStore } from "@/features/product-library/product-library-store";
+import {
+  FREE_ITEM_PRESETS,
+  FreeTextItem,
+  beginDrag,
+  kindForOption,
+  offsetStyle,
+  type FreeItem,
+  type FreeItemKind,
+  type Offset,
+} from "@/features/workspace/canvas-free-items";
 
 import { Portal } from "@/components/ui/portal";
 import { Toast, useToast } from "@/components/patterns/toast";
@@ -180,6 +205,15 @@ function artSchedule(count: number): number[] {
   return Array.from({ length: count }, (_, i) => Math.round(ART_FIRST + i * step));
 }
 
+/** How an Insert request is labelled in the chat. */
+const INSERT_MENU_LABEL: Record<InsertMenuId, string> = {
+  text: "Text",
+  image: "Image",
+  layout: "Layout",
+  chart: "Chart",
+  diagram: "Diagram",
+};
+
 /** The hidden file input behind the toolbar's Replace. */
 const ART_UPLOAD_ID = "studio-art-upload";
 
@@ -195,6 +229,10 @@ interface InfographicPageData {
   art: PageArtLayer[];
   /** The body blocks in reading order; a deleted one is left out. */
   bodyOrder?: BodyBlockId[];
+  /** Text added from Insert › Text, placed anywhere on the page. */
+  freeItems?: FreeItem[];
+  /** Where blocks, art and runs have been dragged to, from their place in the layout. */
+  offsets?: Record<string, Offset>;
   header: {
     title: string;
     subtitle: string;
@@ -462,6 +500,17 @@ export function InfographicStudioScreen() {
      With none of the three, nothing is selected and the toolbar offers
      Insert only. */
   const [blockFocused, setBlockFocused] = useState(false);
+  /** The added text being typed into, if any. */
+  const [editingFreeId, setEditingFreeId] = useState<string | null>(null);
+  /* SwishX's answer to an Insert request, waiting for the request to be sent,
+     keyed by the chat chip it travels with. */
+  const [insertReplies, setInsertReplies] = useState<Record<string, string>>({});
+  /* Image options that pick something first, in a pop-up, before the chat. */
+  const [imagePicker, setImagePicker] = useState<"brand" | "media" | "icon" | "qr" | "generate" | null>(null);
+  const libraryProducts = useProductLibraryStore((s) => s.products);
+  /* The two requests that open a pop-up before they go to the chat. */
+  const [regenArtId, setRegenArtId] = useState<string | null>(null);
+  const [addPageOpen, setAddPageOpen] = useState(false);
 
   /* ── Element-level selection ──────────────────────────────────────────────
      A block is a container; the text inside it is what people actually mean
@@ -727,6 +776,16 @@ export function InfographicStudioScreen() {
       "moa.detail": { id: "moa.detail", blockId: "moa", label: "Section copy", baseSize: 12, baseWeight: 500, multiline: true },
       "isi.title": { id: "isi.title", blockId: "isi", label: "Safety heading", baseSize: 11, baseWeight: 800 },
       "isi.content": { id: "isi.content", blockId: "isi", label: "Safety copy", baseSize: 10, baseWeight: 400, multiline: true, citation: currentPage.isi.citation },
+      /* Added text formats like any other run; it has no claim behind it. */
+      ...Object.fromEntries(
+        (currentPage.freeItems ?? []).map((item) => {
+          const preset = FREE_ITEM_PRESETS[item.kind];
+          return [
+            `free.${item.id}`,
+            { id: `free.${item.id}`, blockId: "free", label: preset.label, baseSize: preset.size, baseWeight: preset.weight, multiline: true },
+          ];
+        })
+      ),
     }),
     [currentPage]
   );
@@ -739,6 +798,7 @@ export function InfographicStudioScreen() {
     moa: "Mechanism",
     chart: "Chart",
     isi: "Safety",
+    free: "Added text",
   };
 
   const handleSelectElement = (id: string, rect: DOMRect | { top: number; left: number; width: number; height: number }) => {
@@ -773,6 +833,103 @@ export function InfographicStudioScreen() {
     setSelectedArtId(null);
     setBlockFocused(false);
   };
+
+  /* ── Moving things ──────────────────────────────────────────────────────
+     Anything on the page can be dragged. What the layout placed keeps its
+     place in the flow and is moved from there; added text sits wherever it
+     is put. Each move is one step of undo. */
+  const offsetOf = (key: string) => currentPage.offsets?.[key];
+  const startMove = (key: string, pick?: () => void) => (e: React.PointerEvent<HTMLElement>) => {
+    if (studioMode !== "editor") return;
+    beginDrag(e, {
+      /* Inside the composition, which can itself be scaled to fit the page. */
+      scale: pageScale * compositionFit,
+      from: offsetOf(key) ?? { x: 0, y: 0 },
+      mode: "translate",
+      onStart: () => {
+        record();
+        pick?.();
+      },
+      onEnd: (to) => updateCurrentPage((prev) => ({ ...prev, offsets: { ...prev.offsets, [key]: to } })),
+    });
+  };
+
+  const selectFree = (id: string) => {
+    setSelectedElementId(`free.${id}`);
+    /* The Edit panel lists the selected block's text; added text is its own group. */
+    setSelectedBlockId("free" as never);
+    setSelectedArtId(null);
+    setBlockFocused(false);
+    setCommentComposerAt(null);
+  };
+
+  /* Added in the middle of the page, ready to type into. The next one goes
+     just under the last, so a second insert is never hidden under the first;
+     at the foot of the page it starts again from the middle. */
+  const addFreeItem = (kind: FreeItemKind) => {
+    const preset = FREE_ITEM_PRESETS[kind];
+    const middle = Math.round(pageGeometry.height / 2 - 40);
+    const lowest = Math.max(
+      0,
+      ...(currentPage.freeItems ?? []).map((f) => {
+        const node = document.querySelector<HTMLElement>(`[data-free-item="${f.id}"]`);
+        return f.y + (node?.offsetHeight ?? 40);
+      })
+    );
+    const below = lowest + 16;
+    const y = lowest === 0 || below + 60 > pageGeometry.height ? middle : below;
+    const item: FreeItem = {
+      /* Counted up from every page's added text, so an id is never reused. */
+      id: `t${1 + Math.max(0, ...pagesList.flatMap((pg) => (pg.freeItems ?? []).map((f) => Number(f.id.slice(1)) || 0)))}`,
+      kind,
+      text: preset.text,
+      w: Math.min(preset.w, pageGeometry.width - 48),
+      x: Math.round((pageGeometry.width - Math.min(preset.w, pageGeometry.width - 48)) / 2),
+      y,
+    };
+    record();
+    updateCurrentPage((prev) => ({ ...prev, freeItems: [...(prev.freeItems ?? []), item] }));
+    selectFree(item.id);
+    setEditingFreeId(item.id);
+    showToast(`${preset.label} added. Type to replace the text, drag to move it`);
+  };
+
+  const commitFreeText = (id: string, text: string) => {
+    setEditingFreeId(null);
+    const item = currentPage.freeItems?.find((f) => f.id === id);
+    if (!item || item.text === text) return;
+    if (!text.trim()) {
+      deleteFreeItem(id);
+      return;
+    }
+    record();
+    updateCurrentPage((prev) => ({ ...prev, freeItems: prev.freeItems?.map((f) => (f.id === id ? { ...f, text } : f)) }));
+  };
+
+  const deleteFreeItem = (id: string) => {
+    const item = currentPage.freeItems?.find((f) => f.id === id);
+    if (!item) return;
+    record();
+    updateCurrentPage((prev) => ({ ...prev, freeItems: prev.freeItems?.filter((f) => f.id !== id) }));
+    setSelectedElementId(null);
+    setEditingFreeId(null);
+    showToast(`${FREE_ITEM_PRESETS[item.kind].label} removed. Undo brings it back`);
+  };
+
+  /* Delete or Backspace removes selected added text, unless it is being typed into. */
+  useEffect(() => {
+    if (studioMode !== "editor") return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedElementId?.startsWith("free.") && !editingFreeId) {
+        e.preventDefault();
+        deleteFreeItem(selectedElementId.slice(5));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const deleteArt = (id: string) => {
     const layer = currentPage.art.find((a) => a.id === id);
@@ -831,6 +988,7 @@ export function InfographicStudioScreen() {
      id rather than passed in, so a run cannot be wired to the wrong field —
      the id is the single place the binding is stated. */
   const runValue = (id: string): string => {
+    if (id.startsWith("free.")) return currentPage.freeItems?.find((f) => `free.${f.id}` === id)?.text ?? "";
     const [blockId, field] = id.split(".");
     const block = (currentPage as unknown as Record<string, Record<string, unknown>>)[blockId] ?? {};
     return String(block[field] ?? "");
@@ -847,6 +1005,15 @@ export function InfographicStudioScreen() {
       selected={selectedElementId === id}
       onSelect={(r) => handleSelectElement(id, r)}
       onReposition={repositionComposer}
+      offset={currentPage.offsets?.[`run:${id}`]}
+      onMovePointerDown={
+        studioMode === "editor"
+          ? startMove(`run:${id}`, () => {
+              const node = document.querySelector(`[data-canvas-text="${id}"]`);
+              if (node) handleSelectElement(id, node.getBoundingClientRect());
+            })
+          : undefined
+      }
     />
   );
 
@@ -861,16 +1028,6 @@ export function InfographicStudioScreen() {
 
   const [mlrCheckResolved, setMlrCheckResolved] = useState(false);
   const [qaCheckResolved, setQaCheckResolved] = useState(false);
-
-  /**
-   * Hand the asset to the people who do this for a living. Nothing is sent
-   * anywhere in this build; the toast is the same one every other hand-off on
-   * this screen uses.
-   */
-  const handleSendToSwishXTeam = () => {
-    setConfirmGenerateModalOpen(false);
-    showToast("Sent to the SwishX team. They will reach out to you");
-  };
 
   /* Publishing is the finished document, so it waits for the last art. */
   const docFullyRendered = genElapsed >= ART_LAST;
@@ -890,6 +1047,8 @@ export function InfographicStudioScreen() {
     if (!text && attached.length === 0) return;
 
     const context = directText ? [] : chatContexts.map((c) => `[Context: ${c.label} - ${c.detail}]`);
+    /* An Insert request has its own answer, worked out when it was picked. */
+    const insertReply = directText ? undefined : chatContexts.map((c) => insertReplies[c.id]).find(Boolean);
     addChatMessage({
       role: "user",
       text: [...context, text, ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n"),
@@ -912,6 +1071,11 @@ export function InfographicStudioScreen() {
         });
       }, 600);
       if (!text) return;
+    }
+
+    if (insertReply) {
+      setTimeout(() => addChatMessage({ role: "swishx", text: insertReply }), 700);
+      return;
     }
 
     setTimeout(() => {
@@ -1188,7 +1352,7 @@ export function InfographicStudioScreen() {
         z: art.z,
         ready: genElapsed >= art.readyAt,
         onReplace: () => document.getElementById(ART_UPLOAD_ID)?.click(),
-        onRegenerate: () => regenerateArt(art.id),
+        onRegenerate: () => setRegenArtId(art.id),
         onBringForward: () => nudgeArtOrder(art.id, 1),
         onSendBack: () => nudgeArtOrder(art.id, -1),
         onAlt: (alt) => setArtAlt(art.id, alt),
@@ -1208,7 +1372,13 @@ export function InfographicStudioScreen() {
         style: elementStyles[el.id],
         onStyle: patchElementStyle,
         onReset: resetElementStyle,
-        onCite: () => {
+        ...(el.blockId === "free"
+          ? {
+              onEdit: () => setEditingFreeId(el.id.slice(5)),
+              onDelete: () => deleteFreeItem(el.id.slice(5)),
+            }
+          : {}),
+        onCite: el.blockId === "free" ? undefined : () => {
           setCopilotPanelOpen(true);
           setActiveTab("evidence");
           showToast(`Pick the claim the ${el.label.toLowerCase()} cites`);
@@ -1262,29 +1432,95 @@ export function InfographicStudioScreen() {
 
   /* Insert hands the request to SwishX, which writes it from the approved
      claims; an approved claim is picked from the Claims tab directly. */
-  const handleInsert = (_menu: InsertMenuId, option: string) => {
-    if (option === "Approved claim") {
-      setCopilotPanelOpen(true);
-      setActiveTab("evidence");
-      showToast("Pick a claim to place it on the page");
+  const insertTarget = toolbarSelection?.name.toLowerCase();
+  const insertWhere = insertTarget ? `below the ${insertTarget}` : "at the end of the page";
+
+  /* An Insert request, into the chat: a chip saying what and where, the
+     start of the sentence, SwishX's answer for when it is sent, and a toast. */
+  const queueInsert = (req: { id: string; label: string; detail: string; prompt: string; reply: string; toast: string }) => {
+    handToChat({ id: req.id, label: req.label, detail: req.detail }, req.prompt);
+    setInsertReplies((prev) => ({ ...prev, [req.id]: req.reply }));
+    showToast(`${req.toast} added to chat`);
+    /* Straight into the sentence, at its end, so the next keystroke finishes it. */
+    requestAnimationFrame(() => {
+      const field = document.querySelector<HTMLTextAreaElement>("[data-chat-composer]");
+      if (!field) return;
+      field.focus();
+      field.setSelectionRange(field.value.length, field.value.length);
+    });
+  };
+
+  const IMAGE_PICKERS: Record<string, NonNullable<typeof imagePicker>> = {
+    "Brand images library": "brand",
+    "Workspace media library": "media",
+    Icon: "icon",
+    "QR code": "qr",
+    "Generate image": "generate",
+  };
+
+  const handleInsert = (menu: InsertMenuId, option: string) => {
+    const kind = menu === "text" ? kindForOption(option) : null;
+    if (kind) {
+      addFreeItem(kind);
       return;
     }
-    const where = toolbarSelection ? `below the ${toolbarSelection.name.toLowerCase()}` : "at the end of the page";
-    /* Options that are an action, said as the thing they add. */
-    const PHRASES: Record<string, string> = {
-      Upload: "an image I upload",
-      "Media library": "an image from the media library",
-      "Generate image": "a generated image",
-    };
+    if (menu === "image" && IMAGE_PICKERS[option]) {
+      setImagePicker(IMAGE_PICKERS[option]);
+      return;
+    }
+    const where = insertWhere;
     const thing = option.toLowerCase();
     /* "a big number", "an icon", but "references". */
-    const article = thing.endsWith("s") ? "" : /^[aeiou]/.test(thing) ? "an " : "a ";
-    handToChat(
-      { id: `insert-${option}`, label: `Insert · ${option}`, detail: `${pageLabel}, ${where}` },
-      `Add ${PHRASES[option] ?? article + thing} ${where}. It should show `
-    );
-    showToast(`${option} added to the chat. Say what it should show`);
+    const a = thing.endsWith("s") ? "" : /^[aeiou]/.test(thing) ? "an " : "a ";
+    const id = `insert-${menu}-${option}`;
+    const label = `${INSERT_MENU_LABEL[menu]} · ${option}`;
+
+    /* Charts, diagrams and layouts always go through the chat: SwishX draws
+       them from the dossier, and the request says what to show. The prompt
+       is left open for exactly that. */
+    if (menu === "chart") {
+      queueInsert({
+        id,
+        label,
+        detail: `${pageLabel}, ${where} · data from the dossier`,
+        prompt: `Add ${a}${thing} ${where} showing `,
+        reply: `Drafting ${a}**${thing}** ${where} from the trial data in the dossier, with every value cited to its table. Tell me if the comparison should change.`,
+        toast: option,
+      });
+    } else if (menu === "diagram") {
+      queueInsert({
+        id,
+        label,
+        detail: `${pageLabel}, ${where}`,
+        prompt: `Add ${a}${thing} ${where} that explains `,
+        reply: `Drafting ${a}**${thing}** ${where}, worded from the approved mechanism and the label so it stays MLR-safe. Tell me if a step is missing.`,
+        toast: option,
+      });
+    } else if (menu === "layout") {
+      const what = insertTarget ? `the ${insertTarget}` : "the page body";
+      queueInsert({
+        id,
+        label,
+        detail: `${insertOption(menu, option)?.explain ?? option} · ${pageLabel}, ${what}`,
+        prompt: `Rearrange ${what} as ${thing}. Put `,
+        reply: `Rearranging ${what} as **${thing}**. Every claim keeps its words and its citation; only where it sits changes.`,
+        toast: option,
+      });
+    } else {
+      const phrase = option === "Upload" ? "an image I upload" : `${a}${thing}`;
+      queueInsert({
+        id,
+        label,
+        detail: `${pageLabel}, ${where}`,
+        prompt: `Add ${phrase} ${where}. It should show `,
+        reply: `Adding ${phrase} ${where}, from the approved claims.`,
+        toast: option,
+      });
+    }
   };
+
+  /* The drug this document is for, as the Product Library has it. */
+  const brandProduct = libraryProducts.find((p) => p.name.toLowerCase() === brandName.toLowerCase());
 
   return (
     <WorkbenchLayout
@@ -1303,7 +1539,6 @@ export function InfographicStudioScreen() {
           <EditorToolbar
             selection={toolbarSelection}
             onInsert={handleInsert}
-            unavailable={{ "Safety information": "Already on this page" }}
           />
         ) : undefined
       }
@@ -1448,7 +1683,11 @@ export function InfographicStudioScreen() {
                 {!isReview && (
                   <button
                     type="button"
-                    onClick={handleAddPage}
+                    onClick={() =>
+                      pagesList.length >= MAX_PAGES
+                        ? showToast(`A document runs to ${MAX_PAGES} pages at most`)
+                        : setAddPageOpen(true)
+                    }
                     className="p-1 text-brand hover:bg-tint rounded-glyph cursor-pointer transition-colors"
                     title="Add Page"
                   >
@@ -1658,6 +1897,8 @@ export function InfographicStudioScreen() {
                 {/* 1. Header Band */}
                 <div
                   onClick={() => studioMode === "editor" && handleSelectBlock("header")}
+                    style={offsetStyle(offsetOf("block:header"))}
+                    onPointerDown={startMove("block:header", () => handleSelectBlock("header"))}
                   className={cn(
                     "relative z-[1] p-6 pb-5 bg-gradient-to-r from-[#0c1524] via-[#14233c] to-[#1e3458] text-white transition group",
                     studioMode === "editor" && "cursor-pointer",
@@ -1684,6 +1925,12 @@ export function InfographicStudioScreen() {
                     {artFor("header") && (
                       <ArtSlot
                         layer={artFor("header")!}
+                        style={offsetStyle(offsetOf(`art:${artFor("header")!.id}`))}
+                        onPointerDown={startMove(`art:${artFor("header")!.id}`, () => {
+                          setSelectedArtId(artFor("header")!.id);
+                          clearElementSelection();
+                          setBlockFocused(false);
+                        })}
                         elapsed={genElapsed}
                         selected={selectedArtId === artFor("header")!.id}
                         onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
@@ -1709,6 +1956,8 @@ export function InfographicStudioScreen() {
                     bodyId === "heroStat" ? (
                   <div key="heroStat"
                     onClick={() => studioMode === "editor" && handleSelectBlock("heroStat")}
+                    style={offsetStyle(offsetOf("block:heroStat"))}
+                    onPointerDown={startMove("block:heroStat", () => handleSelectBlock("heroStat"))}
                     className={cn(
                       "p-4 rounded-panel bg-[#fff7f4] border border-tint-line shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
@@ -1739,6 +1988,8 @@ export function InfographicStudioScreen() {
                     ) : bodyId === "moa" ? (
                   <div key="moa"
                     onClick={() => studioMode === "editor" && handleSelectBlock("moa")}
+                    style={offsetStyle(offsetOf("block:moa"))}
+                    onPointerDown={startMove("block:moa", () => handleSelectBlock("moa"))}
                     className={cn(
                       "p-4 rounded-panel bg-subtle border border-hair shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
@@ -1759,6 +2010,12 @@ export function InfographicStudioScreen() {
                     {artFor("moa") && (
                       <ArtSlot
                         layer={artFor("moa")!}
+                        style={offsetStyle(offsetOf(`art:${artFor("moa")!.id}`))}
+                        onPointerDown={startMove(`art:${artFor("moa")!.id}`, () => {
+                          setSelectedArtId(artFor("moa")!.id);
+                          clearElementSelection();
+                          setBlockFocused(false);
+                        })}
                         elapsed={genElapsed}
                         selected={selectedArtId === artFor("moa")!.id}
                         onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
@@ -1782,6 +2039,8 @@ export function InfographicStudioScreen() {
                     ) : (
                   <div key="chart"
                     onClick={() => studioMode === "editor" && handleSelectBlock("chart")}
+                    style={offsetStyle(offsetOf("block:chart"))}
+                    onPointerDown={startMove("block:chart", () => handleSelectBlock("chart"))}
                     className={cn(
                       "p-4 rounded-panel bg-card border border-hair shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
@@ -1809,6 +2068,12 @@ export function InfographicStudioScreen() {
                     {artFor("chart") && (
                       <ArtSlot
                         layer={artFor("chart")!}
+                        style={offsetStyle(offsetOf(`art:${artFor("chart")!.id}`))}
+                        onPointerDown={startMove(`art:${artFor("chart")!.id}`, () => {
+                          setSelectedArtId(artFor("chart")!.id);
+                          clearElementSelection();
+                          setBlockFocused(false);
+                        })}
                         elapsed={genElapsed}
                         selected={selectedArtId === artFor("chart")!.id}
                         onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
@@ -1851,6 +2116,8 @@ export function InfographicStudioScreen() {
                   {/* 5. ISI / Fair Balance Footnote */}
                   <div
                     onClick={() => studioMode === "editor" && handleSelectBlock("isi")}
+                    style={offsetStyle(offsetOf("block:isi"))}
+                    onPointerDown={startMove("block:isi", () => handleSelectBlock("isi"))}
                     className={cn(
                       "p-3.5 rounded-panel bg-[#fafafa] border border-hair mt-auto transition relative group",
                       studioMode === "editor" && "cursor-pointer",
@@ -1873,6 +2140,32 @@ export function InfographicStudioScreen() {
                   </div>
                 </div>
                 </div>
+
+                {/* Added text, over the layout, wherever it was put. */}
+                {(currentPage.freeItems ?? []).map((item) => (
+                  <FreeTextItem
+                    key={item.id}
+                    item={item}
+                    style={elementStyles[`free.${item.id}`]}
+                    selected={selectedElementId === `free.${item.id}`}
+                    editing={editingFreeId === item.id}
+                    locked={studioMode !== "editor"}
+                    scale={pageScale}
+                    onSelect={() => selectFree(item.id)}
+                    onEdit={() => {
+                      selectFree(item.id);
+                      setEditingFreeId(item.id);
+                    }}
+                    onCommit={(text) => commitFreeText(item.id, text)}
+                    onMoveStart={record}
+                    onMoveEnd={(to) =>
+                      updateCurrentPage((prev) => ({
+                        ...prev,
+                        freeItems: prev.freeItems?.map((f) => (f.id === item.id ? { ...f, ...to } : f)),
+                      }))
+                    }
+                  />
+                ))}
               </div>
             </div>
           </main>
@@ -1993,6 +2286,18 @@ export function InfographicStudioScreen() {
                             : "bg-subtle text-ink border border-hair rounded-tl-xs"
                         )}
                       >
+                        {msg.artRef && (() => {
+                          const ref = msg.artRef;
+                          const layer = pagesList.find((pg) => pg.id === ref.pageId)?.art.find((a) => a.id === ref.layerId);
+                          return layer ? (
+                            <div className="mb-2 w-44 overflow-hidden rounded-control ring-1 ring-white/30">
+                              <ArtSlot layer={layer} elapsed={genElapsed} className="h-24 w-full rounded-none border-0" />
+                              <div className="bg-black/40 px-2 py-1 text-caption font-bold text-white">
+                                Page {ref.pageId} · {layer.label}
+                              </div>
+                            </div>
+                          ) : null;
+                        })()}
                         <FormattedMessageText text={msg.text} />
                         <ChatChips chips={msg.chips} onPick={(chip) => handleSendMessage(chip)} />
                       </div>
@@ -2327,7 +2632,6 @@ export function InfographicStudioScreen() {
               { id: "refs", source: "MLR", title: "Reference list complete", detail: "All citations resolve to approved sources" },
             ]}
             onClose={() => setConfirmGenerateModalOpen(false)}
-            onSendToTeam={handleSendToSwishXTeam}
             onPublish={() => {
               setConfirmGenerateModalOpen(false);
               handlePublishCreative();
@@ -2384,6 +2688,181 @@ export function InfographicStudioScreen() {
 
         {/* ── TOAST NOTIFICATION ── */}
         <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
+
+        {regenArtId && (() => {
+          const layer = currentPage.art.find((a) => a.id === regenArtId);
+          if (!layer) return null;
+          const kind = layer.kind === "graph" ? "chart" : layer.kind === "background" ? "background" : "image";
+          const where = layer.slot === "page" ? "behind the whole page" : `in the ${BLOCK_LABELS[layer.slot]?.toLowerCase()} block`;
+          return (
+            <RequestModal
+              icon={RotateCcw}
+              action="Regenerate"
+              subject={`${pageLabel} · ${layer.label}`}
+              preview={
+                <div className="relative">
+                  <ArtSlot layer={layer} elapsed={genElapsed} className="h-56 w-full" />
+                  <CurrentTag />
+                </div>
+              }
+              current={`The ${kind} ${where}.${layer.alt ? ` Alt text: “${layer.alt}”.` : ""}`}
+              label="What should change?"
+              hint="Optional. Leave it empty for a fresh take on the same direction. The claims and copy around it stay as they are."
+              placeholder={
+                layer.kind === "graph"
+                  ? "e.g. Lighten the placebo line and label week 16"
+                  : layer.kind === "background"
+                    ? "e.g. A softer, lighter wash"
+                    : "e.g. Closer in, with cooler light"
+              }
+              submitLabel={`Regenerate ${layer.label}`}
+              onClose={() => setRegenArtId(null)}
+              onSubmit={(note) => {
+                /* Into the chat like anything else asked of SwishX, with the
+                   art attached, and the redraw starts in the same box. */
+                setRegenArtId(null);
+                regenerateArt(layer.id);
+                setCopilotPanelOpen(true);
+                setActiveTab("assistant");
+                addChatMessage({
+                  role: "user",
+                  text: note ? `Regenerate ${layer.label} on ${pageLabel}: ${note}` : `Regenerate ${layer.label} on ${pageLabel}`,
+                  artRef: { pageId: activePageId, layerId: layer.id },
+                });
+                setTimeout(() => {
+                  addChatMessage({
+                    role: "swishx",
+                    text: note
+                      ? `Redrawing **${layer.label}** with that change. It lands in the same box in about 12 seconds; the claims and copy around it stay as they are.`
+                      : `A fresh take on **${layer.label}**, same direction. It lands in the same box in about 12 seconds.`,
+                  });
+                }, 700);
+              }}
+            />
+          );
+        })()}
+
+        {(imagePicker === "brand" || imagePicker === "media") && (
+          <MediaPickerModal
+            icon={imagePicker === "brand" ? Package : FolderOpen}
+            title={imagePicker === "brand" ? `Brand images library · ${brandName}` : "Workspace media library"}
+            sub={
+              imagePicker === "brand"
+                ? `Images attached to ${brandName} in the Product Library, every variation.`
+                : "Images used across the workspace, each with the drug or project it came from."
+            }
+            items={
+              imagePicker === "brand"
+                ? brandProduct
+                  ? brandImageItems(brandProduct)
+                  : []
+                : workspaceMediaItems(libraryProducts, brandName)
+            }
+            empty={`No images are attached to ${brandName} yet. Add them to the drug in the Product Library.`}
+            onClose={() => setImagePicker(null)}
+            onUse={(item) => {
+              setImagePicker(null);
+              queueInsert({
+                id: `insert-image-${item.id}`,
+                label: `Image · ${item.name}`,
+                detail: `${item.source.kind} ${item.source.name} (${item.source.id}) · ${pageLabel}, ${insertWhere}`,
+                prompt: `Place this image ${insertWhere}. `,
+                reply: `Placing **${item.name}** ${insertWhere}. It keeps its source, ${item.source.kind.toLowerCase()} ${item.source.name}, so its approval travels with it.`,
+                toast: item.name,
+              });
+            }}
+          />
+        )}
+
+        {imagePicker === "icon" && (
+          <IconPickerModal
+            onClose={() => setImagePicker(null)}
+            onUse={(name, label) => {
+              setImagePicker(null);
+              queueInsert({
+                id: `insert-icon-${name}`,
+                label: `Icon · ${label}`,
+                detail: `${pageLabel}, ${insertWhere} · in the brand colour`,
+                prompt: `Add the ${label.toLowerCase()} icon ${insertWhere}, next to `,
+                reply: `Adding the **${label.toLowerCase()}** icon ${insertWhere}, drawn in the brand colour.`,
+                toast: `${label} icon`,
+              });
+            }}
+          />
+        )}
+
+        {imagePicker === "qr" && (
+          <QrCodeModal
+            onClose={() => setImagePicker(null)}
+            onUse={(url) => {
+              setImagePicker(null);
+              queueInsert({
+                id: `insert-qr-${url}`,
+                label: "QR code",
+                detail: `Links to ${url} · ${pageLabel}, ${insertWhere}`,
+                prompt: `Place this QR code ${insertWhere}. `,
+                reply: `Placing a **QR code** to ${url} ${insertWhere}. I'll add a line under it saying where it goes, so a reader knows before they scan.`,
+                toast: "QR code",
+              });
+            }}
+          />
+        )}
+
+        {imagePicker === "generate" && (
+          <RequestModal
+            icon={Sparkles}
+            action="Generate an image"
+            subject={pageLabel}
+            label="Describe the image"
+            hint={`It goes ${insertWhere}. SwishX keeps it to the brand look and away from anything a claim would need to back up.`}
+            placeholder="e.g. A dermatologist examining a patient's forearm, soft daylight"
+            submitLabel="Generate image"
+            required
+            onClose={() => setImagePicker(null)}
+            onSubmit={(note) => {
+              setImagePicker(null);
+              setCopilotPanelOpen(true);
+              setActiveTab("assistant");
+              addChatMessage({ role: "user", text: `Generate an image ${insertWhere}: ${note}` });
+              setTimeout(() => {
+                addChatMessage({
+                  role: "swishx",
+                  text: `Generating that image ${insertWhere}. It lands in its own box when it's drawn; nothing else on the page moves.`,
+                });
+              }, 700);
+            }}
+          />
+        )}
+
+        {addPageOpen && (() => {
+          const next = pagesList.length + 1;
+          return (
+            <RequestModal
+              icon={FilePlus2}
+              action="Add a page"
+              subject={`Page ${next}`}
+              label="What should this page be about?"
+              hint="SwishX lays it out from the approved claims. You can change anything after."
+              placeholder="e.g. Safety and tolerability, with the adverse event table"
+              submitLabel={`Add page ${next}`}
+              required
+              onClose={() => setAddPageOpen(false)}
+              onSubmit={(note) => {
+                setAddPageOpen(false);
+                handleAddPage();
+                setCopilotPanelOpen(true);
+                setActiveTab("assistant");
+                addChatMessage({ role: "user", text: `Add page ${next}: ${note}` });
+                setTimeout(() => {
+                  addChatMessage({
+                    role: "swishx",
+                    text: `Added **Page ${next}**. I'm laying it out around that, from the approved claims, starting from the evidence layout. Tell me what to change.`,
+                  });
+                }, 700);
+              }}
+            />
+          );
+        })()}
         <SaveOrDiscardDialog
           open={!!exit.pending}
           destinationLabel={exit.pending?.label}

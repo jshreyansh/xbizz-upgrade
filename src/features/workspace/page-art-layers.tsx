@@ -53,6 +53,8 @@ export function ArtSlot({
   onSelect,
   interactive,
   className,
+  style,
+  onPointerDown,
 }: {
   layer: ArtLayerView;
   /** Milliseconds since generation began. */
@@ -62,6 +64,10 @@ export function ArtSlot({
   /** Review mode is a finished asset: nothing on it is selectable. */
   interactive?: boolean;
   className?: string;
+  /** Where it has been dragged to, from its slot. */
+  style?: React.CSSProperties;
+  /** Starts a drag. */
+  onPointerDown?: (e: React.PointerEvent<HTMLDivElement>) => void;
 }) {
   const ready = elapsed >= layer.readyAt;
   const secondsLeft = Math.max(0, Math.ceil((layer.readyAt - elapsed) / 1000));
@@ -72,6 +78,12 @@ export function ArtSlot({
       tabIndex={interactive ? 0 : undefined}
       aria-busy={!ready}
       aria-label={ready ? layer.label : `${layer.label} generating, ${secondsLeft}s`}
+      style={style}
+      onPointerDown={(e) => {
+        if (!interactive || !onPointerDown) return;
+        e.stopPropagation();
+        onPointerDown(e);
+      }}
       onClick={(e) => {
         if (!interactive) return;
         e.stopPropagation();
