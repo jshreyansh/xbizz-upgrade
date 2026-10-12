@@ -211,6 +211,15 @@ function artSchedule(count: number): number[] {
   return Array.from({ length: count }, (_, i) => Math.round(ART_FIRST + i * step));
 }
 
+/** Each card's own colour in the template, for the Fill swatch. */
+const TEMPLATE_FILLS: Record<string, string> = {
+  header: "linear-gradient(90deg, #0c1524, #14233c, #1e3458)",
+  heroStat: "#fff7f4",
+  moa: "var(--color-subtle)",
+  chart: "var(--color-card)",
+  isi: "#fafafa",
+};
+
 /** How an Insert request is labelled in the chat. */
 const INSERT_MENU_LABEL: Record<InsertMenuId, string> = {
   text: "Text",
@@ -869,15 +878,6 @@ export function InfographicStudioScreen() {
       blockStyles: { ...prev.blockStyles, [id]: { ...EMPTY_BLOCK_STYLE, ...prev.blockStyles?.[id], ...patch } },
     }));
   };
-  const resetBlockStyle = (id: string) => {
-    record();
-    updateCurrentPage((prev) => {
-      const next = { ...prev.blockStyles };
-      delete next[id];
-      return { ...prev, blockStyles: next };
-    });
-    showToast("Back to the template's look");
-  };
   const pageStyle = currentPage.pageStyle ?? { fill: null, art: true };
   const patchPageStyle = (patch: Partial<{ fill: string | null; art: boolean }>) => {
     record();
@@ -1021,17 +1021,6 @@ export function InfographicStudioScreen() {
       ...prev,
       [selectedElementId]: { ...EMPTY_STYLE, ...prev[selectedElementId], ...patch },
     }));
-  };
-
-  const resetElementStyle = () => {
-    if (!selectedElementId) return;
-    record();
-    setElementStyles((prev) => {
-      const next = { ...prev };
-      delete next[selectedElementId];
-      return next;
-    });
-    showToast("Formatting reset to the template");
   };
 
 
@@ -1422,7 +1411,6 @@ export function InfographicStudioScreen() {
         element: el,
         style: elementStyles[el.id],
         onStyle: patchElementStyle,
-        onReset: resetElementStyle,
         ...(el.blockId === "free"
           ? {
               onEdit: () => setEditingFreeId(el.id.slice(5)),
@@ -1462,8 +1450,8 @@ export function InfographicStudioScreen() {
         extra: [
           ...blockStyleOptions({
             style: currentPage.blockStyles?.[id],
+            templateFill: TEMPLATE_FILLS[id] ?? "var(--color-card)",
             onStyle: (patch) => patchBlockStyle(id, patch),
-            onReset: () => resetBlockStyle(id),
           }),
           ...(id === "chart"
             ? chartExtras({
@@ -1499,10 +1487,7 @@ export function InfographicStudioScreen() {
         hasArt: Boolean(artFor("page")),
         onFill: (fill) => patchPageStyle({ fill }),
         onArt: (art) => patchPageStyle({ art }),
-        onReset: () => {
-          patchPageStyle({ fill: null, art: true });
-          showToast("Back to the template's page");
-        },
+        templateFill: "var(--color-card)",
       }),
       onAddToChat: () => {
         handToChat(

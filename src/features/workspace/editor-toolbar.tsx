@@ -36,7 +36,6 @@ import {
   QrCode,
   Quote,
   RefreshCw,
-  RotateCcw,
   ScanText,
   ScatterChart,
   Shapes,
@@ -52,6 +51,7 @@ import {
   Workflow,
   type LucideIcon,
 } from "lucide-react";
+import { HexColorInput, HexColorPicker } from "react-colorful";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -63,7 +63,6 @@ import {
   SizeStepper,
   WEIGHTS,
   fontStack,
-  hasOverrides,
   nearestWeight,
   type CanvasTextElement,
   type TextAlign,
@@ -431,7 +430,6 @@ export function textOptions({
   element,
   style,
   onStyle,
-  onReset,
   onCite,
   onEdit,
   onDelete,
@@ -439,7 +437,6 @@ export function textOptions({
   element: CanvasTextElement;
   style: TextStyle | undefined;
   onStyle: (patch: Partial<TextStyle>) => void;
-  onReset: () => void;
   /** Runs that can carry a claim; added text has none. */
   onCite?: () => void;
   /** Added text only: typed into directly, and removable. */
@@ -531,33 +528,15 @@ export function textOptions({
           }
         >
           {(close) => (
-            <div className="flex items-center gap-1.5 p-0.5">
-              {SWATCHES.map((s) => {
-                const active = (style?.color ?? null) === s.value;
-                return (
-                  <button
-                    key={s.label}
-                    type="button"
-                    onClick={() => {
-                      onStyle({ color: s.value });
-                      close();
-                    }}
-                    title={s.label}
-                    aria-label={s.label}
-                    aria-pressed={active}
-                    className={cn(
-                      "focus-ring size-6 shrink-0 cursor-pointer rounded-glyph border transition",
-                      active ? "border-ink ring-2 ring-brand/30" : "border-hair-3 hover:border-ink-3"
-                    )}
-                    style={
-                      s.value
-                        ? { background: s.value }
-                        : { background: "linear-gradient(135deg, #ffffff 0 46%, var(--color-hair-3) 46% 54%, #ffffff 54%)" }
-                    }
-                  />
-                );
-              })}
-            </div>
+            <ColourChoices
+              title="Text colour"
+              swatches={SWATCHES}
+              value={style?.color ?? null}
+              onPick={(color) => {
+                onStyle({ color });
+                close();
+              }}
+            />
           )}
         </ToolMenu>
       ),
@@ -604,18 +583,6 @@ export function textOptions({
       : onCite
         ? [{ key: "claim", node: <ToolButton icon={Link2} label="Cite a claim" onClick={onCite} /> }]
         : []),
-    {
-      key: "reset",
-      node: (
-        <ToolButton
-          icon={RotateCcw}
-          label="Reset"
-          onClick={onReset}
-          disabled={!hasOverrides(style)}
-          title="Back to the template's formatting"
-        />
-      ),
-    },
     ...(onDelete ? [{ key: "delete", node: <ToolButton icon={Trash2} label="Delete" onClick={onDelete} tone="danger" /> }] : []),
   ];
 }
@@ -819,6 +786,80 @@ function Swatch({
   );
 }
 
+/**
+ * Brand swatches first, then any colour: the picker people know from design
+ * tools — a saturation and brightness field, a hue strip, and the hex code —
+ * applied when it is right rather than on every drag.
+ */
+function ColourChoices({
+  title,
+  swatches,
+  value,
+  templateValue,
+  onPick,
+}: {
+  title: string;
+  swatches: Array<{ label: string; value: string | null }>;
+  value: string | null;
+  /** What "template" looks like here, so its swatch shows the real colour. */
+  templateValue?: string;
+  onPick: (value: string | null) => void;
+}) {
+  const custom = value !== null && !swatches.some((sw) => sw.value === value);
+  const [open, setOpen] = useState(custom);
+  const [draft, setDraft] = useState(value && value.startsWith("#") ? value : "#fd4816");
+  return (
+    <div className="grid w-64 gap-2 p-1">
+      <span className="text-caption font-bold text-ink-3">{title}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {swatches.map((sw) => (
+          <Swatch
+            key={sw.label}
+            label={sw.value ? sw.label : "Template colour"}
+            value={sw.value ?? templateValue ?? null}
+            active={value === sw.value}
+            onClick={() => onPick(sw.value)}
+          />
+        ))}
+        <button
+          type="button"
+          title="Custom colour"
+          aria-label="Custom colour"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          className={cn(
+            "focus-ring grid size-6 shrink-0 cursor-pointer place-items-center rounded-glyph border transition",
+            open || custom ? "border-ink ring-2 ring-brand/30" : "border-hair-3 hover:border-ink-3"
+          )}
+          style={{ background: "conic-gradient(#ff3b30, #ffcc00, #34c759, #00c7be, #007aff, #af52de, #ff3b30)" }}
+        >
+          <Plus className="size-3 text-white drop-shadow" strokeWidth={3} />
+        </button>
+      </div>
+      {open && (
+        <div className="grid gap-2 border-t border-hair pt-2">
+          <HexColorPicker color={draft} onChange={setDraft} style={{ width: "100%", height: 144 }} />
+          <div className="flex items-center gap-1.5">
+            <span className="size-8 shrink-0 rounded-chip border border-hair-3" style={{ background: draft }} />
+            <label className="flex h-8 min-w-0 flex-1 items-center gap-1 rounded-chip border border-hair-2 bg-subtle px-2 focus-within:border-brand">
+              <span className="text-label font-bold text-ink-4">#</span>
+              <HexColorInput
+                color={draft}
+                onChange={setDraft}
+                aria-label="Hex colour"
+                className="min-w-0 flex-1 bg-transparent font-mono text-label uppercase text-ink outline-none"
+              />
+            </label>
+            <Button size="sm" onClick={() => onPick(draft)} className="h-8 shrink-0 px-3">
+              Apply
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Choice<T extends string | number>({
   options,
   value,
@@ -850,15 +891,15 @@ function Choice<T extends string | number>({
 
 export function blockStyleOptions({
   style,
+  templateFill,
   onStyle,
-  onReset,
 }: {
   style: BlockStyle | undefined;
+  /** What the template fills it with, so the swatch shows the colour actually on the page. */
+  templateFill: string;
   onStyle: (patch: Partial<BlockStyle>) => void;
-  onReset: () => void;
 }): ToolbarItem[] {
   const s = style ?? EMPTY_BLOCK_STYLE;
-  const edited = Boolean(s.fill || s.border || s.radius || s.shadow);
   return [
     {
       key: "fill",
@@ -868,31 +909,22 @@ export function blockStyleOptions({
           trigger={
             <span className="inline-flex items-center gap-1.5">
               <PaintBucket className="size-3.5" />
-              <span
-                className="size-3 rounded-glyph border border-hair-3"
-                style={{ background: s.fill ?? "linear-gradient(135deg, #ffffff 0 46%, var(--color-hair-3) 46% 54%, #ffffff 54%)" }}
-              />
+              Fill
+              <span className="size-3.5 rounded-glyph border border-hair-3" style={{ background: s.fill ?? templateFill }} />
             </span>
           }
         >
           {(close) => (
-            <div className="grid w-56 gap-2 p-1">
-              <span className="text-caption font-bold text-ink-3">Fill</span>
-              <div className="flex flex-wrap gap-1.5">
-                {FILLS.map((f) => (
-                  <Swatch
-                    key={f.label}
-                    label={f.label}
-                    value={f.value}
-                    active={s.fill === f.value}
-                    onClick={() => {
-                      onStyle({ fill: f.value });
-                      close();
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
+            <ColourChoices
+              title="Fill"
+              swatches={FILLS}
+              templateValue={templateFill}
+              value={s.fill}
+              onPick={(fill) => {
+                onStyle({ fill });
+                close();
+              }}
+            />
           )}
         </ToolMenu>
       ),
@@ -926,18 +958,12 @@ export function blockStyleOptions({
                   })
                 }
               />
-              <span className="text-caption font-bold text-ink-3">Colour</span>
-              <div className="flex flex-wrap gap-1.5">
-                {BORDER_COLOURS.map((c) => (
-                  <Swatch
-                    key={c.label}
-                    label={c.label}
-                    value={c.value}
-                    active={s.border?.color === c.value}
-                    onClick={() => onStyle({ border: { width: s.border?.width ?? 1, color: c.value } })}
-                  />
-                ))}
-              </div>
+              <ColourChoices
+                title="Colour"
+                swatches={BORDER_COLOURS}
+                value={s.border?.color ?? null}
+                onPick={(color) => onStyle({ border: { width: s.border?.width ?? 1, color: color ?? BORDER_COLOURS[0].value } })}
+              />
             </div>
           )}
         </ToolMenu>
@@ -1005,18 +1031,6 @@ export function blockStyleOptions({
         </ToolMenu>
       ),
     },
-    {
-      key: "style-reset",
-      node: (
-        <ToolButton
-          icon={RotateCcw}
-          label="Reset"
-          onClick={onReset}
-          disabled={!edited}
-          title="Back to the template's look"
-        />
-      ),
-    },
   ];
 }
 
@@ -1025,17 +1039,18 @@ export function pageOptions({
   fill,
   art,
   hasArt,
+  templateFill,
   onFill,
   onArt,
-  onReset,
 }: {
   fill: string | null;
+  /** The template's page colour, shown when none is set. */
+  templateFill: string;
   /** Whether the generated background art shows. */
   art: boolean;
   hasArt: boolean;
   onFill: (fill: string | null) => void;
   onArt: (show: boolean) => void;
-  onReset: () => void;
 }): ToolbarItem[] {
   return [
     {
@@ -1047,31 +1062,21 @@ export function pageOptions({
             <span className="inline-flex items-center gap-1.5">
               <PaintBucket className="size-3.5" />
               Background
-              <span
-                className="size-3 rounded-glyph border border-hair-3"
-                style={{ background: fill ?? "linear-gradient(135deg, #ffffff 0 46%, var(--color-hair-3) 46% 54%, #ffffff 54%)" }}
-              />
+              <span className="size-3.5 rounded-glyph border border-hair-3" style={{ background: fill ?? templateFill }} />
             </span>
           }
         >
           {(close) => (
-            <div className="grid w-56 gap-2 p-1">
-              <span className="text-caption font-bold text-ink-3">Page background</span>
-              <div className="flex flex-wrap gap-1.5">
-                {FILLS.map((f) => (
-                  <Swatch
-                    key={f.label}
-                    label={f.label}
-                    value={f.value}
-                    active={fill === f.value}
-                    onClick={() => {
-                      onFill(f.value);
-                      close();
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
+            <ColourChoices
+              title="Page background"
+              swatches={FILLS}
+              templateValue={templateFill}
+              value={fill}
+              onPick={(next) => {
+                onFill(next);
+                close();
+              }}
+            />
           )}
         </ToolMenu>
       ),
@@ -1096,19 +1101,6 @@ export function pageOptions({
           },
         ]
       : []),
-    divider("dp"),
-    {
-      key: "page-reset",
-      node: (
-        <ToolButton
-          icon={RotateCcw}
-          label="Reset"
-          onClick={onReset}
-          disabled={fill === null && art}
-          title="Back to the template's page"
-        />
-      ),
-    },
   ];
 }
 
