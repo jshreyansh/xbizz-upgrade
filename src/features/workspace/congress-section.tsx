@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { BadgeCheck, Clock, FileText, Lock, Monitor, Plus, Presentation, ShieldAlert, Tag } from "lucide-react";
+import { BadgeCheck, CircleDot, Clock, FileText, Lock, Monitor, Plus, Presentation, ShieldAlert, Tag } from "lucide-react";
 import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components/patterns/pick-list";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
+import { ChoiceGroup, DecisionRow } from "@/features/workspace/plan-decisions";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { CongressRulesModal } from "@/features/workspace/congress-rules-editor";
@@ -15,6 +16,7 @@ import {
   SUGGESTED_CONGRESS_IDS,
   congressLabel,
   deliverablesFor,
+  focusQuestion,
   formatSize,
   isUsable,
   keyRules,
@@ -37,27 +39,40 @@ export function useChosenCongress() {
   const congressId = useWorkspaceStore((s) => s.congressId);
   const posterType = useWorkspaceStore((s) => s.posterType);
   const sizeIndex = useWorkspaceStore((s) => s.posterSizeIndex);
+  const focus = useWorkspaceStore((s) => s.posterFocus);
   const congress = congresses.find((c) => c.id === congressId);
-  return { congress, posterType, sizeIndex };
+  return { congress, posterType, sizeIndex, focus };
 }
 
-/** What still stands between this poster and a plan, if anything. */
-export function posterMissing(congress: Congress | undefined, type: PosterType | null, sizeIndex: number | null) {
+/** What still stands between this poster and a plan, if anything. In the order the questions are asked. */
+export function posterMissing(
+  congress: Congress | undefined,
+  type: PosterType | null,
+  sizeIndex: number | null,
+  focus: string | null
+) {
   if (!congress) return "congress" as const;
   if (!type) return "type" as const;
+  if (!focus) return "focus" as const;
   if (sizeChoices(congress, type).length > 1 && sizeIndex == null) return "size" as const;
   return null;
 }
 
-export function congressSummary(congress: Congress | undefined, type: PosterType | null, sizeIndex: number | null) {
-  const missing = posterMissing(congress, type, sizeIndex);
+export function congressSummary(
+  congress: Congress | undefined,
+  type: PosterType | null,
+  sizeIndex: number | null,
+  focus: string | null
+) {
+  const missing = posterMissing(congress, type, sizeIndex, focus);
   if (!congress) return "Choose the congress first";
   if (missing === "type") return `${congressLabel(congress)} · choose the presentation type`;
+  if (missing === "focus" && type) return `${congressLabel(congress)} · ${focusQuestion(congress, type).question.toLowerCase()}`;
   if (missing === "size") return `${congressLabel(congress)} · choose the poster size`;
   const typeLabel = congress.presentationTypes.find((t) => t.id === type)?.label ?? "Printed poster";
   const sizes = sizeChoices(congress, type);
   const size = sizes[sizeIndex ?? 0];
-  return [congressLabel(congress), typeLabel, size ? formatSize(size) : "16:9 PDF"].join(" · ");
+  return [congressLabel(congress), typeLabel, size ? formatSize(size) : "16:9 PDF", focus].join(" · ");
 }
 
 /** What the congress means for the brand, where it changes another section. */
@@ -78,7 +93,7 @@ export function congressBrandingNotes(congress: Congress | undefined) {
 }
 
 /**
- * Congress, format and pages — the poster's version of Format & pages.
+ * Congress and Visual Guidelines — the poster's version of Format & pages.
  *
  * One decision, the congress, and the presentation type where it offers more
  * than one. What has to be delivered, at what size, and what must be printed
@@ -90,12 +105,15 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
   const setCongress = useWorkspaceStore((s) => s.setCongress);
   const setPosterType = useWorkspaceStore((s) => s.setPosterType);
   const setPosterSizeIndex = useWorkspaceStore((s) => s.setPosterSizeIndex);
+  const setPosterFocus = useWorkspaceStore((s) => s.setPosterFocus);
   const setPosterField = useWorkspaceStore((s) => s.setPosterField);
   const posterFields = useWorkspaceStore((s) => s.posterFields);
   const setPageShape = useWorkspaceStore((s) => s.setPageShape);
   const setInfographicPages = useWorkspaceStore((s) => s.setInfographicPages);
-  const { congress, posterType, sizeIndex } = useChosenCongress();
+  const { congress, posterType, sizeIndex, focus } = useChosenCongress();
   const [query, setQuery] = useState("");
+  /* An answered question is a row with Change; this is the one reopened. */
+  const [changing, setChanging] = useState<"type" | "focus" | null>(null);
   const [modal, setModal] = useState<{ mode: "add"; name: string } | { mode: "view"; congress: Congress } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -119,6 +137,7 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
 
   const chooseType = (type: PosterType) => {
     if (!congress) return;
+    setChanging(null);
     setPosterType(type);
     const many = sizeChoices(congress, type).length > 1;
     const index = many ? sizeIndex : 0;
@@ -138,7 +157,15 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
   const results = searchCongresses(congresses, query);
   /* What this workspace sent, so whoever added it can see it is on its way. */
   const waiting = congresses.filter((c) => c.origin === "team" && !isUsable(c));
-  const missing = posterMissing(congress, posterType, sizeIndex);
+  const missing = posterMissing(congress, posterType, sizeIndex, focus);
+  const third = congress && posterType ? focusQuestion(congress, posterType) : null;
+  /* "Printed poster (190 × 110 cm)" ⇄ its type, for the shared option list. */
+  const typeOptions =
+    congress?.presentationTypes.map((t) => {
+      const { bracket, line } = typeDetail(congress, t);
+      return { type: t, label: bracket ? `${t.label} (${bracket})` : t.label, line };
+    }) ?? [];
+  const typeChosen = typeOptions.find((o) => o.type.id === posterType);
   const delivery = congress && posterType ? deliverablesFor(congress, posterType) : null;
   const sizes = congress && posterType ? sizeChoices(congress, posterType) : [];
   const typeInfo = congress?.presentationTypes.find((t) => t.id === posterType);
@@ -263,137 +290,148 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
         )}
       </div>
 
-      {/* ── Presentation type: chosen where the congress offers more than one ── */}
-      {congress && congress.presentationTypes.length > 1 ? (
-        <div className="space-y-2 rounded-control border border-hair-3 bg-card px-3.5 py-3">
-          <RowLabel>How are you presenting at {congress.acronym}? · choose one</RowLabel>
-          <div className="grid gap-2" role="radiogroup" aria-label={`How are you presenting at ${congress.acronym}?`}>
-            {congress.presentationTypes.map((t) => {
-              const { bracket, line } = typeDetail(congress, t);
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={posterType === t.id}
-                  onClick={() => chooseType(t.id)}
-                  className={cn(
-                    "flex cursor-pointer items-start gap-2.5 rounded-control border px-3 py-2.5 text-left transition-colors",
-                    posterType === t.id ? "border-brand bg-tint ring-1 ring-brand" : "border-hair-2 hover:border-hair-3"
-                  )}
-                >
-                  {t.digitalOnly ? (
-                    <Monitor className="mt-0.5 size-4 shrink-0 text-brand" />
-                  ) : (
-                    <FileText className="mt-0.5 size-4 shrink-0 text-brand" />
-                  )}
-                  <span className="min-w-0">
-                    <span className="block text-body font-bold text-ink">
-                      {t.label}
-                      {bracket && <span className="font-medium text-ink-3"> ({bracket})</span>}
-                    </span>
-                    <span className="block text-label text-ink-3">{line}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {typeInfo?.note && <Warning>{typeInfo.note}</Warning>}
-        </div>
-      ) : (
+      {/* Until there is a congress, everything it sets is one locked row. */}
+      {!congress && <SettledRow icon={<Tag className="size-4" />} label="Visual guidelines" value={null} />}
+
+      {/* ── Question 2: how they're presenting, where the congress offers more than one ── */}
+      {congress && typeOptions.length > 1 && (
+        <Question
+          answered={typeChosen?.label ?? null}
+          label={`How are you presenting at ${congress.acronym}?`}
+          icon={typeChosen?.type.digitalOnly ? <Monitor className="size-4" /> : <FileText className="size-4" />}
+          changing={changing === "type"}
+          onChange={() => setChanging(changing === "type" ? null : "type")}
+        >
+          <ChoiceGroup
+            label={`How are you presenting at ${congress.acronym}?`}
+            value={typeChosen?.label ?? ""}
+            options={typeOptions.map((o) => o.label)}
+            hint={(label) => typeOptions.find((o) => o.label === label)?.line}
+            icon={(label) =>
+              typeOptions.find((o) => o.label === label)?.type.digitalOnly ? (
+                <Monitor className="size-4" />
+              ) : (
+                <FileText className="size-4" />
+              )
+            }
+            onChange={(label) => {
+              const picked = typeOptions.find((o) => o.label === label);
+              if (picked) chooseType(picked.type.id);
+            }}
+          />
+        </Question>
+      )}
+      {congress && typeOptions.length === 1 && typeChosen && (
         <SettledRow
           icon={<Tag className="size-4" />}
           label="Presentation type"
-          value={
-            congress && typeInfo
-              ? `${typeInfo.label}${typeDetail(congress, typeInfo).bracket ? ` (${typeDetail(congress, typeInfo).bracket})` : ""}`
-              : null
-          }
-          source={congress && typeInfo ? `${typeDetail(congress, typeInfo).line} The only type ${congress.acronym} offers.` : undefined}
+          value={typeChosen.label}
+          source={`${typeChosen.line} The only type ${congress.acronym} offers.`}
         />
       )}
+      {typeInfo?.note && <Warning>{typeInfo.note}</Warning>}
 
-      {/* ── What you deliver: set by the congress, a size chosen only where it allows several ── */}
-      {congress && posterType && delivery ? (
-        <div className="space-y-2.5 rounded-control border border-hair bg-card px-3.5 py-3">
-          <RowLabel>What you deliver · set by {congress.acronym}</RowLabel>
-          {delivery.print && (
-            <div className="flex items-start gap-2.5">
-              <FileText className="mt-0.5 size-4 shrink-0 text-brand" />
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <span className="block text-body font-bold text-ink">
-                  Printed poster{delivery.print.required ? "" : " · optional"} · 1 page
-                </span>
-                {sizes.length > 1 ? (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {sizes.map((s, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        aria-pressed={sizeIndex === i}
-                        onClick={() => chooseSize(i)}
-                        className={cn(
-                          "cursor-pointer rounded-control border px-2.5 py-1.5 text-label font-bold transition-colors",
-                          sizeIndex === i
-                            ? "border-brand bg-tint text-brand-deep ring-1 ring-brand"
-                            : "border-hair-2 text-ink-2 hover:border-hair-3"
-                        )}
-                      >
-                        {formatSize(s)}
-                      </button>
-                    ))}
-                    <span className="text-caption text-ink-3">{congress.acronym} accepts these sizes. Choose one.</span>
-                  </div>
-                ) : (
-                  <span className="block text-label text-ink-3">
-                    {sizes[0] ? formatSize(sizes[0]) : "Size not stated · check the guidelines"}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-          {delivery.digital && (
-            <div className="flex items-start gap-2.5">
-              <Monitor className="mt-0.5 size-4 shrink-0 text-brand" />
-              <span className="min-w-0 flex-1">
-                <span className="block text-body font-bold text-ink">
-                  {delivery.print ? "Digital copy for the online gallery" : "Digital poster"}
-                  {delivery.digital.required ? "" : " · optional"} ·{" "}
-                  {delivery.digital.maxPages && delivery.digital.maxPages > 1
-                    ? `up to ${delivery.digital.maxPages} pages or slides`
-                    : "1 page"}
-                </span>
-                <span className="block text-label text-ink-3">
-                  {[
-                    delivery.digital.fileTypes.join(" / "),
-                    delivery.digital.aspect,
-                    !delivery.print && sizes[0] ? formatSize(sizes[0]) : null,
-                    delivery.digital.maxMB ? `up to ${delivery.digital.maxMB} MB` : null,
-                    delivery.digital.minDpi ? `${delivery.digital.minDpi} dpi or more` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              </span>
-            </div>
-          )}
-          {delivery.digital && recordingNote(congress) && (
-            /* Not part of the poster, but part of what is due: said here so
-               nobody finds out at upload. */
-            <p className="pl-6.5 text-caption text-ink-3">{recordingNote(congress)}</p>
-          )}
+      {/* ── Question 3: asked once the type is known, because the type decides what it is ── */}
+      {congress && posterType && third && (
+        <div key={posterType} className="rise-in">
+          <Question
+            answered={focus}
+            label={third.question}
+            icon={<CircleDot className="size-4" />}
+            changing={changing === "focus"}
+            onChange={() => setChanging(changing === "focus" ? null : "focus")}
+          >
+            <ChoiceGroup
+              label={third.question}
+              value={focus ?? ""}
+              options={third.options.map((o) => o.label)}
+              hint={(label) => third.options.find((o) => o.label === label)?.hint}
+              icon={() => <CircleDot className="size-4" />}
+              onChange={(label) => {
+                setPosterFocus(label);
+                setChanging(null);
+              }}
+            />
+          </Question>
         </div>
-      ) : (
-        <SettledRow
-          icon={<FileText className="size-4" />}
-          label="What you deliver"
-          value={congress && posterType && !delivery ? "Not stated · check the congress rules" : null}
-          lockedText={congress ? "Set when you choose the presentation type" : undefined}
-        />
+      )}
+
+      {/* ── What you deliver: follows from the answers; a size chosen only where the congress allows several ── */}
+      {congress && posterType && focus && delivery && (
+        <div className="rise-in">
+        <div className="space-y-2.5 rounded-control border border-hair bg-card px-3.5 py-3">
+            <RowLabel>What you deliver · set by {congress.acronym}</RowLabel>
+            {delivery.print && (
+              <div className="flex items-start gap-2.5">
+                <FileText className="mt-0.5 size-4 shrink-0 text-brand" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <span className="block text-body font-bold text-ink">
+                    Printed poster{delivery.print.required ? "" : " · optional"} · 1 page
+                  </span>
+                  {sizes.length > 1 ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {sizes.map((s, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          aria-pressed={sizeIndex === i}
+                          onClick={() => chooseSize(i)}
+                          className={cn(
+                            "cursor-pointer rounded-control border px-2.5 py-1.5 text-label font-bold transition-colors",
+                            sizeIndex === i
+                              ? "border-brand bg-tint text-brand-deep ring-1 ring-brand"
+                              : "border-hair-2 text-ink-2 hover:border-hair-3"
+                          )}
+                        >
+                          {formatSize(s)}
+                        </button>
+                      ))}
+                      <span className="text-caption text-ink-3">{congress.acronym} accepts these sizes. Choose one.</span>
+                    </div>
+                  ) : (
+                    <span className="block text-label text-ink-3">
+                      {sizes[0] ? formatSize(sizes[0]) : "Size not stated · check the guidelines"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            {delivery.digital && (
+              <div className="flex items-start gap-2.5">
+                <Monitor className="mt-0.5 size-4 shrink-0 text-brand" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-body font-bold text-ink">
+                    {delivery.print ? "Digital copy for the online gallery" : "Digital poster"}
+                    {delivery.digital.required ? "" : " · optional"} ·{" "}
+                    {delivery.digital.maxPages && delivery.digital.maxPages > 1
+                      ? `up to ${delivery.digital.maxPages} pages or slides`
+                      : "1 page"}
+                  </span>
+                  <span className="block text-label text-ink-3">
+                    {[
+                      delivery.digital.fileTypes.join(" / "),
+                      delivery.digital.aspect,
+                      !delivery.print && sizes[0] ? formatSize(sizes[0]) : null,
+                      delivery.digital.maxMB ? `up to ${delivery.digital.maxMB} MB` : null,
+                      delivery.digital.minDpi ? `${delivery.digital.minDpi} dpi or more` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </span>
+                </span>
+              </div>
+            )}
+            {delivery.digital && recordingNote(congress) && (
+              /* Not part of the poster, but part of what is due: said here so
+                 nobody finds out at upload. */
+              <p className="pl-6.5 text-caption text-ink-3">{recordingNote(congress)}</p>
+            )}
+          </div>
+        </div>
       )}
 
       {/* ── Required on the poster: never blocks; the check flags anything missing later ── */}
-      {congress && required.length > 0 && (
+      {congress && posterType && focus && required.length > 0 && (
         <div className="space-y-2 rounded-control border border-hair bg-card px-3.5 py-3">
           <RowLabel>Required on the poster · add now or later</RowLabel>
           {required.map((item) => (
@@ -425,6 +463,8 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
             ? "Choose the congress first"
             : missing === "type"
               ? "Choose the presentation type"
+              : missing === "focus"
+                ? "Answer the question above"
               : missing === "size"
                 ? "Choose the poster size"
                 : undefined
@@ -446,6 +486,35 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
         />
       )}
     </div>
+  );
+}
+
+/**
+ * One question in the sequence: open as a list of choices until answered,
+ * then a quiet row with Change, like every other decision in the plan.
+ */
+function Question({
+  answered,
+  label,
+  icon,
+  changing,
+  onChange,
+  children,
+}: {
+  answered: string | null;
+  label: string;
+  icon: ReactNode;
+  changing: boolean;
+  onChange: () => void;
+  children: ReactNode;
+}) {
+  if (!answered) {
+    return <div className="rounded-control border border-hair-3 bg-card p-3.5 shadow-soft">{children}</div>;
+  }
+  return (
+    <DecisionRow label={label} value={answered} icon={icon} editing={changing} onEdit={onChange}>
+      {children}
+    </DecisionRow>
   );
 }
 

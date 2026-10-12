@@ -87,6 +87,7 @@ import {
   posterMissing,
   useChosenCongress,
 } from "@/features/workspace/congress-section";
+import { focusQuestion } from "@/features/workspace/congress-guidelines";
 import {
   buildIntakeQuestions,
   intakeSteps,
@@ -206,8 +207,13 @@ export function InfographicDirectionsScreen() {
   /* No "design" here: the layout archetype became its own step, because it
      decides the page's whole composition and because the twelve hundred
      variants behind the five families need room the accordion never had. */
-  /* The video plan's order, so the two read the same way down. */
-  const sectionOrder: PlanSectionId[] = ["sources", "logo", "assets", "references", "audience", "format"];
+  /* The video plan's order, so the two read the same way down. A poster
+     asks for the congress second: it decides the shape, and whether a logo
+     is allowed at all, before anything below it. */
+  const isPoster = useWorkspaceStore((st) => st.documentType) === "poster";
+  const sectionOrder: PlanSectionId[] = isPoster
+    ? ["sources", "format", "logo", "assets", "references", "audience"]
+    : ["sources", "logo", "assets", "references", "audience", "format"];
 
   const advanceFrom = (section: PlanSectionId) => {
     // Working a section through is what confirms it; the status then reads as
@@ -322,9 +328,8 @@ export function InfographicDirectionsScreen() {
   /* A poster takes its format and page count from a congress, so it cannot be
      planned until one is chosen — and, where the congress accepts both,
      printed or ePoster. */
-  const isPoster = useWorkspaceStore((st) => st.documentType) === "poster";
-  const { congress, posterType, sizeIndex } = useChosenCongress();
-  const posterGap = isPoster ? posterMissing(congress, posterType, sizeIndex) : null;
+  const { congress, posterType, sizeIndex, focus: posterFocus } = useChosenCongress();
+  const posterGap = isPoster ? posterMissing(congress, posterType, sizeIndex, posterFocus) : null;
   const posterUnset = posterGap !== null;
   /* Where the congress's rules change other sections: logos, drug names. */
   const brandNotes = isPoster ? congressBrandingNotes(congress) : { noLogo: null, genericNames: null };
@@ -364,12 +369,16 @@ export function InfographicDirectionsScreen() {
             title:
               posterGap === "type"
                 ? "Choose the presentation type"
+                : posterGap === "focus" && congress && posterType
+                  ? focusQuestion(congress, posterType).question
                 : posterGap === "size"
                   ? "Choose the poster size"
                   : "Choose the congress",
             detail:
               posterGap === "type"
                 ? `${congress?.acronym} offers more than one. It decides what you deliver and what the poster may contain.`
+                : posterGap === "focus"
+                  ? "It decides what the poster leads with."
                 : posterGap === "size"
                   ? `${congress?.acronym} accepts more than one size. Pick the one you are printing.`
                   : "A poster takes its size, delivery and branding rules from the congress it is for.",
@@ -635,7 +644,7 @@ export function InfographicDirectionsScreen() {
 
       if (isPoster && /16:9|landscape|3:4|portrait|\ba4\b|print|\bpages?\b/.test(lower)) {
         /* The congress decides these for a poster; chat does not overrule it. */
-        reply = `This poster's size, orientation and page count come from the congress. To change them, edit its rules in **Congress, format and pages**.`;
+        reply = `This poster's size, orientation and page count come from the congress. To change them, edit its rules in **Congress and Visual Guidelines**.`;
       } else if (lower.includes("16:9") || lower.includes("landscape")) {
         setPageShape("16:9");
         reply = `Updated page shape to **Landscape 16:9** (optimized for screen projection and desktop detailers).`;
@@ -853,6 +862,22 @@ export function InfographicDirectionsScreen() {
                       notice={brandNotes.genericNames}
                     />
                   </CreativePlanSection>
+
+                  {isPoster && (
+                    /* A poster's shape is the congress's: one decision, and
+                       its format, pages and visual rules follow from it. */
+                    <CreativePlanSection
+                      icon={LayoutGrid}
+                      title="Congress and Visual Guidelines"
+                      summary={congressSummary(congress, posterType, sizeIndex, posterFocus)}
+                      state={planState(sectionNeedsYou("format"))}
+                      source="from congress"
+                      open={openSection === "format"}
+                      onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
+                    >
+                      <CongressSectionContent onContinue={() => advanceFrom("format")} />
+                    </CreativePlanSection>
+                  )}
 
                   {/* Brand mark — one corner, every page. Its own section, as
                       in the video plan, rather than tucked into the visuals. */}
@@ -1167,21 +1192,7 @@ export function InfographicDirectionsScreen() {
                     <PlanSectionContinue onClick={() => advanceFrom("audience")} />
                   </CreativePlanSection>
 
-                  {isPoster ? (
-                    /* A poster's shape is the congress's: one decision, and
-                       Format and Pages follow from it. */
-                    <CreativePlanSection
-                      icon={LayoutGrid}
-                      title="Congress, format and pages"
-                      summary={congressSummary(congress, posterType, sizeIndex)}
-                      state={planState(sectionNeedsYou("format"))}
-                      source="from congress"
-                      open={openSection === "format"}
-                      onToggle={() => setOpenSection(openSection === "format" ? null : "format")}
-                    >
-                      <CongressSectionContent onContinue={() => advanceFrom("format")} />
-                    </CreativePlanSection>
-                  ) : (
+                  {!isPoster && (
                     <>
                     {/* Format and pages — the document's shape, together. Page
                         count used to sit under the visual assets; it is part of

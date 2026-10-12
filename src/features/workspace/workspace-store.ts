@@ -120,6 +120,8 @@ interface WorkspaceState {
   congressId: string | null;
   posterType: "poster" | "tip" | "eposter" | "encore" | null;
   posterSizeIndex: number | null;
+  /** The third poster question, which depends on the type: what it reports, where the trial is, or where it was first shown. */
+  posterFocus: string | null;
   /** Values for the congress's required items: acceptance code, contact email… */
   posterFields: Record<string, string>;
   // Setters
@@ -185,6 +187,7 @@ interface WorkspaceState {
   ) => void;
   setPosterType: (posterType: "poster" | "tip" | "eposter" | "encore") => void;
   setPosterSizeIndex: (posterSizeIndex: number) => void;
+  setPosterFocus: (posterFocus: string) => void;
   setPosterField: (id: string, value: string) => void;
   reset: () => void;
 }
@@ -251,6 +254,7 @@ const initialState = {
   congressId: null as string | null,
   posterType: null as "poster" | "tip" | "eposter" | "encore" | null,
   posterSizeIndex: null as number | null,
+  posterFocus: null as string | null,
   posterFields: {} as Record<string, string>,
 };
 
@@ -330,9 +334,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setInfographicActivePage: (infographicActivePage) => set({ infographicActivePage }),
   setDocumentType: (documentType) => set({ documentType }),
   setCongress: (congressId, posterType, posterSizeIndex) =>
-    set({ congressId, posterType, posterSizeIndex, posterFields: {} }),
-  setPosterType: (posterType) => set({ posterType }),
+    set({ congressId, posterType, posterSizeIndex, posterFocus: null, posterFields: {} }),
+  /* A different type asks a different third question, so its answer goes. */
+  setPosterType: (posterType) =>
+    set((state) => (state.posterType === posterType ? {} : { posterType, posterFocus: null })),
   setPosterSizeIndex: (posterSizeIndex) => set({ posterSizeIndex }),
+  setPosterFocus: (posterFocus) => set({ posterFocus }),
   setPosterField: (id, value) => set((state) => ({ posterFields: { ...state.posterFields, [id]: value } })),
   reset: () => set(initialState),
 }));

@@ -1036,6 +1036,57 @@ export function typeDetail(congress: Congress, type: PresentationType) {
   };
 }
 
+/**
+ * The third poster question. Which one depends on the presentation type,
+ * because each type leads with something different: results, the trial's
+ * status, or where it was first shown. Prototype data.
+ */
+export interface FocusQuestion {
+  question: string;
+  /** Under the answer once chosen: "What the poster reports". */
+  short: string;
+  options: Array<{ label: string; hint: string }>;
+}
+
+const REPORTS: FocusQuestion = {
+  question: "What does the poster report?",
+  short: "What it reports",
+  options: [
+    { label: "Primary results", hint: "The headline endpoint, shown for the first time" },
+    { label: "Secondary or subgroup analysis", hint: "A deeper cut of data already presented" },
+    { label: "Real-world evidence", hint: "Outcomes from routine clinical practice" },
+    { label: "Long-term follow-up", hint: "Durability and safety over a longer period" },
+  ],
+};
+
+export function focusQuestion(congress: Congress, type: PresentationType["id"]): FocusQuestion {
+  if (type === "tip") {
+    return {
+      question: "Where is the trial now?",
+      short: "Trial status",
+      options: [
+        { label: "Not yet enrolling", hint: "Sites are opening; the poster invites interest" },
+        { label: "Enrolling", hint: "Recruiting now; the poster lists sites and criteria" },
+        { label: "Enrollment complete", hint: "Fully recruited; results expected later" },
+        { label: "Follow-up ongoing", hint: "Treatment done; patients still being followed" },
+      ],
+    };
+  }
+  if (type === "encore") {
+    return {
+      question: `Where was it first presented, before ${congress.acronym}?`,
+      short: "First presented at",
+      options: [
+        { label: "ASCO 2026", hint: "Chicago · June 2026" },
+        { label: "AACR 2026", hint: "San Diego · April 2026" },
+        { label: "ESMO Breast 2026", hint: "Berlin · May 2026" },
+        { label: "Another congress", hint: "SwishX asks for its name and the original poster" },
+      ],
+    };
+  }
+  return REPORTS;
+}
+
 export function searchCongresses(list: Congress[], query: string) {
   const q = query.trim().toLowerCase();
   if (!q) return [];
