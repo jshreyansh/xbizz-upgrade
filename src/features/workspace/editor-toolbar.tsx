@@ -983,7 +983,7 @@ export function EditorToolbar({
         {panel}
       </div>
 
-      <span className="mx-1 h-5 w-px shrink-0 bg-hair-2" />
+      {selection && <span className="mx-1 h-5 w-px shrink-0 bg-hair-2" />}
 
       {selection ? (
         <div key={selection.id} className="step-transition flex min-w-0 flex-1 items-center gap-1.5">
@@ -1000,9 +1000,7 @@ export function EditorToolbar({
             Add to chat
           </Button>
         </div>
-      ) : (
-        <span className="min-w-0 truncate text-label text-ink-4">Select anything on the page to see its options</span>
-      )}
+      ) : null}
     </div>
   );
 }
