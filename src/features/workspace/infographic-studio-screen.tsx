@@ -93,6 +93,7 @@ import { useMlrReview } from "@/features/workspace/mlr-review";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 import { CurrentTag, RequestModal } from "@/components/patterns/request-modal";
+import { ImageCropModal } from "@/features/workspace/image-crop-modal";
 import {
   IconPickerModal,
   MediaPickerModal,
@@ -178,6 +179,8 @@ interface PageArtLayer {
   readyAt: number;
   /** Read aloud by screen readers and kept in the export. */
   alt?: string;
+  /** An uploaded image, cropped to the slot, in place of the generated art. */
+  imageUrl?: string;
 }
 
 /**
@@ -532,6 +535,15 @@ export function InfographicStudioScreen() {
   /* The two requests that open a pop-up before they go to the chat. */
   const [regenArtId, setRegenArtId] = useState<string | null>(null);
   const [addPageOpen, setAddPageOpen] = useState(false);
+  /* An uploaded replacement, being fitted to its slot before it is placed. */
+  const [cropping, setCropping] = useState<{
+    src: string;
+    fileName: string;
+    mime: string;
+    layerId: string;
+    layerLabel: string;
+    aspect: number;
+  } | null>(null);
 
   /* ── Element-level selection ──────────────────────────────────────────────
      A block is a container; the text inside it is what people actually mean
@@ -1879,16 +1891,20 @@ export function InfographicStudioScreen() {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (!file || !selectedArt) return;
-                record();
-                updateCurrentPage((prev) => ({
-                  ...prev,
-                  art: prev.art.map((a) =>
-                    a.id === selectedArt.id ? { ...a, label: file.name, readyAt: 0 } : a
-                  ),
-                }));
-                showToast(`${file.name} placed in the ${selectedArt.label} slot`);
                 e.target.value = "";
+                if (!file || !selectedArt) return;
+                /* The frame is the slot's own shape, measured as laid out
+                   (offset sizes ignore the page's zoom). */
+                const slot = document.querySelector<HTMLElement>(`[data-art-slot="${selectedArt.id}"]`);
+                const aspect = slot && slot.offsetHeight > 0 ? slot.offsetWidth / slot.offsetHeight : 16 / 9;
+                setCropping({
+                  src: URL.createObjectURL(file),
+                  fileName: file.name,
+                  mime: file.type,
+                  layerId: selectedArt.id,
+                  layerLabel: selectedArt.label,
+                  aspect,
+                });
               }}
             />
             {/* Retyping a grounded run does not make it false — it makes it
@@ -2915,6 +2931,32 @@ export function InfographicStudioScreen() {
                   text: `Generating that image ${insertWhere}. It lands in its own box when it's drawn; nothing else on the page moves.`,
                 });
               }, 700);
+            }}
+          />
+        )}
+
+        {cropping && (
+          <ImageCropModal
+            src={cropping.src}
+            fileName={cropping.fileName}
+            mime={cropping.mime}
+            aspect={cropping.aspect}
+            slotLabel={`the ${cropping.layerLabel} box`}
+            onClose={() => {
+              URL.revokeObjectURL(cropping.src);
+              setCropping(null);
+            }}
+            onApply={(imageUrl) => {
+              record();
+              updateCurrentPage((prev) => ({
+                ...prev,
+                art: prev.art.map((a) =>
+                  a.id === cropping.layerId ? { ...a, imageUrl, label: cropping.fileName, readyAt: 0 } : a
+                ),
+              }));
+              URL.revokeObjectURL(cropping.src);
+              setCropping(null);
+              showToast(`${cropping.fileName} placed in the ${cropping.layerLabel} slot`);
             }}
           />
         )}

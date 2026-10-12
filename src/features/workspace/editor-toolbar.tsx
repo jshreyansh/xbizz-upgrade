@@ -809,7 +809,8 @@ function ColourChoices({
   const [open, setOpen] = useState(custom);
   const [draft, setDraft] = useState(value && value.startsWith("#") ? value : "#fd4816");
   return (
-    <div className="grid w-64 gap-2 p-1">
+    /* minmax(0,1fr): the column is the menu's width, never the hex field's natural width. */
+    <div className="grid w-64 grid-cols-[minmax(0,1fr)] gap-2 p-1">
       <span className="text-caption font-bold text-ink-3">{title}</span>
       <div className="flex flex-wrap gap-1.5">
         {swatches.map((sw) => (
@@ -837,8 +838,11 @@ function ColourChoices({
         </button>
       </div>
       {open && (
-        <div className="grid gap-2 border-t border-hair pt-2">
-          <HexColorPicker color={draft} onChange={setDraft} style={{ width: "100%", height: 144 }} />
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-2 border-t border-hair pt-2">
+          {/* Inset by half a handle, so a handle at the very edge stays inside the menu. */}
+          <div className="colour-picker px-2.5 pt-2.5">
+            <HexColorPicker color={draft} onChange={setDraft} style={{ width: "100%", height: 144 }} />
+          </div>
           <div className="flex items-center gap-1.5">
             <span className="size-8 shrink-0 rounded-chip border border-hair-3" style={{ background: draft }} />
             <label className="flex h-8 min-w-0 flex-1 items-center gap-1 rounded-chip border border-hair-2 bg-subtle px-2 focus-within:border-brand">
@@ -847,7 +851,7 @@ function ColourChoices({
                 color={draft}
                 onChange={setDraft}
                 aria-label="Hex colour"
-                className="min-w-0 flex-1 bg-transparent font-mono text-label uppercase text-ink outline-none"
+                className="w-full min-w-0 flex-1 bg-transparent font-mono text-label uppercase text-ink outline-none"
               />
             </label>
             <Button size="sm" onClick={() => onPick(draft)} className="h-8 shrink-0 px-3">

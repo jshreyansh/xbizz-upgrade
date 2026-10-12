@@ -26,6 +26,8 @@ export interface ArtLayerView {
   z: number;
   /** Milliseconds from the start of generation when this art lands. */
   readyAt: number;
+  /** An uploaded image, cropped to this slot, shown in place of the generated art. */
+  imageUrl?: string;
 }
 
 /** The glyph for a layer kind, as a component rather than a local binding:
@@ -78,6 +80,7 @@ export function ArtSlot({
       tabIndex={interactive ? 0 : undefined}
       aria-busy={!ready}
       aria-label={ready ? layer.label : `${layer.label} generating, ${secondsLeft}s`}
+      data-art-slot={layer.id}
       style={style}
       onPointerDown={(e) => {
         if (!interactive || !onPointerDown) return;
@@ -131,7 +134,10 @@ function PendingArt({ layer, secondsLeft }: { layer: ArtLayerView; secondsLeft: 
 function FinishedArt({ layer }: { layer: ArtLayerView }) {
   return (
     <>
-      {layer.kind === "graph" ? (
+      {layer.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={layer.imageUrl} alt={layer.label} className="absolute inset-0 h-full w-full object-cover" />
+      ) : layer.kind === "graph" ? (
         <div className="absolute inset-0 flex items-end gap-[6%] px-[8%] pb-[12%]">
           {[38, 62, 81, 74, 90].map((h, i) => (
             <span

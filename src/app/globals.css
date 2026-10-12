@@ -768,3 +768,18 @@ button.rounded-full {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The editor's colour picker (react-colorful): handles small enough to sit
+   inside a toolbar menu, and a hue strip that matches its control height. */
+.colour-picker .react-colorful__pointer {
+  width: 20px;
+  height: 20px;
+  border-width: 3px;
+}
+.colour-picker .react-colorful__saturation {
+  border-radius: 10px 10px 0 0;
+}
+.colour-picker .react-colorful__hue {
+  height: 16px;
+  border-radius: 0 0 10px 10px;
+}
