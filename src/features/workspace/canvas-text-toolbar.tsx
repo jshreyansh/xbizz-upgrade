@@ -40,6 +40,8 @@ export type TextAlign = "left" | "center" | "right";
 export type TextStyle = {
   /** Pixels. Null means the template's own size is untouched. */
   size: number | null;
+  /** A name from FONTS. Null means the template's own typeface. */
+  font: string | null;
   weight: number | null;
   align: TextAlign | null;
   uppercase: boolean | null;
@@ -48,6 +50,7 @@ export type TextStyle = {
 
 export const EMPTY_STYLE: TextStyle = {
   size: null,
+  font: null,
   weight: null,
   align: null,
   uppercase: null,
@@ -75,6 +78,22 @@ export type CanvasTextElement = {
 
 const SIZE_MIN = 8;
 const SIZE_MAX = 72;
+
+/**
+ * The typefaces people know from Word and PowerPoint, and the ones congress
+ * guidelines name. Each carries a fallback, so a machine without Calibri
+ * still shows something close rather than the browser default.
+ */
+const FONTS: { label: string; stack: string }[] = [
+  { label: "Arial", stack: "Arial, Helvetica, sans-serif" },
+  { label: "Calibri", stack: "Calibri, Carlito, 'Segoe UI', sans-serif" },
+  { label: "Helvetica", stack: "Helvetica, Arial, sans-serif" },
+  { label: "Verdana", stack: "Verdana, Geneva, sans-serif" },
+  { label: "Georgia", stack: "Georgia, 'Times New Roman', serif" },
+  { label: "Times New Roman", stack: "'Times New Roman', Times, serif" },
+];
+
+const fontStack = (label: string | null) => FONTS.find((f) => f.label === label)?.stack;
 
 const WEIGHTS: { label: string; value: number }[] = [
   { label: "Regular", value: 400 },
@@ -109,6 +128,7 @@ export function textStyleCss(style: TextStyle | undefined): React.CSSProperties 
   if (!style) return {};
   return {
     ...(style.size != null ? { fontSize: `${style.size}px` } : {}),
+    ...(fontStack(style.font) ? { fontFamily: fontStack(style.font) } : {}),
     ...(style.weight != null ? { fontWeight: style.weight } : {}),
     ...(style.align != null ? { textAlign: style.align } : {}),
     ...(style.uppercase != null
@@ -292,6 +312,22 @@ export function FormatRibbon({
       <Divider />
 
       <div className={cn("flex flex-wrap items-center gap-x-1.5 gap-y-1.5", !live && "pointer-events-none opacity-40")}>
+        <select
+          value={style?.font ?? ""}
+          onChange={(e) => onStyle({ font: e.target.value || null })}
+          aria-label="Font"
+          title="Font"
+          className="focus-ring h-7 w-[132px] shrink-0 cursor-pointer rounded-chip border border-hair-2 bg-subtle px-1.5 text-label font-bold text-ink"
+          style={{ fontFamily: fontStack(style?.font ?? null) }}
+        >
+          <option value="">Template font</option>
+          {FONTS.map((f) => (
+            <option key={f.label} value={f.label} style={{ fontFamily: f.stack }}>
+              {f.label}
+            </option>
+          ))}
+        </select>
+
         <SizeStepper value={size} onChange={(next) => onStyle({ size: next })} />
 
         <select
@@ -489,6 +525,12 @@ export function EditableCanvasText({
  * where it sits in the stack, and the two things you can ask for — so the bar
  * changes its controls rather than going blank.
  */
+/** The stacking range the studio clamps to. */
+const Z_MAX = 9;
+
+const LAYER_BUTTON =
+  "focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border border-hair-2 bg-card px-2 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:text-ink-4 disabled:hover:border-hair-2";
+
 export function ArtRibbon({
   label,
   kind,
@@ -532,15 +574,17 @@ export function ArtRibbon({
       <Divider />
 
       {/* Stacking order, which is the one spatial property art has here —
-          position and size come from the slot the layout reserved. */}
-      <div className="flex shrink-0 items-center gap-0.5">
-        <IconToggle onClick={onSendBack} title="Send backward">
-          <ArrowDown className="size-3.5" />
-        </IconToggle>
-        <span className="min-w-[22px] text-center text-label font-bold tabular-nums text-ink-2">z{z}</span>
-        <IconToggle onClick={onBringForward} title="Bring forward">
+          position and size come from the slot the layout reserved. Said the
+          way PowerPoint says it, not as a z number. */}
+      <div className="flex shrink-0 items-center gap-1">
+        <button type="button" onClick={onBringForward} disabled={z >= Z_MAX} className={LAYER_BUTTON}>
           <ArrowUp className="size-3.5" />
-        </IconToggle>
+          Bring forward
+        </button>
+        <button type="button" onClick={onSendBack} disabled={z <= 0} className={LAYER_BUTTON}>
+          <ArrowDown className="size-3.5" />
+          Send backward
+        </button>
       </div>
 
       <Divider />
