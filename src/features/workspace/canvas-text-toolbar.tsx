@@ -3,32 +3,19 @@
 import { useEffect, useRef } from "react";
 import {
   AlignCenter,
-  ArrowDown,
-  ArrowUp,
-  BarChart3,
-  ImageIcon,
-  Layers,
-  Upload,
   AlignLeft,
   AlignRight,
-  Bold,
-  CaseUpper,
   Minus,
   Plus,
-  RotateCcw,
-  Type,
 } from "lucide-react";
-import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 
 /**
  * Direct formatting for a text element on the canvas.
  *
- * Two surfaces, deliberately not the same controls twice. The ribbon is the
- * Word position — always there, holds the full set, and is the thing you learn
- * once. The floating bar is the PowerPoint/Gamma position — it appears at the
- * selection and holds only what you reach for mid-sentence. Duplicating the
- * whole ribbon in a popover is what makes those popovers feel like clutter.
+ * The style model, the selectable run, and the small controls the editor
+ * toolbar (editor-toolbar.tsx) builds its text options from. The toolbar is
+ * the Word position: always there, holding the full set.
  *
  * The palette is a fixed set of swatches rather than a colour picker. On a
  * claims-grounded asset the brand colours are approved artwork, so an
@@ -43,6 +30,8 @@ export type TextStyle = {
   /** A name from FONTS. Null means the template's own typeface. */
   font: string | null;
   weight: number | null;
+  italic: boolean | null;
+  underline: boolean | null;
   align: TextAlign | null;
   uppercase: boolean | null;
   color: string | null;
@@ -51,6 +40,8 @@ export type TextStyle = {
 export const EMPTY_STYLE: TextStyle = {
   size: null,
   font: null,
+  italic: null,
+  underline: null,
   weight: null,
   align: null,
   uppercase: null,
@@ -76,15 +67,15 @@ export type CanvasTextElement = {
   citation?: string;
 };
 
-const SIZE_MIN = 8;
-const SIZE_MAX = 72;
+export const SIZE_MIN = 8;
+export const SIZE_MAX = 72;
 
 /**
  * The typefaces people know from Word and PowerPoint, and the ones congress
  * guidelines name. Each carries a fallback, so a machine without Calibri
  * still shows something close rather than the browser default.
  */
-const FONTS: { label: string; stack: string }[] = [
+export const FONTS: { label: string; stack: string }[] = [
   { label: "Arial", stack: "Arial, Helvetica, sans-serif" },
   { label: "Calibri", stack: "Calibri, Carlito, 'Segoe UI', sans-serif" },
   { label: "Helvetica", stack: "Helvetica, Arial, sans-serif" },
@@ -93,9 +84,9 @@ const FONTS: { label: string; stack: string }[] = [
   { label: "Times New Roman", stack: "'Times New Roman', Times, serif" },
 ];
 
-const fontStack = (label: string | null) => FONTS.find((f) => f.label === label)?.stack;
+export const fontStack = (label: string | null) => FONTS.find((f) => f.label === label)?.stack;
 
-const WEIGHTS: { label: string; value: number }[] = [
+export const WEIGHTS: { label: string; value: number }[] = [
   { label: "Regular", value: 400 },
   { label: "Medium", value: 600 },
   { label: "Bold", value: 700 },
@@ -108,13 +99,13 @@ const WEIGHTS: { label: string; value: number }[] = [
  * listed weight so it never sits on the wrong label, which is what a plain
  * value match does when the value is not an option.
  */
-function nearestWeight(weight: number): number {
+export function nearestWeight(weight: number): number {
   return WEIGHTS.reduce((best, w) =>
     Math.abs(w.value - weight) < Math.abs(best - weight) ? w.value : best,
   WEIGHTS[0].value);
 }
 
-const SWATCHES: { label: string; value: string | null }[] = [
+export const SWATCHES: { label: string; value: string | null }[] = [
   { label: "Template default", value: null },
   { label: "Brand orange", value: "#fd4816" },
   { label: "Deep brand", value: "#b82f0c" },
@@ -130,6 +121,8 @@ export function textStyleCss(style: TextStyle | undefined): React.CSSProperties 
     ...(style.size != null ? { fontSize: `${style.size}px` } : {}),
     ...(fontStack(style.font) ? { fontFamily: fontStack(style.font) } : {}),
     ...(style.weight != null ? { fontWeight: style.weight } : {}),
+    ...(style.italic ? { fontStyle: "italic" as const } : {}),
+    ...(style.underline ? { textDecoration: "underline" as const } : {}),
     ...(style.align != null ? { textAlign: style.align } : {}),
     ...(style.uppercase != null
       ? { textTransform: style.uppercase ? ("uppercase" as const) : ("none" as const) }
@@ -145,11 +138,11 @@ export function hasOverrides(style: TextStyle | undefined): boolean {
 
 /* ─────────────────────────── shared control atoms ─────────────────────────── */
 
-function Divider({ dark }: { dark?: boolean }) {
+export function Divider({ dark }: { dark?: boolean }) {
   return <span className={cn("h-5 w-px shrink-0", dark ? "bg-white/15" : "bg-hair-2")} />;
 }
 
-function IconToggle({
+export function IconToggle({
   active,
   onClick,
   title,
@@ -185,7 +178,7 @@ function IconToggle({
   );
 }
 
-function SizeStepper({
+export function SizeStepper({
   value,
   onChange,
   dark,
@@ -238,7 +231,7 @@ function SizeStepper({
   );
 }
 
-function AlignGroup({
+export function AlignGroup({
   value,
   onChange,
   dark,
@@ -258,152 +251,6 @@ function AlignGroup({
       <IconToggle dark={dark} active={value === "right"} onClick={() => onChange("right")} title="Align right">
         <AlignRight className="size-3.5" />
       </IconToggle>
-    </div>
-  );
-}
-
-/* ──────────────────────────────── the ribbon ──────────────────────────────── */
-
-/**
- * The persistent formatting bar under the app header.
- *
- * It is present whether or not something is selected, because a control that
- * appears and disappears cannot be learned. With nothing selected it says so
- * and dims, which is also how it teaches that formatting is per-element.
- */
-export function FormatRibbon({
-  element,
-  style,
-  blockLabel,
-  onStyle,
-  onReset,
-}: {
-  element: CanvasTextElement | null;
-  style: TextStyle | undefined;
-  blockLabel: string;
-  onStyle: (patch: Partial<TextStyle>) => void;
-  onReset: () => void;
-}) {
-  const size = style?.size ?? element?.baseSize ?? 12;
-  const weight = style?.weight ?? element?.baseWeight ?? 400;
-  const align = style?.align ?? "left";
-  const upper = style?.uppercase ?? false;
-  const live = !!element;
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hair bg-canvas px-3 py-1.5 sm:px-4">
-      {/* What the controls will act on. Naming it is the difference between a
-          ribbon and a row of mystery buttons. */}
-      <div className="flex min-w-0 shrink-0 items-center gap-1.5">
-        <Type className={cn("size-3.5 shrink-0", live ? "text-brand" : "text-ink-4")} />
-        {live ? (
-          <span className="truncate text-label font-bold text-ink">
-            {blockLabel}
-            <span className="px-1 text-ink-4">›</span>
-            {element.label}
-          </span>
-        ) : (
-          <span className="truncate text-label font-semibold text-ink-3">
-            Select any text on the page to format it
-          </span>
-        )}
-      </div>
-
-      <Divider />
-
-      <div className={cn("flex flex-wrap items-center gap-x-1.5 gap-y-1.5", !live && "pointer-events-none opacity-40")}>
-        <select
-          value={style?.font ?? ""}
-          onChange={(e) => onStyle({ font: e.target.value || null })}
-          aria-label="Font"
-          title="Font"
-          className="focus-ring h-7 w-[132px] shrink-0 cursor-pointer rounded-chip border border-hair-2 bg-subtle px-1.5 text-label font-bold text-ink"
-          style={{ fontFamily: fontStack(style?.font ?? null) }}
-        >
-          <option value="">Template font</option>
-          {FONTS.map((f) => (
-            <option key={f.label} value={f.label} style={{ fontFamily: f.stack }}>
-              {f.label}
-            </option>
-          ))}
-        </select>
-
-        <SizeStepper value={size} onChange={(next) => onStyle({ size: next })} />
-
-        <select
-          value={nearestWeight(weight)}
-          onChange={(e) => onStyle({ weight: Number(e.target.value) })}
-          aria-label="Font weight"
-          className="focus-ring h-7 shrink-0 cursor-pointer rounded-chip border border-hair-2 bg-subtle px-1.5 text-label font-bold text-ink"
-        >
-          {WEIGHTS.map((w) => (
-            <option key={w.value} value={w.value}>
-              {w.label}
-            </option>
-          ))}
-        </select>
-
-        <IconToggle
-          active={weight >= 700}
-          onClick={() => onStyle({ weight: weight >= 700 ? 400 : 850 })}
-          title="Bold"
-        >
-          <Bold className="size-3.5" />
-        </IconToggle>
-
-        <IconToggle active={upper} onClick={() => onStyle({ uppercase: !upper })} title="Uppercase">
-          <CaseUpper className="size-4" />
-        </IconToggle>
-
-        <Divider />
-        <AlignGroup value={align} onChange={(next) => onStyle({ align: next })} />
-
-        <Divider />
-        {/* Swatches, not a picker — see the note at the top of the file. */}
-        <div className="flex shrink-0 items-center gap-1">
-          {SWATCHES.map((s) => {
-            const active = (style?.color ?? null) === s.value;
-            return (
-              <button
-                key={s.label}
-                type="button"
-                onClick={() => onStyle({ color: s.value })}
-                title={s.label}
-                aria-label={s.label}
-                aria-pressed={active}
-                className={cn(
-                  "focus-ring size-5 shrink-0 cursor-pointer rounded-glyph border transition",
-                  active ? "border-ink ring-2 ring-brand/30" : "border-hair-3 hover:border-ink-3"
-                )}
-                style={
-                  s.value
-                    ? { background: s.value }
-                    : {
-                        background:
-                          "linear-gradient(135deg, #ffffff 0 46%, var(--color-hair-3) 46% 54%, #ffffff 54%)",
-                      }
-                }
-              />
-            );
-          })}
-        </div>
-
-        <Divider />
-        <button
-          type="button"
-          onClick={onReset}
-          disabled={!hasOverrides(style)}
-          className={cn(
-            "focus-ring inline-flex shrink-0 items-center gap-1 rounded-chip px-2 py-1 text-label font-bold transition",
-            hasOverrides(style)
-              ? "cursor-pointer text-brand hover:bg-tint"
-              : "cursor-not-allowed text-ink-4"
-          )}
-        >
-          <RotateCcw className="size-3.5" />
-          Reset
-        </button>
-      </div>
     </div>
   );
 }
@@ -512,115 +359,5 @@ export function EditableCanvasText({
     >
       {value}
     </Tag>
-  );
-}
-
-/* ─────────────────────────── the ribbon, for art ─────────────────────────── */
-
-/**
- * The same bar when what is selected is not text.
- *
- * A toolbar that only knows about type says "select any text" at an image and
- * leaves you with nothing to press. Art has its own small set — which layer,
- * where it sits in the stack, and the two things you can ask for — so the bar
- * changes its controls rather than going blank.
- */
-/** The stacking range the studio clamps to. */
-const Z_MAX = 9;
-
-const LAYER_BUTTON =
-  "focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border border-hair-2 bg-card px-2 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:text-ink-4 disabled:hover:border-hair-2";
-
-export function ArtRibbon({
-  label,
-  kind,
-  z,
-  ready,
-  onSendBack,
-  onBringForward,
-  onRegenerate,
-  onReplace,
-  onAddToChat,
-}: {
-  label: string;
-  kind: "image" | "graph" | "background";
-  z: number;
-  /** False while the render is still in flight. */
-  ready: boolean;
-  onSendBack: () => void;
-  onBringForward: () => void;
-  onRegenerate: () => void;
-  onReplace: () => void;
-  onAddToChat: () => void;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-hair bg-canvas px-3 py-1.5 sm:px-4">
-      <div className="flex min-w-0 shrink-0 items-center gap-1.5">
-        {kind === "graph" ? (
-          <BarChart3 className="size-3.5 shrink-0 text-brand" />
-        ) : kind === "background" ? (
-          <Layers className="size-3.5 shrink-0 text-brand" />
-        ) : (
-          <ImageIcon className="size-3.5 shrink-0 text-brand" />
-        )}
-        <span className="truncate text-label font-bold text-ink">{label}</span>
-        {!ready && (
-          <span className="shrink-0 rounded-glyph bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">
-            Rendering
-          </span>
-        )}
-      </div>
-
-      <Divider />
-
-      {/* Stacking order, which is the one spatial property art has here —
-          position and size come from the slot the layout reserved. Said the
-          way PowerPoint says it, not as a z number. */}
-      <div className="flex shrink-0 items-center gap-1">
-        <button type="button" onClick={onBringForward} disabled={z >= Z_MAX} className={LAYER_BUTTON}>
-          <ArrowUp className="size-3.5" />
-          Bring forward
-        </button>
-        <button type="button" onClick={onSendBack} disabled={z <= 0} className={LAYER_BUTTON}>
-          <ArrowDown className="size-3.5" />
-          Send backward
-        </button>
-      </div>
-
-      <Divider />
-
-      <button
-        type="button"
-        onClick={onRegenerate}
-        disabled={!ready}
-        className={cn(
-          "inline-flex shrink-0 items-center gap-1 rounded-chip border px-2 py-1 text-label font-bold transition",
-          ready
-            ? "cursor-pointer border-hair-2 bg-card text-ink-2 hover:border-brand hover:text-brand"
-            : "cursor-not-allowed border-hair-2 bg-card text-ink-4"
-        )}
-      >
-        <RotateCcw className="size-3.5" />
-        Regenerate
-      </button>
-
-      <button
-        type="button"
-        onClick={onReplace}
-        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip border border-hair-2 bg-card px-2 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:text-brand"
-      >
-        <Upload className="size-3.5" />
-        Replace
-      </button>
-
-      <button
-        type="button"
-        onClick={onAddToChat}
-        className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-chip bg-brand px-2 py-1 text-label font-bold text-white transition hover:bg-brand-deep"
-      >
-        <LogoMark size={13} className="shrink-0" />
-        Add to chat
-      </button>
-    </div>
   );
 }

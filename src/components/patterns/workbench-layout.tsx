@@ -22,6 +22,12 @@ import { atLeast, useLayout, type Layout } from "@/lib/use-breakpoint";
  */
 export interface WorkbenchLayoutProps {
   header?: ReactNode;
+  /**
+   * A bar across the rail and the main region, but not the panel, which keeps
+   * its full height. The document editor's toolbar: it acts on the pages and
+   * the canvas, never on the chat beside them.
+   */
+  toolbar?: ReactNode;
   /** Left rail — scene list, page list. A complete element. Omit for two-pane. */
   rail?: ReactNode;
   main: ReactNode;
@@ -55,7 +61,7 @@ export interface WorkbenchLayoutProps {
 }
 
 export function WorkbenchLayout({
-  header, rail, main, panel, bottomBar, overlay,
+  header, toolbar, rail, main, panel, bottomBar, overlay,
   panelWidth = SIDE_PANEL_DEFAULT_WIDTH,
   onPanelWidthChange, onPanelResizingChange, panelStorageKey, panelMinCanvas,
   panelOpen = true, onPanelOpenChange,
@@ -86,25 +92,39 @@ export function WorkbenchLayout({
       {header}
 
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        {/* The rail renders as given. Its width is genuinely screen-specific
-            (the scene rail is responsive, the page rail is fixed) and it
-            brings its own scroll, so a wrapper here could only fight it. */}
-        {rail}
-
-        {/* Every slot renders as given. The layout owns the root column and
-            the row; each region owns its own element, width and scrolling.
-            This is not fussiness — studio-screen cross-fades its rail and
-            canvas (flex 0 <-> 1 with opacity), so a flex-1 wrapper here would
-            pin the canvas open and break the collapse; and an extra
-            overflow-hidden ancestor is what breaks the scroll contract that
-            <Panel> exists to protect. The one exception is a bottom bar,
-            which by definition needs a column to sit under. */}
-        {bottomBar ? (
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-            {main}
-            <div className="shrink-0 border-t border-hair">{bottomBar}</div>
+        {toolbar ? (
+          /* Only a screen with a toolbar gets this column, so every screen
+             without one keeps exactly the row described below. */
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            {toolbar}
+            <div className="flex min-h-0 flex-1 overflow-hidden">
+              {rail}
+              {main}
+            </div>
           </div>
-        ) : main}
+        ) : (
+          <>
+            {/* The rail renders as given. Its width is genuinely screen-specific
+                (the scene rail is responsive, the page rail is fixed) and it
+                brings its own scroll, so a wrapper here could only fight it. */}
+            {rail}
+
+            {/* Every slot renders as given. The layout owns the root column and
+                the row; each region owns its own element, width and scrolling.
+                This is not fussiness — studio-screen cross-fades its rail and
+                canvas (flex 0 <-> 1 with opacity), so a flex-1 wrapper here would
+                pin the canvas open and break the collapse; and an extra
+                overflow-hidden ancestor is what breaks the scroll contract that
+                <Panel> exists to protect. The one exception is a bottom bar,
+                which by definition needs a column to sit under. */}
+            {bottomBar ? (
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                {main}
+                <div className="shrink-0 border-t border-hair">{bottomBar}</div>
+              </div>
+            ) : main}
+          </>
+        )}
 
         {panel && (
           <SidePanel

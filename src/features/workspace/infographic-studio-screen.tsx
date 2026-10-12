@@ -5,16 +5,21 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
+  BarChart3,
   Check,
   Download,
   Image as ImageIcon,
+  Layers,
+  LayoutTemplate,
   MessageSquare,
   PanelRight,
   Pencil,
   Plus,
+  Redo2,
   Share2,
   ShieldCheck,
-  Expand,
+  Type,
+  Undo2,
   ZoomIn,
   ZoomOut,
   X,
@@ -35,9 +40,7 @@ import {
 } from "@/features/workspace/asset-comments";
 import { ReviewComments } from "@/features/workspace/review-comments";
 import {
-  ArtRibbon,
   EditableCanvasText,
-  FormatRibbon,
   EMPTY_STYLE,
   type CanvasTextElement,
   type TextStyle,
@@ -59,7 +62,15 @@ import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcru
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
-import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import {
+  EditorToolbar,
+  artOptions,
+  blockOptions,
+  chartExtras,
+  textOptions,
+  type InsertMenuId,
+  type ToolbarSelection,
+} from "@/features/workspace/editor-toolbar";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -134,6 +145,8 @@ interface PageArtLayer {
   z: number;
   /** Milliseconds from the start of generation when this art lands. */
   readyAt: number;
+  /** Read aloud by screen readers and kept in the export. */
+  alt?: string;
 }
 
 /**
@@ -167,12 +180,21 @@ function artSchedule(count: number): number[] {
   return Array.from({ length: count }, (_, i) => Math.round(ART_FIRST + i * step));
 }
 
+/** The hidden file input behind the toolbar's Replace. */
+const ART_UPLOAD_ID = "studio-art-upload";
+
+/** The blocks between the header and the safety band, which can be reordered or removed. */
+type BodyBlockId = "heroStat" | "moa" | "chart";
+const DEFAULT_BODY: BodyBlockId[] = ["heroStat", "moa", "chart"];
+
 interface InfographicPageData {
   id: number;
   name: string;
   subtitle: string;
   /** Art layers, back to front. */
   art: PageArtLayer[];
+  /** The body blocks in reading order; a deleted one is left out. */
+  bodyOrder?: BodyBlockId[];
   header: {
     title: string;
     subtitle: string;
@@ -363,12 +385,6 @@ export function InfographicStudioScreen() {
   // Zoom & UI state
   const [zoomLevel, setZoomLevel] = useState<number>(100);
 
-  /* Version 1 is what ships: select an element and direct it, with no
-     formatting bar. Future is the opt-in preview where type can be set on the
-     canvas. Default v1, the same as the video editor — the toggle is a
-     statement about what is real, so the real one is what opens. */
-  const [editorVersion, setEditorVersion] = useState<"v1" | "future">("v1");
-  const showFormatRibbon = editorVersion === "future";
 
   /* ── Two-pass generation ──────────────────────────────────────────────────
      The studio opens on a page that is being built, not on a spinner. Blocks
@@ -403,7 +419,6 @@ export function InfographicStudioScreen() {
   const blockLanded = (id: (typeof BLOCK_ORDER)[number]) => BLOCK_ORDER.indexOf(id) < blocksLanded;
   const layoutDone = blocksLanded >= BLOCK_ORDER.length;
   const [selectedArtId, setSelectedArtId] = useState<string | null>(null);
-  const artUploadRef = useRef<HTMLInputElement>(null);
 
   /* The page is drawn at its true size and scaled to the room available, so
      the mat measures itself rather than the page guessing. */
@@ -443,6 +458,10 @@ export function InfographicStudioScreen() {
     return () => observer.disconnect();
   }, []);
   const [selectedBlockId, setSelectedBlockId] = useState<"header" | "heroStat" | "moa" | "chart" | "isi">("heroStat");
+  /* Whether the block itself is selected, rather than a run or art inside it.
+     With none of the three, nothing is selected and the toolbar offers
+     Insert only. */
+  const [blockFocused, setBlockFocused] = useState(false);
 
   /* ── Element-level selection ──────────────────────────────────────────────
      A block is a container; the text inside it is what people actually mean
@@ -497,6 +516,49 @@ export function InfographicStudioScreen() {
   const currentPage = useMemo(() => {
     return pagesList.find((p) => p.id === activePageId) || pagesList[0] || DEFAULT_PAGE_1;
   }, [pagesList, activePageId]);
+  const bodyOrder = currentPage.bodyOrder ?? DEFAULT_BODY;
+
+  /* ── Undo and redo ──────────────────────────────────────────────────────
+     Snapshots of what the toolbar changes: formatting, art and block order.
+     Wording is not here; it changes through the chat. */
+  type Snapshot = { pages: InfographicPageData[]; styles: Record<string, TextStyle> };
+  const [undoStack, setUndoStack] = useState<Snapshot[]>([]);
+  const [redoStack, setRedoStack] = useState<Snapshot[]>([]);
+  const record = () => {
+    setUndoStack((stack) => [...stack.slice(-49), { pages: pagesList, styles: elementStyles }]);
+    setRedoStack([]);
+  };
+  const undo = () => {
+    const prev = undoStack[undoStack.length - 1];
+    if (!prev) return;
+    setUndoStack((stack) => stack.slice(0, -1));
+    setRedoStack((stack) => [...stack, { pages: pagesList, styles: elementStyles }]);
+    setPagesList(prev.pages);
+    setElementStyles(prev.styles);
+  };
+  const redo = () => {
+    const next = redoStack[redoStack.length - 1];
+    if (!next) return;
+    setRedoStack((stack) => stack.slice(0, -1));
+    setUndoStack((stack) => [...stack, { pages: pagesList, styles: elementStyles }]);
+    setPagesList(next.pages);
+    setElementStyles(next.styles);
+  };
+  /* ⌘Z and ⇧⌘Z, except while typing. Re-bound each render so it always
+     undoes the current state rather than the one it was bound with. */
+  useEffect(() => {
+    if (studioMode !== "editor") return;
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
+      e.preventDefault();
+      if (e.shiftKey) redo();
+      else undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const isReview = studioMode === "review";
   /* Where this studio sits in the creative trail, and what Back means here. */
@@ -583,6 +645,11 @@ export function InfographicStudioScreen() {
   // Edit handler for active block
   const handleSelectBlock = (blockId: "header" | "heroStat" | "moa" | "chart" | "isi") => {
     setSelectedBlockId(blockId);
+    setBlockFocused(true);
+    // Runs and art stop their own clicks, so this was a click on the block itself.
+    setSelectedElementId(null);
+    setCommentComposerAt(null);
+    setSelectedArtId(null);
     setActiveTab("edit");
   };
 
@@ -595,6 +662,7 @@ export function InfographicStudioScreen() {
   /* Stacking order is the one spatial property art has here — where it sits
      and how big it is come from the slot the layout reserved for it. */
   const nudgeArtOrder = (id: string, delta: number) => {
+    record();
     updateCurrentPage((prev) => ({
       ...prev,
       art: prev.art.map((layer) =>
@@ -699,8 +767,48 @@ export function InfographicStudioScreen() {
     setCommentComposerAt(null);
   };
 
+  /* A click on the mat: nothing selected, and the toolbar folds back to Insert. */
+  const clearSelection = () => {
+    clearElementSelection();
+    setSelectedArtId(null);
+    setBlockFocused(false);
+  };
+
+  const deleteArt = (id: string) => {
+    const layer = currentPage.art.find((a) => a.id === id);
+    if (!layer) return;
+    record();
+    updateCurrentPage((prev) => ({ ...prev, art: prev.art.filter((a) => a.id !== id) }));
+    setSelectedArtId(null);
+    showToast(`${layer.label} removed. Undo brings it back`);
+  };
+
+  const setArtAlt = (id: string, alt: string) => {
+    record();
+    updateCurrentPage((prev) => ({ ...prev, art: prev.art.map((a) => (a.id === id ? { ...a, alt } : a)) }));
+    showToast(alt ? "Alt text saved" : "Alt text cleared");
+  };
+
+  const moveBlock = (id: BodyBlockId, by: -1 | 1) => {
+    const from = bodyOrder.indexOf(id);
+    const to = from + by;
+    if (from < 0 || to < 0 || to >= bodyOrder.length) return;
+    record();
+    const next = [...bodyOrder];
+    [next[from], next[to]] = [next[to], next[from]];
+    updateCurrentPage((prev) => ({ ...prev, bodyOrder: next }));
+  };
+
+  const deleteBlock = (id: BodyBlockId) => {
+    record();
+    updateCurrentPage((prev) => ({ ...prev, bodyOrder: (prev.bodyOrder ?? DEFAULT_BODY).filter((b) => b !== id) }));
+    setBlockFocused(false);
+    showToast(`${BLOCK_LABELS[id]} removed. Undo brings it back`);
+  };
+
   const patchElementStyle = (patch: Partial<TextStyle>) => {
     if (!selectedElementId) return;
+    record();
     setElementStyles((prev) => ({
       ...prev,
       [selectedElementId]: { ...EMPTY_STYLE, ...prev[selectedElementId], ...patch },
@@ -709,6 +817,7 @@ export function InfographicStudioScreen() {
 
   const resetElementStyle = () => {
     if (!selectedElementId) return;
+    record();
     setElementStyles((prev) => {
       const next = { ...prev };
       delete next[selectedElementId];
@@ -1055,6 +1164,128 @@ export function InfographicStudioScreen() {
     showToast(`${comment.containerLabel} · ${comment.elementLabel}`);
   };
 
+  /* ── The toolbar's selection ─────────────────────────────────────────────
+     Art first, then a run of text, then a block: the innermost thing clicked
+     is what the options act on. */
+  const pageLabel = `Page ${activePageId}`;
+  /* Something handed to the chat: the panel opens on it, with a start to the sentence. */
+  const handToChat = (ctx: { id: string; label: string; detail: string }, prompt: string) => {
+    setCopilotPanelOpen(true);
+    setActiveTab("assistant");
+    attachToChat(ctx);
+    setChatInput((prev) => (prev.trim() ? prev : prompt));
+  };
+
+  let toolbarSelection: ToolbarSelection | null = null;
+  if (studioMode === "editor" && selectedArt) {
+    const art = selectedArt;
+    toolbarSelection = {
+      id: `art-${art.id}`,
+      icon: art.kind === "graph" ? BarChart3 : art.kind === "background" ? Layers : ImageIcon,
+      name: art.label,
+      items: artOptions({
+        alt: art.alt ?? "",
+        z: art.z,
+        ready: genElapsed >= art.readyAt,
+        onReplace: () => document.getElementById(ART_UPLOAD_ID)?.click(),
+        onRegenerate: () => regenerateArt(art.id),
+        onBringForward: () => nudgeArtOrder(art.id, 1),
+        onSendBack: () => nudgeArtOrder(art.id, -1),
+        onAlt: (alt) => setArtAlt(art.id, alt),
+        onDelete: () => deleteArt(art.id),
+      }),
+      onAddToChat: () => addArtToChat(art.id),
+    };
+  } else if (studioMode === "editor" && selectedElement) {
+    const el = selectedElement;
+    toolbarSelection = {
+      id: `text-${el.id}`,
+      icon: Type,
+      name: el.label,
+      path: `${BLOCK_LABELS[el.blockId] ?? ""} › ${el.label}`,
+      items: textOptions({
+        element: el,
+        style: elementStyles[el.id],
+        onStyle: patchElementStyle,
+        onReset: resetElementStyle,
+        onCite: () => {
+          setCopilotPanelOpen(true);
+          setActiveTab("evidence");
+          showToast(`Pick the claim the ${el.label.toLowerCase()} cites`);
+        },
+      }),
+      onAddToChat: () => {
+        handToChat(
+          { id: `run-${el.id}`, label: `${pageLabel} · ${el.label}`, detail: `"${runValue(el.id)}"` },
+          `Rewrite the ${el.label.toLowerCase()} `
+        );
+        showToast(`${el.label} added to the chat`);
+      },
+    };
+  } else if (studioMode === "editor" && blockFocused) {
+    const id = selectedBlockId;
+    const label = BLOCK_LABELS[id];
+    const body = id === "heroStat" || id === "moa" || id === "chart" ? id : null;
+    const at = body ? bodyOrder.indexOf(body) : -1;
+    toolbarSelection = {
+      id: `block-${id}`,
+      icon: id === "chart" ? BarChart3 : id === "isi" ? ShieldCheck : LayoutTemplate,
+      name: label,
+      items: blockOptions({
+        locked: id === "isi" ? "Required on every page" : id === "header" ? "Always at the top" : undefined,
+        canMoveUp: at > 0,
+        canMoveDown: at >= 0 && at < bodyOrder.length - 1,
+        onMoveUp: () => body && moveBlock(body, -1),
+        onMoveDown: () => body && moveBlock(body, 1),
+        onDelete: () => body && deleteBlock(body),
+        extra:
+          id === "chart"
+            ? chartExtras({
+                source: currentPage.chart.cohort,
+                onEditData: () =>
+                  handToChat(
+                    { id: "block-chart", label: `${pageLabel} · ${currentPage.chart.title}`, detail: "Chart data" },
+                    "Change the chart data so that "
+                  ),
+              })
+            : [],
+      }),
+      onAddToChat: () => {
+        handToChat(
+          { id: `block-${id}`, label: `${pageLabel} · ${label}`, detail: "Block" },
+          `Change the ${label.toLowerCase()} so that `
+        );
+        showToast(`${label} added to the chat`);
+      },
+    };
+  }
+
+  /* Insert hands the request to SwishX, which writes it from the approved
+     claims; an approved claim is picked from the Claims tab directly. */
+  const handleInsert = (_menu: InsertMenuId, option: string) => {
+    if (option === "Approved claim") {
+      setCopilotPanelOpen(true);
+      setActiveTab("evidence");
+      showToast("Pick a claim to place it on the page");
+      return;
+    }
+    const where = toolbarSelection ? `below the ${toolbarSelection.name.toLowerCase()}` : "at the end of the page";
+    /* Options that are an action, said as the thing they add. */
+    const PHRASES: Record<string, string> = {
+      Upload: "an image I upload",
+      "Media library": "an image from the media library",
+      "Generate image": "a generated image",
+    };
+    const thing = option.toLowerCase();
+    /* "a big number", "an icon", but "references". */
+    const article = thing.endsWith("s") ? "" : /^[aeiou]/.test(thing) ? "an " : "a ";
+    handToChat(
+      { id: `insert-${option}`, label: `Insert · ${option}`, detail: `${pageLabel}, ${where}` },
+      `Add ${PHRASES[option] ?? article + thing} ${where}. It should show `
+    );
+    showToast(`${option} added to the chat. Say what it should show`);
+  };
+
   return (
     <WorkbenchLayout
       className="bg-[#edf0ed] text-left"
@@ -1067,6 +1298,15 @@ export function InfographicStudioScreen() {
          the panel closes once on the way down, and a deliberate
          re-open sticks. Tablet portrait is review-only by design. */
       autoCollapsePanelBelow="laptop"
+      toolbar={
+        studioMode === "editor" ? (
+          <EditorToolbar
+            selection={toolbarSelection}
+            onInsert={handleInsert}
+            unavailable={{ "Safety information": "Already on this page" }}
+          />
+        ) : undefined
+      }
       header={
         <ScreenHeader spread onClose={() => exit.requestExit()}>
           <div className="flex items-center gap-2 min-w-0">
@@ -1129,30 +1369,27 @@ export function InfographicStudioScreen() {
 
           {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
           <div className="flex items-center gap-2">
-            {/* Version 1 is what ships today; Future is the opt-in preview
-                of what it grows into. Editor only — a reviewer on a shared
-                link is not choosing an editor. */}
+            {/* Undo and redo sit where people look for them in Office: top
+                left of the actions, apart from the toolbar's per-element options. */}
             {studioMode === "editor" && (
-              <Segmented className="hidden bg-card sm:flex" aria-label="Editor version">
+              <div className="hidden items-center gap-1 sm:flex">
                 {([
-                  { id: "v1" as const, label: "Version 1" },
-                  { id: "future" as const, label: "Future" },
-                ]).map((option) => (
-                  <SegmentedButton
-                    key={option.id}
-                    active={editorVersion === option.id}
-                    onClick={() => setEditorVersion(option.id)}
-                    title={
-                      option.id === "v1"
-                        ? "Ships today: select and direct, no formatting bar"
-                        : "Preview: set type on the canvas from the formatting bar"
-                    }
-                    className={cn("px-2.5 py-1 text-caption", editorVersion === option.id && "bg-brand text-white shadow-none")}
+                  { label: "Undo", keys: "⌘Z", icon: Undo2, run: undo, can: undoStack.length > 0 },
+                  { label: "Redo", keys: "⇧⌘Z", icon: Redo2, run: redo, can: redoStack.length > 0 },
+                ] as const).map(({ label, keys, icon: Icon, run, can }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={run}
+                    disabled={!can}
+                    title={`${label} (${keys})`}
+                    aria-label={label}
+                    className="focus-ring grid size-8 cursor-pointer place-items-center rounded-chip border border-hair-2 bg-card text-ink-2 shadow-2xs transition-colors hover:border-brand hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-hair-2"
                   >
-                    {option.label}
-                  </SegmentedButton>
+                    <Icon className="size-4" />
+                  </button>
                 ))}
-              </Segmented>
+              </div>
             )}
             {studioMode === "editor" && (
               <Button
@@ -1297,55 +1534,7 @@ export function InfographicStudioScreen() {
               }
             />
         ) : (
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-            {/* The canvas's own header, the same shape as the video editor's:
-                what you are looking at on the left, how you are looking at it
-                on the right. Zoom lived in the app header, three panels away
-                from the thing it scaled. */}
-            <div className="flex h-11 shrink-0 items-center justify-between border-b border-hair-3/70 bg-white/60 px-4 backdrop-blur-sm">
-              <div className="flex min-w-0 items-center gap-2.5 text-label font-bold text-ink">
-                <span className="shrink-0 rounded-glyph border border-hair-2 bg-card px-2 py-0.5 font-extrabold shadow-2xs">
-                  Page {Math.max(1, pagesList.findIndex((pg) => pg.id === currentPage.id) + 1)} of {pagesList.length}
-                </span>
-                <span className="truncate">{currentPage.name}</span>
-              </div>
-              <div className="flex items-center gap-2 text-label">
-                <div className="hidden items-center gap-1 rounded-control border border-hair-2 bg-card p-0.5 shadow-2xs sm:flex">
-                    <button
-                      type="button"
-                      onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
-                      className="cursor-pointer rounded-glyph p-1 text-ink-2 transition hover:bg-subtle hover:text-ink"
-                      title="Zoom out"
-                      aria-label="Zoom out"
-                    >
-                      <ZoomOut className="size-3.5" />
-                    </button>
-                    <span className="min-w-[42px] px-1 text-center text-caption font-bold tabular-nums text-ink">
-                      {zoomLevel}%
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
-                      className="cursor-pointer rounded-glyph p-1 text-ink-2 transition hover:bg-subtle hover:text-ink"
-                      title="Zoom in"
-                      aria-label="Zoom in"
-                    >
-                      <ZoomIn className="size-3.5" />
-                    </button>
-                  <button
-                    type="button"
-                    onClick={() => setZoomLevel(100)}
-                    className="cursor-pointer rounded-glyph px-2 py-0.5 text-caption font-bold text-brand transition hover:bg-subtle"
-                  >
-                    Fit
-                  </button>
-                </div>
-                <Button variant="ghost" size="icon" className="size-7" aria-label="Full screen">
-                  <Expand className="size-3.5" />
-                </Button>
-              </div>
-            </div>
-
+          <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
             {/* What is still arriving, and what you can already do. The page
                 below is editable throughout — the strip is a status line, not
                 a gate. */}
@@ -1375,39 +1564,15 @@ export function InfographicStudioScreen() {
               </div>
             )}
 
-            {/* One bar, two control sets: what is selected decides which. A
-                toolbar that only knows about type says "select any text" at an
-                image and leaves you nothing to press. */}
-            {studioMode === "editor" && showFormatRibbon && selectedArt ? (
-              <ArtRibbon
-                label={selectedArt.label}
-                kind={selectedArt.kind}
-                z={selectedArt.z}
-                ready={genElapsed >= selectedArt.readyAt}
-                onSendBack={() => nudgeArtOrder(selectedArt.id, -1)}
-                onBringForward={() => nudgeArtOrder(selectedArt.id, 1)}
-                onRegenerate={() => regenerateArt(selectedArt.id)}
-                onReplace={() => artUploadRef.current?.click()}
-                onAddToChat={() => addArtToChat(selectedArt.id)}
-              />
-            ) : studioMode === "editor" && showFormatRibbon ? (
-              <FormatRibbon
-                element={selectedElement}
-                style={selectedElementId ? elementStyles[selectedElementId] : undefined}
-                blockLabel={selectedElement ? BLOCK_LABELS[selectedElement.blockId] ?? "" : ""}
-                onStyle={patchElementStyle}
-                onReset={resetElementStyle}
-              />
-            ) : null}
-
             <input
-              ref={artUploadRef}
+              id={ART_UPLOAD_ID}
               type="file"
               accept="image/*"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file || !selectedArt) return;
+                record();
                 updateCurrentPage((prev) => ({
                   ...prev,
                   art: prev.art.map((a) =>
@@ -1448,7 +1613,7 @@ export function InfographicStudioScreen() {
               // Only the mat itself deselects. Without the target check, any
               // click that bubbles out of the page would clear the selection
               // the moment you used a control inside it.
-              if (e.target === e.currentTarget) clearElementSelection();
+              if (e.target === e.currentTarget) clearSelection();
             }}
             className="flex flex-1 items-start justify-center overflow-auto bg-[#e5e8e4] p-4 sm:p-6 lg:p-8"
           >
@@ -1496,7 +1661,7 @@ export function InfographicStudioScreen() {
                   className={cn(
                     "relative z-[1] p-6 pb-5 bg-gradient-to-r from-[#0c1524] via-[#14233c] to-[#1e3458] text-white transition group",
                     studioMode === "editor" && "cursor-pointer",
-                    selectedBlockId === "header" && studioMode === "editor"
+                    selectedBlockId === "header" && blockFocused && studioMode === "editor"
                       ? "ring-3 ring-inset ring-brand shadow-inner"
                       : "hover:brightness-105"
                   )}
@@ -1538,13 +1703,16 @@ export function InfographicStudioScreen() {
                       : "flex flex-col"
                   )}
                 >
-                  {/* 2. Stat Hero */}
-                  <div
+                  {/* 2–4. The body blocks, in the page's order: the stat hero,
+                      the mechanism and the chart can be moved or removed. */}
+                  {bodyOrder.map((bodyId) =>
+                    bodyId === "heroStat" ? (
+                  <div key="heroStat"
                     onClick={() => studioMode === "editor" && handleSelectBlock("heroStat")}
                     className={cn(
                       "p-4 rounded-panel bg-[#fff7f4] border border-tint-line shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
-                      selectedBlockId === "heroStat" && studioMode === "editor"
+                      selectedBlockId === "heroStat" && blockFocused && studioMode === "editor"
                         ? "ring-2 ring-brand/15 shadow-sm bg-card"
                         : "hover:border-brand"
                     )}
@@ -1568,14 +1736,13 @@ export function InfographicStudioScreen() {
                     </div>
                     {run("heroStat.detail", "text-body text-ink-2 font-medium mt-0.5 leading-relaxed block", "p")}
                   </div>
-
-                  {/* 3. MoA Pathway */}
-                  <div
+                    ) : bodyId === "moa" ? (
+                  <div key="moa"
                     onClick={() => studioMode === "editor" && handleSelectBlock("moa")}
                     className={cn(
                       "p-4 rounded-panel bg-subtle border border-hair shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
-                      selectedBlockId === "moa" && studioMode === "editor"
+                      selectedBlockId === "moa" && blockFocused && studioMode === "editor"
                         ? "ring-2 ring-brand/15 shadow-sm bg-card"
                         : "hover:border-hair-3"
                     )}
@@ -1612,14 +1779,13 @@ export function InfographicStudioScreen() {
                       ))}
                     </div>
                   </div>
-
-                  {/* 4. Chart / Comparison Section */}
-                  <div
+                    ) : (
+                  <div key="chart"
                     onClick={() => studioMode === "editor" && handleSelectBlock("chart")}
                     className={cn(
                       "p-4 rounded-panel bg-card border border-hair shadow-2xs transition relative group",
                       studioMode === "editor" && "cursor-pointer",
-                      selectedBlockId === "chart" && studioMode === "editor"
+                      selectedBlockId === "chart" && blockFocused && studioMode === "editor"
                         ? "ring-2 ring-brand/15 shadow-sm"
                         : "hover:border-hair-3"
                     )}
@@ -1679,6 +1845,8 @@ export function InfographicStudioScreen() {
                       </div>
                     </div>
                   </div>
+                    )
+                  )}
 
                   {/* 5. ISI / Fair Balance Footnote */}
                   <div
@@ -1686,7 +1854,7 @@ export function InfographicStudioScreen() {
                     className={cn(
                       "p-3.5 rounded-panel bg-[#fafafa] border border-hair mt-auto transition relative group",
                       studioMode === "editor" && "cursor-pointer",
-                      selectedBlockId === "isi" && studioMode === "editor"
+                      selectedBlockId === "isi" && blockFocused && studioMode === "editor"
                         ? "ring-2 ring-brand/15 shadow-sm bg-card"
                         : "hover:border-hair-3"
                     )}
@@ -1708,6 +1876,37 @@ export function InfographicStudioScreen() {
               </div>
             </div>
           </main>
+
+          {/* Zoom, in the canvas's own corner: it changes how you look at the
+              page, not the page, so it stays out of the editing toolbar. */}
+          <div className="absolute bottom-4 right-4 z-10 hidden items-center gap-1 rounded-control border border-hair-2 bg-card p-0.5 shadow-soft sm:flex">
+            <button
+              type="button"
+              onClick={() => setZoomLevel((z) => Math.max(50, z - 10))}
+              className="focus-ring cursor-pointer rounded-glyph p-1 text-ink-2 transition hover:bg-subtle hover:text-ink"
+              title="Zoom out"
+              aria-label="Zoom out"
+            >
+              <ZoomOut className="size-3.5" />
+            </button>
+            <span className="min-w-[42px] px-1 text-center text-caption font-bold tabular-nums text-ink">{zoomLevel}%</span>
+            <button
+              type="button"
+              onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
+              className="focus-ring cursor-pointer rounded-glyph p-1 text-ink-2 transition hover:bg-subtle hover:text-ink"
+              title="Zoom in"
+              aria-label="Zoom in"
+            >
+              <ZoomIn className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoomLevel(100)}
+              className="focus-ring cursor-pointer rounded-glyph px-2 py-0.5 text-caption font-bold text-brand transition hover:bg-subtle"
+            >
+              Fit
+            </button>
+          </div>
           </div>
         )
       }
