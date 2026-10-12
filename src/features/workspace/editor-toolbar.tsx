@@ -1285,7 +1285,7 @@ export function EditorToolbar({
               /* The five menus, then the chosen one's options in the same place. */
               <div
                 role="menu"
-                className="step-transition absolute left-0 top-full z-30 mt-1.5 grid w-48 gap-0.5 rounded-control border border-hair-2 bg-card p-1.5 shadow-float"
+                className="step-transition absolute left-0 top-full z-30 mt-1.5 grid w-60 gap-0.5 rounded-control border border-hair-2 bg-card p-1.5 shadow-float"
               >
                 {MENU_IDS.map((id) => {
                   const Icon = INSERT_MENUS[id].icon;
@@ -1295,11 +1295,14 @@ export function EditorToolbar({
                       type="button"
                       role="menuitem"
                       onClick={(e) => openMenu(id, e.currentTarget.closest("[data-insert-root]")?.querySelector("button") ?? e.currentTarget)}
-                      className="focus-ring flex h-9 cursor-pointer items-center gap-2 rounded-chip px-2.5 text-left text-body font-semibold text-ink-2 transition hover:bg-subtle hover:text-ink"
+                      className="focus-ring flex cursor-pointer items-center gap-2.5 rounded-chip px-2.5 py-2 text-left transition hover:bg-subtle"
                     >
                       <Icon className="size-4 shrink-0 text-brand" />
-                      <span className="min-w-0 flex-1">{INSERT_MENUS[id].label}</span>
-                      <span className="truncate text-caption font-normal text-ink-4">{INSERT_MENUS[id].tip}</span>
+                      {/* Name, then what is inside on its own line, so neither runs out of the list. */}
+                      <span className="grid min-w-0 flex-1 gap-0.5">
+                        <span className="truncate text-body font-semibold text-ink">{INSERT_MENUS[id].label}</span>
+                        <span className="truncate text-caption text-ink-3">{INSERT_MENUS[id].tip}</span>
+                      </span>
                     </button>
                   );
                 })}
