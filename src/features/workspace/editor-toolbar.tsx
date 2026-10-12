@@ -262,17 +262,19 @@ function useDismiss(open: boolean, close: () => void) {
   return ref;
 }
 
+/* Insert's buttons: a size up from the other tools, with the line box no
+   taller than the type, so the label sits on the icon's centre line. */
+const INSERT_BUTTON = "gap-1.5 px-2 text-body leading-none";
+
 /** Matches the panel's w-[560px]. */
 const PANEL_WIDTH = 560;
 
 function InsertPanel({
   menu,
-  onMenu,
   onPick,
   unavailable,
 }: {
   menu: InsertMenuId;
-  onMenu: (id: InsertMenuId) => void;
   onPick: (option: string) => void;
   /** Options that cannot be added here, with the reason shown in their place. */
   unavailable: Record<string, string>;
@@ -284,28 +286,6 @@ function InsertPanel({
       aria-label={`Insert ${m.label.toLowerCase()}`}
       className="step-transition absolute left-0 top-0 z-30 max-h-[min(470px,70vh)] w-[560px] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-panel border border-hair-2 bg-card p-3.5 shadow-float"
     >
-      {/* Tabs, so the folded Insert button reaches every menu. */}
-      <div role="tablist" className="mb-3 flex gap-0.5 overflow-x-auto rounded-control bg-subtle p-0.5">
-        {MENU_IDS.map((id) => {
-          const Icon = INSERT_MENUS[id].icon;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={id === menu}
-              onClick={() => onMenu(id)}
-              className={cn(
-                "focus-ring inline-flex h-8 flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-chip px-2 text-label font-bold transition",
-                id === menu ? "bg-card text-brand-deep shadow-hair" : "text-ink-3 hover:text-ink"
-              )}
-            >
-              <Icon className="size-3.5" />
-              {INSERT_MENUS[id].label}
-            </button>
-          );
-        })}
-      </div>
       <p className="text-body font-extrabold text-ink">{m.label}</p>
       <p className="mb-1 text-label text-ink-3">{m.sub}</p>
       {m.groups.map((group) => (
@@ -882,10 +862,14 @@ export function EditorToolbar({
   unavailable?: Record<string, string>;
 }) {
   const [menu, setMenu] = useState<InsertMenuId | null>(null);
-  const [lastMenu, setLastMenu] = useState<InsertMenuId>("text");
+  /* The folded Insert button's list of menus, open before a menu is. */
+  const [listOpen, setListOpen] = useState(false);
   const [anchor, setAnchor] = useState(0);
-  const closeMenu = () => setMenu(null);
-  const insertRef = useDismiss(menu !== null, closeMenu);
+  const closeMenu = () => {
+    setMenu(null);
+    setListOpen(false);
+  };
+  const insertRef = useDismiss(menu !== null || listOpen, closeMenu);
 
   const openMenu = (id: InsertMenuId, button: HTMLElement) => {
     if (menu === id) return closeMenu();
@@ -893,8 +877,8 @@ export function EditorToolbar({
     const bar = button.closest("[data-editor-toolbar]") as HTMLElement | null;
     const room = bar ? bar.clientWidth - PANEL_WIDTH - 24 : button.offsetLeft;
     setAnchor(Math.max(0, Math.min(button.offsetLeft, room)));
+    setListOpen(false);
     setMenu(id);
-    setLastMenu(id);
   };
 
   const panel = menu && (
@@ -902,10 +886,6 @@ export function EditorToolbar({
     <div className="absolute top-full mt-1.5" style={{ left: anchor }}>
       <InsertPanel
         menu={menu}
-        onMenu={(id) => {
-          setMenu(id);
-          setLastMenu(id);
-        }}
         unavailable={unavailable}
         onPick={(option) => {
           onInsert(menu, option);
@@ -917,19 +897,45 @@ export function EditorToolbar({
 
   return (
     <div data-editor-toolbar className="relative z-20 flex h-12 shrink-0 items-center gap-1.5 border-b border-hair bg-card px-3">
-      <div ref={insertRef} className="relative flex h-full shrink-0 items-center gap-0.5">
+      <div ref={insertRef} data-insert-root className="relative flex h-full shrink-0 items-center gap-0.5">
         {selection ? (
-          <button
-            type="button"
-            aria-haspopup="dialog"
-            aria-expanded={menu !== null}
-            onClick={(e) => (menu ? closeMenu() : openMenu(lastMenu, e.currentTarget))}
-            className={cn(TOOL, menu && "bg-tint text-brand-deep")}
-          >
-            <Plus className="size-3.5" />
-            Insert
-            <ChevronDown className="size-3 opacity-60" />
-          </button>
+          <>
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={listOpen || menu !== null}
+              onClick={() => (listOpen || menu ? closeMenu() : setListOpen(true))}
+              className={cn(TOOL, INSERT_BUTTON, (listOpen || menu) && "bg-tint text-brand-deep")}
+            >
+              <Plus className="size-3.5 shrink-0" />
+              <span>Insert</span>
+              <ChevronDown className="size-3 shrink-0 opacity-50" />
+            </button>
+            {listOpen && (
+              /* The five menus, then the chosen one's options in the same place. */
+              <div
+                role="menu"
+                className="step-transition absolute left-0 top-full z-30 mt-1.5 grid w-48 gap-0.5 rounded-control border border-hair-2 bg-card p-1.5 shadow-float"
+              >
+                {MENU_IDS.map((id) => {
+                  const Icon = INSERT_MENUS[id].icon;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="menuitem"
+                      onClick={(e) => openMenu(id, e.currentTarget.closest("[data-insert-root]")?.querySelector("button") ?? e.currentTarget)}
+                      className="focus-ring flex h-9 cursor-pointer items-center gap-2 rounded-chip px-2.5 text-left text-body font-semibold text-ink-2 transition hover:bg-subtle hover:text-ink"
+                    >
+                      <Icon className="size-4 shrink-0 text-brand" />
+                      <span className="min-w-0 flex-1">{INSERT_MENUS[id].label}</span>
+                      <span className="truncate text-caption font-normal text-ink-4">{INSERT_MENUS[id].tip}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </>
         ) : (
           <>
             <span className="mr-1 text-micro font-extrabold uppercase tracking-wider text-ink-4">Insert</span>
@@ -944,11 +950,11 @@ export function EditorToolbar({
                   aria-haspopup="dialog"
                   aria-expanded={open}
                   onClick={(e) => openMenu(id, e.currentTarget)}
-                  className={cn(TOOL, "group relative gap-1 px-1.5", open && "bg-tint text-brand-deep")}
+                  className={cn(TOOL, INSERT_BUTTON, "group relative", open && "bg-tint text-brand-deep")}
                 >
-                  <Icon className="size-3.5" />
-                  {m.label}
-                  <ChevronDown className="size-3 opacity-50" />
+                  <Icon className="size-3.5 shrink-0" />
+                  <span>{m.label}</span>
+                  <ChevronDown className="size-3 shrink-0 opacity-50" />
                   {/* What is inside, on hover; hidden while the menu is open. */}
                   {!open && (
                     <span
