@@ -15,13 +15,11 @@ import {
   MORE_CONGRESSES,
   SUGGESTED_CONGRESS_IDS,
   congressLabel,
-  deliverablesFor,
   focusQuestion,
   formatSize,
   isUsable,
   keyRules,
   pageShapeFor,
-  recordingNote,
   searchCongresses,
   sizeChoices,
   typeDetail,
@@ -113,7 +111,7 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
   const { congress, posterType, sizeIndex, focus } = useChosenCongress();
   const [query, setQuery] = useState("");
   /* An answered question is a row with Change; this is the one reopened. */
-  const [changing, setChanging] = useState<"type" | "focus" | null>(null);
+  const [changing, setChanging] = useState<"type" | "focus" | "size" | null>(null);
   const [modal, setModal] = useState<{ mode: "add"; name: string } | { mode: "view"; congress: Congress } | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -166,7 +164,6 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
       return { type: t, label: bracket ? `${t.label} (${bracket})` : t.label, line };
     }) ?? [];
   const typeChosen = typeOptions.find((o) => o.type.id === posterType);
-  const delivery = congress && posterType ? deliverablesFor(congress, posterType) : null;
   const sizes = congress && posterType ? sizeChoices(congress, posterType) : [];
   const typeInfo = congress?.presentationTypes.find((t) => t.id === posterType);
   const required = congress?.rules.requiredItems.value ?? [];
@@ -356,77 +353,28 @@ export function CongressSectionContent({ onContinue }: { onContinue: () => void 
         </div>
       )}
 
-      {/* ── What you deliver: follows from the answers; a size chosen only where the congress allows several ── */}
-      {congress && posterType && focus && delivery && (
+      {/* ── Question 4, only where the congress accepts more than one size ── */}
+      {congress && posterType && focus && sizes.length > 1 && (
         <div className="rise-in">
-        <div className="space-y-2.5 rounded-control border border-hair bg-card px-3.5 py-3">
-            <RowLabel>What you deliver · set by {congress.acronym}</RowLabel>
-            {delivery.print && (
-              <div className="flex items-start gap-2.5">
-                <FileText className="mt-0.5 size-4 shrink-0 text-brand" />
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  <span className="block text-body font-bold text-ink">
-                    Printed poster{delivery.print.required ? "" : " · optional"} · 1 page
-                  </span>
-                  {sizes.length > 1 ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      {sizes.map((s, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          aria-pressed={sizeIndex === i}
-                          onClick={() => chooseSize(i)}
-                          className={cn(
-                            "cursor-pointer rounded-control border px-2.5 py-1.5 text-label font-bold transition-colors",
-                            sizeIndex === i
-                              ? "border-brand bg-tint text-brand-deep ring-1 ring-brand"
-                              : "border-hair-2 text-ink-2 hover:border-hair-3"
-                          )}
-                        >
-                          {formatSize(s)}
-                        </button>
-                      ))}
-                      <span className="text-caption text-ink-3">{congress.acronym} accepts these sizes. Choose one.</span>
-                    </div>
-                  ) : (
-                    <span className="block text-label text-ink-3">
-                      {sizes[0] ? formatSize(sizes[0]) : "Size not stated · check the guidelines"}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-            {delivery.digital && (
-              <div className="flex items-start gap-2.5">
-                <Monitor className="mt-0.5 size-4 shrink-0 text-brand" />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-body font-bold text-ink">
-                    {delivery.print ? "Digital copy for the online gallery" : "Digital poster"}
-                    {delivery.digital.required ? "" : " · optional"} ·{" "}
-                    {delivery.digital.maxPages && delivery.digital.maxPages > 1
-                      ? `up to ${delivery.digital.maxPages} pages or slides`
-                      : "1 page"}
-                  </span>
-                  <span className="block text-label text-ink-3">
-                    {[
-                      delivery.digital.fileTypes.join(" / "),
-                      delivery.digital.aspect,
-                      !delivery.print && sizes[0] ? formatSize(sizes[0]) : null,
-                      delivery.digital.maxMB ? `up to ${delivery.digital.maxMB} MB` : null,
-                      delivery.digital.minDpi ? `${delivery.digital.minDpi} dpi or more` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </span>
-                </span>
-              </div>
-            )}
-            {delivery.digital && recordingNote(congress) && (
-              /* Not part of the poster, but part of what is due: said here so
-                 nobody finds out at upload. */
-              <p className="pl-6.5 text-caption text-ink-3">{recordingNote(congress)}</p>
-            )}
-          </div>
+          <Question
+            answered={sizeIndex != null && sizes[sizeIndex] ? formatSize(sizes[sizeIndex]) : null}
+            label={`Which size are you printing? ${congress.acronym} accepts ${sizes.length}`}
+            icon={<FileText className="size-4" />}
+            changing={changing === "size"}
+            onChange={() => setChanging(changing === "size" ? null : "size")}
+          >
+            <ChoiceGroup
+              label={`Which size are you printing? ${congress.acronym} accepts ${sizes.length}`}
+              value={sizeIndex != null && sizes[sizeIndex] ? formatSize(sizes[sizeIndex]) : ""}
+              options={sizes.map((sz) => formatSize(sz))}
+              icon={() => <FileText className="size-4" />}
+              onChange={(label) => {
+                const index = sizes.findIndex((sz) => formatSize(sz) === label);
+                if (index >= 0) chooseSize(index);
+                setChanging(null);
+              }}
+            />
+          </Question>
         </div>
       )}
 
