@@ -15,6 +15,7 @@ import {
   PanelRight,
   Pencil,
   FilePlus2,
+  FileText,
   FolderOpen,
   Package,
   Plus,
@@ -71,7 +72,12 @@ import {
   EditorToolbar,
   artOptions,
   blockOptions,
+  blockStyleCss,
+  blockStyleOptions,
   chartExtras,
+  pageOptions,
+  EMPTY_BLOCK_STYLE,
+  type BlockStyle,
   insertOption,
   textOptions,
   type InsertMenuId,
@@ -233,6 +239,10 @@ interface InfographicPageData {
   freeItems?: FreeItem[];
   /** Where blocks, art and runs have been dragged to, from their place in the layout. */
   offsets?: Record<string, Offset>;
+  /** Each block's own fill, border, corners and shadow, over the template's. */
+  blockStyles?: Record<string, BlockStyle>;
+  /** The page's own background, and whether its generated background art shows. */
+  pageStyle?: { fill: string | null; art: boolean };
   header: {
     title: string;
     subtitle: string;
@@ -500,6 +510,8 @@ export function InfographicStudioScreen() {
      With none of the three, nothing is selected and the toolbar offers
      Insert only. */
   const [blockFocused, setBlockFocused] = useState(false);
+  /* The page itself, selected by clicking its empty space. */
+  const [pageFocused, setPageFocused] = useState(false);
   /** The added text being typed into, if any. */
   const [editingFreeId, setEditingFreeId] = useState<string | null>(null);
   /* SwishX's answer to an Insert request, waiting for the request to be sent,
@@ -695,6 +707,7 @@ export function InfographicStudioScreen() {
   const handleSelectBlock = (blockId: "header" | "heroStat" | "moa" | "chart" | "isi") => {
     setSelectedBlockId(blockId);
     setBlockFocused(true);
+    setPageFocused(false);
     // Runs and art stop their own clicks, so this was a click on the block itself.
     setSelectedElementId(null);
     setCommentComposerAt(null);
@@ -802,6 +815,7 @@ export function InfographicStudioScreen() {
   };
 
   const handleSelectElement = (id: string, rect: DOMRect | { top: number; left: number; width: number; height: number }) => {
+    setPageFocused(false);
     setSelectedElementId(id);
     const el = textElements[id];
     if (el) setSelectedBlockId(el.blockId as never);
@@ -832,6 +846,42 @@ export function InfographicStudioScreen() {
     clearElementSelection();
     setSelectedArtId(null);
     setBlockFocused(false);
+    setPageFocused(false);
+  };
+
+  /* A click on the page's own empty space selects the page. */
+  const selectPage = () => {
+    clearElementSelection();
+    setSelectedArtId(null);
+    setBlockFocused(false);
+    setPageFocused(true);
+  };
+
+  /* ── A block's look, and the page's ─────────────────────────────────── */
+  const blockCss = (id: string): React.CSSProperties => ({
+    ...blockStyleCss(currentPage.blockStyles?.[id]),
+    ...offsetStyle(currentPage.offsets?.[`block:${id}`]),
+  });
+  const patchBlockStyle = (id: string, patch: Partial<BlockStyle>) => {
+    record();
+    updateCurrentPage((prev) => ({
+      ...prev,
+      blockStyles: { ...prev.blockStyles, [id]: { ...EMPTY_BLOCK_STYLE, ...prev.blockStyles?.[id], ...patch } },
+    }));
+  };
+  const resetBlockStyle = (id: string) => {
+    record();
+    updateCurrentPage((prev) => {
+      const next = { ...prev.blockStyles };
+      delete next[id];
+      return { ...prev, blockStyles: next };
+    });
+    showToast("Back to the template's look");
+  };
+  const pageStyle = currentPage.pageStyle ?? { fill: null, art: true };
+  const patchPageStyle = (patch: Partial<{ fill: string | null; art: boolean }>) => {
+    record();
+    updateCurrentPage((prev) => ({ ...prev, pageStyle: { ...(prev.pageStyle ?? { fill: null, art: true }), ...patch } }));
   };
 
   /* ── Moving things ──────────────────────────────────────────────────────
@@ -855,6 +905,7 @@ export function InfographicStudioScreen() {
   };
 
   const selectFree = (id: string) => {
+    setPageFocused(false);
     setSelectedElementId(`free.${id}`);
     /* The Edit panel lists the selected block's text; added text is its own group. */
     setSelectedBlockId("free" as never);
@@ -1408,8 +1459,13 @@ export function InfographicStudioScreen() {
         onMoveUp: () => body && moveBlock(body, -1),
         onMoveDown: () => body && moveBlock(body, 1),
         onDelete: () => body && deleteBlock(body),
-        extra:
-          id === "chart"
+        extra: [
+          ...blockStyleOptions({
+            style: currentPage.blockStyles?.[id],
+            onStyle: (patch) => patchBlockStyle(id, patch),
+            onReset: () => resetBlockStyle(id),
+          }),
+          ...(id === "chart"
             ? chartExtras({
                 source: currentPage.chart.cohort,
                 onEditData: () =>
@@ -1418,7 +1474,8 @@ export function InfographicStudioScreen() {
                     "Change the chart data so that "
                   ),
               })
-            : [],
+            : []),
+        ],
       }),
       onAddToChat: () => {
         handToChat(
@@ -1426,6 +1483,33 @@ export function InfographicStudioScreen() {
           `Change the ${label.toLowerCase()} so that `
         );
         showToast(`${label} added to the chat`);
+      },
+    };
+  }
+
+  if (studioMode === "editor" && !toolbarSelection && pageFocused) {
+    toolbarSelection = {
+      id: `page-${activePageId}`,
+      icon: FileText,
+      name: currentPage.name,
+      path: `${pageLabel} · the whole page`,
+      items: pageOptions({
+        fill: pageStyle.fill,
+        art: pageStyle.art,
+        hasArt: Boolean(artFor("page")),
+        onFill: (fill) => patchPageStyle({ fill }),
+        onArt: (art) => patchPageStyle({ art }),
+        onReset: () => {
+          patchPageStyle({ fill: null, art: true });
+          showToast("Back to the template's page");
+        },
+      }),
+      onAddToChat: () => {
+        handToChat(
+          { id: `page-${activePageId}`, label: `${pageLabel} · ${currentPage.name}`, detail: "The whole page" },
+          `Change ${pageLabel.toLowerCase()} so that `
+        );
+        showToast(`${pageLabel} added to the chat`);
       },
     };
   }
@@ -1873,17 +1957,28 @@ export function InfographicStudioScreen() {
             >
               <div
                 ref={pageCanvasRef}
+                onClick={(e) => {
+                  /* Empty page, not a block, run, art or added text inside it. */
+                  if (studioMode !== "editor") return;
+                  const target = e.target as HTMLElement;
+                  if (target.closest("[data-block], [data-free-item], [data-canvas-text], [role='button']")) return;
+                  selectPage();
+                }}
                 style={{
                   width: pageGeometry.width,
                   height: pageGeometry.height,
+                  ...(pageStyle.fill ? { backgroundColor: pageStyle.fill } : {}),
                   transform: `scale(${pageScale})`,
                   transformOrigin: "top left",
                 }}
-                className="absolute left-0 top-0 flex select-none flex-col overflow-hidden rounded-card border border-hair-2 bg-card text-left shadow-2xl transition-transform duration-150"
+                className={cn(
+                  "absolute left-0 top-0 flex select-none flex-col overflow-hidden rounded-card border border-hair-2 bg-card text-left shadow-2xl transition-transform duration-150",
+                  pageFocused && studioMode === "editor" && "ring-3 ring-brand ring-offset-4 ring-offset-transparent"
+                )}
               >
                 {/* The one true overlay: it sits behind everything rather than
                     taking space from anything. */}
-                <PageBackgroundArt layer={artFor("page")} elapsed={genElapsed} />
+                {pageStyle.art && <PageBackgroundArt layer={artFor("page")} elapsed={genElapsed} />}
 
                 <div
                   ref={compositionRef}
@@ -1897,7 +1992,8 @@ export function InfographicStudioScreen() {
                 {/* 1. Header Band */}
                 <div
                   onClick={() => studioMode === "editor" && handleSelectBlock("header")}
-                    style={offsetStyle(offsetOf("block:header"))}
+                    data-block={"header"}
+                    style={blockCss("header")}
                     onPointerDown={startMove("block:header", () => handleSelectBlock("header"))}
                   className={cn(
                     "relative z-[1] p-6 pb-5 bg-gradient-to-r from-[#0c1524] via-[#14233c] to-[#1e3458] text-white transition group",
@@ -1933,7 +2029,7 @@ export function InfographicStudioScreen() {
                         })}
                         elapsed={genElapsed}
                         selected={selectedArtId === artFor("header")!.id}
-                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
+                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); setPageFocused(false); }}
                         interactive={studioMode === "editor"}
                         className="h-[74px] w-[108px] shrink-0"
                       />
@@ -1956,7 +2052,8 @@ export function InfographicStudioScreen() {
                     bodyId === "heroStat" ? (
                   <div key="heroStat"
                     onClick={() => studioMode === "editor" && handleSelectBlock("heroStat")}
-                    style={offsetStyle(offsetOf("block:heroStat"))}
+                    data-block={"heroStat"}
+                    style={blockCss("heroStat")}
                     onPointerDown={startMove("block:heroStat", () => handleSelectBlock("heroStat"))}
                     className={cn(
                       "p-4 rounded-panel bg-[#fff7f4] border border-tint-line shadow-2xs transition relative group",
@@ -1988,7 +2085,8 @@ export function InfographicStudioScreen() {
                     ) : bodyId === "moa" ? (
                   <div key="moa"
                     onClick={() => studioMode === "editor" && handleSelectBlock("moa")}
-                    style={offsetStyle(offsetOf("block:moa"))}
+                    data-block={"moa"}
+                    style={blockCss("moa")}
                     onPointerDown={startMove("block:moa", () => handleSelectBlock("moa"))}
                     className={cn(
                       "p-4 rounded-panel bg-subtle border border-hair shadow-2xs transition relative group",
@@ -2018,7 +2116,7 @@ export function InfographicStudioScreen() {
                         })}
                         elapsed={genElapsed}
                         selected={selectedArtId === artFor("moa")!.id}
-                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
+                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); setPageFocused(false); }}
                         interactive={studioMode === "editor"}
                         className="mb-2.5 h-[96px] w-full"
                       />
@@ -2039,7 +2137,8 @@ export function InfographicStudioScreen() {
                     ) : (
                   <div key="chart"
                     onClick={() => studioMode === "editor" && handleSelectBlock("chart")}
-                    style={offsetStyle(offsetOf("block:chart"))}
+                    data-block={"chart"}
+                    style={blockCss("chart")}
                     onPointerDown={startMove("block:chart", () => handleSelectBlock("chart"))}
                     className={cn(
                       "p-4 rounded-panel bg-card border border-hair shadow-2xs transition relative group",
@@ -2076,7 +2175,7 @@ export function InfographicStudioScreen() {
                         })}
                         elapsed={genElapsed}
                         selected={selectedArtId === artFor("chart")!.id}
-                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); }}
+                        onSelect={(id) => { setSelectedArtId(id); clearElementSelection(); setPageFocused(false); }}
                         interactive={studioMode === "editor"}
                         className="mb-2.5 h-[96px] w-full"
                       />
@@ -2116,7 +2215,8 @@ export function InfographicStudioScreen() {
                   {/* 5. ISI / Fair Balance Footnote */}
                   <div
                     onClick={() => studioMode === "editor" && handleSelectBlock("isi")}
-                    style={offsetStyle(offsetOf("block:isi"))}
+                    data-block={"isi"}
+                    style={blockCss("isi")}
                     onPointerDown={startMove("block:isi", () => handleSelectBlock("isi"))}
                     className={cn(
                       "p-3.5 rounded-panel bg-[#fafafa] border border-hair mt-auto transition relative group",

@@ -22,12 +22,14 @@ import {
   Info,
   Italic,
   LineChart,
+  Layers2,
   Link2,
   List,
   ListOrdered,
   Lock,
   Network,
   Package,
+  PaintBucket,
   Pilcrow,
   PieChart,
   Plus,
@@ -38,6 +40,8 @@ import {
   ScanText,
   ScatterChart,
   Shapes,
+  Square,
+  SquareRoundCorner,
   Sparkles,
   Table2,
   Trash2,
@@ -731,6 +735,380 @@ export function blockOptions({
     { key: "down", node: <ToolButton icon={ArrowDown} label="Move down" onClick={onMoveDown} disabled={!canMoveDown} /> },
     divider("d1"),
     { key: "delete", node: <ToolButton icon={Trash2} label="Delete" onClick={onDelete} tone="danger" /> },
+  ];
+}
+
+/* ─────────────────────────── a block's own look ─────────────────────────── */
+
+/** How a block looks as a shape: what fills it and what edges it. Null keeps the template's. */
+export interface BlockStyle {
+  fill: string | null;
+  border: { width: 1 | 2 | 3; color: string } | null;
+  radius: "square" | "rounded" | "round" | null;
+  shadow: "none" | "soft" | "raised" | null;
+}
+
+export const EMPTY_BLOCK_STYLE: BlockStyle = { fill: null, border: null, radius: null, shadow: null };
+
+/* Brand colours only, as for text: on approved artwork, any other colour is
+   a way to ship something off-brand. */
+const FILLS: Array<{ label: string; value: string | null }> = [
+  { label: "Template", value: null },
+  { label: "White", value: "#ffffff" },
+  { label: "Warm grey", value: "#f4f3f1" },
+  { label: "Brand tint", value: "#fff5f1" },
+  { label: "Evidence tint", value: "#e7f4ec" },
+  { label: "Brand orange", value: "#fd4816" },
+  { label: "Deep brand", value: "#b82f0c" },
+  { label: "Navy", value: "#14233c" },
+  { label: "Ink", value: "#0a0d14" },
+];
+const BORDER_COLOURS: Array<{ label: string; value: string }> = [
+  { label: "Hairline grey", value: "#d9d7d2" },
+  { label: "Brand orange", value: "#fd4816" },
+  { label: "Deep brand", value: "#b82f0c" },
+  { label: "Navy", value: "#14233c" },
+  { label: "Evidence green", value: "#12784a" },
+];
+const RADIUS_PX: Record<NonNullable<BlockStyle["radius"]>, number> = { square: 0, rounded: 12, round: 24 };
+const SHADOWS: Record<NonNullable<BlockStyle["shadow"]>, string> = {
+  none: "none",
+  soft: "var(--shadow-soft)",
+  raised: "var(--shadow-float)",
+};
+
+/** The CSS for a styled block, laid over its template classes. */
+export function blockStyleCss(style: BlockStyle | undefined): React.CSSProperties {
+  if (!style) return {};
+  return {
+    ...(style.fill ? { backgroundColor: style.fill, backgroundImage: "none" } : {}),
+    ...(style.border ? { border: `${style.border.width}px solid ${style.border.color}` } : {}),
+    ...(style.radius ? { borderRadius: RADIUS_PX[style.radius] } : {}),
+    ...(style.shadow ? { boxShadow: SHADOWS[style.shadow] } : {}),
+  };
+}
+
+function Swatch({
+  label,
+  value,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: string | null;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      aria-pressed={active}
+      className={cn(
+        "focus-ring size-6 shrink-0 cursor-pointer rounded-glyph border transition",
+        active ? "border-ink ring-2 ring-brand/30" : "border-hair-3 hover:border-ink-3"
+      )}
+      style={
+        value
+          ? { background: value }
+          : { background: "linear-gradient(135deg, #ffffff 0 46%, var(--color-hair-3) 46% 54%, #ffffff 54%)" }
+      }
+    />
+  );
+}
+
+function Choice<T extends string | number>({
+  options,
+  value,
+  onPick,
+}: {
+  options: Array<{ label: string; value: T }>;
+  value: T | null;
+  onPick: (value: T) => void;
+}) {
+  return (
+    <div className="flex gap-0.5 rounded-chip bg-subtle p-0.5">
+      {options.map((o) => (
+        <button
+          key={String(o.value)}
+          type="button"
+          onClick={() => onPick(o.value)}
+          aria-pressed={value === o.value}
+          className={cn(
+            "focus-ring h-7 cursor-pointer whitespace-nowrap rounded-chip px-2 text-label font-semibold transition",
+            value === o.value ? "bg-card text-brand-deep shadow-hair" : "text-ink-3 hover:text-ink"
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function blockStyleOptions({
+  style,
+  onStyle,
+  onReset,
+}: {
+  style: BlockStyle | undefined;
+  onStyle: (patch: Partial<BlockStyle>) => void;
+  onReset: () => void;
+}): ToolbarItem[] {
+  const s = style ?? EMPTY_BLOCK_STYLE;
+  const edited = Boolean(s.fill || s.border || s.radius || s.shadow);
+  return [
+    {
+      key: "fill",
+      node: (
+        <ToolMenu
+          label="Fill colour"
+          trigger={
+            <span className="inline-flex items-center gap-1.5">
+              <PaintBucket className="size-3.5" />
+              <span
+                className="size-3 rounded-glyph border border-hair-3"
+                style={{ background: s.fill ?? "linear-gradient(135deg, #ffffff 0 46%, var(--color-hair-3) 46% 54%, #ffffff 54%)" }}
+              />
+            </span>
+          }
+        >
+          {(close) => (
+            <div className="grid w-56 gap-2 p-1">
+              <span className="text-caption font-bold text-ink-3">Fill</span>
+              <div className="flex flex-wrap gap-1.5">
+                {FILLS.map((f) => (
+                  <Swatch
+                    key={f.label}
+                    label={f.label}
+                    value={f.value}
+                    active={s.fill === f.value}
+                    onClick={() => {
+                      onStyle({ fill: f.value });
+                      close();
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </ToolMenu>
+      ),
+    },
+    {
+      key: "border",
+      node: (
+        <ToolMenu
+          label="Border"
+          trigger={
+            <span className="inline-flex items-center gap-1.5">
+              <Square className="size-3.5" />
+              Border
+            </span>
+          }
+        >
+          {() => (
+            <div className="grid w-64 gap-2.5 p-1">
+              <span className="text-caption font-bold text-ink-3">Thickness</span>
+              <Choice
+                value={s.border?.width ?? 0}
+                options={[
+                  { label: "None", value: 0 },
+                  { label: "Thin", value: 1 },
+                  { label: "Medium", value: 2 },
+                  { label: "Thick", value: 3 },
+                ]}
+                onPick={(w) =>
+                  onStyle({
+                    border: w === 0 ? null : { width: w as 1 | 2 | 3, color: s.border?.color ?? BORDER_COLOURS[0].value },
+                  })
+                }
+              />
+              <span className="text-caption font-bold text-ink-3">Colour</span>
+              <div className="flex flex-wrap gap-1.5">
+                {BORDER_COLOURS.map((c) => (
+                  <Swatch
+                    key={c.label}
+                    label={c.label}
+                    value={c.value}
+                    active={s.border?.color === c.value}
+                    onClick={() => onStyle({ border: { width: s.border?.width ?? 1, color: c.value } })}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </ToolMenu>
+      ),
+    },
+    {
+      key: "corners",
+      node: (
+        <ToolMenu
+          label="Corners"
+          trigger={
+            <span className="inline-flex items-center gap-1.5">
+              <SquareRoundCorner className="size-3.5" />
+              Corners
+            </span>
+          }
+        >
+          {(close) => (
+            <div className="p-1">
+              <Choice
+                value={s.radius}
+                options={[
+                  { label: "Square", value: "square" as const },
+                  { label: "Rounded", value: "rounded" as const },
+                  { label: "More rounded", value: "round" as const },
+                ]}
+                onPick={(radius) => {
+                  onStyle({ radius });
+                  close();
+                }}
+              />
+            </div>
+          )}
+        </ToolMenu>
+      ),
+    },
+    {
+      key: "shadow",
+      node: (
+        <ToolMenu
+          label="Shadow"
+          trigger={
+            <span className="inline-flex items-center gap-1.5">
+              <Layers2 className="size-3.5" />
+              Shadow
+            </span>
+          }
+        >
+          {(close) => (
+            <div className="p-1">
+              <Choice
+                value={s.shadow}
+                options={[
+                  { label: "None", value: "none" as const },
+                  { label: "Soft", value: "soft" as const },
+                  { label: "Raised", value: "raised" as const },
+                ]}
+                onPick={(shadow) => {
+                  onStyle({ shadow });
+                  close();
+                }}
+              />
+            </div>
+          )}
+        </ToolMenu>
+      ),
+    },
+    {
+      key: "style-reset",
+      node: (
+        <ToolButton
+          icon={RotateCcw}
+          label="Reset"
+          onClick={onReset}
+          disabled={!edited}
+          title="Back to the template's look"
+        />
+      ),
+    },
+  ];
+}
+
+/** The page itself: its background colour, and whether the generated background art shows. */
+export function pageOptions({
+  fill,
+  art,
+  hasArt,
+  onFill,
+  onArt,
+  onReset,
+}: {
+  fill: string | null;
+  /** Whether the generated background art shows. */
+  art: boolean;
+  hasArt: boolean;
+  onFill: (fill: string | null) => void;
+  onArt: (show: boolean) => void;
+  onReset: () => void;
+}): ToolbarItem[] {
+  return [
+    {
+      key: "page-fill",
+      node: (
+        <ToolMenu
+          label="Page background"
+          trigger={
+            <span className="inline-flex items-center gap-1.5">
+              <PaintBucket className="size-3.5" />
+              Background
+              <span
+                className="size-3 rounded-glyph border border-hair-3"
+                style={{ background: fill ?? "linear-gradient(135deg, #ffffff 0 46%, var(--color-hair-3) 46% 54%, #ffffff 54%)" }}
+              />
+            </span>
+          }
+        >
+          {(close) => (
+            <div className="grid w-56 gap-2 p-1">
+              <span className="text-caption font-bold text-ink-3">Page background</span>
+              <div className="flex flex-wrap gap-1.5">
+                {FILLS.map((f) => (
+                  <Swatch
+                    key={f.label}
+                    label={f.label}
+                    value={f.value}
+                    active={fill === f.value}
+                    onClick={() => {
+                      onFill(f.value);
+                      close();
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </ToolMenu>
+      ),
+    },
+    ...(hasArt
+      ? [
+          {
+            key: "page-art",
+            node: (
+              <div className="flex shrink-0 items-center gap-1.5">
+                <span className="text-label font-semibold text-ink-3">Background art</span>
+                <Choice
+                  value={art ? "show" : "hide"}
+                  options={[
+                    { label: "Show", value: "show" as const },
+                    { label: "Hide", value: "hide" as const },
+                  ]}
+                  onPick={(v) => onArt(v === "show")}
+                />
+              </div>
+            ),
+          },
+        ]
+      : []),
+    divider("dp"),
+    {
+      key: "page-reset",
+      node: (
+        <ToolButton
+          icon={RotateCcw}
+          label="Reset"
+          onClick={onReset}
+          disabled={fill === null && art}
+          title="Back to the template's page"
+        />
+      ),
+    },
   ];
 }
 
