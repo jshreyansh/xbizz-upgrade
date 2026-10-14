@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft,
   ArrowRight,
   ArrowUp,
   ChevronDown,
@@ -320,10 +319,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const creativeFlow = useCreativeSteps({});
   const flowSteps = isInfographic ? creativeFlow : videoFlow;
 
-  const handleBackToSource = () => {
-    setVideoSubStage("mode-select");
-  };
-
   const loadScenario = (scenario: DemoScenario) => {
     setBrief(scenario.inputs.brief);
     setAudience(scenario.inputs.audience);
@@ -375,15 +370,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     <div className="min-h-screen flex flex-col bg-subtle" onClick={() => setActivePopover(null)}>
       {/* ─── Top Studio-Matched Header Bar ─── */}
       <ScreenHeader onClose={() => exit.requestExit()}>
-        {/* The first step of the trail, so Back leaves it for the mode
-            picker — there is nothing behind Brief inside the flow. */}
-        <button
-          onClick={handleBackToSource}
-          className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 hover:bg-black/5 cursor-pointer"
-          aria-label="Back to modes"
-        >
-          <ArrowLeft className="size-4" />
-        </button>
         <SwishXMark compact />
         <div className="mx-3 h-5 w-px bg-hair" />
 

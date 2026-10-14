@@ -1609,6 +1609,17 @@ export function InfographicStudioScreen() {
   /* The drug this document is for, as the Product Library has it. */
   const brandProduct = libraryProducts.find((p) => p.name.toLowerCase() === brandName.toLowerCase());
 
+  /* The pages as Preview and Publish shows them; Version history shows a version the same way. */
+  const docPreview = (
+    <DocPagePreview
+      sourceRef={pageCanvasRef}
+      pageSize={{ width: pageGeometry.width, height: pageGeometry.height }}
+      pages={pagesList.map((pg) => ({ id: pg.id, name: pg.name }))}
+      activePage={activePageId}
+      onSelectPage={setInfographicActivePage}
+    />
+  );
+
   return (
     <WorkbenchLayout
       className="bg-[#edf0ed] text-left"
@@ -1651,7 +1662,8 @@ export function InfographicStudioScreen() {
 
             {/* Mode Switchers */}
             <div className="ml-4 hidden items-center gap-1.5 md:flex">
-              <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
+              {/* Not in the editor: the stage is plain from the screen itself. */}
+              {studioMode !== "editor" && <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />}
 
               {studioMode === "generating" && (
                 <span className="inline-flex items-center gap-1.5 rounded-chip bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse">
@@ -1661,14 +1673,6 @@ export function InfographicStudioScreen() {
               )}
               {studioMode === "review" && (
                 <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setStudioMode("editor")}
-                    className="focus-ring flex items-center gap-1.5 rounded-chip border border-hair bg-canvas px-2.5 py-1 text-label font-bold text-ink-2 transition hover:border-brand hover:bg-tint hover:text-brand shadow-xs cursor-pointer"
-                  >
-                    <Pencil className="size-3 text-brand" />
-                    <span>Editor</span>
-                  </button>
-                  <span className="text-ink-3">/</span>
                   <span className="rounded-chip bg-ok-bg px-3 py-0.5 text-caption font-extrabold text-ok border border-ok-line">
                     Shared Review View · Final Asset
                   </span>
@@ -1682,17 +1686,18 @@ export function InfographicStudioScreen() {
             {/* The version, beside the action that makes the next one. */}
             {studioMode === "editor" && (
               <VersionHistoryButton
-                label={assetVersions.find((v) => v.state === "current")?.label ?? "Draft v1"}
+                publishedCount={publishedCount}
                 sessionStart={sessionStart}
                 editCount={undoStack.length}
                 author="Maya Kapoor"
+                preview={docPreview}
                 onRestore={(v) => {
-                  showToast(`Restored the version from ${v.day}, ${v.span.split(" – ")[0]}`);
+                  showToast(`Restored ${v.label}`);
                   setCopilotPanelOpen(true);
                   setActiveTab("assistant");
                   addChatMessage({
                     role: "swishx",
-                    text: `Restored the version from **${v.day}, ${v.span}**. The session you were in is kept in Version history, so you can go back to it.`,
+                    text: `Restored **${v.label}** (${v.day}, ${v.span}). The session you were in is kept in Version history, so you can go back to it.`,
                   });
                 }}
               />
@@ -1715,6 +1720,13 @@ export function InfographicStudioScreen() {
                 the same list offered twice, and from version 2 on both were
                 on screen at once. */}
 
+            {/* A published asset opens here from the library; Edit starts the next draft. */}
+            {studioMode === "review" && (
+              <Button size="sm" variant="secondary" onClick={() => setStudioMode("editor")} className="gap-1.5 px-3.5 font-bold">
+                <Pencil className="size-3.5" />
+                Edit
+              </Button>
+            )}
             {studioMode === "review" && (
               <Button
                 size="sm"

@@ -3,7 +3,6 @@
 import {
   AlertCircle,
   Pencil,
-  ArrowLeft,
   ArrowRight,
   BookOpenCheck,
   Check,
@@ -100,7 +99,7 @@ import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
-import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { useVideoSteps } from "@/features/workspace/flow-steps";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
@@ -404,7 +403,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const [planLanded, setPlanLanded] = useState(false);
 
   const flowSteps = useVideoSteps({});
-  const backStep = previousStep(flowSteps, "plan");
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -1280,15 +1278,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
       autoCollapsePanelBelow="laptop"
       header={
         <ScreenHeader onClose={() => exit.requestExit()}>
-          <button
-            onClick={() => backStep?.onGo?.()}
-            disabled={!backStep?.onGo}
-            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-            aria-label={backStep ? `Back to ${backStep.label}` : "Back"}
-            title={backStep ? `Back to ${backStep.label}` : undefined}
-          >
-            <ArrowLeft className="size-4" />
-          </button>
           <SwishXMark compact />
           <div className="mx-3 h-5 w-px bg-hair" />
 

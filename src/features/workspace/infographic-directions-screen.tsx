@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import {
   AlertTriangle,
-  ArrowLeft,
   ArrowRight,
   Check,
   CheckCircle2,
@@ -36,7 +35,7 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
-import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { useCreativeSteps } from "@/features/workspace/flow-steps";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -168,7 +167,6 @@ export function InfographicDirectionsScreen() {
   const currentStep = useWorkspaceStore((st) => st.creativeStep) as InfographicSubStep;
   const setCurrentStep = useWorkspaceStore((st) => st.setCreativeStep);
   const flowSteps = useCreativeSteps({});
-  const backStep = previousStep(flowSteps, currentStep === "template" ? "layout" : "plan");
 
   /* ── The use case is the whole context, not a label ──────────────────────
      Same switcher as the video plan, filtered to image cases. Changing it
@@ -690,22 +688,6 @@ export function InfographicDirectionsScreen() {
       autoCollapsePanelBelow="laptop"
       header={
         <ScreenHeader onClose={() => exit.requestExit()}>
-          <button
-            type="button"
-            onClick={() => {
-              // The shell's back button is the only one. The layout step had
-              // grown its own, two arrows apart, which is a choice between
-              // two things that should be one.
-              // One step at a time, rather than dropping out of the flow.
-              backStep?.onGo?.();
-            }}
-            disabled={!backStep?.onGo}
-            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-            aria-label={backStep ? `Back to ${backStep.label}` : "Back"}
-            title={backStep ? `Back to ${backStep.label}` : undefined}
-          >
-            <ArrowLeft className="size-4" />
-          </button>
 
           <SwishXMark compact />
           <div className="mx-3 h-5 w-px bg-hair" />

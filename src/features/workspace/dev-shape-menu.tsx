@@ -12,8 +12,17 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
  * the video editor can be checked in both shapes without walking back to
  * the brief. A marketer sets the shape once, on the brief; this menu exists
  * for the people building the screens, and nothing else should depend on it.
+ *
+ * The video editor's Version 1 / Future switch lives here too: it picks which
+ * editor to show, which is a question for the people building it, not for a
+ * marketer, so it stays out of the header.
  */
-export function DevShapeMenu() {
+export function DevShapeMenu({
+  editorVersion,
+}: {
+  /** The video editor's build: what ships, or the preview of what it grows into. */
+  editorVersion?: { value: "v1" | "future"; onChange: (next: "v1" | "future") => void };
+} = {}) {
   const format = useWorkspaceStore((s) => s.format);
   const setFormat = useWorkspaceStore((s) => s.setFormat);
   const [open, setOpen] = useState(false);
@@ -84,6 +93,39 @@ export function DevShapeMenu() {
               </button>
             );
           })}
+          {editorVersion && (
+            <>
+              <div className="mx-1 my-1 border-t border-hair" />
+              <div className="flex items-center gap-1.5 px-2.5 pb-1.5 pt-1.5 text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">
+                Editor build
+                <span className="rounded-glyph bg-warn-bg px-1.5 py-px text-micro font-extrabold normal-case tracking-normal text-warn">
+                  Dev only
+                </span>
+              </div>
+              {([
+                { id: "v1" as const, label: "Version 1", hint: "Ships today: select and direct" },
+                { id: "future" as const, label: "Future", hint: "Drag elements, inline element toolbar" },
+              ]).map((option) => {
+                const active = editorVersion.value === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={active}
+                    onClick={() => { editorVersion.onChange(option.id); setOpen(false); }}
+                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-control px-2.5 py-2 text-left transition-colors hover:bg-subtle"
+                  >
+                    <span className="grid min-w-0 flex-1 gap-0.5">
+                      <span className={cn("text-body-lg", active ? "font-extrabold text-ink" : "font-semibold text-ink-2")}>{option.label}</span>
+                      <span className="truncate text-caption text-ink-4">{option.hint}</span>
+                    </span>
+                    {active && <Check className="size-3.5 shrink-0 text-brand" strokeWidth={3} />}
+                  </button>
+                );
+              })}
+            </>
+          )}
           <p className="mx-1 mt-1 border-t border-hair px-1.5 pb-1 pt-2 text-caption leading-snug text-ink-4">
             For checking screens in both shapes. Remove this menu before release.
           </p>

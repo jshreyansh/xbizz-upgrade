@@ -10,6 +10,7 @@ import {
   Clapperboard,
   ChevronUp,
   Download,
+  Pencil,
   Expand,
   FileCheck2,
   Film,
@@ -71,9 +72,10 @@ import {
   type Suggestion,
 } from "@/features/workspace/suggestion-queue";
 import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
-import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
+import { VersionHistoryButton, VIDEO_SESSIONS } from "@/features/workspace/version-history";
 import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
 import type { EvidenceState, InspectorTab, Scene, Shot } from "@/types/content";
 import { SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
@@ -118,7 +120,6 @@ import { SceneProgressStrip } from "@/features/workspace/scene-progress-strip";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 import { SubtitleStrip, SubtitleSyncPanel } from "@/features/workspace/subtitle-sync";
 import { ScreenHeader } from "@/components/patterns/screen-header";
-import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { LogoMark } from "@/components/ui/logo-mark";
@@ -459,7 +460,6 @@ export function StudioScreen() {
     toProduction: () => { setStudioMode("scenes"); setActiveTab("assistant"); },
     toEditor: () => { setStudioMode("editor"); setActiveTab("edit"); },
   });
-  const backStep = previousStep(flowSteps, currentStepId);
 
   const editorOpenStepList = useMemo(() => editorOpenSteps(sceneList.length), [sceneList.length]);
   const masterRenderStepList = useMemo(
@@ -467,6 +467,10 @@ export function StudioScreen() {
     [sceneList.length, selectedQuality]
   );
   const isReview = studioMode === "review";
+  /* When this session, and so this version, began. */
+  const [sessionStart] = useState(() =>
+    new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+  );
 
   /* From the catalogue, not from a five-entry map that answered "Velmora" for
      every brand it had not heard of. */
@@ -1771,6 +1775,61 @@ export function StudioScreen() {
     }, 500);
   };
 
+  /* The whole film, as Preview and Publish shows it; Version history shows a version the same way. */
+  const renderFilmPreview = (frozen: boolean) => (
+    /* The whole film, from the composition engine the published
+       review plays, with its chapters to step through. */
+    <div className="flex h-full items-center justify-center p-4">
+      <div
+        className={cn(
+          "relative flex w-full flex-col justify-between overflow-hidden rounded-card bg-black shadow-on-dark ring-1 ring-white/10",
+          /* Portrait fills the height and takes its width from it;
+             sized by its contents it shrank to a thumbnail. */
+          isPortrait ? "aspect-[9/16] h-full w-auto max-w-full" : "aspect-video"
+        )}
+      >
+        <div className="absolute inset-0">
+          <MasterVideoSequenceComposition
+            sceneList={sceneList}
+            activeScene={activeMasterChapter}
+            brandName={brandName}
+            isPlaying={masterPlaying && !frozen}
+            sceneTime={Math.max(0, masterCurrentTime - (activeMasterChapter?.start ?? 0))}
+          />
+        </div>
+        <div className="relative z-[40] flex items-center justify-between gap-3 bg-gradient-to-b from-black/80 to-transparent p-3 text-label text-white">
+          <span className="min-w-0 truncate font-extrabold">
+            {activeMasterChapter?.number}. {activeMasterChapter?.title}
+          </span>
+          <span className="shrink-0 font-semibold text-white/70">
+            Chapter {activeMasterChapter?.number} of {chapters.length}
+          </span>
+        </div>
+        <div className="relative z-[40] space-y-2.5 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-3 pt-8 text-white">
+          <ChapterScrubber
+            chapters={chapters}
+            currentTime={masterCurrentTime}
+            totalDuration={totalDurationSeconds}
+            onSeek={setMasterCurrentTime}
+          />
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMasterPlaying(!masterPlaying)}
+              className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-brand text-white shadow-md transition-transform hover:bg-brand-deep active:scale-95"
+              aria-label={masterPlaying ? "Pause" : "Play"}
+            >
+              {masterPlaying ? <Pause className="size-4 fill-current" /> : <Play className="ml-0.5 size-4 fill-current" />}
+            </button>
+            <span className="font-mono text-label font-bold tabular-nums text-white/90">
+              0:{Math.floor(masterCurrentTime).toString().padStart(2, "0")} / 0:{totalDurationSeconds}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <WorkbenchLayout
       className="bg-[#edf0ed]"
@@ -1790,61 +1849,28 @@ export function StudioScreen() {
       panelMinCanvas={isReview ? 240 + 360 : isEditor ? 220 + 360 : 360}
       header={
         <ScreenHeader onClose={() => exit.requestExit()}>
-          {/* One step back along the trail, not out of the project. This went
-              to the app home from every mode, so the control shaped like
-              "back" was the one that lost your place — while the crumb beside
-              it offered the real step back. */}
-          <button
-            onClick={() => backStep?.onGo?.()}
-            disabled={!backStep?.onGo}
-            className="focus-ring mr-2 grid size-8 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-            aria-label={backStep ? `Back to ${backStep.label}` : "Back"}
-            title={backStep ? `Back to ${backStep.label}` : undefined}
-          >
-            <ArrowLeft className="size-4" />
-          </button>
           <SwishXMark compact />
           <div className="mx-3 h-5 w-px bg-hair" />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="truncate text-body font-[800] text-ink">{projectTitle}</span>
-              <VersionChip versions={assetVersions} />
+              {/* In the editor the version sits with Preview and Publish, as in the doc editor. */}
+              {!isEditor && <VersionChip versions={assetVersions} />}
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
           </div>
 
-          <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />
+          {/* Not in the editor: the stage is plain from the screen itself. */}
+          {!isEditor && <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />}
 
           <div className="ml-auto flex items-center gap-2">
-            {/* Version. Defaults to Version 1 because that is what ships;
-                Future is the opt-in preview of what it grows into. Editor
-                only — a reviewer on a shared link is not choosing an editor. */}
-            {isEditor && (
-              <Segmented className="hidden bg-card sm:flex" aria-label="Editor version">
-                {([
-                  { id: "v1" as const, label: "Version 1" },
-                  { id: "future" as const, label: "Future" },
-                ]).map((option) => (
-                  <SegmentedButton
-                    key={option.id}
-                    active={editorVersion === option.id}
-                    onClick={() => setEditorVersion(option.id)}
-                    title={
-                      option.id === "v1"
-                        ? "Ships today: select and direct, no direct manipulation"
-                        : "Preview: drag elements and use the inline element toolbar"
-                    }
-                    className={cn("px-2.5 py-1 text-caption", editorVersion === option.id && "bg-brand text-white shadow-none")}
-                  >
-                    {option.label}
-                  </SegmentedButton>
-                ))}
-              </Segmented>
-            )}
-
             {/* DEV ONLY — remove before release. Landscape / portrait, so
                 the storyboard and the editor can be checked in both shapes. */}
-            {!isReview && <DevShapeMenu />}
+            {!isReview && (
+              <DevShapeMenu
+                editorVersion={isEditor ? { value: editorVersion, onChange: setEditorVersion } : undefined}
+              />
+            )}
 
             {/* Toggle Right Sidebar Panel Button (Icon Only) */}
             <button
@@ -1862,6 +1888,26 @@ export function StudioScreen() {
               <PanelRight className="size-4" />
             </button>
 
+            {isEditor && (
+              <VersionHistoryButton
+                publishedCount={publishedCount}
+                sessionStart={sessionStart}
+                editCount={chatMessages.filter((m) => m.role === "user" && !m.seeded).length}
+                author="Maya Kapoor"
+                samples={VIDEO_SESSIONS}
+                preview={renderFilmPreview(false)}
+                onClose={() => setMasterPlaying(false)}
+                onRestore={(v) => {
+                  showToast(`Restored ${v.label}`);
+                  setCopilotPanelOpen(true);
+                  setActiveTab("assistant");
+                  addChatMessage({
+                    role: "swishx",
+                    text: `Restored **${v.label}** (${v.day}, ${v.span}). The session you were in is kept in Version history, so you can go back to it.`,
+                  });
+                }}
+              />
+            )}
             {isEditor && (
               <>
                 {/* Publishing is the finished film, so it waits for the last
@@ -1881,6 +1927,13 @@ export function StudioScreen() {
                   <LogoMark size={14} /> <span>Preview and Publish</span>
                 </Button>
               </>
+            )}
+            {/* A published film opens here from the library; Edit starts the next draft. */}
+            {isReview && (
+              <Button size="sm" variant="secondary" onClick={handleReturnToEditor} className="gap-1.5 px-3.5 font-bold">
+                <Pencil className="size-3.5" />
+                Edit
+              </Button>
             )}
             {isReview && (
               <Button
@@ -3961,59 +4014,7 @@ export function StudioScreen() {
             }}
             onClose={() => setGenerateVideoModalOpen(false)}
             onPublish={handleConfirmVideoGeneration}
-            preview={
-              /* The whole film, from the composition engine the published
-                 review plays, with its chapters to step through. */
-              <div className="flex h-full items-center justify-center p-4">
-                <div
-                  className={cn(
-                    "relative flex w-full flex-col justify-between overflow-hidden rounded-card bg-black shadow-on-dark ring-1 ring-white/10",
-                    /* Portrait fills the height and takes its width from it;
-                       sized by its contents it shrank to a thumbnail. */
-                    isPortrait ? "aspect-[9/16] h-full w-auto max-w-full" : "aspect-video"
-                  )}
-                >
-                  <div className="absolute inset-0">
-                    <MasterVideoSequenceComposition
-                      sceneList={sceneList}
-                      activeScene={activeMasterChapter}
-                      brandName={brandName}
-                      isPlaying={masterPlaying && mlrReview.status !== "running"}
-                      sceneTime={Math.max(0, masterCurrentTime - (activeMasterChapter?.start ?? 0))}
-                    />
-                  </div>
-                  <div className="relative z-[40] flex items-center justify-between gap-3 bg-gradient-to-b from-black/80 to-transparent p-3 text-label text-white">
-                    <span className="min-w-0 truncate font-extrabold">
-                      {activeMasterChapter?.number}. {activeMasterChapter?.title}
-                    </span>
-                    <span className="shrink-0 font-semibold text-white/70">
-                      Chapter {activeMasterChapter?.number} of {chapters.length}
-                    </span>
-                  </div>
-                  <div className="relative z-[40] space-y-2.5 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-3 pt-8 text-white">
-                    <ChapterScrubber
-                      chapters={chapters}
-                      currentTime={masterCurrentTime}
-                      totalDuration={totalDurationSeconds}
-                      onSeek={setMasterCurrentTime}
-                    />
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setMasterPlaying(!masterPlaying)}
-                        className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-brand text-white shadow-md transition-transform hover:bg-brand-deep active:scale-95"
-                        aria-label={masterPlaying ? "Pause" : "Play"}
-                      >
-                        {masterPlaying ? <Pause className="size-4 fill-current" /> : <Play className="ml-0.5 size-4 fill-current" />}
-                      </button>
-                      <span className="font-mono text-label font-bold tabular-nums text-white/90">
-                        0:{Math.floor(masterCurrentTime).toString().padStart(2, "0")} / 0:{totalDurationSeconds}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
+            preview={renderFilmPreview(mlrReview.status === "running")}
           />
         )}
 
