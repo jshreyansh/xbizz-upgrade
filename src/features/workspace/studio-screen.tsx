@@ -87,6 +87,7 @@ import {
   storyShots,
   type StoryboardLayout,
 } from "@/features/workspace/storyboard";
+import { NarrationPlayer } from "@/features/workspace/narration-player";
 import { useShotPreviews } from "@/features/workspace/use-shot-previews";
 import { DevShapeMenu } from "@/features/workspace/dev-shape-menu";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
@@ -2095,6 +2096,8 @@ export function StudioScreen() {
                          is on the list, not the window, because the chat
                          panel decides how wide this column is. */
                       <div className="pb-24">
+                        {presentationMode !== "visual-only" && <NarrationPlayer scenes={sceneList} voice={voice} />}
+                        <h3 className="pb-2.5 text-subhead font-[850] tracking-tight text-ink">Scenes</h3>
                         <StoryboardSummary
                           sceneCount={sceneList.length}
                           previews={previews}
