@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlignCenter,
   AlignLeft,
@@ -207,14 +207,8 @@ export function SizeStepper({
       >
         <Minus className="size-3" />
       </button>
-      <span
-        className={cn(
-          "min-w-[24px] text-center text-label font-bold tabular-nums",
-          dark ? "text-white" : "text-ink"
-        )}
-      >
-        {value}
-      </span>
+      {/* Keyed by the value, so a step from − / + shows in the box at once. */}
+      <SizeField key={value} value={value} dark={dark} onCommit={(n) => onChange(clamp(n))} />
       <button
         type="button"
         onClick={() => onChange(clamp(value + 1))}
@@ -228,6 +222,45 @@ export function SizeStepper({
         <Plus className="size-3" />
       </button>
     </div>
+  );
+}
+
+/** The size itself, typed into. Enter or leaving the box applies it; Esc puts it back; ↑ ↓ step. */
+function SizeField({ value, dark, onCommit }: { value: number; dark?: boolean; onCommit: (next: number) => void }) {
+  const [draft, setDraft] = useState(String(value));
+  const commit = () => {
+    const n = Math.round(Number(draft));
+    if (draft.trim() === "" || !Number.isFinite(n)) setDraft(String(value));
+    else if (n !== value) onCommit(n);
+    else setDraft(String(value));
+  };
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={draft}
+      aria-label="Text size"
+      title={`Text size (${SIZE_MIN}–${SIZE_MAX})`}
+      onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
+      onFocus={(e) => e.currentTarget.select()}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        /* The editor listens for Delete and arrows on the page; typing here is not that. */
+        e.stopPropagation();
+        if (e.key === "Enter") e.currentTarget.blur();
+        else if (e.key === "Escape") {
+          setDraft(String(value));
+          requestAnimationFrame(() => (e.target as HTMLInputElement).blur());
+        } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+          e.preventDefault();
+          onCommit(value + (e.key === "ArrowUp" ? 1 : -1));
+        }
+      }}
+      className={cn(
+        "focus-ring h-6 w-8 rounded-[5px] bg-transparent text-center text-label font-bold tabular-nums outline-none transition-colors",
+        dark ? "text-white hover:bg-white/12 focus:bg-white/15" : "text-ink hover:bg-card focus:bg-card focus:ring-1 focus:ring-brand"
+      )}
+    />
   );
 }
 

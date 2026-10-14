@@ -23,6 +23,7 @@ import {
   Italic,
   LineChart,
   Layers2,
+  LayoutTemplate,
   Link2,
   List,
   ListOrdered,
@@ -35,6 +36,7 @@ import {
   Plus,
   QrCode,
   Quote,
+  Redo2,
   RefreshCw,
   ScanText,
   ScatterChart,
@@ -47,6 +49,7 @@ import {
   TrendingDown,
   Type,
   Underline,
+  Undo2,
   Upload,
   Workflow,
   type LucideIcon,
@@ -1046,6 +1049,7 @@ export function pageOptions({
   templateFill,
   onFill,
   onArt,
+  onTemplates,
 }: {
   fill: string | null;
   /** The template's page colour, shown when none is set. */
@@ -1055,6 +1059,8 @@ export function pageOptions({
   hasArt: boolean;
   onFill: (fill: string | null) => void;
   onArt: (show: boolean) => void;
+  /** The whole document's template, changed from the page it is seen on. */
+  onTemplates?: () => void;
 }): ToolbarItem[] {
   return [
     {
@@ -1104,6 +1110,9 @@ export function pageOptions({
             ),
           },
         ]
+      : []),
+    ...(onTemplates
+      ? [divider("d-tpl"), { key: "templates", node: <ToolButton icon={LayoutTemplate} label="Templates" onClick={onTemplates} /> }]
       : []),
   ];
 }
@@ -1230,10 +1239,16 @@ export function EditorToolbar({
   selection,
   onInsert,
   unavailable = {},
+  history,
+  onTemplates,
 }: {
   selection: ToolbarSelection | null;
   onInsert: (menu: InsertMenuId, option: string) => void;
   unavailable?: Record<string, string>;
+  /** Undo and redo, first in the bar the way Word and Google Docs have them. */
+  history?: { onUndo: () => void; onRedo: () => void; canUndo: boolean; canRedo: boolean };
+  /** The document's template; offered at the far end while nothing is selected. */
+  onTemplates?: () => void;
 }) {
   const [menu, setMenu] = useState<InsertMenuId | null>(null);
   /* The folded Insert button's list of menus, open before a menu is. */
@@ -1271,6 +1286,29 @@ export function EditorToolbar({
 
   return (
     <div data-editor-toolbar className="relative z-20 flex h-12 shrink-0 items-center gap-1.5 border-b border-hair bg-card px-3">
+      {history && (
+        <>
+          <div className="flex shrink-0 items-center gap-0.5">
+            {([
+              { label: "Undo", keys: "⌘Z", icon: Undo2, run: history.onUndo, can: history.canUndo },
+              { label: "Redo", keys: "⇧⌘Z", icon: Redo2, run: history.onRedo, can: history.canRedo },
+            ] as const).map(({ label, keys, icon: Icon, run, can }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={run}
+                disabled={!can}
+                title={`${label} (${keys})`}
+                aria-label={label}
+                className={cn(TOOL, "w-8 justify-center px-0")}
+              >
+                <Icon className="size-4" />
+              </button>
+            ))}
+          </div>
+          <span className="mx-0.5 h-5 w-px shrink-0 bg-hair-2" />
+        </>
+      )}
       <div ref={insertRef} data-insert-root className="relative flex h-full shrink-0 items-center gap-0.5">
         {selection ? (
           <>
@@ -1366,6 +1404,21 @@ export function EditorToolbar({
             Add to chat
           </Button>
         </div>
+      ) : onTemplates ? (
+        /* Beside the inserts, not off at the far end: it is the same kind of
+           choice, made for the whole document rather than one spot on it. */
+        <>
+          <span className="mx-0.5 h-5 w-px shrink-0 bg-hair-2" />
+          <button
+            type="button"
+            onClick={onTemplates}
+            title="Change the template for the whole document"
+            className={cn(TOOL, INSERT_BUTTON)}
+          >
+            <LayoutTemplate className="size-3.5 shrink-0" />
+            <span>Templates</span>
+          </button>
+        </>
       ) : null}
     </div>
   );

@@ -4,7 +4,6 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
-  ArrowLeft,
   BarChart3,
   Check,
   Download,
@@ -21,16 +20,13 @@ import {
   Plus,
   Sparkles,
   RotateCcw,
-  Redo2,
   Share2,
   ShieldCheck,
   Type,
-  Undo2,
   ZoomIn,
   ZoomOut,
   X,
   MessageCircle,
-  PenLine,
   MessageSquareQuote,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,8 +60,9 @@ import {
   useSuggestionQueue,
 } from "@/features/workspace/suggestion-queue";
 import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
-import { FlowBreadcrumb, previousStep } from "@/features/workspace/flow-breadcrumb";
+import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
+import { VersionHistoryButton } from "@/features/workspace/version-history";
 import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import {
@@ -91,6 +88,8 @@ import { PreviewPublishModal } from "@/features/workspace/preview-publish-modal"
 import { DocPagePreview } from "@/features/workspace/doc-page-preview";
 import { useMlrReview } from "@/features/workspace/mlr-review";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
+import { TemplateSwitchModal } from "@/features/workspace/template-switch-modal";
+import type { TemplateArchetype } from "@/features/workspace/template-archetypes";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 import { CurrentTag, RequestModal } from "@/components/patterns/request-modal";
 import { ImageCropModal } from "@/features/workspace/image-crop-modal";
@@ -397,6 +396,7 @@ export function InfographicStudioScreen() {
     pageShape,
     infographicPages,
     infographicTemplate,
+    setInfographicTemplate,
     infographicActivePage,
     setInfographicActivePage,
     setInfographicPages,
@@ -535,6 +535,13 @@ export function InfographicStudioScreen() {
   /* The two requests that open a pop-up before they go to the chat. */
   const [regenArtId, setRegenArtId] = useState<string | null>(null);
   const [addPageOpen, setAddPageOpen] = useState(false);
+  /* Templates: the picker, then the redraw on the canvas while the new one is applied. */
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  /* When this session, and so this version, began. */
+  const [sessionStart] = useState(() =>
+    new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+  );
+  const [applyingTemplate, setApplyingTemplate] = useState<{ template: TemplateArchetype; steps: GenerationStep[] } | null>(null);
   /* An uploaded replacement, being fitted to its slot before it is placed. */
   const [cropping, setCropping] = useState<{
     src: string;
@@ -646,7 +653,6 @@ export function InfographicStudioScreen() {
   /* Where this studio sits in the creative trail, and what Back means here. */
   const currentStepId: CreativeStepId = studioMode === "review" ? "review" : "canvas";
   const flowSteps = useCreativeSteps({ toCanvas: () => setStudioMode("editor") });
-  const backStep = previousStep(flowSteps, currentStepId);
   /* How many versions have shipped, not merely whether any have — a boolean
      cannot tell version 1 from version 3. Opened from the library, one exists. */
   const [publishedCount, setPublishedCount] = useState(openedForReview ? 1 : 0);
@@ -733,7 +739,6 @@ export function InfographicStudioScreen() {
     setSelectedElementId(null);
     setCommentComposerAt(null);
     setSelectedArtId(null);
-    setActiveTab("edit");
   };
 
   // Update current page field
@@ -1500,6 +1505,7 @@ export function InfographicStudioScreen() {
         onFill: (fill) => patchPageStyle({ fill }),
         onArt: (art) => patchPageStyle({ art }),
         templateFill: "var(--color-card)",
+        onTemplates: () => setTemplatesOpen(true),
       }),
       onAddToChat: () => {
         handToChat(
@@ -1616,30 +1622,18 @@ export function InfographicStudioScreen() {
          re-open sticks. Tablet portrait is review-only by design. */
       autoCollapsePanelBelow="laptop"
       toolbar={
-        studioMode === "editor" ? (
+        studioMode === "editor" && !applyingTemplate ? (
           <EditorToolbar
             selection={toolbarSelection}
             onInsert={handleInsert}
+            history={{ onUndo: undo, onRedo: redo, canUndo: undoStack.length > 0, canRedo: redoStack.length > 0 }}
+            onTemplates={() => setTemplatesOpen(true)}
           />
         ) : undefined
       }
       header={
         <ScreenHeader spread onClose={() => exit.requestExit()}>
           <div className="flex items-center gap-2 min-w-0">
-            {/* One step back along the trail. This skipped the Layout step it
-                came through, and used different logic from the video studio
-                for the same shape of screen. */}
-            <button
-              type="button"
-              onClick={() => backStep?.onGo?.()}
-              disabled={!backStep?.onGo}
-              className="focus-ring mr-1 grid size-8 place-items-center rounded-chip text-ink-3 transition hover:bg-black/5 hover:text-ink disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-              title={backStep ? `Back to ${backStep.label}` : undefined}
-              aria-label={backStep ? `Back to ${backStep.label}` : "Back"}
-            >
-              <ArrowLeft className="size-4" />
-            </button>
-
             <SwishXMark compact />
             <div className="mx-2.5 h-5 w-px bg-hair" />
 
@@ -1648,7 +1642,7 @@ export function InfographicStudioScreen() {
                 <span className="truncate text-body-lg font-[850] text-ink tracking-tight">
                   {creativeTitle}
                 </span>
-                <VersionChip versions={assetVersions} />
+                {studioMode === "review" && <VersionChip versions={assetVersions} />}
               </div>
               <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
                 Saved just now · {pagesList.length} {pagesList.length === 1 ? "page" : "pages"} ({pageGeometry.label})
@@ -1685,27 +1679,23 @@ export function InfographicStudioScreen() {
 
           {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
           <div className="flex items-center gap-2">
-            {/* Undo and redo sit where people look for them in Office: top
-                left of the actions, apart from the toolbar's per-element options. */}
+            {/* The version, beside the action that makes the next one. */}
             {studioMode === "editor" && (
-              <div className="hidden items-center gap-1 sm:flex">
-                {([
-                  { label: "Undo", keys: "⌘Z", icon: Undo2, run: undo, can: undoStack.length > 0 },
-                  { label: "Redo", keys: "⇧⌘Z", icon: Redo2, run: redo, can: redoStack.length > 0 },
-                ] as const).map(({ label, keys, icon: Icon, run, can }) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={run}
-                    disabled={!can}
-                    title={`${label} (${keys})`}
-                    aria-label={label}
-                    className="focus-ring grid size-8 cursor-pointer place-items-center rounded-chip border border-hair-2 bg-card text-ink-2 shadow-2xs transition-colors hover:border-brand hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-hair-2"
-                  >
-                    <Icon className="size-4" />
-                  </button>
-                ))}
-              </div>
+              <VersionHistoryButton
+                label={assetVersions.find((v) => v.state === "current")?.label ?? "Draft v1"}
+                sessionStart={sessionStart}
+                editCount={undoStack.length}
+                author="Maya Kapoor"
+                onRestore={(v) => {
+                  showToast(`Restored the version from ${v.day}, ${v.span.split(" – ")[0]}`);
+                  setCopilotPanelOpen(true);
+                  setActiveTab("assistant");
+                  addChatMessage({
+                    role: "swishx",
+                    text: `Restored the version from **${v.day}, ${v.span}**. The session you were in is kept in Version history, so you can go back to it.`,
+                  });
+                }}
+              />
             )}
             {studioMode === "editor" && (
               <Button
@@ -1834,7 +1824,22 @@ export function InfographicStudioScreen() {
         ) : undefined
       }
       main={
-        studioMode === "opening" ? (
+        applyingTemplate ? (
+            <GenerationProgress
+              title={`Applying the ${applyingTemplate.template.name} template...`}
+              subtitle="Redrawing every page in the new template. Claims keep their words and citations; the chat stays open."
+              steps={applyingTemplate.steps}
+              onDone={() => {
+                const { template } = applyingTemplate;
+                setApplyingTemplate(null);
+                addChatMessage({
+                  role: "swishx",
+                  text: `Done. ${pagesList.length === 1 ? "The page is" : `All ${pagesList.length} pages are`} in the **${template.name}** template now. Every claim kept its words and its citation. Tell me what to change, or undo to go back.`,
+                });
+                showToast(`${template.name} template applied`);
+              }}
+            />
+        ) : studioMode === "opening" ? (
             <GenerationProgress
               title="Opening the canvas editor..."
               subtitle="Applying the chosen layout and fitting the approved copy into it, before the art starts arriving."
@@ -2325,17 +2330,8 @@ export function InfographicStudioScreen() {
                   Chat
                 </InspectorTabButton>
 
-                {studioMode === "editor" && (
-                  <InspectorTabButton
-                    tab="edit"
-                    current={activeTab}
-                    onClick={setActiveTab}
-                    icon={PenLine}
-                    chip={`Page ${activePageId}`}
-                  >
-                    Edit
-                  </InspectorTabButton>
-                )}
+                {/* No Edit tab: the toolbar edits whatever is selected, and
+                    selecting never moves the panel off the chat. */}
 
                 {(publishedCount > 0 || isReview) && (
                 <InspectorTabButton
@@ -2961,6 +2957,39 @@ export function InfographicStudioScreen() {
           />
         )}
 
+        {templatesOpen && (
+          <TemplateSwitchModal
+            currentId={infographicTemplate}
+            pageCount={pagesList.length}
+            onClose={() => setTemplatesOpen(false)}
+            onApply={(template, note) => {
+              setTemplatesOpen(false);
+              setInfographicTemplate(template.id);
+              setCopilotPanelOpen(true);
+              setActiveTab("assistant");
+              addChatMessage({
+                role: "user",
+                text: `Switch the document to the **${template.name}** template.${note ? ` ${note}` : ""}`,
+              });
+              setTimeout(() => {
+                addChatMessage({
+                  role: "swishx",
+                  text: `Applying **${template.name}** to ${pagesList.length === 1 ? "the page" : `all ${pagesList.length} pages`}${note ? ", with your note in mind" : ""}. The canvas shows the redraw; it takes a few seconds.`,
+                });
+              }, 500);
+              setApplyingTemplate({
+                template,
+                steps: [
+                  { label: `Loaded the ${template.name} template`, seconds: 0.5 },
+                  ...pagesList.map((_, i) => ({ label: `Page ${i + 1}, laid out the blocks again`, seconds: 0.6 })),
+                  { label: "Moved the approved copy across, citations intact", seconds: 0.6 },
+                  { label: "Carried over added text and replaced images", seconds: 0.5 },
+                  { label: "Placed the brand mark & fair balance band", seconds: 0.45 },
+                ],
+              });
+            }}
+          />
+        )}
         {addPageOpen && (() => {
           const next = pagesList.length + 1;
           return (
