@@ -1036,6 +1036,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     }
 
     setIsGenerating(true);
+    /* Credits are taken here, where the storyboard starts being built. */
+    showToast(`${estimatedCredits.toLocaleString()} credits deducted`);
     /* What the editor's Video section will show: confirmed here, once. */
     setPlanChoices({ characters: presenter ? [presenter] : [], storyStructure });
 

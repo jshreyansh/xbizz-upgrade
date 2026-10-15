@@ -10,6 +10,7 @@ import {
   Clapperboard,
   ChevronUp,
   Download,
+  Mail,
   Pencil,
   Expand,
   FileCheck2,
@@ -1391,12 +1392,11 @@ export function StudioScreen() {
       detail: `${sceneList.length} scenes · ${totalDurationSeconds}s · ${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}`,
       version: `Version ${draftVersion}`,
     });
-    const creditsDeducted = selectedQuality === "cinematic" ? "7,500" : "2,500";
+    /* Credits were taken when the storyboard was built, not here. */
     addChatMessage({
       role: "swishx",
-      text: `⚡ Video generation initiated in **${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}** (${creditsDeducted} credits deducted). Neural rendering is processing in the cloud. You will receive an email once your final video is ready. Feel free to continue chatting with me about your project.`,
+      text: `Assembling the final video in **${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}**. You'll get an email as soon as it's ready; carry on chatting with me in the meantime.`,
     });
-    showToast(`Video generation queued · ${creditsDeducted} credits deducted`);
   };
 
   const handleMasterRendered = () => {
@@ -1992,8 +1992,13 @@ export function StudioScreen() {
                 steps={masterRenderStepList}
                 onDone={handleMasterRendered}
                 footer={
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <span>Email notification queued. You can close this tab</span>
+                  /* The same promise as the pop-up after Publish, where it can be seen. */
+                  <span className="inline-flex items-start gap-2.5 rounded-control border border-tint-line bg-tint px-4 py-3 text-left text-body text-ink-2">
+                    <Mail className="mt-0.5 size-4 shrink-0 text-brand" />
+                    <span>
+                      <span className="font-bold text-ink">You can close this tab now.</span> We&rsquo;ll email you as soon as the video is
+                      ready; the render carries on without it.
+                    </span>
                   </span>
                 }
               />

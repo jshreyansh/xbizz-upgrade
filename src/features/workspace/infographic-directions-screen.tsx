@@ -87,6 +87,7 @@ import {
   useChosenCongress,
 } from "@/features/workspace/congress-section";
 import { focusQuestion } from "@/features/workspace/congress-guidelines";
+import { Toast, useToast } from "@/components/patterns/toast";
 import {
   buildIntakeQuestions,
   intakeSteps,
@@ -408,9 +409,16 @@ export function InfographicDirectionsScreen() {
         return;
       }
       // The plan settles the brief; the layout is the next decision.
-      setCurrentStep("template");
+      goToLayout();
     }, 900);
   };
+
+  /* Credits are taken here, where the plan becomes a document being built. */
+  const goToLayout = () => {
+    showToast(`${(CREDITS_PER_PAGE * pageCount).toLocaleString()} credits deducted`);
+    setCurrentStep("template");
+  };
+  const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
 
 
   // Local state for brief questions
@@ -1385,7 +1393,7 @@ export function InfographicDirectionsScreen() {
                   type="button"
                   /* A poster cannot leave the plan without its congress, so
                      this runs the plan's own Confirm check for posters. */
-                  onClick={isPoster ? handleConfirmPlan : () => setCurrentStep("template")}
+                  onClick={isPoster ? handleConfirmPlan : goToLayout}
                   disabled={isPoster && verifyingSources}
                   size="sm"
                   className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
@@ -1415,6 +1423,7 @@ export function InfographicDirectionsScreen() {
       }
       overlay={
         <>
+          <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
           {/* The same note dialog the sources uploader and the video flow use:
               a file arrives with a note about what it is for, or it does not
               arrive. */}
