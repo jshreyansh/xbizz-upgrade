@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { BadgeCheck, Check, History, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { AssetComment } from "@/features/workspace/asset-comments";
 
@@ -75,7 +75,14 @@ export function buildVersions(
   return out;
 }
 
-export function VersionChip({ versions }: { versions: AssetVersion[] }) {
+export function VersionChip({
+  versions,
+  variant = "chip",
+}: {
+  versions: AssetVersion[];
+  /** "button" sits with the header actions, the way the editors' Version history does. */
+  variant?: "chip" | "button";
+}) {
   const [open, setOpen] = useState(false);
   const current = versions.find((v) => v.state === "current") ?? versions[versions.length - 1];
 
@@ -85,8 +92,13 @@ export function VersionChip({ versions }: { versions: AssetVersion[] }) {
         type="button"
         onClick={() => setOpen(true)}
         title="Version history"
-        className="focus-ring hidden shrink-0 cursor-pointer rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 transition hover:bg-tint hover:text-brand-deep sm:inline"
+        className={
+          variant === "button"
+            ? "focus-ring hidden h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-2.5 text-label font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand-deep sm:inline-flex"
+            : "focus-ring hidden shrink-0 cursor-pointer rounded-chip bg-ok-bg px-2 py-0.5 text-micro font-bold text-ink-3 transition hover:bg-tint hover:text-brand-deep sm:inline"
+        }
       >
+        {variant === "button" && <History className="size-3.5" />}
         {current?.label ?? "Draft v1"}
       </button>
 
@@ -150,20 +162,22 @@ function VersionTrailModal({
                 aria-hidden
                 className={cn(
                   "absolute left-0 top-1.5 size-[11px] rounded-full ring-2 ring-card",
-                  v.state === "current" ? "bg-brand" : "bg-ok"
+                  v.label.startsWith("Draft") ? "bg-brand" : "bg-ok"
                 )}
               />
-              <div className="flex items-baseline gap-2">
-                <span className="text-body font-[800] text-ink">{v.label}</span>
+              <div className="flex items-center gap-2">
+                {/* The same tag as the editors' Version history: the number, styled by what it is. */}
                 <span
                   className={cn(
-                    "rounded-glyph border px-1.5 py-0.2 text-micro font-bold",
-                    v.state === "current"
-                      ? "border-brand/25 bg-tint text-brand-deep"
-                      : "border-ok-line bg-ok-bg text-ok"
+                    "inline-flex shrink-0 items-center gap-1 rounded-glyph px-1.5 py-px text-label font-bold tabular-nums",
+                    v.label.startsWith("Draft")
+                      ? "bg-brand text-white"
+                      : "border border-ok-line bg-ok-bg text-ok"
                   )}
                 >
-                  {v.state === "current" ? "Current draft" : "Published"}
+                  {!v.label.startsWith("Draft") && <BadgeCheck className="size-3" />}
+                  {v.label}
+                  {v.state === "current" && " · Current"}
                 </span>
                 <span className="ml-auto shrink-0 text-caption text-ink-4">{v.at}</span>
               </div>

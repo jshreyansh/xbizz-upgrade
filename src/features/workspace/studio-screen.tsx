@@ -76,6 +76,9 @@ import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { VersionHistoryButton, VIDEO_SESSIONS } from "@/features/workspace/version-history";
+import { RenderStartedModal } from "@/features/workspace/render-started-modal";
+import type { PendingRender } from "@/features/workspace/workspace-store";
+import { useRouter } from "next/navigation";
 import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
 import type { EvidenceState, InspectorTab, Scene, Shot } from "@/types/content";
 import { SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
@@ -467,6 +470,10 @@ export function StudioScreen() {
     [sceneList.length, selectedQuality]
   );
   const isReview = studioMode === "review";
+  const router = useRouter();
+  const setPendingRender = useWorkspaceStore((s) => s.setPendingRender);
+  /* The pop-up after Publish: what is rendering, and where to wait for it. */
+  const [renderNotice, setRenderNotice] = useState<PendingRender | null>(null);
   /* When this session, and so this version, began. */
   const [sessionStart] = useState(() =>
     new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
@@ -492,6 +499,8 @@ export function StudioScreen() {
      published with, and the start modal lets you type one. */
   const storedProjectName = useWorkspaceStore((s) => s.projectName);
   const projectTitle = storedProjectName.trim() || `${brandName} HCP launch`;
+  /* A stable reference for the render, the way the library would show it. */
+  const renderId = `SX-VID-${String([...projectTitle].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9000, 7) + 1000)}`;
 
   const totalDurationSeconds = useMemo(
     () => sceneList.reduce((acc, sc) => acc + (sc.duration || 10), 0),
@@ -1376,6 +1385,12 @@ export function StudioScreen() {
     });
     setStudioMode("generating");
     setActiveTab("assistant");
+    setRenderNotice({
+      title: projectTitle,
+      id: renderId,
+      detail: `${sceneList.length} scenes · ${totalDurationSeconds}s · ${selectedQuality === "cinematic" ? "Cinematic 4K" : "HD Motion"}`,
+      version: `Version ${draftVersion}`,
+    });
     const creditsDeducted = selectedQuality === "cinematic" ? "7,500" : "2,500";
     addChatMessage({
       role: "swishx",
@@ -1854,8 +1869,8 @@ export function StudioScreen() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="truncate text-body font-[800] text-ink">{projectTitle}</span>
-              {/* In the editor the version sits with Preview and Publish, as in the doc editor. */}
-              {!isEditor && <VersionChip versions={assetVersions} />}
+              {/* The editor and the published view keep the version with their header actions. */}
+              {!isEditor && !isReview && <VersionChip versions={assetVersions} />}
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
           </div>
@@ -1928,6 +1943,8 @@ export function StudioScreen() {
                 </Button>
               </>
             )}
+            {/* The published versions, where the editors keep Version history. */}
+            {isReview && <VersionChip versions={assetVersions} variant="button" />}
             {/* A published film opens here from the library; Edit starts the next draft. */}
             {isReview && (
               <Button size="sm" variant="secondary" onClick={handleReturnToEditor} className="gap-1.5 px-3.5 font-bold">
@@ -4015,6 +4032,19 @@ export function StudioScreen() {
             onClose={() => setGenerateVideoModalOpen(false)}
             onPublish={handleConfirmVideoGeneration}
             preview={renderFilmPreview(mlrReview.status === "running")}
+          />
+        )}
+
+        {/* Stays until answered: the demo render is quicker than reading this. */}
+        {renderNotice && (
+          <RenderStartedModal
+            render={renderNotice}
+            onStay={() => setRenderNotice(null)}
+            onLibrary={() => {
+              setPendingRender(renderNotice);
+              setRenderNotice(null);
+              router.push("/content-library");
+            }}
           />
         )}
 

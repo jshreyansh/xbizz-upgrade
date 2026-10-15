@@ -1653,7 +1653,6 @@ export function InfographicStudioScreen() {
                 <span className="truncate text-body-lg font-[850] text-ink tracking-tight">
                   {creativeTitle}
                 </span>
-                {studioMode === "review" && <VersionChip versions={assetVersions} />}
               </div>
               <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
                 Saved just now · {pagesList.length} {pagesList.length === 1 ? "page" : "pages"} ({pageGeometry.label})
@@ -1720,6 +1719,8 @@ export function InfographicStudioScreen() {
                 the same list offered twice, and from version 2 on both were
                 on screen at once. */}
 
+            {/* The published versions, where the editors keep Version history. */}
+            {studioMode === "review" && <VersionChip versions={assetVersions} variant="button" />}
             {/* A published asset opens here from the library; Edit starts the next draft. */}
             {studioMode === "review" && (
               <Button size="sm" variant="secondary" onClick={() => setStudioMode("editor")} className="gap-1.5 px-3.5 font-bold">

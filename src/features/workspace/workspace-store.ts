@@ -26,6 +26,15 @@ export type ChatMessage = {
   artRef?: { pageId: number; layerId: string };
 };
 
+/** A video being assembled after Publish, so the Content Library can say so. */
+export interface PendingRender {
+  title: string;
+  id: string;
+  /** "5 scenes · 50s · HD Motion". */
+  detail: string;
+  version: string;
+}
+
 interface WorkspaceState {
   view: AppView;
   // Magic Video workflow states
@@ -124,6 +133,8 @@ interface WorkspaceState {
   posterSizeIndex: number | null;
   /** The third poster question, which depends on the type: what it reports, where the trial is, or where it was first shown. */
   posterFocus: string | null;
+  /** A video sent to render from the editor, announced in the Content Library until dismissed. */
+  pendingRender: PendingRender | null;
   /** Values for the congress's required items: acceptance code, contact email… */
   posterFields: Record<string, string>;
   // Setters
@@ -190,6 +201,7 @@ interface WorkspaceState {
   setPosterType: (posterType: "poster" | "tip" | "eposter" | "encore") => void;
   setPosterSizeIndex: (posterSizeIndex: number) => void;
   setPosterFocus: (posterFocus: string) => void;
+  setPendingRender: (pendingRender: PendingRender | null) => void;
   setPosterField: (id: string, value: string) => void;
   reset: () => void;
 }
@@ -257,6 +269,7 @@ const initialState = {
   posterType: null as "poster" | "tip" | "eposter" | "encore" | null,
   posterSizeIndex: null as number | null,
   posterFocus: null as string | null,
+  pendingRender: null as PendingRender | null,
   posterFields: {} as Record<string, string>,
 };
 
@@ -342,6 +355,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     set((state) => (state.posterType === posterType ? {} : { posterType, posterFocus: null })),
   setPosterSizeIndex: (posterSizeIndex) => set({ posterSizeIndex }),
   setPosterFocus: (posterFocus) => set({ posterFocus }),
+  setPendingRender: (pendingRender) => set({ pendingRender }),
   setPosterField: (id, value) => set((state) => ({ posterFields: { ...state.posterFields, [id]: value } })),
   reset: () => set(initialState),
 }));
