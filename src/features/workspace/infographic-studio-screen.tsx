@@ -62,7 +62,7 @@ import {
 import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
 import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
-import { VersionHistoryButton } from "@/features/workspace/version-history";
+import { stamp, VersionHistoryButton } from "@/features/workspace/version-history";
 import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import {
@@ -1696,7 +1696,7 @@ export function InfographicStudioScreen() {
                   setActiveTab("assistant");
                   addChatMessage({
                     role: "swishx",
-                    text: `Restored **${v.label}** (${v.day}, ${v.span}). The session you were in is kept in Version history, so you can go back to it.`,
+                    text: `Restored **${v.label}** (${stamp(v)}). The session you were in is kept in Version history, so you can go back to it.`,
                   });
                 }}
               />

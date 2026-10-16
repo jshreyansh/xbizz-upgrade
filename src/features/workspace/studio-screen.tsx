@@ -76,7 +76,7 @@ import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/in
 import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
-import { VersionHistoryButton, VIDEO_SESSIONS } from "@/features/workspace/version-history";
+import { stamp, VersionHistoryButton, VIDEO_SESSIONS } from "@/features/workspace/version-history";
 import { RenderStartedModal } from "@/features/workspace/render-started-modal";
 import type { PendingRender } from "@/features/workspace/workspace-store";
 import { useRouter } from "next/navigation";
@@ -1918,7 +1918,7 @@ export function StudioScreen() {
                   setActiveTab("assistant");
                   addChatMessage({
                     role: "swishx",
-                    text: `Restored **${v.label}** (${v.day}, ${v.span}). The session you were in is kept in Version history, so you can go back to it.`,
+                    text: `Restored **${v.label}** (${stamp(v)}). The session you were in is kept in Version history, so you can go back to it.`,
                   });
                 }}
               />

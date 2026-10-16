@@ -309,12 +309,12 @@ function VersionHistoryModal({
                             v.id === selectedId ? "bg-tint ring-1 ring-tint-line" : "hover:bg-subtle"
                           )}
                         >
-                          <span className="flex items-center gap-1.5">
-                            <VersionTag version={v} />
-                            <span className="text-body font-bold tabular-nums text-ink">{v.span}</span>
-                          </span>
-                          <span className="text-caption text-ink-3">
-                            {v.author} · {v.edits} {v.edits === 1 ? "edit" : "edits"}
+                          {/* As Google Docs lists them: when it started, what it is, who. */}
+                          <span className="text-body font-bold tabular-nums text-ink">{stamp(v)}</span>
+                          <VersionLine version={v} />
+                          <span className="flex items-center gap-1.5 text-caption text-ink-3">
+                            <span className="size-1.5 shrink-0 rounded-full bg-ok" />
+                            {v.author}
                           </span>
                         </button>
                       </li>
@@ -328,7 +328,7 @@ function VersionHistoryModal({
             <div className="relative min-h-[260px] min-w-0 flex-1 overflow-hidden bg-subtle">
               {preview}
               <span className="pointer-events-none absolute left-3 top-3 z-50 inline-flex items-center gap-1.5 rounded-chip bg-ink/80 px-2.5 py-1 text-caption font-bold text-white ring-1 ring-white/15 backdrop-blur-sm">
-                {selected.label} · {isCurrent ? "as it is now" : `${selected.day}, ${selected.span}`}
+                {selected.label} · {isCurrent ? "as it is now" : stamp(selected)}
               </span>
             </div>
 
@@ -338,9 +338,7 @@ function VersionHistoryModal({
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <VersionTag version={selected} large />
-                    <h3 className="text-subhead font-[850] tracking-tight text-ink">
-                      {selected.day}, {selected.span}
-                    </h3>
+                    <h3 className="text-subhead font-[850] tracking-tight text-ink">{stamp(selected)}</h3>
                   </div>
                   <p className="mt-1 text-label text-ink-3">
                     {selected.author} · {selected.edits} {selected.edits === 1 ? "edit" : "edits"}
@@ -417,6 +415,28 @@ function VersionHistoryModal({
       </div>
     </Portal>
   );
+}
+
+/** One time per version, the moment it started (or was published). */
+export function stamp(version: HistoryVersion) {
+  const start = version.span.replace(/^Published /, "").split(" – ")[0];
+  return `${version.day}, ${start}`;
+}
+
+/** What a version is, in words, under its time. */
+function VersionLine({ version }: { version: HistoryVersion }) {
+  if (version.kind === "current") {
+    return <span className="text-caption font-semibold text-brand-deep">{version.label} · Current version</span>;
+  }
+  if (version.kind === "published") {
+    return (
+      <span className="inline-flex items-center gap-1 text-caption font-semibold text-ok">
+        <BadgeCheck className="size-3" />
+        {version.label} · Published
+      </span>
+    );
+  }
+  return <span className="text-caption font-semibold text-ink-2">{version.label}</span>;
 }
 
 /** The version number, styled by what it is: published, open, or a session between. */

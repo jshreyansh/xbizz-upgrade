@@ -345,6 +345,37 @@ const divider = (key: string): ToolbarItem => ({ key, divider: true, node: <span
 const TOOL =
   "focus-ring inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-chip px-2 text-label font-semibold text-ink-2 transition hover:bg-subtle hover:text-ink disabled:cursor-not-allowed disabled:text-ink-4 disabled:hover:bg-transparent";
 
+/**
+ * Templates, shown but not yet usable. Changing the whole document's template
+ * is built (see template-switch-modal) and switched off until the redraw is
+ * real; the button says so on hover rather than opening a flow that only
+ * pretends to work. A disabled button gets no hover in every browser, so it
+ * is marked disabled and the note is drawn here.
+ */
+function TemplatesSoon() {
+  return (
+    <span className="group relative inline-flex shrink-0">
+      <button
+        type="button"
+        aria-disabled="true"
+        aria-describedby="templates-soon"
+        onClick={(e) => e.preventDefault()}
+        className={cn(TOOL, INSERT_BUTTON, "cursor-not-allowed text-ink-4 hover:bg-transparent hover:text-ink-4")}
+      >
+        <LayoutTemplate className="size-3.5 shrink-0" />
+        <span>Templates</span>
+      </button>
+      <span
+        id="templates-soon"
+        role="tooltip"
+        className="pointer-events-none absolute left-1/2 top-full z-40 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-chip bg-ink px-2 py-1 text-caption font-semibold text-card opacity-0 shadow-soft transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+      >
+        Coming soon
+      </span>
+    </span>
+  );
+}
+
 function ToolButton({
   icon: Icon,
   label,
@@ -1112,7 +1143,7 @@ export function pageOptions({
         ]
       : []),
     ...(onTemplates
-      ? [divider("d-tpl"), { key: "templates", node: <ToolButton icon={LayoutTemplate} label="Templates" onClick={onTemplates} /> }]
+      ? [divider("d-tpl"), { key: "templates", node: <TemplatesSoon /> }]
       : []),
   ];
 }
@@ -1409,15 +1440,7 @@ export function EditorToolbar({
            choice, made for the whole document rather than one spot on it. */
         <>
           <span className="mx-0.5 h-5 w-px shrink-0 bg-hair-2" />
-          <button
-            type="button"
-            onClick={onTemplates}
-            title="Change the template for the whole document"
-            className={cn(TOOL, INSERT_BUTTON)}
-          >
-            <LayoutTemplate className="size-3.5 shrink-0" />
-            <span>Templates</span>
-          </button>
+          <TemplatesSoon />
         </>
       ) : null}
     </div>
