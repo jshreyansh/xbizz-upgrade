@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useRef, type ReactNode } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import {
   PanelLeftClose,
   PanelLeftOpen,
@@ -21,6 +21,7 @@ import {
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { LogoMark } from "@/components/ui/logo-mark";
+import { usePageSettled } from "@/lib/use-load-gates";
 
 /** Premium collapse/expand control — a small dark chip so it reads as a
  *  deliberate, discoverable control in both states, rather than an
@@ -152,6 +153,22 @@ export function Sidebar() {
   const setView = useWorkspaceStore((s) => s.setView);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
   const assetType = useWorkspaceStore((s) => s.assetType);
+
+  /* Every page the rail links to, fetched in the background once this page
+     has settled, so a click opens it at once. The items are buttons, not
+     links, so nothing was fetched ahead and each first visit waited on the
+     network for its route file and script. */
+  const pageSettled = usePageSettled();
+  useEffect(() => {
+    if (!pageSettled) return;
+    const hrefs = new Set(["/", "/create"]);
+    for (const group of ASSET_GROUPS)
+      for (const item of group.items) {
+        if (item.href !== "#") hrefs.add(item.href);
+        for (const child of item.children ?? []) if (child.href !== "#") hrefs.add(child.href);
+      }
+    hrefs.forEach((href) => router.prefetch(href));
+  }, [pageSettled, router]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [createFlyoutOpen, setCreateFlyoutOpen] = useState(false);

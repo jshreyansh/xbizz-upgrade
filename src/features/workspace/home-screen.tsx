@@ -7,6 +7,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { cn } from "@/lib/cn";
+import { firstFrame, useNearViewport, usePageSettled } from "@/lib/use-load-gates";
 import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { Portal } from "@/components/ui/portal";
@@ -458,6 +459,10 @@ function RecentProjectCard({ project }: { project: RecentProject }) {
 function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: ShowcaseItem) => void }) {
   const [hovered, setHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  /* The clip is fetched once the card is near the screen, and then only its
+     first frame until it is pointed at. A card in a hidden layout never is. */
+  const cardRef = useRef<HTMLDivElement>(null);
+  const near = useNearViewport(cardRef);
 
   useEffect(() => {
     if (hovered && item.videoSrc && videoRef.current) {
@@ -470,6 +475,7 @@ function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: Sho
 
   return (
     <div
+      ref={cardRef}
       onClick={() => onPlay(item)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -490,7 +496,8 @@ function ShowcaseCard({ item, onPlay }: { item: ShowcaseItem; onPlay: (item: Sho
       {item.videoSrc && (
         <video
           ref={videoRef}
-          src={item.videoSrc}
+          src={near ? firstFrame(item.videoSrc) : undefined}
+          preload="metadata"
           loop
           muted
           playsInline
@@ -972,6 +979,10 @@ const EXAMPLE_STARTERS: ShowcaseItem[] = [
 ];
 
 export function HomeScreen() {
+  /* The hero sample: on screen and the page settled before the 6 MB clip starts. */
+  const heroRef = useRef<HTMLDivElement>(null);
+  const heroNear = useNearViewport(heroRef);
+  const pageSettled = usePageSettled();
   const router = useRouter();
   const [playingVideoItem, setPlayingVideoItem] = useState<ShowcaseItem | null>(null);
   const [isNewUser, setIsNewUser] = useState(true);
@@ -1098,12 +1109,16 @@ export function HomeScreen() {
                 actually produces. Autoplays muted so the "content" is
                 literally on screen, not implied by an icon. */}
             <div
+              ref={heroRef}
               className="group relative shrink-0 cursor-pointer overflow-hidden rounded-panel"
               style={{ width: 200, height: 132 }}
               onClick={() => setPlayingVideoItem(HERO_SAMPLE)}
             >
+              {/* Starts once the page has finished loading, so it never
+                  holds up the first click. */}
               <video
-                src="/avatar-showcase.mp4"
+                src={heroNear && pageSettled ? "/avatar-showcase.mp4" : undefined}
+                preload="none"
                 autoPlay
                 loop
                 muted
