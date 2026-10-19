@@ -91,10 +91,11 @@ import { Toast, useToast } from "@/components/patterns/toast";
 import {
   buildIntakeQuestions,
   intakeSteps,
-  intakeBundlePrompt,
+  choicesMessage,
   readIntakeBundle,
   type IntakeAnswer,
 } from "@/features/workspace/plan-intake";
+import { IntakeQuestionCard } from "@/features/workspace/intake-question-card";
 
 type InfographicSubStep = "brief" | "template";
 type PlanSectionId = "sources" | "logo" | "treatment" | "audience" | "format" | "design" | "assets" | "references";
@@ -472,13 +473,10 @@ export function InfographicDirectionsScreen() {
     addChatMessage({
       role: "swishx",
       text: count
-        ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out.`
-        : `I've read the brief against the **${brandName}** dossier. A couple of things and I can lay the plan out.`,
+        ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out: pick below, or just type.`
+        : `I've read the brief against the **${brandName}** dossier. A couple of things and I can lay the plan out: pick below, or just type.`,
     });
-    setTimeout(() => {
-      const prompt = intakeBundlePrompt(intakeQuestions);
-      if (prompt) addChatMessage({ role: "swishx", text: prompt });
-    }, 600);
+    /* The questions themselves arrive as a card above the composer. */
   };
 
   /**
@@ -487,10 +485,21 @@ export function InfographicDirectionsScreen() {
    */
   const answerIntake = (text: string) => {
     if (intakeQuestions.length === 0) return;
-    const answers = readIntakeBundle(intakeQuestions, text, (question) => {
-      const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
-      return file?.kind ?? "doc";
-    });
+    finishIntake(
+      readIntakeBundle(intakeQuestions, text, (question) => {
+        const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
+        return file?.kind ?? "doc";
+      })
+    );
+  };
+
+  /* Answered on the card: said back as the user's message, then the same as typing. */
+  const answerIntakeChoices = (answers: IntakeAnswer[]) => {
+    addChatMessage({ role: "user", text: choicesMessage(answers, intakeQuestions) });
+    finishIntake(answers);
+  };
+
+  const finishIntake = (answers: IntakeAnswer[]) => {
     setIntakeAnswers(answers);
     setIntakeIndex(intakeQuestions.length);
 
@@ -1409,6 +1418,14 @@ export function InfographicDirectionsScreen() {
 
             {/* The same composer as the video plan: the files on this
                 message above the field, the plus and send under it. */}
+            {planPhase === "intake" && intakeIndex < intakeQuestions.length && (
+              <IntakeQuestionCard
+                questions={intakeQuestions}
+                attachments={briefAttachments}
+                onComplete={answerIntakeChoices}
+              />
+            )}
+
             <ChatComposer
               value={chatInput}
               onChange={setChatInput}

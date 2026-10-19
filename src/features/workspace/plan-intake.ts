@@ -34,12 +34,16 @@ export interface IntakeAnswer {
   value: string;
   /** What the agent says back before asking the next thing. */
   reply: string;
+  /** The user's own words on it, when they added any. */
+  note?: string;
 }
 
 export interface BriefAttachment {
   id: string;
   name: string;
   kind: "image" | "video" | "doc";
+  /** An object URL for images and video, so the question can show the file. */
+  previewUrl?: string;
 }
 
 /* ── The questions ───────────────────────────────────────────────────────── */
@@ -90,22 +94,126 @@ export function buildIntakeQuestions(
   ];
 }
 
+/* ── Answering by choosing ─────────────────────────────────────────────── */
+
+export interface IntakeOption {
+  id: string;
+  label: string;
+  hint: string;
+}
+
 /**
- * Everything it needs, asked once.
+ * The same questions as choices, for the card in the chat.
  *
- * Asked one at a time, a person who already knew all three answers had to
- * wait to be asked each of them — a form handed over a field at a time. One
- * message, numbered, and they can answer it in a sentence or in a list.
+ * Typed answers still work; this is the quicker way for anyone who would
+ * rather pick than write. A file can be used for more than one thing, so its
+ * question takes several; a length or a shape is one thing, so it takes one.
  */
-export function intakeBundlePrompt(questions: IntakeQuestion[]): string {
-  if (questions.length === 0) return "";
-  if (questions.length === 1) return questions[0].prompt;
-  const lines = questions.map((question, index) => `**${index + 1}.** ${question.prompt}`);
-  return [
-    `${questions.length} things and I can lay the plan out, answer them together or one line each.`,
-    "",
-    ...lines,
-  ].join("\n");
+export function intakeChoices(
+  question: IntakeQuestion,
+  attachmentKind: BriefAttachment["kind"] = "doc"
+): { title: string; multi: boolean; options: IntakeOption[] } {
+  switch (question.kind) {
+    case "attachment":
+      return {
+        title: `What should I use ${question.fileName} for?`,
+        multi: true,
+        options:
+          attachmentKind === "doc"
+            ? [
+                { id: "Evidence", label: "Clinical evidence", hint: "Claims and data to ground the content in." },
+                { id: "Wording", label: "Wording", hint: "Phrasing to reuse or match." },
+                { id: "Layout", label: "Layout", hint: "A structure to follow." },
+                { id: "Context only", label: "Context only", hint: "Background reading; nothing quoted from it." },
+              ]
+            : attachmentKind === "video"
+              ? [
+                  { id: "Footage", label: "Footage to cut in", hint: "Clips shown in the video." },
+                  { id: "Visual style", label: "Visual style", hint: "The look and feel to match." },
+                  { id: "Context only", label: "Context only", hint: "Background; not shown." },
+                ]
+              : [
+                  { id: "Product shot", label: "Product packshot", hint: "Your product's picture, shown in the content." },
+                  { id: "Logo", label: "Logo", hint: "Your brand mark, placed in a corner." },
+                  { id: "Visual style", label: "Visual style", hint: "The look and feel to match." },
+                  { id: "Context only", label: "Context only", hint: "Background; not shown." },
+                ],
+      };
+    case "duration":
+      return {
+        title: "How long should the video run?",
+        multi: false,
+        options: [
+          { id: "30 sec", label: "30 seconds", hint: "A single idea." },
+          { id: "45 sec", label: "45 seconds", hint: "One idea with its evidence." },
+          { id: "60 sec", label: "60 seconds", hint: "The need, the mechanism and the evidence." },
+          { id: "90 sec", label: "90 seconds", hint: "Room for safety and a second claim." },
+        ],
+      };
+    case "pages":
+      return {
+        title: "How many pages should it run to?",
+        multi: false,
+        options: [
+          { id: "1", label: "1 page", hint: "A single figure, held well." },
+          { id: "2", label: "2 pages", hint: "The message, then the evidence and safety." },
+          { id: "3", label: "3 pages", hint: "A page per message." },
+          { id: "4", label: "4 pages", hint: "A full detail aid." },
+        ],
+      };
+    case "shape":
+      return {
+        title: "What shape should the pages be?",
+        multi: false,
+        options: [
+          { id: "A4 print", label: "A4 print", hint: "Leave-behinds and printed handouts." },
+          { id: "3:4 tablet", label: "3:4 tablet", hint: "Detailing on an iPad." },
+          { id: "16:9 landscape", label: "16:9 screen", hint: "Slides and screens." },
+        ],
+      };
+  }
+}
+
+/**
+ * What the card's choices mean for the plan: the same answer a typed reply
+ * would have produced, so the plan cannot tell which way it was given.
+ */
+export function answerFromChoices(
+  question: IntakeQuestion,
+  picked: Array<{ id: string; label: string; note?: string }>,
+  other?: string
+): IntakeAnswer {
+  /* With one option ticked the note is plainly about it; with several, say which. */
+  const notes = picked
+    .filter((p) => p.note?.trim())
+    .map((p) => (picked.length > 1 ? `${p.label}: ${p.note!.trim()}` : p.note!.trim()));
+  const note = notes.join("; ") || undefined;
+  if (question.kind === "attachment") {
+    const roles = [...picked.map((p) => p.id), ...(other?.trim() ? [other.trim()] : [])];
+    const value = roles.join(" + ") || "Evidence";
+    return { questionId: question.id, kind: question.kind, value, note, reply: `Filed **${question.fileName}** under **${value}**.` };
+  }
+  /* One choice, or the user's own: read the own words the way a typed answer is read. */
+  if (!picked.length && other?.trim()) {
+    const answer = readIntakeAnswer(question, other);
+    return { ...answer, note };
+  }
+  const choice = picked[0];
+  const base = readIntakeAnswer(question, choice ? choice.id : "");
+  return { ...base, note };
+}
+
+/** The card's answers, said back in the chat as the user's own message. */
+export function choicesMessage(answers: IntakeAnswer[], questions: IntakeQuestion[]): string {
+  return answers
+    .map((a) => {
+      const q = questions.find((x) => x.id === a.questionId);
+      const what = q?.fileName
+        ? `**${q.fileName}**`
+        : q?.kind === "duration" ? "**Length**" : q?.kind === "pages" ? "**Pages**" : "**Shape**";
+      return `${what}: ${a.value}${a.note ? ` (${a.note})` : ""}`;
+    })
+    .join("\n");
 }
 
 /* ── Reading an answer ───────────────────────────────────────────────────── */

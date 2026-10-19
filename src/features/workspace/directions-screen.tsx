@@ -90,10 +90,11 @@ import { useBrandName } from "@/features/workspace/brand-catalogue";
 import {
   buildIntakeQuestions,
   intakeSteps,
-  intakeBundlePrompt,
+  choicesMessage,
   readIntakeBundle,
   type IntakeAnswer,
 } from "@/features/workspace/plan-intake";
+import { IntakeQuestionCard } from "@/features/workspace/intake-question-card";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
 import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
@@ -1083,13 +1084,10 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     addChatMessage({
       role: "swishx",
       text: count
-        ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out.`
-        : `I've read the brief against the **${brandName}** dossier. One thing and I can lay the plan out.`,
+        ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out: pick below, or just type.`
+        : `I've read the brief against the **${brandName}** dossier. One thing and I can lay the plan out: pick below, or just type.`,
     });
-    setTimeout(() => {
-      const prompt = intakeBundlePrompt(intakeQuestions);
-      if (prompt) addChatMessage({ role: "swishx", text: prompt });
-    }, 600);
+    /* The questions themselves arrive as a card above the composer. */
   };
 
   /**
@@ -1100,10 +1098,21 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    */
   const answerIntake = (text: string) => {
     if (intakeQuestions.length === 0) return;
-    const answers = readIntakeBundle(intakeQuestions, text, (question) => {
-      const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
-      return file?.kind ?? "doc";
-    });
+    finishIntake(
+      readIntakeBundle(intakeQuestions, text, (question) => {
+        const file = briefAttachments.find((f) => `file-${f.id}` === question.id);
+        return file?.kind ?? "doc";
+      })
+    );
+  };
+
+  /* Answered on the card: said back as the user's message, then the same as typing. */
+  const answerIntakeChoices = (answers: IntakeAnswer[]) => {
+    addChatMessage({ role: "user", text: choicesMessage(answers, intakeQuestions) });
+    finishIntake(answers);
+  };
+
+  const finishIntake = (answers: IntakeAnswer[]) => {
     setIntakeAnswers(answers);
     setIntakeIndex(intakeQuestions.length);
     for (const answer of answers) {
@@ -2482,6 +2491,14 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                 <ArrowRight className="size-3 ml-1" />
               </Button>
             </div>
+            )}
+
+            {planPhase === "intake" && intakeIndex < intakeQuestions.length && (
+              <IntakeQuestionCard
+                questions={intakeQuestions}
+                attachments={briefAttachments}
+                onComplete={answerIntakeChoices}
+              />
             )}
 
             <ChatComposer

@@ -304,8 +304,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
        navigation, so the plan screen invented a list — which is why it could
        never ask what any of them were for. */
     setBriefAttachments(
-      localFiles.map((file) => ({ id: file.id, name: file.name, kind: file.kind }))
+      localFiles.map((file) => ({ id: file.id, name: file.name, kind: file.kind, previewUrl: file.previewUrl }))
     );
+    /* Their previews go with them, so the plan can show each file it asks
+       about: this screen no longer frees those URLs when it closes. */
+    localFilesRef.current = [];
     setPlanPhase(scenarioDriven ? "plan" : "research");
     // Kick off the grounding research the plan screen shows while it settles.
     setPlanResearching(true);
