@@ -171,6 +171,8 @@ interface SettingsState {
   setMemberStatus: (id: string, status: Member["status"], reason?: string) => void;
   sendInvites: (emails: string[], role: Role, seniority: Seniority, permissions: PermissionId[]) => void;
   revokeInvite: (id: string) => void;
+  /** Sends the invite email again; the row then says when. */
+  resendInvite: (id: string) => void;
   resolveJoinRequest: (id: string, accept: boolean, role?: Role, seniority?: Seniority) => void;
 
   // 5 — compliance & MLR
@@ -353,6 +355,9 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     }))],
   })),
   revokeInvite: (id) => set((s) => ({ invites: s.invites.filter((i) => i.id !== id) })),
+  resendInvite: (id) => set((s) => ({
+    invites: s.invites.map((i) => (i.id === id ? { ...i, invitedAt: "resent just now" } : i)),
+  })),
   resolveJoinRequest: (id, accept, role = "Read only", seniority = "Associate") => set((s) => {
     const req = s.joinRequests.find((r) => r.id === id);
     if (!req) return s;

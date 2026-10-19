@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RotateCcw, Shield, UserPlus } from "lucide-react";
+import { Check, RotateCcw, Shield, UserPlus } from "lucide-react";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
 import { Stack } from "@/components/ui/stack";
@@ -14,7 +14,7 @@ import { useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard, CheckRow } from "@/features/settings/settings-parts";
 import {
   PERMISSIONS, SENIORITY, includedNote, rolePermissions,
-  type Member, type Role, type Seniority,
+  type JoinRequest, type Member, type Role, type Seniority,
 } from "@/features/settings/settings-types";
 import { cn } from "@/lib/cn";
 
@@ -78,18 +78,7 @@ export function SectionTeam() {
       {s.joinRequests.length > 0 && (
         <SettingsCard title="Join requests" description="People asking for access to this workspace.">
           <Stack gap={2}>
-            {s.joinRequests.map((r) => (
-              <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-warn-line bg-warn-bg px-3 py-2.5">
-                <div className="min-w-0">
-                  <Text size="body" weight="semibold" className="block">{r.name}</Text>
-                  <Text size="caption" tone="muted" className="block">{r.email} · asked {r.requestedAt}</Text>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Button size="sm" variant="secondary" onClick={() => s.resolveJoinRequest(r.id, false)}>Decline</Button>
-                  <Button size="sm" onClick={() => s.resolveJoinRequest(r.id, true, "Read only", "Associate")}>Approve</Button>
-                </div>
-              </div>
-            ))}
+            {s.joinRequests.map((r) => <JoinRequestRow key={r.id} request={r} />)}
           </Stack>
         </SettingsCard>
       )}
@@ -142,10 +131,12 @@ export function SectionTeam() {
               <div key={i.id} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-hair bg-canvas px-3 py-2.5">
                 <div className="min-w-0">
                   <Text size="body" weight="semibold" className="block truncate">{i.email}</Text>
-                  <Text size="caption" tone="muted" className="block">{i.role} · {i.seniority} · invited {i.invitedAt}</Text>
+                  <Text size="caption" tone="muted" className="block">
+                    {i.role} · {i.seniority} · {i.invitedAt.startsWith("resent") ? i.invitedAt : `invited ${i.invitedAt}`}
+                  </Text>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <Button size="sm" variant="ghost">Resend</Button>
+                  <ResendButton onResend={() => s.resendInvite(i.id)} />
                   <Button size="sm" variant="secondary" onClick={() => s.revokeInvite(i.id)}>Revoke</Button>
                 </div>
               </div>
@@ -274,5 +265,90 @@ export function SectionTeam() {
         )}
       </Sheet>
     </Stack>
+  );
+}
+
+/**
+ * A join request, approved with a role the admin picks. It used to approve
+ * everyone as "Read only", which could even be a role that no longer
+ * existed once an admin had removed it.
+ */
+function JoinRequestRow({ request }: { request: JoinRequest }) {
+  const s = useSettingsStore();
+  /* Start from the least access: the role with the fewest permissions. */
+  const leastAccess = [...s.roles].sort((a, b) => a.permissions.length - b.permissions.length)[0]?.name ?? "";
+  const [choosing, setChoosing] = useState(false);
+  const [role, setRole] = useState<Role>(leastAccess);
+  const [seniority, setSeniority] = useState<Seniority>("Associate");
+  const activeRole = s.roles.some((r) => r.name === role) ? role : leastAccess;
+
+  return (
+    <div className="rounded-control border border-warn-line bg-warn-bg px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <Text size="body" weight="semibold" className="block">{request.name}</Text>
+          <Text size="caption" tone="muted" className="block">{request.email} · asked {request.requestedAt}</Text>
+        </div>
+        {!choosing && (
+          <div className="flex shrink-0 items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={() => s.resolveJoinRequest(request.id, false)}>Decline</Button>
+            <Button size="sm" onClick={() => setChoosing(true)}>Approve</Button>
+          </div>
+        )}
+      </div>
+      {/* Approving asks what they join as. */}
+      {choosing && (
+        <div className="mt-2.5 flex flex-wrap items-end gap-2 border-t border-warn-line pt-2.5">
+          <label className="flex flex-col gap-1">
+            <Text size="caption" tone="muted" weight="semibold">Role</Text>
+            <select
+              value={activeRole}
+              onChange={(e) => setRole(e.target.value)}
+              className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
+            >
+              {s.roles.map((r) => (
+                <option key={r.name} value={r.name}>{r.name} ({r.permissions.length} of {PERMISSIONS.length})</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <Text size="caption" tone="muted" weight="semibold">Seniority</Text>
+            <select
+              value={seniority}
+              onChange={(e) => setSeniority(e.target.value as Seniority)}
+              className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
+            >
+              {SENIORITY.map((x) => <option key={x} value={x}>{x}</option>)}
+            </select>
+          </label>
+          <div className="ml-auto flex items-center gap-2">
+            <Button size="sm" variant="ghost" onClick={() => setChoosing(false)}>Cancel</Button>
+            <Button size="sm" onClick={() => s.resolveJoinRequest(request.id, true, activeRole, seniority)}>
+              Approve as {activeRole}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Resend, with a moment of "Sent" so the click is seen to have done something. */
+function ResendButton({ onResend }: { onResend: () => void }) {
+  const [sent, setSent] = useState(false);
+  return (
+    <Button
+      size="sm"
+      variant="ghost"
+      disabled={sent}
+      onClick={() => {
+        onResend();
+        setSent(true);
+        window.setTimeout(() => setSent(false), 2500);
+      }}
+      className="gap-1.5"
+    >
+      {sent ? <><Check className="size-3.5 text-ok" /> Sent</> : "Resend"}
+    </Button>
   );
 }
