@@ -150,9 +150,13 @@ export interface ApprovalStage {
     | { kind: "anyone" }
     | { kind: "person"; memberId: string }
     | { kind: "seniority"; floor: Seniority };
-  /** All named approvers must sign off, or any one is enough. */
-  requireAll: boolean;
-  onReject: "draft" | "previous";
+  /**
+   * A rejection always goes back to the creator, because the content has to
+   * change. This is who reviews the changed version: everyone from step 1
+   * (earlier approvals are void; the compliance default), or from this step
+   * on (earlier approvals stand; quicker for a small fix).
+   */
+  restartFrom: "first" | "this";
 }
 
 /** One chain per person. Admins CRUD every chain; a user sees only their own. */

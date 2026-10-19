@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Copy, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, Plus, Trash2 } from "lucide-react";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
 import { Stack } from "@/components/ui/stack";
@@ -47,7 +47,6 @@ function narrowLabel(stage: ApprovalStage, members: Member[]) {
 export function SectionCompliance() {
   const s = useSettingsStore();
   const [editing, setEditing] = useState<string | null>(null);
-  const [dupFrom, setDupFrom] = useState<string | null>(null);
 
   const creators = s.members.filter(
     (m) => m.permissions.includes("create") && m.status !== "deactivated",
@@ -168,7 +167,7 @@ export function SectionCompliance() {
       {/* Chain editor */}
       <Sheet
         open={Boolean(editMember)}
-        onClose={() => { setEditing(null); setDupFrom(null); }}
+        onClose={() => setEditing(null)}
         side="right"
         size={560}
         title={editMember ? `${editMember.name}'s chain` : ""}
@@ -182,7 +181,7 @@ export function SectionCompliance() {
                 onClick={() => {
                   s.setChainStages(editMember.id, [
                     ...chainFor(editMember.id),
-                    { id: uid(), name: "New stage", role: "Medical reviewer", narrowTo: { kind: "anyone" }, requireAll: false, onReject: "draft" },
+                    { id: uid(), name: "New stage", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" },
                   ]);
                 }}
               >
@@ -296,32 +295,26 @@ export function SectionCompliance() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                      <label className="flex items-center gap-2">
-                        <Toggle
-                          checked={st.requireAll}
-                          label="Everyone must approve"
-                          onChange={(v) => s.setChainStages(editMember.id,
-                            chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, requireAll: v } : x)))}
-                        />
-                        <Text size="label" tone="muted">{st.requireAll ? "Everyone must approve" : "Any one is enough"}</Text>
-                      </label>
-
-                      <label className="flex items-center gap-2">
-                        <Text size="label" tone="muted">On reject</Text>
+                      {/* A rejection goes back to the creator; this is who re-reviews the change. */}
+                      <label className="flex flex-wrap items-center gap-2">
+                        <Text size="label" tone="muted">If rejected, after changes review restarts from</Text>
                         <select
-                          value={st.onReject}
+                          value={st.restartFrom}
                           onChange={(e) => s.setChainStages(editMember.id,
-                            chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, onReject: e.target.value as "draft" | "previous" } : x)))}
+                            chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, restartFrom: e.target.value as "first" | "this" } : x)))}
                           className="rounded-control border border-hair-2 bg-card px-2 py-1 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
                         >
-                          <option value="draft">Back to draft</option>
-                          <option value="previous">Back one stage</option>
+                          <option value="first">The first step (everyone approves again)</option>
+                          <option value="this">This step (earlier approvals stand)</option>
                         </select>
                       </label>
                     </div>
 
                     <Text size="caption" tone="subtle">
-                      Approved by {narrowLabel(st, s.members)}.
+                      Approved by {narrowLabel(st, s.members)}. If rejected, it goes back to the creator;{" "}
+                      {st.restartFrom === "first"
+                        ? "after their changes, everyone from step 1 reviews it again."
+                        : "after their changes, review picks up from this step and earlier approvals stand."}
                     </Text>
                   </Stack>
                 )}
@@ -338,31 +331,6 @@ export function SectionCompliance() {
               />
             )}
 
-            {/* Ten people on one team usually want one chain — without this, that
-                is ten identical builds by hand. */}
-            <div className="rounded-panel border border-hair bg-subtle p-3">
-              <Text size="label" weight="bold" className="mb-1.5 block">Copy this chain to someone else</Text>
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  value={dupFrom ?? ""}
-                  onChange={(e) => setDupFrom(e.target.value || null)}
-                  className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
-                >
-                  <option value="">Choose a person…</option>
-                  {creators.filter((m) => m.id !== editMember.id).map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={!dupFrom || chainFor(editMember.id).length === 0}
-                  onClick={() => { if (dupFrom) { s.duplicateChain(editMember.id, dupFrom); setDupFrom(null); } }}
-                >
-                  <Copy className="size-3.5" /> Copy
-                </Button>
-              </div>
-            </div>
           </Stack>
         )}
       </Sheet>

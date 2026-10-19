@@ -38,22 +38,22 @@ const CHAINS: ApprovalChain[] = [
   {
     memberId: "m0",
     stages: [
-      { id: "s0", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "seniority", floor: "Director" }, requireAll: false, onReject: "draft" },
+      { id: "s0", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "seniority", floor: "Director" }, restartFrom: "first" },
     ],
   },
   {
     memberId: "m1",
     stages: [
-      { id: "s1", name: "Medical review",    role: "Medical reviewer",    narrowTo: { kind: "person", memberId: "m3" }, requireAll: true,  onReject: "draft" },
-      { id: "s2", name: "Legal review",      role: "Legal reviewer",      narrowTo: { kind: "anyone" },                 requireAll: false, onReject: "previous" },
-      { id: "s3", name: "Regulatory sign-off", role: "Regulatory reviewer", narrowTo: { kind: "seniority", floor: "Director" }, requireAll: true, onReject: "draft" },
+      { id: "s1", name: "Medical review",    role: "Medical reviewer",    narrowTo: { kind: "person", memberId: "m3" }, restartFrom: "first" },
+      { id: "s2", name: "Legal review",      role: "Legal reviewer",      narrowTo: { kind: "anyone" },                 restartFrom: "this" },
+      { id: "s3", name: "Regulatory sign-off", role: "Regulatory reviewer", narrowTo: { kind: "seniority", floor: "Director" }, restartFrom: "first" },
     ],
   },
   {
     memberId: "m2",
     stages: [
-      { id: "s4", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" }, requireAll: false, onReject: "draft" },
-      { id: "s5", name: "Legal review",   role: "Legal reviewer",   narrowTo: { kind: "anyone" }, requireAll: false, onReject: "previous" },
+      { id: "s4", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" },
+      { id: "s5", name: "Legal review",   role: "Legal reviewer",   narrowTo: { kind: "anyone" }, restartFrom: "this" },
     ],
   },
   { memberId: "m9", stages: [] },
@@ -178,7 +178,6 @@ interface SettingsState {
   expiryWarnDays: number;
   autoArchive: boolean;
   setChainStages: (memberId: string, stages: ApprovalChain["stages"]) => void;
-  duplicateChain: (fromMemberId: string, toMemberId: string) => void;
   clearChain: (memberId: string) => void;
   setExpiry: (days: number, autoArchive: boolean) => void;
 
@@ -226,7 +225,7 @@ interface SettingsState {
   removePronunciation: (id: string) => void;
 }
 
-export const useSettingsStore = create<SettingsState>((set, get) => ({
+export const useSettingsStore = create<SettingsState>((set) => ({
   isAdmin: true,
   currentUserId: "m0",
   setCurrentUser: (memberId) => set((s) => {
@@ -377,13 +376,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         : [...s.chains, { memberId, stages }],
     };
   }),
-  duplicateChain: (fromMemberId, toMemberId) => {
-    const from = get().chains.find((c) => c.memberId === fromMemberId);
-    if (!from) return;
-    // New stage ids so the two chains stay independent afterwards.
-    const stages = from.stages.map((st) => ({ ...st, id: uid() }));
-    get().setChainStages(toMemberId, stages);
-  },
   clearChain: (memberId) => set((s) => ({
     chains: s.chains.map((c) => (c.memberId === memberId ? { ...c, stages: [] } : c)),
   })),
