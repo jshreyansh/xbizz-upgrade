@@ -91,18 +91,26 @@ export function Toggle({
 
 /** A checkbox that reads as a chip — used for the permission list. */
 export function CheckRow({
-  checked, onChange, label, trailing, disabled,
-}: { checked: boolean; onChange: () => void; label: string; trailing?: string; disabled?: boolean }) {
+  checked, onChange, label, trailing, disabled, lockedNote,
+}: {
+  checked: boolean; onChange: () => void; label: string; trailing?: string; disabled?: boolean;
+  /** On because something else brings it, e.g. "Included with Create": shown ticked and fixed, not faded. */
+  lockedNote?: string;
+}) {
   return (
     <button
       type="button"
       role="checkbox"
       aria-checked={checked}
+      aria-disabled={lockedNote ? true : undefined}
       disabled={disabled}
-      onClick={onChange}
+      onClick={lockedNote ? undefined : onChange}
+      title={lockedNote}
       className={cn(
-        "flex w-full items-start gap-3 rounded-control border px-3 py-2.5 text-left transition-colors cursor-pointer",
+        "flex w-full items-start gap-3 rounded-control border px-3 py-2.5 text-left transition-colors",
+        lockedNote ? "cursor-default" : "cursor-pointer",
         checked ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas",
+        lockedNote && "ring-0",
         disabled && "pointer-events-none opacity-40",
       )}
     >
@@ -118,6 +126,7 @@ export function CheckRow({
       <span className="min-w-0">
         <Text size="body" weight="semibold" className={cn("block", checked && "text-brand-deep")}>{label}</Text>
         {trailing && <Text size="label" tone="muted" className="mt-0.5 block">{trailing}</Text>}
+        {lockedNote && <Text size="caption" weight="semibold" className="mt-0.5 block text-brand-deep">{lockedNote}</Text>}
       </span>
     </button>
   );

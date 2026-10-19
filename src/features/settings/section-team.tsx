@@ -1,19 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { RotateCcw, Send, UserPlus } from "lucide-react";
+import { RotateCcw, Shield, UserPlus } from "lucide-react";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
 import { Stack } from "@/components/ui/stack";
 import { Field } from "@/components/ui/field";
+import { InviteModal, RoleConfigModal } from "@/features/settings/team-modals";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/patterns/sheet";
 import { DataTable, type DataColumn } from "@/components/patterns/data-table";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard, CheckRow } from "@/features/settings/settings-parts";
 import {
-  PERMISSIONS, ROLES, ROLE_PERMISSIONS, SENIORITY,
-  type Member, type PermissionId, type Role, type Seniority,
+  PERMISSIONS, SENIORITY, includedNote, rolePermissions,
+  type Member, type Role, type Seniority,
 } from "@/features/settings/settings-types";
 import { cn } from "@/lib/cn";
 
@@ -28,13 +29,9 @@ export function SectionTeam() {
   const s = useSettingsStore();
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [inviteEmails, setInviteEmails] = useState("");
-  const [inviteRole, setInviteRole] = useState<Role>("Marketing");
-  const [inviteSeniority, setInviteSeniority] = useState<Seniority>("Associate");
-  // Seeded from the role, then editable — same contract as an existing member,
-  // so what you grant at invite time is what they arrive with.
-  const [invitePerms, setInvitePerms] = useState<PermissionId[]>([...ROLE_PERMISSIONS["Marketing"]]);
+  /* Adding people and defining roles are separate jobs, so separate modals. */
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [rolesOpen, setRolesOpen] = useState(false);
   const [deactivating, setDeactivating] = useState<string | null>(null);
   const [reason, setReason] = useState("");
 
@@ -59,7 +56,7 @@ export function SectionTeam() {
     {
       key: "perms", header: "Permissions", secondary: true,
       cell: (m) => {
-        const custom = !sameSet(m.permissions, ROLE_PERMISSIONS[m.role]);
+        const custom = !sameSet(m.permissions, rolePermissions(s.roles, m.role));
         return (
           <div className="flex items-center gap-1.5">
             <Text size="body" className="tabular-nums">{m.permissions.length} of {PERMISSIONS.length}</Text>
@@ -75,14 +72,6 @@ export function SectionTeam() {
     },
     { key: "last", header: "Last active", secondary: true, cell: (m) => <Text size="caption" tone="muted">{m.lastActive}</Text> },
   ];
-
-  const sendInvites = () => {
-    const emails = inviteEmails.split(/[\s,;]+/).map((e) => e.trim()).filter(Boolean);
-    if (emails.length === 0) return;
-    s.sendInvites(emails, inviteRole, inviteSeniority, invitePerms);
-    setInviteEmails("");
-    setComposerOpen(false);
-  };
 
   return (
     <Stack gap={4}>
@@ -109,86 +98,17 @@ export function SectionTeam() {
         title="Members"
         description="Field-force reps are members with the Field Force role, filter to see just them."
         actions={
-          <Button size="sm" onClick={() => setComposerOpen((v) => !v)}>
-            <UserPlus className="size-3.5" /> Invite
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setRolesOpen(true)}>
+              <Shield className="size-3.5" /> Role configuration
+            </Button>
+            <Button size="sm" onClick={() => setInviteOpen(true)}>
+              <UserPlus className="size-3.5" /> Invite
+            </Button>
+          </div>
         }
       >
         <Stack gap={3}>
-          {composerOpen && (
-            <div className="rounded-panel border border-brand/20 bg-tint p-3">
-              <Stack gap={2}>
-                <Field
-                  label="Email addresses"
-                  hint="Several at once, separate with commas or spaces"
-                  value={inviteEmails}
-                  onChange={(e) => setInviteEmails(e.target.value)}
-                  placeholder="name@velmora.com, other@velmora.com"
-                  className="text-body"
-                />
-                <div className="flex flex-wrap items-end gap-3">
-                  <label className="flex flex-col gap-1">
-                    <Text size="label" tone="muted" weight="semibold">Role</Text>
-                    <select value={inviteRole} onChange={(e) => {
-                        const r = e.target.value as Role;
-                        setInviteRole(r);
-                        setInvitePerms([...ROLE_PERMISSIONS[r]]);
-                      }}
-                      className="rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink cursor-pointer focus:border-brand focus:outline-none">
-                      {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <Text size="label" tone="muted" weight="semibold">Seniority</Text>
-                    <select value={inviteSeniority} onChange={(e) => setInviteSeniority(e.target.value as Seniority)}
-                      className="rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink cursor-pointer focus:border-brand focus:outline-none">
-                      {SENIORITY.map((r) => <option key={r} value={r}>{r}</option>)}
-                    </select>
-                  </label>
-                </div>
-
-                <div>
-                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                    <Text size="label" tone="muted" weight="semibold">
-                      Permissions, {invitePerms.length} of {PERMISSIONS.length}
-                    </Text>
-                    {!sameSet(invitePerms, ROLE_PERMISSIONS[inviteRole]) && (
-                      <button
-                        type="button"
-                        onClick={() => setInvitePerms([...ROLE_PERMISSIONS[inviteRole]])}
-                        className="flex items-center gap-1 text-brand transition-colors hover:underline cursor-pointer"
-                      >
-                        <RotateCcw className="size-3" />
-                        <span className="text-label font-bold">Reset to {inviteRole} default</span>
-                      </button>
-                    )}
-                  </div>
-                  <Text size="caption" tone="subtle" className="mb-2 block">
-                    Seeded from {inviteRole}. Change them here and the invitee arrives with exactly this set.
-                  </Text>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {PERMISSIONS.map((p) => (
-                      <CheckRow
-                        key={p.id}
-                        checked={invitePerms.includes(p.id)}
-                        onChange={() => setInvitePerms((cur) =>
-                          cur.includes(p.id) ? cur.filter((x) => x !== p.id) : [...cur, p.id])}
-                        label={p.label}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button size="sm" onClick={sendInvites} disabled={!inviteEmails.trim()}>
-                    <Send className="size-3.5" /> Send invites
-                  </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setComposerOpen(false)}>Cancel</Button>
-                </div>
-              </Stack>
-            </div>
-          )}
-
           <div className="flex flex-wrap items-center gap-1.5">
             <Text size="label" tone="muted" weight="semibold" className="mr-1">Filter</Text>
             <button type="button" onClick={() => setRoleFilter("all")}
@@ -196,7 +116,7 @@ export function SectionTeam() {
                 roleFilter === "all" ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3")}>
               <span className="text-label font-bold">All</span>
             </button>
-            {ROLES.map((r) => (
+            {s.roles.map(({ name: r }) => (
               <button key={r} type="button" onClick={() => setRoleFilter(r)}
                 className={cn("rounded-chip border px-2.5 py-1 transition-colors cursor-pointer",
                   roleFilter === r ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3")}>
@@ -234,6 +154,18 @@ export function SectionTeam() {
         </SettingsCard>
       )}
 
+      {/* Mounted per opening, so each invite starts fresh. */}
+      {inviteOpen && (
+        <InviteModal
+          open
+          onClose={() => setInviteOpen(false)}
+          onManageRoles={() => { setInviteOpen(false); setRolesOpen(true); }}
+        />
+      )}
+      {rolesOpen && (
+        <RoleConfigModal open onClose={() => setRolesOpen(false)} onShowMembers={(r) => setRoleFilter(r)} />
+      )}
+
       {/* Member drawer — role, seniority, permissions, deactivation. */}
       <Sheet
         open={Boolean(openMember)}
@@ -265,7 +197,7 @@ export function SectionTeam() {
                 onChange={(e) => s.setMemberRole(openMember.id, e.target.value as Role)}
                 className="w-full rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink cursor-pointer focus:border-brand focus:outline-none"
               >
-                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                {s.roles.map(({ name: r }) => <option key={r} value={r}>{r}</option>)}
               </select>
               <Text size="caption" tone="subtle" className="mt-1 block">
                 Changing the role re-seeds the permissions below.
@@ -289,7 +221,7 @@ export function SectionTeam() {
             <div>
               <div className="mb-1.5 flex items-center justify-between gap-2">
                 <Text size="label" tone="muted" weight="semibold">Permissions</Text>
-                {!sameSet(openMember.permissions, ROLE_PERMISSIONS[openMember.role]) && (
+                {!sameSet(openMember.permissions, rolePermissions(s.roles, openMember.role)) && (
                   <button
                     type="button"
                     onClick={() => s.resetMemberPermissions(openMember.id)}
@@ -311,6 +243,7 @@ export function SectionTeam() {
                     onChange={() => s.toggleMemberPermission(openMember.id, p.id)}
                     label={p.label}
                     trailing={p.trailing}
+                    lockedNote={includedNote(openMember.permissions, p.id)}
                   />
                 ))}
               </Stack>

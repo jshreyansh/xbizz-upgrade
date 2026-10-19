@@ -1,43 +1,113 @@
 /** Domain types for the settings surface. Mock-only: there is no API layer. */
 
+/** The roles a workspace starts with. Admins can rename, re-permission,
+    add and remove roles in Role configuration, so this is only the seed. */
 export const ROLES = [
   "Admin", "Marketing", "Design", "Field Force",
   "Medical reviewer", "Legal reviewer", "Regulatory reviewer",
   "Read only", "CXO",
 ] as const;
-export type Role = (typeof ROLES)[number];
+/** A role's name. Roles are workspace data, defined by an admin. */
+export type Role = string;
 
 /** Ordered low to high — a stage's seniority is a FLOOR, so the index matters. */
 export const SENIORITY = ["Intern", "Associate", "Manager", "Lead", "Director", "VP"] as const;
 export type Seniority = (typeof SENIORITY)[number];
 
+/**
+ * What a member can do, for a pharma content team.
+ *
+ * Built around what people do with content rather than which screens exist:
+ * creators make, edit and publish (and so can share and comment); everyone
+ * else views and comments; reviewers also sign off. The two libraries are
+ * separate because the Claims Library is the approved source of truth, and
+ * changing it changes what every asset may say. MLR review itself is
+ * SwishX's automated check, so it is not a permission. Members with none
+ * still see published content.
+ */
 export const PERMISSIONS = [
-  { id: "studio",    label: "Studio access",                trailing: "Create and edit video, creative and infographic assets" },
-  { id: "admin",     label: "Admin controls",                trailing: "Workspace, brand kit, team, integrations, approval chains" },
-  { id: "libraries", label: "Libraries, add, edit, update", trailing: "Claims, Products and Content" },
-  { id: "analytics", label: "Analytics",                     trailing: "The Insights section" },
-  { id: "comment",   label: "Comment on drafts & published", trailing: "Commenting without edit rights" },
-  { id: "billing",   label: "Billing, plans & top-ups",      trailing: "Purchasing. Reading stays open to everyone" },
-  { id: "approvals", label: "Approval flows",                trailing: "Act as an approver in a chain" },
+  { id: "create",    label: "Create, edit & publish content", trailing: "Studio and the Content Library: make, edit and publish, then share, download or send on" },
+  { id: "comment",   label: "View & comment",                 trailing: "Open anything in the Content Library and comment, without editing" },
+  { id: "approve",   label: "Approve",                        trailing: "Sign off or reject as a reviewer in an approval chain" },
+  { id: "products",  label: "Manage Product Library",         trailing: "Products, dossiers, packshots and brand assets" },
+  { id: "claims",    label: "Manage Claims Library",          trailing: "Add, edit and retire approved claims and their references" },
+  { id: "analytics", label: "Analytics",                      trailing: "The Insights section" },
+  { id: "billing",   label: "Billing & credits",              trailing: "Plans, top-ups and purchases. Reading stays open to everyone" },
+  { id: "admin",     label: "Admin",                          trailing: "Team, roles, brand kit, integrations and approval-chain setup" },
 ] as const;
 export type PermissionId = (typeof PERMISSIONS)[number]["id"];
+
+/** Permissions that come with another: you can't create or approve what you can't open. */
+export const INCLUDED_BY: Partial<Record<PermissionId, PermissionId[]>> = {
+  comment: ["create", "approve"],
+};
+
+/** Which held permission brings this one along, if any. */
+export function includedBy(perms: readonly PermissionId[], id: PermissionId): PermissionId | undefined {
+  return INCLUDED_BY[id]?.find((p) => perms.includes(p));
+}
+
+const SHORT: Partial<Record<PermissionId, string>> = { create: "Create", approve: "Approve" };
+
+/** "Included with Create", when another held permission brings this one along. */
+export function includedNote(perms: readonly PermissionId[], id: PermissionId): string | undefined {
+  const by = includedBy(perms, id);
+  return by ? `Included with ${SHORT[by] ?? by}` : undefined;
+}
+
+/** A set with everything it implies added, so the stored set always tells the truth. */
+export function withIncluded(perms: readonly PermissionId[]): PermissionId[] {
+  const out = new Set(perms);
+  for (const [id, parents] of Object.entries(INCLUDED_BY) as [PermissionId, PermissionId[]][]) {
+    if (parents.some((p) => out.has(p))) out.add(id);
+  }
+  return PERMISSIONS.map((p) => p.id).filter((id) => out.has(id));
+}
+
+/** Toggle one permission, keeping included ones in step. */
+export function togglePermission(perms: readonly PermissionId[], id: PermissionId): PermissionId[] {
+  if (includedBy(perms, id)) return [...perms]; // locked on by another
+  return withIncluded(perms.includes(id) ? perms.filter((x) => x !== id) : [...perms, id]);
+}
 
 /**
  * What each role starts with. Choosing a role seeds these; a member may then
  * differ, and that difference is theirs alone — it never edits the role for
  * anyone else.
  */
-export const ROLE_PERMISSIONS: Record<Role, PermissionId[]> = {
-  "Admin":               ["studio", "admin", "libraries", "analytics", "comment", "billing", "approvals"],
-  "Marketing":           ["studio", "libraries", "analytics", "comment"],
-  "Design":              ["studio", "libraries", "comment"],
-  "Field Force":         ["analytics", "comment"],
-  "Medical reviewer":    ["comment", "approvals"],
-  "Legal reviewer":      ["comment", "approvals"],
-  "Regulatory reviewer": ["comment", "approvals"],
+export const ROLE_PERMISSIONS: Record<(typeof ROLES)[number], PermissionId[]> = {
+  "Admin":               ["create", "comment", "approve", "products", "claims", "analytics", "billing", "admin"],
+  "Marketing":           ["create", "comment", "products", "analytics"],
+  "Design":              ["create", "comment"],
+  "Field Force":         ["comment", "analytics"],
+  "Medical reviewer":    ["comment", "approve", "claims"],
+  "Legal reviewer":      ["comment", "approve"],
+  "Regulatory reviewer": ["comment", "approve", "claims"],
   "Read only":           [],
-  "CXO":                 ["analytics", "billing", "comment"],
+  "CXO":                 ["comment", "analytics", "billing"],
 };
+
+/** A role as an admin defines it: a name and the permissions it seeds. */
+export interface RoleDef {
+  name: string;
+  permissions: PermissionId[];
+  /** Came with the workspace. Still editable and removable, except Admin. */
+  system: boolean;
+  /** Admin can't be removed or lose admin controls: someone has to manage roles. */
+  locked?: boolean;
+}
+
+export const DEFAULT_ROLES: RoleDef[] = ROLES.map((name) => ({
+  name,
+  permissions: [...ROLE_PERMISSIONS[name]],
+  system: true,
+  locked: name === "Admin",
+}));
+
+/** What a role seeds, by name; nothing for a role that no longer exists. */
+export function rolePermissions(roles: RoleDef[], name: Role): PermissionId[] {
+  return [...(roles.find((r) => r.name === name)?.permissions ?? [])];
+}
 
 export type MemberStatus = "active" | "invited" | "deactivated";
 

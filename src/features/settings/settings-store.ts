@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import {
-  ROLE_PERMISSIONS,
+  ROLE_PERMISSIONS, DEFAULT_ROLES, rolePermissions, togglePermission, type RoleDef,
   type ApprovalChain, type BrandKit, type IntegrationLog, type IntegrationStatus,
   type Invoice, type JoinRequest, type Language, type Member, type NotificationPref,
   type PendingInvite, type PermissionId, type Pronunciation, type Role, type Seniority,
@@ -28,9 +28,9 @@ const MEMBERS: Member[] = [
   { id: "m6", name: "Daniel Osei",    email: "daniel.osei@velmora.com",  role: "Field Force",         seniority: "Associate", permissions: ROLE_PERMISSIONS["Field Force"],         status: "active", lastActive: "4 hours ago" },
   { id: "m7", name: "Lena Fischer",   email: "lena.fischer@velmora.com", role: "Field Force",         seniority: "Associate", permissions: ROLE_PERMISSIONS["Field Force"],         status: "active", lastActive: "Today" },
   { id: "m8", name: "Marco Duarte",   email: "marco.d@velmora.com",      role: "Field Force",         seniority: "Manager",   permissions: ROLE_PERMISSIONS["Field Force"],         status: "deactivated", lastActive: "6 weeks ago", deactivationReason: "Left the territory team" },
-  // A deliberately customised member: Studio access removed from Marketing, so
+  // A deliberately customised member: Create removed from Marketing, so
   // the "differs from role default" marker has something real to show.
-  { id: "m9", name: "Aisha Khan",      email: "aisha.khan@velmora.com",  role: "Marketing",           seniority: "Associate", permissions: ["libraries", "analytics", "comment"],   status: "active", lastActive: "Today" },
+  { id: "m9", name: "Aisha Khan",      email: "aisha.khan@velmora.com",  role: "Marketing",           seniority: "Associate", permissions: ["comment", "products", "analytics"],   status: "active", lastActive: "Today" },
   { id: "m10", name: "Ben Sorensen",  email: "ben.s@velmora.com",        role: "CXO",                 seniority: "VP",        permissions: ROLE_PERMISSIONS["CXO"],                 status: "active", lastActive: "1 week ago" },
 ];
 
@@ -158,6 +158,12 @@ interface SettingsState {
   members: Member[];
   invites: PendingInvite[];
   joinRequests: JoinRequest[];
+  roles: RoleDef[];
+  addRole: (name: string, permissions: PermissionId[]) => void;
+  /** Rename and/or re-permission. Members still on the old defaults move to the new ones. */
+  updateRole: (name: string, next: { name: string; permissions: PermissionId[] }) => void;
+  /** Only once nobody uses it; Role configuration blocks it before that. */
+  removeRole: (name: string) => void;
   setMemberRole: (id: string, role: Role) => void;
   setMemberSeniority: (id: string, s: Seniority) => void;
   toggleMemberPermission: (id: string, p: PermissionId) => void;
@@ -301,28 +307,43 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   members: MEMBERS,
   invites: [
     { id: "iv1", email: "nadia.hassan@velmora.com", role: "Marketing",   seniority: "Manager",   permissions: [...ROLE_PERMISSIONS["Marketing"]],   invitedAt: "2 days ago" },
-    // Invited without Studio access — a deliberate narrowing at invite time.
+    // Invited without View & comment — a deliberate narrowing at invite time.
     { id: "iv2", email: "tom.becker@velmora.com",   role: "Field Force", seniority: "Associate", permissions: ["analytics"],                        invitedAt: "5 days ago" },
   ],
   joinRequests: [
     { id: "jr1", name: "Elena Sokolova", email: "elena.s@velmora.com", requestedAt: "Yesterday" },
   ],
+  roles: DEFAULT_ROLES,
+  addRole: (name, permissions) => set((s) => ({
+    roles: [...s.roles, { name, permissions: [...permissions], system: false }],
+  })),
+  updateRole: (name, next) => set((s) => {
+    const old = s.roles.find((r) => r.name === name);
+    if (!old) return s;
+    const same = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x) => b.includes(x));
+    return {
+      roles: s.roles.map((r) => (r.name === name ? { ...r, name: next.name, permissions: [...next.permissions] } : r)),
+      /* Members on the role's old defaults follow it; anyone customised keeps their own set. */
+      members: s.members.map((m) =>
+        m.role !== name ? m : { ...m, role: next.name, permissions: same(m.permissions, old.permissions) ? [...next.permissions] : m.permissions }
+      ),
+      invites: s.invites.map((i) => (i.role === name ? { ...i, role: next.name } : i)),
+      chains: s.chains.map((c) => ({ ...c, stages: c.stages.map((st) => (st.role === name ? { ...st, role: next.name } : st)) })),
+    };
+  }),
+  removeRole: (name) => set((s) => ({ roles: s.roles.filter((r) => r.name !== name || r.locked) })),
   setMemberRole: (id, role) => set((s) => ({
     // Changing role re-seeds permissions — the role is the starting point.
-    members: s.members.map((m) => (m.id === id ? { ...m, role, permissions: [...ROLE_PERMISSIONS[role]] } : m)),
+    members: s.members.map((m) => (m.id === id ? { ...m, role, permissions: rolePermissions(s.roles, role) } : m)),
   })),
   setMemberSeniority: (id, seniority) => set((s) => ({
     members: s.members.map((m) => (m.id === id ? { ...m, seniority } : m)),
   })),
   toggleMemberPermission: (id, p) => set((s) => ({
-    members: s.members.map((m) => {
-      if (m.id !== id) return m;
-      const has = m.permissions.includes(p);
-      return { ...m, permissions: has ? m.permissions.filter((x) => x !== p) : [...m.permissions, p] };
-    }),
+    members: s.members.map((m) => (m.id === id ? { ...m, permissions: togglePermission(m.permissions, p) } : m)),
   })),
   resetMemberPermissions: (id) => set((s) => ({
-    members: s.members.map((m) => (m.id === id ? { ...m, permissions: [...ROLE_PERMISSIONS[m.role]] } : m)),
+    members: s.members.map((m) => (m.id === id ? { ...m, permissions: rolePermissions(s.roles, m.role) } : m)),
   })),
   setMemberStatus: (id, status, reason) => set((s) => ({
     members: s.members.map((m) => (m.id === id ? { ...m, status, deactivationReason: status === "deactivated" ? reason : undefined } : m)),
@@ -340,7 +361,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       joinRequests: s.joinRequests.filter((r) => r.id !== id),
       members: accept
         ? [...s.members, { id: uid(), name: req.name, email: req.email, role, seniority,
-            permissions: [...ROLE_PERMISSIONS[role]], status: "active" as const, lastActive: "Just now" }]
+            permissions: rolePermissions(s.roles, role), status: "active" as const, lastActive: "Just now" }]
         : s.members,
     };
   }),

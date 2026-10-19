@@ -13,14 +13,14 @@ import { DataTable, type DataColumn } from "@/components/patterns/data-table";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard, SettingRow, Toggle } from "@/features/settings/settings-parts";
 import {
-  ROLES, SENIORITY,
+  SENIORITY,
   type ApprovalStage, type Member, type Role, type Seniority,
 } from "@/features/settings/settings-types";
 
 /**
  * One chain per person, not global chains with scopes.
  *
- * The list is filtered to members with Studio access, because a chain routes
+ * The list is filtered to members who can create content, because a chain routes
  * work that someone CREATES. A Medical reviewer has no chain — they are the
  * approver, not the routed — so they are absent rather than shown empty.
  *
@@ -50,7 +50,7 @@ export function SectionCompliance() {
   const [dupFrom, setDupFrom] = useState<string | null>(null);
 
   const creators = s.members.filter(
-    (m) => m.permissions.includes("studio") && m.status !== "deactivated",
+    (m) => m.permissions.includes("create") && m.status !== "deactivated",
   );
   const chainFor = (id: string) => s.chains.find((c) => c.memberId === id)?.stages ?? [];
   const editMember = s.members.find((m) => m.id === editing) ?? null;
@@ -137,10 +137,10 @@ export function SectionCompliance() {
           rows={creators}
           rowKey={(m) => m.id}
           onRowClick={(m) => setEditing(m.id)}
-          empty="Nobody has Studio access yet."
+          empty="Nobody can create content yet."
         />
         <Text size="caption" tone="subtle" className="mt-3 block">
-          {creators.length} of {s.members.length} members have Studio access. Click a row to edit that chain.
+          {creators.length} of {s.members.length} members can create content. Click a row to edit that chain.
         </Text>
       </SettingsCard>
 
@@ -236,7 +236,7 @@ export function SectionCompliance() {
                             chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, role: e.target.value as Role, narrowTo: { kind: "anyone" } } : x)))}
                           className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
                         >
-                          {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                          {s.roles.map(({ name: r }) => <option key={r} value={r}>{r}</option>)}
                         </select>
                       </label>
 
