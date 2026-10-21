@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -60,10 +61,8 @@ import {
   useSuggestionQueue,
 } from "@/features/workspace/suggestion-queue";
 import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
-import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { stamp, VersionHistoryButton } from "@/features/workspace/version-history";
-import { useCreativeSteps, type CreativeStepId } from "@/features/workspace/flow-steps";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import {
   EditorToolbar,
@@ -89,6 +88,7 @@ import { DocPagePreview } from "@/features/workspace/doc-page-preview";
 import { useMlrReview } from "@/features/workspace/mlr-review";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { TemplateSwitchModal } from "@/features/workspace/template-switch-modal";
+import { ReviewStatusBanner, useAssetReview } from "@/features/review/asset-review";
 import type { TemplateArchetype } from "@/features/workspace/template-archetypes";
 import { ArtSlot, PageBackgroundArt } from "@/features/workspace/page-art-layers";
 import { CurrentTag, RequestModal } from "@/components/patterns/request-modal";
@@ -432,6 +432,8 @@ export function InfographicStudioScreen() {
   // As in the video studio: a published asset opens under its own title.
   const storedProjectName = useWorkspaceStore((s) => s.projectName);
   const creativeTitle = storedProjectName.trim() || `${brandName} HCP Infographic`;
+  /* The review funnel for this document: the creator's chain, and its item once submitted. */
+  const assetReview = useAssetReview(`document:${creativeTitle}`);
 
   const [studioMode, setStudioMode] = useState<CreativeStudioMode>(
     openedForReview ? "review" : openedForMlr ? "editor" : "opening"
@@ -650,9 +652,6 @@ export function InfographicStudioScreen() {
   });
 
   const isReview = studioMode === "review";
-  /* Where this studio sits in the creative trail, and what Back means here. */
-  const currentStepId: CreativeStepId = studioMode === "review" ? "review" : "canvas";
-  const flowSteps = useCreativeSteps({ toCanvas: () => setStudioMode("editor") });
   /* How many versions have shipped, not merely whether any have — a boolean
      cannot tell version 1 from version 3. Opened from the library, one exists. */
   const [publishedCount, setPublishedCount] = useState(openedForReview ? 1 : 0);
@@ -1230,7 +1229,29 @@ export function InfographicStudioScreen() {
     setStudioMode("review");
     setActiveTab("comments");
     if (!copilotPanelOpen) toggleCopilotPanel();
-    showToast("Creative published · Opened Shared Review View");
+    /* Into the creator's approval chain; with no chain it publishes as before. */
+    const flags = mlrCheckResolved ? 0 : 1;
+    const item = assetReview.submit({
+      key: `document:${creativeTitle}`,
+      title: creativeTitle,
+      kind: "document",
+      brand: brandName,
+      spec: `${pageGeometry.label} · ${pagesList.length} ${pagesList.length === 1 ? "page" : "pages"}`,
+      version: `Version ${draftVersion}`,
+      ownerId: assetReview.me,
+      preview: {
+        gradient: "linear-gradient(150deg,#111827,#1f2937 55%,#334155)",
+        badge: "HCP Clinical Brief",
+        metric: "52% PASI 90",
+        metricLabel: "vs 18% placebo at week 16",
+      },
+      stages: assetReview.stages,
+      check: {
+        flags,
+        summary: flags ? "One comparative claim was flagged by SwishX before submission." : "Every claim resolves to an approved source.",
+      },
+    });
+    showToast(item.status === "in_review" ? `Submitted for review · ${item.stages[item.stageIndex]?.name} is next` : "Creative published · Opened Shared Review View");
   };
 
   /**
@@ -1650,9 +1671,12 @@ export function InfographicStudioScreen() {
 
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="truncate text-body-lg font-[850] text-ink tracking-tight">
-                  {creativeTitle}
-                </span>
+                <ProjectTitle
+                  kind="document"
+                  fallback={`${brandName} HCP Infographic`}
+                  published={studioMode === "review"}
+                  className="text-body-lg font-[850] tracking-tight"
+                />
               </div>
               <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
                 Saved just now · {pagesList.length} {pagesList.length === 1 ? "page" : "pages"} ({pageGeometry.label})
@@ -1661,8 +1685,6 @@ export function InfographicStudioScreen() {
 
             {/* Mode Switchers */}
             <div className="ml-4 hidden items-center gap-1.5 md:flex">
-              {/* Not in the editor: the stage is plain from the screen itself. */}
-              {studioMode !== "editor" && <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />}
 
               {studioMode === "generating" && (
                 <span className="inline-flex items-center gap-1.5 rounded-chip bg-tint border border-tint-line px-3 py-1 text-caption font-extrabold text-brand-deep animate-pulse">
@@ -1682,7 +1704,9 @@ export function InfographicStudioScreen() {
 
           {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
           <div className="flex items-center gap-2">
+            <ProjectMenu kind="document" fallback={`${brandName} HCP Infographic`} published={studioMode === "review"} />
             {/* The version, beside the action that makes the next one. */}
+            {studioMode !== "editor" && studioMode !== "review" && <VersionChip versions={assetVersions} variant="button" />}
             {studioMode === "editor" && (
               <VersionHistoryButton
                 publishedCount={publishedCount}
@@ -1722,16 +1746,19 @@ export function InfographicStudioScreen() {
             {/* The published versions, where the editors keep Version history. */}
             {studioMode === "review" && <VersionChip versions={assetVersions} variant="button" />}
             {/* A published asset opens here from the library; Edit starts the next draft. */}
-            {studioMode === "review" && (
+            {studioMode === "review" && assetReview.canEdit && (
               <Button size="sm" variant="secondary" onClick={() => setStudioMode("editor")} className="gap-1.5 px-3.5 font-bold">
                 <Pencil className="size-3.5" />
                 Edit
               </Button>
             )}
-            {studioMode === "review" && (
+            {/* Without Create there's nothing to share from here: hidden, not greyed out. */}
+            {studioMode === "review" && assetReview.canEdit && (
               <Button
                 size="sm"
                 onClick={() => setShareModalOpen(true)}
+                disabled={assetReview.shareLocked}
+                title={assetReview.shareNote}
                 className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4 hover:scale-[1.02] transition-transform"
               >
                 <Share2 className="size-3.5" />
@@ -1873,6 +1900,9 @@ export function InfographicStudioScreen() {
             />
         ) : (
           <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+            {studioMode === "review" && assetReview.item && (
+              <ReviewStatusBanner item={assetReview.item} onEdit={() => setStudioMode("editor")} />
+            )}
             {/* What is still arriving, and what you can already do. The page
                 below is editable throughout — the strip is a status line, not
                 a gate. */}
@@ -2333,6 +2363,8 @@ export function InfographicStudioScreen() {
                   the agent resolves a reviewer's note while you are editing,
                   and this is where you go to see that. */}
               <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#edeef0]")}>
+                {/* The chat changes the asset, so a viewer without Create doesn't get it. */}
+                {assetReview.canEdit && (
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}
@@ -2342,6 +2374,7 @@ export function InfographicStudioScreen() {
                 >
                   Chat
                 </InspectorTabButton>
+                )}
 
                 {/* No Edit tab: the toolbar edits whatever is selected, and
                     selecting never moves the panel off the chat. */}
@@ -2599,8 +2632,7 @@ export function InfographicStudioScreen() {
               <ReviewComments
                 comments={comments}
                 stampLabel={`Page ${activePageId}`}
-                medicalReviewDone={mlrCheckResolved}
-                regulatoryReviewDone={qaCheckResolved}
+                review={assetReview.item}
                 canClose={studioMode === "editor"}
                 onAddAsSuggestion={studioMode === "editor" ? addCommentAsSuggestion : undefined}
                 onResolve={(id, note) => closeComment(id, "resolved", note)}
@@ -2717,6 +2749,14 @@ export function InfographicStudioScreen() {
             version={`Version ${draftVersion}`}
             kind="document"
             review={mlrReview}
+            submit={
+              assetReview.stages.length
+                ? {
+                    label: assetReview.item?.status === "changes" ? "Resubmit for review" : "Submit for review",
+                    route: assetReview.stages.map((st) => st.name),
+                  }
+                : undefined
+            }
             checks={[
               mlrCheckResolved
                 ? { id: "mlr", source: "MLR", title: "24 verified claims cited", detail: "EMBRACE-3 §2.4 grounded (p < 0.001)" }

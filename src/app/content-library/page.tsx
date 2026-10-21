@@ -6,7 +6,7 @@ import { AppShell } from "@/features/workspace/app-shell";
 import { ContentLibraryScreen, type StageFilter } from "@/features/content-library/content-library-screen";
 import { RenderingNotice } from "@/features/content-library/rendering-notice";
 
-const STAGES: StageFilter[] = ["all", "draft", "published", "archived"];
+const STAGES: StageFilter[] = ["all", "draft", "shared", "published", "archived"];
 
 /* `?stage=archived` opens on that tab: where a closed project is sent. */
 function ContentLibraryContent() {

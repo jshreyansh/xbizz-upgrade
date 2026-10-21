@@ -1,5 +1,6 @@
 "use client";
 
+import { useCan } from "@/features/settings/view-as";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
@@ -16,6 +17,9 @@ export function DossierListScreen({
 }: DossierListScreenProps) {
   const router = useRouter();
   const resetDraft = useDossierDraftStore((s) => s.reset);
+
+  /* Dossiers are product source material, kept by whoever manages the Product & Claims Library. */
+  const canCreateDossier = useCan().can("products");
 
   function startNewDossier() {
     resetDraft();
@@ -35,7 +39,7 @@ export function DossierListScreen({
             The single source of truth for your brand, grounded in approved prescribing info, clinical trial readouts, and HEOR models.
           </p>
         </div>
-        <button
+        {canCreateDossier && <button
           onClick={startNewDossier}
           style={{
             display: "inline-flex",
@@ -54,7 +58,7 @@ export function DossierListScreen({
           }}
         >
           Create Brand Dossier
-        </button>
+        </button>}
       </div>
 
       {/* Grid of Dossiers */}

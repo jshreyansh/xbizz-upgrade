@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import {
   ArrowRight,
   ArrowUp,
@@ -34,8 +35,6 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
-import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
-import { useVideoSteps, useCreativeSteps } from "@/features/workspace/flow-steps";
 import { AUDIENCE_OPTIONS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
 import { Portal } from "@/components/ui/portal";
 
@@ -316,12 +315,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
     setVideoSubStage("directions");
   };
 
-  /* The trail this screen starts. Which one depends on the asset being made,
-     because the two flows do not share their middle steps. */
-  const videoFlow = useVideoSteps({});
-  const creativeFlow = useCreativeSteps({});
-  const flowSteps = isInfographic ? creativeFlow : videoFlow;
-
   const loadScenario = (scenario: DemoScenario) => {
     setBrief(scenario.inputs.brief);
     setAudience(scenario.inputs.audience);
@@ -364,10 +357,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   );
 
 
+  const projectKind = isInfographic ? "document" : "video";
   const projectName =
     sourceType === "dossier"
-      ? `${currentBrandName} HCP launch`
-      : "New Video Project";
+      ? `${currentBrandName} ${isInfographic ? "HCP Infographic" : "HCP launch"}`
+      : isInfographic ? "New Doc Project" : "New Video Project";
 
   return (
     <div className="min-h-screen flex flex-col bg-subtle" onClick={() => setActivePopover(null)}>
@@ -378,15 +372,13 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="truncate text-body font-[800] text-ink">{projectName}</span>
-            <VersionChip versions={DRAFT_ONLY} />
+            <ProjectTitle kind={projectKind} fallback={projectName} className="text-body font-[800]" />
           </div>
           <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
             Saved just now · Maya Kapoor
           </div>
         </div>
 
-        <FlowBreadcrumb steps={flowSteps} currentId="brief" />
 
         {/* The brand lives in the context tiles above the input, alongside the
             audience, focus and frame it was chosen with — and clicking one
@@ -395,6 +387,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             are already on screen. */}
 
         <div className="ml-auto flex items-center gap-2">
+          <ProjectMenu kind={projectKind} fallback={projectName} />
           {/* Sample Briefs Button moved to Top Header */}
           <Button
             variant="ghost"
@@ -405,7 +398,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <FlaskConical className="size-3.5 text-brand" />
             <span>Sample Briefs</span>
           </Button>
-
+          {/* The version sits with the header actions on every stage, as in the editors. */}
+          <VersionChip versions={DRAFT_ONLY} variant="button" />
         </div>
       </ScreenHeader>
 

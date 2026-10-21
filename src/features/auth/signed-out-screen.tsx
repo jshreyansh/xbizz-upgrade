@@ -1,9 +1,13 @@
 "use client";
 
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { useSettingsStore } from "@/features/settings/settings-store";
+import { useAuthFlow } from "@/features/auth/auth-flow";
 
 export function SignedOutScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
+  const me = useSettingsStore((s) => s.members.find((m) => m.id === s.currentUserId));
+  const workspaceName = useSettingsStore((s) => s.workspaceName);
 
   return (
     <div className="stage-in flex h-full w-full items-center justify-center p-11">
@@ -26,7 +30,7 @@ export function SignedOutScreen() {
 
         <h2 style={{ fontSize: 34, letterSpacing: "-1.4px", margin: "0 0 10px", fontWeight: 800 }}>You&apos;re signed out</h2>
         <p style={{ color: "rgba(255,255,255,.66)", fontSize: 15, lineHeight: 1.65, margin: "0 auto 30px", maxWidth: "44ch" }}>
-          Your session on this device has ended. Everything you made is safe in the Meridian Therapeutics workspace.
+          Your session on this device has ended. Everything you made is safe in the {workspaceName} workspace.
         </p>
 
         {/* Recap stats */}
@@ -53,13 +57,13 @@ export function SignedOutScreen() {
         </div>
 
         <button
-          onClick={() => setAuthView("signin")}
+          onClick={() => { if (me) useAuthFlow.getState().setEmail(me.email); setAuthView("signin"); }}
           style={{ padding: "14px 30px", display: "inline-flex", alignItems: "center", gap: 9, borderRadius: "var(--r)", fontWeight: 680, fontSize: 15, background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff", boxShadow: "0 12px 26px -14px rgba(253,72,22,.95),inset 0 1px 0 rgba(255,255,255,.28)" }}
         >
           Sign back in
         </button>
         <p style={{ marginTop: 22, fontSize: 11.5, color: "rgba(255,255,255,.34)" }}>
-          Signed in as sivaprakasam.gnanam@swishx.com
+          Signed in as {me?.email ?? "sivaprakasam.gnanam@swishx.com"}
         </p>
       </div>
     </div>

@@ -1,11 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play } from "lucide-react";
+import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { DataList } from "@/components/patterns/data-list";
 import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
+import { useWorkspaceReviewItems } from "@/features/review/review-store";
+import { SEED_WORKSPACE_ID, useSettingsStore } from "@/features/settings/settings-store";
+import { canSeeDraft, sharedWith, useSharingStore, visibilityLabel } from "@/features/workspace/project-sharing";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
 
@@ -23,13 +26,15 @@ import { AssetVideo } from "@/features/workspace/asset-video";
  */
 
 const STATUS_STYLE: Record<LibraryAsset["status"], { bg: string; fg: string; line: string }> = {
+  Draft: { bg: "var(--color-subtle)", fg: "var(--ink-3)", line: "var(--hair-2)" },
   Published: { bg: "var(--ok-bg)", fg: "var(--ok)", line: "var(--ok-line)" },
   Approved: { bg: "var(--tint-2)", fg: "var(--brand-deep)", line: "var(--tint-line)" },
   "In MLR review": { bg: "#fff4e5", fg: "#b45309", line: "#fcd9a4" },
+  "Changes requested": { bg: "var(--warn-bg)", fg: "var(--warn)", line: "var(--warn-line)" },
 };
 
 type KindFilter = "all" | "video" | "infographic";
-export type StageFilter = "all" | "draft" | "published" | "archived";
+export type StageFilter = "all" | "draft" | "shared" | "published" | "archived";
 
 export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: StageFilter }) {
   const [query, setQuery] = useState("");
@@ -41,11 +46,35 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
 
   const openReview = useOpenPublishedAsset();
 
+  /* A sample's status follows its review: approving or sending it back in MLR Review shows here. */
+  const reviews = useWorkspaceReviewItems();
+  /* A draft is private to its owner unless shared, and Admin doesn't override that. */
+  const me = useSettingsStore((st) => st.currentUserId);
+  const members = useSettingsStore((st) => st.members);
+  const sharing = useSharingStore((st) => st.projects);
+  /* Content belongs to its workspace; a new one starts empty. */
+  const workspaceId = useSettingsStore((st) => st.workspaceId);
+  const workspaceName = useSettingsStore((st) => st.workspaceName);
+  const assets = useMemo(
+    () =>
+      (workspaceId === SEED_WORKSPACE_ID ? LIBRARY_ASSETS : []).filter((a) => a.stage !== "draft" || canSeeDraft(sharing[`lib:${a.id}`], me)).map((a) => {
+        const r = reviews.find((i) => i.libraryId === a.id);
+        if (!r) return a;
+        const status: LibraryAsset["status"] =
+          r.status === "approved" ? "Approved" : r.status === "changes" ? "Changes requested" : "In MLR review";
+        return { ...a, status };
+      }),
+    [reviews, sharing, me, workspaceId]
+  );
+  const draftSharing = (a: LibraryAsset) => (a.stage === "draft" ? sharing[`lib:${a.id}`] : undefined);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return LIBRARY_ASSETS.filter((a) => {
+    return assets.filter((a) => {
       if (kind !== "all" && a.kind !== kind) return false;
-      if (stage !== "all" && a.stage !== stage) return false;
+      if (stage === "shared") {
+        if (a.stage !== "draft" || !sharedWith(sharing[`lib:${a.id}`], me)) return false;
+      } else if (stage !== "all" && a.stage !== stage) return false;
       if (!q) return true;
       return (
         a.title.toLowerCase().includes(q) ||
@@ -53,7 +82,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
         a.audience.toLowerCase().includes(q)
       );
     });
-  }, [query, kind, stage]);
+  }, [assets, query, kind, stage, sharing, me]);
 
   return (
     <div className="page-enter space-y-6">
@@ -62,7 +91,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
           All Content
         </h1>
         <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-          Everything you have published, with the comments your reviewers left on it.
+          Everything published in this workspace, with the comments your reviewers left on it, plus your drafts and drafts shared with you.
         </p>
       </div>
 
@@ -94,6 +123,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
           {([
             { id: "all" as const, label: "All" },
             { id: "draft" as const, label: "Drafts" },
+            { id: "shared" as const, label: "Shared with me" },
             { id: "published" as const, label: "Published" },
             { id: "archived" as const, label: "Archived" },
           ]).map((opt) => (
@@ -184,6 +214,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
                   >
                     {a.status}
                   </span>
+                  <DraftVisibility entry={draftSharing(a)} me={me} ownerName={members.find((m) => m.id === a.ownerId)?.name} />
                   {a.comments > 0 && (
                     <span className="inline-flex items-center gap-1 text-caption font-bold text-brand">
                       <MessageSquare size={12} /> {a.comments}
@@ -245,15 +276,18 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
             {
               id: "status",
               header: "Status",
-              width: 130,
+              width: 170,
               cell: (a) => {
                 const tone = STATUS_STYLE[a.status];
                 return (
-                  <span
-                    className="rounded-chip px-2 py-0.5 text-caption font-bold"
-                    style={{ background: tone.bg, color: tone.fg, border: `1px solid ${tone.line}` }}
-                  >
-                    {a.status}
+                  <span className="flex items-center gap-1.5">
+                    <span
+                      className="rounded-chip px-2 py-0.5 text-caption font-bold"
+                      style={{ background: tone.bg, color: tone.fg, border: `1px solid ${tone.line}` }}
+                    >
+                      {a.status}
+                    </span>
+                    <DraftVisibility entry={draftSharing(a)} me={me} iconOnly />
                   </span>
                 );
               },
@@ -297,7 +331,9 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
 
       {view === "grid" && filtered.length === 0 && (
         <div style={{ textAlign: "center", padding: "60px 20px", color: "var(--ink-4)", fontSize: 14 }}>
-          No assets match &ldquo;{query}&rdquo;.
+          {assets.length === 0
+            ? `Nothing in ${workspaceName} yet. What your team makes and publishes here shows up in this list.`
+            : query ? <>No assets match &ldquo;{query}&rdquo;.</> : "Nothing here with these filters."}
         </div>
       )}
     </div>
@@ -313,3 +349,23 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
  * the motion is what confirms it, and that is worth exactly the moment you
  * hover.
  */
+
+/** A draft's sharing at a glance: private, the workspace, or named people; and who shared it, if not you. */
+function DraftVisibility({
+  entry, me, ownerName, iconOnly,
+}: {
+  entry: ReturnType<typeof useSharingStore.getState>["projects"][string] | undefined;
+  me: string;
+  ownerName?: string;
+  iconOnly?: boolean;
+}) {
+  if (!entry) return null;
+  const Icon = entry.visibility.kind === "private" ? Lock : entry.visibility.kind === "workspace" ? Globe : Users;
+  const label = entry.ownerId === me ? visibilityLabel(entry.visibility) : `Shared by ${ownerName ?? "a teammate"}`;
+  return (
+    <span title={label} className="inline-flex min-w-0 items-center gap-1 text-caption font-bold text-ink-3">
+      <Icon size={12} className="shrink-0" />
+      {!iconOnly && <span className="truncate">{label}</span>}
+    </span>
+  );
+}

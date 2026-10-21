@@ -20,8 +20,14 @@ import {
 } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
+import { listWorkspaces } from "@/features/settings/settings-store";
+import { CreateWorkspaceModal } from "@/features/settings/workspace-modals";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { usePageSettled } from "@/lib/use-load-gates";
+import { canDecide, useWorkspaceReviewItems } from "@/features/review/review-store";
+import { useSettingsStore } from "@/features/settings/settings-store";
+import { LIBRARY_ACCESS, useCan } from "@/features/settings/view-as";
+import type { PermissionId } from "@/features/settings/settings-types";
 
 /** Premium collapse/expand control — a small dark chip so it reads as a
  *  deliberate, discoverable control in both states, rather than an
@@ -66,6 +72,8 @@ interface NavItem {
   icon: string;
   href: string;
   badge?: number;
+  /** Shown only to people holding at least one of these; everyone sees it when absent. */
+  requires?: PermissionId[];
   /**
    * Shelves that live under this one.
    *
@@ -82,6 +90,8 @@ interface NavChild {
   href: string;
   /** Named but not built — no link, and a badge that says why. */
   soon?: boolean;
+  /** Shown only to someone holding at least one of these. */
+  requires?: PermissionId[];
 }
 
 interface NavGroup {
@@ -100,24 +110,24 @@ const ASSET_GROUPS: NavGroup[] = [
         href: "/content-library",
         children: [
           { label: "All Content", href: "/content-library" },
-          { label: "Characters", href: "/content-library/characters" },
+          { label: "Characters", href: "/content-library/characters", requires: ["create"] },
           { label: "Voices", href: "#", soon: true },
         ],
       },
-      { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library" },
-      { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "/claims-library" },
+      { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library", requires: [...LIBRARY_ACCESS] },
+      { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "/claims-library", requires: [...LIBRARY_ACCESS] },
     ],
   },
   {
     label: "Review",
     items: [
-      { label: "MLR Review", shortLabel: "MLR", icon: "shield", href: "#", badge: 12 },
+      { label: "MLR Review", shortLabel: "MLR", icon: "shield", href: "/mlr-review", requires: ["approve", "create"] },
     ],
   },
   {
     label: "Insights",
     items: [
-      { label: "Analytics", shortLabel: "Analytics", icon: "chart", href: "/analytics" },
+      { label: "Analytics", shortLabel: "Analytics", icon: "chart", href: "/analytics", requires: ["analytics"] },
     ],
   },
 ];
@@ -153,6 +163,20 @@ export function Sidebar() {
   const setView = useWorkspaceStore((s) => s.setView);
   const setVideoSubStage = useWorkspaceStore((s) => s.setVideoSubStage);
   const assetType = useWorkspaceStore((s) => s.assetType);
+  /* MLR Review counts what is waiting on the person you are viewing as. */
+  const reviewItems = useWorkspaceReviewItems();
+  const members = useSettingsStore((s) => s.members);
+  const currentUserId = useSettingsStore((s) => s.currentUserId);
+  const waitingOnMe = reviewItems.filter((i) => canDecide(i, currentUserId, members)).length;
+  /* The rail shows only what the person you're viewing as can use. */
+  const { can } = useCan();
+  const visibleGroups = ASSET_GROUPS.map((g) => ({
+    ...g,
+    items: g.items
+      .filter((item) => !item.requires || item.requires.some((p) => can(p)))
+      .map((item) => ({ ...item, children: item.children?.filter((c) => !c.requires || c.requires.some((p) => can(p))) })),
+  })).filter((g) => g.items.length > 0);
+  const badgeFor = (item: NavItem) => (item.href === "/mlr-review" ? waitingOnMe || undefined : item.badge);
 
   /* Every page the rail links to, fetched in the background once this page
      has settled, so a click opens it at once. The items are buttons, not
@@ -171,6 +195,14 @@ export function Sidebar() {
   }, [pageSettled, router]);
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false);
+  /* The account pill and switcher follow the person you're viewing as, in the workspace you're in. */
+  const settings = useSettingsStore();
+  const { me } = useCan();
+  const workspaces = listWorkspaces(settings);
+  const { orgName, workspaceName, creditBalance, switchWorkspace, joinWorkspaceAsAdmin } = settings;
+  const isOrgAdmin = settings.orgAdminIds.includes(currentUserId);
+  const initials = (me?.name ?? PERSONA.name).replace(/^Dr\.\s*/, "").split(" ").map((p) => p[0]).slice(0, 2).join("");
   const [createFlyoutOpen, setCreateFlyoutOpen] = useState(false);
   const flyoutTimerRef = useRef<NodeJS.Timeout | null>(null);
   /**
@@ -311,6 +343,8 @@ export function Sidebar() {
             </button>
           </div>
 
+          {/* Making content needs Create; without it the studio isn't offered. */}
+          {can("create") && (<>
           {/* ── MAGIC STUDIO SECTION (single-column rows: Video, Creatives, Web) ── */}
           <div
             className="relative"
@@ -383,9 +417,10 @@ export function Sidebar() {
               </div>
             )}
           </div>
+          </>)}
 
           {/* ── ASSETS & REVIEW SECTIONS ── */}
-          {ASSET_GROUPS.map((group) => (
+          {visibleGroups.map((group) => (
             <div key={group.label} className="space-y-1.5">
               {!collapsed ? (
                 <div className="px-2 pt-2 text-caption font-extrabold uppercase tracking-[0.14em] text-ink-3">
@@ -442,9 +477,9 @@ export function Sidebar() {
                       >
                         {collapsed ? item.shortLabel : item.label}
                       </span>
-                      {!collapsed && item.badge !== undefined && (
+                      {!collapsed && badgeFor(item) !== undefined && (
                         <span className={`rounded-chip px-2 py-0.5 text-caption font-bold ${isActive ? "bg-white/25 text-white" : "bg-brand text-white"}`}>
-                          {item.badge}
+                          {badgeFor(item)}
                         </span>
                       )}
                     </button>
@@ -500,16 +535,16 @@ export function Sidebar() {
 
         {/* ── Floating Bottom: Tokens & Profile ── */}
         <div className="relative border-t border-hair p-2 space-y-1.5">
-          {/* Token chip */}
-          {!collapsed && (
+          {/* Credits: for whoever spends them (creators) or buys them (Billing). */}
+          {!collapsed && (can("create") || can("billing")) && (
             <div className="flex items-center gap-2 rounded-control border border-tint-line bg-gradient-to-r from-tint to-white px-2.5 py-2">
               <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth={2.2}>
                 <circle cx={12} cy={12} r={9} />
                 <path d="M12 7v10M9 10h6" />
               </svg>
               <div className="min-w-0 flex-1">
-                <span className="block text-label font-extrabold text-ink leading-none">2.45M Tokens</span>
-                <span className="block text-micro uppercase font-bold text-ink-3 mt-0.5">Growth Plan</span>
+                <span className="block text-label font-extrabold text-ink leading-none tabular-nums">{creditBalance.toLocaleString()} credits</span>
+                <span className="block text-micro uppercase font-bold text-ink-3 mt-0.5 truncate">{workspaceName}</span>
               </div>
             </div>
           )}
@@ -526,18 +561,18 @@ export function Sidebar() {
                 style={{ background: PERSONA.avatarGradient }}
                 className="grid size-7 shrink-0 place-items-center rounded-full text-label font-[800] text-white shadow-xs"
               >
-                {PERSONA.initials}
+                {initials}
               </span>
 
               {!collapsed && (
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-body font-bold text-ink leading-tight">{PERSONA.name}</div>
+                  <div className="truncate text-body font-bold text-ink leading-tight">{me?.name ?? PERSONA.name}</div>
                   <div className="flex items-center gap-1 text-caption font-bold text-brand truncate mt-0.5">
                     <svg width={9} height={9} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
                       <rect x={2} y={7} width={20} height={15} rx={2} />
                       <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
                     </svg>
-                    <span className="truncate">{PERSONA.org}</span>
+                    <span className="truncate">{workspaceName}</span>
                   </div>
                 </div>
               )}
@@ -554,12 +589,54 @@ export function Sidebar() {
                     style={{ background: PERSONA.avatarGradient }}
                     className="grid size-8 shrink-0 place-items-center rounded-full text-body font-bold text-white"
                   >
-                    {PERSONA.initials}
+                    {initials}
                   </span>
                   <div className="min-w-0">
-                    <b className="block text-body-lg font-bold leading-tight">{PERSONA.name}</b>
-                    <span className="block text-label text-ink-3 truncate">{PERSONA.email}</span>
+                    <b className="block text-body-lg font-bold leading-tight">{me?.name ?? PERSONA.name}</b>
+                    <span className="block text-label text-ink-3 truncate">{me?.email ?? PERSONA.email}</span>
                   </div>
+                </div>
+
+                {/* Workspaces: the ones you're in, and for organisation admins
+                    the rest of the organisation's, which they can open as Admin. */}
+                <div className="border-b border-hair py-1.5">
+                  <div className="px-2.5 pb-1 pt-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4 truncate">
+                    {orgName}
+                  </div>
+                  {workspaces.filter((w) => !w.archived && (w.me || isOrgAdmin)).map((w) => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (w.current) return;
+                        if (w.me) switchWorkspace(w.id); else joinWorkspaceAsAdmin(w.id);
+                        router.push("/");
+                      }}
+                      className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-left hover:bg-black/[0.04]"
+                    >
+                      <span className={`grid size-6 shrink-0 place-items-center rounded-glyph text-caption font-extrabold ${w.current ? "bg-brand text-white" : "bg-subtle text-ink-3"}`}>
+                        {w.name.slice(0, 1)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className={`block truncate text-body ${w.current ? "font-bold text-ink" : "font-medium text-ink-2"}`}>{w.name}</span>
+                        <span className="block truncate text-caption text-ink-4">
+                          {w.me ? w.me.role : "Not a member · open as Admin"}
+                        </span>
+                      </span>
+                      {w.current && <span className="text-caption font-bold text-brand">Current</span>}
+                    </button>
+                  ))}
+                  {isOrgAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpen(false); setCreatingWorkspace(true); }}
+                      className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-left text-body font-semibold text-brand hover:bg-tint"
+                    >
+                      <span className="grid size-6 shrink-0 place-items-center rounded-glyph border border-dashed border-tint-line">+</span>
+                      Create workspace
+                    </button>
+                  )}
                 </div>
 
                 <div className="py-1 space-y-0.5">
@@ -569,10 +646,6 @@ export function Sidebar() {
                     className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left"
                   >
                     Profile &amp; Settings
-                  </button>
-                  <button className="flex w-full items-center justify-between rounded-chip px-2.5 py-1.5 text-body font-medium text-ink-2 hover:bg-black/[0.04] text-left">
-                    <span>Switch Workspace</span>
-                    <span className="rounded-glyph bg-black/[0.06] px-1.5 py-0.2 text-caption font-bold text-ink-3">3</span>
                   </button>
                   <button
                     onClick={handleSignOut}
@@ -586,6 +659,7 @@ export function Sidebar() {
           </div>
         </div>
       </aside>
+      {creatingWorkspace && <CreateWorkspaceModal open onClose={() => setCreatingWorkspace(false)} />}
 
       {/* ── Hover Flyout Grid for Collapsed Mode ── */}
       {collapsed && createFlyoutOpen && (

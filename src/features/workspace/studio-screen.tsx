@@ -73,14 +73,13 @@ import {
   type Suggestion,
 } from "@/features/workspace/suggestion-queue";
 import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
-import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
 import { stamp, VersionHistoryButton, VIDEO_SESSIONS } from "@/features/workspace/version-history";
 import { RenderStartedModal } from "@/features/workspace/render-started-modal";
+import { ReviewStatusBanner, useAssetReview } from "@/features/review/asset-review";
 import type { PendingRender } from "@/features/workspace/workspace-store";
 import { useRouter } from "next/navigation";
-import { useVideoSteps, type VideoStepId } from "@/features/workspace/flow-steps";
 import type { EvidenceState, InspectorTab, Scene, Shot } from "@/types/content";
 import { SCRIPT_EDITING_ENABLED } from "@/features/workspace/script-scene-card";
 import {
@@ -95,7 +94,8 @@ import {
 } from "@/features/workspace/storyboard";
 import { NarrationPlayer } from "@/features/workspace/narration-player";
 import { useShotPreviews } from "@/features/workspace/use-shot-previews";
-import { DevShapeMenu } from "@/features/workspace/dev-shape-menu";
+import { DevShapeMenuItems } from "@/features/workspace/dev-shape-menu";
+import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { APPROVED_CLAIMS, citationsFor, claimUsage } from "@/features/workspace/script-claims";
 import { ClaimsPanel } from "@/features/workspace/claims-panel";
@@ -457,14 +457,6 @@ export function StudioScreen() {
   const isGenerating = studioMode === "generating";
   const isOpeningEditor = studioMode === "opening-editor";
 
-  /* Where this studio sits in the video trail, and what Back means here. */
-  const currentStepId: VideoStepId =
-    studioMode === "review" ? "review" : studioMode === "scenes" ? "production" : "editor";
-  const flowSteps = useVideoSteps({
-    toProduction: () => { setStudioMode("scenes"); setActiveTab("assistant"); },
-    toEditor: () => { setStudioMode("editor"); setActiveTab("edit"); },
-  });
-
   const editorOpenStepList = useMemo(() => editorOpenSteps(sceneList.length), [sceneList.length]);
   const masterRenderStepList = useMemo(
     () => masterRenderSteps(sceneList.length, selectedQuality === "cinematic"),
@@ -500,6 +492,8 @@ export function StudioScreen() {
      published with, and the start modal lets you type one. */
   const storedProjectName = useWorkspaceStore((s) => s.projectName);
   const projectTitle = storedProjectName.trim() || `${brandName} HCP launch`;
+  /* The review funnel for this film: the creator's chain, and its item once submitted. */
+  const assetReview = useAssetReview(`video:${projectTitle}`);
   /* A stable reference for the render, the way the library would show it. */
   const renderId = `SX-VID-${String([...projectTitle].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9000, 7) + 1000)}`;
 
@@ -1404,6 +1398,27 @@ export function StudioScreen() {
     handleEnterReviewView();
     setTeamCommentsUnlocked(true);
     seedTeamComments();
+    /* Into the creator's approval chain; with no chain it publishes as before. */
+    const flags = videoChecks.filter((c) => "severity" in c && c.severity).length;
+    const item = assetReview.submit({
+      key: `video:${projectTitle}`,
+      title: projectTitle,
+      kind: "video",
+      brand: brandName,
+      spec: `${isPortrait ? "9:16" : "16:9"} · ${totalDurationSeconds} sec`,
+      version: `Version ${draftVersion}`,
+      ownerId: assetReview.me,
+      preview: {
+        gradient: "linear-gradient(150deg,#0f2d22,#14532d 55%,#1f7a4d)",
+        videoSrc: sceneList.find((sc) => sc.bgVideoSrc)?.bgVideoSrc ?? "/reel-moa.mp4",
+      },
+      stages: assetReview.stages,
+      check: {
+        flags,
+        summary: flags ? `${flags} ${flags === 1 ? "item" : "items"} flagged by SwishX before submission.` : "Every claim resolves to an approved source; fair balance present.",
+      },
+    });
+    if (item.status === "in_review") showToast(`Submitted for review · ${item.stages[item.stageIndex]?.name} is next`);
   };
 
   /**
@@ -1868,24 +1883,26 @@ export function StudioScreen() {
           <div className="mx-3 h-5 w-px bg-hair" />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="truncate text-body font-[800] text-ink">{projectTitle}</span>
-              {/* The editor and the published view keep the version with their header actions. */}
-              {!isEditor && !isReview && <VersionChip versions={assetVersions} />}
+              <ProjectTitle kind="video" fallback={`${brandName} HCP launch`} published={isReview} className="text-body font-[800]" />
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">Saved just now · Maya Kapoor</div>
           </div>
 
-          {/* Not in the editor: the stage is plain from the screen itself. */}
-          {!isEditor && <FlowBreadcrumb steps={flowSteps} currentId={currentStepId} />}
 
           <div className="ml-auto flex items-center gap-2">
             {/* DEV ONLY — remove before release. Landscape / portrait, so
                 the storyboard and the editor can be checked in both shapes. */}
-            {!isReview && (
-              <DevShapeMenu
-                editorVersion={isEditor ? { value: editorVersion, onChange: setEditorVersion } : undefined}
-              />
-            )}
+            <ProjectMenu
+              kind="video"
+              fallback={`${brandName} HCP launch`}
+              published={isReview}
+              dev={isReview ? undefined : (close) => (
+                <DevShapeMenuItems
+                  editorVersion={isEditor ? { value: editorVersion, onChange: setEditorVersion } : undefined}
+                  onDone={close}
+                />
+              )}
+            />
 
             {/* Toggle Right Sidebar Panel Button (Icon Only) */}
             <button
@@ -1903,6 +1920,8 @@ export function StudioScreen() {
               <PanelRight className="size-4" />
             </button>
 
+            {/* Before the editor (storyboard, rendering), the same version button the editor has. */}
+            {!isEditor && !isReview && <VersionChip versions={assetVersions} variant="button" />}
             {isEditor && (
               <VersionHistoryButton
                 publishedCount={publishedCount}
@@ -1946,16 +1965,19 @@ export function StudioScreen() {
             {/* The published versions, where the editors keep Version history. */}
             {isReview && <VersionChip versions={assetVersions} variant="button" />}
             {/* A published film opens here from the library; Edit starts the next draft. */}
-            {isReview && (
+            {isReview && assetReview.canEdit && (
               <Button size="sm" variant="secondary" onClick={handleReturnToEditor} className="gap-1.5 px-3.5 font-bold">
                 <Pencil className="size-3.5" />
                 Edit
               </Button>
             )}
-            {isReview && (
+            {/* Without Create there's nothing to share from here: hidden, not greyed out. */}
+            {isReview && assetReview.canEdit && (
               <Button
                 size="sm"
                 onClick={() => setShareModalOpen(true)}
+                disabled={assetReview.shareLocked}
+                title={assetReview.shareNote}
                 className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"
               >
                 <Share2 className="size-3.5" />
@@ -3333,6 +3355,9 @@ export function StudioScreen() {
             {/* ══════════════════════════════════════════════════════════════════════════════════
                 MODE 3: FINAL SHARED REVIEW VIEW (Master Player with YouTube-Style Segmented Scrubber)
                ══════════════════════════════════════════════════════════════════════════════════ */}
+            {isReview && assetReview.item && (
+              <ReviewStatusBanner item={assetReview.item} onEdit={handleReturnToEditor} />
+            )}
             {isReview && (
               <div className="relative flex min-h-0 flex-1 flex-col bg-[#0d1411]">
                 {/* Master Video Container */}
@@ -3455,6 +3480,8 @@ export function StudioScreen() {
                  that is the same list the note was left in — not a counter in
                  the top bar that opens a different surface. */
               <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#e6ebe6] shadow-inner-xs")}>
+                {/* The chat changes the asset, so a viewer without Create doesn't get it. */}
+                {assetReview.canEdit && (
                 <InspectorTabButton
                   tab="assistant"
                   current={activeTab}
@@ -3464,6 +3491,7 @@ export function StudioScreen() {
                 >
                   Chat
                 </InspectorTabButton>
+                )}
                 {!isReview && (
                   <InspectorTabButton
                     tab="edit"
@@ -3750,8 +3778,7 @@ export function StudioScreen() {
               <ReviewComments
                 comments={comments}
                 stampLabel={`${Math.floor(masterCurrentTime / 60)}:${Math.floor(masterCurrentTime % 60).toString().padStart(2, "0")}`}
-                medicalReviewDone={mlrCheckResolved}
-                regulatoryReviewDone={qaCheckResolved}
+                review={assetReview.item}
                 canClose={!isReview}
                 onAddAsSuggestion={isReview ? undefined : addCommentAsSuggestion}
                 onResolve={(id, note) => closeComment(id, "resolved", note)}
@@ -4026,6 +4053,14 @@ export function StudioScreen() {
             version={`Version ${draftVersion}`}
             kind="video"
             checks={videoChecks}
+            submit={
+              assetReview.stages.length
+                ? {
+                    label: assetReview.item?.status === "changes" ? "Resubmit for review" : "Submit for review",
+                    route: assetReview.stages.map((st) => st.name),
+                  }
+                : undefined
+            }
             review={{
               ...mlrReview,
               /* The film stops where it is: the review is of this frame on. */

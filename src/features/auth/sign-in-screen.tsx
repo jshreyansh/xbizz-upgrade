@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { Field } from "@/components/ui/field";
+import { emailProblem, routeEmail, TRY_EMAILS, useAuthFlow } from "@/features/auth/auth-flow";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { PharmaSignature } from "@/components/ui/pharma-signature";
 
@@ -20,6 +23,18 @@ const TICKER = [
 
 export function SignInScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
+  const { email: storedEmail, setEmail, setRoute, inviteId } = useAuthFlow();
+  const [email, setDraft] = useState(storedEmail);
+  const [error, setError] = useState<string>();
+
+  /* Work email only: a personal address is stopped here, before any code is sent. */
+  function proceed(address = email) {
+    const problem = emailProblem(address);
+    if (problem) { setError(problem); return; }
+    setEmail(address.trim());
+    setRoute(routeEmail(address, inviteId));
+    setAuthView("otp");
+  }
 
   return (
     <div className="stage-in flex h-full w-full">
@@ -176,41 +191,23 @@ export function SignInScreen() {
           />
           <h2 style={{ fontSize: 27, letterSpacing: "-1.1px", margin: "0 0 8px", fontWeight: 800 }}>Welcome to SwishX</h2>
           <p style={{ margin: "0 0 26px", color: "var(--ink-3)", fontSize: 14.5, lineHeight: 1.6 }}>
-            Sign in with your work email. We&apos;ll set up your workspace, your markets and your team in about ninety seconds.
+            Sign in with your work email. New to SwishX? We&apos;ll set up your organisation, your first workspace and your team in about ninety seconds.
           </p>
 
-          <div style={{ marginBottom: 15 }}>
-            <label
-              style={{
-                display: "block",
-                fontSize: 11,
-                letterSpacing: ".11em",
-                textTransform: "uppercase",
-                color: "var(--ink-4)",
-                marginBottom: 8,
-                fontWeight: 750,
-              }}
-            >
-              Work email
-            </label>
-            <input
+          <form onSubmit={(e) => { e.preventDefault(); proceed(); }} style={{ marginBottom: 15 }}>
+            <Field
               type="email"
-              defaultValue="sivaprakasam.gnanam@swishx.com"
+              label="Work email"
+              value={email}
+              onChange={(e) => { setDraft(e.target.value); setError(undefined); }}
               placeholder="you@company.com"
-              style={{
-                width: "100%",
-                padding: "13px 15px",
-                border: "1px solid var(--hair-2)",
-                borderRadius: "var(--r)",
-                background: "#fff",
-                fontSize: 15,
-                outline: "none",
-              }}
+              error={error}
+              autoComplete="email"
             />
-          </div>
+          </form>
 
           <button
-            onClick={() => setAuthView("otp")}
+            onClick={() => proceed()}
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -257,7 +254,7 @@ export function SignInScreen() {
             {[("Google"), ("Microsoft")].map((provider) => (
               <button
                 key={provider}
-                onClick={() => setAuthView("otp")}
+                onClick={() => proceed()}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -291,7 +288,28 @@ export function SignInScreen() {
             ))}
           </div>
 
-          <p style={{ fontSize: 11.5, color: "var(--ink-4)", lineHeight: 1.65, marginTop: 20 }}>
+          {/* Prototype only: one address per path, so each sign-up flow can be walked. */}
+          <div className="mt-5 border-t border-hair pt-3">
+            <span className="mb-1.5 flex items-center gap-1.5 text-micro font-extrabold uppercase tracking-wider text-ink-4">
+              Try a path
+              <span className="rounded-glyph bg-warn-bg px-1.5 py-px normal-case tracking-normal text-warn">Prototype</span>
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {TRY_EMAILS.map((t) => (
+                <button
+                  key={t.label}
+                  type="button"
+                  title={t.email}
+                  onClick={() => { setDraft(t.email); setError(undefined); }}
+                  className="cursor-pointer rounded-chip border border-hair-2 bg-card px-2 py-0.5 text-caption font-semibold text-ink-3 transition-colors hover:border-brand hover:text-ink"
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p style={{ fontSize: 11.5, color: "var(--ink-4)", lineHeight: 1.65, marginTop: 14 }}>
             By continuing you agree to the{" "}
             <a href="#" style={{ color: "var(--brand)", textDecoration: "none", fontWeight: 600 }}>Terms</a>{" "}
             and{" "}

@@ -5,7 +5,7 @@
 export const ROLES = [
   "Admin", "Marketing", "Design", "Field Force",
   "Medical reviewer", "Legal reviewer", "Regulatory reviewer",
-  "Read only", "CXO",
+  "Read only",
 ] as const;
 /** A role's name. Roles are workspace data, defined by an admin. */
 export type Role = string;
@@ -19,9 +19,10 @@ export type Seniority = (typeof SENIORITY)[number];
  *
  * Built around what people do with content rather than which screens exist:
  * creators make, edit and publish (and so can share and comment); everyone
- * else views and comments; reviewers also sign off. The two libraries are
- * separate because the Claims Library is the approved source of truth, and
- * changing it changes what every asset may say. MLR review itself is
+ * else views and comments; reviewers also sign off. The Product and Claims
+ * libraries are one permission: claims hang off products, so whoever keeps
+ * one keeps the other. Admin is everything, so it brings every other
+ * permission along. MLR review itself is
  * SwishX's automated check, so it is not a permission. Members with none
  * still see published content.
  */
@@ -29,25 +30,32 @@ export const PERMISSIONS = [
   { id: "create",    label: "Create, edit & publish content", trailing: "Studio and the Content Library: make, edit and publish, then share, download or send on" },
   { id: "comment",   label: "View & comment",                 trailing: "Open anything in the Content Library and comment, without editing" },
   { id: "approve",   label: "Approve",                        trailing: "Sign off or reject as a reviewer in an approval chain" },
-  { id: "products",  label: "Manage Product Library",         trailing: "Products, dossiers, packshots and brand assets" },
-  { id: "claims",    label: "Manage Claims Library",          trailing: "Add, edit and retire approved claims and their references" },
+  { id: "products",  label: "Manage Product & Claims Library", trailing: "Products, dossiers, packshots, brand assets, and the approved claims and references behind them" },
   { id: "analytics", label: "Analytics",                      trailing: "The Insights section" },
-  { id: "billing",   label: "Billing & credits",              trailing: "Plans, top-ups and purchases. Reading stays open to everyone" },
-  { id: "admin",     label: "Admin",                          trailing: "Team, roles, brand kit, integrations and approval-chain setup" },
+  { id: "billing",   label: "Billing & credits",              trailing: "The Billing page: plan, credits, top-ups, invoices and payment method" },
+  { id: "admin",     label: "Admin (full access)",            trailing: "Everything above, plus team, roles, brand kit, integrations and approval chains" },
 ] as const;
 export type PermissionId = (typeof PERMISSIONS)[number]["id"];
 
 /** Permissions that come with another: you can't create or approve what you can't open. */
 export const INCLUDED_BY: Partial<Record<PermissionId, PermissionId[]>> = {
-  comment: ["create", "approve"],
+  comment: ["create", "approve", "admin"],
+  create: ["admin"],
+  approve: ["admin"],
+  products: ["admin"],
+  analytics: ["admin"],
+  billing: ["admin"],
 };
 
 /** Which held permission brings this one along, if any. */
 export function includedBy(perms: readonly PermissionId[], id: PermissionId): PermissionId | undefined {
-  return INCLUDED_BY[id]?.find((p) => perms.includes(p));
+  /* Admin first: "Included with Admin" is the truer reason when both apply. */
+  const parents = INCLUDED_BY[id];
+  if (!parents) return undefined;
+  return parents.includes("admin") && perms.includes("admin") ? "admin" : parents.find((p) => perms.includes(p));
 }
 
-const SHORT: Partial<Record<PermissionId, string>> = { create: "Create", approve: "Approve" };
+const SHORT: Partial<Record<PermissionId, string>> = { create: "Create", approve: "Approve", admin: "Admin" };
 
 /** "Included with Create", when another held permission brings this one along. */
 export function includedNote(perms: readonly PermissionId[], id: PermissionId): string | undefined {
@@ -76,15 +84,14 @@ export function togglePermission(perms: readonly PermissionId[], id: PermissionI
  * anyone else.
  */
 export const ROLE_PERMISSIONS: Record<(typeof ROLES)[number], PermissionId[]> = {
-  "Admin":               ["create", "comment", "approve", "products", "claims", "analytics", "billing", "admin"],
+  "Admin":               ["create", "comment", "approve", "products", "analytics", "billing", "admin"],
   "Marketing":           ["create", "comment", "products", "analytics"],
   "Design":              ["create", "comment"],
-  "Field Force":         ["comment", "analytics"],
-  "Medical reviewer":    ["comment", "approve", "claims"],
-  "Legal reviewer":      ["comment", "approve"],
-  "Regulatory reviewer": ["comment", "approve", "claims"],
+  "Field Force":         ["comment"],
+  "Medical reviewer":    ["comment", "approve", "products"],
+  "Legal reviewer":      ["comment", "approve", "products"],
+  "Regulatory reviewer": ["comment", "approve", "products"],
   "Read only":           [],
-  "CXO":                 ["comment", "analytics", "billing"],
 };
 
 /** A role as an admin defines it: a name and the permissions it seeds. */
@@ -131,6 +138,10 @@ export interface PendingInvite {
   /** What they arrive with — chosen at invite time, not on first sign-in. */
   permissions: PermissionId[];
   invitedAt: string;
+  /** Links last 14 days; Resend issues a fresh one. */
+  expired?: boolean;
+  /** Member id of whoever sent it. */
+  invitedBy?: string;
 }
 
 export interface JoinRequest {
@@ -138,6 +149,8 @@ export interface JoinRequest {
   name: string;
   email: string;
   requestedAt: string;
+  /** What they wrote to the admins, if anything. */
+  note?: string;
 }
 
 /** One stage in a person's chain. Draft and Approved are the implicit ends. */
@@ -271,3 +284,61 @@ export const LANGUAGES = [
   "French",
 ] as const;
 export type Language = (typeof LANGUAGES)[number];
+
+/** Where a workspace ships content; each sets the rules claims are checked against. */
+export const MARKETS = [
+  "United States · FDA", "European Union · EMA", "UK", "Japan", "India", "Australia", "Brazil",
+] as const;
+
+export const THERAPY_AREAS = [
+  "Dermatology", "Cardiology", "Oncology", "Immunology",
+  "Nephrology", "Endocrinology", "Neurology", "Respiratory",
+] as const;
+
+export const REGIONS = ["United States", "European Union", "United Kingdom", "India", "Japan", "Global"] as const;
+
+/** Free mail providers. SwishX is for company accounts, so these can't sign in. */
+const PERSONAL_DOMAINS = [
+  "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com", "hotmail.com", "live.com",
+  "msn.com", "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com", "gmx.com", "zoho.com", "rediffmail.com",
+];
+
+export function emailDomain(email: string): string {
+  return email.trim().toLowerCase().split("@")[1] ?? "";
+}
+
+export function isPersonalEmail(email: string): boolean {
+  return PERSONAL_DOMAINS.includes(emailDomain(email));
+}
+
+/**
+ * What a set of permissions opens up across the app, in the words a member
+ * would use: the same checks the sidebar, Home, studios and libraries make.
+ */
+export function roleSees(perms: readonly PermissionId[]): { sees: string[]; cant: string[] } {
+  const has = (p: PermissionId) => perms.includes(p);
+  const libraries = has("create") || has("approve") || has("products");
+  const sees = [
+    "Home, and published content in the Content Library",
+    has("create") && "Video and Docs studios, Characters and the AI co-workers: make, edit, submit for review, share",
+    (has("approve") || has("create")) && (has("approve") ? "MLR Review: the queue, approve or request changes" : "MLR Review: their own submissions"),
+    has("comment") && "Comments on anything they can open",
+    has("products")
+      ? "Product & Claims Library and Brand Dossiers: add, edit, archive, brand kits"
+      : libraries && "Product & Claims Library and Brand Dossiers: view",
+    has("analytics") && "Analytics",
+    has("billing") && "Billing: plan, credits, top-ups and invoices",
+    (has("create") || has("approve") || has("admin")) && (has("admin") ? "Compliance & MLR: every approval chain" : [has("create") && "their own approval chain", has("approve") && "the chains they review in"].filter(Boolean).join(" and ").replace(/^/, "Compliance & MLR: ")),
+    has("admin") && "Settings: team, roles, brand kit, integrations, approval chains",
+  ].filter((x): x is string => !!x);
+  const cant = [
+    !has("create") && "Studios, Characters and editing",
+    !has("approve") && !has("create") && "MLR Review",
+    !libraries && "Product & Claims Library",
+    !has("comment") && "Commenting",
+    !has("analytics") && "Analytics",
+    !has("billing") && "Billing",
+    !has("admin") && "Workspace settings",
+  ].filter((x): x is string => !!x);
+  return { sees, cant };
+}

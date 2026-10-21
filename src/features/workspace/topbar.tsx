@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSettingsStore } from "@/features/settings/settings-store";
+import { canDecide, stepLabel, useWorkspaceReviewItems } from "@/features/review/review-store";
 import { Menu, Play, Search, X } from "lucide-react";
 
 import { Portal } from "@/components/ui/portal";
+import { ViewAsSwitcher } from "@/features/settings/view-as";
 
 interface TopbarProps {
   pageTitle?: string;
@@ -91,8 +95,9 @@ export function Topbar({ pageTitle = "Home", onMenuClick }: TopbarProps) {
           </label>
         </div>
 
-        {/* Right-aligned: Watch demo + icon buttons */}
+        {/* Right-aligned: who the app is viewed as, Watch demo, icon buttons */}
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
+          <ViewAsSwitcher />
           <button
             type="button"
             onClick={() => setDemoOpen(true)}
@@ -104,8 +109,18 @@ export function Topbar({ pageTitle = "Home", onMenuClick }: TopbarProps) {
 
           {[
             { title: "Help", path: "M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.7.3-.9.8-.9 1.5v.5M12 17v.5" },
-            { title: "Notifications", path: "M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0", badge: true },
-            { title: "Dark mode", path: "M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" },
+          ].map((btn) => (
+            <button
+              key={btn.title}
+              title={btn.title}
+              style={{ width: 36, height: 36, borderRadius: 10, display: "grid", placeItems: "center", color: "var(--ink-3)", position: "relative" }}
+            >
+              <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}><path d={btn.path} /></svg>
+            </button>
+          ))}
+          <NotificationsMenu />
+          {[
+            { title: "Dark mode", path: "M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z", badge: false },
           ].map((btn) => (
             <button
               key={btn.title}
@@ -152,5 +167,90 @@ export function Topbar({ pageTitle = "Home", onMenuClick }: TopbarProps) {
         </Portal>
       )}
     </>
+  );
+}
+
+/**
+ * The bell: what needs this person, worked out from the review funnel and the
+ * team rather than a feed of its own. Items waiting on their review, their
+ * submissions sent back or approved, and for admins, people asking to join.
+ */
+function NotificationsMenu() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const items = useWorkspaceReviewItems();
+  const members = useSettingsStore((s) => s.members);
+  const me = useSettingsStore((s) => s.currentUserId);
+  const isAdmin = useSettingsStore((s) => s.isAdmin);
+  const joinRequests = useSettingsStore((s) => s.joinRequests);
+  const nameOf = (id?: string) => members.find((m) => m.id === id)?.name ?? "A reviewer";
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => { if (!wrapRef.current?.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [open]);
+
+  const notes = [
+    ...items.filter((i) => canDecide(i, me, members)).map((i) => ({
+      id: `w-${i.id}`, tone: "brand" as const, href: "/mlr-review",
+      title: `${i.title} is waiting for you`, detail: `${stepLabel(i)} · from ${nameOf(i.ownerId)}`,
+    })),
+    ...items.filter((i) => i.ownerId === me && i.status === "changes").map((i) => {
+      const last = [...i.events].reverse().find((e) => e.kind === "changes");
+      return { id: `c-${i.id}`, tone: "warn" as const, href: "/mlr-review", title: `Changes requested on ${i.title}`, detail: `${nameOf(last?.by)}: “${last?.note ?? ""}”` };
+    }),
+    ...items.filter((i) => i.ownerId === me && i.status === "approved").map((i) => ({
+      id: `a-${i.id}`, tone: "ok" as const, href: "/mlr-review", title: `${i.title} was approved`, detail: `Published as ${i.version}. Sharing is open.`,
+    })),
+    ...(isAdmin ? joinRequests.map((r) => ({
+      id: `j-${r.id}`, tone: "brand" as const, href: "/settings/team", title: `${r.name} asked to join`, detail: `${r.email} · ${r.requestedAt}`,
+    })) : []),
+  ];
+  const actionable = notes.filter((n) => n.tone !== "ok").length;
+  const dot = { brand: "var(--brand)", warn: "var(--warn)", ok: "var(--ok)" };
+
+  return (
+    <div ref={wrapRef} style={{ position: "relative" }}>
+      <button
+        type="button"
+        title="Notifications"
+        aria-label={actionable ? `Notifications, ${actionable} need you` : "Notifications"}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        style={{ width: 36, height: 36, borderRadius: 10, display: "grid", placeItems: "center", color: "var(--ink-3)", position: "relative" }}
+      >
+        <svg width={17} height={17} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9}><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" /></svg>
+        {actionable > 0 && <span style={{ position: "absolute", top: 6, right: 6, width: 7, height: 7, borderRadius: "50%", background: "var(--brand)", border: "1.5px solid var(--canvas)" }} />}
+      </button>
+      {open && (
+        <div className="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-panel border border-hair-2 bg-card shadow-float">
+          <div className="border-b border-hair px-3.5 py-2.5 text-body font-bold text-ink">Notifications</div>
+          {notes.length === 0 ? (
+            <p className="px-3.5 py-6 text-center text-label text-ink-4">Nothing needs you right now.</p>
+          ) : (
+            <ul className="max-h-96 overflow-y-auto">
+              {notes.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    onClick={() => { setOpen(false); router.push(n.href); }}
+                    className="flex w-full cursor-pointer items-start gap-2.5 border-b border-hair px-3.5 py-2.5 text-left last:border-b-0 hover:bg-subtle"
+                  >
+                    <span className="mt-1.5 size-2 shrink-0 rounded-full" style={{ background: dot[n.tone] }} />
+                    <span className="min-w-0">
+                      <span className="block text-body font-semibold text-ink">{n.title}</span>
+                      <span className="block truncate text-caption text-ink-3">{n.detail}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

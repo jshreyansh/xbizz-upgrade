@@ -1,5 +1,7 @@
 "use client";
 
+import { useCan } from "@/features/settings/view-as";
+import type { PermissionId } from "@/features/settings/settings-types";
 import { KeyRound } from "lucide-react";
 import { Field } from "@/components/ui/field";
 import { Text } from "@/components/ui/text";
@@ -11,7 +13,15 @@ import {
   SettingsCard, SettingRow, ReadOnlyValue, Toggle, SaveBar, useDirty,
 } from "@/features/settings/settings-parts";
 
+const NOTIFY_NEEDS: Record<string, PermissionId[]> = {
+  approvals: ["approve", "create"],
+  compliance: ["approve", "create", "admin"],
+  engagement: ["analytics"],
+};
+
 export function SectionProfile() {
+  /* Only the notifications this person can get: review mail for people in the funnel, and so on. */
+  const { canAny } = useCan();
   const s = useSettingsStore();
   const { dirty, touch, clear } = useDirty();
   const me = s.members.find((m) => m.id === s.currentUserId);
@@ -81,7 +91,7 @@ export function SectionProfile() {
               </tr>
             </thead>
             <tbody>
-              {s.notifications.map((n) => (
+              {s.notifications.filter((n) => !NOTIFY_NEEDS[n.key] || canAny(NOTIFY_NEEDS[n.key])).map((n) => (
                 <tr key={n.key} className="border-b border-hair last:border-b-0">
                   <td className="py-3 pr-4">
                     <Text size="body" weight="semibold">{n.label}</Text>

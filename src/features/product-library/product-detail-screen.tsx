@@ -1,5 +1,6 @@
 "use client";
 
+import { useCan } from "@/features/settings/view-as";
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -103,6 +104,8 @@ export function ProductDetailScreen({
    *  instead of always landing on Dossier. */
   initialTab?: Tab;
 }) {
+  /* Adding, uploading and archiving come with Manage Product Library; everyone can look. */
+  const canManage = useCan().can("products");
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [variations, setVariations] = useState<ProductVariation[]>(detail.variations);
@@ -186,7 +189,8 @@ export function ProductDetailScreen({
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
     { key: "documents", label: "Team Attachments", icon: Paperclip, count: documents.filter((d) => !d.archived).length },
     { key: "images", label: "Product Images", icon: ImageIcon, count: activeImageTotal },
-    { key: "brand-kit", label: "Brand Kit", icon: Palette },
+    /* An editing surface, so only for whoever manages the library. */
+    ...(canManage ? [{ key: "brand-kit" as const, label: "Brand Kit", icon: Palette }] : []),
   ];
 
 
@@ -363,14 +367,14 @@ export function ProductDetailScreen({
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
             {/* First, not last. The way in belongs where you look before
                 you have scrolled past everything already there. */}
-            <button
+            {canManage && <button
               onClick={handleUpload}
               className="flex min-h-[178px] flex-col items-center justify-center gap-1.5 rounded-panel border border-dashed border-hair-2 text-ink-4 transition-colors hover:border-brand hover:text-brand-deep hover:bg-tint-2"
             >
               <Upload size={18} />
               <span className="text-body font-bold">Add product image</span>
               <span className="text-caption text-ink-4">JPG, PNG or WebP (max 10MB)</span>
-            </button>
+            </button>}
 
             {visibleImages.map((img) => (
               <div
@@ -398,7 +402,7 @@ export function ProductDetailScreen({
                   </div>
 
                   {/* Always-visible overflow menu — Archive / Restore */}
-                  <div className="absolute right-2 top-2">
+                  {canManage && <div className="absolute right-2 top-2">
                     <button
                       type="button"
                       title="Image options"
@@ -428,7 +432,7 @@ export function ProductDetailScreen({
                         </button>
                       </div>
                     )}
-                  </div>
+                  </div>}
                 </div>
                 {/* The file and what the person who uploaded it said about
                     it — which is what the studio asked them for and what
@@ -591,13 +595,13 @@ export function ProductDetailScreen({
               <p className="text-body text-ink-3">Prescribing information, decks, and anything else your team grounded this brand in</p>
             </div>
             <div className="flex items-center gap-2">
-            <button
+            {canManage && <button
               type="button"
               onClick={() => docInputRef.current?.click()}
               className="inline-flex cursor-pointer items-center gap-1.5 rounded-control border border-hair-2 bg-card px-3 py-1.5 text-body font-bold text-ink-2 transition-colors hover:border-brand hover:bg-tint hover:text-brand-deep"
             >
               <Upload size={14} /> Add attachment
-            </button>
+            </button>}
             <Segmented>
               <SegmentedButton active={docShelf === "active"} onClick={() => setDocShelf("active")}>
                 Active {documents.length - archivedDocCount}
@@ -635,7 +639,7 @@ export function ProductDetailScreen({
                 <button className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 text-body-lg font-bold text-brand transition-colors hover:text-brand-deep">
                   <Download size={14} /> Download
                 </button>
-                <button
+                {canManage && <button
                   type="button"
                   onClick={() => setDocArchived(doc.id, !doc.archived)}
                   title={doc.archived ? "Restore" : "Archive"}
@@ -643,7 +647,7 @@ export function ProductDetailScreen({
                   className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-control text-ink-4 transition-colors hover:bg-subtle hover:text-ink"
                 >
                   {doc.archived ? <Undo2 size={14} /> : <Archive size={14} />}
-                </button>
+                </button>}
               </div>
             ))}
           </div>

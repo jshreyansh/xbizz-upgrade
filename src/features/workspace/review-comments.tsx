@@ -4,7 +4,9 @@ import { useState } from "react";
 import { Check, Clock, MessageSquarePlus, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { useCan } from "@/features/settings/view-as";
 import type { AssetComment } from "@/features/workspace/asset-comments";
+import type { ReviewItem } from "@/features/review/review-store";
 
 /**
  * The comments surface a reviewer sees on a published link.
@@ -18,8 +20,7 @@ import type { AssetComment } from "@/features/workspace/asset-comments";
 export function ReviewComments({
   comments,
   stampLabel,
-  medicalReviewDone,
-  regulatoryReviewDone,
+  review,
   onPost,
   canClose = false,
   onResolve,
@@ -30,8 +31,8 @@ export function ReviewComments({
   /** Where the reviewer is — the playhead on a video, the page on a deck —
    *  so a new comment is stamped with its own location. */
   stampLabel: string;
-  medicalReviewDone: boolean;
-  regulatoryReviewDone: boolean;
+  /** This asset in the review funnel, when it has been submitted: its chain is the status shown. */
+  review?: ReviewItem;
   onPost: (text: string) => void;
   /**
    * Whether this viewer may close a comment. True in the editor, where the
@@ -48,6 +49,8 @@ export function ReviewComments({
    */
   onAddAsSuggestion?: (id: string) => void;
 }) {
+  /* Reading comments is open to everyone who can open the asset; adding one needs View & comment. */
+  const canComment = useCan().can("comment");
   const [draft, setDraft] = useState("");
   /* Which card is asking for its closing note, and what it will be closed as. */
   const [closing, setClosing] = useState<{ id: string; as: "resolved" | "rejected" } | null>(null);
@@ -69,11 +72,12 @@ export function ReviewComments({
         {/* Where the asset stands, before anything about individual comments:
             a reviewer's first question is whether this is still in review at
             all, not what the comment count is. */}
+        {review && review.stages.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {[
-            { label: "Medical review", done: medicalReviewDone },
-            { label: "Regulatory review", done: regulatoryReviewDone },
-          ].map((gate) => (
+          {review.stages.map((st, i) => ({
+            label: st.name,
+            done: review.status === "approved" || i < review.stageIndex,
+          })).map((gate) => (
             <span
               key={gate.label}
               className={cn(
@@ -88,6 +92,7 @@ export function ReviewComments({
             </span>
           ))}
         </div>
+        )}
 
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-control border border-hair bg-card px-3 py-2 text-caption">
           {[
@@ -102,6 +107,8 @@ export function ReviewComments({
           ))}
         </div>
 
+        {canComment ? (
+        <>
         <div className="flex items-center justify-between pt-0.5">
           <span className="text-label font-extrabold text-ink">Add Reviewer Comment</span>
           <span className="rounded-glyph border border-tint-line bg-tint px-2 py-0.5 text-caption font-bold tabular-nums text-brand-deep">
@@ -126,6 +133,12 @@ export function ReviewComments({
             <Send className="size-3" /> Post Comment
           </Button>
         </div>
+        </>
+        ) : (
+          <p className="rounded-control border border-hair bg-subtle px-3 py-2 text-label text-ink-3">
+            You can read comments. Adding them comes with View &amp; comment.
+          </p>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3.5">

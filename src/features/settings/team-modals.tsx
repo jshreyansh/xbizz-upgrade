@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
-import { AlertTriangle, Lock, Plus, RotateCcw, Send, Trash2, Users, X } from "lucide-react";
+import { AlertTriangle, Check, Lock, Plus, RotateCcw, Send, Trash2, Users, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { CheckRow } from "@/features/settings/settings-parts";
 import {
-  PERMISSIONS, SENIORITY, includedNote, rolePermissions, togglePermission,
+  PERMISSIONS, SENIORITY, includedNote, roleSees, rolePermissions, togglePermission,
   type PermissionId, type Role, type Seniority,
 } from "@/features/settings/settings-types";
 import { cn } from "@/lib/cn";
@@ -159,7 +159,7 @@ export function InviteModal({
 
 /* ─────────────────────────────── Email chips ─────────────────────────────── */
 
-const isEmail = (v: string) => /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/.test(v);
+export const isEmail = (v: string) => /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/.test(v);
 
 /**
  * The addresses as chips, the way a mail client's To field holds them. A
@@ -168,7 +168,7 @@ const isEmail = (v: string) => /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/.test(v);
  * chip back to edit. A chip that isn't an address is marked rather than
  * dropped, so a typo can be seen and fixed.
  */
-function EmailChips({
+export function EmailChips({
   emails,
   draft,
   onEmails,
@@ -431,6 +431,22 @@ export function RoleConfigModal({
                 />
               ))}
             </div>
+          </div>
+
+          {/* The permissions in the app's own words: what someone in this role will find. */}
+          <div className="rounded-control border border-hair bg-card p-3">
+            <Text size="label" weight="bold" className="mb-1.5 block">What this role sees</Text>
+            <ul className="grid gap-1">
+              {roleSees(draftPerms).sees.map((line) => (
+                <li key={line} className="flex items-start gap-1.5">
+                  <Check className="mt-0.5 size-3.5 shrink-0 text-ok" strokeWidth={3} />
+                  <Text size="caption" tone="muted">{line}</Text>
+                </li>
+              ))}
+            </ul>
+            {roleSees(draftPerms).cant.length > 0 && (
+              <Text size="caption" tone="subtle" className="mt-2 block">Hidden: {roleSees(draftPerms).cant.join(" · ")}</Text>
+            )}
           </div>
 
           {!isNew && members.length > 0 && (

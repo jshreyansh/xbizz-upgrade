@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/features/workspace/sidebar";
 import { Topbar } from "@/features/workspace/topbar";
+import { ViewingAsBanner, useCan } from "@/features/settings/view-as";
 import { TeamDock } from "@/features/team-dock/team-dock";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { takeQueuedToast } from "@/features/workspace/project-exit";
@@ -16,6 +17,7 @@ interface AppShellProps {
 
 export function AppShell({ children, pageTitle }: AppShellProps) {
   const toggleTeamDock = useWorkspaceStore((s) => s.toggleTeamDock);
+  const canCreate = useCan().can("create");
   const pathname = usePathname();
 
   // The sidebar is a fixed-width floating panel that only fits alongside
@@ -39,14 +41,14 @@ export function AppShell({ children, pageTitle }: AppShellProps) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+      if (canCreate && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
         toggleTeamDock();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleTeamDock]);
+  }, [toggleTeamDock, canCreate]);
 
   // Close the drawer whenever navigation actually happens, rather than
   // threading a callback through every nav row inside <Sidebar>.
@@ -83,9 +85,11 @@ export function AppShell({ children, pageTitle }: AppShellProps) {
 
       <div className="flex h-full min-w-0 flex-1 flex-col">
         <Topbar pageTitle={pageTitle} onMenuClick={() => setMobileNavOpen(true)} />
+        <ViewingAsBanner />
         <main className="flex-1 overflow-y-auto px-4 pt-5 pb-16 sm:px-8 sm:pt-7 sm:pb-20">{children}</main>
       </div>
-      <TeamDock />
+      {/* The AI co-workers work on projects, so they're for people who create. */}
+      {canCreate && <TeamDock />}
       <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
     </div>
   );

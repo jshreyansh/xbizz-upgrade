@@ -6,7 +6,14 @@ export type InspectorTab = "edit" | "assistant" | "evidence";
 export type EvidenceState = "approved" | "supported" | "changed" | "unsupported";
 
 /** Auth sub-stages within /auth route */
-export type AuthView = "signin" | "otp" | "workspace" | "team" | "signedout";
+export type AuthView =
+  | "signin" | "otp" | "organisation" | "workspace" | "team" | "signedout"
+  /** Invite link → accept → your details. */
+  | "invite" | "details"
+  /** Company already on SwishX, not invited → ask to join → wait. */
+  | "join" | "waiting"
+  /** An invite or account that can no longer sign in. */
+  | "blocked";
 
 /** Onboarding beat index within /onboarding route (1-indexed) */
 export type OnboardingBeat = 1 | 2;

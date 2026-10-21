@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/patterns/sheet";
 import { SortableList } from "@/components/patterns/sortable-list";
 import { DataTable, type DataColumn } from "@/components/patterns/data-table";
-import { useSettingsStore } from "@/features/settings/settings-store";
+import { DEFAULT_CHAIN_ID, chainStagesFor, useSettingsStore } from "@/features/settings/settings-store";
+import { stageReviewers } from "@/features/review/review-store";
 import { SettingsCard, SettingRow, Toggle } from "@/features/settings/settings-parts";
 import {
   SENIORITY,
@@ -52,40 +53,47 @@ export function SectionCompliance() {
     (m) => m.permissions.includes("create") && m.status !== "deactivated",
   );
   const chainFor = (id: string) => s.chains.find((c) => c.memberId === id)?.stages ?? [];
-  const editMember = s.members.find((m) => m.id === editing) ?? null;
+  /* Someone with no chain of their own uses the default. */
+  const usesDefault = (id: string) => !s.chains.some((c) => c.memberId === id);
+  const defaultStages = chainFor(DEFAULT_CHAIN_ID);
+  const DEFAULT_MEMBER: Member = { id: DEFAULT_CHAIN_ID, name: "New creators", email: "", role: "", seniority: "Associate", permissions: [], status: "active", lastActive: "" };
+  const editMember = s.members.find((m) => m.id === editing) ?? (editing === DEFAULT_CHAIN_ID ? DEFAULT_MEMBER : null);
 
-  // A non-admin sees only their own chain.
+  // A non-admin sees their own chain if they create, and the chains they review in if they approve.
   if (!s.isAdmin) {
-    const mine = chainFor(s.currentUserId);
+    const mine = chainStagesFor(s, s.currentUserId);
     const me = s.members.find((m) => m.id === s.currentUserId);
     return (
-      <SettingsCard
-        title="Your approval chain"
-        description="The stages your work passes through. Set by an admin."
-      >
-        {mine.length === 0 ? (
-          <Text size="body" tone="muted">
-            No chain configured yet. Your work goes straight from draft to approved.
-          </Text>
-        ) : (
-          <div className="flex flex-wrap items-center gap-2">
-            <Chip tone="default" size="sm">Draft</Chip>
-            {mine.map((st) => (
-              <span key={st.id} className="flex items-center gap-2">
+      <Stack gap={4}>
+        {me?.permissions.includes("create") && (
+          <SettingsCard
+            title="Your approval chain"
+            description="The stages your work passes through. Set by an admin."
+          >
+            {mine.length === 0 ? (
+              <Text size="body" tone="muted">
+                No chain configured yet. Your work goes straight from draft to approved.
+              </Text>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <Chip tone="default" size="sm">Draft</Chip>
+                {mine.map((st) => (
+                  <span key={st.id} className="flex items-center gap-2">
+                    <ArrowRight className="size-3.5 text-ink-3" />
+                    <Chip tone="brand" size="sm">{st.name}</Chip>
+                  </span>
+                ))}
                 <ArrowRight className="size-3.5 text-ink-3" />
-                <Chip tone="brand" size="sm">{st.name}</Chip>
-              </span>
-            ))}
-            <ArrowRight className="size-3.5 text-ink-3" />
-            <Chip tone="ok" size="sm">Approved</Chip>
-          </div>
+                <Chip tone="ok" size="sm">Approved</Chip>
+              </div>
+            )}
+            <Text size="caption" tone="subtle" className="mt-3 block">
+              You are {me.role} · {me.seniority}. Ask an admin to change this chain.
+            </Text>
+          </SettingsCard>
         )}
-        {me && (
-          <Text size="caption" tone="subtle" className="mt-3 block">
-            You are {me.role} · {me.seniority}. Ask an admin to change this chain.
-          </Text>
-        )}
-      </SettingsCard>
+        {me?.permissions.includes("approve") && <ChainsYouReview meId={me.id} />}
+      </Stack>
     );
   }
 
@@ -103,7 +111,8 @@ export function SectionCompliance() {
       key: "chain", header: "Chain",
       cell: (m) => {
         const stages = chainFor(m.id);
-        if (stages.length === 0) return <Text size="caption" tone="subtle">Not configured</Text>;
+        if (usesDefault(m.id)) return <Text size="caption" tone="subtle">Default ({defaultStages.length} {defaultStages.length === 1 ? "stage" : "stages"})</Text>;
+        if (stages.length === 0) return <Text size="caption" tone="subtle">None: publishes straight away</Text>;
         return (
           <div className="flex flex-wrap items-center gap-1">
             {stages.map((st, i) => (
@@ -116,17 +125,41 @@ export function SectionCompliance() {
         );
       },
     },
-    { key: "count", header: "Stages", numeric: true, secondary: true, cell: (m) => chainFor(m.id).length },
+    { key: "count", header: "Stages", numeric: true, secondary: true, cell: (m) => chainStagesFor(s, m.id).length },
     {
       key: "status", header: "Status",
-      cell: (m) => chainFor(m.id).length > 0
-        ? <Chip tone="ok" size="xs">Configured</Chip>
-        : <Chip tone="warn" size="xs">Not configured</Chip>,
+      cell: (m) => usesDefault(m.id)
+        ? <Chip tone="default" size="xs">Default</Chip>
+        : chainFor(m.id).length > 0
+          ? <Chip tone="ok" size="xs">Own chain</Chip>
+          : <Chip tone="warn" size="xs">No review</Chip>,
     },
   ];
 
   return (
     <Stack gap={4}>
+      <SettingsCard
+        title="Default chain for new creators"
+        description="Anyone who can create and has no chain of their own goes through this, including people who join later."
+        actions={<Button size="sm" variant="secondary" onClick={() => setEditing(DEFAULT_CHAIN_ID)}>Edit</Button>}
+      >
+        {defaultStages.length === 0 ? (
+          <Text size="body" tone="muted">No default. New creators publish straight from draft.</Text>
+        ) : (
+          <div className="flex flex-wrap items-center gap-2">
+            <Chip tone="default" size="sm">Draft</Chip>
+            {defaultStages.map((st) => (
+              <span key={st.id} className="flex items-center gap-2">
+                <ArrowRight className="size-3.5 text-ink-3" />
+                <Chip tone="brand" size="sm">{st.name}</Chip>
+              </span>
+            ))}
+            <ArrowRight className="size-3.5 text-ink-3" />
+            <Chip tone="ok" size="sm">Approved</Chip>
+          </div>
+        )}
+      </SettingsCard>
+
       <SettingsCard
         title="Approval chains"
         description="One chain per person, for everyone who creates work. Reviewers do not appear. They are the approvers."
@@ -170,7 +203,7 @@ export function SectionCompliance() {
         onClose={() => setEditing(null)}
         side="right"
         size={560}
-        title={editMember ? `${editMember.name}'s chain` : ""}
+        title={editMember ? (editMember.id === DEFAULT_CHAIN_ID ? "Default chain for new creators" : `${editMember.name}'s chain`) : ""}
         description="Draft and Approved are the fixed ends. Drag to reorder the middle."
         footer={
           editMember && (
@@ -335,5 +368,68 @@ export function SectionCompliance() {
         )}
       </Sheet>
     </Stack>
+  );
+}
+
+/**
+ * A reviewer's side of the chains: whose work comes to them, at which step,
+ * and why it is them (named, by seniority, or anyone in their role). The same
+ * rule MLR Review uses to put an item in their queue.
+ */
+function ChainsYouReview({ meId }: { meId: string }) {
+  const s = useSettingsStore();
+  const creators = s.members.filter((m) => m.status === "active" && m.permissions.includes("create"));
+  const rows = creators
+    .map((creator) => {
+      const stages = chainStagesFor(s, creator.id);
+      const usesDefault = !s.chains.some((c) => c.memberId === creator.id);
+      const mineAt = stages.map((st, i) => (stageReviewers(st, s.members).some((m) => m.id === meId) ? i : -1)).filter((i) => i >= 0);
+      return { creator, stages, usesDefault, mineAt };
+    })
+    .filter((r) => r.mineAt.length > 0);
+
+  return (
+    <SettingsCard
+      title="Chains you review in"
+      description="Whose work comes to you in MLR Review, and at which step. Set by an admin."
+    >
+      {rows.length === 0 ? (
+        <Text size="body" tone="muted">
+          You aren&apos;t on anyone&apos;s approval chain yet, so nothing comes to you for review. An admin adds reviewers in Compliance &amp; MLR.
+        </Text>
+      ) : (
+        <div className="divide-y divide-hair">
+          {rows.map(({ creator, stages, usesDefault, mineAt }) => (
+            <div key={creator.id} className="py-3 first:pt-0 last:pb-0">
+              <div className="mb-2 flex flex-wrap items-baseline gap-x-2">
+                <Text size="body" weight="semibold">{creator.name}</Text>
+                <Text size="caption" tone="subtle">{creator.role}{usesDefault ? " · default chain" : ""}</Text>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Chip tone="default" size="xs">Draft</Chip>
+                {stages.map((st, i) => (
+                  <span key={st.id} className="flex items-center gap-1.5">
+                    <ArrowRight className="size-3 text-ink-3" />
+                    <Chip tone={mineAt.includes(i) ? "brand" : "default"} size="xs">
+                      {mineAt.includes(i) ? `${st.name} · you` : st.name}
+                    </Chip>
+                  </span>
+                ))}
+                <ArrowRight className="size-3 text-ink-3" />
+                <Chip tone="ok" size="xs">Approved</Chip>
+              </div>
+              <Text size="caption" tone="subtle" className="mt-1.5 block">
+                {mineAt.map((i) => {
+                  const st = stages[i];
+                  const why = st.narrowTo.kind === "person" ? "you by name" : `${st.role}, ${narrowLabel(st, s.members)}`;
+                  return `Step ${i + 1} of ${stages.length}: ${why}`;
+                }).join(" · ")}
+                {mineAt.some((i) => stages[i].restartFrom === "this") ? ". If you send it back, review restarts from your step." : ". If you send it back, review restarts from step 1."}
+              </Text>
+            </div>
+          ))}
+        </div>
+      )}
+    </SettingsCard>
   );
 }

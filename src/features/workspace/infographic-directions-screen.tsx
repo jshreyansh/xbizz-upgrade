@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import { useState, useRef, useEffect } from "react";
 import {
   AlertTriangle,
@@ -35,8 +36,6 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
-import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
-import { useCreativeSteps } from "@/features/workspace/flow-steps";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
@@ -164,11 +163,9 @@ export function InfographicDirectionsScreen() {
   /* From the catalogue, not from two hard-coded ids and a "Velmora" default. */
   const brandName = useBrandName(sourcePayload?.dossierId);
 
-  /* In the store, not local: the breadcrumb in the canvas studio needs to be
-     able to send you back to this step. */
+  /* In the store, not local, so other screens can send you back to this step. */
   const currentStep = useWorkspaceStore((st) => st.creativeStep) as InfographicSubStep;
   const setCurrentStep = useWorkspaceStore((st) => st.setCreativeStep);
-  const flowSteps = useCreativeSteps({});
 
   /* ── The use case is the whole context, not a label ──────────────────────
      Same switcher as the video plan, filtered to image cases. Changing it
@@ -711,10 +708,7 @@ export function InfographicDirectionsScreen() {
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="truncate text-body font-[800] text-ink">
-                {brandName} HCP launch
-              </span>
-              <VersionChip versions={DRAFT_ONLY} />
+              <ProjectTitle kind="document" fallback={`${brandName} HCP Infographic`} className="text-body font-[800]" />
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
               Saved just now · MLR Ready
@@ -725,7 +719,6 @@ export function InfographicDirectionsScreen() {
               the brief — the same switcher the video plan has, filtered to
               image cases. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
-            <FlowBreadcrumb steps={flowSteps} currentId={currentStep === "template" ? "layout" : "plan"} />
             <button
               type="button"
               onClick={() => setUseCaseDrawerOpen(true)}
@@ -739,6 +732,7 @@ export function InfographicDirectionsScreen() {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            <ProjectMenu kind="document" fallback={`${brandName} HCP Infographic`} />
             {/* Toggle Right Sidebar Panel Button */}
             <button
               type="button"
@@ -753,6 +747,8 @@ export function InfographicDirectionsScreen() {
             >
               <PanelRight className="size-4" />
             </button>
+            {/* The version sits with the header actions on every stage, as in the editors. */}
+            <VersionChip versions={DRAFT_ONLY} variant="button" />
           </div>
         </ScreenHeader>
       }

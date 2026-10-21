@@ -36,6 +36,7 @@ export function PreviewPublishModal({
   review,
   onClose,
   onPublish,
+  submit,
 }: {
   title: string;
   /** "Version 1" — what publishing creates. */
@@ -48,6 +49,11 @@ export function PreviewPublishModal({
   review: MlrReview;
   onClose: () => void;
   onPublish: () => void;
+  /**
+   * The creator has an approval chain: the button submits into it instead of
+   * publishing, and says where it goes. Absent, it publishes straight away.
+   */
+  submit?: { label: string; route: string[] };
 }) {
   const running = review.status === "running";
   const flagged = checks.filter((c) => c.severity).length;
@@ -74,7 +80,7 @@ export function PreviewPublishModal({
               <div className="mt-0.5 flex flex-wrap items-center gap-2">
                 <h2 className="truncate text-title font-[850] tracking-tight text-ink">{title}</h2>
                 <span className="rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-caption font-bold text-brand-deep">
-                  Publishing as {version}
+                  {submit ? `Submitting ${version} for review` : `Publishing as ${version}`}
                 </span>
               </div>
             </div>
@@ -165,11 +171,17 @@ export function PreviewPublishModal({
                     {flagged} {flagged === 1 ? "item" : "items"} flagged. You can still publish.
                   </p>
                 )}
+                {/* Where it goes after this, when it goes to people before publishing. */}
+                {submit && (
+                  <p className="text-label text-ink-2">
+                    Goes to {submit.route.join(" → ")} → <span className="font-semibold">published</span>. Sharing opens once it&rsquo;s approved.
+                  </p>
+                )}
                 {/* No Cancel: the close in the header is the way out. */}
                 <div className="flex items-center justify-end gap-2">
                   <Button type="button" onClick={onPublish} disabled={running} className="gap-1.5 px-6 font-bold">
                     <LogoMark size={14} />
-                    Publish
+                    {submit ? submit.label : "Publish"}
                   </Button>
                 </div>
               </div>

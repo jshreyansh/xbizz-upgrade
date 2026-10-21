@@ -53,6 +53,7 @@ export function CharacterTile({
   onRefine,
   onArchive,
   onRestore,
+  readOnly,
 }: {
   character: Character;
   onOpenGallery: () => void;
@@ -60,6 +61,8 @@ export function CharacterTile({
   onRefine: () => void;
   onArchive: () => void;
   onRestore: () => void;
+  /** Viewable, not changeable: no refine, edit, archive or restore. */
+  readOnly?: boolean;
 }) {
   const missing = character.views.filter((v) => v.missing).length;
   const ready = missing === 0;
@@ -94,7 +97,7 @@ export function CharacterTile({
         </span>
       }
       actions={
-        character.archived ? (
+        readOnly ? undefined : character.archived ? (
           <button
             type="button"
             onClick={onRestore}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { Check, RotateCcw, Shield, UserPlus } from "lucide-react";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
@@ -27,12 +29,14 @@ function sameSet(a: readonly string[], b: readonly string[]) {
 
 export function SectionTeam() {
   const s = useSettingsStore();
+  const router = useRouter();
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
   /* Adding people and defining roles are separate jobs, so separate modals. */
   const [inviteOpen, setInviteOpen] = useState(false);
   const [rolesOpen, setRolesOpen] = useState(false);
   const [deactivating, setDeactivating] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
   const [reason, setReason] = useState("");
 
   const rows = useMemo(
@@ -130,12 +134,20 @@ export function SectionTeam() {
             {s.invites.map((i) => (
               <div key={i.id} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-hair bg-canvas px-3 py-2.5">
                 <div className="min-w-0">
-                  <Text size="body" weight="semibold" className="block truncate">{i.email}</Text>
+                  <div className="flex items-center gap-2">
+                    <Text size="body" weight="semibold" className="block truncate">{i.email}</Text>
+                    {i.expired && <Chip tone="warn" size="xs">Expired</Chip>}
+                  </div>
                   <Text size="caption" tone="muted" className="block">
                     {i.role} · {i.seniority} · {i.invitedAt.startsWith("resent") ? i.invitedAt : `invited ${i.invitedAt}`}
+                    {i.expired && " · the link no longer works, resend to issue a new one"}
                   </Text>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                  {/* Prototype: what the invitee sees when they open the email's link. */}
+                  <Button size="sm" variant="ghost" onClick={() => { useWorkspaceStore.getState().setAuthView("invite"); router.push(`/auth?invite=${i.id}`); }}>
+                    Open invite link
+                  </Button>
                   <ResendButton onResend={() => s.resendInvite(i.id)} />
                   <Button size="sm" variant="secondary" onClick={() => s.revokeInvite(i.id)}>Revoke</Button>
                 </div>
@@ -160,16 +172,25 @@ export function SectionTeam() {
       {/* Member drawer — role, seniority, permissions, deactivation. */}
       <Sheet
         open={Boolean(openMember)}
-        onClose={() => { setOpenMemberId(null); setDeactivating(null); }}
+        onClose={() => { setOpenMemberId(null); setDeactivating(null); setRemoving(false); }}
         side="right"
         size={480}
         title={openMember?.name ?? ""}
         description={openMember?.email}
         footer={
-          openMember && openMember.status !== "deactivated" ? (
-            <Button size="sm" variant="danger" onClick={() => setDeactivating(openMember.id)}>Deactivate</Button>
-          ) : openMember ? (
-            <Button size="sm" variant="secondary" onClick={() => s.setMemberStatus(openMember.id, "active")}>Reactivate</Button>
+          openMember ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {openMember.status !== "deactivated" ? (
+                <Button size="sm" variant="danger" onClick={() => { setRemoving(false); setDeactivating(openMember.id); }}>Deactivate</Button>
+              ) : (
+                <Button size="sm" variant="secondary" onClick={() => s.setMemberStatus(openMember.id, "active")}>Reactivate</Button>
+              )}
+              {openMember.id !== s.currentUserId && (
+                <Button size="sm" variant="ghost" onClick={() => { setDeactivating(null); setRemoving(true); }}>
+                  Remove from {s.workspaceName}
+                </Button>
+              )}
+            </div>
           ) : undefined
         }
       >
@@ -240,6 +261,21 @@ export function SectionTeam() {
               </Stack>
             </div>
 
+            {removing && (
+              <div className="rounded-panel border border-hair-2 bg-subtle p-3">
+                <Text size="body" weight="bold" className="mb-1.5 block">Remove {openMember.name} from {s.workspaceName}?</Text>
+                <Text size="label" tone="muted" className="mb-2 block">
+                  They lose access to this workspace only, and their approval chain here is cleared. Other workspaces they&apos;re in are untouched, and what they made stays.
+                </Text>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="danger" onClick={() => { s.removeMember(openMember.id); setRemoving(false); setOpenMemberId(null); }}>
+                    Remove
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setRemoving(false)}>Cancel</Button>
+                </div>
+              </div>
+            )}
+
             {deactivating === openMember.id && (
               <div className="rounded-panel border border-danger bg-danger-bg p-3">
                 <Text size="body" weight="bold" className="mb-1.5 block text-danger">Deactivate {openMember.name}?</Text>
@@ -288,6 +324,7 @@ function JoinRequestRow({ request }: { request: JoinRequest }) {
         <div className="min-w-0">
           <Text size="body" weight="semibold" className="block">{request.name}</Text>
           <Text size="caption" tone="muted" className="block">{request.email} · asked {request.requestedAt}</Text>
+          {request.note && <Text size="caption" tone="subtle" className="mt-0.5 block italic">“{request.note}”</Text>}
         </div>
         {!choosing && (
           <div className="flex shrink-0 items-center gap-2">

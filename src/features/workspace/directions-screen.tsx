@@ -1,5 +1,7 @@
 "use client";
 
+import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
+import { DevShapeMenuItems } from "@/features/workspace/dev-shape-menu";
 import {
   AlertCircle,
   Pencil,
@@ -21,7 +23,6 @@ import {
   Layers,
   LayoutList,
   Mic2,
-  MoreHorizontal,
   Music2,
   MonitorPlay,
   PackageCheck,
@@ -100,8 +101,6 @@ import { cn } from "@/lib/cn";
 import type { AssetType, Audience, PresentationMode } from "@/types/content";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
-import { FlowBreadcrumb } from "@/features/workspace/flow-breadcrumb";
-import { useVideoSteps } from "@/features/workspace/flow-steps";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { GenerationProgress, type GenerationStep } from "@/features/workspace/generation-progress";
 import { ActionBar } from "@/components/patterns/action-bar";
@@ -402,8 +401,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    * assembled.
    */
   const [planLanded, setPlanLanded] = useState(false);
-
-  const flowSteps = useVideoSteps({});
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -1294,8 +1291,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="truncate text-body font-[800] text-ink">{projectName}</span>
-              <VersionChip versions={DRAFT_ONLY} />
+              <ProjectTitle kind="video" fallback={projectName} className="text-body font-[800]" />
             </div>
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
               Saved just now · {presenter || "Maya Kapoor"}
@@ -1306,7 +1302,6 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
               you were already looking at; this names the job the plan is for
               and lets you change it without walking back to the brief. */}
           <div className="ml-6 hidden items-center gap-1.5 sm:flex">
-            <FlowBreadcrumb steps={flowSteps} currentId="plan" />
             <button
               type="button"
               onClick={() => setUseCaseDrawerOpen(true)}
@@ -1320,6 +1315,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Rename and sharing, then the dev-only landscape / portrait switch under its own divider. */}
+            <ProjectMenu kind="video" fallback={projectName} dev={(close) => <DevShapeMenuItems onDone={close} />} />
             {/* Toggle Right Sidebar Panel Button (Icon Only) */}
             <button
               type="button"
@@ -1335,10 +1332,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
             >
               <PanelRight className="size-4" />
             </button>
-
-            <Button variant="ghost" size="icon" aria-label="More">
-              <MoreHorizontal className="size-4" />
-            </Button>
+            {/* The version sits with the header actions on every stage, as in the editors. */}
+            <VersionChip versions={DRAFT_ONLY} variant="button" />
           </div>
         </ScreenHeader>
       }

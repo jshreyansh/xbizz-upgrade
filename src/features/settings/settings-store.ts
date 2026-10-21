@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import {
   ROLE_PERMISSIONS, DEFAULT_ROLES, rolePermissions, togglePermission, type RoleDef,
   type ApprovalChain, type BrandKit, type IntegrationLog, type IntegrationStatus,
@@ -31,7 +32,8 @@ const MEMBERS: Member[] = [
   // A deliberately customised member: Create removed from Marketing, so
   // the "differs from role default" marker has something real to show.
   { id: "m9", name: "Aisha Khan",      email: "aisha.khan@velmora.com",  role: "Marketing",           seniority: "Associate", permissions: ["comment", "products", "analytics"],   status: "active", lastActive: "Today" },
-  { id: "m10", name: "Ben Sorensen",  email: "ben.s@velmora.com",        role: "CXO",                 seniority: "VP",        permissions: ROLE_PERMISSIONS["CXO"],                 status: "active", lastActive: "1 week ago" },
+  // On a role an admin made (Finance), not one the workspace came with.
+  { id: "m10", name: "Ben Sorensen",  email: "ben.s@velmora.com",        role: "Finance",             seniority: "VP",        permissions: ["billing"],                             status: "active", lastActive: "1 week ago" },
 ];
 
 const CHAINS: ApprovalChain[] = [
@@ -57,6 +59,13 @@ const CHAINS: ApprovalChain[] = [
     ],
   },
   { memberId: "m9", stages: [] },
+  {
+    memberId: "__default",
+    stages: [
+      { id: "sd1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" },
+      { id: "sd2", name: "Legal review",   role: "Legal reviewer",   narrowTo: { kind: "anyone" }, restartFrom: "this" },
+    ],
+  },
 ];
 
 const NOTIFICATIONS: NotificationPref[] = [
@@ -123,14 +132,121 @@ const INVOICES: Invoice[] = [
     lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }] },
 ];
 
+/* ── Organisation and workspaces ────────────────────────────────────────────
+   An organisation (the company: legal entity, allowed email domains, its
+   admins) holds workspaces (a brand or market). Each workspace has its own
+   team, roles, approval chains, libraries and credits; a person can be in
+   several with a different role in each, added to each separately. The
+   workspace you are in lives in the top-level fields below, so every settings
+   screen keeps working unchanged; the others wait in `stash`. A person keeps
+   one id across workspaces. */
+
+export const SEED_WORKSPACE_ID = "ws_velmora_7f3a91";
+
+/** The fields that belong to one workspace. */
+const SLICE_KEYS = [
+  "workspaceName", "region", "therapyAreas", "markets", "workspaceId", "brandKit",
+  "members", "invites", "joinRequests", "roles", "chains", "expiryWarnDays", "autoArchive",
+  "planName", "renewsOn", "creditBalance", "usage", "topUps", "invoices", "pronunciations",
+] as const;
+export type WorkspaceSlice = Pick<SettingsState, (typeof SLICE_KEYS)[number]>;
+
+const pickSlice = (s: SettingsState): WorkspaceSlice =>
+  Object.fromEntries(SLICE_KEYS.map((k) => [k, s[k]])) as WorkspaceSlice;
+
+const EMPTY_KIT: BrandKit = {
+  logos: {},
+  typefaces: [{ id: "tf-inter", name: "Inter", source: "google" }],
+  colors: { primary: "#1f2937", accent: "#475569", callout: "#f1f5f9", text: "#0a0d14" },
+};
+
+export interface WorkspaceSummary {
+  id: string;
+  name: string;
+  memberCount: number;
+  creditBalance: number;
+  archived: boolean;
+  current: boolean;
+  /** The person's member row there, if they are in it. */
+  me?: Member;
+}
+
+export interface NewWorkspaceInput {
+  name: string;
+  region: string;
+  markets: string[];
+  therapyAreas: string[];
+  copyRoles: boolean;
+  copyBrandKit: boolean;
+  invites: { email: string; role: Role }[];
+}
+
+/* A second workspace, so switching has somewhere to go. Maya runs it; Siva,
+   the organisation admin, isn't in it, which is what "Open as admin" is for. */
+const EU_ROLES = DEFAULT_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] }));
+const EU_WORKSPACE: WorkspaceSlice = {
+  workspaceName: "Velmora EU",
+  region: "European Union",
+  markets: ["European Union · EMA", "UK"],
+  therapyAreas: ["Dermatology"],
+  workspaceId: "ws_velmora_eu_2c81",
+  brandKit: {
+    logos: { "lockup-light": { fileName: "velmora-eu-lockup.svg", size: "19 KB" } },
+    typefaces: [{ id: "tf-eu1", name: "Inter", source: "google" }],
+    colors: { primary: "#fd4816", accent: "#b82f0c", callout: "#fff1ec", text: "#0a0d14" },
+  },
+  members: [
+    { ...MEMBERS[1], role: "Admin", seniority: "Lead", permissions: ROLE_PERMISSIONS["Admin"], lastActive: "Today" },
+    { ...MEMBERS[7], role: "Marketing", permissions: ROLE_PERMISSIONS["Marketing"], lastActive: "Yesterday" },
+    { id: "m11", name: "Dr. Jonas Weber", email: "jonas.weber@velmora.com", role: "Medical reviewer", seniority: "Director", permissions: ROLE_PERMISSIONS["Medical reviewer"], status: "active", lastActive: "2 days ago" },
+  ],
+  invites: [],
+  joinRequests: [],
+  roles: EU_ROLES,
+  chains: [{ memberId: "m7", stages: [{ id: "eu1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" }] }],
+  expiryWarnDays: 30,
+  autoArchive: true,
+  planName: "Enterprise",
+  renewsOn: "1 Oct 2026",
+  creditBalance: 12000,
+  usage: [],
+  topUps: [{ id: "k-eu1", at: "3 Oct 2026", amount: "$960.00", credits: 12000, purchasedBy: "Maya Kapoor", reference: "TXN-90118", status: "paid" }],
+  invoices: [],
+  pronunciations: [],
+};
+
 interface SettingsState {
   /** Derived from the current persona's permissions — never set on its own. */
   isAdmin: boolean;
   currentUserId: string;
+  /** Who actually signed in. "Viewing as" changes currentUserId only, so the app can say it's a preview. */
+  signedInId: string;
   /** Switch persona. Drives which tabs render and whether chains are editable. */
   setCurrentUser: (memberId: string) => void;
 
+  // 0 — organisation
+  orgName: string;
+  allowedDomains: string[];
+  /** Person ids. Organisation admins create, rename and archive workspaces and can open any of them. */
+  orgAdminIds: string[];
+  archivedWorkspaceIds: string[];
+  /** Every workspace but the current one. */
+  stash: Record<string, WorkspaceSlice>;
+  setOrgName: (v: string) => void;
+  addAllowedDomain: (d: string) => void;
+  removeAllowedDomain: (d: string) => void;
+  toggleOrgAdmin: (personId: string) => void;
+  switchWorkspace: (id: string) => void;
+  /** Organisation admins only: add yourself as Admin of a workspace you aren't in, then open it. */
+  joinWorkspaceAsAdmin: (id: string) => void;
+  createWorkspace: (input: NewWorkspaceInput) => string;
+  renameWorkspace: (id: string, name: string) => void;
+  setWorkspaceArchived: (id: string, archived: boolean) => void;
+  /** Takes someone out of this workspace only; their other workspaces are untouched. */
+  removeMember: (id: string) => void;
+
   // 1 — workspace profile
+  markets: string[];
   workspaceName: string;
   legalEntity: string;
   region: string;
@@ -138,6 +254,7 @@ interface SettingsState {
   workspaceId: string;
   setWorkspaceField: (k: "workspaceName" | "legalEntity" | "region", v: string) => void;
   toggleTherapyArea: (a: string) => void;
+  toggleMarket: (m: string) => void;
 
   // 2 — brand kit
   brandKit: BrandKit;
@@ -174,6 +291,12 @@ interface SettingsState {
   /** Sends the invite email again; the row then says when. */
   resendInvite: (id: string) => void;
   resolveJoinRequest: (id: string, accept: boolean, role?: Role, seniority?: Seniority) => void;
+  /** The invitee's side: they verified the invited address and gave their name. */
+  acceptInvite: (inviteId: string, name: string) => boolean;
+  /** A colleague whose company is already on SwishX, not invited, asks a workspace's admins. */
+  requestToJoin: (workspaceId: string, name: string, email: string, note?: string) => void;
+  /** Sign in as someone who already has access: into the given workspace, or any of theirs. */
+  signInAs: (personId: string, workspaceId?: string) => void;
 
   // 5 — compliance & MLR
   chains: ApprovalChain[];
@@ -227,9 +350,102 @@ interface SettingsState {
   removePronunciation: (id: string) => void;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+export const useSettingsStore = create<SettingsState>((set, get) => ({
+  orgName: "Velmora Therapeutics",
+  allowedDomains: ["velmora.com", "swishx.com"],
+  orgAdminIds: ["m0"],
+  archivedWorkspaceIds: [],
+  stash: { [EU_WORKSPACE.workspaceId]: EU_WORKSPACE },
+  setOrgName: (orgName) => set({ orgName }),
+  addAllowedDomain: (d) => set((s) => {
+    const domain = d.trim().toLowerCase().replace(/^@/, "");
+    return !domain || s.allowedDomains.includes(domain) ? s : { allowedDomains: [...s.allowedDomains, domain] };
+  }),
+  removeAllowedDomain: (d) => set((s) => ({ allowedDomains: s.allowedDomains.filter((x) => x !== d) })),
+  toggleOrgAdmin: (personId) => set((s) => {
+    if (s.orgAdminIds.includes(personId)) {
+      /* Someone has to be able to create workspaces and own billing. */
+      return s.orgAdminIds.length <= 1 ? s : { orgAdminIds: s.orgAdminIds.filter((x) => x !== personId) };
+    }
+    return { orgAdminIds: [...s.orgAdminIds, personId] };
+  }),
+  switchWorkspace: (id) => {
+    const s = get();
+    if (id === s.workspaceId || !s.stash[id]) return;
+    const target = s.stash[id];
+    const me = target.members.find((m) => m.id === s.currentUserId && m.status === "active");
+    if (!me) return;
+    const stash = { ...s.stash, [s.workspaceId]: pickSlice(s) };
+    delete stash[id];
+    useProductLibraryStore.getState().switchWorkspace(s.workspaceId, id);
+    set({ ...target, stash, isAdmin: me.permissions.includes("admin") });
+  },
+  joinWorkspaceAsAdmin: (id) => {
+    const s = get();
+    const target = s.stash[id];
+    if (!target || !s.orgAdminIds.includes(s.currentUserId)) return;
+    const person = s.members.find((m) => m.id === s.currentUserId);
+    if (!person) return;
+    const existing = target.members.find((m) => m.id === person.id);
+    const members = existing
+      ? target.members.map((m) => (m.id === person.id ? { ...m, status: "active" as const, role: "Admin", permissions: rolePermissions(target.roles, "Admin") } : m))
+      : [...target.members, { ...person, role: "Admin", permissions: rolePermissions(target.roles, "Admin"), status: "active" as const, lastActive: "Just now" }];
+    set({ stash: { ...s.stash, [id]: { ...target, members } } });
+    get().switchWorkspace(id);
+  },
+  createWorkspace: (input) => {
+    const s = get();
+    const id = `ws_${input.name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 18)}_${uid().slice(0, 4)}`;
+    const roles = input.copyRoles ? s.roles.map((r) => ({ ...r, permissions: [...r.permissions] })) : DEFAULT_ROLES;
+    const person = s.members.find((m) => m.id === s.currentUserId)!;
+    const people = orgPeople(s);
+    const members: Member[] = [{ ...person, role: "Admin", permissions: rolePermissions(roles, "Admin"), status: "active", lastActive: "Online now" }];
+    const invites: PendingInvite[] = [];
+    for (const inv of input.invites) {
+      const known = people.find((p) => p.email.toLowerCase() === inv.email.toLowerCase());
+      /* Already in the organisation: added straight away, no sign-up. */
+      if (known) {
+        if (!members.some((m) => m.id === known.id)) members.push({ ...known, role: inv.role, permissions: rolePermissions(roles, inv.role), status: "active", lastActive: "Just now", deactivationReason: undefined });
+      } else {
+        invites.push({ id: uid(), email: inv.email, role: inv.role, seniority: "Associate", permissions: rolePermissions(roles, inv.role), invitedAt: "Just now" });
+      }
+    }
+    const slice: WorkspaceSlice = {
+      workspaceName: input.name.trim(),
+      region: input.region,
+      markets: input.markets,
+      therapyAreas: input.therapyAreas,
+      workspaceId: id,
+      brandKit: input.copyBrandKit ? s.brandKit : EMPTY_KIT,
+      members, invites, joinRequests: [], roles, chains: [],
+      expiryWarnDays: 30, autoArchive: true,
+      planName: s.planName, renewsOn: s.renewsOn,
+      /* Credits are per workspace: a new one starts empty and is topped up in its own Billing. */
+      creditBalance: 0, usage: [], topUps: [], invoices: [], pronunciations: [],
+    };
+    set({ stash: { ...s.stash, [id]: slice } });
+    useProductLibraryStore.getState().ensureWorkspace(id);
+    get().switchWorkspace(id);
+    return id;
+  },
+  renameWorkspace: (id, name) => set((s) => {
+    const n = name.trim();
+    if (!n) return s;
+    if (id === s.workspaceId) return { workspaceName: n };
+    return s.stash[id] ? { stash: { ...s.stash, [id]: { ...s.stash[id], workspaceName: n } } } : s;
+  }),
+  setWorkspaceArchived: (id, archived) => set((s) => {
+    if (id === s.workspaceId && archived) return s; // switch away first
+    return { archivedWorkspaceIds: archived ? [...s.archivedWorkspaceIds, id] : s.archivedWorkspaceIds.filter((x) => x !== id) };
+  }),
+  removeMember: (id) => set((s) => ({
+    members: s.members.filter((m) => m.id !== id),
+    chains: s.chains.filter((c) => c.memberId !== id),
+  })),
+
   isAdmin: true,
   currentUserId: "m0",
+  signedInId: "m0",
   setCurrentUser: (memberId) => set((s) => {
     const m = s.members.find((x) => x.id === memberId);
     if (!m) return s;
@@ -243,12 +459,16 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     };
   }),
 
+  markets: ["United States · FDA", "UK"],
   workspaceName: "Velmora Commercial",
   legalEntity: "Velmora Therapeutics Inc.",
   region: "United States",
   therapyAreas: ["Dermatology", "Cardiology"],
-  workspaceId: "ws_velmora_7f3a91",
+  workspaceId: SEED_WORKSPACE_ID,
   setWorkspaceField: (k, v) => set({ [k]: v } as Partial<SettingsState>),
+  toggleMarket: (m) => set((s) => ({
+    markets: s.markets.includes(m) ? s.markets.filter((x) => x !== m) : [...s.markets, m],
+  })),
   toggleTherapyArea: (a) => set((s) => ({
     therapyAreas: s.therapyAreas.includes(a) ? s.therapyAreas.filter((x) => x !== a) : [...s.therapyAreas, a],
   })),
@@ -310,11 +530,12 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     { id: "iv1", email: "nadia.hassan@velmora.com", role: "Marketing",   seniority: "Manager",   permissions: [...ROLE_PERMISSIONS["Marketing"]],   invitedAt: "2 days ago" },
     // Invited without View & comment — a deliberate narrowing at invite time.
     { id: "iv2", email: "tom.becker@velmora.com",   role: "Field Force", seniority: "Associate", permissions: ["analytics"],                        invitedAt: "5 days ago" },
+    { id: "iv3", email: "grace.liu@velmora.com",    role: "Design",      seniority: "Associate", permissions: [...ROLE_PERMISSIONS["Design"]],      invitedAt: "16 days ago", expired: true },
   ],
   joinRequests: [
     { id: "jr1", name: "Elena Sokolova", email: "elena.s@velmora.com", requestedAt: "Yesterday" },
   ],
-  roles: DEFAULT_ROLES,
+  roles: [...DEFAULT_ROLES, { name: "Finance", permissions: ["billing"], system: false }],
   addRole: (name, permissions) => set((s) => ({
     roles: [...s.roles, { name, permissions: [...permissions], system: false }],
   })),
@@ -349,15 +570,59 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setMemberStatus: (id, status, reason) => set((s) => ({
     members: s.members.map((m) => (m.id === id ? { ...m, status, deactivationReason: status === "deactivated" ? reason : undefined } : m)),
   })),
-  sendInvites: (emails, role, seniority, permissions) => set((s) => ({
-    invites: [...s.invites, ...emails.map((email) => ({
-      id: uid(), email, role, seniority, permissions: [...permissions], invitedAt: "Just now",
-    }))],
-  })),
+  sendInvites: (emails, role, seniority, permissions) => set((s) => {
+    /* Someone already in another of the organisation's workspaces is added
+       straight away with this workspace's role; nobody signs up twice. */
+    const people = orgPeople(s);
+    const known = emails.map((e) => people.find((p) => p.email.toLowerCase() === e.toLowerCase())).filter((p): p is Member => !!p && !s.members.some((m) => m.id === p.id));
+    const fresh = emails.filter((e) => !people.some((p) => p.email.toLowerCase() === e.toLowerCase()));
+    return {
+      members: [...s.members, ...known.map((p) => ({ ...p, role, seniority, permissions: [...permissions], status: "active" as const, lastActive: "Added just now", deactivationReason: undefined }))],
+      invites: [...s.invites, ...fresh.map((email) => ({
+        id: uid(), email, role, seniority, permissions: [...permissions], invitedAt: "Just now",
+      }))],
+    };
+  }),
   revokeInvite: (id) => set((s) => ({ invites: s.invites.filter((i) => i.id !== id) })),
   resendInvite: (id) => set((s) => ({
-    invites: s.invites.map((i) => (i.id === id ? { ...i, invitedAt: "resent just now" } : i)),
+    invites: s.invites.map((i) => (i.id === id ? { ...i, invitedAt: "resent just now", expired: false } : i)),
   })),
+  acceptInvite: (inviteId, name) => {
+    const s = get();
+    const where = findInvite(s, inviteId);
+    if (!where || where.invite.expired) return false;
+    const { invite, workspaceId } = where;
+    const member: Member = {
+      id: `m${uid()}`, name: name.trim(), email: invite.email, role: invite.role, seniority: invite.seniority,
+      permissions: [...invite.permissions], status: "active", lastActive: "Online now",
+    };
+    if (workspaceId === s.workspaceId) {
+      set({ invites: s.invites.filter((i) => i.id !== inviteId), members: [...s.members, member] });
+    } else {
+      const slice = s.stash[workspaceId];
+      set({ stash: { ...s.stash, [workspaceId]: { ...slice, invites: slice.invites.filter((i) => i.id !== inviteId), members: [...slice.members, member] } } });
+    }
+    get().signInAs(member.id, workspaceId);
+    return true;
+  },
+  requestToJoin: (workspaceId, name, email, note) => {
+    const req: JoinRequest = { id: uid(), name: name.trim(), email, requestedAt: "Just now", note: note?.trim() || undefined };
+    set((s) => workspaceId === s.workspaceId
+      ? { joinRequests: [...s.joinRequests, req] }
+      : s.stash[workspaceId] ? { stash: { ...s.stash, [workspaceId]: { ...s.stash[workspaceId], joinRequests: [...s.stash[workspaceId].joinRequests, req] } } } : s);
+  },
+  signInAs: (personId, preferredWorkspace) => {
+    const s = get();
+    const mine = listWorkspaces(s, personId).filter((w) => w.me && !w.archived);
+    const target = mine.find((w) => w.id === preferredWorkspace) ?? mine.find((w) => w.current) ?? mine[0];
+    if (!target) return;
+    set({ signedInId: personId });
+    if (target.current) { get().setCurrentUser(personId); return; }
+    /* Switching needs the person to be a member there, so become them first. */
+    set({ currentUserId: personId });
+    get().switchWorkspace(target.id);
+    get().setCurrentUser(personId);
+  },
   resolveJoinRequest: (id, accept, role = "Read only", seniority = "Associate") => set((s) => {
     const req = s.joinRequests.find((r) => r.id === id);
     if (!req) return s;
@@ -441,4 +706,61 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 
 if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
   (window as unknown as { __swishxSettings?: typeof useSettingsStore }).__swishxSettings = useSettingsStore;
+}
+
+/** Everyone in any of the organisation's workspaces, once each. */
+export function orgPeople(s: Pick<SettingsState, "members" | "stash">): Member[] {
+  const out = new Map<string, Member>();
+  for (const m of s.members) out.set(m.id, m);
+  for (const slice of Object.values(s.stash)) for (const m of slice.members) if (!out.has(m.id)) out.set(m.id, m);
+  return [...out.values()];
+}
+
+/** The organisation's workspaces, the current one first, with this person's place in each. */
+export function listWorkspaces(s: SettingsState, personId = s.currentUserId): WorkspaceSummary[] {
+  const all: WorkspaceSlice[] = [pickSlice(s), ...Object.values(s.stash)];
+  return all.map((w) => ({
+    id: w.workspaceId,
+    name: w.workspaceName,
+    memberCount: w.members.filter((m) => m.status === "active").length,
+    creditBalance: w.creditBalance,
+    archived: s.archivedWorkspaceIds.includes(w.workspaceId),
+    current: w.workspaceId === s.workspaceId,
+    me: w.members.find((m) => m.id === personId && m.status === "active"),
+  }));
+}
+
+/** An invite in any of the organisation's workspaces. */
+export function findInvite(s: Pick<SettingsState, "invites" | "stash" | "workspaceId">, inviteId: string) {
+  const here = s.invites.find((i) => i.id === inviteId);
+  if (here) return { invite: here, workspaceId: s.workspaceId };
+  for (const [workspaceId, slice] of Object.entries(s.stash)) {
+    const invite = slice.invites.find((i) => i.id === inviteId);
+    if (invite) return { invite, workspaceId };
+  }
+  return undefined;
+}
+
+/** Same, by the invited address. */
+export function findInviteByEmail(s: Pick<SettingsState, "invites" | "stash" | "workspaceId">, email: string) {
+  const e = email.trim().toLowerCase();
+  const all = [{ id: s.workspaceId, invites: s.invites }, ...Object.entries(s.stash).map(([id, w]) => ({ id, invites: w.invites }))];
+  for (const w of all) {
+    const invite = w.invites.find((i) => i.email.toLowerCase() === e);
+    if (invite) return { invite, workspaceId: w.id };
+  }
+  return undefined;
+}
+
+/** A workspace's name, wherever it is. */
+export function workspaceNameOf(s: Pick<SettingsState, "workspaceId" | "workspaceName" | "stash">, id: string) {
+  return id === s.workspaceId ? s.workspaceName : s.stash[id]?.workspaceName ?? "the workspace";
+}
+
+/** The chain new creators get until an admin sets one for them. */
+export const DEFAULT_CHAIN_ID = "__default";
+
+/** A creator's chain: their own if an admin set one (even empty), otherwise the default. */
+export function chainStagesFor(s: Pick<SettingsState, "chains">, memberId: string) {
+  return (s.chains.find((c) => c.memberId === memberId) ?? s.chains.find((c) => c.memberId === DEFAULT_CHAIN_ID))?.stages ?? [];
 }

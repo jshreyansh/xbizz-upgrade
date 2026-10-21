@@ -11,6 +11,9 @@ import { firstFrame, useNearViewport, usePageSettled } from "@/lib/use-load-gate
 import { MOCK_DOSSIERS } from "@/features/dossiers/mock-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { Portal } from "@/components/ui/portal";
+import { useCan } from "@/features/settings/view-as";
+import { canDecide, useWorkspaceReviewItems } from "@/features/review/review-store";
+import { useSettingsStore } from "@/features/settings/settings-store";
 
 function greeting(hour: number) {
   if (hour < 5) return "Still up";
@@ -988,6 +991,12 @@ export function HomeScreen() {
   const [isNewUser, setIsNewUser] = useState(true);
   const [dossierModalOpen, setDossierModalOpen] = useState(false);
   const [hour, setHour] = useState<number | null>(null);
+  /* Home follows the person: studios for those who create, their review queue for reviewers. */
+  const { me, can } = useCan();
+  const members = useSettingsStore((s) => s.members);
+  const reviewItems = useWorkspaceReviewItems();
+  const waiting = me ? reviewItems.filter((i) => canDecide(i, me.id, members)).length : 0;
+  const firstName = me ? me.name.replace(/^Dr\.\s*/, "").split(" ")[0] : PERSONA.firstName;
 
   // Computed client-side only, after mount — this value only exists in the
   // viewer's local time, so it can't be part of the server-rendered markup.
@@ -1082,7 +1091,7 @@ export function HomeScreen() {
                     color: "transparent",
                   }}
                 >
-                  {PERSONA.firstName}
+                  {firstName}
                 </span>
               </h1>
               <p className="mt-2 max-w-[42ch] text-body-lg font-medium leading-relaxed text-ink-3">
@@ -1151,7 +1160,43 @@ export function HomeScreen() {
             </div>
           </div>
 
+          {/* Reviewers: what's waiting on them, ahead of anything else. */}
+          {can("approve") && (
+            <button
+              type="button"
+              onClick={() => router.push("/mlr-review")}
+              className="flex w-full cursor-pointer items-center gap-4 rounded-card border border-hair bg-card px-6 py-4 text-left shadow-hair transition-colors hover:border-brand"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-tint text-title font-black tabular-nums text-brand-deep">{waiting}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-body-lg font-extrabold text-ink">
+                  {waiting ? `${waiting} ${waiting === 1 ? "item is" : "items are"} waiting for your review` : "Nothing is waiting for your review"}
+                </span>
+                <span className="block text-body text-ink-3">Approve, or send back with a note, in MLR Review.</span>
+              </span>
+              <ArrowRight size={18} className="shrink-0 text-brand" />
+            </button>
+          )}
+
+          {/* Without Create, the studios aren't theirs: published content is. */}
+          {!can("create") && (
+            <button
+              type="button"
+              onClick={() => router.push("/content-library")}
+              className="flex w-full cursor-pointer items-center gap-4 rounded-card border border-hair bg-card px-6 py-4 text-left shadow-hair transition-colors hover:border-brand"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-body-lg font-extrabold text-ink">Browse published content</span>
+                <span className="block text-body text-ink-3">
+                  {can("comment") ? "Open anything your team has published, and comment on it." : "Everything your team has published, ready to view and share."}
+                </span>
+              </span>
+              <ArrowRight size={18} className="shrink-0 text-brand" />
+            </button>
+          )}
+
           {/* Studio tiles — sitting in the same soft ambient zone */}
+          {can("create") && (
           <div>
             <div className="mb-5 flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:justify-between">
               <h2 className="text-title font-extrabold tracking-tight text-ink">Pick a studio</h2>
@@ -1173,9 +1218,13 @@ export function HomeScreen() {
               ))}
             </div>
           </div>
+          )}
         </div>
       </div>
 
+      {/* Your projects and starter examples are about making things, so they're for people who can. */}
+      {can("create") && (
+      <>
       {/* Soft fade divider — a quieter section break than a hard hairline,
           echoing the same gradient-fade treatment used on the sidebar. */}
       <div aria-hidden className="h-px w-full bg-gradient-to-r from-transparent via-hair-2 to-transparent" />
@@ -1245,6 +1294,8 @@ export function HomeScreen() {
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* Showcase lanes */}
       <div

@@ -1,6 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { useAuthFlow } from "@/features/auth/auth-flow";
+import {
+  BlockedScreen, DetailsScreen, InviteScreen, JoinScreen, OrganisationScreen, WaitingScreen,
+} from "@/features/auth/auth-steps";
 import { SignInScreen } from "@/features/auth/sign-in-screen";
 import { OtpScreen } from "@/features/auth/otp-screen";
 import { WorkspaceScreen } from "@/features/auth/workspace-screen";
@@ -66,10 +71,23 @@ function Vignette() {
   );
 }
 
-const STAGES = ["signin", "otp", "workspace", "team"] as const;
+/* The progress dots are for setting up a new company, the one path with a fixed number of steps. */
+const STAGES = ["signin", "otp", "organisation", "workspace", "team"] as const;
 
 export function AuthShell() {
   const authView = useWorkspaceStore((s) => s.authView);
+  const setAuthView = useWorkspaceStore((s) => s.setAuthView);
+  const path = useAuthFlow((s) => s.route.path);
+  const showDots = STAGES.includes(authView as (typeof STAGES)[number]) && (authView === "signin" || path === "new");
+
+  /* An invite link (/auth?invite=…) lands on the invite itself. */
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("invite");
+    if (!id) return;
+    useAuthFlow.getState().setInviteId(id);
+    useAuthFlow.getState().setRoute({ path: "invite", inviteId: id });
+    setAuthView("invite");
+  }, [setAuthView]);
 
   return (
     <div className="relative flex h-full w-full overflow-hidden" style={{ background: "#06070a" }}>
@@ -81,13 +99,19 @@ export function AuthShell() {
       <div className="relative z-10 flex h-full w-full">
         {authView === "signin" && <SignInScreen />}
         {authView === "otp" && <OtpScreen />}
+        {authView === "organisation" && <OrganisationScreen />}
         {authView === "workspace" && <WorkspaceScreen />}
+        {authView === "invite" && <InviteScreen />}
+        {authView === "details" && <DetailsScreen />}
+        {authView === "join" && <JoinScreen />}
+        {authView === "waiting" && <WaitingScreen />}
+        {authView === "blocked" && <BlockedScreen />}
         {authView === "team" && <TeamScreen />}
         {authView === "signedout" && <SignedOutScreen />}
       </div>
 
-      {/* Progress dots for signin → otp → workspace → team */}
-      {STAGES.includes(authView as (typeof STAGES)[number]) && (
+      {/* Progress dots for signin → otp → organisation → workspace → team */}
+      {showDots && (
         <div
           className="absolute bottom-6 left-0 right-0 flex justify-center gap-[7px]"
           style={{ zIndex: 5 }}

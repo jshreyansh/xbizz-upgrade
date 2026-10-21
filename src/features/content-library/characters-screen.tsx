@@ -1,5 +1,6 @@
 "use client";
 
+import { useCan } from "@/features/settings/view-as";
 import { useMemo, useState } from "react";
 import { Search, UserRoundPlus } from "lucide-react";
 import { CreateTile } from "@/components/patterns/create-tile";
@@ -33,6 +34,8 @@ export function CharactersScreen() {
   const [shelf, setShelf] = useState<Shelf>("active");
   const [query, setQuery] = useState("");
 
+  /* Characters are made for videos, so making and changing them needs Create. */
+  const canCreate = useCan().can("create");
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Character | null>(null);
   const [refining, setRefining] = useState<Character | null>(null);
@@ -109,7 +112,7 @@ export function CharactersScreen() {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
-        {shelf === "active" && (
+        {shelf === "active" && canCreate && (
           /* The first tile makes the thing, the way the Create landing and the
              Product Library both open with the action rather than a toolbar
              button somebody has to go looking for. */
@@ -136,6 +139,7 @@ export function CharactersScreen() {
               setArchived(character.id, false);
               say(`${character.name} restored`);
             }}
+            readOnly={!canCreate}
           />
         ))}
 

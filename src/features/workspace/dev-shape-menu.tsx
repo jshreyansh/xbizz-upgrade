@@ -21,10 +21,8 @@ export function DevShapeMenu({
   editorVersion,
 }: {
   /** The video editor's build: what ships, or the preview of what it grows into. */
-  editorVersion?: { value: "v1" | "future"; onChange: (next: "v1" | "future") => void };
+  editorVersion?: EditorVersion;
 } = {}) {
-  const format = useWorkspaceStore((s) => s.format);
-  const setFormat = useWorkspaceStore((s) => s.setFormat);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -41,11 +39,6 @@ export function DevShapeMenu({
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
-
-  const options = [
-    { id: "16:9", label: "Landscape 16:9", shape: "h-2.5 w-4" },
-    { id: "9:16", label: "Portrait 9:16", shape: "h-4 w-2.5 mx-0.75" },
-  ];
 
   return (
     <div ref={wrapRef} className="relative">
@@ -67,70 +60,88 @@ export function DevShapeMenu({
           role="menu"
           className="absolute right-0 top-10 z-50 w-60 rounded-panel border border-hair-2 bg-card p-1.5 shadow-float"
         >
-          <div className="flex items-center gap-1.5 px-2.5 pb-1.5 pt-2 text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">
-            Video shape
+          <DevShapeMenuItems editorVersion={editorVersion} onDone={() => setOpen(false)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+type EditorVersion = { value: "v1" | "future"; onChange: (next: "v1" | "future") => void };
+
+/** The dev-only rows, so the project ⋮ menu can carry them under its own divider. */
+export function DevShapeMenuItems({ editorVersion, onDone }: { editorVersion?: EditorVersion; onDone: () => void }) {
+  const format = useWorkspaceStore((s) => s.format);
+  const setFormat = useWorkspaceStore((s) => s.setFormat);
+  const options = [
+    { id: "16:9", label: "Landscape 16:9", shape: "h-2.5 w-4" },
+    { id: "9:16", label: "Portrait 9:16", shape: "h-4 w-2.5 mx-0.75" },
+  ];
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5 px-2.5 pb-1.5 pt-2 text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">
+        Video shape
+        <span className="rounded-glyph bg-warn-bg px-1.5 py-px text-micro font-extrabold normal-case tracking-normal text-warn">
+          Dev only
+        </span>
+      </div>
+      {options.map((option) => {
+        const active = format === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            role="menuitemradio"
+            aria-checked={active}
+            onClick={() => { setFormat(option.id); onDone(); }}
+            className={cn(
+              "flex w-full cursor-pointer items-center gap-2.5 rounded-control px-2.5 py-2 text-left text-body-lg transition-colors hover:bg-subtle",
+              active ? "font-extrabold text-ink" : "font-semibold text-ink-2"
+            )}
+          >
+            <span className={cn("shrink-0 rounded-[3px] border-[1.5px] border-current opacity-70", option.shape)} />
+            {option.label}
+            {active && <Check className="ml-auto size-3.5 text-brand" strokeWidth={3} />}
+          </button>
+        );
+      })}
+      {editorVersion && (
+        <>
+          <div className="mx-1 my-1 border-t border-hair" />
+          <div className="flex items-center gap-1.5 px-2.5 pb-1.5 pt-1.5 text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">
+            Editor build
             <span className="rounded-glyph bg-warn-bg px-1.5 py-px text-micro font-extrabold normal-case tracking-normal text-warn">
               Dev only
             </span>
           </div>
-          {options.map((option) => {
-            const active = format === option.id;
+          {([
+            { id: "v1" as const, label: "Version 1", hint: "Ships today: select and direct" },
+            { id: "future" as const, label: "Future", hint: "Drag elements, inline element toolbar" },
+          ]).map((option) => {
+            const active = editorVersion.value === option.id;
             return (
               <button
                 key={option.id}
                 type="button"
                 role="menuitemradio"
                 aria-checked={active}
-                onClick={() => { setFormat(option.id); setOpen(false); }}
-                className={cn(
-                  "flex w-full cursor-pointer items-center gap-2.5 rounded-control px-2.5 py-2 text-left text-body-lg transition-colors hover:bg-subtle",
-                  active ? "font-extrabold text-ink" : "font-semibold text-ink-2"
-                )}
+                onClick={() => { editorVersion.onChange(option.id); onDone(); }}
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-control px-2.5 py-2 text-left transition-colors hover:bg-subtle"
               >
-                <span className={cn("shrink-0 rounded-[3px] border-[1.5px] border-current opacity-70", option.shape)} />
-                {option.label}
-                {active && <Check className="ml-auto size-3.5 text-brand" strokeWidth={3} />}
+                <span className="grid min-w-0 flex-1 gap-0.5">
+                  <span className={cn("text-body-lg", active ? "font-extrabold text-ink" : "font-semibold text-ink-2")}>{option.label}</span>
+                  <span className="truncate text-caption text-ink-4">{option.hint}</span>
+                </span>
+                {active && <Check className="size-3.5 shrink-0 text-brand" strokeWidth={3} />}
               </button>
             );
           })}
-          {editorVersion && (
-            <>
-              <div className="mx-1 my-1 border-t border-hair" />
-              <div className="flex items-center gap-1.5 px-2.5 pb-1.5 pt-1.5 text-caption font-extrabold uppercase tracking-[.08em] text-ink-4">
-                Editor build
-                <span className="rounded-glyph bg-warn-bg px-1.5 py-px text-micro font-extrabold normal-case tracking-normal text-warn">
-                  Dev only
-                </span>
-              </div>
-              {([
-                { id: "v1" as const, label: "Version 1", hint: "Ships today: select and direct" },
-                { id: "future" as const, label: "Future", hint: "Drag elements, inline element toolbar" },
-              ]).map((option) => {
-                const active = editorVersion.value === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={active}
-                    onClick={() => { editorVersion.onChange(option.id); setOpen(false); }}
-                    className="flex w-full cursor-pointer items-center gap-2.5 rounded-control px-2.5 py-2 text-left transition-colors hover:bg-subtle"
-                  >
-                    <span className="grid min-w-0 flex-1 gap-0.5">
-                      <span className={cn("text-body-lg", active ? "font-extrabold text-ink" : "font-semibold text-ink-2")}>{option.label}</span>
-                      <span className="truncate text-caption text-ink-4">{option.hint}</span>
-                    </span>
-                    {active && <Check className="size-3.5 shrink-0 text-brand" strokeWidth={3} />}
-                  </button>
-                );
-              })}
-            </>
-          )}
-          <p className="mx-1 mt-1 border-t border-hair px-1.5 pb-1 pt-2 text-caption leading-snug text-ink-4">
-            For checking screens in both shapes. Remove this menu before release.
-          </p>
-        </div>
+        </>
       )}
-    </div>
+      <p className="mx-1 mt-1 border-t border-hair px-1.5 pb-1 pt-2 text-caption leading-snug text-ink-4">
+        For checking screens in both shapes. Remove this menu before release.
+      </p>
+    </>
   );
 }

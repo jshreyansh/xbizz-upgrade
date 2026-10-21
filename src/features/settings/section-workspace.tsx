@@ -8,14 +8,9 @@ import { Chip } from "@/components/ui/chip";
 import { Stack } from "@/components/ui/stack";
 import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { useSettingsStore } from "@/features/settings/settings-store";
-import { SettingsCard, SettingRow, SaveBar, useDirty } from "@/features/settings/settings-parts";
+import { SettingsCard, SettingRow, SaveBar, ReadOnlyValue, useDirty } from "@/features/settings/settings-parts";
+import { MARKETS, REGIONS, THERAPY_AREAS } from "@/features/settings/settings-types";
 
-const THERAPY_AREAS = [
-  "Dermatology", "Cardiology", "Oncology", "Immunology",
-  "Nephrology", "Endocrinology", "Neurology", "Respiratory",
-];
-
-const REGIONS = ["United States", "European Union", "United Kingdom", "India", "Japan", "Global"];
 
 export function SectionWorkspace() {
   const s = useSettingsStore();
@@ -72,12 +67,10 @@ export function SectionWorkspace() {
             />
           </SettingRow>
 
-          <SettingRow label="Legal entity" hint="Used on invoices" htmlFor="ws-entity">
-            <Field
-              id="ws-entity"
-              value={s.legalEntity}
-              onChange={(e) => { s.setWorkspaceField("legalEntity", e.target.value); touch(); }}
-              className="text-body"
+          <SettingRow label="Organisation" hint="Legal entity on invoices">
+            <ReadOnlyValue
+              value={`${s.orgName} · ${s.legalEntity}`}
+              note={s.orgAdminIds.includes(s.currentUserId) ? "Change it in Organisation." : "Set by an organisation admin."}
             />
           </SettingRow>
 
@@ -108,6 +101,18 @@ export function SectionWorkspace() {
             </div>
           </SettingRow>
         </div>
+      </SettingsCard>
+
+      <SettingsCard
+        title="Markets"
+        description="Every asset made here is checked against the label and promotional rules of these markets."
+      >
+        <ChipMultiSelect
+          size="md"
+          options={MARKETS.map((m) => ({ id: m, label: m }))}
+          selected={s.markets}
+          onToggle={(id) => { s.toggleMarket(id); touch(); }}
+        />
       </SettingsCard>
 
       <SettingsCard

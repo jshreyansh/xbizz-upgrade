@@ -19,13 +19,15 @@ export interface LibraryAsset {
   audience: string;
   /** "16:9 · 50 sec" for video, "A4 · 2 pages" for a creative. */
   spec: string;
-  status: "Published" | "In MLR review" | "Approved";
+  status: "Draft" | "Published" | "In MLR review" | "Changes requested" | "Approved";
   /**
    * Where it is in its life, which is a different question from its review
    * status: a draft can be in MLR, and an archived asset was published once.
    */
   stage: "draft" | "published" | "archived";
   updated: string;
+  /** Who made it. Drafts are private to them unless shared (see project-sharing). */
+  ownerId: string;
   views: number;
   comments: number;
   gradient: string;
@@ -50,6 +52,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     status: "Published",
     stage: "published",
     updated: "Sep 19, 2026",
+    ownerId: "m1",
     views: 412,
     comments: 3,
     gradient: "linear-gradient(150deg,#0f2d22,#14532d 55%,#1f7a4d)",
@@ -66,6 +69,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     status: "Published",
     stage: "published",
     updated: "Sep 18, 2026",
+    ownerId: "m2",
     views: 288,
     comments: 1,
     gradient: "linear-gradient(150deg,#111827,#1f2937 55%,#334155)",
@@ -84,6 +88,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     status: "In MLR review",
     stage: "draft",
     updated: "Sep 21, 2026",
+    ownerId: "m1",
     views: 96,
     comments: 5,
     gradient: "linear-gradient(150deg,#3b1d5e,#5b21b6 55%,#7c3aed)",
@@ -100,6 +105,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     status: "Approved",
     stage: "published",
     updated: "Sep 15, 2026",
+    ownerId: "m1",
     views: 173,
     comments: 0,
     gradient: "linear-gradient(150deg,#0c2740,#0e4f6e 55%,#1d7fa8)",
@@ -116,6 +122,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     status: "Published",
     stage: "published",
     updated: "Sep 15, 2026",
+    ownerId: "m2",
     views: 134,
     comments: 2,
     gradient: "linear-gradient(150deg,#3a1414,#7f1d1d 55%,#b91c1c)",
@@ -134,6 +141,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     status: "In MLR review",
     stage: "draft",
     updated: "Sep 8, 2026",
+    ownerId: "m2",
     views: 61,
     comments: 4,
     gradient: "linear-gradient(150deg,#12303a,#155e75 55%,#0891b2)",
@@ -152,6 +160,7 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     status: "Published",
     stage: "archived",
     updated: "Sep 1, 2026",
+    ownerId: "m2",
     views: 502,
     comments: 0,
     gradient: "linear-gradient(150deg,#1c1917,#44403c 55%,#78716c)",
@@ -168,11 +177,50 @@ export const LIBRARY_ASSETS: LibraryAsset[] = [
     status: "Approved",
     stage: "archived",
     updated: "Aug 24, 2026",
+    ownerId: "m1",
     views: 219,
     comments: 1,
     gradient: "linear-gradient(150deg,#422006,#854d0e 55%,#ca8a04)",
     badge: "Burden of Disease",
     metric: "1 in 4 adults",
     metricLabel: "Living with the condition untreated",
+  },
+  {
+    id: "velmora-dosing-card",
+    title: "Velmora Dosing Quick Card",
+    kind: "infographic",
+    scenarioId: "mechanism-infographic",
+    brand: "Velmora",
+    audience: "HCP · Dermatology",
+    spec: "A5 print · 1 page",
+    status: "Draft",
+    stage: "draft",
+    updated: "Oct 20, 2026",
+    ownerId: "m0",
+    views: 0,
+    comments: 0,
+    gradient: "linear-gradient(150deg,#0f2d22,#166534 55%,#22a061)",
+    badge: "Dosing Guide",
+    metric: "Once daily",
+    metricLabel: "Titrate over 4 weeks",
+  },
+  {
+    id: "onkavia-patient-leaflet",
+    title: "Onkavia Patient Leaflet",
+    kind: "infographic",
+    scenarioId: "patient-explainer-sheet",
+    brand: "Onkavia",
+    audience: "Patients",
+    spec: "A4 print · 2 pages",
+    status: "Draft",
+    stage: "draft",
+    updated: "Oct 19, 2026",
+    ownerId: "m1",
+    views: 0,
+    comments: 0,
+    gradient: "linear-gradient(150deg,#0c2740,#155e75 55%,#1d7fa8)",
+    badge: "Patient Guide",
+    metric: "What to expect",
+    metricLabel: "Your first 12 weeks",
   },
 ];

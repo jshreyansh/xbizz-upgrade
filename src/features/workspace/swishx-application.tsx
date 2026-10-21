@@ -9,13 +9,20 @@ import { HomeScreen } from "@/features/workspace/home-screen";
 import { StudioScreen } from "@/features/workspace/studio-screen";
 import { InfographicStudioScreen } from "@/features/workspace/infographic-studio-screen";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { useCan } from "@/features/settings/view-as";
 
 export function SwishXApplication() {
   const view = useWorkspaceStore((state) => state.view);
   const videoSubStage = useWorkspaceStore((state) => state.videoSubStage);
   const assetType = useWorkspaceStore((state) => state.assetType);
+  const studioEntry = useWorkspaceStore((state) => state.studioEntry);
+  const { can } = useCan();
+  /* The root follows the last screen you were on, which may be a studio.
+     Without Create that is Home instead; a published asset opened to view
+     is still allowed, as on /create. */
+  const viewingPublished = view === "studio" && studioEntry === "review";
 
-  if (view === "home") {
+  if (view === "home" || (!can("create") && !viewingPublished)) {
     return (
       <AppShell>
         <HomeScreen />

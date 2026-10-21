@@ -18,7 +18,7 @@ export function TeamScreen() {
       <div style={{ width: "100%", maxWidth: 1040, textAlign: "center", color: "#fff" }}>
         <div style={{ fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(255,255,255,.62)", fontWeight: 700, marginBottom: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9 }}>
           <span style={{ width: 22, height: 1, background: "linear-gradient(90deg,var(--brand),transparent)", display: "inline-block" }} />
-          Step 3 of 3 · Your co-workers
+          Step 4 of 4 · Your co-workers
         </div>
         <h2 style={{ fontSize: "clamp(32px,3.6vw,46px)", letterSpacing: "-1.9px", margin: "0 0 12px", fontWeight: 800 }}>Five specialists. One record of truth.</h2>
         <p style={{ color: "rgba(255,255,255,.68)", fontSize: 16, margin: "0 auto 46px", maxWidth: "58ch", lineHeight: 1.62 }}>

@@ -2,104 +2,92 @@
 
 import { useState } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { LogoMark } from "@/components/ui/logo-mark";
+import { useSettingsStore } from "@/features/settings/settings-store";
+import { Field } from "@/components/ui/field";
+import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
+import { AuthButton, AuthCardHead, AuthLabel, AuthStage } from "@/features/auth/auth-stage";
+import { cn } from "@/lib/cn";
 
 const PRIMARY_MARKETS = [
-  { flag: "🇺🇸", label: "United States · FDA", desc: "Claims checked against the approved PI and OPDP promotional guidance" },
-  { flag: "🇪🇺", label: "European Union · EMA", desc: "Claims checked against the SmPC and EFPIA code" },
+  { id: "United States · FDA", flag: "🇺🇸", desc: "Claims checked against the approved PI and OPDP promotional guidance" },
+  { id: "European Union · EMA", flag: "🇪🇺", desc: "Claims checked against the SmPC and EFPIA code" },
 ];
-const SECONDARY_MARKETS = ["🇬🇧 UK", "🇯🇵 Japan", "🇮🇳 India", "🇦🇺 Australia", "🇧🇷 Brazil"];
-const THERAPY_AREAS = ["Cardiology", "Oncology", "Immunology", "Neurology"];
+const SECONDARY_MARKETS = ["UK", "Japan", "India", "Australia", "Brazil"];
+const THERAPY_AREAS = ["Cardiology", "Oncology", "Immunology", "Neurology", "Dermatology"];
 
+/** The organisation's first workspace: a brand or market, with the markets that set its rules. */
 export function WorkspaceScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
-  const [primaryMarket, setPrimaryMarket] = useState(0);
-  const [secMarkets, setSecMarkets] = useState<string[]>(["🇬🇧 UK", "🇯🇵 Japan"]);
+  const orgName = useSettingsStore((s) => s.orgName);
+  const [name, setName] = useState(`${orgName.split(" ")[0]} Commercial`);
+  const [primary, setPrimary] = useState(PRIMARY_MARKETS[0].id);
+  const [secondary, setSecondary] = useState<string[]>(["UK", "Japan"]);
   const [therapies, setTherapies] = useState<string[]>(["Cardiology", "Oncology"]);
 
-  const toggleSec = (m: string) => setSecMarkets((p) => p.includes(m) ? p.filter((x) => x !== m) : [...p, m]);
-  const toggleTherapy = (t: string) => setTherapies((p) => p.includes(t) ? p.filter((x) => x !== t) : [...p, t]);
+  const toggle = (list: string[], set: (v: string[]) => void, id: string) =>
+    set(list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+
+  const next = () => {
+    useSettingsStore.setState({
+      workspaceName: name.trim(),
+      markets: [primary, ...secondary],
+      therapyAreas: therapies,
+      region: primary.startsWith("European") ? "European Union" : "United States",
+    });
+    setAuthView("team");
+  };
 
   return (
-    <div className="stage-in flex h-full w-full">
-      {/* Left */}
-      <div className="relative z-[2] flex min-w-0 flex-[1.12] flex-col justify-between" style={{ padding: "54px 62px", color: "#fff" }}>
+    <AuthStage
+      eyebrow="Step 3 of 4 · First workspace"
+      title="Your markets"
+      accent="set the rules."
+      body="A workspace is one brand or market, with its own team, libraries and credits. Each asset is written against the label and promotional guidance of the market it ships to, so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim."
+      footnote={`More workspaces can be added later from Settings → Organisation.`}
+    >
+      <AuthCardHead title="Create your first workspace">
+        Inside {orgName}. This becomes the default for every dossier, reel and campaign made here.
+      </AuthCardHead>
+
+      <div className="grid gap-5">
+        <Field label="Workspace name" value={name} onChange={(e) => setName(e.target.value)} hint="Usually a brand or market, like Velmora US" />
+
         <div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 9, color: "#fff", fontSize: 22, fontWeight: 800, letterSpacing: "-1px" }}>
-            <LogoMark size={24} />
-            swish<span style={{ color: "var(--brand)" }}>X</span>
+          <AuthLabel>Primary market</AuthLabel>
+          <div className="grid gap-2">
+            {PRIMARY_MARKETS.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setPrimary(m.id)}
+                aria-pressed={primary === m.id}
+                className={cn(
+                  "flex cursor-pointer items-start gap-3 rounded-control border px-3.5 py-3 text-left transition-colors",
+                  primary === m.id ? "border-brand bg-tint" : "border-hair-2 bg-card hover:border-ink-4"
+                )}
+              >
+                <span className="text-title leading-none">{m.flag}</span>
+                <span>
+                  <b className="mb-0.5 block text-body text-ink">{m.id}</b>
+                  <span className="text-label leading-snug text-ink-3">{m.desc}</span>
+                </span>
+              </button>
+            ))}
           </div>
         </div>
+
         <div>
-          <div style={{ fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(255,255,255,.62)", fontWeight: 700, marginBottom: 22, display: "inline-flex", alignItems: "center", gap: 9 }}>
-            <span style={{ width: 22, height: 1, background: "linear-gradient(90deg,var(--brand),transparent)", display: "inline-block" }} />
-            Step 2 of 3 · Workspace
-          </div>
-          <h1 style={{ fontSize: "clamp(38px,4.1vw,58px)", lineHeight: 1.01, fontWeight: 800, letterSpacing: "-2.2px", margin: "0 0 20px", maxWidth: "14ch" }}>
-            Your markets{" "}
-            <em style={{ fontStyle: "normal", background: "linear-gradient(96deg,#ffd8c6,#ff8654 48%,#ffcbb4)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>set the rules.</em>
-          </h1>
-          <p style={{ fontSize: 16.5, lineHeight: 1.62, color: "rgba(255,255,255,.7)", maxWidth: "46ch", margin: 0 }}>
-            Pick every market you operate in. Each asset is written against the label and promotional guidance of the market it ships to, so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim.
-          </p>
+          <AuthLabel>Also operating in</AuthLabel>
+          <ChipMultiSelect options={SECONDARY_MARKETS.map((m) => ({ id: m, label: m }))} selected={secondary} onToggle={(id) => toggle(secondary, setSecondary, id)} />
         </div>
-        <p style={{ margin: 0, fontSize: 11.5, color: "rgba(255,255,255,.34)", letterSpacing: ".01em" }}>
-          Markets can be added, per document, at any time in the Brief step.
-        </p>
-      </div>
 
-      {/* Right glass card */}
-      <div className="relative z-[3] flex flex-[.9] items-center justify-center p-10">
-        <div style={{ width: "100%", maxWidth: 430, background: "rgba(255,255,255,.97)", borderRadius: "var(--r-xl)", padding: "38px 36px", boxShadow: "var(--sh-4)", border: "1px solid rgba(255,255,255,.6)", position: "relative", overflow: "hidden" }}>
-          <span style={{ position: "absolute", inset: "0 0 auto", height: 2, background: "linear-gradient(90deg,transparent,var(--brand),transparent)", opacity: 0.7 }} />
-          <h2 style={{ fontSize: 27, letterSpacing: "-1.1px", margin: "0 0 8px", fontWeight: 800 }}>Set up your workspace</h2>
-          <p style={{ margin: "0 0 26px", color: "var(--ink-3)", fontSize: 14.5, lineHeight: 1.6 }}>This becomes the default for every dossier, reel and campaign your team produces.</p>
-
-          {/* Org field */}
-          <div style={{ marginBottom: 15 }}>
-            <label style={{ display: "block", fontSize: 11, letterSpacing: ".11em", textTransform: "uppercase", color: "var(--ink-4)", marginBottom: 8, fontWeight: 750 }}>Organisation</label>
-            <input defaultValue="Meridian Therapeutics" style={{ width: "100%", padding: "13px 15px", border: "1px solid var(--hair-2)", borderRadius: "var(--r)", background: "#fff", fontSize: 15, outline: "none" }} />
-          </div>
-
-          {/* Primary market */}
-          <div style={{ marginBottom: 15 }}>
-            <label style={{ display: "block", fontSize: 11, letterSpacing: ".11em", textTransform: "uppercase", color: "var(--ink-4)", marginBottom: 8, fontWeight: 750 }}>Primary market</label>
-            <div style={{ display: "grid", gap: 9 }}>
-              {PRIMARY_MARKETS.map((m, i) => (
-                <button key={m.label} onClick={() => setPrimaryMarket(i)} style={{ display: "flex", gap: 13, alignItems: "flex-start", padding: "13px 14px", border: `1px solid ${primaryMarket === i ? "var(--brand)" : "var(--hair-2)"}`, borderRadius: "var(--r)", background: primaryMarket === i ? "var(--tint)" : "#fff", textAlign: "left", boxShadow: primaryMarket === i ? "0 0 0 3px rgba(253,72,22,.09)" : "none" }}>
-                  <span style={{ fontSize: 19 }}>{m.flag}</span>
-                  <span><b style={{ display: "block", fontSize: 14, marginBottom: 2 }}>{m.label}</b><span style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5 }}>{m.desc}</span></span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Secondary markets */}
-          <div style={{ marginTop: 18, marginBottom: 15 }}>
-            <label style={{ display: "block", fontSize: 11, letterSpacing: ".11em", textTransform: "uppercase", color: "var(--ink-4)", marginBottom: 8, fontWeight: 750 }}>Also operating in</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {SECONDARY_MARKETS.map((m) => (
-                <button key={m} onClick={() => toggleSec(m)} style={{ padding: "8px 14px", border: `1px solid ${secMarkets.includes(m) ? "var(--brand)" : "var(--hair-2)"}`, borderRadius: 99, fontSize: 13, fontWeight: 650, background: secMarkets.includes(m) ? "var(--tint)" : "#fff", color: secMarkets.includes(m) ? "var(--brand-deep)" : "var(--ink)" }}>{m}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Therapy areas */}
-          <div style={{ marginTop: 18, marginBottom: 26 }}>
-            <label style={{ display: "block", fontSize: 11, letterSpacing: ".11em", textTransform: "uppercase", color: "var(--ink-4)", marginBottom: 8, fontWeight: 750 }}>Therapy areas</label>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {THERAPY_AREAS.map((t) => (
-                <button key={t} onClick={() => toggleTherapy(t)} style={{ padding: "8px 14px", border: `1px solid ${therapies.includes(t) ? "var(--brand)" : "var(--hair-2)"}`, borderRadius: 99, fontSize: 13, fontWeight: 650, background: therapies.includes(t) ? "var(--tint)" : "#fff", color: therapies.includes(t) ? "var(--brand-deep)" : "var(--ink)" }}>{t}</button>
-              ))}
-            </div>
-          </div>
-
-          <button onClick={() => setAuthView("team")} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9, width: "100%", padding: "13px 22px", borderRadius: "var(--r)", fontWeight: 680, fontSize: 14.5, background: "linear-gradient(180deg,#ff5b2d,var(--brand))", color: "#fff", boxShadow: "0 12px 26px -14px rgba(253,72,22,.95),inset 0 1px 0 rgba(255,255,255,.28)" }}>
-            Meet your team
-            <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-          </button>
+        <div>
+          <AuthLabel>Therapy areas</AuthLabel>
+          <ChipMultiSelect options={THERAPY_AREAS.map((t) => ({ id: t, label: t }))} selected={therapies} onToggle={(id) => toggle(therapies, setTherapies, id)} />
         </div>
+
+        <AuthButton onClick={next} disabled={name.trim().length < 2}>Meet your team</AuthButton>
       </div>
-    </div>
+    </AuthStage>
   );
 }
