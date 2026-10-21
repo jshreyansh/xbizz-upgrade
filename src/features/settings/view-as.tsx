@@ -1,11 +1,11 @@
 "use client";
 
-import { ChevronDown, Eye, ShieldCheck } from "lucide-react";
+import { Eye, ShieldCheck } from "lucide-react";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { Text } from "@/components/ui/text";
 import { PERMISSIONS } from "@/features/settings/settings-types";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import type { PermissionId } from "@/features/settings/settings-types";
-import { cn } from "@/lib/cn";
 
 /**
  * Who the app is being viewed as, and what that person can do.
@@ -39,29 +39,23 @@ export function ViewAsSwitcher() {
   const options = members.filter((m) => m.status === "active");
 
   return (
-    <label
-      className="hidden shrink-0 items-center gap-1.5 rounded-full border border-hair-2 bg-card py-0.5 pl-2.5 pr-1 lg:flex"
+    <div
+      className="hidden shrink-0 items-center gap-1.5 rounded-full border border-hair-2 bg-card py-0.5 pl-2.5 pr-0.5 lg:flex"
       title="Prototype: view the whole app as this person"
     >
       <Eye className="size-3.5 shrink-0 text-ink-3" />
       <span className="text-label font-semibold text-ink-3">Viewing as</span>
-      <span className="relative">
-        <select
-          value={currentUserId}
-          onChange={(e) => setCurrentUser(e.target.value)}
-          aria-label="View the app as"
-          className={cn(
-            "max-w-[13rem] cursor-pointer appearance-none truncate rounded-full bg-subtle py-1 pl-2.5 pr-7 text-label font-bold text-ink",
-            "transition-colors hover:bg-tint focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
-          )}
-        >
-          {options.map((m) => (
-            <option key={m.id} value={m.id}>{m.name} · {m.role}</option>
-          ))}
-        </select>
-        <ChevronDown aria-hidden className="pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2 text-ink-3" />
-      </span>
-    </label>
+      <SelectMenu
+        size="sm"
+        ariaLabel="View the app as"
+        value={currentUserId}
+        onChange={setCurrentUser}
+        className="w-52"
+        menuMinWidth={260}
+        triggerClassName="h-7 rounded-full border-transparent bg-subtle hover:border-transparent hover:bg-tint"
+        options={options.map((m) => ({ value: m.id, label: m.name, hint: m.role }))}
+      />
+    </div>
   );
 }
 

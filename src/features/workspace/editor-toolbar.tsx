@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   AlignCenter,
@@ -455,8 +456,6 @@ function Note({ icon: Icon, children, tone = "warn" }: { icon: LucideIcon; child
   );
 }
 
-const SELECT =
-  "focus-ring h-8 shrink-0 cursor-pointer rounded-chip border border-hair-2 bg-subtle px-1.5 text-label font-bold text-ink";
 
 const ALIGN_ICON: Record<TextAlign, LucideIcon> = { left: AlignLeft, center: AlignCenter, right: AlignRight };
 
@@ -485,39 +484,35 @@ export function textOptions({
     {
       key: "font",
       node: (
-        <select
+        <SelectMenu
+          size="sm"
+          ariaLabel="Font"
           value={style?.font ?? ""}
-          onChange={(e) => onStyle({ font: e.target.value || null })}
-          aria-label="Font"
-          title="Font"
-          className={cn(SELECT, "w-32")}
-          style={{ fontFamily: fontStack(style?.font ?? null) }}
-        >
-          <option value="">Template font</option>
-          {FONTS.map((f) => (
-            <option key={f.label} value={f.label} style={{ fontFamily: f.stack }}>
-              {f.label}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => onStyle({ font: v || null })}
+          className="w-36 shrink-0"
+          menuMinWidth={200}
+          triggerClassName="bg-subtle"
+          options={[
+            { value: "", label: "Template font", style: { fontFamily: fontStack(null) } },
+            ...FONTS.map((f) => ({ value: f.label, label: f.label, style: { fontFamily: f.stack } })),
+          ]}
+        />
       ),
     },
     { key: "size", node: <SizeStepper value={size} onChange={(next) => onStyle({ size: next })} /> },
     {
       key: "weight",
       node: (
-        <select
-          value={nearestWeight(weight)}
-          onChange={(e) => onStyle({ weight: Number(e.target.value) })}
-          aria-label="Font weight"
-          className={SELECT}
-        >
-          {WEIGHTS.map((w) => (
-            <option key={w.value} value={w.value}>
-              {w.label}
-            </option>
-          ))}
-        </select>
+        <SelectMenu
+          size="sm"
+          ariaLabel="Font weight"
+          value={String(nearestWeight(weight))}
+          onChange={(v) => onStyle({ weight: Number(v) })}
+          className="w-28 shrink-0"
+          menuMinWidth={150}
+          triggerClassName="bg-subtle"
+          options={WEIGHTS.map((w) => ({ value: String(w.value), label: w.label }))}
+        />
       ),
     },
     {

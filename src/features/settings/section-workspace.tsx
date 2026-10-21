@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { Copy, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { Field } from "@/components/ui/field";
@@ -74,15 +75,15 @@ export function SectionWorkspace() {
             />
           </SettingRow>
 
-          <SettingRow label="Region" hint="Sets the currency used in Billing" htmlFor="ws-region">
-            <select
-              id="ws-region"
+          <SettingRow label="Region" hint="Sets the currency used in Billing">
+            <SelectMenu
+              size="md"
+              ariaLabel="Region"
+              className="max-w-xs"
               value={s.region}
-              onChange={(e) => { s.setWorkspaceField("region", e.target.value); touch(); }}
-              className="w-full max-w-xs rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink transition-colors focus:border-brand focus:outline-none cursor-pointer"
-            >
-              {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
+              onChange={(v) => { s.setWorkspaceField("region", v); touch(); }}
+              options={REGIONS}
+            />
           </SettingRow>
 
           <SettingRow label="Workspace ID" hint="Quote this to support">

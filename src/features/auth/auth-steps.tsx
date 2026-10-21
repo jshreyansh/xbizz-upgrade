@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Clock, Lock, MailX, ShieldAlert } from "lucide-react";
@@ -12,9 +13,6 @@ import { PERMISSIONS, REGIONS, emailDomain } from "@/features/settings/settings-
 import { routeEmail, useAuthFlow } from "@/features/auth/auth-flow";
 import { AuthButton, AuthCardHead, AuthLabel, AuthStage } from "@/features/auth/auth-stage";
 import { cn } from "@/lib/cn";
-
-const SELECT =
-  "w-full cursor-pointer rounded-control border border-hair-2 bg-card px-3 py-2.5 text-body text-ink focus:border-brand focus:outline-none";
 
 /** After the code: wherever this email leads. */
 export function useAuthNext() {
@@ -75,12 +73,10 @@ export function OrganisationScreen() {
       <div className="grid gap-4">
         <Field label="Organisation name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Meridian Therapeutics" autoFocus />
         <Field label="Legal entity" value={entity} onChange={(e) => setEntity(e.target.value)} hint="Shown on invoices" />
-        <label className="grid gap-1.5">
+        <div className="grid gap-1.5">
           <span className="text-label font-semibold text-ink-2">Headquarters region</span>
-          <select value={region} onChange={(e) => setRegion(e.target.value)} className={SELECT}>
-            {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-          </select>
-        </label>
+          <SelectMenu size="md" ariaLabel="Headquarters region" value={region} onChange={setRegion} options={REGIONS} />
+        </div>
         <div className="rounded-control border border-hair bg-subtle px-3 py-2.5 text-label leading-snug text-ink-3">
           Anyone with an <b className="text-ink">@{domain}</b> email can ask to join. You approve each request, and you can add more domains in Settings.
         </div>

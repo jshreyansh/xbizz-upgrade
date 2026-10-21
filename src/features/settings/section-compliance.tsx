@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useState } from "react";
 import { ArrowRight, Plus, Trash2 } from "lucide-react";
 import { Text } from "@/components/ui/text";
@@ -260,24 +261,28 @@ export function SectionCompliance() {
                     </div>
 
                     <div className="flex flex-wrap items-end gap-2">
-                      <label className="flex flex-col gap-1">
+                      <div className="flex w-48 flex-col gap-1">
                         <Text size="caption" tone="muted" weight="semibold">Role considered</Text>
-                        <select
+                        <SelectMenu
+                          size="sm"
+                          ariaLabel="Role considered"
                           value={st.role}
-                          onChange={(e) => s.setChainStages(editMember.id,
-                            chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, role: e.target.value as Role, narrowTo: { kind: "anyone" } } : x)))}
-                          className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
-                        >
-                          {s.roles.map(({ name: r }) => <option key={r} value={r}>{r}</option>)}
-                        </select>
-                      </label>
+                          menuMinWidth={220}
+                          onChange={(v) => s.setChainStages(editMember.id,
+                            chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, role: v as Role, narrowTo: { kind: "anyone" } } : x)))}
+                          options={s.roles.map((r) => r.name)}
+                        />
+                      </div>
 
-                      <label className="flex flex-col gap-1">
+                      <div className="flex w-48 flex-col gap-1">
                         <Text size="caption" tone="muted" weight="semibold">Narrow to</Text>
-                        <select
+                        <SelectMenu
+                          size="sm"
+                          ariaLabel="Narrow to"
                           value={st.narrowTo.kind}
-                          onChange={(e) => {
-                            const kind = e.target.value as "anyone" | "person" | "seniority";
+                          menuMinWidth={220}
+                          onChange={(v) => {
+                            const kind = v as "anyone" | "person" | "seniority";
                             const inRole = s.members.filter((m) => m.role === st.role && m.status === "active");
                             const narrowTo: ApprovalStage["narrowTo"] =
                               kind === "person"
@@ -288,59 +293,59 @@ export function SectionCompliance() {
                             s.setChainStages(editMember.id,
                               chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, narrowTo } : x)));
                           }}
-                          className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
-                        >
-                          <option value="anyone">Anyone in the role</option>
-                          <option value="person">A named person</option>
-                          <option value="seniority">A seniority floor</option>
-                        </select>
-                      </label>
+                          options={[
+                            { value: "anyone", label: "Anyone in the role" },
+                            { value: "person", label: "A named person" },
+                            { value: "seniority", label: "A seniority floor" },
+                          ]}
+                        />
+                      </div>
 
                       {st.narrowTo.kind === "person" && (
-                        <label className="flex flex-col gap-1">
+                        <div className="flex w-48 flex-col gap-1">
                           <Text size="caption" tone="muted" weight="semibold">Person</Text>
-                          <select
+                          <SelectMenu
+                            size="sm"
+                            ariaLabel="Person"
                             value={st.narrowTo.memberId}
-                            onChange={(e) => s.setChainStages(editMember.id,
-                              chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, narrowTo: { kind: "person", memberId: e.target.value } } : x)))}
-                            className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
-                          >
-                            {s.members.filter((m) => m.role === st.role && m.status === "active").map((m) => (
-                              <option key={m.id} value={m.id}>{m.name}</option>
-                            ))}
-                          </select>
-                        </label>
+                            placeholder="No one in this role"
+                            onChange={(v) => s.setChainStages(editMember.id,
+                              chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, narrowTo: { kind: "person", memberId: v } } : x)))}
+                            options={s.members.filter((m) => m.role === st.role && m.status === "active").map((m) => ({ value: m.id, label: m.name, hint: m.seniority }))}
+                          />
+                        </div>
                       )}
 
                       {st.narrowTo.kind === "seniority" && (
-                        <label className="flex flex-col gap-1">
+                        <div className="flex w-40 flex-col gap-1">
                           <Text size="caption" tone="muted" weight="semibold">Floor, and above</Text>
-                          <select
+                          <SelectMenu
+                            size="sm"
+                            ariaLabel="Seniority floor"
                             value={st.narrowTo.floor}
-                            onChange={(e) => s.setChainStages(editMember.id,
-                              chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, narrowTo: { kind: "seniority", floor: e.target.value as Seniority } } : x)))}
-                            className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
-                          >
-                            {SENIORITY.map((r) => <option key={r} value={r}>{r}</option>)}
-                          </select>
-                        </label>
+                            onChange={(v) => s.setChainStages(editMember.id,
+                              chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, narrowTo: { kind: "seniority", floor: v as Seniority } } : x)))}
+                            options={SENIORITY}
+                          />
+                        </div>
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                      {/* A rejection goes back to the creator; this is who re-reviews the change. */}
-                      <label className="flex flex-wrap items-center gap-2">
-                        <Text size="label" tone="muted">If rejected, after changes review restarts from</Text>
-                        <select
-                          value={st.restartFrom}
-                          onChange={(e) => s.setChainStages(editMember.id,
-                            chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, restartFrom: e.target.value as "first" | "this" } : x)))}
-                          className="rounded-control border border-hair-2 bg-card px-2 py-1 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
-                        >
-                          <option value="first">The first step (everyone approves again)</option>
-                          <option value="this">This step (earlier approvals stand)</option>
-                        </select>
-                      </label>
+                    {/* A rejection goes back to the creator; this is who re-reviews the change. */}
+                    <div className="flex flex-col gap-1">
+                      <Text size="caption" tone="muted" weight="semibold">If rejected, after changes review restarts from</Text>
+                      <SelectMenu
+                        size="sm"
+                        ariaLabel="If rejected, review restarts from"
+                        value={st.restartFrom}
+                        className="max-w-sm"
+                        onChange={(v) => s.setChainStages(editMember.id,
+                          chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, restartFrom: v as "first" | "this" } : x)))}
+                        options={[
+                          { value: "first", label: "The first step", hint: "Everyone approves again" },
+                          { value: "this", label: "This step", hint: "Earlier approvals stand" },
+                        ]}
+                      />
                     </div>
 
                     <Text size="caption" tone="subtle">

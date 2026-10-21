@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useCreationStore } from "@/features/creation/creation-store";
 
 export function Step5ScenesTimeline() {
@@ -177,15 +178,14 @@ export function Step5ScenesTimeline() {
                   onChange={(e) => updateScene(activeSceneIndex, { overlayText: e.target.value })}
                   style={{ flex: 1, padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13 }}
                 />
-                <select
+                <SelectMenu
+                  size="md"
+                  ariaLabel="Overlay"
                   value={curScene.overlayType}
-                  onChange={(e) => updateScene(activeSceneIndex, { overlayType: e.target.value })}
-                  style={{ width: 220, padding: "9px 12px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 12.5 }}
-                >
-                  <option>Key term, middle, dark box</option>
-                  <option>Lower third, light</option>
-                  <option>Title card, centre</option>
-                </select>
+                  onChange={(v) => updateScene(activeSceneIndex, { overlayType: v })}
+                  className="w-56"
+                  options={["Key term, middle, dark box", "Lower third, light", "Title card, centre"]}
+                />
               </div>
             </div>
           </div>

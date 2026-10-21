@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   ArrowDown,
@@ -256,18 +257,15 @@ function Select<T extends string>({
   label: string;
 }) {
   return (
-    <select
-      aria-label={label}
+    <SelectMenu
+      size="sm"
+      ariaLabel={label}
       value={value}
-      onChange={(e) => onChange(e.target.value as T)}
-      className="h-8 cursor-pointer rounded-control border border-hair-2 bg-card px-2 text-body text-ink focus:border-brand focus:outline-none"
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+      onChange={(v) => onChange(v as T)}
+      options={options}
+      className="min-w-36"
+      menuMinWidth={200}
+    />
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { AlertTriangle, Check, Lock, Plus, RotateCcw, Send, Trash2, Users, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
@@ -26,9 +27,6 @@ import { cn } from "@/lib/cn";
  * invitee. Now the admin defines it once, and every invite starts from it —
  * still adjustable for the one person being invited.
  */
-
-const SELECT =
-  "w-full rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink cursor-pointer focus:border-brand focus:outline-none";
 
 function sameSet(a: readonly string[], b: readonly string[]) {
   return a.length === b.length && a.every((x) => b.includes(x));
@@ -99,18 +97,14 @@ export function InviteModal({
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             <Text size="label" tone="muted" weight="semibold">Role</Text>
-            <select value={activeRole} onChange={(e) => pickRole(e.target.value)} className={SELECT}>
-              {s.roles.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
+            <SelectMenu size="md" ariaLabel="Role" value={activeRole} onChange={pickRole} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: `${r.permissions.length} of ${PERMISSIONS.length} permissions` }))} />
+          </div>
+          <div className="flex flex-col gap-1">
             <Text size="label" tone="muted" weight="semibold">Seniority</Text>
-            <select value={seniority} onChange={(e) => setSeniority(e.target.value as Seniority)} className={SELECT}>
-              {SENIORITY.map((x) => <option key={x} value={x}>{x}</option>)}
-            </select>
-          </label>
+            <SelectMenu size="md" ariaLabel="Seniority" value={seniority} onChange={(v) => setSeniority(v as Seniority)} options={SENIORITY} />
+          </div>
         </div>
         {/* The roles come from Role configuration; this is where to change them. */}
         <Text size="caption" tone="subtle" className="-mt-2 block">

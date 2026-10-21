@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/modal";
@@ -9,12 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Stack } from "@/components/ui/stack";
 import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { useSettingsStore } from "@/features/settings/settings-store";
-import { Segmented } from "@/features/settings/settings-parts";
 import { EmailChips, isEmail } from "@/features/settings/team-modals";
 import { MARKETS, REGIONS, THERAPY_AREAS, DEFAULT_ROLES } from "@/features/settings/settings-types";
-
-const SELECT =
-  "w-full rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink cursor-pointer focus:border-brand focus:outline-none";
 
 /**
  * A new workspace in the same organisation: a brand or market with its own
@@ -80,14 +77,10 @@ export function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose
           autoFocus
         />
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1.5">
-            <Text size="label" weight="bold" tone="muted">Region</Text>
-            <select value={region} onChange={(e) => setRegion(e.target.value)} className={SELECT}>
-              {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
-            <Text size="caption" tone="subtle">Sets the currency in its Billing.</Text>
-          </label>
+        <div className="grid gap-1.5">
+          <Text size="label" weight="bold" tone="muted">Region</Text>
+          <SelectMenu size="md" ariaLabel="Region" value={region} onChange={setRegion} options={REGIONS} />
+          <Text size="caption" tone="subtle">Sets the currency in its Billing.</Text>
         </div>
 
         <div className="grid gap-2">
@@ -109,36 +102,45 @@ export function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose
           />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        {/* Two starting points, side by side at the same height; either can be changed later. */}
+        <div className="grid items-start gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <Text size="label" weight="bold" tone="muted">Roles</Text>
-            <Segmented
+            <SelectMenu
+              size="md"
               ariaLabel="Starting roles"
               value={roles}
-              onChange={setRoles}
-              options={[{ id: "copy", label: `Copy ${s.workspaceName}` }, { id: "default", label: "Default set" }]}
+              onChange={(v) => setRoles(v as "copy" | "default")}
+              options={[
+                { value: "copy", label: `Copy from ${s.workspaceName}`, hint: `${s.roles.length} roles, as they are now` },
+                { value: "default", label: "Default set", hint: `${DEFAULT_ROLES.length} roles SwishX starts with` },
+              ]}
             />
-            <Text size="caption" tone="subtle">A starting point. After this, each workspace edits its own.</Text>
           </div>
           <div className="grid gap-1.5">
             <Text size="label" weight="bold" tone="muted">Brand kit</Text>
-            <Segmented
+            <SelectMenu
+              size="md"
               ariaLabel="Brand kit"
               value={kit}
-              onChange={setKit}
-              options={[{ id: "copy", label: "Copy current" }, { id: "empty", label: "Start empty" }]}
+              onChange={(v) => setKit(v as "copy" | "empty")}
+              options={[
+                { value: "copy", label: `Copy from ${s.workspaceName}`, hint: "Logos, typefaces and colours" },
+                { value: "empty", label: "Start empty", hint: "Set it up in the new workspace" },
+              ]}
             />
           </div>
+          <Text size="caption" tone="subtle" className="sm:col-span-2">
+            Starting points only. After this, each workspace edits its own roles and brand kit.
+          </Text>
         </div>
 
         <div className="grid gap-2">
           <Text size="label" weight="bold" tone="muted">Invite people (optional)</Text>
           <EmailChips emails={emails} draft={draft} onEmails={setEmails} onDraft={setDraft} />
-          <div className="flex flex-wrap items-center gap-2">
-            <Text size="caption" tone="subtle">as</Text>
-            <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className={`${SELECT} w-auto py-1.5`} aria-label="Role for invitees">
-              {roleNames.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
+          <div className="grid items-center gap-2 sm:grid-cols-[auto_minmax(0,14rem)_1fr]">
+            <Text size="label" tone="muted">Join as</Text>
+            <SelectMenu size="md" ariaLabel="Role for invitees" value={roleNames.includes(inviteRole) ? inviteRole : roleNames[0]} onChange={setInviteRole} options={roleNames} />
             <Text size="caption" tone="subtle">People already in {s.orgName} are added straight away; others get an invite.</Text>
           </div>
         </div>

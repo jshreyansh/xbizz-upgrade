@@ -1,8 +1,9 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, ChevronDown } from "lucide-react";
+import { Upload } from "lucide-react";
 import { AppShell } from "@/features/workspace/app-shell";
 import { DossierFlowShell } from "@/features/dossiers/dossier-flow-shell";
 import { useDossierDraftStore, applyProductSelection } from "@/features/dossiers/dossier-draft-store";
@@ -152,61 +153,30 @@ export default function NewDossierProductPage() {
         </p>
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Product</label>
-        <div style={{ position: "relative", marginBottom: 22 }}>
-          <select
+        <div style={{ marginBottom: 22 }}>
+          <SelectMenu
+            size="md"
+            ariaLabel="Product"
             value={productId}
-            onChange={(e) => handleProductChange(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "11px 34px 11px 13px",
-              borderRadius: "var(--r)",
-              border: "1px solid var(--hair-2)",
-              fontSize: 14,
-              color: productId ? "var(--ink)" : "var(--ink-4)",
-              background: "#fff",
-              appearance: "none",
-              cursor: "pointer",
-            }}
-          >
-            <option value="" disabled>
-              Choose a product…
-            </option>
-            {brandOptions.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.name}, {b.therapyArea}
-                {b.hasDossier ? " (has a dossier)" : ""}
-              </option>
-            ))}
-            <option value={OTHER_PRODUCT_ID}>+ Create a new brand…</option>
-          </select>
-          <ChevronDown size={15} style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
+            onChange={handleProductChange}
+            placeholder="Choose a product…"
+            options={[
+              ...brandOptions.map((b) => ({ value: b.id, label: b.name, hint: `${b.therapyArea}${b.hasDossier ? " · has a dossier" : ""}` })),
+              { value: OTHER_PRODUCT_ID, label: "+ Create a new brand…" },
+            ]}
+          />
         </div>
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Dossier category</label>
-        <div style={{ position: "relative", marginBottom: 22 }}>
-          <select
+        <div style={{ marginBottom: 22 }}>
+          <SelectMenu
+            size="md"
+            ariaLabel="Dossier category"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "11px 34px 11px 13px",
-              borderRadius: "var(--r)",
-              border: "1px solid var(--hair-2)",
-              fontSize: 14,
-              color: category ? "var(--ink)" : "var(--ink-4)",
-              background: "#fff",
-              appearance: "none",
-              cursor: "pointer",
-            }}
-          >
-            <option value="">Choose a category…</option>
-            {DOSSIER_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={15} style={{ position: "absolute", right: 13, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)", pointerEvents: "none" }} />
+            onChange={setCategory}
+            placeholder="Choose a category…"
+            options={DOSSIER_CATEGORIES}
+          />
         </div>
 
         <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 6 }}>Target audience</label>

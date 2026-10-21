@@ -1,5 +1,6 @@
 "use client";
 
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -204,13 +205,7 @@ export function SectionTeam() {
 
             <div>
               <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">Role</Text>
-              <select
-                value={openMember.role}
-                onChange={(e) => s.setMemberRole(openMember.id, e.target.value as Role)}
-                className="w-full rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink cursor-pointer focus:border-brand focus:outline-none"
-              >
-                {s.roles.map(({ name: r }) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              <SelectMenu size="md" ariaLabel="Role" value={openMember.role} onChange={(v) => s.setMemberRole(openMember.id, v as Role)} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: `${r.permissions.length} of ${PERMISSIONS.length} permissions` }))} />
               <Text size="caption" tone="subtle" className="mt-1 block">
                 Changing the role re-seeds the permissions below.
               </Text>
@@ -218,13 +213,7 @@ export function SectionTeam() {
 
             <div>
               <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">Seniority</Text>
-              <select
-                value={openMember.seniority}
-                onChange={(e) => s.setMemberSeniority(openMember.id, e.target.value as Seniority)}
-                className="w-full rounded-control border border-hair-2 bg-card px-3 py-2 text-body text-ink cursor-pointer focus:border-brand focus:outline-none"
-              >
-                {SENIORITY.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              <SelectMenu size="md" ariaLabel="Seniority" value={openMember.seniority} onChange={(v) => s.setMemberSeniority(openMember.id, v as Seniority)} options={SENIORITY} />
               <Text size="caption" tone="subtle" className="mt-1 block">
                 Carries no permissions itself. It is used for approval routing.
               </Text>
@@ -336,28 +325,14 @@ function JoinRequestRow({ request }: { request: JoinRequest }) {
       {/* Approving asks what they join as. */}
       {choosing && (
         <div className="mt-2.5 flex flex-wrap items-end gap-2 border-t border-warn-line pt-2.5">
-          <label className="flex flex-col gap-1">
+          <div className="flex w-52 flex-col gap-1">
             <Text size="caption" tone="muted" weight="semibold">Role</Text>
-            <select
-              value={activeRole}
-              onChange={(e) => setRole(e.target.value)}
-              className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
-            >
-              {s.roles.map((r) => (
-                <option key={r.name} value={r.name}>{r.name} ({r.permissions.length} of {PERMISSIONS.length})</option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
+            <SelectMenu size="sm" ariaLabel="Role" value={activeRole} onChange={setRole} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: `${r.permissions.length} of ${PERMISSIONS.length} permissions` }))} menuMinWidth={240} />
+          </div>
+          <div className="flex w-36 flex-col gap-1">
             <Text size="caption" tone="muted" weight="semibold">Seniority</Text>
-            <select
-              value={seniority}
-              onChange={(e) => setSeniority(e.target.value as Seniority)}
-              className="rounded-control border border-hair-2 bg-card px-2.5 py-1.5 text-label text-ink cursor-pointer focus:border-brand focus:outline-none"
-            >
-              {SENIORITY.map((x) => <option key={x} value={x}>{x}</option>)}
-            </select>
-          </label>
+            <SelectMenu size="sm" ariaLabel="Seniority" value={seniority} onChange={(v) => setSeniority(v as Seniority)} options={SENIORITY} />
+          </div>
           <div className="ml-auto flex items-center gap-2">
             <Button size="sm" variant="ghost" onClick={() => setChoosing(false)}>Cancel</Button>
             <Button size="sm" onClick={() => s.resolveJoinRequest(request.id, true, activeRole, seniority)}>

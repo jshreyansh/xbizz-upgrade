@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Grid3x3, List, ShieldCheck, Eye, Star, Package, MoreHorizontal } from "lucide-react";
+import { Search, Grid3x3, List, ShieldCheck, Eye, Star, Package } from "lucide-react";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { CreateBrandModal } from "@/features/product-library/create-brand-modal";
@@ -16,7 +16,6 @@ export function ProductLibraryScreen() {
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [createOpen, setCreateOpen] = useState(false);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   const STATS = useMemo(
     () => [
@@ -35,7 +34,7 @@ export function ProductLibraryScreen() {
   }, [products, query]);
 
   return (
-    <div className="page-enter space-y-6" onClick={() => setOpenMenuId(null)}>
+    <div className="page-enter space-y-6">
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
@@ -131,38 +130,6 @@ export function ProductLibraryScreen() {
             mediaTopLeft={
               <span className="rounded-chip bg-black/45 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90">
                 {p.type}
-              </span>
-            }
-            mediaTopRight={
-              <span className="relative">
-                <button
-                  type="button"
-                  title="More options"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpenMenuId(openMenuId === p.id ? null : p.id);
-                  }}
-                  className="grid size-6 cursor-pointer place-items-center rounded-full bg-white/75 text-ink-2 backdrop-blur-sm transition-colors hover:bg-card"
-                >
-                  <MoreHorizontal size={14} />
-                </button>
-                {openMenuId === p.id && (
-                  <span
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute right-0 top-[calc(100%+6px)] z-30 block w-36 overflow-hidden rounded-control border border-hair bg-card py-1 shadow-float"
-                  >
-                    {["Duplicate", "Archive"].map((action) => (
-                      <button
-                        key={action}
-                        type="button"
-                        onClick={() => setOpenMenuId(null)}
-                        className="flex w-full cursor-pointer items-center px-3 py-1.5 text-left text-body font-medium text-ink-2 hover:bg-black/[0.04]"
-                      >
-                        {action}
-                      </button>
-                    ))}
-                  </span>
-                )}
               </span>
             }
             title={p.name}
