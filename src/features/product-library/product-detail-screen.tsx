@@ -105,7 +105,10 @@ export function ProductDetailScreen({
   initialTab?: Tab;
 }) {
   /* Adding, uploading and archiving come with Manage Product Library; everyone can look. */
-  const canManage = useCan().can("products");
+  const { can } = useCan();
+  const canManage = can("products");
+  const canSeeKit = can("brand");
+  const canEditKit = can("brandManage");
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
   const [variations, setVariations] = useState<ProductVariation[]>(detail.variations);
@@ -189,8 +192,8 @@ export function ProductDetailScreen({
     { key: "claims", label: "Claims", icon: ListChecks, count: detail.claims.length },
     { key: "documents", label: "Team Attachments", icon: Paperclip, count: documents.filter((d) => !d.archived).length },
     { key: "images", label: "Product Images", icon: ImageIcon, count: activeImageTotal },
-    /* An editing surface, so only for whoever manages the library. */
-    ...(canManage ? [{ key: "brand-kit" as const, label: "Brand Kit", icon: Palette }] : []),
+    /* Brand kit: View sees it, Manage changes it — the same rule as the workspace kit. */
+    ...(canSeeKit ? [{ key: "brand-kit" as const, label: "Brand Kit", icon: Palette }] : []),
   ];
 
 
@@ -323,7 +326,7 @@ export function ProductDetailScreen({
       </DetailHeader>
 
       {/* Tab content */}
-      {tab === "brand-kit" && <ProductBrandKit product={product} />}
+      {tab === "brand-kit" && canSeeKit && <ProductBrandKit product={product} readOnly={!canEditKit} />}
 
       {tab === "images" && (
         <div className="space-y-4" onClick={() => setOpenImageMenuId(null)}>

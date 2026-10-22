@@ -83,5 +83,15 @@ export function useProjectExit() {
     [pending, reset, router]
   );
 
-  return { pending, requestExit, cancel, resolve };
+  /* A published asset opened to look at isn't a project being worked on:
+     closing it just goes back, with no draft-or-discard question. */
+  const leave = useCallback(
+    (href: string = CONTENT_LIBRARY) => {
+      reset();
+      router.push(href);
+    },
+    [reset, router]
+  );
+
+  return { pending, requestExit, cancel, resolve, leave };
 }

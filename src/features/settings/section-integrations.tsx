@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/patterns/sheet";
 import { DataTable, type DataColumn } from "@/components/patterns/data-table";
 import { useSettingsStore } from "@/features/settings/settings-store";
-import { SettingsCard, SettingRow, Toggle, Segmented } from "@/features/settings/settings-parts";
+import { SettingsCard, SettingRow, Toggle, Segmented, ReadOnlyValue } from "@/features/settings/settings-parts";
+import { useCan } from "@/features/settings/view-as";
 import type { IntegrationLog, IntegrationStatus } from "@/features/settings/settings-types";
 
 /**
@@ -48,7 +49,7 @@ function IntegrationCard({
   name, blurb, status, onOpen, primary,
 }: {
   name: string; blurb: string; status: IntegrationStatus;
-  onOpen: () => void; primary: string;
+  onOpen: () => void; primary?: string;
 }) {
   const st = STATUS[status];
   return (
@@ -71,7 +72,7 @@ function IntegrationCard({
           <BookOpen className="size-3.5 text-ink-3" />
           <span className="text-label font-bold text-ink">See docs</span>
         </a>
-        <Button size="sm" variant="secondary" onClick={onOpen}>{primary}</Button>
+        {primary && <Button size="sm" variant="secondary" onClick={onOpen}>{primary}</Button>}
       </div>
     </div>
   );
@@ -79,6 +80,9 @@ function IntegrationCard({
 
 export function SectionIntegrations() {
   const s = useSettingsStore();
+  /* Integrations: View sees what's connected and its activity; Manage connects and configures. */
+  const canManage = useCan().can("integrationsManage");
+  const DIRECTION = { pull: "Pull only", push: "Push only", both: "Both" } as const;
   const [open, setOpen] = useState<"veeva" | "teams" | "imessage" | null>(null);
 
   /** Connect, then verify — a card saying Connected before a successful call is
@@ -92,28 +96,30 @@ export function SectionIntegrations() {
     <Stack gap={4}>
       <SettingsCard
         title="Connected systems"
-        description="Review and distribution. Each one links out to its own configuration docs."
+        description={canManage
+          ? "Review and distribution. Each one links out to its own configuration docs."
+          : "What this workspace is connected to, for review and distribution. Connecting and configuring comes with Integrations: Manage."}
       >
         <Stack gap={2}>
           <IntegrationCard
             name="Veeva"
             blurb="Claims, product records and asset metadata"
             status={s.integrationStatus.veeva}
-            primary="Configure"
+            primary={canManage ? "Configure" : "Details"}
             onOpen={() => setOpen("veeva")}
           />
           <IntegrationCard
             name="Microsoft Teams"
             blurb="Approval requests, alerts and the agent"
             status={s.integrationStatus.teams}
-            primary="Configure"
+            primary={canManage ? "Configure" : "Details"}
             onOpen={() => setOpen("teams")}
           />
           <IntegrationCard
             name="iMessage"
             blurb="Field-force messaging from a sender number"
             status={s.integrationStatus.imessage}
-            primary={s.integrationStatus.imessage === "connected" ? "Configure" : "Connect"}
+            primary={canManage ? (s.integrationStatus.imessage === "connected" ? "Configure" : "Connect") : s.integrationStatus.imessage === "connected" ? "Details" : undefined}
             onOpen={() => setOpen("imessage")}
           />
         </Stack>
@@ -131,22 +137,28 @@ export function SectionIntegrations() {
                 <Chip tone={STATUS[s.integrationStatus.veeva].tone} size="sm">
                   {STATUS[s.integrationStatus.veeva].label}
                 </Chip>
-                <Button size="sm" variant="secondary" onClick={() => connectAndVerify("veeva")}>
-                  <RefreshCw className="size-3.5" /> Test connection
-                </Button>
+                {canManage && (
+                  <Button size="sm" variant="secondary" onClick={() => connectAndVerify("veeva")}>
+                    <RefreshCw className="size-3.5" /> Test connection
+                  </Button>
+                )}
               </div>
             </SettingRow>
             <SettingRow label="Sync direction" hint="Pharma teams rarely want blind push">
-              <Segmented
-                ariaLabel="Sync direction"
-                value={s.veevaDirection}
-                onChange={s.setVeevaDirection}
-                options={[
-                  { id: "pull", label: "Pull only" },
-                  { id: "push", label: "Push only" },
-                  { id: "both", label: "Both" },
-                ]}
-              />
+              {canManage ? (
+                <Segmented
+                  ariaLabel="Sync direction"
+                  value={s.veevaDirection}
+                  onChange={s.setVeevaDirection}
+                  options={[
+                    { id: "pull", label: "Pull only" },
+                    { id: "push", label: "Push only" },
+                    { id: "both", label: "Both" },
+                  ]}
+                />
+              ) : (
+                <ReadOnlyValue value={DIRECTION[s.veevaDirection]} />
+              )}
             </SettingRow>
           </div>
 
@@ -165,11 +177,19 @@ export function SectionIntegrations() {
         <Stack gap={4}>
           <div>
             <SettingRow label="Agent identity" hint="The address the agent posts as" htmlFor="t-email">
-              <Field id="t-email" value={s.teamsAgentEmail}
-                onChange={(e) => s.setTeamsAgentEmail(e.target.value)} className="text-body" />
+              {canManage ? (
+                <Field id="t-email" value={s.teamsAgentEmail}
+                  onChange={(e) => s.setTeamsAgentEmail(e.target.value)} className="text-body" />
+              ) : (
+                <ReadOnlyValue value={s.teamsAgentEmail} />
+              )}
             </SettingRow>
             <SettingRow label="Direct messages" hint="Whether the agent may DM people">
-              <Toggle checked={s.teamsAllowDm} label="Allow direct messages" onChange={s.setTeamsAllowDm} />
+              {canManage ? (
+                <Toggle checked={s.teamsAllowDm} label="Allow direct messages" onChange={s.setTeamsAllowDm} />
+              ) : (
+                <ReadOnlyValue value={s.teamsAllowDm ? "Allowed" : "Not allowed"} />
+              )}
             </SettingRow>
           </div>
 
@@ -182,6 +202,7 @@ export function SectionIntegrations() {
               {s.teamsChannels.map((c) => (
                 <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-hair bg-canvas px-3 py-2.5">
                   <Text size="body" weight="semibold" className="font-mono">{c.name}</Text>
+                  {canManage ? (
                   <div className="flex items-center gap-5">
                     <label className="flex items-center gap-2">
                       <Toggle checked={c.canRead} label={`Read ${c.name}`}
@@ -194,6 +215,12 @@ export function SectionIntegrations() {
                       <Text size="label" tone="muted">Send</Text>
                     </label>
                   </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <Chip tone={c.canRead ? "ok" : "default"} size="xs">{c.canRead ? "Reads" : "Can't read"}</Chip>
+                      <Chip tone={c.canSend ? "ok" : "default"} size="xs">{c.canSend ? "Posts" : "Can't post"}</Chip>
+                    </div>
+                  )}
                 </div>
               ))}
             </Stack>
@@ -213,14 +240,20 @@ export function SectionIntegrations() {
       >
         <Stack gap={4}>
           <SettingRow label="Sender number" htmlFor="im-num">
-            <Field id="im-num" value={s.imessageNumber}
-              onChange={(e) => s.setImessageNumber(e.target.value)}
-              placeholder="+1 415 555 0000" className="max-w-xs text-body" />
+            {canManage ? (
+              <Field id="im-num" value={s.imessageNumber}
+                onChange={(e) => s.setImessageNumber(e.target.value)}
+                placeholder="+1 415 555 0000" className="max-w-xs text-body" />
+            ) : (
+              <ReadOnlyValue value={s.imessageNumber || "Not set"} />
+            )}
           </SettingRow>
           <div className="flex items-center gap-2">
-            <Button size="sm" disabled={!s.imessageNumber.trim()} onClick={() => connectAndVerify("imessage")}>
-              {s.integrationStatus.imessage === "connected" ? "Re-verify" : "Connect"}
-            </Button>
+            {canManage && (
+              <Button size="sm" disabled={!s.imessageNumber.trim()} onClick={() => connectAndVerify("imessage")}>
+                {s.integrationStatus.imessage === "connected" ? "Re-verify" : "Connect"}
+              </Button>
+            )}
             {s.integrationStatus.imessage === "connected" ? (
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="size-3.5 text-ok" />

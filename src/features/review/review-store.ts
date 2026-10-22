@@ -16,9 +16,9 @@ import {
  * snapshot of that chain onto the item, so editing the chain later changes
  * the next submission, never one already in flight. The item then waits on
  * one stage at a time: whoever that stage names approves it on, or requests
- * changes, which sends it back to the creator. When they resubmit, review
- * restarts from step 1 or from the stage that rejected, as that stage says.
- * The last approval publishes it.
+ * changes, which sends it back to the creator. When they resubmit, the
+ * changed version goes through the whole chain again from step 1, so every
+ * approval is of the version that ships. The last approval publishes it.
  *
  * SwishX's automated MLR check runs before submission; its result travels
  * with the item so reviewers see what it found.
@@ -58,7 +58,7 @@ export interface ReviewItem {
   stages: ApprovalStage[];
   stageIndex: number;
   status: ReviewStatus;
-  /** Where the last request for changes came from, for the restart rule. */
+  /** The step that last asked for changes, shown on the chain until it's resubmitted. */
   rejectedAt?: number;
   /** What SwishX's automated check found before submission. */
   check: { flags: number; summary: string };
@@ -106,18 +106,18 @@ export function stepLabel(item: ReviewItem): string {
 /* ── Samples ─────────────────────────────────────────────────────────────── */
 
 const MAYA_CHAIN: ApprovalStage[] = [
-  { id: "s1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "person", memberId: "m3" }, restartFrom: "first" },
-  { id: "s2", name: "Legal review", role: "Legal reviewer", narrowTo: { kind: "anyone" }, restartFrom: "this" },
-  { id: "s3", name: "Regulatory sign-off", role: "Regulatory reviewer", narrowTo: { kind: "seniority", floor: "Director" }, restartFrom: "first" },
+  { id: "s1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "person", memberId: "m3" } },
+  { id: "s2", name: "Legal review", role: "Legal reviewer", narrowTo: { kind: "anyone" } },
+  { id: "s3", name: "Regulatory sign-off", role: "Regulatory reviewer", narrowTo: { kind: "seniority", floor: "Director" } },
 ];
 const ROHAN_CHAIN: ApprovalStage[] = [
-  { id: "s4", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" },
-  { id: "s5", name: "Legal review", role: "Legal reviewer", narrowTo: { kind: "anyone" }, restartFrom: "this" },
+  { id: "s4", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" } },
+  { id: "s5", name: "Legal review", role: "Legal reviewer", narrowTo: { kind: "anyone" } },
 ];
 
 /* A brand lead's sign-off, so Siva (Admin) has items waiting on them in the demo. */
 const BRAND_SIGNOFF: ApprovalStage = {
-  id: "s6", name: "Brand lead sign-off", role: "Admin", narrowTo: { kind: "person", memberId: "m0" }, restartFrom: "this",
+  id: "s6", name: "Brand lead sign-off", role: "Workspace admin", narrowTo: { kind: "person", memberId: "m0" },
 };
 
 const SAMPLES: ReviewItem[] = [
@@ -316,7 +316,7 @@ const SAMPLES: ReviewItem[] = [
 
 interface ReviewState {
   items: ReviewItem[];
-  /** Submit, or resubmit after changes: an item already asked for changes picks up by its restart rule. */
+  /** Submit, or resubmit after changes: a resubmission starts the whole chain again. */
   submit: (input: Omit<ReviewItem, "id" | "stageIndex" | "status" | "events" | "rejectedAt" | "workspaceId">) => ReviewItem;
   approve: (id: string, by: string, note?: string) => void;
   requestChanges: (id: string, by: string, note: string) => void;
@@ -335,13 +335,11 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     const workspaceId = useSettingsStore.getState().workspaceId;
     const existing = get().items.find((i) => i.key === input.key && inWorkspace(i, workspaceId) && i.status === "changes");
     if (existing) {
-      const rejected = existing.rejectedAt ?? 0;
-      const from = existing.stages[rejected]?.restartFrom === "this" ? rejected : 0;
       const next: ReviewItem = {
         ...existing,
         ...input,
         stages: existing.stages,
-        stageIndex: from,
+        stageIndex: 0,
         status: input.stages.length ? "in_review" : "approved",
         rejectedAt: undefined,
         events: [...existing.events, { id: uid(), kind: "resubmitted", by: input.ownerId, at: "Just now" }],

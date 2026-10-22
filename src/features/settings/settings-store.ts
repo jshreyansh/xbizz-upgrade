@@ -3,11 +3,11 @@
 import { create } from "zustand";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import {
-  ROLE_PERMISSIONS, DEFAULT_ROLES, rolePermissions, togglePermission, type RoleDef,
+  ROLE_PERMISSIONS, DEFAULT_ROLES, rolePermissions, setLevel, fromSpec, type RoleDef, type AreaId, type LevelId,
   type ApprovalChain, type BrandKit, type IntegrationLog, type IntegrationStatus,
   type Invoice, type JoinRequest, type Language, type Member, type NotificationPref,
   type PendingInvite, type PermissionId, type Pronunciation, type Role, type Seniority,
-  type ColorRole, type TeamsChannel, type ThemeChoice, type TopUpEntry, type Typeface, type UsageEntry,
+  type ColorRole, type TeamsChannel, type ThemeChoice, type TopUpEntry, type Typeface, type UsageEntry, type TopUpRequest,
 } from "@/features/settings/settings-types";
 
 /**
@@ -19,8 +19,11 @@ import {
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
+/* A role an admin made: billing only, for whoever buys the credits. */
+const FINANCE = fromSpec({ content: "view", billing: "manage" });
+
 const MEMBERS: Member[] = [
-  { id: "m0", name: "Siva Gnanam",    email: "sivaprakasam.gnanam@swishx.com", role: "Admin",       seniority: "Director",  permissions: ROLE_PERMISSIONS["Admin"],               status: "active", lastActive: "Online now" },
+  { id: "m0", name: "Siva Gnanam",    email: "sivaprakasam.gnanam@swishx.com", role: "Workspace admin", seniority: "Director", permissions: ROLE_PERMISSIONS["Workspace admin"],               status: "active", lastActive: "Online now" },
   { id: "m1", name: "Maya Kapoor",    email: "maya.kapoor@velmora.com",  role: "Marketing",           seniority: "Lead",      permissions: ROLE_PERMISSIONS["Marketing"],                      status: "active", lastActive: "2 minutes ago" },
   { id: "m2", name: "Rohan Mehta",    email: "rohan.mehta@velmora.com",  role: "Design",              seniority: "Manager",   permissions: ROLE_PERMISSIONS["Design"],              status: "active", lastActive: "1 hour ago" },
   { id: "m3", name: "Dr. Anita Rao",  email: "anita.rao@velmora.com",    role: "Medical reviewer",    seniority: "Director",  permissions: ROLE_PERMISSIONS["Medical reviewer"],    status: "active", lastActive: "Yesterday" },
@@ -31,39 +34,39 @@ const MEMBERS: Member[] = [
   { id: "m8", name: "Marco Duarte",   email: "marco.d@velmora.com",      role: "Field Force",         seniority: "Manager",   permissions: ROLE_PERMISSIONS["Field Force"],         status: "deactivated", lastActive: "6 weeks ago", deactivationReason: "Left the territory team" },
   // A deliberately customised member: Create removed from Marketing, so
   // the "differs from role default" marker has something real to show.
-  { id: "m9", name: "Aisha Khan",      email: "aisha.khan@velmora.com",  role: "Marketing",           seniority: "Associate", permissions: ["comment", "products", "analytics"],   status: "active", lastActive: "Today" },
+  { id: "m9", name: "Aisha Khan",      email: "aisha.khan@velmora.com",  role: "Marketing",           seniority: "Associate", permissions: fromSpec({ content: "comment", library: "manage", brand: "manage", pronunciations: "manage", integrations: "view", analytics: "view", billing: "view" }),   status: "active", lastActive: "Today" },
   // On a role an admin made (Finance), not one the workspace came with.
-  { id: "m10", name: "Ben Sorensen",  email: "ben.s@velmora.com",        role: "Finance",             seniority: "VP",        permissions: ["billing"],                             status: "active", lastActive: "1 week ago" },
+  { id: "m10", name: "Ben Sorensen",  email: "ben.s@velmora.com",        role: "Finance",             seniority: "VP",        permissions: FINANCE,                             status: "active", lastActive: "1 week ago" },
 ];
 
 const CHAINS: ApprovalChain[] = [
   {
     memberId: "m0",
     stages: [
-      { id: "s0", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "seniority", floor: "Director" }, restartFrom: "first" },
+      { id: "s0", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "seniority", floor: "Director" } },
     ],
   },
   {
     memberId: "m1",
     stages: [
-      { id: "s1", name: "Medical review",    role: "Medical reviewer",    narrowTo: { kind: "person", memberId: "m3" }, restartFrom: "first" },
-      { id: "s2", name: "Legal review",      role: "Legal reviewer",      narrowTo: { kind: "anyone" },                 restartFrom: "this" },
-      { id: "s3", name: "Regulatory sign-off", role: "Regulatory reviewer", narrowTo: { kind: "seniority", floor: "Director" }, restartFrom: "first" },
+      { id: "s1", name: "Medical review",    role: "Medical reviewer",    narrowTo: { kind: "person", memberId: "m3" } },
+      { id: "s2", name: "Legal review",      role: "Legal reviewer",      narrowTo: { kind: "anyone" } },
+      { id: "s3", name: "Regulatory sign-off", role: "Regulatory reviewer", narrowTo: { kind: "seniority", floor: "Director" } },
     ],
   },
   {
     memberId: "m2",
     stages: [
-      { id: "s4", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" },
-      { id: "s5", name: "Legal review",   role: "Legal reviewer",   narrowTo: { kind: "anyone" }, restartFrom: "this" },
+      { id: "s4", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" } },
+      { id: "s5", name: "Legal review",   role: "Legal reviewer",   narrowTo: { kind: "anyone" } },
     ],
   },
   { memberId: "m9", stages: [] },
   {
     memberId: "__default",
     stages: [
-      { id: "sd1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" },
-      { id: "sd2", name: "Legal review",   role: "Legal reviewer",   narrowTo: { kind: "anyone" }, restartFrom: "this" },
+      { id: "sd1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" } },
+      { id: "sd2", name: "Legal review",   role: "Legal reviewer",   narrowTo: { kind: "anyone" } },
     ],
   },
 ];
@@ -147,7 +150,7 @@ export const SEED_WORKSPACE_ID = "ws_velmora_7f3a91";
 const SLICE_KEYS = [
   "workspaceName", "region", "therapyAreas", "markets", "workspaceId", "brandKit",
   "members", "invites", "joinRequests", "roles", "chains", "expiryWarnDays", "autoArchive",
-  "planName", "renewsOn", "creditBalance", "usage", "topUps", "invoices", "pronunciations",
+  "planName", "renewsOn", "creditBalance", "usage", "topUps", "invoices", "pronunciations", "topUpRequests",
 ] as const;
 export type WorkspaceSlice = Pick<SettingsState, (typeof SLICE_KEYS)[number]>;
 
@@ -196,14 +199,14 @@ const EU_WORKSPACE: WorkspaceSlice = {
     colors: { primary: "#fd4816", accent: "#b82f0c", callout: "#fff1ec", text: "#0a0d14" },
   },
   members: [
-    { ...MEMBERS[1], role: "Admin", seniority: "Lead", permissions: ROLE_PERMISSIONS["Admin"], lastActive: "Today" },
+    { ...MEMBERS[1], role: "Workspace admin", seniority: "Lead", permissions: ROLE_PERMISSIONS["Workspace admin"], lastActive: "Today" },
     { ...MEMBERS[7], role: "Marketing", permissions: ROLE_PERMISSIONS["Marketing"], lastActive: "Yesterday" },
     { id: "m11", name: "Dr. Jonas Weber", email: "jonas.weber@velmora.com", role: "Medical reviewer", seniority: "Director", permissions: ROLE_PERMISSIONS["Medical reviewer"], status: "active", lastActive: "2 days ago" },
   ],
   invites: [],
   joinRequests: [],
   roles: EU_ROLES,
-  chains: [{ memberId: "m7", stages: [{ id: "eu1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" }] }],
+  chains: [{ memberId: "m7", stages: [{ id: "eu1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" } }] }],
   expiryWarnDays: 30,
   autoArchive: true,
   planName: "Enterprise",
@@ -213,6 +216,7 @@ const EU_WORKSPACE: WorkspaceSlice = {
   topUps: [{ id: "k-eu1", at: "3 Oct 2026", amount: "$960.00", credits: 12000, purchasedBy: "Maya Kapoor", reference: "TXN-90118", status: "paid" }],
   invoices: [],
   pronunciations: [],
+  topUpRequests: [],
 };
 
 interface SettingsState {
@@ -237,7 +241,7 @@ interface SettingsState {
   removeAllowedDomain: (d: string) => void;
   toggleOrgAdmin: (personId: string) => void;
   switchWorkspace: (id: string) => void;
-  /** Organisation admins only: add yourself as Admin of a workspace you aren't in, then open it. */
+  /** Organisation admins only: add yourself as Workspace admin of a workspace (or step up in one you're in), then open it. */
   joinWorkspaceAsAdmin: (id: string) => void;
   createWorkspace: (input: NewWorkspaceInput) => string;
   renameWorkspace: (id: string, name: string) => void;
@@ -283,13 +287,16 @@ interface SettingsState {
   removeRole: (name: string) => void;
   setMemberRole: (id: string, role: Role) => void;
   setMemberSeniority: (id: string, s: Seniority) => void;
-  toggleMemberPermission: (id: string, p: PermissionId) => void;
+  /** One area's level for this member only; the rules bring along what it needs. */
+  setMemberLevel: (id: string, area: AreaId, level: LevelId) => void;
   resetMemberPermissions: (id: string) => void;
   setMemberStatus: (id: string, status: Member["status"], reason?: string) => void;
   sendInvites: (emails: string[], role: Role, seniority: Seniority, permissions: PermissionId[]) => void;
   revokeInvite: (id: string) => void;
   /** Sends the invite email again; the row then says when. */
   resendInvite: (id: string) => void;
+  /** The invitee's side: asks the admins for a fresh link. */
+  requestInviteResend: (inviteId: string) => void;
   resolveJoinRequest: (id: string, accept: boolean, role?: Role, seniority?: Seniority) => void;
   /** The invitee's side: they verified the invited address and gave their name. */
   acceptInvite: (inviteId: string, name: string) => boolean;
@@ -342,6 +349,12 @@ interface SettingsState {
   setPaymentMethod: (m: SettingsState["paymentMethod"]) => void;
   setBillingField: (k: "taxId" | "billingAddress", v: string) => void;
   dismissPromo: () => void;
+  /** People who spend credits asking whoever holds Billing: Manage to top up. */
+  topUpRequests: TopUpRequest[];
+  requestTopUp: () => void;
+  dismissTopUpRequest: (id: string) => void;
+  /** Billing: Manage buys credits; open requests are answered by it. */
+  topUp: (credits: number, amount: string) => void;
 
   // 9 — pronunciations
   pronunciations: Pronunciation[];
@@ -382,14 +395,23 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
   joinWorkspaceAsAdmin: (id) => {
     const s = get();
+    /* In the workspace you're in: step up from your role there to Workspace admin. */
+    if (id === s.workspaceId) {
+      if (!s.orgAdminIds.includes(s.currentUserId)) return;
+      set({
+        members: s.members.map((m) => (m.id === s.currentUserId ? { ...m, role: "Workspace admin", permissions: rolePermissions(s.roles, "Workspace admin") } : m)),
+        isAdmin: true,
+      });
+      return;
+    }
     const target = s.stash[id];
     if (!target || !s.orgAdminIds.includes(s.currentUserId)) return;
     const person = s.members.find((m) => m.id === s.currentUserId);
     if (!person) return;
     const existing = target.members.find((m) => m.id === person.id);
     const members = existing
-      ? target.members.map((m) => (m.id === person.id ? { ...m, status: "active" as const, role: "Admin", permissions: rolePermissions(target.roles, "Admin") } : m))
-      : [...target.members, { ...person, role: "Admin", permissions: rolePermissions(target.roles, "Admin"), status: "active" as const, lastActive: "Just now" }];
+      ? target.members.map((m) => (m.id === person.id ? { ...m, status: "active" as const, role: "Workspace admin", permissions: rolePermissions(target.roles, "Workspace admin") } : m))
+      : [...target.members, { ...person, role: "Workspace admin", permissions: rolePermissions(target.roles, "Workspace admin"), status: "active" as const, lastActive: "Just now" }];
     set({ stash: { ...s.stash, [id]: { ...target, members } } });
     get().switchWorkspace(id);
   },
@@ -399,7 +421,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const roles = input.copyRoles ? s.roles.map((r) => ({ ...r, permissions: [...r.permissions] })) : DEFAULT_ROLES;
     const person = s.members.find((m) => m.id === s.currentUserId)!;
     const people = orgPeople(s);
-    const members: Member[] = [{ ...person, role: "Admin", permissions: rolePermissions(roles, "Admin"), status: "active", lastActive: "Online now" }];
+    const members: Member[] = [{ ...person, role: "Workspace admin", permissions: rolePermissions(roles, "Workspace admin"), status: "active", lastActive: "Online now" }];
     const invites: PendingInvite[] = [];
     for (const inv of input.invites) {
       const known = people.find((p) => p.email.toLowerCase() === inv.email.toLowerCase());
@@ -421,7 +443,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       expiryWarnDays: 30, autoArchive: true,
       planName: s.planName, renewsOn: s.renewsOn,
       /* Credits are per workspace: a new one starts empty and is topped up in its own Billing. */
-      creditBalance: 0, usage: [], topUps: [], invoices: [], pronunciations: [],
+      creditBalance: 0, usage: [], topUps: [], invoices: [], pronunciations: [], topUpRequests: [],
     };
     set({ stash: { ...s.stash, [id]: slice } });
     useProductLibraryStore.getState().ensureWorkspace(id);
@@ -529,13 +551,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   invites: [
     { id: "iv1", email: "nadia.hassan@velmora.com", role: "Marketing",   seniority: "Manager",   permissions: [...ROLE_PERMISSIONS["Marketing"]],   invitedAt: "2 days ago" },
     // Invited without View & comment — a deliberate narrowing at invite time.
-    { id: "iv2", email: "tom.becker@velmora.com",   role: "Field Force", seniority: "Associate", permissions: ["analytics"],                        invitedAt: "5 days ago" },
+    // Couldn't find the email and asked for the link again; still valid.
+    { id: "iv2", email: "tom.becker@velmora.com",   role: "Field Force", seniority: "Associate", permissions: fromSpec({ library: "view", brand: "view" }), invitedAt: "5 days ago", resendRequestedAt: "this morning" },
     { id: "iv3", email: "grace.liu@velmora.com",    role: "Design",      seniority: "Associate", permissions: [...ROLE_PERMISSIONS["Design"]],      invitedAt: "16 days ago", expired: true },
   ],
   joinRequests: [
     { id: "jr1", name: "Elena Sokolova", email: "elena.s@velmora.com", requestedAt: "Yesterday" },
   ],
-  roles: [...DEFAULT_ROLES, { name: "Finance", permissions: ["billing"], system: false }],
+  roles: [...DEFAULT_ROLES, { name: "Finance", permissions: FINANCE, system: false }],
   addRole: (name, permissions) => set((s) => ({
     roles: [...s.roles, { name, permissions: [...permissions], system: false }],
   })),
@@ -561,8 +584,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setMemberSeniority: (id, seniority) => set((s) => ({
     members: s.members.map((m) => (m.id === id ? { ...m, seniority } : m)),
   })),
-  toggleMemberPermission: (id, p) => set((s) => ({
-    members: s.members.map((m) => (m.id === id ? { ...m, permissions: togglePermission(m.permissions, p) } : m)),
+  setMemberLevel: (id, area, level) => set((s) => ({
+    members: s.members.map((m) => (m.id === id ? { ...m, permissions: setLevel(m.permissions, area, level) } : m)),
   })),
   resetMemberPermissions: (id) => set((s) => ({
     members: s.members.map((m) => (m.id === id ? { ...m, permissions: rolePermissions(s.roles, m.role) } : m)),
@@ -585,8 +608,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   }),
   revokeInvite: (id) => set((s) => ({ invites: s.invites.filter((i) => i.id !== id) })),
   resendInvite: (id) => set((s) => ({
-    invites: s.invites.map((i) => (i.id === id ? { ...i, invitedAt: "resent just now", expired: false } : i)),
+    invites: s.invites.map((i) => (i.id === id ? { ...i, invitedAt: "resent just now", expired: false, resendRequestedAt: undefined } : i)),
   })),
+  requestInviteResend: (inviteId) => set((s) => {
+    const mark = (list: PendingInvite[]) => list.map((i) => (i.id === inviteId ? { ...i, resendRequestedAt: "just now" } : i));
+    const where = findInvite(s, inviteId);
+    if (!where) return s;
+    if (where.workspaceId === s.workspaceId) return { invites: mark(s.invites) };
+    const slice = s.stash[where.workspaceId];
+    return { stash: { ...s.stash, [where.workspaceId]: { ...slice, invites: mark(slice.invites) } } };
+  }),
   acceptInvite: (inviteId, name) => {
     const s = get();
     const where = findInvite(s, inviteId);
@@ -693,10 +724,24 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setPaymentMethod: (paymentMethod) => set({ paymentMethod }),
   setBillingField: (k, v) => set({ [k]: v } as Partial<SettingsState>),
   dismissPromo: () => set({ promoDismissed: true }),
+  topUpRequests: [],
+  requestTopUp: () => set((s) => (
+    s.topUpRequests.some((r) => r.by === s.currentUserId) ? s
+      : { topUpRequests: [...s.topUpRequests, { id: uid(), by: s.currentUserId, at: "Just now" }] }
+  )),
+  dismissTopUpRequest: (id) => set((s) => ({ topUpRequests: s.topUpRequests.filter((r) => r.id !== id) })),
+  topUp: (credits, amount) => set((s) => {
+    const by = s.members.find((m) => m.id === s.currentUserId)?.name ?? "You";
+    return {
+      creditBalance: s.creditBalance + credits,
+      topUps: [{ id: uid(), at: "Just now", amount, credits, purchasedBy: by, reference: `TXN-${Math.floor(90000 + Math.random() * 9999)}`, status: "paid" as const }, ...s.topUps],
+      topUpRequests: [],
+    };
+  }),
 
   pronunciations: PRONUNCIATIONS,
   addPronunciation: (p) => set((s) => ({
-    pronunciations: [{ ...p, id: uid(), addedBy: "Maya Kapoor", addedAt: "Just now" }, ...s.pronunciations],
+    pronunciations: [{ ...p, id: uid(), addedBy: s.members.find((m) => m.id === s.currentUserId)?.name ?? "You", addedAt: "Just now" }, ...s.pronunciations],
   })),
   updatePronunciation: (id, patch) => set((s) => ({
     pronunciations: s.pronunciations.map((p) => (p.id === id ? { ...p, ...patch } : p)),

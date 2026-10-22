@@ -1,9 +1,9 @@
 "use client";
 
+import { PageHeading } from "@/components/patterns/page-heading";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { TabNav, type TabNavItem } from "@/components/patterns/tab-nav";
-import { Text } from "@/components/ui/text";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { useCan } from "@/features/settings/view-as";
 import type { PermissionId } from "@/features/settings/settings-types";
@@ -31,14 +31,14 @@ export interface SettingsSection {
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   { id: "organisation",   label: "Organisation",        blurb: "The company above its workspaces: domains, admins, and every workspace.", orgAdminOnly: true },
   { id: "workspace",      label: "Workspace profile",   blurb: "This workspace: its name, markets and therapy areas.", adminOnly: true },
-  { id: "brand-kit",      label: "Workspace brand kit", blurb: "The logos, typefaces and colours every generated asset is built from.", adminOnly: true },
+  { id: "brand-kit",      label: "Workspace brand kit", blurb: "The logos, typefaces and colours every asset in this workspace is built from.", anyOf: ["brand"] },
   { id: "profile",        label: "User profile",        blurb: "Your own details, sign-in, and what reaches you." },
-  { id: "team",           label: "Team",                blurb: "Who is in this workspace, what they are, and what they can do.", adminOnly: true },
-  { id: "compliance",     label: "Compliance & MLR",    blurb: "The stages work passes through between draft and approved.", anyOf: ["create", "approve", "admin"] },
-  { id: "integrations",   label: "Integrations",        blurb: "Connected systems for review and distribution.", adminOnly: true },
+  { id: "team",           label: "Team",                blurb: "Who is in this workspace, what they are, and what they can do." },
+  { id: "compliance",     label: "Compliance & MLR",    blurb: "The stages work passes through between draft and approved.", anyOf: ["chains"] },
+  { id: "integrations",   label: "Integrations",        blurb: "Connected systems for review and distribution.", anyOf: ["integrations"] },
   { id: "appearance",     label: "Appearance",          blurb: "Theme and language, for your account." },
-  { id: "billing",        label: "Billing & usage",     blurb: "Plan, payment method, and what has been spent.", anyOf: ["billing"] },
-  { id: "pronunciations", label: "Pronunciations",      blurb: "How names are spoken in generated narration.", adminOnly: true },
+  { id: "billing",        label: "Billing & usage",     blurb: "Plan, credits, and what has been spent.", anyOf: ["billingView"] },
+  { id: "pronunciations", label: "Pronunciations",      blurb: "How names are spoken in generated narration.", anyOf: ["pron"] },
 ];
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {
@@ -77,13 +77,10 @@ export function SettingsShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="mx-auto w-full max-w-(--container-page)">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <Text as="h1" size="display" weight="bold" className="block leading-tight">Settings</Text>
-          {/* The blurb carries the orienting job the label cannot: a scrolling
-              tab row can push the active tab out of view. */}
-          <Text size="body" tone="muted" className="mt-0.5 block">{active?.blurb}</Text>
-        </div>
+      {/* The blurb carries the orienting job the label cannot: a scrolling
+          tab row can push the active tab out of view. */}
+      <div className="mb-6">
+        <PageHeading title="Settings" description={active?.blurb} />
       </div>
 
       <TabNav items={items} activeId={activeId} ariaLabel="Settings sections" className="mb-6" />

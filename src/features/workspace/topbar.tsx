@@ -182,8 +182,13 @@ function NotificationsMenu() {
   const items = useWorkspaceReviewItems();
   const members = useSettingsStore((s) => s.members);
   const me = useSettingsStore((s) => s.currentUserId);
-  const isAdmin = useSettingsStore((s) => s.isAdmin);
+  /* Requests go to whoever can act on them: team requests to Team: Manage, top-ups to Billing: Manage. */
+  const myPerms = useSettingsStore((s) => s.members.find((m) => m.id === s.currentUserId)?.permissions ?? []);
+  const isAdmin = myPerms.includes("teamManage");
+  const canBuy = myPerms.includes("billing");
+  const topUpRequests = useSettingsStore((s) => s.topUpRequests);
   const joinRequests = useSettingsStore((s) => s.joinRequests);
+  const invites = useSettingsStore((s) => s.invites);
   const nameOf = (id?: string) => members.find((m) => m.id === id)?.name ?? "A reviewer";
 
   useEffect(() => {
@@ -207,6 +212,15 @@ function NotificationsMenu() {
     })),
     ...(isAdmin ? joinRequests.map((r) => ({
       id: `j-${r.id}`, tone: "brand" as const, href: "/settings/team", title: `${r.name} asked to join`, detail: `${r.email} · ${r.requestedAt}`,
+    })) : []),
+    ...(isAdmin ? invites.filter((i) => i.expired || i.resendRequestedAt).map((i) => ({
+      id: `i-${i.id}`, tone: "warn" as const, href: "/settings/team",
+      title: i.resendRequestedAt ? `${i.email} asked for a new invite link` : `${i.email}'s invite expired`,
+      detail: `${i.role} · resend it from Team → Requests`,
+    })) : []),
+    ...(canBuy ? topUpRequests.map((r) => ({
+      id: `t-${r.id}`, tone: "warn" as const, href: "/settings/billing",
+      title: `${nameOf(r.by)} asked for a top-up`, detail: `${r.at} · top up from Billing`,
     })) : []),
   ];
   const actionable = notes.filter((n) => n.tone !== "ok").length;

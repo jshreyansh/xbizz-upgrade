@@ -59,7 +59,7 @@ export function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose
       description={`A new brand or market inside ${s.orgName}. It gets its own team, roles, Product and Claims libraries, and credits.`}
       footer={
         <div className="flex items-center justify-between gap-3">
-          <Text size="caption" tone="subtle">You&apos;ll be its Admin and switch into it.</Text>
+          <Text size="caption" tone="subtle">You&apos;ll be its workspace admin and switch into it.</Text>
           <div className="flex gap-2">
             <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
             <Button size="sm" onClick={create} disabled={!valid}>Create workspace</Button>

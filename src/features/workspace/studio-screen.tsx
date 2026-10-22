@@ -1878,7 +1878,7 @@ export function StudioScreen() {
          size leaves ~140px of canvas. */
       panelMinCanvas={isReview ? 240 + 360 : isEditor ? 220 + 360 : 360}
       header={
-        <ScreenHeader onClose={() => exit.requestExit()}>
+        <ScreenHeader onClose={() => (isReview ? exit.leave() : exit.requestExit())}>
           <SwishXMark compact />
           <div className="mx-3 h-5 w-px bg-hair" />
           <div className="min-w-0">
@@ -1892,17 +1892,17 @@ export function StudioScreen() {
           <div className="ml-auto flex items-center gap-2">
             {/* DEV ONLY — remove before release. Landscape / portrait, so
                 the storyboard and the editor can be checked in both shapes. */}
-            <ProjectMenu
+            {/* Rename, sharing and the dev tools belong to the flow, not the published preview. */}
+            {!isReview && <ProjectMenu
               kind="video"
               fallback={`${brandName} HCP launch`}
-              published={isReview}
-              dev={isReview ? undefined : (close) => (
+              dev={(close) => (
                 <DevShapeMenuItems
                   editorVersion={isEditor ? { value: editorVersion, onChange: setEditorVersion } : undefined}
                   onDone={close}
                 />
               )}
-            />
+            />}
 
             {/* Toggle Right Sidebar Panel Button (Icon Only) */}
             <button

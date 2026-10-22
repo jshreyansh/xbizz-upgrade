@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeading } from "@/components/patterns/page-heading";
 import { useState } from "react";
 import { useWorkspaceStore, type CreationMode } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
@@ -91,12 +92,7 @@ export function MagicVideoModeScreen() {
 
   return (
     <div className="page-enter max-w-[1140px] space-y-6">
-      <div>
-        <h1 className="text-hero font-[800] leading-tight tracking-[-1px] text-ink">Create Videos</h1>
-        <p className="mt-1.5 max-w-[60ch] text-body-lg leading-relaxed text-ink-3">
-          Grounded in your verified label claims, from the first scene.
-        </p>
-      </div>
+      <PageHeading title="Create Videos" description="Grounded in your verified label claims, from the first scene." />
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
         <CreateTile

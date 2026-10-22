@@ -38,7 +38,10 @@ export function ProjectTitle({
 
   return (
     <span className="flex min-w-0 items-center gap-2">
-      {renaming && isOwner ? (
+      {published ? (
+        /* The published preview shows the name; renaming happens in the flow. */
+        <span className={cn("truncate text-ink", className)}>{title}</span>
+      ) : renaming && isOwner ? (
         <RenameInput
           initial={title}
           className={className}

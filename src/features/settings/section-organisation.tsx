@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Plus, RotateCcw, X } from "lucide-react";
 import { Field } from "@/components/ui/field";
+import { Modal } from "@/components/ui/modal";
+import { SelectMenu, type SelectOption } from "@/components/ui/select-menu";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
 import { Stack } from "@/components/ui/stack";
@@ -26,6 +28,9 @@ export function SectionOrganisation() {
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [domain, setDomain] = useState("");
+  const [addingAdmin, setAddingAdmin] = useState(false);
+  const admins = people.filter((p) => s.orgAdminIds.includes(p.id));
+  const candidates = people.filter((p) => !s.orgAdminIds.includes(p.id));
 
   const open = (id: string, member: boolean) => {
     if (member) s.switchWorkspace(id); else s.joinWorkspaceAsAdmin(id);
@@ -108,7 +113,13 @@ export function SectionOrganisation() {
                 <div className="flex shrink-0 flex-wrap items-center gap-1.5">
                   {!w.current && !w.archived && (
                     <Button size="sm" variant="secondary" onClick={() => open(w.id, !!w.me)}>
-                      {w.me ? "Open" : "Open as Admin"}
+                      {w.me ? "Open" : "Open as workspace admin"}
+                    </Button>
+                  )}
+                  {/* An organisation admin who's a regular member somewhere can step up there. */}
+                  {w.me && !w.me.permissions.includes("admin") && !w.archived && (
+                    <Button size="sm" variant="ghost" onClick={() => s.joinWorkspaceAsAdmin(w.id)}>
+                      Make myself workspace admin
                     </Button>
                   )}
                   {!w.archived && <Button size="sm" variant="ghost" onClick={() => setRenaming({ id: w.id, name: w.name })}>Rename</Button>}
@@ -134,29 +145,26 @@ export function SectionOrganisation() {
 
       <SettingsCard
         title="Organisation admins"
-        description="Create, rename and archive workspaces, manage allowed domains, and open any workspace as its Admin. Admin of one workspace only is set by that workspace's Team."
+        description="Company-wide: create, rename and archive workspaces, manage allowed domains, and open any workspace as its workspace admin. Being Workspace admin of one workspace is set in that workspace's Team instead."
+        actions={<Button size="sm" variant="secondary" onClick={() => setAddingAdmin(true)} disabled={candidates.length === 0}><Plus className="size-3.5" /> Add admin</Button>}
       >
         <div className="divide-y divide-hair">
-          {people.map((p) => {
-            const admin = s.orgAdminIds.includes(p.id);
-            const last = admin && s.orgAdminIds.length <= 1;
+          {admins.map((p) => {
+            const last = s.orgAdminIds.length <= 1;
             return (
               <div key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 py-2.5 first:pt-0 last:pb-0">
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <Text size="body" weight="semibold">{p.name}</Text>
-                    {admin && <Chip tone="brand" size="xs">Organisation admin</Chip>}
-                  </div>
-                  <Text size="caption" tone="subtle" className="mt-0.5 block truncate">{workspacesOf(p.id).join(" · ")}</Text>
+                  <Text size="body" weight="semibold" className="block">{p.name}</Text>
+                  <Text size="caption" tone="subtle" className="mt-0.5 block truncate">{p.email} · {workspacesOf(p.id).join(" · ")}</Text>
                 </div>
                 <Button
                   size="sm"
-                  variant={admin ? "ghost" : "secondary"}
+                  variant="ghost"
                   disabled={last}
                   title={last ? "There has to be at least one organisation admin" : undefined}
                   onClick={() => s.toggleOrgAdmin(p.id)}
                 >
-                  {admin ? "Remove" : "Make admin"}
+                  Remove
                 </Button>
               </div>
             );
@@ -165,6 +173,55 @@ export function SectionOrganisation() {
       </SettingsCard>
 
       {creating && <CreateWorkspaceModal open onClose={() => setCreating(false)} />}
+      {addingAdmin && (
+        <AddOrgAdminModal
+          candidates={candidates.map((p) => ({ value: p.id, label: p.name, hint: workspacesOf(p.id).join(" · ") || p.email }))}
+          orgName={s.orgName}
+          onAdd={(id) => { s.toggleOrgAdmin(id); setAddingAdmin(false); }}
+          onClose={() => setAddingAdmin(false)}
+        />
+      )}
     </Stack>
+  );
+}
+
+/** Pick someone already in the organisation, see what it grants, confirm. */
+function AddOrgAdminModal({
+  candidates, orgName, onAdd, onClose,
+}: {
+  candidates: SelectOption[];
+  orgName: string;
+  onAdd: (personId: string) => void;
+  onClose: () => void;
+}) {
+  const [personId, setPersonId] = useState("");
+  const person = candidates.find((c) => c.value === personId);
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="sm"
+      title="Add an organisation admin"
+      description={`Someone already in ${orgName}. Their role in each workspace stays as it is.`}
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
+          <Button size="sm" disabled={!person} onClick={() => onAdd(personId)}>
+            {person ? `Make ${person.label.split(" ")[0]} an organisation admin` : "Make organisation admin"}
+          </Button>
+        </div>
+      }
+    >
+      <Stack gap={3}>
+        <SelectMenu size="md" ariaLabel="Person" placeholder="Choose a person…" value={personId} onChange={setPersonId} options={candidates} />
+        <div className="rounded-control border border-hair bg-subtle px-3 py-2.5">
+          <Text size="label" weight="bold" className="mb-1 block">They&apos;ll be able to</Text>
+          <Text size="caption" tone="muted" className="block">
+            Create, rename and archive workspaces · manage allowed email domains · open any workspace as its workspace admin · add or remove organisation admins.
+          </Text>
+          <Text size="caption" tone="subtle" className="mt-1.5 block">They still can&apos;t see anyone&apos;s private drafts.</Text>
+        </div>
+      </Stack>
+    </Modal>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeading } from "@/components/patterns/page-heading";
 import { useState } from "react";
 import { Check, Circle, Clapperboard, FileText, MessageSquare, RotateCcw, ShieldCheck, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
@@ -86,23 +87,19 @@ export function MlrReviewScreen() {
   const nameOf = (id: string) => members.find((m) => m.id === id)?.name ?? "Someone";
 
   return (
-    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-5 px-4 py-6 sm:px-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-display-lg font-[850] tracking-tight text-ink">MLR Review</h1>
-          <Text size="body" tone="muted" className="mt-1 block max-w-[64ch]">
-            {reviewer
-              ? "Assets waiting on medical, legal and regulatory sign-off, in the order each creator’s chain sets."
-              : "Where your submitted content is in its review, and what reviewers have asked to change."}
-          </Text>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* The decisions can be played again from the start. */}
+    <div className="page-enter space-y-6">
+      <PageHeading
+        title="MLR Review"
+        description={reviewer
+          ? "Assets waiting on medical, legal and regulatory sign-off, in the order each creator’s chain sets."
+          : "Where your submitted content is in its review, and what reviewers have asked to change."}
+        actions={
+          /* The decisions can be played again from the start. */
           <Button size="sm" variant="ghost" onClick={() => { reset(); setOpenId(null); }} className="gap-1.5" title="Put every sample back where it started">
             <RotateCcw className="size-3.5" /> Reset samples
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       <Segmented role="tablist" aria-label="Review queue" className="w-fit bg-card">
         {tabs.map((t) => (

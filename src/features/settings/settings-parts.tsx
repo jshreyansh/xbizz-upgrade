@@ -1,5 +1,6 @@
 "use client";
 
+import { AREAS, floorOf, levelOf, type AreaId, type LevelId, type PermissionId } from "@/features/settings/settings-types";
 import { useState, type ReactNode } from "react";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { Check } from "lucide-react";
@@ -134,8 +135,17 @@ export function CheckRow({
 
 /** A small segmented control for two or three mutually exclusive options. */
 export function Segmented<T extends string>({
-  value, onChange, options, ariaLabel,
-}: { value: T; onChange: (v: T) => void; options: { id: T; label: string }[]; ariaLabel: string }) {
+  value, onChange, options, ariaLabel, disabled = [], titles,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  options: { id: T; label: string }[];
+  ariaLabel: string;
+  /** Options that can't be chosen right now (shown, not hidden, so the scale reads whole). */
+  disabled?: T[];
+  /** A tooltip per option, e.g. why it's disabled. */
+  titles?: Partial<Record<T, string>>;
+}) {
   return (
     <div
       role="radiogroup"
@@ -151,9 +161,11 @@ export function Segmented<T extends string>({
             type="button"
             role="radio"
             aria-checked={active}
+            disabled={disabled.includes(o.id)}
+            title={titles?.[o.id]}
             onClick={() => onChange(o.id)}
             className={cn(
-              "rounded-glyph px-3 py-1.5 transition-colors cursor-pointer",
+              "rounded-glyph px-3 py-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-40",
               active ? "bg-card text-ink shadow-2xs" : "text-ink-3 hover:text-ink",
             )}
           >
@@ -204,4 +216,70 @@ export function useDirty() {
     touch: () => setDirty(true),
     clear: () => setDirty(false),
   };
+}
+
+/**
+ * Access as one row per area of the app, each with a level: the shape of every
+ * permission editor (Invite, Role configuration, a member's drawer). Levels the
+ * rest of the set rules out are shown but disabled, with the reason, so the
+ * scale always reads whole.
+ */
+export function AccessGrid({
+  perms, onLevel, lockAdmin,
+}: {
+  perms: readonly PermissionId[];
+  onLevel: (area: AreaId, level: LevelId) => void;
+  /** Keeps Workspace admin on (the Workspace admin role always has it). */
+  lockAdmin?: string;
+}) {
+  const admin = perms.includes("admin");
+  return (
+    <div className="divide-y divide-hair rounded-panel border border-hair bg-card">
+      {/* With Workspace admin on, every row is Manage: say it once, not on every row. */}
+      {admin && (
+        <div className="rounded-t-panel bg-tint px-3.5 py-2">
+          <Text size="caption" tone="brand-deep" weight="semibold">
+            {lockAdmin
+              ? "This role always has full access: every area is at its highest level."
+              : "Workspace admin is on, so every area is at its highest level. Turn it off below to set them one by one."}
+          </Text>
+        </div>
+      )}
+      {AREAS.map((area) => {
+        const current = levelOf(perms, area.id);
+        const floor = floorOf(perms, area.id);
+        const floorIdx = area.levels.findIndex((l) => l.id === floor.level.id);
+        const locked = area.id === "admin" && lockAdmin;
+        const disabled = locked
+          ? area.levels.map((l) => l.id).filter((id) => id !== current.id)
+          : area.levels.slice(0, Math.max(0, floorIdx)).map((l) => l.id);
+        const note = locked
+          ? lockAdmin
+          : admin && area.id !== "admin"
+            ? undefined
+            : floor.because && floorIdx > 0 ? `At least ${floor.level.label} with ${floor.because}` : undefined;
+        return (
+          <div key={area.id} className="grid gap-x-4 gap-y-2 px-3.5 py-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <div className="min-w-0">
+              <Text size="body" weight="semibold" className="block">{area.label}</Text>
+              <Text size="caption" tone="subtle" className="block">
+                {current.hint && current.id !== "none" && current.id !== "off" ? current.hint : area.trailing}
+              </Text>
+            </div>
+            <div className="flex flex-col items-start gap-1 sm:items-end">
+              <Segmented
+                ariaLabel={area.label}
+                value={current.id}
+                onChange={(v) => onLevel(area.id, v)}
+                options={area.levels.map((l) => ({ id: l.id, label: l.label }))}
+                disabled={disabled}
+                titles={Object.fromEntries(disabled.map((id) => [id, note ?? (admin ? "Set by Workspace admin" : "")]))}
+              />
+              {note && <Text size="micro" tone="subtle">{note}</Text>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }

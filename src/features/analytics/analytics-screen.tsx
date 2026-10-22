@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeading } from "@/components/patterns/page-heading";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface StatCard {
@@ -57,14 +58,9 @@ function TrendIcon({ trend }: { trend: StatCard["trend"] }) {
 
 export function AnalyticsScreen() {
   return (
-    <div className="page-enter space-y-7 max-w-[1140px] pb-12">
+    <div className="page-enter space-y-6 max-w-[1140px] pb-12">
       {/* Header */}
-      <div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>Analytics</h1>
-        <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "64ch" }}>
-          How your content studios and dossiers are performing, at a glance.
-        </p>
-      </div>
+      <PageHeading title="Analytics" description="How your content studios and dossiers are performing, at a glance." />
 
       {/* Stat cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>

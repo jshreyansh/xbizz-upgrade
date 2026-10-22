@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeading } from "@/components/patterns/page-heading";
 import { useMemo, useState } from "react";
 import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
@@ -86,14 +87,10 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
 
   return (
     <div className="page-enter space-y-6">
-      <div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>
-          All Content
-        </h1>
-        <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-          Everything published in this workspace, with the comments your reviewers left on it, plus your drafts and drafts shared with you.
-        </p>
-      </div>
+      <PageHeading
+        title="All Content"
+        description="Everything published in this workspace, with the comments your reviewers left on it, plus your drafts and drafts shared with you."
+      />
 
       {/* Search, kind filter, view toggle */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>

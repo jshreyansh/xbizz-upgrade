@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeading } from "@/components/patterns/page-heading";
 import { useState } from "react";
 import { useWorkspaceStore, type CreationMode, type DocumentType } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
@@ -146,12 +147,7 @@ export function CreativesModeScreen() {
   return (
     <div className="page-enter max-w-[1140px] space-y-6 text-left">
       {/* Header, the same shape as the video screen's. */}
-      <div>
-        <h1 className="text-hero font-[800] leading-tight tracking-[-1px] text-ink">Create Doc/Images</h1>
-        <p className="mt-1.5 max-w-[60ch] text-body-lg leading-relaxed text-ink-3">
-          Grounded in your verified label claims, from the first page.
-        </p>
-      </div>
+      <PageHeading title="Create Doc/Images" description="Grounded in your verified label claims, from the first page." />
 
       {/* Three document types, three across: the same grid the video screen
           uses. Each starts from its own brief and follows the same steps. */}

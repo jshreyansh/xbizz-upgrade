@@ -52,6 +52,7 @@ export function BrandKitEditor({
   copy = {},
   maxTypefaces = MAX_TYPEFACES,
   colorRoles = COLOR_ROLES.map((role) => ({ id: role.id as ColorRole, label: role.label, trailing: role.trailing })),
+  readOnly = false,
 }: {
   kit: BrandKit;
   onChange: (next: BrandKit) => void;
@@ -68,6 +69,8 @@ export function BrandKitEditor({
   maxTypefaces?: number;
   /** The palette roles this kit has, named as this kit names them. */
   colorRoles?: { id: ColorRole; label: string; trailing: string }[];
+  /** The same kit, to look at: no uploads, removals, reordering, font picker or colour inputs. */
+  readOnly?: boolean;
 }) {
   /* In the order asked for, so a kit can lead with what matters to it. */
   const shown = slots.flatMap((id) => {
@@ -145,7 +148,11 @@ export function BrandKitEditor({
                   )}
                 </div>
 
-                {file ? (
+                {readOnly ? (
+                  <Text size="caption" tone="muted" className="truncate">
+                    {file ? `${file.fileName} · ${file.size}` : "Not set. Uses the workspace logo."}
+                  </Text>
+                ) : file ? (
                   <div className="flex items-center justify-between gap-2">
                     <Text size="caption" tone="muted" className="truncate">{file.fileName} · {file.size}</Text>
                     <button
@@ -178,7 +185,26 @@ export function BrandKitEditor({
         description={copy.typography ?? "One list. Position assigns the role, first is primary, second secondary, third tertiary. Drag to change it."}
       >
         <Stack gap={3}>
-          {kit.typefaces.length > 0 ? (
+          {readOnly ? (
+            kit.typefaces.length > 0 ? (
+              <div className="divide-y divide-hair rounded-panel border border-hair">
+                {kit.typefaces.map((t, i) => (
+                  <div key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5">
+                    <Chip tone={i === 0 ? "brand" : "default"} size="xs">{ROLE_LABELS[i] ?? `#${i + 1}`}</Chip>
+                    <span
+                      style={{ fontFamily: `"${t.name}", var(--font-figtree), sans-serif` }}
+                      className={cn("font-bold text-ink", i === 0 ? "text-subhead" : i === 1 ? "text-body-lg" : "text-label")}
+                    >
+                      {t.name}
+                    </span>
+                    <Text size="caption" tone="subtle">{ROLE_USES[i] ?? ""}</Text>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Text size="body" tone="muted">No typefaces set. Uses the workspace typefaces.</Text>
+            )
+          ) : kit.typefaces.length > 0 ? (
             <SortableList
               items={kit.typefaces}
               itemKey={(t) => t.id}
@@ -212,7 +238,7 @@ export function BrandKitEditor({
             <Text size="body" tone="muted">No typefaces yet. Add one below.</Text>
           )}
 
-          {kit.typefaces.length < maxTypefaces ? (
+          {readOnly ? null : kit.typefaces.length < maxTypefaces ? (
             <div className="flex flex-wrap items-center gap-3">
               <FontPicker
                 exclude={kit.typefaces.map((t) => t.name)}
@@ -249,6 +275,12 @@ export function BrandKitEditor({
                 <Text size="caption" tone="subtle" className="mb-1.5 block uppercase tracking-wider">
                   {role.label}
                 </Text>
+                {readOnly ? (
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden className="size-9 shrink-0 rounded-control border border-hair" style={{ background: value }} />
+                    <Text size="body" weight="semibold" className="font-mono uppercase">{value}</Text>
+                  </div>
+                ) : (
                 <div className="flex items-center gap-2">
                   <label
                     className="relative size-9 shrink-0 cursor-pointer overflow-hidden rounded-control border border-hair"
@@ -269,6 +301,7 @@ export function BrandKitEditor({
                     className="text-body font-mono"
                   />
                 </div>
+                )}
                 <Text size="caption" tone="subtle" className="mt-1 block">{role.trailing}</Text>
               </div>
             );

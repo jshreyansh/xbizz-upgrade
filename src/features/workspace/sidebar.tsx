@@ -536,7 +536,7 @@ export function Sidebar() {
         {/* ── Floating Bottom: Tokens & Profile ── */}
         <div className="relative border-t border-hair p-2 space-y-1.5">
           {/* Credits: for whoever spends them (creators) or buys them (Billing). */}
-          {!collapsed && (can("create") || can("billing")) && (
+          {!collapsed && (can("create") || can("billingView")) && (
             <div className="flex items-center gap-2 rounded-control border border-tint-line bg-gradient-to-r from-tint to-white px-2.5 py-2">
               <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth={2.2}>
                 <circle cx={12} cy={12} r={9} />
@@ -598,7 +598,7 @@ export function Sidebar() {
                 </div>
 
                 {/* Workspaces: the ones you're in, and for organisation admins
-                    the rest of the organisation's, which they can open as Admin. */}
+                    the rest of the organisation's, which they can open as workspace admin. */}
                 <div className="border-b border-hair py-1.5">
                   <div className="px-2.5 pb-1 pt-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4 truncate">
                     {orgName}
@@ -621,7 +621,7 @@ export function Sidebar() {
                       <span className="min-w-0 flex-1">
                         <span className={`block truncate text-body ${w.current ? "font-bold text-ink" : "font-medium text-ink-2"}`}>{w.name}</span>
                         <span className="block truncate text-caption text-ink-4">
-                          {w.me ? w.me.role : "Not a member · open as Admin"}
+                          {w.me ? w.me.role : "Not a member · open as workspace admin"}
                         </span>
                       </span>
                       {w.current && <span className="text-caption font-bold text-brand">Current</span>}

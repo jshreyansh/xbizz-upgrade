@@ -10,9 +10,9 @@ import { Stack } from "@/components/ui/stack";
 import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "@/features/settings/settings-store";
-import { CheckRow } from "@/features/settings/settings-parts";
+import { AccessGrid } from "@/features/settings/settings-parts";
 import {
-  PERMISSIONS, SENIORITY, includedNote, roleSees, rolePermissions, togglePermission,
+  SENIORITY, accessHeadline, roleSees, rolePermissions, setLevel, type AreaId, type LevelId,
   type PermissionId, type Role, type Seniority,
 } from "@/features/settings/settings-types";
 import { cn } from "@/lib/cn";
@@ -99,7 +99,7 @@ export function InviteModal({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <Text size="label" tone="muted" weight="semibold">Role</Text>
-            <SelectMenu size="md" ariaLabel="Role" value={activeRole} onChange={pickRole} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: `${r.permissions.length} of ${PERMISSIONS.length} permissions` }))} />
+            <SelectMenu size="md" ariaLabel="Role" value={activeRole} onChange={pickRole} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: accessHeadline(r.permissions) }))} />
           </div>
           <div className="flex flex-col gap-1">
             <Text size="label" tone="muted" weight="semibold">Seniority</Text>
@@ -117,9 +117,7 @@ export function InviteModal({
 
         <div>
           <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-            <Text size="label" tone="muted" weight="semibold">
-              Permissions, {perms.length} of {PERMISSIONS.length}
-            </Text>
+            <Text size="label" tone="muted" weight="semibold">Access</Text>
             {!sameSet(perms, roleDefault) && (
               <button
                 type="button"
@@ -132,19 +130,9 @@ export function InviteModal({
             )}
           </div>
           <Text size="caption" tone="subtle" className="mb-2 block">
-            Seeded from {activeRole}. Changing them here affects only these invitees, never the role.
+            Seeded from {activeRole}. Changing a level here affects only these invitees, never the role.
           </Text>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {PERMISSIONS.map((p) => (
-              <CheckRow
-                key={p.id}
-                checked={perms.includes(p.id)}
-                onChange={() => setPerms((cur) => togglePermission(cur, p.id))}
-                label={p.label}
-                lockedNote={includedNote(perms, p.id)}
-              />
-            ))}
-          </div>
+          <AccessGrid perms={perms} onLevel={(area, level) => setPerms((cur) => setLevel(cur, area, level))} />
         </div>
       </Stack>
     </Modal>
@@ -344,10 +332,10 @@ export function RoleConfigModal({
     if (next) open_(next.name);
     else startNew();
   };
-  const togglePerm = (id: PermissionId) => {
-    /* Admin keeps admin controls, or nobody could manage roles again. */
-    if (role?.locked && id === "admin") return;
-    setDraftPerms((cur) => togglePermission(cur, id));
+  const setPerm = (area: AreaId, level: LevelId) => {
+    /* Workspace admin keeps admin, or nobody could manage roles again. */
+    if (role?.locked && area === "admin") return;
+    setDraftPerms((cur) => setLevel(cur, area, level));
   };
 
   const countFor = (name: string) => s.members.filter((m) => m.role === name && m.status !== "deactivated").length;
@@ -366,8 +354,12 @@ export function RoleConfigModal({
       }
     >
       <div className="grid gap-4 md:grid-cols-[260px_minmax(0,1fr)]">
-        {/* The roles. */}
+        {/* The roles, with the way to add one first rather than after the whole list. */}
         <div className="flex flex-col gap-1.5">
+          <Button size="sm" variant="secondary" onClick={startNew} className={cn("mb-1 justify-start gap-1.5", isNew && "border-brand text-brand-deep")}>
+            <Plus className="size-3.5" />
+            New role
+          </Button>
           {s.roles.map((r) => (
             <button
               key={r.name}
@@ -384,71 +376,39 @@ export function RoleConfigModal({
                   {r.locked && <Lock className="size-3 shrink-0 text-ink-4" aria-label="Can't be removed" />}
                 </span>
                 <Text size="caption" tone="muted" className="block">
-                  {r.permissions.length} of {PERMISSIONS.length} permissions · {countFor(r.name)} {countFor(r.name) === 1 ? "member" : "members"}
+                  {countFor(r.name)} {countFor(r.name) === 1 ? "member" : "members"} · {accessHeadline(r.permissions)}
                 </Text>
               </span>
               <Chip size="xs" tone={r.system ? "default" : "brand"}>{r.system ? "System" : "Custom"}</Chip>
             </button>
           ))}
-          <Button size="sm" variant="secondary" onClick={startNew} className={cn("mt-1 justify-start gap-1.5", isNew && "border-brand text-brand-deep")}>
-            <Plus className="size-3.5" />
-            New role
-          </Button>
         </div>
 
         {/* The one being edited. */}
         <div className="flex min-w-0 flex-col gap-4 rounded-panel border border-hair bg-canvas p-4">
-          <Field
-            label="Role name"
-            value={draftName}
-            onChange={(e) => setDraftName(e.target.value)}
-            placeholder="e.g. Creative team"
-            error={nameTaken ? "A role with this name already exists." : undefined}
-            autoFocus={isNew}
-          />
-
-          <div>
-            <div className="mb-1.5 flex items-center justify-between gap-2">
-              <Text size="label" tone="muted" weight="semibold">
-                Permissions, {draftPerms.length} of {PERMISSIONS.length}
-              </Text>
-            </div>
-            <div className="grid gap-2 lg:grid-cols-2">
-              {PERMISSIONS.map((p) => (
-                <CheckRow
-                  key={p.id}
-                  checked={draftPerms.includes(p.id)}
-                  onChange={() => togglePerm(p.id)}
-                  label={p.label}
-                  trailing={p.trailing}
-                  lockedNote={role?.locked && p.id === "admin" ? "Admin always keeps this" : includedNote(draftPerms, p.id)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* The permissions in the app's own words: what someone in this role will find. */}
-          <div className="rounded-control border border-hair bg-card p-3">
-            <Text size="label" weight="bold" className="mb-1.5 block">What this role sees</Text>
-            <ul className="grid gap-1">
-              {roleSees(draftPerms).sees.map((line) => (
-                <li key={line} className="flex items-start gap-1.5">
-                  <Check className="mt-0.5 size-3.5 shrink-0 text-ok" strokeWidth={3} />
-                  <Text size="caption" tone="muted">{line}</Text>
-                </li>
-              ))}
-            </ul>
-            {roleSees(draftPerms).cant.length > 0 && (
-              <Text size="caption" tone="subtle" className="mt-2 block">Hidden: {roleSees(draftPerms).cant.join(" · ")}</Text>
+          {/* Save and delete sit at the top, and stay there while the access grid scrolls. */}
+          <div className="sticky top-0 z-10 -mx-4 -mt-4 flex items-center gap-2 rounded-t-panel border-b border-hair bg-canvas px-4 py-3">
+            <Text size="body" weight="bold" className="min-w-0 truncate">{isNew ? "New role" : role?.name}</Text>
+            <div className="ml-auto flex items-center gap-2">
+            {!isNew && !role?.locked && (
+              <Button size="sm" variant="ghost" onClick={tryDelete} className="gap-1.5 text-danger hover:text-danger">
+                <Trash2 className="size-3.5" />
+                Delete role
+              </Button>
             )}
+            {!isNew && role?.locked && (
+              <Text size="caption" tone="subtle" className="flex items-center gap-1">
+                <Lock className="size-3" /> Workspace admin can&rsquo;t be deleted.
+              </Text>
+            )}
+              {dirty && !isNew && (
+                <Button size="sm" variant="ghost" onClick={() => open_(selected)}>Discard</Button>
+              )}
+              <Button size="sm" onClick={save} disabled={!dirty || !valid}>
+                {isNew ? "Create role" : "Save changes"}
+              </Button>
+            </div>
           </div>
-
-          {!isNew && members.length > 0 && (
-            <Text size="caption" tone="muted" className="flex items-start gap-1.5">
-              <Users className="mt-0.5 size-3.5 shrink-0" />
-              {members.length} {members.length === 1 ? "member has" : "members have"} this role. Saving updates everyone still on its defaults; anyone with a custom set keeps theirs.
-            </Text>
-          )}
 
           {/* Can't remove a role people still have. */}
           {blocked && (
@@ -494,27 +454,44 @@ export function RoleConfigModal({
             </div>
           )}
 
-          <div className="mt-auto flex items-center gap-2 border-t border-hair pt-3">
-            {!isNew && !role?.locked && (
-              <Button size="sm" variant="ghost" onClick={tryDelete} className="gap-1.5 text-danger hover:text-danger">
-                <Trash2 className="size-3.5" />
-                Delete role
-              </Button>
-            )}
-            {!isNew && role?.locked && (
-              <Text size="caption" tone="subtle" className="flex items-center gap-1">
-                <Lock className="size-3" /> Admin can&rsquo;t be deleted.
-              </Text>
-            )}
-            <div className="ml-auto flex items-center gap-2">
-              {dirty && !isNew && (
-                <Button size="sm" variant="ghost" onClick={() => open_(selected)}>Discard</Button>
-              )}
-              <Button size="sm" onClick={save} disabled={!dirty || !valid}>
-                {isNew ? "Create role" : "Save changes"}
-              </Button>
-            </div>
+          <Field
+            label="Role name"
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            placeholder="e.g. Creative team"
+            error={nameTaken ? "A role with this name already exists." : undefined}
+            autoFocus={isNew}
+          />
+
+          <div>
+            <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">Access</Text>
+            <AccessGrid perms={draftPerms} onLevel={setPerm} lockAdmin={role?.locked ? "The Workspace admin role always keeps this" : undefined} />
           </div>
+
+          {/* The permissions in the app's own words: what someone in this role will find. */}
+          <div className="rounded-control border border-hair bg-card p-3">
+            <Text size="label" weight="bold" className="mb-1.5 block">What this role sees</Text>
+            <ul className="grid gap-1">
+              {roleSees(draftPerms).sees.map((line) => (
+                <li key={line} className="flex items-start gap-1.5">
+                  <Check className="mt-0.5 size-3.5 shrink-0 text-ok" strokeWidth={3} />
+                  <Text size="caption" tone="muted">{line}</Text>
+                </li>
+              ))}
+            </ul>
+            {roleSees(draftPerms).cant.length > 0 && (
+              <Text size="caption" tone="subtle" className="mt-2 block">Hidden: {roleSees(draftPerms).cant.join(" · ")}</Text>
+            )}
+          </div>
+
+          {!isNew && members.length > 0 && (
+            <Text size="caption" tone="muted" className="flex items-start gap-1.5">
+              <Users className="mt-0.5 size-3.5 shrink-0" />
+              {members.length} {members.length === 1 ? "member has" : "members have"} this role. Saving updates everyone still on its defaults; anyone with a custom set keeps theirs.
+            </Text>
+          )}
+
+
         </div>
       </div>
     </Modal>

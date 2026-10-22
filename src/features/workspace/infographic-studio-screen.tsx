@@ -1664,7 +1664,7 @@ export function InfographicStudioScreen() {
         ) : undefined
       }
       header={
-        <ScreenHeader spread onClose={() => exit.requestExit()}>
+        <ScreenHeader spread onClose={() => (studioMode === "review" ? exit.leave() : exit.requestExit())}>
           <div className="flex items-center gap-2 min-w-0">
             <SwishXMark compact />
             <div className="mx-2.5 h-5 w-px bg-hair" />
@@ -1704,7 +1704,8 @@ export function InfographicStudioScreen() {
 
           {/* Right Actions: Generate/Publish in Editor OR Export/Share in Review */}
           <div className="flex items-center gap-2">
-            <ProjectMenu kind="document" fallback={`${brandName} HCP Infographic`} published={studioMode === "review"} />
+            {/* Rename and sharing belong to the flow, not the published preview. */}
+            {studioMode !== "review" && <ProjectMenu kind="document" fallback={`${brandName} HCP Infographic`} />}
             {/* The version, beside the action that makes the next one. */}
             {studioMode !== "editor" && studioMode !== "review" && <VersionChip versions={assetVersions} variant="button" />}
             {studioMode === "editor" && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeading } from "@/components/patterns/page-heading";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ListChecks, CheckCircle2, Clock, XCircle, PackagePlus } from "lucide-react";
@@ -146,12 +147,7 @@ export function ClaimsLibraryScreen() {
 
   return (
     <div className="page-enter space-y-6">
-      <div>
-        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>Claims Library</h1>
-        <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-          Every approved claim across your brands, in one place.
-        </p>
-      </div>
+      <PageHeading title="Claims Library" description="Every approved claim across your brands, in one place." />
 
       {products.length > 0 && (
         <>

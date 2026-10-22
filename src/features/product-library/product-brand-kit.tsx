@@ -49,7 +49,7 @@ function seedKit(product: LibraryProduct, workspace: BrandKit): BrandKit {
 }
 
 /** The Brand Kit tab on a product's page. */
-export function ProductBrandKit({ product }: { product: LibraryProduct }) {
+export function ProductBrandKit({ product, readOnly = false }: { product: LibraryProduct; readOnly?: boolean }) {
   const workspaceKit = useSettingsStore((s) => s.brandKit);
   const [saved, setSaved] = useState<BrandKit>(() => seedKit(product, workspaceKit));
   const [kit, setKit] = useState<BrandKit>(saved);
@@ -62,6 +62,7 @@ export function ProductBrandKit({ product }: { product: LibraryProduct }) {
         <p className="text-body text-ink-3">
           The logos, typefaces and colours every {product.name} asset is built from. Anything left empty
           uses the workspace brand kit.
+          {readOnly && " View only: changing it comes with Brand kit: Manage."}
         </p>
       </div>
 
@@ -72,14 +73,19 @@ export function ProductBrandKit({ product }: { product: LibraryProduct }) {
         slotCopy={PRODUCT_SLOT_COPY}
         maxTypefaces={PRODUCT_TYPEFACES}
         colorRoles={PRODUCT_COLOR_ROLES}
-        copy={{
+        readOnly={readOnly}
+        copy={readOnly ? {
+          logos: `${product.name}'s logo, and two optional versions of it, each on the ground it is used against.`,
+          typography: "Two roles: first is primary, second secondary.",
+          palette: `Two colours, named for where each lands in ${product.name}'s assets.`,
+        } : {
           logos: `${product.name}'s logo, and two optional versions of it. Each previews on the ground it is used against.`,
           typography: "Two roles. First is primary, second secondary. Drag to swap them.",
           palette: `Two colours, named for where each lands in ${product.name}'s assets. Contrast is checked against both grounds.`,
         }}
       />
 
-      <SaveBar dirty={dirty} onSave={() => setSaved(kit)} onDiscard={() => setKit(saved)} />
+      {!readOnly && <SaveBar dirty={dirty} onSave={() => setSaved(kit)} onDiscard={() => setKit(saved)} />}
     </div>
   );
 }

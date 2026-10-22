@@ -7,7 +7,7 @@ import { LIBRARY_ACCESS } from "@/features/settings/view-as";
 /* Brand Dossiers are part of the Product Library, so the same people see them. */
 export default function DossiersLayout({ children }: { children: ReactNode }) {
   return (
-    <PageGate anyOf={LIBRARY_ACCESS} pageTitle="Brand Dossiers" area="Brand Dossiers" needs="products" instead="They're for people who create, review or manage content.">
+    <PageGate anyOf={LIBRARY_ACCESS} pageTitle="Brand Dossiers" area="Brand Dossiers" needs="library">
       {children}
     </PageGate>
   );

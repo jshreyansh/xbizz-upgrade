@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable, type DataColumn } from "@/components/patterns/data-table";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard } from "@/features/settings/settings-parts";
+import { useCan } from "@/features/settings/view-as";
 import type { Pronunciation } from "@/features/settings/settings-types";
 
 /**
@@ -21,6 +22,8 @@ import type { Pronunciation } from "@/features/settings/settings-types";
  */
 export function SectionPronunciations() {
   const s = useSettingsStore();
+  /* Pronunciations: Manage adds and fixes entries; View sees the list and can try it. */
+  const canManage = useCan().can("pronManage");
   const [term, setTerm] = useState("");
   const [phonetic, setPhonetic] = useState("");
   const [notes, setNotes] = useState("");
@@ -53,8 +56,8 @@ export function SectionPronunciations() {
           <Text size="caption" tone="subtle" className="block">{p.addedBy}</Text>
         </div>
       ) },
-    {
-      key: "rm", header: "", cell: (p) => (
+    ...(!canManage ? [] : [{
+      key: "rm", header: "", cell: (p: Pronunciation) => (
         <button
           type="button" aria-label={`Remove ${p.term}`}
           onClick={() => s.removePronunciation(p.id)}
@@ -63,17 +66,19 @@ export function SectionPronunciations() {
           <Trash2 className="size-3.5" />
         </button>
       ),
-    },
+    }]),
   ];
 
   return (
     <Stack gap={4}>
       <SettingsCard
         title="Dictionary"
-        description="Applies to the whole workspace. One person's spelling should not change everyone's narration, which is why this is admin-only."
+        description={canManage
+          ? "Applies to the whole workspace: every narration reads from it. Fix a name the AI voice gets wrong, and note why for whoever edits it next."
+          : "Applies to the whole workspace. Adding and fixing entries comes with Pronunciations: Manage."}
       >
         <Stack gap={3}>
-          <div className="flex flex-wrap items-end gap-2 rounded-panel border border-hair bg-canvas p-3">
+          {canManage && <div className="flex flex-wrap items-end gap-2 rounded-panel border border-hair bg-canvas p-3">
             <Field label="Term" value={term} onChange={(e) => setTerm(e.target.value)}
               placeholder="e.g. Velmora" className="max-w-44 text-body" />
             <Field label="Phonetic" value={phonetic} onChange={(e) => setPhonetic(e.target.value)}
@@ -84,7 +89,7 @@ export function SectionPronunciations() {
             <Button size="sm" onClick={add} disabled={!term.trim() || !phonetic.trim()}>
               <Plus className="size-3.5" /> Add
             </Button>
-          </div>
+          </div>}
 
           <DataTable columns={columns} rows={s.pronunciations} rowKey={(p) => p.id}
             empty="No entries yet. Narration will use default pronunciation." />

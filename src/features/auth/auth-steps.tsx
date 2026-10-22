@@ -9,7 +9,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import {
   findInvite, listWorkspaces, orgPeople, useSettingsStore, workspaceNameOf,
 } from "@/features/settings/settings-store";
-import { PERMISSIONS, REGIONS, emailDomain } from "@/features/settings/settings-types";
+import { REGIONS, accessHeadline, emailDomain } from "@/features/settings/settings-types";
 import { routeEmail, useAuthFlow } from "@/features/auth/auth-flow";
 import { AuthButton, AuthCardHead, AuthLabel, AuthStage } from "@/features/auth/auth-stage";
 import { cn } from "@/lib/cn";
@@ -109,7 +109,7 @@ export function InviteScreen() {
 
   if (!found) return <BlockedScreen />;
   const { invite } = found;
-  const perms = PERMISSIONS.filter((p) => invite.permissions.includes(p.id)).map((p) => p.label);
+  const access = accessHeadline(invite.permissions);
 
   return (
     <AuthStage
@@ -127,7 +127,7 @@ export function InviteScreen() {
         <div className="flex justify-between gap-3"><dt className="text-ink-3">Role</dt><dd className="text-right font-semibold text-ink">{invite.role} · {invite.seniority}</dd></div>
         <div className="grid gap-1">
           <dt className="text-ink-3">You&apos;ll be able to</dt>
-          <dd className="text-label text-ink-2">{perms.length ? perms.join(" · ") : "See published content"}</dd>
+          <dd className="text-label text-ink-2">{access}</dd>
         </div>
       </dl>
       {invite.expired ? (
@@ -291,7 +291,7 @@ export function BlockedScreen() {
         actions: asked ? (
           <div className="flex items-start gap-2 rounded-control border border-ok-line bg-ok-bg px-3 py-2.5 text-label text-ok"><Check className="mt-0.5 size-3.5 shrink-0" /> Asked. You&apos;ll get a new link by email.</div>
         ) : (
-          <AuthButton onClick={() => setAsked(true)}>Ask for a new invite</AuthButton>
+          <AuthButton onClick={() => { s.requestInviteResend(found.invite.id); setAsked(true); }}>Ask for a new invite</AuthButton>
         ),
       };
     }

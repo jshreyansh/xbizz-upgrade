@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { PageHeading } from "@/components/patterns/page-heading";
 import { useCan } from "@/features/settings/view-as";
 import { useRouter } from "next/navigation";
 import { Clock } from "lucide-react";
@@ -29,37 +31,14 @@ export function DossierListScreen({
   return (
     <div className="page-enter space-y-6">
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-        <div>
-          <div style={{ fontSize: 11, letterSpacing: ".14em", textTransform: "uppercase", color: "var(--ink-4)", fontWeight: 800, marginBottom: 5 }}>
-            Master Knowledge Base
-          </div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>Brand Dossiers</h1>
-          <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "64ch" }}>
-            The single source of truth for your brand, grounded in approved prescribing info, clinical trial readouts, and HEOR models.
-          </p>
-        </div>
-        {canCreateDossier && <button
-          onClick={startNewDossier}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "11px 20px",
-            borderRadius: "var(--r)",
-            fontWeight: 700,
-            fontSize: 14,
-            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            color: "#fff",
-            boxShadow: "0 12px 26px -14px rgba(253,72,22,.9)",
-            border: "none",
-            cursor: "pointer",
-            flexShrink: 0,
-          }}
-        >
-          Create Brand Dossier
-        </button>}
-      </div>
+      <PageHeading
+        eyebrow="Master Knowledge Base"
+        title="Brand Dossiers"
+        description="The single source of truth for your brand, grounded in approved prescribing info, clinical trial readouts, and HEOR models."
+        actions={canCreateDossier && (
+        <Button onClick={startNewDossier}>Create Brand Dossier</Button>
+        )}
+      />
 
       {/* Grid of Dossiers */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 18 }}>

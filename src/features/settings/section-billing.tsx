@@ -1,5 +1,6 @@
 "use client";
 
+import { useCan } from "@/features/settings/view-as";
 import { useState } from "react";
 import { CreditCard, Download, Plus, Sparkle, X } from "lucide-react";
 import { Text } from "@/components/ui/text";
@@ -18,8 +19,16 @@ import type { Invoice, TopUpEntry, UsageEntry } from "@/features/settings/settin
 const INVOICE_TONE = { paid: "ok", due: "warn", overdue: "danger", refunded: "default" } as const;
 const TOPUP_TONE = { paid: "ok", pending: "warn", failed: "danger" } as const;
 
+/** Below this the balance is called out, for everyone who can see it. */
+const LOW_CREDITS = 10000;
+
 export function SectionBilling() {
   const s = useSettingsStore();
+  /* Billing: View is the balance and usage, plus asking for a top-up; Manage buys, changes the plan and pays. */
+  const canManage = useCan().can("billing");
+  const asked = s.topUpRequests.some((r) => r.by === s.currentUserId);
+  const nameOf = (id: string) => s.members.find((m) => m.id === id)?.name ?? "Someone";
+  const low = s.creditBalance < LOW_CREDITS;
   const [history, setHistory] = useState<"usage" | "topups" | "invoices">("usage");
   const [addMethod, setAddMethod] = useState(false);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -98,16 +107,51 @@ export function SectionBilling() {
               </Text>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary">Change plan</Button>
-            <Button size="sm">Top up</Button>
-          </div>
+          {canManage ? (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="secondary">Change plan</Button>
+              <Button size="sm" onClick={() => s.topUp(50000, "$4,000.00")}>Top up 50,000</Button>
+            </div>
+          ) : asked ? (
+            <Text size="label" className="text-white/70">Top-up requested. Whoever manages billing has been told.</Text>
+          ) : (
+            <Button size="sm" onClick={s.requestTopUp}>Ask for a top-up</Button>
+          )}
         </div>
       </div>
 
+      {low && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-panel border border-warn-line bg-warn-bg px-4 py-3">
+          <Text size="body" weight="bold" className="text-warn">
+            {s.creditBalance === 0 ? "No credits left. Renders are paused until this workspace is topped up." : "Credits are running low in this workspace."}
+          </Text>
+          {!canManage && !asked && <Button size="sm" variant="secondary" onClick={s.requestTopUp}>Ask for a top-up</Button>}
+        </div>
+      )}
+
+      {/* Requests from people who spend credits, for whoever can buy them. */}
+      {canManage && s.topUpRequests.length > 0 && (
+        <SettingsCard title="Requests" description="People in this workspace asking for more credits.">
+          <Stack gap={2}>
+            {s.topUpRequests.map((r) => (
+              <div key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-warn-line bg-warn-bg px-3 py-2.5">
+                <div className="min-w-0">
+                  <Text size="body" weight="semibold" className="block">{nameOf(r.by)} asked for a top-up</Text>
+                  <Text size="caption" tone="muted" className="block">{r.at} · balance {s.creditBalance.toLocaleString()} credits</Text>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => s.dismissTopUpRequest(r.id)}>Dismiss</Button>
+                  <Button size="sm" onClick={() => s.topUp(50000, "$4,000.00")}>Top up 50,000</Button>
+                </div>
+              </div>
+            ))}
+          </Stack>
+        </SettingsCard>
+      )}
+
       {/* Below the balance, never above — an offer outranking your own balance
           reads as a sales page. */}
-      {!s.promoDismissed && (
+      {canManage && !s.promoDismissed && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-panel border border-brand/20 bg-tint px-4 py-3">
           <div className="flex min-w-0 items-center gap-2.5">
             <Sparkle className="size-4 shrink-0 text-brand" />
@@ -128,7 +172,7 @@ export function SectionBilling() {
         </div>
       )}
 
-      <SettingsCard
+      {canManage && <SettingsCard
         title="Billing method"
         description="Used for renewals and top-ups."
         actions={
@@ -160,11 +204,11 @@ export function SectionBilling() {
               onChange={(e) => s.setBillingField("billingAddress", e.target.value)} className="text-body" />
           </SettingRow>
         </div>
-      </SettingsCard>
+      </SettingsCard>}
 
       <SettingsCard
         title="History"
-        description="What was spent, what was bought, and what was invoiced."
+        description={canManage ? "What was spent, what was bought, and what was invoiced." : "What was spent, by whom, on which asset."}
       >
         <Stack gap={3}>
           <TabNav
@@ -173,8 +217,10 @@ export function SectionBilling() {
             onSelect={(id) => setHistory(id as typeof history)}
             items={[
               { id: "usage", label: "Usage", badge: s.usage.length },
-              { id: "topups", label: "Top-ups", badge: s.topUps.length },
-              { id: "invoices", label: "Invoices", badge: s.invoices.length },
+              ...(canManage ? [
+                { id: "topups", label: "Top-ups", badge: s.topUps.length },
+                { id: "invoices", label: "Invoices", badge: s.invoices.length },
+              ] : []),
             ]}
           />
 

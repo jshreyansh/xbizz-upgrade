@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeading } from "@/components/patterns/page-heading";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Grid3x3, List, ShieldCheck, Eye, Star, Package } from "lucide-react";
@@ -36,13 +37,8 @@ export function ProductLibraryScreen() {
   return (
     <div className="page-enter space-y-6">
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-1px", margin: "0 0 8px" }}>Product Library</h1>
-          <p style={{ margin: 0, fontSize: 14.5, color: "var(--ink-3)", lineHeight: 1.6, maxWidth: "62ch" }}>
-            Every brand you own, with its photography, dossiers and approved claims in one place.
-          </p>
-        </div>
+      <div>
+        <PageHeading title="Product Library" description="Every brand you own, with its photography, dossiers and approved claims in one place." />
         {/* Create brand is hidden while brands are seeded rather than made
             here. The modal and its wiring stay — this is the one line that
             turns it back on. */}

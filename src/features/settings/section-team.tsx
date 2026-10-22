@@ -14,10 +14,11 @@ import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/patterns/sheet";
 import { DataTable, type DataColumn } from "@/components/patterns/data-table";
 import { useSettingsStore } from "@/features/settings/settings-store";
-import { SettingsCard, CheckRow } from "@/features/settings/settings-parts";
+import { SettingsCard, AccessGrid } from "@/features/settings/settings-parts";
+import { useCan } from "@/features/settings/view-as";
 import {
-  PERMISSIONS, SENIORITY, includedNote, rolePermissions,
-  type JoinRequest, type Member, type Role, type Seniority,
+  SENIORITY, accessHeadline, rolePermissions,
+  type JoinRequest, type Member, type PendingInvite, type Role, type Seniority,
 } from "@/features/settings/settings-types";
 import { cn } from "@/lib/cn";
 
@@ -31,6 +32,9 @@ function sameSet(a: readonly string[], b: readonly string[]) {
 export function SectionTeam() {
   const s = useSettingsStore();
   const router = useRouter();
+  const inviteRequests = s.invites.filter((i) => i.expired || i.resendRequestedAt);
+  /* Everyone sees who's here; inviting, roles, requests and editing need Team: Manage. */
+  const canManage = useCan().can("teamManage");
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
   /* Adding people and defining roles are separate jobs, so separate modals. */
@@ -41,8 +45,9 @@ export function SectionTeam() {
   const [reason, setReason] = useState("");
 
   const rows = useMemo(
-    () => (roleFilter === "all" ? s.members : s.members.filter((m) => m.role === roleFilter)),
-    [s.members, roleFilter],
+    () => (roleFilter === "all" ? s.members : s.members.filter((m) => m.role === roleFilter))
+      .filter((m) => canManage || m.status === "active"),
+    [s.members, roleFilter, canManage],
   );
   const openMember = s.members.find((m) => m.id === openMemberId) ?? null;
 
@@ -51,47 +56,56 @@ export function SectionTeam() {
       key: "name", header: "Name",
       cell: (m) => (
         <div className="min-w-0">
-          <Text size="body" weight="semibold" className="block truncate text-ink">{m.name}</Text>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Text size="body" weight="semibold" className="truncate text-ink">{m.name}</Text>
+            {s.orgAdminIds.includes(m.id) && <Chip tone="default" size="xs" title="Organisation admin: company-wide, across workspaces">Org admin</Chip>}
+          </span>
           <Text size="caption" tone="subtle" className="block truncate">{m.email}</Text>
         </div>
       ),
     },
     { key: "role", header: "Role", cell: (m) => <Chip tone="brand" size="xs">{m.role}</Chip> },
     { key: "seniority", header: "Seniority", secondary: true, cell: (m) => <Chip tone="default" size="xs">{m.seniority}</Chip> },
+    ...(canManage ? [
     {
-      key: "perms", header: "Permissions", secondary: true,
-      cell: (m) => {
+      key: "perms", header: "Access", secondary: true,
+      cell: (m: Member) => {
         const custom = !sameSet(m.permissions, rolePermissions(s.roles, m.role));
         return (
-          <div className="flex items-center gap-1.5">
-            <Text size="body" className="tabular-nums">{m.permissions.length} of {PERMISSIONS.length}</Text>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <Text size="caption" tone="muted" className="truncate" title={accessHeadline(m.permissions)}>{accessHeadline(m.permissions)}</Text>
             {/* A member who differs from their role is worth spotting at a glance. */}
-            {custom && <span aria-label="Customised" title="Differs from the role default" className="size-1.5 rounded-full bg-brand" />}
+            {custom && <span aria-label="Customised" title="Differs from the role default" className="size-1.5 shrink-0 rounded-full bg-brand" />}
           </div>
         );
       },
     },
     {
       key: "status", header: "Status",
-      cell: (m) => <Chip tone={STATUS_TONE[m.status]} size="xs">{m.status === "deactivated" ? "Deactivated" : m.status === "invited" ? "Invited" : "Active"}</Chip>,
+      cell: (m: Member) => <Chip tone={STATUS_TONE[m.status]} size="xs">{m.status === "deactivated" ? "Deactivated" : m.status === "invited" ? "Invited" : "Active"}</Chip>,
     },
-    { key: "last", header: "Last active", secondary: true, cell: (m) => <Text size="caption" tone="muted">{m.lastActive}</Text> },
+    { key: "last", header: "Last active", secondary: true, cell: (m: Member) => <Text size="caption" tone="muted">{m.lastActive}</Text> },
+    ] : []),
   ];
 
   return (
     <Stack gap={4}>
-      {s.joinRequests.length > 0 && (
-        <SettingsCard title="Join requests" description="People asking for access to this workspace.">
+      {/* Everything waiting on an admin: people asking to join, and invites
+          that need a fresh link because they expired or the invitee asked.
+          An invite here also stays in Pending invites, where it lives. */}
+      {canManage && (s.joinRequests.length > 0 || inviteRequests.length > 0) && (
+        <SettingsCard title="Requests" description="People asking to join this workspace, and invites that need a new link.">
           <Stack gap={2}>
             {s.joinRequests.map((r) => <JoinRequestRow key={r.id} request={r} />)}
+            {inviteRequests.map((i) => <InviteRequestRow key={i.id} invite={i} />)}
           </Stack>
         </SettingsCard>
       )}
 
       <SettingsCard
         title="Members"
-        description="Field-force reps are members with the Field Force role, filter to see just them."
-        actions={
+        description={canManage ? "Field-force reps are members with the Field Force role, filter to see just them." : `Who's in ${s.workspaceName}, and what they do.`}
+        actions={canManage && (
           <div className="flex items-center gap-2">
             <Button size="sm" variant="secondary" onClick={() => setRolesOpen(true)}>
               <Shield className="size-3.5" /> Role configuration
@@ -100,7 +114,7 @@ export function SectionTeam() {
               <UserPlus className="size-3.5" /> Invite
             </Button>
           </div>
-        }
+        )}
       >
         <Stack gap={3}>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -123,13 +137,13 @@ export function SectionTeam() {
             columns={columns}
             rows={rows}
             rowKey={(m) => m.id}
-            onRowClick={(m) => setOpenMemberId(m.id)}
+            onRowClick={canManage ? (m) => setOpenMemberId(m.id) : undefined}
             empty={`No members with the ${roleFilter} role.`}
           />
         </Stack>
       </SettingsCard>
 
-      {s.invites.length > 0 && (
+      {canManage && s.invites.length > 0 && (
         <SettingsCard title="Pending invites" description="Sent, not yet accepted.">
           <Stack gap={2}>
             {s.invites.map((i) => (
@@ -205,7 +219,7 @@ export function SectionTeam() {
 
             <div>
               <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">Role</Text>
-              <SelectMenu size="md" ariaLabel="Role" value={openMember.role} onChange={(v) => s.setMemberRole(openMember.id, v as Role)} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: `${r.permissions.length} of ${PERMISSIONS.length} permissions` }))} />
+              <SelectMenu size="md" ariaLabel="Role" value={openMember.role} onChange={(v) => s.setMemberRole(openMember.id, v as Role)} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: accessHeadline(r.permissions) }))} />
               <Text size="caption" tone="subtle" className="mt-1 block">
                 Changing the role re-seeds the permissions below.
               </Text>
@@ -221,7 +235,7 @@ export function SectionTeam() {
 
             <div>
               <div className="mb-1.5 flex items-center justify-between gap-2">
-                <Text size="label" tone="muted" weight="semibold">Permissions</Text>
+                <Text size="label" tone="muted" weight="semibold">Access</Text>
                 {!sameSet(openMember.permissions, rolePermissions(s.roles, openMember.role)) && (
                   <button
                     type="button"
@@ -234,20 +248,9 @@ export function SectionTeam() {
                 )}
               </div>
               <Text size="caption" tone="subtle" className="mb-2 block">
-                Seeded from {openMember.role}. Unselecting one affects only {openMember.name.split(" ")[0]}. It never changes the role for anyone else.
+                Seeded from {openMember.role}. Changing a level affects only {openMember.name.split(" ")[0]}. It never changes the role for anyone else.
               </Text>
-              <Stack gap={2}>
-                {PERMISSIONS.map((p) => (
-                  <CheckRow
-                    key={p.id}
-                    checked={openMember.permissions.includes(p.id)}
-                    onChange={() => s.toggleMemberPermission(openMember.id, p.id)}
-                    label={p.label}
-                    trailing={p.trailing}
-                    lockedNote={includedNote(openMember.permissions, p.id)}
-                  />
-                ))}
-              </Stack>
+              <AccessGrid perms={openMember.permissions} onLevel={(area, level) => s.setMemberLevel(openMember.id, area, level)} />
             </div>
 
             {removing && (
@@ -327,7 +330,7 @@ function JoinRequestRow({ request }: { request: JoinRequest }) {
         <div className="mt-2.5 flex flex-wrap items-end gap-2 border-t border-warn-line pt-2.5">
           <div className="flex w-52 flex-col gap-1">
             <Text size="caption" tone="muted" weight="semibold">Role</Text>
-            <SelectMenu size="sm" ariaLabel="Role" value={activeRole} onChange={setRole} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: `${r.permissions.length} of ${PERMISSIONS.length} permissions` }))} menuMinWidth={240} />
+            <SelectMenu size="sm" ariaLabel="Role" value={activeRole} onChange={setRole} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: accessHeadline(r.permissions) }))} menuMinWidth={240} />
           </div>
           <div className="flex w-36 flex-col gap-1">
             <Text size="caption" tone="muted" weight="semibold">Seniority</Text>
@@ -346,6 +349,30 @@ function JoinRequestRow({ request }: { request: JoinRequest }) {
 }
 
 /** Resend, with a moment of "Sent" so the click is seen to have done something. */
+/**
+ * An invite that needs a fresh link: it expired, or the invitee asked for it
+ * again (lost the email, or opened an expired one). Resending clears it from
+ * Requests; the invite itself stays in Pending invites until it's accepted.
+ */
+function InviteRequestRow({ invite }: { invite: PendingInvite }) {
+  const s = useSettingsStore();
+  const why = invite.resendRequestedAt
+    ? `Asked for a new invite link ${invite.resendRequestedAt}${invite.expired ? " · their link expired" : ""}`
+    : `Invite link expired · invited ${invite.invitedAt}`;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-warn-line bg-warn-bg px-3 py-2.5">
+      <div className="min-w-0">
+        <Text size="body" weight="semibold" className="block truncate">{invite.email}</Text>
+        <Text size="caption" tone="muted" className="block">{invite.role} · {invite.seniority} · {why}</Text>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Button size="sm" variant="secondary" onClick={() => s.revokeInvite(invite.id)}>Revoke</Button>
+        <Button size="sm" onClick={() => s.resendInvite(invite.id)}>Resend invite</Button>
+      </div>
+    </div>
+  );
+}
+
 function ResendButton({ onResend }: { onResend: () => void }) {
   const [sent, setSent] = useState(false);
   return (

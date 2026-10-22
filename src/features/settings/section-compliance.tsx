@@ -1,5 +1,6 @@
 "use client";
 
+import { useCan } from "@/features/settings/view-as";
 import { SelectMenu } from "@/components/ui/select-menu";
 import { useState } from "react";
 import { ArrowRight, Plus, Trash2 } from "lucide-react";
@@ -48,6 +49,7 @@ function narrowLabel(stage: ApprovalStage, members: Member[]) {
 
 export function SectionCompliance() {
   const s = useSettingsStore();
+  const canManageChains = useCan().can("chainsManage");
   const [editing, setEditing] = useState<string | null>(null);
 
   const creators = s.members.filter(
@@ -60,8 +62,8 @@ export function SectionCompliance() {
   const DEFAULT_MEMBER: Member = { id: DEFAULT_CHAIN_ID, name: "New creators", email: "", role: "", seniority: "Associate", permissions: [], status: "active", lastActive: "" };
   const editMember = s.members.find((m) => m.id === editing) ?? (editing === DEFAULT_CHAIN_ID ? DEFAULT_MEMBER : null);
 
-  // A non-admin sees their own chain if they create, and the chains they review in if they approve.
-  if (!s.isAdmin) {
+  // Without Approval chains: Manage, it's your own chain if you create, and the chains you review in if you approve.
+  if (!canManageChains) {
     const mine = chainStagesFor(s, s.currentUserId);
     const me = s.members.find((m) => m.id === s.currentUserId);
     return (
@@ -215,7 +217,7 @@ export function SectionCompliance() {
                 onClick={() => {
                   s.setChainStages(editMember.id, [
                     ...chainFor(editMember.id),
-                    { id: uid(), name: "New stage", role: "Medical reviewer", narrowTo: { kind: "anyone" }, restartFrom: "first" },
+                    { id: uid(), name: "New stage", role: "Medical reviewer", narrowTo: { kind: "anyone" } },
                   ]);
                 }}
               >
@@ -331,28 +333,8 @@ export function SectionCompliance() {
                       )}
                     </div>
 
-                    {/* A rejection goes back to the creator; this is who re-reviews the change. */}
-                    <div className="flex flex-col gap-1">
-                      <Text size="caption" tone="muted" weight="semibold">If rejected, after changes review restarts from</Text>
-                      <SelectMenu
-                        size="sm"
-                        ariaLabel="If rejected, review restarts from"
-                        value={st.restartFrom}
-                        className="max-w-sm"
-                        onChange={(v) => s.setChainStages(editMember.id,
-                          chainFor(editMember.id).map((x) => (x.id === st.id ? { ...x, restartFrom: v as "first" | "this" } : x)))}
-                        options={[
-                          { value: "first", label: "The first step", hint: "Everyone approves again" },
-                          { value: "this", label: "This step", hint: "Earlier approvals stand" },
-                        ]}
-                      />
-                    </div>
-
                     <Text size="caption" tone="subtle">
-                      Approved by {narrowLabel(st, s.members)}. If rejected, it goes back to the creator;{" "}
-                      {st.restartFrom === "first"
-                        ? "after their changes, everyone from step 1 reviews it again."
-                        : "after their changes, review picks up from this step and earlier approvals stand."}
+                      Approved by {narrowLabel(st, s.members)}. If rejected, it goes back to the creator, and after their changes the whole chain reviews it again from step 1.
                     </Text>
                   </Stack>
                 )}
@@ -429,7 +411,7 @@ function ChainsYouReview({ meId }: { meId: string }) {
                   const why = st.narrowTo.kind === "person" ? "you by name" : `${st.role}, ${narrowLabel(st, s.members)}`;
                   return `Step ${i + 1} of ${stages.length}: ${why}`;
                 }).join(" · ")}
-                {mineAt.some((i) => stages[i].restartFrom === "this") ? ". If you send it back, review restarts from your step." : ". If you send it back, review restarts from step 1."}
+                . If you send it back, the changed version goes through the whole chain again.
               </Text>
             </div>
           ))}

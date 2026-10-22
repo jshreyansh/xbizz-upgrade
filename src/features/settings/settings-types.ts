@@ -1,13 +1,13 @@
 /** Domain types for the settings surface. Mock-only: there is no API layer. */
 
-/** The roles a workspace starts with. Admins can rename, re-permission,
+/** The roles a workspace starts with. Workspace admins can rename, re-permission,
     add and remove roles in Role configuration, so this is only the seed. */
 export const ROLES = [
-  "Admin", "Marketing", "Design", "Field Force",
+  "Workspace admin", "Marketing", "Design", "Field Force",
   "Medical reviewer", "Legal reviewer", "Regulatory reviewer",
   "Read only",
 ] as const;
-/** A role's name. Roles are workspace data, defined by an admin. */
+/** A role's name. Roles are workspace data, defined by a workspace admin. */
 export type Role = string;
 
 /** Ordered low to high — a stage's seniority is a FLOOR, so the index matters. */
@@ -15,84 +15,208 @@ export const SENIORITY = ["Intern", "Associate", "Manager", "Lead", "Director", 
 export type Seniority = (typeof SENIORITY)[number];
 
 /**
- * What a member can do, for a pharma content team.
+ * What a member can do, as an access level per area of the app, the way a
+ * SharePoint site has Read / Contribute / Full control. Each area is one row
+ * with a level; nothing is a loose checkbox with hidden dependencies.
  *
- * Built around what people do with content rather than which screens exist:
- * creators make, edit and publish (and so can share and comment); everyone
- * else views and comments; reviewers also sign off. The Product and Claims
- * libraries are one permission: claims hang off products, so whoever keeps
- * one keeps the other. Admin is everything, so it brings every other
- * permission along. MLR review itself is
- * SwishX's automated check, so it is not a permission. Members with none
- * still see published content.
+ * Under the hood a level is a small set of tokens (Library: Manage is
+ * "library" + "products"), and every gate in the app asks for a token. The
+ * tokens never appear in the UI; the areas and levels do.
+ *
+ * Organisation admin is not here: it is company-wide, set on the person in
+ * Settings → Organisation, while this is per workspace.
  */
-export const PERMISSIONS = [
-  { id: "create",    label: "Create, edit & publish content", trailing: "Studio and the Content Library: make, edit and publish, then share, download or send on" },
-  { id: "comment",   label: "View & comment",                 trailing: "Open anything in the Content Library and comment, without editing" },
-  { id: "approve",   label: "Approve",                        trailing: "Sign off or reject as a reviewer in an approval chain" },
-  { id: "products",  label: "Manage Product & Claims Library", trailing: "Products, dossiers, packshots, brand assets, and the approved claims and references behind them" },
-  { id: "analytics", label: "Analytics",                      trailing: "The Insights section" },
-  { id: "billing",   label: "Billing & credits",              trailing: "The Billing page: plan, credits, top-ups, invoices and payment method" },
-  { id: "admin",     label: "Admin (full access)",            trailing: "Everything above, plus team, roles, brand kit, integrations and approval chains" },
+export const TOKENS = [
+  "comment", "create", "approve",
+  "library", "products",
+  "brand", "brandManage",
+  "pron", "pronManage",
+  "integrations", "integrationsManage",
+  "chains", "chainsManage",
+  "teamManage",
+  "analytics",
+  "billingView", "billing",
+  "admin",
 ] as const;
-export type PermissionId = (typeof PERMISSIONS)[number]["id"];
+export type PermissionId = (typeof TOKENS)[number];
 
-/** Permissions that come with another: you can't create or approve what you can't open. */
-export const INCLUDED_BY: Partial<Record<PermissionId, PermissionId[]>> = {
-  comment: ["create", "approve", "admin"],
-  create: ["admin"],
-  approve: ["admin"],
-  products: ["admin"],
-  analytics: ["admin"],
-  billing: ["admin"],
-};
+export type LevelId = "none" | "view" | "comment" | "create" | "approve" | "manage" | "off" | "on";
 
-/** Which held permission brings this one along, if any. */
-export function includedBy(perms: readonly PermissionId[], id: PermissionId): PermissionId | undefined {
-  /* Admin first: "Included with Admin" is the truer reason when both apply. */
-  const parents = INCLUDED_BY[id];
-  if (!parents) return undefined;
-  return parents.includes("admin") && perms.includes("admin") ? "admin" : parents.find((p) => perms.includes(p));
+export interface AreaLevel {
+  id: LevelId;
+  label: string;
+  /** What this level adds, in a few words. */
+  hint: string;
+  tokens: PermissionId[];
 }
 
-const SHORT: Partial<Record<PermissionId, string>> = { create: "Create", approve: "Approve", admin: "Admin" };
-
-/** "Included with Create", when another held permission brings this one along. */
-export function includedNote(perms: readonly PermissionId[], id: PermissionId): string | undefined {
-  const by = includedBy(perms, id);
-  return by ? `Included with ${SHORT[by] ?? by}` : undefined;
+export interface Area {
+  id: "content" | "review" | "library" | "brand" | "pronunciations" | "integrations" | "chains" | "team" | "analytics" | "billing" | "admin";
+  label: string;
+  trailing: string;
+  /** Low to high. */
+  levels: AreaLevel[];
 }
+export type AreaId = Area["id"];
 
-/** A set with everything it implies added, so the stored set always tells the truth. */
-export function withIncluded(perms: readonly PermissionId[]): PermissionId[] {
+const NONE: AreaLevel = { id: "none", label: "None", hint: "Hidden", tokens: [] };
+
+export const AREAS: Area[] = [
+  { id: "content", label: "Content", trailing: "Published content is open to everyone; this is what else they can do with it", levels: [
+    { id: "view", label: "View", hint: "See published content", tokens: [] },
+    { id: "comment", label: "Comment", hint: "Plus comment on it", tokens: ["comment"] },
+    { id: "create", label: "Create", hint: "Plus make, edit, submit for review and share", tokens: ["comment", "create"] },
+  ] },
+  { id: "review", label: "MLR review", trailing: "Be a reviewer on an approval-chain stage: approve or request changes", levels: [
+    NONE,
+    { id: "approve", label: "Approve", hint: "Review and decide in MLR Review", tokens: ["approve"] },
+  ] },
+  { id: "library", label: "Product & Claims Library", trailing: "Products, claims, Brand Dossiers and attachments", levels: [
+    NONE,
+    { id: "view", label: "View", hint: "Browse, read-only", tokens: ["library"] },
+    { id: "manage", label: "Manage", hint: "Add, edit and archive", tokens: ["library", "products"] },
+  ] },
+  { id: "brand", label: "Brand kit", trailing: "The workspace's design standard for every asset, and each product's own kit", levels: [
+    NONE,
+    { id: "view", label: "View", hint: "Logos, type and colours, read-only", tokens: ["brand"] },
+    { id: "manage", label: "Manage", hint: "Change them", tokens: ["brand", "brandManage"] },
+  ] },
+  { id: "pronunciations", label: "Pronunciations", trailing: "How the AI voice says names and terms it gets wrong", levels: [
+    NONE,
+    { id: "view", label: "View", hint: "See the list", tokens: ["pron"] },
+    { id: "manage", label: "Manage", hint: "Add and fix entries", tokens: ["pron", "pronManage"] },
+  ] },
+  { id: "integrations", label: "Integrations", trailing: "Veeva, Teams and iMessage", levels: [
+    NONE,
+    { id: "view", label: "View", hint: "See what's connected and use it", tokens: ["integrations"] },
+    { id: "manage", label: "Manage", hint: "Connect, configure, set channel access", tokens: ["integrations", "integrationsManage"] },
+  ] },
+  { id: "chains", label: "Approval chains", trailing: "Who reviews whose work, in Compliance & MLR", levels: [
+    NONE,
+    { id: "view", label: "View", hint: "Your own chain, or the chains you review in", tokens: ["chains"] },
+    { id: "manage", label: "Manage", hint: "Set up everyone's chains", tokens: ["chains", "chainsManage"] },
+  ] },
+  { id: "team", label: "Team", trailing: "Everyone can see who's in the workspace", levels: [
+    { id: "view", label: "View", hint: "The member directory", tokens: [] },
+    { id: "manage", label: "Manage", hint: "Invite, set roles, handle requests, deactivate", tokens: ["teamManage"] },
+  ] },
+  { id: "analytics", label: "Analytics", trailing: "The Insights section", levels: [
+    NONE,
+    { id: "view", label: "View", hint: "See performance", tokens: ["analytics"] },
+  ] },
+  { id: "billing", label: "Billing & credits", trailing: "The workspace's own plan and credit pool", levels: [
+    NONE,
+    { id: "view", label: "View", hint: "Balance and usage; ask for a top-up", tokens: ["billingView"] },
+    { id: "manage", label: "Manage", hint: "Top up, plan, payment, invoices", tokens: ["billingView", "billing"] },
+  ] },
+  { id: "admin", label: "Workspace admin", trailing: "Manage on everything above, plus the workspace profile", levels: [
+    { id: "off", label: "Off", hint: "", tokens: [] },
+    { id: "on", label: "On", hint: "Full access in this workspace", tokens: ["admin"] },
+  ] },
+];
+
+const areaTokens = (area: Area) => [...new Set(area.levels.flatMap((l) => l.tokens))];
+const top = (area: Area) => area.levels[area.levels.length - 1];
+
+/**
+ * The rules, applied after every change so a stored set always tells the
+ * truth: Manage includes View; Create brings at least View on what it builds
+ * from; Approve brings Comment and at least View on what it checks against;
+ * Workspace admin is Manage everywhere.
+ */
+export function normalize(perms: readonly PermissionId[]): PermissionId[] {
   const out = new Set(perms);
-  for (const [id, parents] of Object.entries(INCLUDED_BY) as [PermissionId, PermissionId[]][]) {
-    if (parents.some((p) => out.has(p))) out.add(id);
-  }
-  return PERMISSIONS.map((p) => p.id).filter((id) => out.has(id));
+  if (out.has("admin")) for (const area of AREAS) top(area).tokens.forEach((t) => out.add(t));
+  if (out.has("create")) ["comment", "library", "brand", "pron", "chains"].forEach((t) => out.add(t as PermissionId));
+  if (out.has("approve")) ["comment", "library", "chains"].forEach((t) => out.add(t as PermissionId));
+  const implies: [PermissionId, PermissionId][] = [
+    ["products", "library"], ["brandManage", "brand"], ["pronManage", "pron"],
+    ["integrationsManage", "integrations"], ["chainsManage", "chains"], ["billing", "billingView"],
+  ];
+  for (const [hi, lo] of implies) if (out.has(hi)) out.add(lo);
+  return TOKENS.filter((t) => out.has(t));
 }
 
-/** Toggle one permission, keeping included ones in step. */
-export function togglePermission(perms: readonly PermissionId[], id: PermissionId): PermissionId[] {
-  if (includedBy(perms, id)) return [...perms]; // locked on by another
-  return withIncluded(perms.includes(id) ? perms.filter((x) => x !== id) : [...perms, id]);
+export function areaById(id: AreaId): Area {
+  return AREAS.find((a) => a.id === id)!;
+}
+
+/** The highest level of an area this set reaches. */
+export function levelOf(perms: readonly PermissionId[], areaId: AreaId): AreaLevel {
+  const area = areaById(areaId);
+  return [...area.levels].reverse().find((l) => l.tokens.every((t) => perms.includes(t))) ?? area.levels[0];
+}
+
+/** Set one area's level; the rules then bring along whatever it needs. */
+export function setLevel(perms: readonly PermissionId[], areaId: AreaId, level: LevelId): PermissionId[] {
+  const area = areaById(areaId);
+  const drop = new Set(areaTokens(area));
+  const kept = perms.filter((t) => !drop.has(t));
+  return normalize([...kept, ...(area.levels.find((l) => l.id === level)?.tokens ?? [])]);
+}
+
+/** The lowest level an area can go to, given the rest, and what holds it there. */
+export function floorOf(perms: readonly PermissionId[], areaId: AreaId): { level: AreaLevel; because?: string } {
+  const area = areaById(areaId);
+  const others = perms.filter((t) => !areaTokens(area).includes(t));
+  const level = levelOf(normalize(others), areaId);
+  if (level.id === area.levels[0].id) return { level };
+  const because = others.includes("admin") ? "Workspace admin" : others.includes("create") ? "Create" : others.includes("approve") ? "Approve" : undefined;
+  return { level, because };
+}
+
+/** A role's access written as a table, the way the defaults were agreed. */
+export type AccessSpec = Partial<Record<AreaId, LevelId>>;
+
+export function fromSpec(spec: AccessSpec): PermissionId[] {
+  let perms: PermissionId[] = [];
+  for (const [areaId, level] of Object.entries(spec) as [AreaId, LevelId][]) perms = setLevel(perms, areaId, level);
+  return normalize(perms);
+}
+
+/** "Content: Create" — the name of the level a token stands for, for explanations. */
+export function tokenLabel(token: PermissionId): string {
+  for (const area of AREAS) {
+    const level = area.levels.find((l) => l.tokens.includes(token) && l.tokens[l.tokens.length - 1] === token);
+    if (level) return area.id === "admin" ? "Workspace admin" : `${area.label}: ${level.label}`;
+  }
+  return token;
+}
+
+/** A short line for lists: the areas above their lowest level. */
+export function accessHeadline(perms: readonly PermissionId[]): string {
+  if (perms.includes("admin")) return "Full access";
+  const parts = AREAS.filter((a) => a.id !== "admin").flatMap((a) => {
+    const l = levelOf(perms, a.id);
+    if (l.id === a.levels[0].id) return [];
+    if (a.id === "content") return [l.label];
+    if (a.id === "review") return ["Approve"];
+    return [`${a.id === "library" ? "Library" : a.label} ${l.label.toLowerCase()}`];
+  });
+  return parts.length ? parts.join(" · ") : "View published content";
 }
 
 /**
- * What each role starts with. Choosing a role seeds these; a member may then
- * differ, and that difference is theirs alone — it never edits the role for
- * anyone else.
+ * What each role starts with, as agreed. Choosing a role seeds these; a member
+ * may then differ, and that difference is theirs alone.
  */
-export const ROLE_PERMISSIONS: Record<(typeof ROLES)[number], PermissionId[]> = {
-  "Admin":               ["create", "comment", "approve", "products", "analytics", "billing", "admin"],
-  "Marketing":           ["create", "comment", "products", "analytics"],
-  "Design":              ["create", "comment"],
-  "Field Force":         ["comment"],
-  "Medical reviewer":    ["comment", "approve", "products"],
-  "Legal reviewer":      ["comment", "approve", "products"],
-  "Regulatory reviewer": ["comment", "approve", "products"],
-  "Read only":           [],
+export const ROLE_ACCESS: Record<(typeof ROLES)[number], AccessSpec> = {
+  "Workspace admin":     { admin: "on" },
+  "Marketing":           { content: "create", library: "manage", brand: "manage", pronunciations: "manage", integrations: "view", chains: "view", analytics: "view", billing: "view" },
+  "Design":              { content: "create", library: "view", brand: "manage", pronunciations: "manage", integrations: "view", chains: "view", billing: "view" },
+  "Medical reviewer":    { content: "comment", review: "approve", library: "manage", brand: "view", pronunciations: "manage", integrations: "view", chains: "view" },
+  "Legal reviewer":      { content: "comment", review: "approve", library: "manage", brand: "view", pronunciations: "view", integrations: "view", chains: "view" },
+  "Regulatory reviewer": { content: "comment", review: "approve", library: "manage", brand: "view", pronunciations: "manage", integrations: "view", chains: "manage" },
+  "Field Force":         { content: "comment", library: "view", brand: "view" },
+  "Read only":           {},
 };
+
+export const ROLE_PERMISSIONS = Object.fromEntries(
+  Object.entries(ROLE_ACCESS).map(([role, spec]) => [role, fromSpec(spec)])
+) as Record<(typeof ROLES)[number], PermissionId[]>;
+
+/** Token labels, for the few places that name one permission (a page's explanation). */
+export const PERMISSIONS = TOKENS.map((id) => ({ id, label: tokenLabel(id) }));
 
 /** A role as an admin defines it: a name and the permissions it seeds. */
 export interface RoleDef {
@@ -100,7 +224,7 @@ export interface RoleDef {
   permissions: PermissionId[];
   /** Came with the workspace. Still editable and removable, except Admin. */
   system: boolean;
-  /** Admin can't be removed or lose admin controls: someone has to manage roles. */
+  /** Workspace admin can't be removed or lose admin: someone has to manage roles. */
   locked?: boolean;
 }
 
@@ -108,7 +232,7 @@ export const DEFAULT_ROLES: RoleDef[] = ROLES.map((name) => ({
   name,
   permissions: [...ROLE_PERMISSIONS[name]],
   system: true,
-  locked: name === "Admin",
+  locked: name === "Workspace admin",
 }));
 
 /** What a role seeds, by name; nothing for a role that no longer exists. */
@@ -140,6 +264,8 @@ export interface PendingInvite {
   invitedAt: string;
   /** Links last 14 days; Resend issues a fresh one. */
   expired?: boolean;
+  /** The invitee asked for a new link (lost the email, or it expired). Cleared by Resend. */
+  resendRequestedAt?: string;
   /** Member id of whoever sent it. */
   invitedBy?: string;
 }
@@ -163,14 +289,14 @@ export interface ApprovalStage {
     | { kind: "anyone" }
     | { kind: "person"; memberId: string }
     | { kind: "seniority"; floor: Seniority };
-  /**
-   * A rejection always goes back to the creator, because the content has to
-   * change. This is who reviews the changed version: everyone from step 1
-   * (earlier approvals are void; the compliance default), or from this step
-   * on (earlier approvals stand; quicker for a small fix).
-   */
-  restartFrom: "first" | "this";
 }
+
+/*
+ * A rejection always goes back to the creator, and the changed version goes
+ * through the whole chain again: every approver approves exactly what ships,
+ * because a fix asked for at one step can change what an earlier one approved.
+ * There is deliberately no per-step "earlier approvals stand" option.
+ */
 
 /** One chain per person. Admins CRUD every chain; a user sees only their own. */
 export interface ApprovalChain {
@@ -254,6 +380,13 @@ export interface UsageEntry {
   balanceAfter: number;
 }
 
+export interface TopUpRequest {
+  id: string;
+  /** Member id of whoever asked. */
+  by: string;
+  at: string;
+}
+
 export interface TopUpEntry {
   id: string;
   at: string;
@@ -313,32 +446,31 @@ export function isPersonalEmail(email: string): boolean {
 
 /**
  * What a set of permissions opens up across the app, in the words a member
- * would use: the same checks the sidebar, Home, studios and libraries make.
+ * would use: the same checks the sidebar, Home, studios and settings make.
  */
 export function roleSees(perms: readonly PermissionId[]): { sees: string[]; cant: string[] } {
-  const has = (p: PermissionId) => perms.includes(p);
-  const libraries = has("create") || has("approve") || has("products");
+  const lv = (id: AreaId) => levelOf(perms, id).id;
   const sees = [
-    "Home, and published content in the Content Library",
-    has("create") && "Video and Docs studios, Characters and the AI co-workers: make, edit, submit for review, share",
-    (has("approve") || has("create")) && (has("approve") ? "MLR Review: the queue, approve or request changes" : "MLR Review: their own submissions"),
-    has("comment") && "Comments on anything they can open",
-    has("products")
-      ? "Product & Claims Library and Brand Dossiers: add, edit, archive, brand kits"
-      : libraries && "Product & Claims Library and Brand Dossiers: view",
-    has("analytics") && "Analytics",
-    has("billing") && "Billing: plan, credits, top-ups and invoices",
-    (has("create") || has("approve") || has("admin")) && (has("admin") ? "Compliance & MLR: every approval chain" : [has("create") && "their own approval chain", has("approve") && "the chains they review in"].filter(Boolean).join(" and ").replace(/^/, "Compliance & MLR: ")),
-    has("admin") && "Settings: team, roles, brand kit, integrations, approval chains",
+    "Home, published content in the Content Library, and the Team directory",
+    lv("content") === "create" ? "Video and Docs studios, Characters and the AI co-workers: make, edit, submit for review, share"
+      : lv("content") === "comment" ? "Comments on anything they can open" : null,
+    lv("review") === "approve" ? "MLR Review: the queue, approve or request changes" : lv("content") === "create" ? "MLR Review: their own submissions" : null,
+    lv("library") === "manage" ? "Product & Claims Library and Brand Dossiers: add, edit, archive" : lv("library") === "view" ? "Product & Claims Library and Brand Dossiers: view" : null,
+    lv("brand") === "manage" ? "Brand kits (workspace and products): edit" : lv("brand") === "view" ? "Brand kits: view" : null,
+    lv("pronunciations") === "manage" ? "Pronunciations: add and fix" : lv("pronunciations") === "view" ? "Pronunciations: view" : null,
+    lv("integrations") === "manage" ? "Integrations: connect and configure" : lv("integrations") === "view" ? "Integrations: see and use what's connected" : null,
+    lv("chains") === "manage" ? "Approval chains: set up everyone's" : lv("chains") === "view" ? "Approval chains: their own, or the ones they review in" : null,
+    lv("team") === "manage" ? "Team: invite, roles, requests" : null,
+    lv("analytics") === "view" ? "Analytics" : null,
+    lv("billing") === "manage" ? "Billing: top up, plan, payment, invoices" : lv("billing") === "view" ? "Billing: balance and usage, ask for a top-up" : null,
+    lv("admin") === "on" ? "The workspace profile, and full control of everything above" : null,
   ].filter((x): x is string => !!x);
   const cant = [
-    !has("create") && "Studios, Characters and editing",
-    !has("approve") && !has("create") && "MLR Review",
-    !libraries && "Product & Claims Library",
-    !has("comment") && "Commenting",
-    !has("analytics") && "Analytics",
-    !has("billing") && "Billing",
-    !has("admin") && "Workspace settings",
+    lv("content") !== "create" && "Studios and editing",
+    lv("review") !== "approve" && lv("content") !== "create" && "MLR Review",
+    lv("library") === "none" && "Product & Claims Library",
+    lv("analytics") === "none" && "Analytics",
+    lv("billing") === "none" && "Billing",
   ].filter((x): x is string => !!x);
   return { sees, cant };
 }

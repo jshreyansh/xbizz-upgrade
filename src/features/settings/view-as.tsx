@@ -25,11 +25,11 @@ export function useCan() {
 }
 
 /**
- * Who the Product and Claims libraries (and the Brand Dossiers in them) are
- * for: people who make content from them, review claims against them, or keep
- * them. Everyone else never sees them, rather than seeing them greyed out.
+ * Who sees the Product and Claims libraries (and the Brand Dossiers in them):
+ * anyone with View, which Create, Approve and Manage all bring along. Everyone
+ * else never sees them, rather than seeing them greyed out.
  */
-export const LIBRARY_ACCESS: readonly PermissionId[] = ["create", "approve", "products"];
+export const LIBRARY_ACCESS: readonly PermissionId[] = ["library"];
 
 /** The header control. Admin-ness and every gate follow the chosen person's permissions. */
 export function ViewAsSwitcher() {
