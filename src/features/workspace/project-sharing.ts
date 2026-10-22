@@ -85,7 +85,7 @@ export function visibilityLabel(v: Visibility): string {
  * rename. A title nobody has typed is the generated one, so the first rename
  * or share pins it; after that the review item and sharing follow the name.
  */
-export function useProjectSharing(kind: "video" | "document", fallback: string) {
+export function useProjectSharing(kind: "video" | "document" | "ad", fallback: string) {
   const stored = useWorkspaceStore((s) => s.projectName);
   const setProjectName = useWorkspaceStore((s) => s.setProjectName);
   const me = useSettingsStore((s) => s.currentUserId);

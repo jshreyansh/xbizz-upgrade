@@ -14,6 +14,17 @@ import {
   type OutputShape,
 } from "@/features/workspace/brand-modal-data";
 import { Portal } from "@/components/ui/portal";
+import {
+  AD_ACCOUNTS,
+  AD_AUDIENCES,
+  AD_FORMATS,
+  AD_PLACEMENTS,
+  AD_TYPES,
+  brandAdFacts,
+  placementsFor,
+  type AdPlacement,
+  type AdType,
+} from "@/features/workspace/ad-options";
 
 /**
  * Changing what the prompt is grounded in, without leaving the prompt.
@@ -28,20 +39,29 @@ import { Portal } from "@/components/ui/portal";
  * audiences that can disagree is worse than either list.
  */
 
-export type ContextField = "brand" | "audience" | "topics" | "frame";
+export type ContextField = "brand" | "audience" | "topics" | "frame" | "adType" | "placements";
 
 const FIELD_TITLES: Record<ContextField, { title: string; hint: string }> = {
   brand: { title: "Brand", hint: "What the asset is grounded in. Claims are checked against this dossier." },
   audience: { title: "Audience", hint: "Who this is for. It decides the language, the claims and the topics offered." },
   topics: { title: "Focus topics", hint: "The story pillars. One to three, more than that and none of them land." },
   frame: { title: "Frame size", hint: "The shape the asset is composed for." },
+  adType: { title: "Branding", hint: "Decides what every ad must include. The FDA's three kinds of drug ad." },
+  placements: { title: "Runs on", hint: "Where the ads will run. Each placement sets the format and size." },
 };
+
+/* Video and Docs ask about topics and frame; an ad asks what kind of ad it
+   is, where it runs and in what formats. */
+const ASSET_FIELDS: ContextField[] = ["brand", "audience", "topics", "frame"];
+const AD_FIELDS: ContextField[] = ["brand", "audience", "adType", "placements"];
 
 export interface ProjectContext {
   brandId: string;
   audience: Audience;
   topics: string[];
   shape: OutputShape;
+  adType?: AdType;
+  placements?: AdPlacement[];
 }
 
 export function ProjectContextModal({
@@ -49,7 +69,10 @@ export function ProjectContextModal({
   context,
   onSave,
   onClose,
+  ad = false,
 }: {
+  /** An Ads project: its own fields in place of topics and frame. */
+  ad?: boolean;
   /** Which field to expand on arrival — the one that was clicked. */
   open: ContextField;
   context: ProjectContext;
@@ -74,7 +97,14 @@ export function ProjectContextModal({
     [brandCatalogue, brandQuery]
   );
 
+  const fields = ad ? AD_FIELDS : ASSET_FIELDS;
+  const audienceOptions = ad ? AUDIENCE_OPTIONS.filter((a) => AD_AUDIENCES.includes(a.id)) : AUDIENCE_OPTIONS;
+  const placements = draft.placements ?? [];
+  const boxedWarning = brandAdFacts(draft.brandId).boxedWarning;
+
   const summary: Record<ContextField, string> = {
+    adType: AD_TYPES.find((t) => t.id === draft.adType)?.label ?? "Branded",
+    placements: `${placements.length} ${placements.length === 1 ? "placement" : "placements"}`,
     brand: brand.name,
     audience: AUDIENCE_OPTIONS.find((a) => a.id === draft.audience)?.title ?? draft.audience,
     topics: `${draft.topics.length} ${draft.topics.length === 1 ? "topic" : "topics"}`,
@@ -129,7 +159,7 @@ export function ProjectContextModal({
           {/* The other three stay reachable: having opened this to change one
               thing, changing a second should not mean opening it again. */}
           <div className="flex flex-wrap gap-1.5 border-b border-hair px-5 py-2.5">
-            {(Object.keys(FIELD_TITLES) as ContextField[]).map((id) => (
+            {fields.map((id) => (
               <button
                 key={id}
                 type="button"
@@ -150,7 +180,7 @@ export function ProjectContextModal({
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
             {field === "audience" && (
               <div className="grid gap-2 sm:grid-cols-2">
-                {AUDIENCE_OPTIONS.map((option) => {
+                {audienceOptions.map((option) => {
                   const Icon = option.icon;
                   const active = draft.audience === option.id;
                   return (
@@ -164,6 +194,7 @@ export function ProjectContextModal({
                           // Topics belong to an audience: keeping the old ones
                           // would offer an HCP's mechanism pillars to a patient.
                           topics: prev.audience === option.id ? prev.topics : [],
+                          placements: ad ? placementsFor(option.id, prev.placements ?? []) : prev.placements,
                         }))
                       }
                       className={cn(
@@ -243,6 +274,91 @@ export function ProjectContextModal({
                       <span className="text-body font-bold text-ink">{option.label}</span>
                       {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
                     </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {field === "adType" && (
+              <div className="grid gap-2">
+                {AD_TYPES.map((option) => {
+                  const active = draft.adType === option.id;
+                  /* Not allowed for a drug with a boxed warning, so not offered. */
+                  const blocked = option.id === "reminder" && boxedWarning;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      disabled={blocked}
+                      onClick={() => setDraft((prev) => ({ ...prev, adType: option.id }))}
+                      className={cn(
+                        "flex items-start gap-2.5 rounded-control border p-3 text-left transition",
+                        active
+                          ? "cursor-pointer border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
+                          : blocked
+                            ? "cursor-not-allowed border-hair-2 bg-canvas opacity-60"
+                            : "cursor-pointer border-hair-2 bg-card hover:border-hair-3"
+                      )}
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-body font-bold text-ink">{option.label}</span>
+                        <span className="mt-0.5 block text-label text-ink-3">
+                          {blocked ? `${brand.name} has a boxed warning, so reminder ads aren't allowed.` : option.hint}
+                        </span>
+                      </span>
+                      {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {field === "placements" && (
+              <div className="space-y-3">
+                {AD_ACCOUNTS.map((account) => {
+                  const rows = AD_PLACEMENTS.filter((p) => p.account === account.id && p.audiences.includes(draft.audience));
+                  if (rows.length === 0) return null;
+                  return (
+                    <div key={account.id} className="space-y-1.5">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-label font-extrabold text-ink-2">{account.id}</span>
+                        {account.detail && <span className="text-caption text-ink-4">{account.detail}</span>}
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {rows.map((option) => {
+                          const active = placements.includes(option.id);
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              onClick={() =>
+                                setDraft((prev) => {
+                                  const current = prev.placements ?? [];
+                                  const next = current.includes(option.id)
+                                    ? current.length > 1 ? current.filter((p) => p !== option.id) : current
+                                    : [...current, option.id];
+                                  return { ...prev, placements: next };
+                                })
+                              }
+                              className={cn(
+                                "flex cursor-pointer items-start gap-2.5 rounded-control border p-3 text-left transition",
+                                active
+                                  ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
+                                  : "border-hair-2 bg-card hover:border-hair-3"
+                              )}
+                            >
+                              <span className="min-w-0">
+                                <span className="block text-body font-bold text-ink">{option.label}</span>
+                                <span className="mt-0.5 block text-label text-ink-3">
+                                  {option.makes.map((f) => AD_FORMATS.find((o) => o.id === f)?.label).join(" + ")} · {option.sizes}
+                                </span>
+                              </span>
+                              {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -339,7 +455,7 @@ export function ProjectContextModal({
 
           <div className="flex items-center justify-between gap-3 border-t border-hair bg-canvas px-5 py-3">
             <span className="min-w-0 truncate text-label text-ink-3">
-              {summary.brand} · {summary.audience} · {summary.topics} · {summary.frame}
+              {fields.map((id) => summary[id]).join(" · ")}
             </span>
             <div className="flex shrink-0 items-center gap-2">
               <button

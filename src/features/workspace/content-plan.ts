@@ -36,7 +36,8 @@ export function isRequestSpecific(brief: string) {
   return brief.trim().split(/\s+/).filter(Boolean).length >= 4;
 }
 
-const deliveryDefaults: Record<string, Record<AssetType, { format: string; length: string }>> = {
+/* Partial: an ad takes its sizes from the platforms it runs on, not from an intended use. */
+const deliveryDefaults: Record<string, Partial<Record<AssetType, { format: string; length: string }>>> = {
   "HCP meeting": {
     video: { format: "16:9", length: "60 sec" },
     carousel: { format: "16:9 slides", length: "6 pages" },
@@ -104,7 +105,8 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
   const selectedSources = planningSources.filter((source) => inputs.selectedSourceIds.includes(source.id));
   const intendedUses = parseIntendedUses(inputs.intendedUse);
   const primaryUse = primaryIntendedUse(inputs.intendedUse);
-  const delivery = (deliveryDefaults[primaryUse] ?? deliveryDefaults["HCP meeting"])[inputs.assetType];
+  const uses = deliveryDefaults[primaryUse] ?? deliveryDefaults["HCP meeting"];
+  const delivery = uses[inputs.assetType] ?? uses.video ?? { format: "16:9", length: "60 sec" };
 
   const hasApprovedEvidence = inputs.sourceType === "dossier" || inputs.sourceType === "url" || selectedSources.some((source) => source.kind === "approved-source" || source.kind === "claims");
   const hasBrandKit = inputs.sourceType === "dossier" || selectedSources.some((source) => source.kind === "brand");

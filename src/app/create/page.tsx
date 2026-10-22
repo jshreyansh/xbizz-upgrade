@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { AppShell } from "@/features/workspace/app-shell";
 import { MagicVideoModeScreen } from "@/features/workspace/magic-video-mode-screen";
 import { CreativesModeScreen } from "@/features/workspace/creatives-mode-screen";
+import { AdsModeScreen } from "@/features/workspace/ads-mode-screen";
 import { MagicVideoSourceScreen } from "@/features/workspace/magic-video-source-screen";
 import { CreateScreen } from "@/features/workspace/create-screen";
 import { DirectionsScreen } from "@/features/workspace/directions-screen";
@@ -48,6 +49,13 @@ export default function CreatePage() {
 
   // Stage 1 (Mode Selection) renders within the platform shell with sidebar
   if (videoSubStage === "mode-select") {
+    if (assetType === "ad") {
+      return (
+        <AppShell pageTitle="Create Ads">
+          <AdsModeScreen />
+        </AppShell>
+      );
+    }
     if (assetType === "infographic") {
       return (
         <AppShell pageTitle="Create Doc/Images">

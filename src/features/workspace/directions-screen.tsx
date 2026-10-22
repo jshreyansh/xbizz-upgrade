@@ -144,7 +144,8 @@ const voiceList = [
   { name: "Priya", role: "empathetic and reassuring", accent: "Neutral English", tag: "Patient Care" },
 ];
 
-const profiles: Record<AssetType, {
+/* Partial: the Ads plan is not built yet, so an ad falls back to the video profile. */
+const profiles: Partial<Record<AssetType, {
   noun: string;
   recommendation: string;
   rationale: string;
@@ -152,7 +153,7 @@ const profiles: Record<AssetType, {
   units: Array<{ title: string; detail: string; time?: string }>;
   formatOptions: string[];
   lengthOptions: string[];
-}> = {
+}>> = {
   video: {
     noun: "video",
     recommendation: "Narrated visual story",
@@ -474,7 +475,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const brandName = resolvedBrandName;
   const projectName = `${brandName} HCP launch`;
 
-  const profile = profiles[assetType];
+  const profile = profiles[assetType] ?? profiles.video!;
   const derivedPlan = useMemo(
     () =>
       deriveContentPlan({

@@ -3,6 +3,7 @@
 import { AppShell } from "@/features/workspace/app-shell";
 import { MagicVideoModeScreen } from "@/features/workspace/magic-video-mode-screen";
 import { CreativesModeScreen } from "@/features/workspace/creatives-mode-screen";
+import { AdsModeScreen } from "@/features/workspace/ads-mode-screen";
 import { VideoCreationWizard } from "@/features/workspace/video-creation-wizard";
 import { DirectionsScreen } from "@/features/workspace/directions-screen";
 import { HomeScreen } from "@/features/workspace/home-screen";
@@ -43,6 +44,13 @@ export function SwishXApplication() {
 
   if (view === "create") {
     if (videoSubStage === "mode-select") {
+      if (assetType === "ad") {
+        return (
+          <AppShell pageTitle="Create Ads">
+            <AdsModeScreen />
+          </AppShell>
+        );
+      }
       if (assetType === "infographic") {
         return (
           <AppShell pageTitle="Create Doc/Images">

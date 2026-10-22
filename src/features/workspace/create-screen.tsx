@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Info,
   Layers,
+  Megaphone,
   Paperclip,
   Search,
   ShieldCheck,
@@ -37,6 +38,7 @@ import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialo
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { AUDIENCE_OPTIONS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
 import { Portal } from "@/components/ui/portal";
+import { AD_KIND_PRESETS, AD_TYPES, adSamplePrompts, brandAdFacts, formatsLabel, promptKindFor } from "@/features/workspace/ad-options";
 
 import {
   ProjectContextModal,
@@ -64,6 +66,12 @@ const INFOGRAPHIC_HEADLINES = [
   "What infographic would you like to design today?",
   "Describe your clinical brief to generate directly from approved claims",
   "Use the example prompts below to create a high-impact leave-behind",
+];
+
+const AD_HEADLINES = [
+  "What ads would you like to create today?",
+  "Describe your campaign to generate ads from approved claims",
+  "Use the example prompts below to start a campaign",
 ];
 
 const PRESENTERS = [
@@ -146,7 +154,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const exit = useProjectExit();
 
   const isInfographic = assetType === "infographic";
-  const activeHeadlines = isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
+  const isAd = assetType === "ad";
+  const adKind = useWorkspaceStore((s) => s.adKind);
+  const adType = useWorkspaceStore((s) => s.adType);
+  const adPlacements = useWorkspaceStore((s) => s.adPlacements);
+  const storedProjectName = useWorkspaceStore((s) => s.projectName);
+  /* The Ads plan is the next screen to build; until then the brief stops here. */
+  const [adPlanNotice, setAdPlanNotice] = useState(false);
+  const activeHeadlines = isAd ? AD_HEADLINES : isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
   // Longest by character count, which is what decides the wrap.
   const longestHeadline = activeHeadlines.reduce((a, b) => (b.length > a.length ? b : a));
 
@@ -265,6 +280,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const [contextField, setContextField] = useState<ContextField | null>(null);
 
   const preparePlan = () => {
+    if (isAd && requestIsSpecific) {
+      setAdPlanNotice(true);
+      return;
+    }
     if (!requestIsSpecific) {
       setClarificationOpen(true);
       return;
@@ -330,7 +349,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
 
   const samplePrompts = useMemo(
-    () => [
+    () => isAd ? adSamplePrompts(promptKindFor(adKind, adType, audience), currentBrandName) : [
       {
         id: "hcp-launch",
         tag: isInfographic ? "HCP Clinical Leave-Behind" : "HCP Launch Video",
@@ -353,13 +372,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           : `Generate a presenter-led clinical briefing explaining the dual mechanism of action and fair balance safety profile for ${currentBrandName}.`,
       },
     ],
-    [currentBrandName, isInfographic]
+    [currentBrandName, isInfographic, isAd, adKind, adType, audience]
   );
 
 
-  const projectKind = isInfographic ? "document" : "video";
-  const projectName =
-    sourceType === "dossier"
+  const projectKind = isAd ? "ad" : isInfographic ? "document" : "video";
+  const projectName = isAd
+    ? storedProjectName || `${currentBrandName} · ${AD_KIND_PRESETS[adKind].noun}`
+    : sourceType === "dossier"
       ? `${currentBrandName} ${isInfographic ? "HCP Infographic" : "HCP launch"}`
       : isInfographic ? "New Doc Project" : "New Video Project";
 
@@ -457,7 +477,35 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 an audience turns a two-second correction into a five-step
                 detour. */}
             <div className="flex flex-wrap items-center gap-1.5 border-b border-hair px-3 py-2.5">
-              {([
+              {(isAd
+                ? [
+                    { id: "brand" as const, icon: ShieldCheck, label: currentBrandName, sub: "Dossier", tinted: true },
+                    {
+                      id: "audience" as const,
+                      icon: Users,
+                      label: AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title ?? audience ?? "Audience",
+                      sub: "Audience",
+                      tinted: false,
+                    },
+                    { id: "adType" as const, icon: Target, label: AD_TYPES.find((t) => t.id === adType)?.label ?? "Branded", sub: "Branding", tinted: false },
+                    {
+                      id: "placements" as const,
+                      icon: Megaphone,
+                      label: `${adPlacements.length} ${adPlacements.length === 1 ? "placement" : "placements"}`,
+                      sub: "Runs on",
+                      tinted: false,
+                    },
+                    /* Not a question of its own: what gets made follows from
+                       the placements, so this opens them. */
+                    {
+                      id: "placements" as const,
+                      icon: Layers,
+                      label: formatsLabel(adPlacements),
+                      sub: "Makes",
+                      tinted: false,
+                    },
+                  ]
+                : [
                 {
                   id: "brand" as const,
                   icon: ShieldCheck,
@@ -490,7 +538,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 const Icon = chip.icon;
                 return (
                   <button
-                    key={chip.id}
+                    key={chip.sub}
                     type="button"
                     onClick={() => setContextField(chip.id)}
                     title={`Change ${chip.sub.toLowerCase()}`}
@@ -549,6 +597,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 value={brief}
                 onChange={(e) => {
                   setBrief(e.target.value);
+                  setAdPlanNotice(false);
                   /* Typing over a loaded scenario makes it your brief, and
                      yours has not answered anything yet. */
                   setBriefFromScenario(false);
@@ -557,7 +606,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) preparePlan();
                 }}
                 rows={4}
-                placeholder={`Ask SwishX or describe what you want to create (e.g. "Create a concise ${currentBrandName} HCP launch video for dermatologists explaining clinical need, mechanism, and pivotal PASI 90 evidence")...`}
+                placeholder={
+                  isAd
+                    ? `Describe the campaign: who it's for, the message, and where people should land (e.g. "Launch ${currentBrandName} to adults with plaque psoriasis and drive sign-ups to the savings card")...`
+                    : `Ask SwishX or describe what you want to create (e.g. "Create a concise ${currentBrandName} HCP launch video for dermatologists explaining clinical need, mechanism, and pivotal PASI 90 evidence")...`
+                }
                 className="w-full resize-none bg-transparent text-subhead leading-relaxed outline-none placeholder:text-ink-4 text-ink font-normal"
               />
             </div>
@@ -610,6 +663,20 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
           )}
 
+          {adPlanNotice && (
+            <div className="w-full max-w-[940px] rounded-panel border border-hair-2 bg-card p-4 shadow-2xs">
+              <div className="flex items-start gap-2.5">
+                <Info className="mt-0.5 size-4 shrink-0 text-brand" />
+                <div>
+                  <b className="text-body-lg font-bold text-ink">Brief saved. The Ads plan is the next screen to build.</b>
+                  <p className="mt-0.5 text-body leading-relaxed text-ink-3">
+                    This prototype covers the Ads page, starting a project and the brief. Need your input and the production plan come next.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ── Example Prompts — BELOW the input ── */}
           <div className="w-full max-w-[940px] flex flex-col gap-3 pt-2">
             {samplePrompts.map((sample) => {
@@ -620,6 +687,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   type="button"
                   onClick={() => {
                     setBrief(sample.prompt);
+                    setAdPlanNotice(false);
                     setSelectedSourceIds(["dermora-core", "dermora-claims", "dermora-brand"]);
                   }}
                   className={cn(
@@ -658,8 +726,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           already exists. */}
       {contextField && (
         <ProjectContextModal
+          ad={isAd}
           open={contextField}
           context={{
+            adType,
+            placements: adPlacements,
             brandId:
               INITIAL_BRANDS.find(
                 (b) => b.name.toLowerCase() === currentBrandName.toLowerCase()
@@ -673,6 +744,15 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             const brand = INITIAL_BRANDS.find((b) => b.id === next.brandId);
             if (brand) setSourcePayload({ dossierId: brand.id });
             setAudience(next.audience);
+            if (isAd) {
+              const store = useWorkspaceStore.getState();
+              /* A brand with a boxed warning cannot run reminder ads. */
+              const blocked = next.adType === "reminder" && brand && brandAdFacts(brand.id).boxedWarning;
+              store.setAdType(blocked ? "product-claim" : next.adType ?? adType);
+              store.setAdPlacements(next.placements ?? adPlacements);
+              setContextField(null);
+              return;
+            }
             setTopics(next.topics);
             // Each flow calls the same two shapes by its own name.
             if (isInfographic) setPageShape(next.shape === "portrait" ? "3:4" : "16:9");

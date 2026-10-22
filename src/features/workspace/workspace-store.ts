@@ -3,6 +3,7 @@ import { SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { creativeDirections } from "@/features/workspace/mock-data";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, LogoMark, OnboardingBeat, PresentationMode } from "@/types/content";
 import type { BriefAttachment } from "@/features/workspace/plan-intake";
+import type { AdKind, AdPlacement, AdType } from "@/features/workspace/ad-options";
 
 export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
@@ -137,6 +138,11 @@ interface WorkspaceState {
   pendingRender: PendingRender | null;
   /** Values for the congress's required items: acceptance code, contact email… */
   posterFields: Record<string, string>;
+  /** Ads: the starting point picked, the kind of ad it implies and where it
+   *  runs. What gets made follows from the placements. See ad-options. */
+  adKind: AdKind;
+  adType: AdType;
+  adPlacements: AdPlacement[];
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
@@ -203,6 +209,9 @@ interface WorkspaceState {
   setPosterFocus: (posterFocus: string) => void;
   setPendingRender: (pendingRender: PendingRender | null) => void;
   setPosterField: (id: string, value: string) => void;
+  setAdKind: (adKind: AdKind) => void;
+  setAdType: (adType: AdType) => void;
+  setAdPlacements: (adPlacements: AdPlacement[]) => void;
   reset: () => void;
 }
 
@@ -271,6 +280,9 @@ const initialState = {
   posterFocus: null as string | null,
   pendingRender: null as PendingRender | null,
   posterFields: {} as Record<string, string>,
+  adKind: "scratch" as AdKind,
+  adType: "product-claim" as AdType,
+  adPlacements: ["youtube", "meta-feed", "meta-reels-stories", "google-display"] as AdPlacement[],
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -357,6 +369,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setPosterFocus: (posterFocus) => set({ posterFocus }),
   setPendingRender: (pendingRender) => set({ pendingRender }),
   setPosterField: (id, value) => set((state) => ({ posterFields: { ...state.posterFields, [id]: value } })),
+  setAdKind: (adKind) => set({ adKind }),
+  setAdType: (adType) => set({ adType }),
+  setAdPlacements: (adPlacements) => set({ adPlacements }),
   reset: () => set(initialState),
 }));
 

@@ -10,6 +10,7 @@ import {
   Video,
   FileImage,
   Globe,
+  Megaphone,
   FileText,
   Library,
   Package,
@@ -63,6 +64,7 @@ interface CreateTile {
 const CREATE_TILES: CreateTile[] = [
   { label: "Video", icon: "video", targetAsset: "video" },
   { label: "Docs", icon: "image", targetAsset: "infographic" },
+  { label: "Ads", icon: "megaphone", targetAsset: "ad" },
   { label: "Web", icon: "globe", targetAsset: "web", soon: true },
 ];
 
@@ -143,6 +145,7 @@ function NavIcon({ name }: { name: string }): ReactNode {
     video: <Video size={16} strokeWidth={1.75} />,
     image: <FileImage size={16} strokeWidth={1.75} />,
     globe: <Globe size={16} strokeWidth={1.75} />,
+    megaphone: <Megaphone size={16} strokeWidth={1.75} />,
     dossier: <FileText size={16} strokeWidth={1.75} />,
     library: <Library size={16} strokeWidth={1.75} />,
     package: <Package size={16} strokeWidth={1.75} />,
@@ -234,6 +237,11 @@ export function Sidebar() {
     } else if (targetAsset === "infographic") {
       useWorkspaceStore.getState().setAssetType("infographic");
       useWorkspaceStore.getState().setCreationMode("magic-chart");
+      useWorkspaceStore.getState().setVideoSubStage("mode-select");
+      useWorkspaceStore.getState().setView("create");
+      router.push("/create");
+    } else if (targetAsset === "ad") {
+      useWorkspaceStore.getState().setAssetType("ad");
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
       useWorkspaceStore.getState().setView("create");
       router.push("/create");
@@ -361,8 +369,7 @@ export function Sidebar() {
                 {CREATE_TILES.map((tile) => {
                   const isTileActive =
                     isCreateActive &&
-                    ((tile.targetAsset === "video" && assetType === "video") ||
-                      (tile.targetAsset === "infographic" && assetType === "infographic"));
+                    tile.targetAsset === assetType;
                   return (
                     <button
                       key={tile.label}
@@ -686,8 +693,7 @@ export function Sidebar() {
             {CREATE_TILES.map((tile) => {
               const isTileActive =
                 isCreateActive &&
-                ((tile.targetAsset === "video" && assetType === "video") ||
-                  (tile.targetAsset === "infographic" && assetType === "infographic"));
+                tile.targetAsset === assetType;
               return (
                 <button
                   key={tile.label}

@@ -1,7 +1,7 @@
 "use client";
 
 import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components/patterns/pick-list";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -15,6 +15,10 @@ import {
   X,
   FileImage,
   Video,
+  Megaphone,
+  Info,
+  ShieldAlert,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -25,6 +29,20 @@ import { BRAND_VARIATIONS } from "@/features/workspace/workspace-assets";
 import { ProductArtwork } from "@/features/product-library/product-artwork";
 import { variationLabelsFor } from "@/features/product-library/mock-product-detail";
 import type { Audience } from "@/types/content";
+import {
+  AD_AUDIENCES,
+  AD_KIND_PRESETS,
+  AD_ACCOUNTS,
+  AD_FORMATS,
+  AD_PLACEMENTS,
+  adSamplePrompts,
+  brandAdFacts,
+  placementsFor,
+  placementsFromMediaPlan,
+  promptKindFor,
+  type AdPlacement,
+  type AdType,
+} from "@/features/workspace/ad-options";
 export {
   INITIAL_BRANDS,
   DOSSIERS,
@@ -143,6 +161,99 @@ function SelectedBrandTile({ brand, onChange }: { brand: BrandItem; onChange: ()
   );
 }
 
+/**
+ * What the label says about this brand's ads, shown under the brand.
+ *
+ * A reminder ad for a drug with a boxed warning is not allowed at all, so
+ * that blocks the step with the fix beside it. The rest are things the
+ * marketer should know now rather than at MLR.
+ */
+function AdLabelChecks({
+  brandName,
+  adKind,
+  adType,
+  facts,
+  indication,
+  onIndication,
+  onMakeProductClaim,
+}: {
+  brandName: string;
+  adKind: string;
+  adType: AdType;
+  facts: ReturnType<typeof brandAdFacts>;
+  indication: string;
+  onIndication: (label: string) => void;
+  onMakeProductClaim: () => void;
+}) {
+  return (
+    <div className="space-y-2.5">
+      {adType === "reminder" && facts.boxedWarning && (
+        <div className="flex items-start gap-2.5 rounded-control border border-danger-line bg-danger-bg p-3">
+          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-danger" />
+          <div className="min-w-0 flex-1">
+            <p className="text-body font-bold text-ink">Reminder ads aren&apos;t allowed for {brandName}</p>
+            <p className="text-label text-ink-2">
+              {brandName} carries a boxed warning, so every ad must include its claims and safety information.
+            </p>
+          </div>
+          <Button size="sm" variant="secondary" onClick={onMakeProductClaim} className="h-7.5 shrink-0 text-label font-bold">
+            Make them branded ads
+          </Button>
+        </div>
+      )}
+
+      {adType === "unbranded" && (
+        <div className="flex items-start gap-2.5 rounded-control border border-hair-2 bg-subtle p-3">
+          <Info className="mt-0.5 size-4 shrink-0 text-ink-3" />
+          <p className="text-label text-ink-2">
+            {brandName} sets the condition. It won&apos;t be named or shown in the ads, and they will look different from the brand.
+          </p>
+        </div>
+      )}
+
+      {adKind === "savings" && facts.genericAvailable && (
+        <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
+          <Info className="mt-0.5 size-4 shrink-0 text-warn" />
+          <p className="text-label text-ink-2">
+            A generic of {brandName} is available. California limits copay coupons when a cheaper generic exists, so the plan will flag California placements.
+          </p>
+        </div>
+      )}
+
+      {adKind === "new-indication" && (
+        <div className="space-y-2">
+          <span className="text-label font-bold text-ink-2">Which indication are these ads about?</span>
+          <div className="grid gap-2">
+            {facts.indications.map((option) => {
+              const isSel = indication === option.label;
+              return (
+                <button
+                  key={option.label}
+                  type="button"
+                  onClick={() => onIndication(option.label)}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-control border p-2.5 text-left transition cursor-pointer",
+                    isSel ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3"
+                  )}
+                >
+                  <span className={cn("size-4 shrink-0 rounded-full border", isSel ? "border-[5px] border-brand" : "border-hair-3")} />
+                  <span className="min-w-0 flex-1 text-body font-semibold text-ink">{option.label}</span>
+                  {option.isNew && (
+                    <span className="shrink-0 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok">
+                      Newly approved
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-caption text-ink-4">Only indications in the current label are listed.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface BrandDossierModalProps {
   open: boolean;
   onClose: () => void;
@@ -161,6 +272,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const setTopicsStore = useWorkspaceStore((s) => s.setTopics);
   const setProjectNameStore = useWorkspaceStore((s) => s.setProjectName);
   const setVariationsStore = useWorkspaceStore((s) => s.setVariations);
+  const adKind = useWorkspaceStore((s) => s.adKind);
+  const isAd = assetType === "ad";
+  const adPreset = AD_KIND_PRESETS[adKind];
 
   // Progressive Stage: "audience" -> "grounding" -> "details"
   const [stage, setStage] = useState<RevealStage>("audience");
@@ -191,6 +305,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // 4. Focus Topics
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
+  /* Ads only. Step 3 asks where the ads run instead of which topics they
+     cover: an ad carries one message, and the placements decide every size,
+     length, format and how the safety information fits. */
+  const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
+  /* The media agency's plan, when there is one: it already names the
+     placements, so reading it beats ticking them again. */
+  const [mediaPlanName, setMediaPlanName] = useState("");
+  const mediaPlanInputRef = useRef<HTMLInputElement>(null);
+  const [adType, setAdType] = useState<AdType>("product-claim");
+  const [adIndication, setAdIndication] = useState("");
+
   // Project name. Lives in the header rather than as a step: naming is not a
   // focus decision, and asking for one up front is asking before the user has
   // anything to name it after.
@@ -220,13 +345,25 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setSelectedSpecialities([]);
       const def = TOPICS_BY_AUDIENCE["HCP"];
       setSelectedTopics([def[0].label, def[1].label]);
+      if (isAd) {
+        /* A starting point already knows who the ads are for, so the modal
+           opens on the brand. From scratch, audience is still the first ask. */
+        setAudience(adPreset.audience);
+        setAdPlacements(adPreset.placements);
+        setMediaPlanName("");
+        setAdType(adPreset.adType);
+        setAdIndication("");
+        if (adPreset.id !== "scratch") setStage("grounding");
+      }
     }
-  }, [open, assetType]);
+  }, [open, assetType, isAd, adPreset]);
 
   useEffect(() => {
     const topics = TOPICS_BY_AUDIENCE[audience];
     if (topics) setSelectedTopics([topics[0].label, topics[1].label]);
     setSelectedSpecialities([]);
+    /* TikTok and CTV cannot reach doctors, HCP networks cannot reach patients. */
+    setAdPlacements((prev) => placementsFor(audience, prev));
     // Therapy-area grounding vanishes for brand-only audiences. Drop a
     // selection made under a previous audience rather than carrying an
     // impossible one forward — picking Patient, choosing two therapy areas,
@@ -287,7 +424,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const currentTopics = TOPICS_BY_AUDIENCE[audience] || TOPICS_BY_AUDIENCE.HCP;
 
+  /* Ads reach patients and HCPs. Trade and market-access audiences are
+     reached through dossiers and portals, not ad accounts. */
+  const audienceOptions = isAd ? AUDIENCE_OPTIONS.filter((a) => AD_AUDIENCES.includes(a.id)) : AUDIENCE_OPTIONS;
   const audienceTitle = AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title ?? "";
+  const studioNoun = isAd ? "Ads" : assetType === "infographic" ? "Creative" : "Video";
   const groundingModes = GROUNDING_BY_AUDIENCE[audience] ?? ["brand"];
   /**
    * Therapy-area grounding is hidden for now — every audience grounds in a
@@ -309,8 +450,21 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const suggestedName = useMemo(() => {
     if (!groundingLabel) return "";
-    return `${groundingLabel} · ${audienceTitle} ${assetType === "infographic" ? "Creative" : "Video"}`;
-  }, [groundingLabel, audienceTitle, assetType]);
+    /* The tile's name, unless the kind of ad changed away from it. */
+    if (isAd) {
+      const keepsTileName = adPreset.id !== "scratch" && adType === adPreset.adType;
+      return `${groundingLabel} · ${keepsTileName ? adPreset.noun : `${audienceTitle} Ads`}`;
+    }
+    return `${groundingLabel} · ${audienceTitle} ${studioNoun}`;
+  }, [groundingLabel, audienceTitle, studioNoun, isAd, adPreset, adType]);
+
+  /* What the label allows, checked the moment the brand is picked rather
+     than discovered at MLR. */
+  const adFacts = brandAdFacts(selectedBrandId);
+  const reminderBlocked = isAd && adType === "reminder" && adFacts.boxedWarning;
+  const needsIndication = isAd && adKind === "new-indication";
+  const brandStepBlocked = reminderBlocked || (needsIndication && !adIndication);
+  const adPlacementOptions = AD_PLACEMENTS.filter((p) => p.audiences.includes(audience));
 
   /**
    * Derived, not synced. Until the user types, the name IS the suggestion and
@@ -328,7 +482,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const canProceed =
     (sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
     hasReachedFocusTopics &&
-    selectedTopics.length > 0;
+    (isAd ? adPlacements.length > 0 && !brandStepBlocked : selectedTopics.length > 0);
+
+  const toggleAdPlacement = (id: AdPlacement) =>
+    setAdPlacements((prev) =>
+      prev.includes(id) ? (prev.length > 1 ? prev.filter((p) => p !== id) : prev) : [...prev, id]
+    );
 
   const toggleTopic = (label: string) => {
     if (selectedTopics.includes(label)) {
@@ -368,6 +527,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedBrandId(brand.id);
     setBrandSearch(brand.name);
     setSelectedVariations([]);
+    /* The newest indication is usually the reason for a new-indication campaign. */
+    setAdIndication(brandAdFacts(brand.id).indications.find((i) => i.isNew)?.label ?? "");
   };
 
   /**
@@ -425,7 +586,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
      * again. Asking here only added a step to a screen that should be about
      * what the asset is, not how tall it is.
      */
-    if (assetType === "infographic") {
+    if (isAd) {
+      const store = useWorkspaceStore.getState();
+      store.setAdType(adType);
+      store.setAdPlacements(adPlacements);
+      setTopicsStore(needsIndication ? [adIndication] : []);
+      store.setBrief(adSamplePrompts(promptKindFor(adKind, adType, audience), selectedBrand?.name ?? groundingLabel)[0].prompt);
+    } else if (assetType === "infographic") {
       setPageShapeStore("3:4");
     } else {
       setFormatStore("9:16");
@@ -479,7 +646,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 glyph the sidebar uses for this studio, so the modal says which
                 one you are in before you have read a word of it. */}
             <div className="grid size-9 place-items-center rounded-control bg-tint text-brand-deep border border-tint-line shadow-2xs">
-              {assetType === "infographic" ? (
+              {isAd ? (
+                <Megaphone className="size-4.5" strokeWidth={1.9} />
+              ) : assetType === "infographic" ? (
                 <FileImage className="size-4.5" strokeWidth={1.9} />
               ) : (
                 <Video className="size-4.5" strokeWidth={1.9} />
@@ -493,7 +662,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               {groundingLabel ? (
                 <>
                   <p className="text-micro font-extrabold uppercase tracking-[.14em] text-ink-4 leading-none mb-1">
-                    New {assetType === "infographic" ? "Creative" : "Video"} Project
+                    New {studioNoun} Project
                   </p>
                   {editingName ? (
                     <input
@@ -526,7 +695,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               ) : (
                 <>
                   <h2 className="text-title font-[850] text-ink tracking-tight">
-                    New {assetType === "infographic" ? "Creative / Infographic" : "Video"} Project
+                    New {isAd ? "Ads" : assetType === "infographic" ? "Creative / Infographic" : "Video"} Project
                   </h2>
                   <p className="text-body text-ink-3">
                     Answer each focus decision to configure your project.
@@ -590,8 +759,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             {/* Expanded Body for Step 1 */}
             {stage === "audience" && (
               <div className="pt-4 space-y-4 animate-in fade-in duration-150">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-                  {AUDIENCE_OPTIONS.map((item) => {
+                <div className={cn("grid gap-3.5", isAd ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6")}>
+                  {audienceOptions.map((item) => {
                     const isSel = audience === item.id;
                     const IconComp = item.icon;
                     return (
@@ -855,12 +1024,25 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             }
                           />
 
+                          {isAd && (
+                            <AdLabelChecks
+                              brandName={selectedBrand.name}
+                              adKind={adKind}
+                              adType={adType}
+                              facts={adFacts}
+                              indication={adIndication}
+                              onIndication={setAdIndication}
+                              onMakeProductClaim={() => setAdType("product-claim")}
+                            />
+                          )}
+
                           <div className="flex justify-end pt-1">
                             <Button
                               size="sm"
                               variant="primary"
+                              disabled={brandStepBlocked}
                               onClick={() => setStage("details")}
-                              className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm"
+                              className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm disabled:opacity-40"
                             >
                               <span>Continue</span>
                               <ChevronRight className="size-3.5" />
@@ -925,7 +1107,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   3
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  Clinical Focus Topics
+                  {isAd ? "Where It Runs" : "Clinical Focus Topics"}
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -935,8 +1117,116 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             </div>
           ) : (
             <div className="space-y-4 animate-in fade-in duration-200">
-              
+
+              {/* 3. Where it runs — the ads version of step 3, in the same
+                  row style as the topics, so the modal reads as one form.
+                  Placements are grouped by the account they are bought
+                  through, and each says what it will produce. */}
+              {isAd && (
+                <div className="rounded-panel border border-hair bg-card p-5 space-y-3 shadow-2xs">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
+                        3
+                      </div>
+                      <div>
+                        <h3 className="text-body-lg font-extrabold text-ink">Where It Runs</h3>
+                        <p className="text-label text-ink-3">
+                          Each placement sets the format and size. SwishX makes what it needs.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => mediaPlanInputRef.current?.click()}
+                        className="h-7.5 gap-1.5 text-label font-bold"
+                      >
+                        <Upload className="size-3.5" />
+                        <span>{mediaPlanName ? "Replace media plan" : "Upload media plan"}</span>
+                      </Button>
+                      <span className="text-label font-bold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line">
+                        {adPlacements.length} Selected
+                      </span>
+                    </div>
+                    <input
+                      ref={mediaPlanInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv,.pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setMediaPlanName(file.name);
+                        setAdPlacements(placementsFromMediaPlan(audience));
+                        e.target.value = "";
+                      }}
+                    />
+                  </div>
+
+                  {mediaPlanName && (
+                    <div className="flex items-center gap-2 rounded-control border border-ok-line bg-ok-bg px-3 py-2 text-label text-ink-2">
+                      <Check className="size-3.5 shrink-0 text-ok" />
+                      <span className="min-w-0 truncate">
+                        Placements read from <b className="font-bold text-ink">{mediaPlanName}</b>. Change any below.
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 pt-1">
+                    {AD_ACCOUNTS.map((account) => {
+                      const rows = adPlacementOptions.filter((p) => p.account === account.id);
+                      if (rows.length === 0) return null;
+                      return (
+                        <div key={account.id} className="space-y-1.5">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-label font-extrabold text-ink-2">{account.id}</span>
+                            {account.detail && <span className="text-caption text-ink-4">{account.detail}</span>}
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {rows.map((placement) => {
+                              const isSel = adPlacements.includes(placement.id);
+                              const makes = placement.makes
+                                .map((f) => AD_FORMATS.find((o) => o.id === f)?.label)
+                                .join(" + ");
+                              return (
+                                <button
+                                  key={placement.id}
+                                  type="button"
+                                  onClick={() => toggleAdPlacement(placement.id)}
+                                  className={cn(
+                                    "group relative flex items-center gap-2.5 p-3 rounded-control border text-left transition-all duration-150 cursor-pointer shadow-2xs",
+                                    isSel
+                                      ? "border-brand bg-[#f3f9f5] ring-2 ring-brand/15 shadow-sm"
+                                      : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                                  )}
+                                >
+                                  <span className="min-w-0 flex-1">
+                                    <span className="flex items-center gap-2">
+                                      <span className="text-body font-bold leading-snug text-ink">{placement.label}</span>
+                                      <span className="shrink-0 rounded-chip bg-subtle px-1.5 py-0.5 text-caption font-bold text-ink-3">
+                                        {makes}
+                                      </span>
+                                    </span>
+                                    <span className="block truncate text-label text-ink-3">{placement.sizes}</span>
+                                  </span>
+                                  <div className={cn("size-4 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
+                                    {isSel && <Check className="size-2.5 stroke-[3]" />}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* 3. Clinical Focus Topics (Audience-tailored Hero Cards) */}
+              {!isAd && (
               <div className="rounded-panel border border-hair bg-card p-5 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -989,6 +1279,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   })}
                 </div>
               </div>
+              )}
 
             </div>
           )}
