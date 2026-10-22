@@ -41,6 +41,19 @@ export function DynamicSceneComposition({
      draw them differently, and the first anyone would hear of it is a
      reviewer asking why the share link does not match what was approved. */
   const logoMark = useWorkspaceStore((state) => state.logoMark);
+  /* The frame's small print follows who it is for. A patient piece saying
+     "For US Healthcare Professionals Only" is wrong, and an unbranded ad
+     can't carry the brand name at all. */
+  const audience = useWorkspaceStore((state) => state.audience);
+  const unbranded = useWorkspaceStore((state) => state.assetType === "ad" && state.adType === "unbranded");
+  const forHcp = audience === "HCP" || !audience;
+  const chromeLabel = unbranded ? "Disease awareness" : `${brandName} ${forHcp ? "HCP" : "Patient"} Storyboard`;
+  const chromeFooter = unbranded
+    ? "Talk to your doctor"
+    : forHcp
+      ? `${brandName}™ · For US Healthcare Professionals Only`
+      : `${brandName}™ · See Important Safety Information`;
+  const chromeSource = unbranded ? "" : "Approved Label §4.2 · ClearSkin-1 Trial";
   const frameRef = React.useRef<HTMLDivElement>(null);
   const [frame, setFrame] = React.useState({ width: 0, height: 0 });
   const frameHeight = frame.height;
@@ -429,7 +442,7 @@ export function DynamicSceneComposition({
             {scene.narrativeTag || "EVIDENCE"}
           </span>
           <span style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>
-            {brandName} HCP Storyboard
+            {chromeLabel}
           </span>
         </div>
 
@@ -499,8 +512,8 @@ export function DynamicSceneComposition({
             color: "rgba(255,255,255,0.55)",
           }}
         >
-          <span>{brandName}™ · For US Healthcare Professionals Only</span>
-          <span>Approved Label §4.2 · ClearSkin-1 Trial</span>
+          <span>{chromeFooter}</span>
+          <span>{chromeSource}</span>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Clock, FileStack, FileText, PenLine, RectangleHorizontal } from "lucide-react";
+import { Check, Clock, FileStack, FileText, MousePointerClick, PenLine, RectangleHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
@@ -265,7 +265,7 @@ function Preview({ file, kind }: { file?: BriefAttachment; kind: IntakeQuestion[
       </span>
     );
   }
-  const Icon = kind === "duration" ? Clock : kind === "pages" ? FileStack : RectangleHorizontal;
+  const Icon = kind === "duration" ? Clock : kind === "pages" ? FileStack : kind === "nextstep" ? MousePointerClick : RectangleHorizontal;
   return (
     <span className={cn(box, "bg-tint text-brand")}>
       <Icon className="size-6" />

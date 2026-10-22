@@ -17,7 +17,7 @@
  */
 import type { AssetType } from "@/types/content";
 
-export type IntakeKind = "attachment" | "duration" | "pages" | "shape";
+export type IntakeKind = "attachment" | "duration" | "pages" | "shape" | "nextstep";
 
 export interface IntakeQuestion {
   id: string;
@@ -57,7 +57,7 @@ export function buildIntakeQuestions(
   attachments: BriefAttachment[],
   assetType: AssetType,
   /** A poster's pages and shape come from its congress, so they are not asked. */
-  options: { poster?: boolean } = {}
+  options: { poster?: boolean; brief?: string } = {}
 ): IntakeQuestion[] {
   const perFile = attachments.map<IntakeQuestion>((file) => ({
     id: `file-${file.id}`,
@@ -67,6 +67,22 @@ export function buildIntakeQuestions(
   }));
 
   if (assetType === "infographic" && options.poster) return perFile;
+
+  /* An ad's length and sizes follow from its placements. What no dossier
+     says is what the ad asks people to do, and only when the brief doesn't. */
+  if (assetType === "ad") {
+    const said = /\b(talk to (your|their) doctor|ask (your|their) doctor|saving|copay|co-pay|sign[- ]?up|visit|find a (doctor|specialist)|learn more)\b/i.test(options.brief ?? "");
+    return said
+      ? perFile
+      : [
+          ...perFile,
+          {
+            id: "nextstep",
+            kind: "nextstep",
+            prompt: "What should people do after seeing the ad? It becomes the closing line in every ad.",
+          },
+        ];
+  }
 
   if (assetType === "infographic") {
     return [
@@ -161,6 +177,17 @@ export function intakeChoices(
           { id: "4", label: "4 pages", hint: "A full detail aid." },
         ],
       };
+    case "nextstep":
+      return {
+        title: "What should people do next?",
+        multi: false,
+        options: [
+          { id: "Talk to their doctor", label: "Talk to their doctor", hint: "\u201cAsk your doctor about it.\u201d" },
+          { id: "Sign up for savings", label: "Sign up for savings", hint: "Copay card and patient support." },
+          { id: "Visit the brand site", label: "Visit the brand site", hint: "Learn more about the treatment." },
+          { id: "Find a specialist", label: "Find a specialist", hint: "A doctor who treats the condition." },
+        ],
+      };
     case "shape":
       return {
         title: "What shape should the pages be?",
@@ -210,7 +237,7 @@ export function choicesMessage(answers: IntakeAnswer[], questions: IntakeQuestio
       const q = questions.find((x) => x.id === a.questionId);
       const what = q?.fileName
         ? `**${q.fileName}**`
-        : q?.kind === "duration" ? "**Length**" : q?.kind === "pages" ? "**Pages**" : "**Shape**";
+        : q?.kind === "duration" ? "**Length**" : q?.kind === "pages" ? "**Pages**" : q?.kind === "nextstep" ? "**Next step**" : "**Shape**";
       return `${what}: ${a.value}${a.note ? ` (${a.note})` : ""}`;
     })
     .join("\n");
@@ -268,6 +295,13 @@ function shape(text: string): string {
   return "A4 print";
 }
 
+function nextStep(text: string): string {
+  if (/\b(saving|copay|co-pay|coupon|cost|afford)/i.test(text)) return "Sign up for savings";
+  if (/\b(find|locator|specialist|near me)\b/i.test(text)) return "Find a specialist";
+  if (/\b(site|website|visit|learn)\b/i.test(text)) return "Visit the brand site";
+  return "Talk to their doctor";
+}
+
 /**
  * Read one answer. Returns what to record and what to say back — the caller
  * decides what to do with it, because that differs between the two flows.
@@ -303,6 +337,15 @@ export function readIntakeAnswer(
         kind: question.kind,
         value: String(n),
         reply: `**${n} ${n === 1 ? "page" : "pages"}**, noted.`,
+      };
+    }
+    case "nextstep": {
+      const value = nextStep(text);
+      return {
+        questionId: question.id,
+        kind: question.kind,
+        value,
+        reply: `Every ad will close by asking people to **${value.toLowerCase()}**.`,
       };
     }
     case "shape": {

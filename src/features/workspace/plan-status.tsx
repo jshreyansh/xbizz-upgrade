@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check, ChevronDown, Minus, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronDown, Hourglass, Minus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -17,7 +17,8 @@ import { cn } from "@/lib/cn";
  * muted text in the summary line where it belongs — it is background, not a
  * thing to act on.
  */
-export type PlanState = "needs-you" | "answered" | "optional";
+/** "waiting" is a section built from another one, which can't be answered until that one is. */
+export type PlanState = "needs-you" | "answered" | "optional" | "waiting";
 
 export function planState(needsYou: boolean, optional = false): PlanState {
   return needsYou ? "needs-you" : optional ? "optional" : "answered";
@@ -27,6 +28,7 @@ const STATE_LABEL: Record<PlanState, string> = {
   "needs-you": "Needs you",
   answered: "Answered",
   optional: "Optional",
+  waiting: "Waiting",
 };
 
 export function PlanStatusChip({ state, open }: { state: PlanState; open?: boolean }) {
@@ -46,6 +48,8 @@ export function PlanStatusChip({ state, open }: { state: PlanState; open?: boole
         <AlertTriangle className="size-2.5" />
       ) : state === "answered" ? (
         <Check className="size-2.5 stroke-[3]" />
+      ) : state === "waiting" ? (
+        <Hourglass className="size-2.5" />
       ) : (
         <Minus className="size-2.5" />
       )}

@@ -173,17 +173,21 @@ export function ShotPreview({
   scene,
   shot,
   portrait,
+  square,
   brandName,
 }: {
   scene: Scene;
   shot: Shot;
   portrait: boolean;
+  /** A 1:1 frame, for feed placements. Portrait wins if both are set. */
+  square?: boolean;
   brandName: string;
 }) {
   return (
     <FramePreview
       scene={scene}
       portrait={portrait}
+      square={square}
       brandName={brandName}
       sceneTime={(shot.startAt + shot.endAt) / 2}
     />
@@ -200,19 +204,22 @@ export function ShotPreview({
 export function FramePreview({
   scene,
   portrait,
+  square,
   brandName,
   sceneTime,
 }: {
   scene: Scene;
   portrait: boolean;
+  /** A 1:1 frame, for feed placements. Portrait wins if both are set. */
+  square?: boolean;
   brandName: string;
   /** A moment in the scene. Without one, every element is shown. */
   sceneTime?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
-  const width = portrait ? 360 : 640;
-  const height = portrait ? 640 : 360;
+  const width = portrait ? 360 : square ? 480 : 640;
+  const height = portrait ? 640 : square ? 480 : 360;
 
   useEffect(() => {
     const node = ref.current;
@@ -242,6 +249,7 @@ function ShotCard({
   shot,
   number,
   portrait,
+  square,
   layout,
   brandName,
   previews,
@@ -256,6 +264,7 @@ function ShotCard({
   shot: Shot;
   number: number;
   portrait: boolean;
+  square?: boolean;
   layout: StoryboardLayout;
   brandName: string;
   previews: ShotPreviews;
@@ -289,7 +298,7 @@ function ShotCard({
       onMouseLeave={() => onHover(null)}
       className={cn(
         "focus-ring flex shrink-0 snap-start cursor-pointer overflow-hidden rounded-control border bg-card text-left transition-all duration-200",
-        sideways ? "w-96 flex-row" : portrait ? "w-56 flex-col" : "w-80 flex-col",
+        sideways ? "w-96 flex-row" : portrait ? "w-56 flex-col" : square ? "w-64 flex-col" : "w-80 flex-col",
         selected
           ? "border-brand shadow-soft ring-2 ring-brand"
           : lit
@@ -300,7 +309,7 @@ function ShotCard({
       <div
         className={cn(
           "relative shrink-0 overflow-hidden bg-[#0d1411]",
-          portrait ? "aspect-[9/16]" : "aspect-video",
+          portrait ? "aspect-[9/16]" : square ? "aspect-square" : "aspect-video",
           sideways ? "w-36" : "w-full"
         )}
       >
@@ -310,6 +319,7 @@ function ShotCard({
             scene={scene}
             shot={shot}
             portrait={portrait}
+            square={square}
             brandName={brandName}
           />
         ) : (
@@ -470,6 +480,7 @@ export function StoryboardSceneTile({
   scene,
   brandName,
   portrait,
+  square,
   layout,
   previews,
   selected,
@@ -484,6 +495,8 @@ export function StoryboardSceneTile({
   scene: Scene;
   brandName: string;
   portrait: boolean;
+  /** A 1:1 frame, for feed placements. */
+  square?: boolean;
   layout: StoryboardLayout;
   previews: ShotPreviews;
   /** The scene is in the chat's scope on its own. */
@@ -624,8 +637,8 @@ export function StoryboardSceneTile({
         </div>
         <ShotStrip
           focusId={focusId}
-          layoutKey={`${layout}-${portrait}-${shots.length}`}
-          arrowTop={portrait ? (side ? "top-27" : "top-45") : "top-18"}
+          layoutKey={`${layout}-${portrait}-${square}-${shots.length}`}
+          arrowTop={portrait ? (side ? "top-27" : "top-45") : square ? "top-28" : "top-18"}
         >
           {shots.map((shot, i) => (
             <ShotCard
@@ -634,6 +647,7 @@ export function StoryboardSceneTile({
               shot={shot}
               number={i + 1}
               portrait={portrait}
+              square={square}
               layout={layout}
               brandName={brandName}
               previews={previews}
@@ -667,6 +681,7 @@ export function ShotPreviewModal({
   scenes,
   at,
   portrait,
+  square,
   brandName,
   onNavigate,
   onClose,
@@ -674,6 +689,7 @@ export function ShotPreviewModal({
   scenes: Scene[];
   at: { sceneId: string; shotId: string };
   portrait: boolean;
+  square?: boolean;
   brandName: string;
   onNavigate: (to: { sceneId: string; shotId: string }) => void;
   onClose: () => void;
@@ -787,12 +803,13 @@ export function ShotPreviewModal({
             </div>
           ) : (
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
-              <div className="relative mx-auto w-full max-w-[calc(66vh*16/9)]">
-                <div className="relative aspect-video w-full overflow-hidden rounded-panel bg-[#0d1411]">
+              <div className={cn("relative mx-auto w-full", square ? "max-w-[66vh]" : "max-w-[calc(66vh*16/9)]")}>
+                <div className={cn("relative w-full overflow-hidden rounded-panel bg-[#0d1411]", square ? "aspect-square" : "aspect-video")}>
                   <FramePreview
                     key={shot.id}
                     scene={scene}
                     portrait={false}
+                    square={square}
                     brandName={brandName}
                     sceneTime={(shot.startAt + shot.endAt) / 2}
                   />

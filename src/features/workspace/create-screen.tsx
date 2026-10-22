@@ -159,8 +159,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const adType = useWorkspaceStore((s) => s.adType);
   const adPlacements = useWorkspaceStore((s) => s.adPlacements);
   const storedProjectName = useWorkspaceStore((s) => s.projectName);
-  /* The Ads plan is the next screen to build; until then the brief stops here. */
-  const [adPlanNotice, setAdPlanNotice] = useState(false);
   const activeHeadlines = isAd ? AD_HEADLINES : isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
   // Longest by character count, which is what decides the wrap.
   const longestHeadline = activeHeadlines.reduce((a, b) => (b.length > a.length ? b : a));
@@ -280,10 +278,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const [contextField, setContextField] = useState<ContextField | null>(null);
 
   const preparePlan = () => {
-    if (isAd && requestIsSpecific) {
-      setAdPlanNotice(true);
-      return;
-    }
     if (!requestIsSpecific) {
       setClarificationOpen(true);
       return;
@@ -597,7 +591,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 value={brief}
                 onChange={(e) => {
                   setBrief(e.target.value);
-                  setAdPlanNotice(false);
                   /* Typing over a loaded scenario makes it your brief, and
                      yours has not answered anything yet. */
                   setBriefFromScenario(false);
@@ -663,20 +656,6 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             </div>
           )}
 
-          {adPlanNotice && (
-            <div className="w-full max-w-[940px] rounded-panel border border-hair-2 bg-card p-4 shadow-2xs">
-              <div className="flex items-start gap-2.5">
-                <Info className="mt-0.5 size-4 shrink-0 text-brand" />
-                <div>
-                  <b className="text-body-lg font-bold text-ink">Brief saved. The Ads plan is the next screen to build.</b>
-                  <p className="mt-0.5 text-body leading-relaxed text-ink-3">
-                    This prototype covers the Ads page, starting a project and the brief. Need your input and the production plan come next.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* ── Example Prompts — BELOW the input ── */}
           <div className="w-full max-w-[940px] flex flex-col gap-3 pt-2">
             {samplePrompts.map((sample) => {
@@ -687,8 +666,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   type="button"
                   onClick={() => {
                     setBrief(sample.prompt);
-                    setAdPlanNotice(false);
-                    setSelectedSourceIds(["dermora-core", "dermora-claims", "dermora-brand"]);
+                      setSelectedSourceIds(["dermora-core", "dermora-claims", "dermora-brand"]);
                   }}
                   className={cn(
                     "group flex items-center justify-between gap-3.5 rounded-panel border p-2.5 px-3.5 text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs",

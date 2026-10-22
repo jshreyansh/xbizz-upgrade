@@ -335,7 +335,7 @@ export function FormatChoices({
  * The brand mark, as both plans ask about it: the artwork, and its corner.
  * The corner is a decision row like every other, closed until changed.
  */
-export function BrandMarkContent({ unit }: { unit: "scene" | "page" }) {
+export function BrandMarkContent({ unit }: { unit: "scene" | "page" | "ad" }) {
   const logoMark = useWorkspaceStore((s) => s.logoMark);
   const setLogoMark = useWorkspaceStore((s) => s.setLogoMark);
   const [editing, setEditing] = useState(false);

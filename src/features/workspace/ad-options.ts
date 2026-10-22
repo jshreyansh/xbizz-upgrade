@@ -344,3 +344,95 @@ export function adSamplePrompts(kind: AdKind, brand: string): Array<{ id: string
   };
   return byKind[kind];
 }
+
+/* ── The plan ─────────────────────────────────────────────────────────────
+   What the Ads plan fills in for the marketer to check. Mock data standing
+   in for the Claims Library and the label, keyed by brand. A brand with no
+   approved claims gets none: nothing is invented to fill the row. */
+
+export interface AdClaim {
+  id: string;
+  text: string;
+  source: string;
+  /** Short enough for the smallest banner. */
+  short?: boolean;
+}
+
+const AD_CLAIMS: Record<string, AdClaim[]> = {
+  velmora: [
+    { id: "CL-014", text: "52% reached PASI 90 at Week 16 vs 18% with placebo", source: "EMBRACE-3 · Primary endpoint" },
+    { id: "CL-031", text: "Clear or almost clear skin by Week 16", source: "EMBRACE-3 · Secondary endpoint", short: true },
+    { id: "CL-022", text: "One tablet, once a day", source: "Prescribing Information §2.1", short: true },
+  ],
+  onkavia: [
+    { id: "CL-102", text: "41% reached at least 35% spleen volume reduction at Week 24 vs 1% with placebo", source: "RELIEF-MF · Primary endpoint" },
+    { id: "CL-108", text: "Meaningful symptom relief by Week 24", source: "RELIEF-MF · Secondary endpoint", short: true },
+    { id: "CL-115", text: "Oral, twice-daily dosing", source: "Prescribing Information §2.1", short: true },
+  ],
+  nirvexa: [
+    { id: "CL-301", text: "ACR50 response in 46% at Week 24 vs 15% with placebo", source: "TARGET-RA · Primary endpoint" },
+    { id: "CL-305", text: "One injection every two weeks", source: "Prescribing Information §2", short: true },
+  ],
+  pulmovax: [
+    { id: "CL-201", text: "27% fewer severe asthma attacks vs albuterol alone", source: "MANDALA · Primary endpoint" },
+    { id: "CL-204", text: "Rescue and anti-inflammatory in one inhaler", source: "Prescribing Information §1", short: true },
+  ],
+};
+
+export function adClaims(brandId: string): AdClaim[] {
+  return AD_CLAIMS[brandId] ?? [];
+}
+
+/** The label the ads are built from, for the Sources row. */
+export function labelVersion(brandId: string): string {
+  return brandId in AD_CLAIMS ? "Prescribing Information, Rev. 04/2026" : "Prescribing Information on file";
+}
+
+/** One recommended headline and two alternatives, for the kind of ad. */
+export function leadMessages(adType: AdType, brandName: string, claims: AdClaim[]): string[] {
+  if (adType === "unbranded") {
+    return [
+      "It's more than skin deep. Talk to your doctor.",
+      "You don't have to settle for living with symptoms.",
+      "Ask your doctor what your options really are.",
+    ];
+  }
+  if (adType === "reminder") {
+    return [`${brandName}. Ask your doctor.`, `Remember ${brandName}.`, `${brandName}: talk to your doctor today.`];
+  }
+  if (claims.length === 0) return [];
+  const lead = claims.find((c) => c.short)?.text ?? claims[0].text;
+  return [...new Set([lead, claims[0].text, `${brandName}. ${claims[claims.length - 1].text}`])];
+}
+
+export const NEXT_STEPS = ["Talk to their doctor", "Sign up for savings", "Visit the brand site", "Find a specialist"] as const;
+
+/** The closing line every ad ends on, from the next step. */
+export function closingLine(nextStep: string, adType: AdType, brandName: string): string {
+  const name = adType === "unbranded" ? "your options" : brandName;
+  switch (nextStep) {
+    case "Sign up for savings":
+      return adType === "unbranded" ? "Ask your doctor about support programmes." : `Pay as little as $0 with the ${brandName} savings card.`;
+    case "Visit the brand site":
+      return adType === "unbranded" ? "Learn more about the condition." : `Learn more about ${brandName}.`;
+    case "Find a specialist":
+      return "Find a specialist near you.";
+    default:
+      return `Ask your doctor about ${name}.`;
+  }
+}
+
+/** The best guess at the next step, before anyone answers. */
+export function defaultNextStep(kind: AdKind, audience: Audience): string {
+  if (kind === "savings") return "Sign up for savings";
+  if (audience === "HCP") return "Visit the brand site";
+  return "Talk to their doctor";
+}
+
+/** Placements grouped by account, in the order the accounts are listed. */
+export function placementsByAccount(placements: AdPlacement[]) {
+  return AD_ACCOUNTS.map((account) => ({
+    account,
+    rows: AD_PLACEMENTS.filter((p) => p.account === account.id && placements.includes(p.id)),
+  })).filter((g) => g.rows.length > 0);
+}
