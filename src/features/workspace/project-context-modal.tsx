@@ -1,5 +1,7 @@
 "use client";
 
+import { PlacementPicker } from "@/features/workspace/placement-picker";
+
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,10 +17,7 @@ import {
 } from "@/features/workspace/brand-modal-data";
 import { Portal } from "@/components/ui/portal";
 import {
-  AD_ACCOUNTS,
   AD_AUDIENCES,
-  AD_FORMATS,
-  AD_PLACEMENTS,
   AD_TYPES,
   brandAdFacts,
   placementsFor,
@@ -314,54 +313,17 @@ export function ProjectContextModal({
             )}
 
             {field === "placements" && (
-              <div className="space-y-3">
-                {AD_ACCOUNTS.map((account) => {
-                  const rows = AD_PLACEMENTS.filter((p) => p.account === account.id && p.audiences.includes(draft.audience));
-                  if (rows.length === 0) return null;
-                  return (
-                    <div key={account.id} className="space-y-1.5">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-label font-extrabold text-ink-2">{account.id}</span>
-                        {account.detail && <span className="text-caption text-ink-4">{account.detail}</span>}
-                      </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {rows.map((option) => {
-                          const active = placements.includes(option.id);
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              onClick={() =>
-                                setDraft((prev) => {
-                                  const current = prev.placements ?? [];
-                                  const next = current.includes(option.id)
-                                    ? current.length > 1 ? current.filter((p) => p !== option.id) : current
-                                    : [...current, option.id];
-                                  return { ...prev, placements: next };
-                                })
-                              }
-                              className={cn(
-                                "flex cursor-pointer items-start gap-2.5 rounded-control border p-3 text-left transition",
-                                active
-                                  ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
-                                  : "border-hair-2 bg-card hover:border-hair-3"
-                              )}
-                            >
-                              <span className="min-w-0">
-                                <span className="block text-body font-bold text-ink">{option.label}</span>
-                                <span className="mt-0.5 block text-label text-ink-3">
-                                  {option.makes.map((f) => AD_FORMATS.find((o) => o.id === f)?.label).join(" + ")} · {option.sizes}
-                                </span>
-                              </span>
-                              {active && <Check className="ml-auto size-4 shrink-0 text-brand" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <PlacementPicker
+                audience={draft.audience}
+                selected={placements}
+                onToggle={(id) =>
+                  setDraft((prev) => {
+                    const current = prev.placements ?? [];
+                    const next = current.includes(id) ? (current.length > 1 ? current.filter((p) => p !== id) : current) : [...current, id];
+                    return { ...prev, placements: next };
+                  })
+                }
+              />
             )}
 
             {field === "brand" && (

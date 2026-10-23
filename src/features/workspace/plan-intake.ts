@@ -15,7 +15,6 @@
  * shape of the exchange, and a question that only accepts one spelling of an
  * answer would misrepresent it.
  */
-import type { AssetType } from "@/types/content";
 
 export type IntakeKind = "attachment" | "duration" | "pages" | "shape" | "nextstep";
 
@@ -53,61 +52,61 @@ const roleOptions = (kind: BriefAttachment["kind"]) =>
     ? "the clinical evidence in it, the wording, or the layout"
     : "the product shot, the visual style, or footage to cut in";
 
-export function buildIntakeQuestions(
-  attachments: BriefAttachment[],
-  assetType: AssetType,
-  /** A poster's pages and shape come from its congress, so they are not asked. */
-  options: { poster?: boolean; brief?: string } = {}
-): IntakeQuestion[] {
-  const perFile = attachments.map<IntakeQuestion>((file) => ({
+export function buildIntakeQuestions(attachments: BriefAttachment[]): IntakeQuestion[] {
+  /* Only a file's purpose blocks the plan: it can't be guessed, and guessing
+     wrong puts it in the wrong row. Length, pages, shape and the next step all
+     have defaults and are rows on Need your input, so they aren't asked. */
+  return attachments.map<IntakeQuestion>((file) => ({
     id: `file-${file.id}`,
     kind: "attachment",
     fileName: file.name,
     prompt: `You attached **${file.name}** but didn't say what it's for. What should I take from it, ${roleOptions(file.kind)}?`,
   }));
+}
 
-  if (assetType === "infographic" && options.poster) return perFile;
+/**
+ * What the brief already says about the things the plan would otherwise
+ * default: a length, a page count, a page shape, what the ad asks people to do.
+ */
+export function readBriefDefaults(brief: string): { duration?: string; pages?: string; shape?: "A4" | "3:4" | "16:9"; nextStep?: string } {
+  const text = brief.toLowerCase();
+  const secs = text.match(/\b(30|45|60|90)\s*(-\s*)?(sec|secs|second|seconds|s)\b/)?.[1];
+  const pages = text.match(/\b(1[0-2]|[1-9])\s*(-\s*)?(page|pages|pager)\b/)?.[1];
+  const shape = /\ba4\b|print/.test(text) ? "A4" : /16:9|landscape|slides?\b/.test(text) ? "16:9" : /3:4|tablet|ipad/.test(text) ? "3:4" : undefined;
+  const nextStep = /saving|copay|co-pay/.test(text)
+    ? "Sign up for savings"
+    : /find a (doctor|specialist)/.test(text)
+      ? "Find a specialist"
+      : /visit|learn more|website/.test(text)
+        ? "Visit the brand site"
+        : /(talk to|ask) (your|their) doctor/.test(text)
+          ? "Talk to their doctor"
+          : undefined;
+  return { duration: secs ? `${secs} sec` : undefined, pages, shape, nextStep };
+}
 
-  /* An ad's length and sizes follow from its placements. What no dossier
-     says is what the ad asks people to do, and only when the brief doesn't. */
-  if (assetType === "ad") {
-    const said = /\b(talk to (your|their) doctor|ask (your|their) doctor|saving|copay|co-pay|sign[- ]?up|visit|find a (doctor|specialist)|learn more)\b/i.test(options.brief ?? "");
-    return said
-      ? perFile
-      : [
-          ...perFile,
-          {
-            id: "nextstep",
-            kind: "nextstep",
-            prompt: "What should people do after seeing the ad? It becomes the closing line in every ad.",
-          },
-        ];
-  }
+/** Where an answered file belongs on Need your input. */
+export type FileHome = "sources" | "media" | "references" | "context";
 
-  if (assetType === "infographic") {
-    return [
-      ...perFile,
-      {
-        id: "pages",
-        kind: "pages",
-        prompt: "How many pages should this run to, anywhere from one to twelve? One page holds a single figure well; more give room for evidence, safety and a page per message.",
-      },
-      {
-        id: "shape",
-        kind: "shape",
-        prompt: "And what shape, A4 print, 3:4 tablet, or 16:9 screen?",
-      },
-    ];
-  }
+export function fileHomes(value: string): FileHome[] {
+  const homes = value.split(" + ").map<FileHome>((role) =>
+    /evidence|wording|claim|data|source/i.test(role)
+      ? "sources"
+      : /product|packshot|logo|footage/i.test(role)
+        ? "media"
+        : /style|layout|look|reference/i.test(role)
+          ? "references"
+          : "context"
+  );
+  return [...new Set(homes)];
+}
 
-  return [
-    ...perFile,
-    {
-      id: "duration",
-      kind: "duration",
-      prompt: "How long should the video run? Thirty seconds is a single idea; sixty carries the need, the mechanism and the evidence.",
-    },
-  ];
+/** Each answered file, with where it goes and the note left on it. */
+export function filedAttachments(answers: IntakeAnswer[], attachments: BriefAttachment[]) {
+  return answers.flatMap((a) => {
+    const file = a.kind === "attachment" ? attachments.find((f) => `file-${f.id}` === a.questionId) : undefined;
+    return file ? [{ file, homes: fileHomes(a.value), note: a.note ?? a.value }] : [];
+  });
 }
 
 /* ── Answering by choosing ─────────────────────────────────────────────── */

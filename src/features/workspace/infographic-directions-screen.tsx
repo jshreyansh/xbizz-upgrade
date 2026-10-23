@@ -89,6 +89,8 @@ import { focusQuestion } from "@/features/workspace/congress-guidelines";
 import { Toast, useToast } from "@/components/patterns/toast";
 import {
   buildIntakeQuestions,
+  filedAttachments,
+  readBriefDefaults,
   intakeSteps,
   choicesMessage,
   readIntakeBundle,
@@ -450,17 +452,26 @@ export function InfographicDirectionsScreen() {
   /* Kept as the record of what was answered; nothing renders it, because the
      plan below IS what the answers produced. */
   const [, setIntakeAnswers] = useState<IntakeAnswer[]>([]);
-  const intakeQuestions = buildIntakeQuestions(briefAttachments, "infographic", { poster: isPoster });
+  const intakeQuestions = buildIntakeQuestions(briefAttachments);
   const currentIntake = planPhase === "intake" ? intakeQuestions[intakeIndex] : undefined;
   const intakeStepList = intakeSteps(briefAttachments, brandName);
 
   const handleIntakeResearched = () => {
-    /* A poster has nothing to ask in chat: its size and pages come from the
-       congress, which is chosen on the plan itself. */
+    /* What the brief says wins over the default; nothing else is asked. A
+       poster's size and pages come from its congress, so the brief can't set them. */
+    const said = readBriefDefaults(brief);
+    if (!isPoster) {
+      if (said.pages) setInfographicPages(said.pages);
+      if (said.shape) setPageShape(said.shape);
+    }
     if (intakeQuestions.length === 0) {
+      const pages = Number((!isPoster && said.pages) || infographicPages) || 1;
+      const shape = FORMAT_OPTIONS.find((f) => f.id === ((!isPoster && said.shape) || pageShape))?.label ?? formatLabel;
       addChatMessage({
         role: "swishx",
-        text: `I've read the brief against the **${brandName}** dossier. Choose the congress on the left: its guidelines set the poster's size, orientation and type sizes, and the plan follows from that.`,
+        text: isPoster
+          ? `I've read the brief against the **${brandName}** dossier. Choose the congress on the left: its guidelines set the poster's size, orientation and type sizes, and the plan follows from that.`
+          : `I've laid the plan out on the left from your brief and the **${brandName}** dossier: **${pages} ${pages === 1 ? "page" : "pages"}**, **${shape}**. Change either in the plan, or tell me anything else to change.`,
       });
       setPlanPhase("plan");
       return;
@@ -469,9 +480,7 @@ export function InfographicDirectionsScreen() {
     const count = briefAttachments.length;
     addChatMessage({
       role: "swishx",
-      text: count
-        ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out: pick below, or just type.`
-        : `I've read the brief against the **${brandName}** dossier. A couple of things and I can lay the plan out: pick below, or just type.`,
+      text: `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. Before I lay the plan out, tell me what ${count === 1 ? "it's" : "each one is"} for: pick below, add a note if it helps, or just type.`,
     });
     /* The questions themselves arrive as a card above the composer. */
   };
@@ -500,23 +509,25 @@ export function InfographicDirectionsScreen() {
     setIntakeAnswers(answers);
     setIntakeIndex(intakeQuestions.length);
 
-    for (const answer of answers) {
-      if (answer.kind === "pages") setInfographicPages(answer.value);
-      if (answer.kind === "shape") {
-        /* A page is A4, tablet or screen — the creative flow has no mobile
-           shape, so a mobile answer lands on the nearest upright page. */
-        setPageShape(
-          answer.value === "16:9 landscape" ? "16:9"
-            : answer.value === "3:4 tablet" || answer.value === "9:16 mobile" ? "3:4"
-            : "A4"
-        );
-      }
-    }
+    /* Each file goes to the row its answer names, with the note on it. */
+    const filed = filedAttachments(answers, briefAttachments);
+    const toSources = filed.filter((f) => f.homes.includes("sources"));
+    const toMedia = filed.filter((f) => f.homes.includes("media"));
+    const toRefs = filed.filter((f) => f.homes.includes("references"));
+    if (toSources.length)
+      setUploadedDocs((prev) => [...prev, ...toSources.map(({ file, note }) => ({ name: file.name, size: "—", date: "Just now", note, origin: "new" as const }))]);
+    if (toMedia.length)
+      setPackshots((prev) => [...prev, ...toMedia.map(({ file, note }) => ({ id: `ps-brief-${file.id}`, name: file.name, url: file.previewUrl ?? "", note }))]);
+    if (toRefs.length)
+      setReferenceList((prev) => [
+        ...prev,
+        ...toRefs.map(({ file, note }) => ({ id: `ref-brief-${file.id}`, name: file.name, note, previewUrl: file.previewUrl, kind: (file.kind === "video" ? "video" : "image") as "image" | "video" })),
+      ]);
 
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left, grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
+        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. Each file is in its row on the left, and the plan is grounded in the **${brandName}** dossier and approved claims. Check it over, or tell me what to change.`,
       });
       setPlanPhase("plan");
     }, 650);

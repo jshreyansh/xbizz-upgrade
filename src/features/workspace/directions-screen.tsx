@@ -90,6 +90,8 @@ import {
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import {
   buildIntakeQuestions,
+  filedAttachments,
+  readBriefDefaults,
   intakeSteps,
   choicesMessage,
   readIntakeBundle,
@@ -1071,7 +1073,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    */
   /* Plain values, not memos: every hook in this file has to sit above the
      early return at the top, and these two are cheap array builders. */
-  const intakeQuestions = buildIntakeQuestions(briefAttachments, "video");
+  const intakeQuestions = buildIntakeQuestions(briefAttachments);
   const currentIntake = planPhase === "intake" ? intakeQuestions[intakeIndex] : undefined;
 
 
@@ -1081,13 +1083,24 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
 
   /** The wait is over: say what was read, then ask the first thing. */
   const handleIntakeResearched = () => {
+    /* What the brief says wins over the default; nothing else is asked. */
+    const said = readBriefDefaults(brief);
+    if (said.duration) setDuration(said.duration);
+    if (intakeQuestions.length === 0) {
+      addChatMessage({
+        role: "swishx",
+        text: `I've laid the plan out on the left from your brief and the **${brandName}** dossier. It runs **${said.duration ?? duration}**${said.duration ? ", as the brief says" : ""}; change the length in **Delivery & Cost**, or tell me anything else to change.`,
+      });
+      setPlanPhase("plan");
+      setPlanLanded(false);
+      window.setTimeout(() => setPlanLanded(true), 1500);
+      return;
+    }
     setPlanPhase("intake");
     const count = briefAttachments.length;
     addChatMessage({
       role: "swishx",
-      text: count
-        ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out: pick below, or just type.`
-        : `I've read the brief against the **${brandName}** dossier. One thing and I can lay the plan out: pick below, or just type.`,
+      text: `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. Before I lay the plan out, tell me what ${count === 1 ? "it's" : "each one is"} for: pick below, add a note if it helps, or just type.`,
     });
     /* The questions themselves arrive as a card above the composer. */
   };
@@ -1117,14 +1130,35 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   const finishIntake = (answers: IntakeAnswer[]) => {
     setIntakeAnswers(answers);
     setIntakeIndex(intakeQuestions.length);
-    for (const answer of answers) {
-      if (answer.kind === "duration") setDuration(answer.value);
-    }
+    /* Each file goes to the row its answer names, with the note on it. */
+    const filed = filedAttachments(answers, briefAttachments);
+    const toSources = filed.filter((f) => f.homes.includes("sources"));
+    const toMedia = filed.filter((f) => f.homes.includes("media"));
+    const toRefs = filed.filter((f) => f.homes.includes("references"));
+    if (toSources.length)
+      setUploadedDocs((prev) => [...prev, ...toSources.map(({ file, note }) => ({ name: file.name, size: "—", date: "Just now", note, origin: "new" as const }))]);
+    if (toMedia.length)
+      setProductMediaList((prev) => [
+        ...prev,
+        ...toMedia.map(({ file, note }) => ({
+          id: `media-brief-${file.id}`,
+          name: file.name,
+          type: (file.kind === "video" ? "video" : "image") as "image" | "video",
+          preview: file.previewUrl ?? "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+          size: "—",
+          note,
+        })),
+      ]);
+    if (toRefs.length)
+      setReferenceList((prev) => [
+        ...prev,
+        ...toRefs.map(({ file, note }) => ({ id: `ref-brief-${file.id}`, name: file.name, kind: (file.kind === "video" ? "video" : "image") as "image" | "video", note, previewUrl: file.previewUrl })),
+      ]);
 
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. I've laid the plan out on the left, grounded in the **${brandName}** dossier and approved claims. Check it over and confirm, or tell me what to change.`,
+        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. Each file is in its row on the left, and the plan is grounded in the **${brandName}** dossier and approved claims. It runs **${duration}**; change anything on the left or tell me.`,
       });
       setPlanPhase("plan");
       /* The rows take about a second and a half to finish arriving. Nothing

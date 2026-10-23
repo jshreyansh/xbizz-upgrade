@@ -2,6 +2,7 @@
 
 import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components/patterns/pick-list";
 import { useState, useMemo, useEffect, useRef } from "react";
+import { PlacementPicker } from "@/features/workspace/placement-picker";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -32,12 +33,9 @@ import type { Audience } from "@/types/content";
 import {
   AD_AUDIENCES,
   AD_KIND_PRESETS,
-  AD_ACCOUNTS,
-  AD_FORMATS,
   AD_PLACEMENTS,
   adSamplePrompts,
   brandAdFacts,
-  placementsFor,
   placementsFromMediaPlan,
   promptKindFor,
   type AdPlacement,
@@ -298,8 +296,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [customDiseaseInput, setCustomDiseaseInput] = useState("");
   const [showCustomDiseaseBox, setShowCustomDiseaseBox] = useState(false);
 
-  // 1. Audience & Speciality
-  const [audience, setAudience] = useState<Audience>("HCP");
+  // 1. Audience & Speciality. Nothing is chosen until the user chooses it.
+  const [audience, setAudience] = useState<Audience | null>(null);
   const [selectedSpecialities, setSelectedSpecialities] = useState<string[]>([]);
 
   // 4. Focus Topics
@@ -341,29 +339,28 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setShowCustomDiseaseBox(false);
       setBrandSearch("");
       setDiseaseSearch("");
-      setAudience("HCP");
+      /* Every project starts blank: no audience, topics or placements are
+         picked for the user. The tile only sets the kind of ad. */
+      setAudience(null);
       setSelectedSpecialities([]);
-      const def = TOPICS_BY_AUDIENCE["HCP"];
-      setSelectedTopics([def[0].label, def[1].label]);
+      setSelectedTopics([]);
       if (isAd) {
-        /* A starting point already knows who the ads are for, so the modal
-           opens on the brand. From scratch, audience is still the first ask. */
-        setAudience(adPreset.audience);
-        setAdPlacements(adPreset.placements);
+        setAdPlacements([]);
         setMediaPlanName("");
         setAdType(adPreset.adType);
         setAdIndication("");
-        if (adPreset.id !== "scratch") setStage("grounding");
       }
     }
-  }, [open, assetType, isAd, adPreset]);
+  }, [open, assetType, isAd, adPreset.adType]);
 
   useEffect(() => {
-    const topics = TOPICS_BY_AUDIENCE[audience];
-    if (topics) setSelectedTopics([topics[0].label, topics[1].label]);
+    if (!audience) return;
+    /* Topics belong to an audience, so a new audience clears them rather than picking new ones. */
+    setSelectedTopics([]);
     setSelectedSpecialities([]);
     /* TikTok and CTV cannot reach doctors, HCP networks cannot reach patients. */
-    setAdPlacements((prev) => placementsFor(audience, prev));
+    /* Keeps only what this audience can reach; never picks placements for them. */
+    setAdPlacements((prev) => prev.filter((id) => AD_PLACEMENTS.find((p) => p.id === id)?.audiences.includes(audience)));
     // Therapy-area grounding vanishes for brand-only audiences. Drop a
     // selection made under a previous audience rather than carrying an
     // impossible one forward — picking Patient, choosing two therapy areas,
@@ -422,14 +419,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const allSpecialities = INITIAL_HCP_SPECIALITIES;
 
-  const currentTopics = TOPICS_BY_AUDIENCE[audience] || TOPICS_BY_AUDIENCE.HCP;
+  const currentTopics = (audience && TOPICS_BY_AUDIENCE[audience]) || TOPICS_BY_AUDIENCE.HCP;
 
   /* Ads reach patients and HCPs. Trade and market-access audiences are
      reached through dossiers and portals, not ad accounts. */
   const audienceOptions = isAd ? AUDIENCE_OPTIONS.filter((a) => AD_AUDIENCES.includes(a.id)) : AUDIENCE_OPTIONS;
   const audienceTitle = AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title ?? "";
   const studioNoun = isAd ? "Ads" : assetType === "infographic" ? "Creative" : "Video";
-  const groundingModes = GROUNDING_BY_AUDIENCE[audience] ?? ["brand"];
+  const groundingModes = (audience && GROUNDING_BY_AUDIENCE[audience]) || ["brand"];
   /**
    * Therapy-area grounding is hidden for now — every audience grounds in a
    * brand. The toggle, the disease picker and the mode they switch between
@@ -464,7 +461,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const reminderBlocked = isAd && adType === "reminder" && adFacts.boxedWarning;
   const needsIndication = isAd && adKind === "new-indication";
   const brandStepBlocked = reminderBlocked || (needsIndication && !adIndication);
-  const adPlacementOptions = AD_PLACEMENTS.filter((p) => p.audiences.includes(audience));
 
   /**
    * Derived, not synced. Until the user types, the name IS the suggestion and
@@ -480,18 +476,19 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // Start Project live while section 3 had never been opened.
   const hasReachedFocusTopics = stage === "details";
   const canProceed =
+    !!audience &&
     (sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
     hasReachedFocusTopics &&
     (isAd ? adPlacements.length > 0 && !brandStepBlocked : selectedTopics.length > 0);
 
   const toggleAdPlacement = (id: AdPlacement) =>
     setAdPlacements((prev) =>
-      prev.includes(id) ? (prev.length > 1 ? prev.filter((p) => p !== id) : prev) : [...prev, id]
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
 
   const toggleTopic = (label: string) => {
     if (selectedTopics.includes(label)) {
-      if (selectedTopics.length > 1) setSelectedTopics(selectedTopics.filter((t) => t !== label));
+      setSelectedTopics(selectedTopics.filter((t) => t !== label));
     } else {
       setSelectedTopics([...selectedTopics, label]);
     }
@@ -558,6 +555,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   };
 
   const handleStartProject = () => {
+    /* Start Project is only enabled once an audience is picked. */
+    if (!audience) return;
     // A fresh project walks the flow, whatever the last thing opened was — the
     // Content Library sets this to "review" and nothing else would clear it.
     useWorkspaceStore.getState().setStudioEntry("create");
@@ -1159,7 +1158,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         const file = e.target.files?.[0];
                         if (!file) return;
                         setMediaPlanName(file.name);
-                        setAdPlacements(placementsFromMediaPlan(audience));
+                        if (audience) setAdPlacements(placementsFromMediaPlan(audience));
                         e.target.value = "";
                       }}
                     />
@@ -1174,53 +1173,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     </div>
                   )}
 
-                  <div className="space-y-3 pt-1">
-                    {AD_ACCOUNTS.map((account) => {
-                      const rows = adPlacementOptions.filter((p) => p.account === account.id);
-                      if (rows.length === 0) return null;
-                      return (
-                        <div key={account.id} className="space-y-1.5">
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-label font-extrabold text-ink-2">{account.id}</span>
-                            {account.detail && <span className="text-caption text-ink-4">{account.detail}</span>}
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {rows.map((placement) => {
-                              const isSel = adPlacements.includes(placement.id);
-                              const makes = placement.makes
-                                .map((f) => AD_FORMATS.find((o) => o.id === f)?.label)
-                                .join(" + ");
-                              return (
-                                <button
-                                  key={placement.id}
-                                  type="button"
-                                  onClick={() => toggleAdPlacement(placement.id)}
-                                  className={cn(
-                                    "group relative flex items-center gap-2.5 p-3 rounded-control border text-left transition-all duration-150 cursor-pointer shadow-2xs",
-                                    isSel
-                                      ? "border-brand bg-[#f3f9f5] ring-2 ring-brand/15 shadow-sm"
-                                      : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                                  )}
-                                >
-                                  <span className="min-w-0 flex-1">
-                                    <span className="flex items-center gap-2">
-                                      <span className="text-body font-bold leading-snug text-ink">{placement.label}</span>
-                                      <span className="shrink-0 rounded-chip bg-subtle px-1.5 py-0.5 text-caption font-bold text-ink-3">
-                                        {makes}
-                                      </span>
-                                    </span>
-                                    <span className="block truncate text-label text-ink-3">{placement.sizes}</span>
-                                  </span>
-                                  <div className={cn("size-4 rounded-full border flex items-center justify-center transition-colors shrink-0", isSel ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
-                                    {isSel && <Check className="size-2.5 stroke-[3]" />}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div className="pt-1">
+                    {audience && <PlacementPicker audience={audience} selected={adPlacements} onToggle={toggleAdPlacement} />}
                   </div>
                 </div>
               )}

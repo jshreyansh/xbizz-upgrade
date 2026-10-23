@@ -108,12 +108,12 @@ export const AD_PLACEMENTS: Array<{
   { id: "youtube", account: "Google Ads", label: "YouTube", makes: ["video"], sizes: "16:9 in-stream, 9:16 Shorts · 15 or 30 sec", audiences: ["Patient", "HCP"] },
   { id: "google-display", account: "Google Ads", label: "Display", makes: ["banner"], sizes: "300×250, 728×90, 300×600, 160×600, 320×50", audiences: ["Patient", "HCP"] },
   { id: "meta-feed", account: "Meta Ads", label: "Feed", makes: ["video", "image", "carousel"], sizes: "1:1 and 4:5", audiences: ["Patient", "HCP"] },
-  { id: "meta-reels-stories", account: "Meta Ads", label: "Reels & Stories", makes: ["video", "image"], sizes: "9:16 full screen", audiences: ["Patient"] },
+  { id: "meta-reels-stories", account: "Meta Ads", label: "Reels & Stories", makes: ["video", "image"], sizes: "9:16 full screen", audiences: ["Patient", "HCP"] },
   { id: "programmatic-display", account: "Programmatic", label: "Display", makes: ["banner"], sizes: "Standard banner sizes", audiences: ["Patient", "HCP"] },
   { id: "programmatic-video", account: "Programmatic", label: "Online video", makes: ["video"], sizes: "16:9 · 15 or 30 sec", audiences: ["Patient", "HCP"] },
   { id: "ctv", account: "Programmatic", label: "Connected TV", makes: ["video"], sizes: "16:9 TV spot · 15, 30 or 60 sec", audiences: ["Patient"] },
   { id: "hcp-networks", account: "HCP networks", label: "In-feed and banners", makes: ["video", "image"], sizes: "Each network's own specs", audiences: ["HCP"] },
-  { id: "tiktok", account: "TikTok Ads", label: "In-feed", makes: ["video"], sizes: "9:16 · 15 to 60 sec", audiences: ["Patient"] },
+  { id: "tiktok", account: "TikTok Ads", label: "In-feed", makes: ["video"], sizes: "9:16 · 15 to 60 sec", audiences: ["Patient", "HCP"] },
 ];
 
 export const AD_FORMATS: Array<{ id: AdFormat; label: string; icon: LucideIcon }> = [
@@ -420,6 +420,82 @@ export function closingLine(nextStep: string, adType: AdType, brandName: string)
     default:
       return `Ask your doctor about ${name}.`;
   }
+}
+
+/**
+ * The key message, claims and closing line, crafted from what the marketer
+ * said in the chat and the files they attached.
+ *
+ * Nothing they type goes into an ad as it is. Their words are matched to
+ * the brand's approved claims, and the options offered are written from that
+ * approved wording, so every line still traces to a claim. A result they
+ * mention that no approved claim states is reported, never used.
+ */
+export interface CraftedMessage {
+  messages: string[];
+  claimIds: string[];
+  nextStep?: string;
+  /** A result in their input that no approved claim states. */
+  unmatched?: string;
+}
+
+const STOP = new Set(["that", "this", "with", "from", "have", "want", "should", "about", "their", "they", "them", "make", "more", "less", "like", "line", "key", "message", "claim", "claims", "closing", "ads", "week", "weeks"]);
+const words = (text: string) => text.toLowerCase().match(/[a-z0-9%]+/g)?.filter((w) => w.length > 3 && !STOP.has(w)) ?? [];
+
+export function craftKeyMessage(input: string, files: string[], ctx: { adType: AdType; brandName: string; claims: AdClaim[]; current: string[] }): CraftedMessage {
+  const said = `${input} ${files.join(" ")}`;
+  const lower = said.toLowerCase();
+  const nextStep = /saving|copay|co-pay|\$0|afford/.test(lower)
+    ? "Sign up for savings"
+    : /website|site|learn more|hcp portal/.test(lower)
+      ? "Visit the brand site"
+      : /specialist|find a doctor/.test(lower)
+        ? "Find a specialist"
+        : /ask (your|their) doctor|talk to/.test(lower)
+          ? "Talk to their doctor"
+          : undefined;
+
+  /* Unbranded: no product claims, so only the disease-awareness lines, ordered by what was said. */
+  if (ctx.adType !== "product-claim") {
+    const said_ = words(said);
+    const base = leadMessages(ctx.adType, ctx.brandName, ctx.claims);
+    const ranked = [...base].sort((a, b) => words(b).filter((w) => said_.includes(w)).length - words(a).filter((w) => said_.includes(w)).length);
+    return { messages: ranked, claimIds: [], nextStep };
+  }
+
+  const numbers = said.match(/\d+(\.\d+)?%?/g) ?? [];
+  const tokens = words(said);
+  const scored = ctx.claims
+    .map((c) => {
+      const text = `${c.text} ${c.source}`.toLowerCase();
+      const hits = tokens.filter((t) => text.includes(t)).length + numbers.filter((n) => text.includes(n.toLowerCase())).length * 2;
+      return { c, hits };
+    })
+    .filter((x) => x.hits > 0)
+    .sort((a, b) => b.hits - a.hits)
+    .map((x) => x.c);
+
+  /* A number they gave that no approved claim contains. */
+  const strayNumber = numbers.find((n) => n.length > 1 && !ctx.claims.some((c) => c.text.includes(n)));
+  /* Just the phrase with the number in it, not the whole sentence around it. */
+  const unmatched = strayNumber
+    ? said.split(/[.\n,;]|\band\b|\bbut\b|\bthat\b/).find((part) => part.includes(strayNumber))?.trim()
+    : undefined;
+
+  const picked = scored.length ? scored : ctx.claims.filter((c) => ctx.current.includes(c.id));
+  const lead = picked[0] ?? ctx.claims[0];
+  const shortOne = picked.find((c) => c.short && c.id !== lead.id) ?? ctx.claims.find((c) => c.short && c.id !== lead.id);
+  const messages = [
+    lead.text,
+    `${ctx.brandName}. ${lead.short ? lead.text : (shortOne ?? lead).text}`,
+    ...(shortOne ? [`${lead.short ? lead.text : shortOne.text}. ${lead.short ? shortOne.text : lead.text}`.replace(/\.\./g, ".")] : []),
+  ];
+  return {
+    messages: [...new Set(messages)].slice(0, 3),
+    claimIds: [...new Set([lead.id, ...picked.slice(1, 2).map((c) => c.id), ...(shortOne && !picked.length ? [shortOne.id] : [])])],
+    nextStep,
+    unmatched,
+  };
 }
 
 /** The best guess at the next step, before anyone answers. */

@@ -61,6 +61,7 @@ const FORMAT_ICON: Record<AdFormat, typeof Clapperboard> = {
 /* ── Key message & claims — decided on Need your input ── */
 
 export function KeyMessageFields({
+  fromInput = [],
   adType,
   brandName,
   messages,
@@ -72,6 +73,8 @@ export function KeyMessageFields({
   nextStep,
   onNextStep,
 }: {
+  /** Options SwishX wrote from the marketer's chat; marked as theirs. */
+  fromInput?: string[];
   adType: AdType;
   brandName: string;
   messages: string[];
@@ -103,7 +106,7 @@ export function KeyMessageFields({
             setEditing(null);
           }}
           icon={() => <MessageSquareQuote className="size-4" />}
-          hint={(option) => (option === messages[0] ? "Recommended" : undefined)}
+          hint={(option) => (fromInput.includes(option) ? "From your input" : option === messages[0] ? "Recommended" : undefined)}
         />
       </DecisionRow>
       {adType === "product-claim" && (
@@ -149,6 +152,38 @@ export function KeyMessageFields({
 
 /* ── Ads to make — decided on Need your input ── */
 
+/** The ad's shape as small frames: what it will look like before it is made. */
+function AdShapePreview({ ad, on }: { ad: AdOutput; on: boolean }) {
+  const frames: Array<{ w: number; h: number; stack?: boolean }> =
+    ad.format === "banner"
+      ? [{ w: 6, h: 5 }, { w: 16, h: 2.4 }, { w: 3, h: 7 }]
+      : ad.format === "carousel"
+        ? [{ w: 1, h: 1, stack: true }]
+        : [{ w: Number(ad.shape.split(":")[0]) || 1, h: Number(ad.shape.split(":")[1]) || 1 }];
+  const box = 34;
+  return (
+    <span className={cn("flex h-12 w-[72px] shrink-0 items-center justify-center gap-1.5 rounded-chip", on ? "bg-tint" : "bg-subtle")}>
+      {frames.map((f, i) => {
+        const scale = box / Math.max(f.w, f.h);
+        const style = { width: Math.max(6, f.w * scale * 0.9), height: Math.max(6, f.h * scale * 0.9) };
+        const frame = cn("grid place-items-center rounded-[3px] border-[1.5px]", on ? "border-brand bg-card" : "border-ink-4/50 bg-card");
+        return f.stack ? (
+          <span key={i} className="relative" style={style}>
+            <span className={cn(frame, "absolute inset-0 translate-x-1.5 -translate-y-1 opacity-60")} />
+            <span className={cn(frame, "absolute inset-0")} />
+          </span>
+        ) : (
+          <span key={i} className={frame} style={style}>
+            {ad.format === "video" && (
+              <span aria-hidden className={cn("block size-0 border-y-[4px] border-l-[6px] border-y-transparent", on ? "border-l-brand" : "border-l-ink-3")} />
+            )}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 export function AdsToMakeList({
   outputs,
   removed,
@@ -159,51 +194,68 @@ export function AdsToMakeList({
   onToggle: (id: string) => void;
 }) {
   const kept = outputs.filter((o) => !removed.includes(o.id));
-  const credits = kept.reduce((sum, o) => sum + o.credits, 0);
   /* A placement whose every ad was unticked has nothing to run. */
   const orphaned = (ad: AdOutput) => ad.placements.filter((p) => !kept.some((k) => k.id !== ad.id && k.placements.includes(p)));
 
   return (
-    <div className="overflow-hidden rounded-control border border-hair bg-card">
-      {outputs.map((ad) => {
-        const on = !removed.includes(ad.id);
-        const Icon = FORMAT_ICON[ad.format];
-        const lost = on ? [] : orphaned(ad);
-        return (
-          <label
-            key={ad.id}
-            className="grid cursor-pointer items-start gap-3 border-b border-hair px-3.5 py-3 last:border-b-0 sm:grid-cols-[auto_minmax(0,1.2fr)_minmax(0,1.3fr)_auto]"
-          >
-            <input type="checkbox" checked={on} onChange={() => onToggle(ad.id)} className="mt-1 size-4 accent-brand" aria-label={`Make ${ad.name}`} />
-            <span className={cn("min-w-0", !on && "opacity-55")}>
-              <span className="flex items-center gap-2 text-body font-bold text-ink">
-                <Icon className="size-3.5 shrink-0 text-brand" />
-                {ad.name}
-              </span>
-              <span className="block text-label text-ink-3">
-                {AD_FORMATS.find((f) => f.id === ad.format)?.label} · {ad.shape}
-                {ad.length ? ` · ${ad.length}` : ""}
-              </span>
-            </span>
-            <span className="min-w-0">
-              <span className={cn("block text-label leading-snug text-ink-2", !on && "opacity-55")}>{ad.placements.join(", ")}</span>
-              {lost.length > 0 && (
-                <span className="mt-1 flex items-start gap-1.5 text-caption font-semibold text-danger">
-                  <AlertTriangle className="mt-px size-3 shrink-0" />
-                  {lost.join(" and ")} will have no ad
-                </span>
+    <div className="space-y-2">
+      {/* Cards, not rows: seven ads read at a glance in a grid, and each card
+          still says what it is, where it runs and what it costs. */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {outputs.map((ad) => {
+          const on = !removed.includes(ad.id);
+          const Icon = FORMAT_ICON[ad.format];
+          const lost = on ? [] : orphaned(ad);
+          const spec =
+            ad.format === "banner"
+              ? `${ad.shape.split(" · ").length} sizes`
+              : `${AD_FORMATS.find((f) => f.id === ad.format)?.label} · ${ad.shape}${ad.length ? ` · ${ad.length}` : ""}`;
+          return (
+            <label
+              key={ad.id}
+              className={cn(
+                "relative flex cursor-pointer flex-col gap-2.5 rounded-control border p-3 transition-all duration-150",
+                on ? "border-brand bg-card shadow-2xs ring-2 ring-brand/10" : "border-hair-2 bg-canvas hover:border-hair-3"
               )}
-            </span>
-            <span className={cn("text-label font-bold tabular-nums text-ink-2", !on && "opacity-55")}>{ad.credits.toLocaleString()}</span>
-          </label>
-        );
-      })}
-      <div className="flex items-center justify-between bg-subtle px-3.5 py-2.5 text-label">
-        <span className="font-bold text-ink-2">
-          {kept.length} of {outputs.length} ads
-        </span>
-        <span className="font-bold tabular-nums text-ink">{credits.toLocaleString()} credits</span>
+            >
+              <input type="checkbox" checked={on} onChange={() => onToggle(ad.id)} className="sr-only" aria-label={`Make ${ad.name}`} />
+              <span className="flex items-start justify-between gap-2">
+                <AdShapePreview ad={ad} on={on} />
+                <span
+                  aria-hidden
+                  className={cn("grid size-5 shrink-0 place-items-center rounded-full border transition-colors", on ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}
+                >
+                  {on && <Check className="size-3 stroke-[3]" />}
+                </span>
+              </span>
+              <span className={cn("min-w-0", !on && "opacity-55")}>
+                <span className="flex items-center gap-1.5 text-body font-bold text-ink">
+                  <Icon className="size-3.5 shrink-0 text-brand" />
+                  <span className="truncate">{ad.name}</span>
+                </span>
+                <span className="block text-label text-ink-3" title={ad.format === "banner" ? ad.shape : undefined}>
+                  {spec}
+                </span>
+                <span className="mt-1 line-clamp-2 block text-caption leading-snug text-ink-3">{ad.placements.join(", ")}</span>
+              </span>
+              <span className="mt-auto flex items-center justify-between gap-2 border-t border-hair pt-2">
+                {lost.length > 0 ? (
+                  <span className="flex min-w-0 items-start gap-1 text-caption font-semibold text-danger">
+                    <AlertTriangle className="mt-px size-3 shrink-0" />
+                    <span>{lost.join(" and ")} will have no ad</span>
+                  </span>
+                ) : (
+                  <span className={cn("text-caption font-semibold", on ? "text-ink-3" : "text-ink-4")}>{on ? "Will be made" : "Not made"}</span>
+                )}
+                <span className={cn("shrink-0 text-label font-bold tabular-nums", on ? "text-ink" : "text-ink-4")}>{ad.credits.toLocaleString()} cr</span>
+              </span>
+            </label>
+          );
+        })}
       </div>
+      <p className="text-label font-bold text-ink-2">
+        {kept.length} of {outputs.length} ads
+      </p>
     </div>
   );
 }

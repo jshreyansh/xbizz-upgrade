@@ -8,7 +8,9 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   ListChecks,
+  MessageSquare,
   MessageSquareQuote,
+  RotateCcw,
   Palette,
   PanelRight,
   ShieldCheck,
@@ -19,6 +21,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatComposer, ComposerAttachButton } from "@/components/patterns/chat-composer";
+import { ComposerTray } from "@/components/patterns/composer-tray";
 import { SwishXMark } from "@/components/ui/swishx-mark";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { ScreenHeader } from "@/components/patterns/screen-header";
@@ -32,6 +35,7 @@ import type { Audience } from "@/types/content";
 import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
+import { useSettingsStore } from "@/features/settings/settings-store";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { DossierReaderModal } from "@/features/dossiers/dossier-reader-modal";
@@ -71,6 +75,8 @@ import {
 import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
 import {
   buildIntakeQuestions,
+  filedAttachments,
+  readBriefDefaults,
   choicesMessage,
   intakeSteps,
   readIntakeBundle,
@@ -83,6 +89,7 @@ import {
   adClaims,
   brandAdFacts,
   closingLine,
+  craftKeyMessage,
   defaultNextStep,
   labelVersion,
   leadMessages,
@@ -153,7 +160,7 @@ export function AdsDirectionsScreen() {
   const setPlanPhase = useWorkspaceStore((st) => st.setPlanPhase);
   const briefAttachments = useWorkspaceStore((st) => st.briefAttachments);
   const [intakeIndex, setIntakeIndex] = useState(0);
-  const intakeQuestions = buildIntakeQuestions(briefAttachments, "ad", { brief });
+  const intakeQuestions = buildIntakeQuestions(briefAttachments);
   const currentIntake = planPhase === "intake" ? intakeQuestions[intakeIndex] : undefined;
   const intakeStepList = [
     ...intakeSteps(briefAttachments, brandName).slice(0, -1),
@@ -200,19 +207,25 @@ export function AdsDirectionsScreen() {
   };
 
   /* ── What the plan holds ── */
-  const [nextStep, setNextStep] = useState(defaultNextStep(adKind, who));
-  const messages = leadMessages(adType, brandName, claims);
+  /* What the brief asks people to do, else the starting point's usual next step. */
+  const [nextStep, setNextStep] = useState(() => readBriefDefaults(brief).nextStep ?? defaultNextStep(adKind, who));
+  /* Options SwishX wrote from what the marketer said in the chat, first in the list. */
+  const [crafted, setCrafted] = useState<string[]>([]);
+  const messages = [...new Set([...crafted, ...leadMessages(adType, brandName, claims)])];
   const [chosenMessage, setChosenMessage] = useState("");
   const leadMessage = messages.includes(chosenMessage) ? chosenMessage : messages[0] ?? brandName;
   const [pickedClaims, setPickedClaims] = useState<string[]>(claims.slice(0, 2).map((c) => c.text));
   const usedClaims = claims.filter((c) => pickedClaims.includes(c.text));
   const closing = closingLine(nextStep, adType, brandName);
+  /* The section as it was before the chat last changed it, for Undo. */
+  const [beforeCraft, setBeforeCraft] = useState<{ crafted: string[]; chosen: string; picked: string[]; nextStep: string } | null>(null);
 
   /* What the campaign makes. Unticked ads aren't written, made, charged or sent to MLR. */
   const outputs = buildAdOutputs(adPlacements, adType);
   const [removed, setRemoved] = useState<string[]>([]);
   const kept = outputs.filter((o) => !removed.includes(o.id));
   const credits = kept.reduce((sum, o) => sum + o.credits, 0);
+  const creditBalance = useSettingsStore((st) => st.creditBalance);
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
   const [changingPlacements, setChangingPlacements] = useState(false);
   const showsProduct = adType !== "unbranded";
@@ -264,7 +277,7 @@ export function AdsDirectionsScreen() {
     if (intakeQuestions.length === 0) {
       addChatMessage({
         role: "swishx",
-        text: `I've read the brief against the **${brandName}** dossier and checked each placement. The plan is on the left: add your sources, check the rest, then confirm and I'll write the campaign storyboard from them.`,
+        text: `I've read the brief against the **${brandName}** dossier and checked each placement. The plan is on the left, with every ad closing on **${closing}**; change that in **Key message & claims**. Start by adding your sources, then confirm and I'll write the campaign storyboard from them.`,
       });
       setPlanPhase("plan");
       return;
@@ -273,20 +286,31 @@ export function AdsDirectionsScreen() {
     const count = briefAttachments.length;
     addChatMessage({
       role: "swishx",
-      text: count
-        ? `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. ${intakeQuestions.length} quick ${intakeQuestions.length === 1 ? "thing" : "things"} and I can lay the plan out: pick below, or just type.`
-        : `I've read the brief against the **${brandName}** dossier and checked each placement. One thing and I can lay the plan out: pick below, or just type.`,
+      text: `I've read the brief and opened ${count === 1 ? "the attachment" : `all ${count} attachments`}. Before I lay the plan out, tell me what ${count === 1 ? "it's" : "each one is"} for: pick below, add a note if it helps, or just type.`,
     });
   };
 
   const finishIntake = (answers: IntakeAnswer[]) => {
     setIntakeIndex(intakeQuestions.length);
-    const step = answers.find((a) => a.kind === "nextstep");
-    if (step) setNextStep(step.value);
+    /* Each file goes to the row its answer names, with the note on it. */
+    const filed = filedAttachments(answers, briefAttachments);
+    const toSources = filed.filter((f) => f.homes.includes("sources"));
+    const toMedia = filed.filter((f) => f.homes.includes("media"));
+    const toRefs = filed.filter((f) => f.homes.includes("references"));
+    if (toSources.length)
+      changeUploadedDocs((prev) => [...prev, ...toSources.map(({ file, note }) => ({ name: file.name, size: "—", date: "Just now", note, origin: "new" as const }))]);
+    /* Unbranded ads can't show the product, so no packshots are kept for them. */
+    if (toMedia.length && showsProduct)
+      setPackshots((prev) => [...prev, ...toMedia.map(({ file, note }) => ({ id: `ps-brief-${file.id}`, name: file.name, url: file.previewUrl ?? "", note }))]);
+    if (toRefs.length)
+      setReferences((prev) => [
+        ...prev,
+        ...toRefs.map(({ file, note }) => ({ id: `ref-brief-${file.id}`, name: file.name, note, previewUrl: file.previewUrl, kind: (file.kind === "video" ? "video" : "image") as "image" | "video" })),
+      ]);
     setTimeout(() => {
       addChatMessage({
         role: "swishx",
-        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. The plan is on the left. Start with **Research and Sources**; once you confirm, I'll write the campaign storyboard from them.`,
+        text: `${answers.map((a) => a.reply).join(" ")}\n\nThat's everything I needed. Each file is in its row on the left${toSources.length ? ", and I'm reading the documents for the key message and claims" : ""}. Start with **Research and Sources**; once you confirm, I'll write the campaign storyboard from them.`,
       });
       setPlanPhase("plan");
       setOpenSection("sources");
@@ -301,6 +325,46 @@ export function AdsDirectionsScreen() {
   /* ── Chat ── */
   const chatFiles = useChatAttachments();
   const [chatInput, setChatInput] = useState("");
+  /* What goes with the next message: a section handed to the chat. */
+  const [chatContexts, setChatContexts] = useState<Array<{ id: string; label: string; detail: string }>>([]);
+  const handMessageToChat = () => {
+    setCopilotPanelOpen(true);
+    setChatContexts((prev) => (prev.some((c) => c.id === "message") ? prev : [...prev, { id: "message", label: "Key message & claims", detail: leadMessage }]));
+    setChatInput((prev) => (prev.trim() ? prev : "My key message is "));
+    requestAnimationFrame(() => {
+      const field = document.querySelector<HTMLTextAreaElement>("[data-chat-composer]");
+      field?.focus();
+      field?.setSelectionRange(field.value.length, field.value.length);
+    });
+  };
+
+  /* Their words and files, turned into options written from approved claims. */
+  const craftFromChat = (text: string, files: string[]) => {
+    const result = craftKeyMessage(text, files, { adType, brandName, claims, current: usedClaims.map((c) => c.id) });
+    setBeforeCraft({ crafted, chosen: chosenMessage, picked: pickedClaims, nextStep });
+    setCrafted(result.messages);
+    setChosenMessage(result.messages[0] ?? "");
+    const pickedNow = claims.filter((c) => result.claimIds.includes(c.id));
+    if (pickedNow.length) setPickedClaims(pickedNow.map((c) => c.text));
+    if (result.nextStep) setNextStep(result.nextStep);
+    setOpenSection("message");
+    const lines = [
+      `I've updated **Key message & claims** from what you shared${files.length ? ` and ${files.length === 1 ? "your file" : `your ${files.length} files`}` : ""}.`,
+      `Key message: **${result.messages[0]}**${pickedNow[0] ? `, in the approved wording of ${pickedNow[0].id}` : ""}. The other options are in the section, marked From your input.`,
+      ...(pickedNow.length ? [`Approved claims: ${pickedNow.map((c) => c.id).join(", ")}.`] : adType === "product-claim" ? ["None of the approved claims matched, so I kept the ones you had."] : ["These ads are unbranded, so they carry no product claims."]),
+      ...(result.nextStep ? [`Closing line: **${closingLine(result.nextStep, adType, brandName)}**`] : []),
+      ...(result.unmatched ? [`"${result.unmatched}" isn't in the Claims Library, so I didn't use it. Ask for it to be added there and it can go in once MLR approves it.`] : []),
+    ];
+    return lines.join("\n\n");
+  };
+  const undoCraft = () => {
+    if (!beforeCraft) return;
+    setCrafted(beforeCraft.crafted);
+    setChosenMessage(beforeCraft.chosen);
+    setPickedClaims(beforeCraft.picked);
+    setNextStep(beforeCraft.nextStep);
+    setBeforeCraft(null);
+  };
   const chatBottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -315,11 +379,15 @@ export function AdsDirectionsScreen() {
     const attached = directText ? [] : chatFiles.take();
     const text = directText || chatInput.trim();
     if (!text && attached.length === 0) return;
+    const context = directText ? [] : chatContexts;
     addChatMessage({
       role: "user",
-      text: attached.length ? [text, ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n") : text,
+      text: [text, ...context.map((c) => `\u{1F4CE} ${c.label}`), ...attached.map((f) => `\u{1F4CE} ${f.name}`)].filter(Boolean).join("\n"),
     });
-    if (!directText) setChatInput("");
+    if (!directText) {
+      setChatInput("");
+      setChatContexts([]);
+    }
 
     if (currentIntake) {
       finishIntake(readIntakeBundle(intakeQuestions, text, () => "doc"));
@@ -329,7 +397,12 @@ export function AdsDirectionsScreen() {
     setTimeout(() => {
       const lower = text.toLowerCase();
       let reply = `Understood. I've updated the plan, still grounded in the **${brandName}** dossier.`;
-      if (/unbranded|disease awareness/.test(lower)) {
+      const aboutMessage =
+        context.some((c) => c.id === "message") ||
+        (stage === "input" && extraction === "ready" && /key message|tagline|headline|claim|closing line|my line/.test(lower));
+      if (aboutMessage && !noClaims) {
+        reply = craftFromChat(text, attached.map((f) => f.name));
+      } else if (/unbranded|disease awareness/.test(lower)) {
         changeBranding("unbranded");
         reply = `Switched to **unbranded** ads. ${brandName} won't be named or shown, so the packshots are gone too.`;
       } else if (/hcp|doctor|physician/.test(lower) && /audience|switch|for/.test(lower)) {
@@ -578,7 +651,39 @@ export function AdsDirectionsScreen() {
                     </div>
                   )}
                   {extraction === "ready" && !noClaims && (
+                    /* Their own line or material goes through the chat, and comes
+                       back written from approved claims; nothing is typed straight in. */
+                    beforeCraft ? (
+                      <div className="mb-2 flex items-center gap-3 rounded-control border border-ok-line bg-ok-bg px-3.5 py-2.5">
+                        <CheckCircle2 className="size-4 shrink-0 text-ok" />
+                        <p className="min-w-0 flex-1 text-label text-ink-2">
+                          <span className="font-bold text-ink">Updated from your chat.</span> Every option is still written from approved claims.
+                        </p>
+                        <Button size="sm" variant="ghost" onClick={undoCraft} className="gap-1.5">
+                          <RotateCcw className="size-3.5" />
+                          Undo
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={handMessageToChat}>
+                          Add to chat
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="mb-2 flex items-center gap-3 rounded-control border border-tint-line bg-tint px-3.5 py-2.5">
+                        <LogoMark size={14} className="shrink-0 text-brand" />
+                        <p className="min-w-0 flex-1 text-label text-ink-2">
+                          <span className="font-bold text-ink">Have your own line or material?</span> Tell SwishX in the chat and attach files. It
+                          crafts the key message, claims and closing line from them, using approved claims.
+                        </p>
+                        <Button size="sm" onClick={handMessageToChat} className="shrink-0 gap-1.5">
+                          <LogoMark size={13} />
+                          Add to chat
+                        </Button>
+                      </div>
+                    )
+                  )}
+                  {extraction === "ready" && !noClaims && (
                     <KeyMessageFields
+                      fromInput={crafted}
                       adType={adType}
                       brandName={brandName}
                       messages={messages}
@@ -699,6 +804,46 @@ export function AdsDirectionsScreen() {
                     <Button size="sm" variant="secondary" onClick={() => setChangingPlacements(true)}>
                       Change placements
                     </Button>
+                    {/* The same budget card as the Video and Docs plans: what this
+                        campaign costs against what the workspace has. */}
+                    {(() => {
+                      const count = (formats: string[]) => kept.filter((o) => formats.includes(o.format)).length;
+                      const videos = count(["video"]);
+                      const stills = count(["image", "banner"]);
+                      const carousels = count(["carousel"]);
+                      const over = credits > creditBalance;
+                      return (
+                        <div className="rounded-panel border border-white/10 bg-[#121614] p-4 text-white shadow-md">
+                          <div className="flex flex-col justify-between gap-2 border-b border-white/10 pb-2.5 sm:flex-row sm:items-center">
+                            <div>
+                              <div className="text-label font-extrabold uppercase tracking-wider text-white/60">Project budget</div>
+                              <div className="text-subhead font-[850] text-white">⚡ {credits.toLocaleString()} credits</div>
+                            </div>
+                            <div className="text-label text-white/70">
+                              <span>Team balance: </span>
+                              <strong className={cn("font-bold", over ? "text-warn-on-dark" : "text-ok-on-dark")}>{creditBalance.toLocaleString()} credits</strong>
+                            </div>
+                          </div>
+                          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-label text-white/75">
+                            <span>
+                              Ads: <strong className="font-semibold text-white">{kept.length}</strong>
+                              {" "}({[videos && `${videos} video`, stills && `${stills} image`, carousels && `${carousels} carousel`].filter(Boolean).join(", ")})
+                            </span>
+                            <span>
+                              Placements: <strong className="font-semibold text-white">{adPlacements.length}</strong>
+                            </span>
+                            <span>
+                              Estimated making time: <strong className="font-semibold text-white">~{videos ? "8–10" : "2–3"} min</strong>
+                            </span>
+                          </div>
+                          {over && (
+                            <p className="mt-2.5 text-label text-warn-on-dark">
+                              That&apos;s more than the workspace has. Untick some ads, or ask an admin to top up in Billing.
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <PlanSectionContinue onClick={() => advanceFrom("ads")} />
                 </PlanSectionShell>
@@ -970,6 +1115,10 @@ export function AdsDirectionsScreen() {
               attachControl={<ComposerAttachButton onClick={chatFiles.open} label="Attach a file" />}
             >
               <ChatAttachmentRow attachments={chatFiles} />
+              <ComposerTray
+                items={chatContexts.map((c) => ({ id: c.id, icon: <MessageSquare className="size-3" />, label: c.label, detail: c.detail }))}
+                onRemove={(id) => setChatContexts((prev) => prev.filter((c) => c.id !== id))}
+              />
             </ChatComposer>
           </div>
         </>
