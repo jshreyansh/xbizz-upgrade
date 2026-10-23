@@ -1296,8 +1296,8 @@ export function InfographicDirectionsScreen() {
                 >
                   <span>
                     {currentStep === "brief"
-                      ? "Confirm Plan & Choose Layout"
-                      : "Choose Layout"}
+                      ? "Confirm Plan & Choose Template"
+                      : "Choose Template"}
                   </span>
                   <ArrowRight className="size-3.5 ml-1.5" />
                 </Button>
@@ -1403,7 +1403,7 @@ export function InfographicDirectionsScreen() {
                   size="sm"
                   className="h-7.5 px-3 rounded-chip text-label font-bold shadow-xs transition-all shrink-0 cursor-pointer bg-brand hover:bg-brand-deep text-white hover:scale-[1.02]"
                 >
-                  <span>Choose Layout</span>
+                  <span>Choose Template</span>
                   <ArrowRight className="size-3 ml-1" />
                 </Button>
               </div>

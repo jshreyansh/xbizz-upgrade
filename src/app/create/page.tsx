@@ -10,6 +10,7 @@ import { CreateScreen } from "@/features/workspace/create-screen";
 import { DirectionsScreen } from "@/features/workspace/directions-screen";
 import { StudioScreen } from "@/features/workspace/studio-screen";
 import { InfographicStudioScreen } from "@/features/workspace/infographic-studio-screen";
+import { AdsStudioScreen } from "@/features/workspace/ads-studio-screen";
 import { VideoCreationWizard } from "@/features/workspace/video-creation-wizard";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { NoAccess, useCan } from "@/features/settings/view-as";
@@ -43,6 +44,9 @@ export default function CreatePage() {
   if (view === "studio") {
     if (assetType === "infographic") {
       return <InfographicStudioScreen />;
+    }
+    if (assetType === "ad") {
+      return <AdsStudioScreen />;
     }
     return <StudioScreen />;
   }

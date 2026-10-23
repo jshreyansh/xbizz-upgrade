@@ -45,7 +45,8 @@ import { PlanSectionShell, planState, type PlanState } from "@/features/workspac
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
 import { AdsCampaignStoryboard, AdsToMakeList, KeyMessageFields } from "@/features/workspace/ads-campaign-plan";
-import { buildAdOutputs } from "@/features/workspace/ad-campaign";
+import { buildAdOutputs, buildImageAd } from "@/features/workspace/ad-campaign";
+import { AdsTemplateStep } from "@/features/workspace/ads-template-step";
 import {
   BrandMarkContent,
   ChipChoices,
@@ -103,7 +104,7 @@ type Extraction = "waiting" | "extracting" | "ready";
 const EXTRACT_MS = 6000;
 const EXTRACT_STEPS = ["Reading the dossier and your files", "Matching approved claims in the Claims Library", "Drafting the key message"];
 /** Need your input, then the wait while the plan is written, then the plan. */
-type Stage = "input" | "building" | "campaign";
+type Stage = "input" | "building" | "campaign" | "templates";
 
 const DRAFT_ONLY: AssetVersion[] = [{ label: "Draft v1", state: "current", at: "Saved just now" }];
 
@@ -126,6 +127,8 @@ export function AdsDirectionsScreen() {
     setAdType,
     adPlacements,
     setAdPlacements,
+    setAdCampaign,
+    setView,
     projectName,
     logoMark,
     chatMessages,
@@ -348,6 +351,16 @@ export function AdsDirectionsScreen() {
     ...(kept.some((o) => o.format !== "video") ? [{ label: "Planned the image and carousel ads", seconds: 1.2 }] : []),
     { label: `Fitted ${kept.length} ads to their placements`, seconds: 1.0 },
   ];
+  /* Into the Ads studio, with what the plan settled. */
+  const createAds = (look: { mode: "fresh" | "references" | "template"; image?: string; carousel?: string }) => {
+    setAdCampaign({ leadMessage, claimIds: usedClaims.map((c) => c.id), closing, keptIds: kept.map((o) => o.id), look });
+    addChatMessage({
+      role: "swishx",
+      text: `Making your **${kept.length} ads** from the campaign storyboard${look.mode === "template" ? " and the templates you chose" : look.mode === "references" ? " and your references" : ""}. They arrive one by one on the left; open any of them to edit it, or tell me what to change across all of them.`,
+    });
+    setView("studio");
+  };
+
   const handleCampaignBuilt = () => {
     setStage("campaign");
     addChatMessage({
@@ -424,9 +437,53 @@ export function AdsDirectionsScreen() {
               claims={usedClaims}
               closing={closing}
               kept={kept}
-              onConfirm={({ ads, credits: total, hasStills }) =>
-                showToast(`${total.toLocaleString()} credits for ${ads} ads. ${hasStills ? "Layout selection" : "The editor"} is the next screen to build`)
+              onConfirm={({ hasStills }) => {
+                if (hasStills) {
+                  setStage("templates");
+                  addChatMessage({
+                    role: "swishx",
+                    text: `Now the look of the still ads. I've put the templates that fit your words first${references.length ? ", with the one closest to your references at the front" : ""}. Or let me design it fresh.`,
+                  });
+                } else {
+                  createAds({ mode: "fresh" });
+                }
+              }}
+            />
+          )}
+
+          {planPhase === "plan" && stage === "templates" && (
+            <AdsTemplateStep
+              brandName={brandName}
+              adType={adType}
+              copy={(() => {
+                const plan = buildImageAd({ brandId, brand: brandName, adType, claims: usedClaims, leadMessage, closing });
+                const number = usedClaims.map((c) => c.text.match(/\d+%/)?.[0]).find(Boolean);
+                return { headline: plan.headline, support: plan.support, riskLine: plan.riskLine, number, packshot: plan.packshot };
+              })()}
+              hasImage={kept.some((o) => o.format === "image" || o.format === "banner")}
+              hasCarousel={kept.some((o) => o.format === "carousel")}
+              imageShapes={kept.filter((o) => o.format === "image").map((o) => o.shape)}
+              hasBanners={kept.some((o) => o.format === "banner")}
+              references={references.map((r) => ({ id: r.id, name: r.name, note: r.note, previewUrl: r.previewUrl }))}
+              onAddReference={() =>
+                setPendingReference([
+                  {
+                    id: `ref-${Date.now()}`,
+                    name: "Campaign_Look_Reference.png",
+                    previewUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=400&q=80",
+                  },
+                ])
               }
+              onRemoveReference={(id) => setReferences((prev) => prev.filter((r) => r.id !== id))}
+              onAddSuggested={(asset) =>
+                setReferences((prev) => [
+                  ...prev,
+                  { id: `ref-${asset.id}-${Date.now()}`, name: asset.name, note: asset.note, previewUrl: asset.previewUrl, kind: asset.kind === "video" ? "video" : "image" },
+                ])
+              }
+              adCount={kept.length}
+              credits={credits}
+              onContinue={createAds}
             />
           )}
 
@@ -727,6 +784,7 @@ export function AdsDirectionsScreen() {
                     <MediaAttachmentGrid
                       items={references.map((r) => ({ id: r.id, name: r.name, note: r.note, previewUrl: r.previewUrl, kind: r.kind }))}
                       uploadLabel={references.length === 0 ? "Upload a reference" : "Add another"}
+                      uploadHint="PNG, JPG, MP4, PDF, PPTX · a PDF or deck works for carousels, a page per card"
                       onUpload={() =>
                         setPendingReference([
                           {
@@ -852,7 +910,9 @@ export function AdsDirectionsScreen() {
                   </div>
                   {msg.role === "swishx" && idx === chatMessages.length - 1 && planPhase === "plan" && stage !== "building" && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {(stage === "campaign"
+                      {(stage === "templates"
+                        ? ["Make it feel calmer", "More of the brand colour", "Show the product bigger"]
+                        : stage === "campaign"
                         ? ["Make the opening about a caregiver", "Warmer light in scene 1", "Slow down the safety scene"]
                         : ["Make it unbranded", "Switch the audience to HCPs", "Close on the savings card"]
                       ).map((chip) => (

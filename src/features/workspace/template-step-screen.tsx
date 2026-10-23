@@ -144,10 +144,10 @@ export function TemplateStepScreen({
             below, where the filters that change them are. */}
         <div className="mb-4 min-w-0">
           <h2 className="text-display font-[850] tracking-tight text-ink">
-            Choose a layout
+            Choose a template
           </h2>
           <p className="mt-0.5 text-body text-ink-3">
-            The layout decides which blocks the page has, and how much each one holds.
+            The template decides which blocks the page has, and how much each one holds.
           </p>
         </div>
 
@@ -164,7 +164,7 @@ export function TemplateStepScreen({
                 type="search"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setShown(24); }}
-                placeholder="Search layouts…"
+                placeholder="Search templates…"
                 className="w-full rounded-control border border-hair-2 bg-canvas py-1.5 pl-8 pr-2.5 text-body text-ink outline-none focus:border-brand focus:bg-card"
               />
             </label>
@@ -299,7 +299,7 @@ export function TemplateStepScreen({
         )}
 
         <SectionLabel>
-          {results.length.toLocaleString()} {results.length === 1 ? "layout" : "layouts"} · best fit first
+          {results.length.toLocaleString()} {results.length === 1 ? "template" : "templates"} · best fit first
         </SectionLabel>
 
         {results.length === 0 ? (
@@ -355,10 +355,10 @@ export function TemplateStepScreen({
               <CheckCircle2 className="size-4.5 shrink-0 text-ok-on-dark" />
             )
           }
-          title={blocked ? (chosenCost?.label ?? "This layout cannot carry the brief") : "Layout chosen"}
+          title={blocked ? (chosenCost?.label ?? "This template cannot carry the brief") : "Template chosen"}
           description={
             blocked
-              ? "Choose a layout that can carry this brief, or shorten the request."
+              ? "Choose a template that can carry this brief, or shorten the request."
               : `Opens the editor · ${pages} ${pages === 1 ? "page" : "pages"} · ${(pages * DOC_CREDITS_PER_PAGE).toLocaleString()} credits`
           }
           action={
@@ -395,7 +395,7 @@ function archetypeSpec(archetype: TemplateArchetype): TemplatePreviewSpec {
   const members = TEMPLATE_LIBRARY.filter((t) => t.family === archetype.id);
   return {
     name: archetype.name,
-    meta: `${FAMILY_LABELS[archetype.id]} · ${members.length.toLocaleString()} layouts in this family`,
+    meta: `${FAMILY_LABELS[archetype.id]} · ${members.length.toLocaleString()} templates in this family`,
     shape: "16:9",
     accent: archetype.accent,
     previewBg: archetype.previewBg,

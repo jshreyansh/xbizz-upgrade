@@ -250,7 +250,8 @@ export function AdsCampaignStoryboard({
   const hasBanners = kept.some((o) => o.format === "banner");
   const hasImage = imageShapes.length > 0 || hasBanners;
   const hasCarousel = kept.some((o) => o.format === "carousel");
-  const hasStills = hasImage;
+  /* Image ads and carousels both get a template next; video-only goes straight on. */
+  const hasStills = hasImage || hasCarousel;
   const storyLength = story.reduce((sum, s) => sum + s.duration, 0);
 
   const tabs: Array<{ id: Tab; label: string }> = [
@@ -423,7 +424,7 @@ export function AdsCampaignStoryboard({
             onClick={() => onConfirm({ ads: kept.length, credits, hasStills })}
             className="h-9 shrink-0 cursor-pointer rounded-control bg-brand px-5 text-body font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-deep"
           >
-            <span>{hasStills ? "Choose Layout" : "Create Ads"}</span>
+            <span>{hasStills ? "Choose Templates" : "Create Ads"}</span>
             <ArrowRight className="ml-1.5 size-3.5" />
           </Button>
         }

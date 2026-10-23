@@ -9,6 +9,7 @@ import { DirectionsScreen } from "@/features/workspace/directions-screen";
 import { HomeScreen } from "@/features/workspace/home-screen";
 import { StudioScreen } from "@/features/workspace/studio-screen";
 import { InfographicStudioScreen } from "@/features/workspace/infographic-studio-screen";
+import { AdsStudioScreen } from "@/features/workspace/ads-studio-screen";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { useCan } from "@/features/settings/view-as";
 
@@ -38,6 +39,9 @@ export function SwishXApplication() {
   if (view === "studio") {
     if (assetType === "infographic") {
       return <InfographicStudioScreen />;
+    }
+    if (assetType === "ad") {
+      return <AdsStudioScreen />;
     }
     return <StudioScreen />;
   }

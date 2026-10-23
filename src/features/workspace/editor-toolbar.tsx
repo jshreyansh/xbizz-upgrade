@@ -341,7 +341,7 @@ export interface ToolbarItem {
   divider?: boolean;
 }
 
-const divider = (key: string): ToolbarItem => ({ key, divider: true, node: <span className="h-5 w-px shrink-0 bg-hair-2" /> });
+export const toolbarDivider = (key: string): ToolbarItem => ({ key, divider: true, node: <span className="h-5 w-px shrink-0 bg-hair-2" /> });
 
 const TOOL =
   "focus-ring inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-chip px-2 text-label font-semibold text-ink-2 transition hover:bg-subtle hover:text-ink disabled:cursor-not-allowed disabled:text-ink-4 disabled:hover:bg-transparent";
@@ -377,7 +377,7 @@ function TemplatesSoon() {
   );
 }
 
-function ToolButton({
+export function ToolButton({
   icon: Icon,
   label,
   onClick,
@@ -442,7 +442,7 @@ function ToolMenu({
   );
 }
 
-function Note({ icon: Icon, children, tone = "warn" }: { icon: LucideIcon; children: ReactNode; tone?: "warn" | "ok" }) {
+export function ToolNote({ icon: Icon, children, tone = "warn" }: { icon: LucideIcon; children: ReactNode; tone?: "warn" | "ok" }) {
   return (
     <span
       className={cn(
@@ -539,7 +539,7 @@ export function textOptions({
         </IconToggle>
       ),
     },
-    divider("d1"),
+    toolbarDivider("d1"),
     {
       key: "colour",
       /* Brand swatches, not a picker: on approved artwork an arbitrary colour
@@ -605,10 +605,10 @@ export function textOptions({
         </IconToggle>
       ),
     },
-    divider("d2"),
+    toolbarDivider("d2"),
     ...(onEdit ? [{ key: "edit", node: <ToolButton icon={Type} label="Edit text" onClick={onEdit} /> }] : []),
     ...(element.citation
-      ? [{ key: "claim", node: <Note icon={BadgeCheck} tone="ok">Claim {element.citation}</Note> }]
+      ? [{ key: "claim", node: <ToolNote icon={BadgeCheck} tone="ok">Claim {element.citation}</ToolNote> }]
       : onCite
         ? [{ key: "claim", node: <ToolButton icon={Link2} label="Cite a claim" onClick={onCite} /> }]
         : []),
@@ -651,10 +651,10 @@ export function artOptions({
         />
       ),
     },
-    divider("d1"),
+    toolbarDivider("d1"),
     { key: "forward", node: <ToolButton icon={ArrowUp} label="Bring forward" onClick={onBringForward} disabled={z >= Z_MAX} /> },
     { key: "back", node: <ToolButton icon={ArrowDown} label="Send backward" onClick={onSendBack} disabled={z <= 0} /> },
-    divider("d2"),
+    toolbarDivider("d2"),
     {
       key: "alt",
       node: (
@@ -723,13 +723,13 @@ export function blockOptions({
   /** Options this kind of block adds, e.g. a chart's data. */
   extra?: ToolbarItem[];
 }): ToolbarItem[] {
-  if (locked) return [{ key: "locked", node: <Note icon={Lock}>{locked}</Note> }, ...extra];
+  if (locked) return [{ key: "locked", node: <ToolNote icon={Lock}>{locked}</ToolNote> }, ...extra];
   return [
     ...extra,
-    ...(extra.length ? [divider("d0")] : []),
+    ...(extra.length ? [toolbarDivider("d0")] : []),
     { key: "up", node: <ToolButton icon={ArrowUp} label="Move up" onClick={onMoveUp} disabled={!canMoveUp} /> },
     { key: "down", node: <ToolButton icon={ArrowDown} label="Move down" onClick={onMoveDown} disabled={!canMoveDown} /> },
-    divider("d1"),
+    toolbarDivider("d1"),
     { key: "delete", node: <ToolButton icon={Trash2} label="Delete" onClick={onDelete} tone="danger" /> },
   ];
 }
@@ -1138,14 +1138,14 @@ export function pageOptions({
         ]
       : []),
     ...(onTemplates
-      ? [divider("d-tpl"), { key: "templates", node: <TemplatesSoon /> }]
+      ? [toolbarDivider("d-tpl"), { key: "templates", node: <TemplatesSoon /> }]
       : []),
   ];
 }
 
 export function chartExtras({ source, onEditData }: { source: string; onEditData: () => void }): ToolbarItem[] {
   return [
-    { key: "source", node: <Note icon={BadgeCheck} tone="ok">{source}</Note> },
+    { key: "source", node: <ToolNote icon={BadgeCheck} tone="ok">{source}</ToolNote> },
     { key: "data", node: <ToolButton icon={Table2} label="Edit data" onClick={onEditData} /> },
   ];
 }
@@ -1267,6 +1267,7 @@ export function EditorToolbar({
   unavailable = {},
   history,
   onTemplates,
+  menus = MENU_IDS,
 }: {
   selection: ToolbarSelection | null;
   onInsert: (menu: InsertMenuId, option: string) => void;
@@ -1275,6 +1276,8 @@ export function EditorToolbar({
   history?: { onUndo: () => void; onRedo: () => void; canUndo: boolean; canRedo: boolean };
   /** The document's template; offered at the far end while nothing is selected. */
   onTemplates?: () => void;
+  /** The Insert menus this editor offers; the document editor has all of them. */
+  menus?: InsertMenuId[];
 }) {
   const [menu, setMenu] = useState<InsertMenuId | null>(null);
   /* The folded Insert button's list of menus, open before a menu is. */
@@ -1355,7 +1358,7 @@ export function EditorToolbar({
                 role="menu"
                 className="step-transition absolute left-0 top-full z-30 mt-1.5 grid w-60 gap-0.5 rounded-control border border-hair-2 bg-card p-1.5 shadow-float"
               >
-                {MENU_IDS.map((id) => {
+                {menus.map((id) => {
                   const Icon = INSERT_MENUS[id].icon;
                   return (
                     <button
@@ -1380,7 +1383,7 @@ export function EditorToolbar({
         ) : (
           <>
             <span className="mr-1 text-micro font-extrabold uppercase tracking-wider text-ink-4">Insert</span>
-            {MENU_IDS.map((id) => {
+            {menus.map((id) => {
               const m = INSERT_MENUS[id];
               const Icon = m.icon;
               const open = menu === id;

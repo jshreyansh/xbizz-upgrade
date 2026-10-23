@@ -27,6 +27,20 @@ export type ChatMessage = {
   artRef?: { pageId: number; layerId: string };
 };
 
+/**
+ * What the Ads plan settled, handed to the Ads studio: the words, the ads that
+ * were kept and how the still ads get their look. Everything else is rebuilt
+ * from the brand, the branding and the placements.
+ */
+export interface AdCampaignSnapshot {
+  leadMessage: string;
+  claimIds: string[];
+  closing: string;
+  /** AdOutput ids, e.g. "v-16x9", "s-4x5", "b-set", "c-1x1". */
+  keptIds: string[];
+  look: { mode: "fresh" | "references" | "template"; image?: string; carousel?: string };
+}
+
 /** A video being assembled after Publish, so the Content Library can say so. */
 export interface PendingRender {
   title: string;
@@ -143,6 +157,7 @@ interface WorkspaceState {
   adKind: AdKind;
   adType: AdType;
   adPlacements: AdPlacement[];
+  adCampaign: AdCampaignSnapshot | null;
   // Setters
   setView: (view: AppView) => void;
   setSelectedQuality: (quality: "hd" | "cinematic") => void;
@@ -212,6 +227,7 @@ interface WorkspaceState {
   setAdKind: (adKind: AdKind) => void;
   setAdType: (adType: AdType) => void;
   setAdPlacements: (adPlacements: AdPlacement[]) => void;
+  setAdCampaign: (adCampaign: AdCampaignSnapshot | null) => void;
   reset: () => void;
 }
 
@@ -283,6 +299,7 @@ const initialState = {
   adKind: "scratch" as AdKind,
   adType: "product-claim" as AdType,
   adPlacements: ["youtube", "meta-feed", "meta-reels-stories", "google-display"] as AdPlacement[],
+  adCampaign: null as AdCampaignSnapshot | null,
 };
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
@@ -372,6 +389,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setAdKind: (adKind) => set({ adKind }),
   setAdType: (adType) => set({ adType }),
   setAdPlacements: (adPlacements) => set({ adPlacements }),
+  setAdCampaign: (adCampaign) => set({ adCampaign }),
   reset: () => set(initialState),
 }));
 
