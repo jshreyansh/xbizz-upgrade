@@ -2,7 +2,7 @@
 
 import { SelectMenu } from "@/components/ui/select-menu";
 import { useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
-import { AlertTriangle, Check, Lock, Plus, RotateCcw, Send, Trash2, Users, X } from "lucide-react";
+import { AlertTriangle, Check, Lock, Plus, Send, Trash2, Users, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
@@ -10,7 +10,7 @@ import { Stack } from "@/components/ui/stack";
 import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
 import { useSettingsStore } from "@/features/settings/settings-store";
-import { AccessGrid } from "@/features/settings/settings-parts";
+import { AccessGrid, AccessSummary } from "@/features/settings/settings-parts";
 import {
   SENIORITY, accessHeadline, roleSees, rolePermissions, setLevel, type AreaId, type LevelId,
   type PermissionId, type Role, type Seniority,
@@ -50,8 +50,6 @@ export function InviteModal({
   const [draft, setDraft] = useState("");
   const [role, setRole] = useState<Role>(firstRole);
   const [seniority, setSeniority] = useState<Seniority>("Associate");
-  /* Seeded from the role, then editable for this invitee only. */
-  const [perms, setPerms] = useState<PermissionId[]>(rolePermissions(s.roles, firstRole));
   /* A role removed or renamed since the modal last opened falls back to the first. */
   const activeRole = s.roles.some((r) => r.name === role) ? role : firstRole;
   const roleDefault = rolePermissions(s.roles, activeRole);
@@ -59,13 +57,10 @@ export function InviteModal({
   const list = [...emails, ...(isEmail(draft.trim()) ? [draft.trim()] : [])].filter(isEmail);
   const invalid = emails.filter((e) => !isEmail(e)).length;
 
-  const pickRole = (next: Role) => {
-    setRole(next);
-    setPerms(rolePermissions(s.roles, next));
-  };
   const send = () => {
     if (!list.length) return;
-    s.sendInvites(list, activeRole, seniority, perms);
+    /* Invitees get exactly the role's access. Different access is a different role. */
+    s.sendInvites(list, activeRole, seniority, roleDefault);
     setEmails([]);
     setDraft("");
     onClose();
@@ -77,7 +72,7 @@ export function InviteModal({
       onClose={onClose}
       size="md"
       title="Invite teammates"
-      description="They join with the role you pick, and the permissions below."
+      description="They join with the role you pick and get exactly its access."
       footer={
         <div className="flex w-full items-center justify-end gap-2">
           <Button size="sm" variant="ghost" onClick={onClose}>Cancel</Button>
@@ -99,40 +94,27 @@ export function InviteModal({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <Text size="label" tone="muted" weight="semibold">Role</Text>
-            <SelectMenu size="md" ariaLabel="Role" value={activeRole} onChange={pickRole} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: accessHeadline(r.permissions) }))} />
+            <SelectMenu size="md" ariaLabel="Role" value={activeRole} onChange={(v) => setRole(v as Role)} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: accessHeadline(r.permissions) }))} />
           </div>
           <div className="flex flex-col gap-1">
             <Text size="label" tone="muted" weight="semibold">Seniority</Text>
             <SelectMenu size="md" ariaLabel="Seniority" value={seniority} onChange={(v) => setSeniority(v as Seniority)} options={SENIORITY} />
           </div>
         </div>
-        {/* The roles come from Role configuration; this is where to change them. */}
-        <Text size="caption" tone="subtle" className="-mt-2 block">
-          Roles and what they include are set in{" "}
-          <button type="button" onClick={onManageRoles} className="cursor-pointer font-semibold text-brand hover:underline">
-            Role configuration
-          </button>
-          .
-        </Text>
 
         <div>
-          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-            <Text size="label" tone="muted" weight="semibold">Access</Text>
-            {!sameSet(perms, roleDefault) && (
-              <button
-                type="button"
-                onClick={() => setPerms(roleDefault)}
-                className="flex cursor-pointer items-center gap-1 text-brand hover:underline"
-              >
-                <RotateCcw className="size-3" />
-                <span className="text-label font-bold">Reset to {activeRole}</span>
-              </button>
-            )}
-          </div>
+          <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">What {activeRole} can do</Text>
+          {/* Read, not set: access belongs to the role. Changing it for a few
+              invitees would make people with the same role able to do
+              different things, with nothing on the role to say so. */}
           <Text size="caption" tone="subtle" className="mb-2 block">
-            Seeded from {activeRole}. Changing a level here affects only these invitees, never the role.
+            Everyone with this role gets exactly this. Need different access?{" "}
+            <button type="button" onClick={onManageRoles} className="cursor-pointer font-semibold text-brand hover:underline">
+              Create a role for it
+            </button>{" "}
+            and invite them with that.
           </Text>
-          <AccessGrid perms={perms} onLevel={(area, level) => setPerms((cur) => setLevel(cur, area, level))} />
+          <AccessSummary perms={roleDefault} />
         </div>
       </Stack>
     </Modal>

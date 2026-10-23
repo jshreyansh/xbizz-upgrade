@@ -17,7 +17,10 @@ export interface TeamMember {
   key: "amber" | "brand" | "green" | "blue" | "violet";
   gradient: string;
   color: string;
+  /** What this specialist passes to the next one in the chain. */
+  handsOn: string;
 }
+
 
 export const TEAM: TeamMember[] = [
   {
@@ -27,6 +30,7 @@ export const TEAM: TeamMember[] = [
     key: "amber",
     gradient: "linear-gradient(140deg,#f7b733,#d97706)",
     color: "#b45309",
+    handsOn: "The brief",
   },
   {
     name: "Medical Writer",
@@ -35,6 +39,7 @@ export const TEAM: TeamMember[] = [
     key: "brand",
     gradient: "linear-gradient(140deg,#ff7a3d,#c9310a)",
     color: "#b82f0c",
+    handsOn: "A cited draft",
   },
   {
     name: "MLR Reviewer",
@@ -43,6 +48,7 @@ export const TEAM: TeamMember[] = [
     key: "green",
     gradient: "linear-gradient(140deg,#22c07a,#12784a)",
     color: "#12784a",
+    handsOn: "Cleared claims",
   },
   {
     name: "Creative Producer",
@@ -51,6 +57,7 @@ export const TEAM: TeamMember[] = [
     key: "blue",
     gradient: "linear-gradient(140deg,#4f83ff,#1d4ed8)",
     color: "#1d4ed8",
+    handsOn: "The storyboard",
   },
   {
     name: "Project Manager",
@@ -59,6 +66,7 @@ export const TEAM: TeamMember[] = [
     key: "violet",
     gradient: "linear-gradient(140deg,#9b6bff,#5b21b6)",
     color: "#5b21b6",
+    handsOn: "The finished asset",
   },
 ];
 

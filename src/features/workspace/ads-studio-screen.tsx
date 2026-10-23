@@ -9,8 +9,10 @@ import {
   BadgeCheck,
   BarChart3,
   BookOpen,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ArrowLeft,
   Clapperboard,
   Film,
   Image as ImageIcon,
@@ -54,6 +56,7 @@ import { useProjectExit } from "@/features/workspace/project-exit";
 import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
+import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { EMPTY_STYLE, IconToggle, type TextStyle } from "@/features/workspace/canvas-text-toolbar";
@@ -263,9 +266,12 @@ export function AdsStudioScreen() {
   const [imageSize, setImageSize] = useState<StillSize>(imageSizes[0] ?? "4:5");
   const [selected, setSelected] = useState<string | null>(null);
   const [panelTab, setPanelTab] = useState<PanelTab>("assistant");
+  /* Watching the whole story, rather than editing one scene of it. */
+  const [fullPreview, setFullPreview] = useState(false);
 
   const openAd = (next: Focus) => {
     setFocus(next);
+    setFullPreview(false);
     setSelected(null);
     if (next !== "all" && next !== "image") setOpenItems((prev) => (prev.includes(next) ? prev : [...prev, next]));
   };
@@ -279,7 +285,14 @@ export function AdsStudioScreen() {
   const running = playing && time < duration && focus === "video";
   useEffect(() => {
     if (!running) return;
-    const timer = window.setInterval(() => setTime((t) => Math.min(+(t + 0.1).toFixed(1), duration)), 100);
+    /* Elapsed time, not ticks: a background tab slows the ticks, never the clock. */
+    let last = performance.now();
+    const timer = window.setInterval(() => {
+      const now = performance.now();
+      const step = (now - last) / 1000;
+      last = now;
+      setTime((t) => Math.min(+(t + step).toFixed(2), duration));
+    }, 100);
     return () => window.clearInterval(timer);
   }, [running, duration]);
   const pickScene = (id: string) => {
@@ -577,20 +590,8 @@ export function AdsStudioScreen() {
     const on = focus === item;
     return (
       <div className={cn("overflow-hidden rounded-control border bg-card transition", on ? "border-brand ring-2 ring-brand/15" : "border-hair")}>
-        <div className="flex items-center gap-1 p-1.5">
-          {children ? (
-            <button
-              type="button"
-              onClick={() => toggleItem(item)}
-              aria-label={isOpen ? `Close ${label}` : `Open ${label}`}
-              aria-expanded={isOpen}
-              className="grid size-6 shrink-0 cursor-pointer place-items-center rounded-glyph text-ink-4 transition hover:bg-subtle hover:text-ink"
-            >
-              <ChevronRight className={cn("size-3.5 transition-transform", isOpen && "rotate-90")} />
-            </button>
-          ) : (
-            <span className="size-6 shrink-0" />
-          )}
+        {/* Thumbnails line up with All ads above; the chevron sits at the end. */}
+        <div className="flex items-center gap-1 p-1.5 pl-2">
           <button type="button" onClick={() => openAd(item)} className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left">
             <span className="grid h-9 w-12 shrink-0 place-items-center overflow-hidden rounded-glyph bg-subtle">{thumb}</span>
             <span className="min-w-0 flex-1">
@@ -599,8 +600,20 @@ export function AdsStudioScreen() {
             </span>
             {statusChip(ready)}
           </button>
+          {children && (
+            <button
+              type="button"
+              onClick={() => toggleItem(item)}
+              aria-label={isOpen ? `Close ${label}` : `Open ${label}`}
+              aria-expanded={isOpen}
+              className="grid size-6 shrink-0 cursor-pointer place-items-center rounded-glyph text-ink-4 transition hover:bg-subtle hover:text-ink"
+            >
+              <ChevronDown className={cn("size-3.5 transition-transform", isOpen && "rotate-180")} />
+            </button>
+          )}
         </div>
-        {children && isOpen && <div className="space-y-1.5 border-t border-hair bg-canvas p-2">{children}</div>}
+        {/* What the ad is made of, set in under it. */}
+        {children && isOpen && <div className="space-y-1.5 border-t border-hair bg-canvas py-2 pl-5 pr-2">{children}</div>}
       </div>
     );
   };
@@ -811,34 +824,148 @@ export function AdsStudioScreen() {
     </div>
   );
 
+  /* One line, the height of the rail's header beside it. */
   const canvasBar = (children: ReactNode) => (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-hair bg-card px-4 py-2">{children}</div>
+    <div className="flex h-11 shrink-0 items-center gap-3 overflow-hidden whitespace-nowrap border-b border-hair bg-card px-4">{children}</div>
   );
-  const editOnceToggle = (
-    <label className="ml-auto inline-flex shrink-0 items-center gap-2 text-label font-bold text-ink-2">
-      <Toggle checked={editOnce} onChange={setEditOnce} label="Edit once, update every size" />
-      Edit once, update every size
+  const barTitle = (text: string) => <span className="shrink-0 text-caption font-bold text-ink">{text}</span>;
+  const barNote = (text: string) => <span className="hidden min-w-0 truncate text-caption text-ink-3 xl:inline">{text}</span>;
+  const barToggle = (checked: boolean, onChange: (v: boolean) => void, label: string) => (
+    <label className="inline-flex shrink-0 items-center gap-2 text-caption font-bold text-ink-2">
+      <Toggle checked={checked} onChange={onChange} label={label} />
+      {label}
     </label>
   );
+  const editOnceToggle = barToggle(editOnce, setEditOnce, "Edit once, update every size");
 
-  const videoCanvas = scene && (
+  /* ── Full preview: the whole story, scene after scene ── */
+  const chapters = story.reduce<Array<{ id: string; number: number; title: string; start: number; duration: number }>>(
+    (list, sc) => [...list, { id: sc.id, number: sc.number, title: sc.title, start: list.reduce((t, c) => t + c.duration, 0), duration: sc.duration }],
+    []
+  );
+  const filmLength = chapters.reduce((t, c) => t + c.duration, 0);
+  const [filmTime, setFilmTime] = useState(0);
+  const [filmPlaying, setFilmPlaying] = useState(false);
+  const filmRunning = fullPreview && filmPlaying && filmTime < filmLength && focus === "video";
+  useEffect(() => {
+    if (!filmRunning) return;
+    let last = performance.now();
+    const timer = window.setInterval(() => {
+      const now = performance.now();
+      const step = (now - last) / 1000;
+      last = now;
+      setFilmTime((t) => Math.min(+(t + step).toFixed(2), filmLength));
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [filmRunning, filmLength]);
+  const chapter = [...chapters].reverse().find((c) => filmTime >= c.start) ?? chapters[0];
+  const chapterScene = story.find((sc) => sc.id === chapter?.id) ?? story[0];
+  const openFullPreview = () => {
+    setPlaying(false);
+    setSelected(null);
+    setFilmTime(0);
+    setFilmPlaying(true);
+    setFullPreview(true);
+  };
+  const closeFullPreview = () => {
+    setFilmPlaying(false);
+    setFullPreview(false);
+  };
+  const shapeSwitch =
+    videoShapes.length > 1 ? (
+      <Segmented className="shrink-0">
+        {videoShapes.map((sz) => (
+          <SegmentedButton key={sz} active={videoShape === sz} onClick={() => setVideoShape(sz)} className="px-2.5 py-0.5 text-caption">
+            {sz}
+            {editedSizes.has(sz) && <span className="size-1.5 rounded-full bg-brand" title="Edited in this size" />}
+          </SegmentedButton>
+        ))}
+      </Segmented>
+    ) : null;
+
+  const videoCanvas = scene && fullPreview && chapterScene ? (
     <>
       {canvasBar(
         <>
-          <span className="text-label font-bold text-ink">
-            Scene {scene.number} of {story.length} · {scene.title}
-          </span>
-          <span className="text-label text-ink-3">{editOnce ? `Changes apply to ${sizeWords(videoShapes)}` : `Changes stay in ${videoShape}`}</span>
-          {videoShapes.length > 1 && (
-            <Segmented className="ml-auto">
-              {videoShapes.map((s) => (
-                <SegmentedButton key={s} active={videoShape === s} onClick={() => setVideoShape(s)}>
-                  {s}
-                  {editedSizes.has(s) && <span className="size-1.5 rounded-full bg-brand" title="Edited in this size" />}
-                </SegmentedButton>
-              ))}
-            </Segmented>
-          )}
+          <button
+            type="button"
+            onClick={closeFullPreview}
+            aria-label="Back to editing"
+            className="focus-ring grid size-6 shrink-0 cursor-pointer place-items-center rounded-full text-ink-3 transition hover:bg-black/5 hover:text-ink"
+          >
+            <ArrowLeft className="size-3.5" />
+          </button>
+          {barTitle("Full preview")}
+          {barNote(`${filmLength} sec · ${story.length} scenes · ${videoShape}`)}
+          <span className="ml-auto" />
+          {shapeSwitch}
+        </>
+      )}
+      <FitCanvas ratio={VIDEO_SIZE[videoShape].w / VIDEO_SIZE[videoShape].h} onClear={() => {}} className="bg-[#0d1411]">
+        {(width) => (
+          <div className="relative overflow-hidden rounded-card bg-black shadow-on-dark ring-1 ring-white/10" style={{ width }}>
+            <Scaled w={VIDEO_SIZE[videoShape].w} h={VIDEO_SIZE[videoShape].h} width={width}>
+              <AdVideoFrame
+                scene={chapterScene}
+                shape={videoShape}
+                time={Math.max(0, filmTime - (chapter?.start ?? 0))}
+                playing={filmRunning}
+                brandName={brandName}
+                adType={adType}
+                logoCorner={logoCorner[videoShape]}
+                prefix={`film:${chapterScene.id}`}
+                edit={still(videoShape)}
+              />
+            </Scaled>
+            <div className="absolute inset-x-0 bottom-0 space-y-3 bg-gradient-to-t from-black/95 via-black/75 to-transparent p-4 pt-8 text-white">
+              <ChapterScrubber chapters={chapters} currentTime={filmTime} totalDuration={filmLength} onSeek={setFilmTime} />
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (filmTime >= filmLength) setFilmTime(0);
+                    setFilmPlaying(!filmRunning);
+                  }}
+                  aria-label={filmRunning ? "Pause" : "Play"}
+                  className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-brand text-white shadow-md transition-transform hover:bg-brand-deep active:scale-95"
+                >
+                  {filmRunning ? <Pause className="size-4 fill-current" /> : <Play className="ml-0.5 size-4 fill-current" />}
+                </button>
+                <span className="font-mono text-label font-bold tabular-nums text-white/90">
+                  0:{Math.floor(filmTime).toString().padStart(2, "0")} / 0:{filmLength}s
+                </span>
+                <span className="truncate text-caption font-semibold text-white/70">
+                  {chapter?.number}. {chapter?.title}
+                </span>
+                <button
+                  type="button"
+                  onClick={closeFullPreview}
+                  className="ml-auto shrink-0 cursor-pointer rounded-glyph border border-white/20 px-2.5 py-1 text-caption font-bold text-white/80 transition hover:border-white/40 hover:text-white"
+                >
+                  Back to editing
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </FitCanvas>
+    </>
+  ) : scene ? (
+    <>
+      {canvasBar(
+        <>
+          {barTitle(`Scene ${scene.number} of ${story.length} · ${scene.title}`)}
+          {barNote(editOnce ? `Changes apply to ${sizeWords(videoShapes)}` : `Changes stay in ${videoShape}`)}
+          <span className="ml-auto" />
+          {shapeSwitch}
+          <button
+            type="button"
+            onClick={openFullPreview}
+            className="focus-ring inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-glyph border border-brand/30 bg-tint px-2.5 py-1 text-caption font-extrabold text-brand-deep shadow-2xs transition hover:border-brand hover:bg-brand hover:text-white"
+          >
+            <Play className="size-3 fill-current" />
+            Full preview
+          </button>
           {videoShapes.length > 1 && editOnceToggle}
         </>
       )}
@@ -878,15 +1005,16 @@ export function AdsStudioScreen() {
         )}
       </FitCanvas>
     </>
-  );
+  ) : null;
 
   const masterSize = imageSizes[0];
   const imageCanvas = hasImage && (
     <>
       {canvasBar(
         <>
-          <span className="text-label font-bold text-ink">{imageSize === masterSize ? `Master · ${imageSize}` : imageSize}</span>
-          <span className="text-label text-ink-3">{lookNote ?? `Template: ${imageTemplate?.name ?? "Full picture, words on top"}`}</span>
+          {barTitle(imageSize === masterSize ? `Master · ${imageSize}` : imageSize)}
+          {barNote(lookNote ?? `Template: ${imageTemplate?.name ?? "Full picture, words on top"}`)}
+          <span className="ml-auto" />
           {editOnceToggle}
         </>
       )}
@@ -939,14 +1067,10 @@ export function AdsStudioScreen() {
     <>
       {canvasBar(
         <>
-          <span className="text-label font-bold text-ink">
-            Card {cardIndex + 1} of {cards.length} · {card.role}
-          </span>
-          <span className="text-label text-ink-3">{lookNote ?? `Template: ${carouselTemplate?.name ?? "Picture, then words"}`}</span>
-          <label className="ml-auto inline-flex shrink-0 items-center gap-2 text-label font-bold text-ink-2">
-            <Toggle checked={sameLook} onChange={setSameLook} label="Same look on every card" />
-            Same look on every card
-          </label>
+          {barTitle(`Card ${cardIndex + 1} of ${cards.length} · ${card.role}`)}
+          {barNote(lookNote ?? `Template: ${carouselTemplate?.name ?? "Picture, then words"}`)}
+          <span className="ml-auto" />
+          {barToggle(sameLook, setSameLook, "Same look on every card")}
         </>
       )}
       <div className="relative flex min-h-0 flex-1 flex-col" onClick={() => setSelected(null)}>

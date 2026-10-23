@@ -15,7 +15,7 @@ export type AuthView =
   /** An invite or account that can no longer sign in. */
   | "blocked";
 
-/** Onboarding beat index within /onboarding route (1-indexed) */
+/** Onboarding beat index (1-indexed). The intro route it drove has been removed. */
 export type OnboardingBeat = 1 | 2;
 
 export interface SourceReference {

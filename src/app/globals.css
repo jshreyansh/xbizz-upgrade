@@ -783,3 +783,31 @@ button.rounded-full {
   height: 16px;
   border-radius: 0 0 10px 10px;
 }
+
+/* ── Mascots: the specialists' characters (features/workspace/mascot.tsx) ── */
+@keyframes mascot-blink {
+  0%, 93%, 100% { transform: scaleY(1); }
+  95.5% { transform: scaleY(0.12); }
+}
+@keyframes mascot-glance {
+  0%, 30%, 100% { transform: translate(0, 0); }
+  36%, 48% { transform: translate(-3px, 0); }
+  56%, 70% { transform: translate(3px, -1px); }
+  76% { transform: translate(0, 0); }
+}
+@keyframes mascot-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-2.5px) rotate(-1.5deg); }
+}
+@keyframes mascot-hop {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-7px) scale(0.96, 1.05); }
+  60% { transform: translateY(0) scale(1.05, 0.95); }
+}
+.mascot-body { transform-box: fill-box; transform-origin: 50% 100%; animation: mascot-bob 3.6s ease-in-out infinite; }
+.mascot-body[data-mood="happy"] { animation: mascot-hop 0.6s var(--spring, ease-out) 1; }
+.mascot-glance { animation: mascot-glance 7s ease-in-out infinite; }
+.mascot-blink { transform-box: fill-box; transform-origin: center; animation: mascot-blink 4.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .mascot-body, .mascot-glance, .mascot-blink { animation: none; }
+}

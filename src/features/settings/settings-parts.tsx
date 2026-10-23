@@ -283,3 +283,42 @@ export function AccessGrid({
     </div>
   );
 }
+
+/**
+ * A role's access, read rather than set: what someone gets by being given
+ * that role. Used where people are assigned a role, not where roles are made.
+ */
+export function AccessSummary({ perms }: { perms: readonly PermissionId[] }) {
+  const admin = perms.includes("admin");
+  return (
+    <div className="divide-y divide-hair rounded-panel border border-hair bg-card">
+      {admin && (
+        <div className="rounded-t-panel bg-tint px-3.5 py-2">
+          <Text size="caption" tone="brand-deep" weight="semibold">Workspace admin: every area is at its highest level.</Text>
+        </div>
+      )}
+      {AREAS.map((area) => {
+        const current = levelOf(perms, area.id);
+        const none = current.id === "none" || current.id === "off";
+        return (
+          <div key={area.id} className="flex items-center justify-between gap-4 px-3.5 py-2">
+            <div className="min-w-0">
+              <Text size="label" weight="semibold" className="block">{area.label}</Text>
+              <Text size="caption" tone="subtle" className="block truncate">
+                {current.hint && !none ? current.hint : area.trailing}
+              </Text>
+            </div>
+            <span
+              className={cn(
+                "shrink-0 rounded-chip border px-2.5 py-0.5 text-label font-bold",
+                none ? "border-hair bg-subtle text-ink-4" : "border-hair-2 bg-card text-ink"
+              )}
+            >
+              {current.label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
