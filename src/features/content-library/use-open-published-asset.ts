@@ -30,6 +30,12 @@ export function useOpenPublishedAsset(): (asset: LibraryAsset) => void {
   const setIntendedUse = useWorkspaceStore((s) => s.setIntendedUse);
   const setSelectedSourceIds = useWorkspaceStore((s) => s.setSelectedSourceIds);
   const setProjectName = useWorkspaceStore((s) => s.setProjectName);
+  const setAdKind = useWorkspaceStore((s) => s.setAdKind);
+  const setAdType = useWorkspaceStore((s) => s.setAdType);
+  const setAdPlacements = useWorkspaceStore((s) => s.setAdPlacements);
+  const setAdFormats = useWorkspaceStore((s) => s.setAdFormats);
+  const setAdSubject = useWorkspaceStore((s) => s.setAdSubject);
+  const setAdCampaign = useWorkspaceStore((s) => s.setAdCampaign);
 
   return (asset: LibraryAsset) => {
     const scenario = demoScenarios.find((s) => s.id === asset.scenarioId);
@@ -40,6 +46,16 @@ export function useOpenPublishedAsset(): (asset: LibraryAsset) => void {
       setIntendedUse(scenario.inputs.intendedUse);
       setSelectedSourceIds(scenario.inputs.selectedSourceIds);
       setDemoScenarioId(scenario.id);
+    }
+    /* An ad campaign is rebuilt from its own settings: the placements make the ads. */
+    if (asset.ad) {
+      setAudience(asset.ad.audience);
+      setAdKind(asset.ad.kind);
+      setAdType(asset.ad.type);
+      setAdPlacements(asset.ad.placements);
+      setAdFormats(asset.ad.formats ?? {});
+      setAdSubject(asset.ad.subject);
+      setAdCampaign(null);
     }
     setProjectName(asset.title);
     setAssetType(asset.kind);

@@ -41,7 +41,7 @@ export function PreviewPublishModal({
   title: string;
   /** "Version 1" — what publishing creates. */
   version: string;
-  kind: "video" | "document";
+  kind: "video" | "document" | "ad";
   /** The asset itself, frozen by the caller while the review runs. */
   preview: ReactNode;
   /** What the last review found. Shown only once a review has run. */
@@ -138,7 +138,7 @@ export function PreviewPublishModal({
                       />
                     </div>
                     <p className="text-label leading-snug text-ink-2">
-                      {`${reviewStep(review.progress)}. The ${kind} is frozen until it finishes, and leaving or refreshing won't stop it.`}
+                      {`${reviewStep(review.progress)}. The ${kind === "ad" ? "campaign" : kind} is frozen until it finishes, and leaving or refreshing won't stop it.`}
                     </p>
                   </div>
                 ) : showFindings ? (

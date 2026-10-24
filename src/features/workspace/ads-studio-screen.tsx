@@ -13,7 +13,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
-  Clapperboard,
   Film,
   Image as ImageIcon,
   LayoutGrid,
@@ -22,10 +21,11 @@ import {
   MessageSquare,
   Package,
   PanelRight,
+  Pencil,
   Pause,
   Play,
   RefreshCw,
-  Send,
+  Share2,
   ShieldCheck,
   FileText,
   TextCursorInput,
@@ -55,7 +55,15 @@ import { useWorkspaceStore, type AdCampaignSnapshot } from "@/features/workspace
 import { useAdSubject } from "@/features/workspace/ad-subject";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
-import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
+import { VersionChip, buildVersions } from "@/features/workspace/version-trail";
+import { PreviewPublishModal } from "@/features/workspace/preview-publish-modal";
+import type { PreflightCheck } from "@/features/workspace/preflight-panel";
+import { useMlrReview } from "@/features/workspace/mlr-review";
+import { ReviewStatusBanner, useAssetReview } from "@/features/review/asset-review";
+import { ReviewComments } from "@/features/workspace/review-comments";
+import type { AssetComment } from "@/features/workspace/asset-comments";
+import { ShareReviewModal } from "@/features/workspace/share-review-modal";
+import { AdsPreviewGallery, GalleryFilm, GalleryPager, type GalleryGroup } from "@/features/workspace/ads-preview-gallery";
 import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
 import { SearchAdCard, SearchChecks, SearchLines } from "@/features/workspace/search-ad-preview";
@@ -73,6 +81,7 @@ import {
 } from "@/features/workspace/editor-toolbar";
 import {
   AD_KIND_PRESETS,
+  AD_PLACEMENTS,
   adClaims,
   brandAdFacts,
   closingLine,
@@ -95,7 +104,7 @@ import {
   type SearchAdPlan,
   type SearchLine,
 } from "@/features/workspace/ad-campaign";
-import { CAROUSEL_TEMPLATES, IMAGE_TEMPLATES } from "@/features/workspace/ad-templates";
+import { CAROUSEL_TEMPLATES, DOCUMENT_TEMPLATES, IMAGE_TEMPLATES } from "@/features/workspace/ad-templates";
 import {
   AdCard,
   AdDocPage,
@@ -132,9 +141,8 @@ import {
  */
 
 type Focus = "all" | "video" | "image" | "carousel" | "document" | "search";
-type PanelTab = "assistant" | "evidence";
+type PanelTab = "assistant" | "evidence" | "comments";
 
-const DRAFT_ONLY: AssetVersion[] = [{ label: "Draft v1", state: "current", at: "Saved just now" }];
 
 const PART_LABEL: Record<string, string> = {
   footage: "Shot footage",
@@ -261,6 +269,11 @@ export function AdsStudioScreen() {
     CAROUSEL_TEMPLATES.find((t) => t.layout === imageTemplate?.layout);
   const imageLayout = imageTemplate?.layout ?? "photo";
   const carouselLayout = carouselTemplate?.layout ?? "split";
+  /* The document's own template; opened without one, the image ad's family. */
+  const documentTemplate =
+    DOCUMENT_TEMPLATES.find((t) => t.id === campaign.look.document) ??
+    DOCUMENT_TEMPLATES.find((t) => t.layout === imageTemplate?.layout);
+  const documentLayout = documentTemplate?.layout ?? "split";
   const lookNote =
     campaign.look.mode === "references" ? "Following your references" : campaign.look.mode === "fresh" ? "Designed by SwishX" : null;
 
@@ -296,7 +309,9 @@ export function AdsStudioScreen() {
   const [videoShape, setVideoShape] = useState<VideoShape>(videoShapes[0] ?? "16:9");
   const [imageSize, setImageSize] = useState<StillSize>(imageSizes[0] ?? "4:5");
   const [selected, setSelected] = useState<string | null>(null);
-  const [panelTab, setPanelTab] = useState<PanelTab>("assistant");
+  /* Opened from the Content Library: the published campaign, for review. */
+  const [openedForReview] = useState(() => useWorkspaceStore.getState().studioEntry === "review");
+  const [panelTab, setPanelTab] = useState<PanelTab>(openedForReview ? "comments" : "assistant");
   /* Watching the whole story, rather than editing one scene of it. */
   const [fullPreview, setFullPreview] = useState(false);
 
@@ -482,17 +497,20 @@ export function AdsStudioScreen() {
   const [regenPicture, setRegenPicture] = useState<string | null>(null);
   const [dossier, setDossier] = useState<BrandDossier | null>(null);
 
-  /* ── Submit for MLR ── */
-  const [submitted, setSubmitted] = useState(false);
-  const submitForMlr = () => {
-    setSubmitted(true);
-    setSelected(null);
-    showToast(`Sent ${outputs.length} ads to MLR review`);
-    addChatMessage({
-      role: "swishx",
-      text: `Sent to MLR review: **${outputs.length} ads** in ${sizeCount} sizes, each with its claims and references attached. The ads are locked while the review runs; I'll tell you here when it comes back.`,
-    });
-  };
+  /* ── Publishing, and the published campaign under review ──
+     Like the Video and Docs studios: Preview and Publish runs the MLR check
+     over every ad, then the studio turns into the shared review view —
+     read-only, every part selectable to pin a comment to. Edit starts the
+     next draft. */
+  const [studioMode, setStudioMode] = useState<"editor" | "review">(openedForReview ? "review" : "editor");
+  const submitted = studioMode === "review";
+  const [publishedCount, setPublishedCount] = useState(openedForReview ? 1 : 0);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const reviewKey = `ad:${title}`;
+  const assetReview = useAssetReview(reviewKey);
+  const editCount = Object.keys(texts).length + Object.keys(styles).length + Object.keys(logoCorner).length + Object.keys(pins).length;
+  const mlrReview = useMlrReview(reviewKey, editCount);
 
   /* ── The toolbar's selection ── */
   const part = selected?.split(".").pop() ?? "";
@@ -501,6 +519,137 @@ export function AdsStudioScreen() {
   const ownerLabel =
     owner === "image" ? "Image ad" : owner.startsWith("card:") ? `Card ${+owner.slice(5) + 1}` : owner.startsWith("page:") ? `Page ${+owner.slice(5) + 1}` : owner.startsWith("scene:") ? `Scene ${scene?.number}` : "";
   const selectedClaim = claimFor(selected);
+
+  /* ── Comments: pinned to an ad, and to a part of it ── */
+  const adLabel =
+    focus === "video"
+      ? `Video story · Scene ${scene?.number}`
+      : focus === "image"
+        ? `Image ad · ${imageSize}`
+        : focus === "carousel"
+          ? `Carousel · Card ${cardIndex + 1}`
+          : focus === "document"
+            ? `Document · Page ${pageIndex + 1}`
+            : focus === "search"
+              ? "Search ad"
+              : "The whole campaign";
+  const selectedName = selected?.startsWith("search.")
+    ? `${selected.split(".")[1] === "h" ? "Headline" : "Description"} ${+selected.split(".")[2] + 1}`
+    : selected
+      ? partLabel
+      : null;
+  const commentAt = selectedName ? `${adLabel} · ${selectedName}` : adLabel;
+  /* What reviewers raise first: one point per kind of ad, at most three. */
+  const teamComments = (): AssetComment[] => {
+    const at = { surface: "creative" as const, author: "Sarah Lin (Medical Director)", role: "Medical Reviewer", avatar: "SL", at: "2 hours ago", source: "team" as const, status: "open" as const, sentToChat: false };
+    const seeds: AssetComment[] = [
+      ...(hasVideo
+        ? [{ ...at, id: "team-video", containerId: "video:2", containerNumber: 2, containerLabel: "Video story · Scene 2", elementId: "caption", elementLabel: "Caption", text: "Can the caption on this scene name the trial, not only the endpoint?" }]
+        : []),
+      ...(hasDocument
+        ? [{ ...at, id: "team-doc", author: "Dev Rao (Regulatory)", avatar: "DR", role: "Regulatory", containerId: "document:3", containerNumber: 3, containerLabel: "Document · Page 3", elementId: "title", elementLabel: "Page headline", text: "Please add the number of patients beside the result on this page." }]
+        : []),
+      ...(hasImage
+        ? [{ ...at, id: "team-image", author: "Priya Nair (Legal)", avatar: "PN", role: "Legal", containerId: "image:1", containerNumber: 1, containerLabel: `Image ad · ${imageSizes[0]}`, elementId: "safety", elementLabel: "Safety information", text: "The safety band reads well here. Check it is still legible in the smallest banner." }]
+        : []),
+      ...(hasCarousel
+        ? [{ ...at, id: "team-card", containerId: "carousel:1", containerNumber: 1, containerLabel: "Carousel · Card 1", elementId: "picture", elementLabel: "Picture", text: "The opening picture feels a little clinical. Something warmer?" }]
+        : []),
+    ];
+    return seeds.slice(0, 3);
+  };
+  const [comments, setComments] = useState<AssetComment[]>(() => (openedForReview ? teamComments() : []));
+  const postComment = (text: string) => {
+    const index = focus === "video" ? (scene?.number ?? 1) : focus === "carousel" ? cardIndex + 1 : focus === "document" ? pageIndex + 1 : 1;
+    setComments((prev) => [
+      {
+        id: `c-${Date.now()}`,
+        surface: "creative",
+        containerId: `${focus}:${index}`,
+        containerNumber: index,
+        containerLabel: adLabel,
+        elementId: selected ?? "ad",
+        elementLabel: selectedName ?? "Whole ad",
+        author: "Sarah Lin (Medical Director)",
+        role: "Medical Reviewer",
+        avatar: "SL",
+        text,
+        at: "Just now",
+        source: "team",
+        status: "open",
+        sentToChat: false,
+      },
+      ...prev,
+    ]);
+    showToast("Review comment posted");
+  };
+  const closeComment = (id: string, status: "resolved" | "rejected", note: string) =>
+    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, status, closedBy: "user", closedReason: note, closedInVersion: publishedCount + 1 } : c)));
+  const versions = buildVersions(comments, publishedCount, submitted);
+
+  /* ── What the MLR check found, over every ad ── */
+  const accounts = [...new Set(adPlacements.map((id) => AD_PLACEMENTS.find((p) => p.id === id)?.account))];
+  const approvals = [
+    accounts.includes("Google Ads") && "Google pharmaceutical certification",
+    accounts.includes("Meta Ads") && "Meta prescription drug authorization",
+    accounts.includes("TikTok Ads") && "TikTok proof of FDA approval",
+    accounts.includes("LinkedIn Ads") && "LinkedIn healthcare ad policy",
+  ].filter(Boolean) as string[];
+  const failedSearch = searchPlan?.checks.find((c) => !c.ok);
+  const publishChecks: PreflightCheck[] = [
+    adType === "product-claim"
+      ? { id: "claims", source: "MLR", title: `${claims.length} approved claims, each cited`, detail: claims.map((c) => `${c.id} · ${c.source}`).join(" · ") }
+      : adType === "reminder"
+        ? { id: "claims", source: "MLR", title: "No claims, name only", detail: "Every ad carries the brand and generic name and nothing more" }
+        : { id: "claims", source: "MLR", title: "No product named or implied", detail: "Every ad is about the condition and ends with talk to your doctor" },
+    ...(adType === "product-claim"
+      ? [{ id: "isi", source: "MLR", title: "Safety information on every ad", detail: "Spoken and on screen in the video, a band on the stills, a card in the carousel, pages in the document" }]
+      : []),
+    ...(searchPlan
+      ? [
+          failedSearch
+            ? { id: "search", source: "MLR", severity: "blocker" as const, title: "A search combination fails a check", detail: failedSearch.label }
+            : { id: "search", source: "MLR", title: "Search ad safe in every combination", detail: "Brand and safety pinned to position 1" },
+        ]
+      : []),
+    ...(hasDocument ? [{ id: "refs", source: "MLR", title: "Document references complete", detail: "Every claim on the pages resolves to a source on the last page" }] : []),
+    { id: "sizes", source: "Quality", title: `${sizeCount} sizes fit their placements`, detail: "Nothing important under captions, buttons or player controls" },
+    ...(approvals.length
+      ? [{ id: "platform", source: "Quality", severity: "warning" as const, title: "Platform approvals to confirm", detail: `${approvals.join(" · ")}. Confirm before the ads go live.` }]
+      : []),
+  ];
+
+  const startEditing = () => {
+    setStudioMode("editor");
+    setPanelTab("assistant");
+    setSelected(null);
+  };
+  const publish = () => {
+    setPublishOpen(false);
+    setStudioMode("review");
+    setPublishedCount((n) => n + 1);
+    setSelected(null);
+    setFocus("all");
+    setFullPreview(false);
+    setPanelTab("comments");
+    setCopilotPanelOpen(true);
+    setComments((prev) => (prev.length ? prev : teamComments()));
+    const flags = publishChecks.filter((c) => c.severity === "blocker").length;
+    const item = assetReview.submit({
+      key: reviewKey,
+      title,
+      kind: "ad",
+      brand: brandName,
+      spec: `${adCount} ${adCount === 1 ? "ad" : "ads"} · ${sizeCount} sizes`,
+      version: `Version ${publishedCount + 1}`,
+      ownerId: assetReview.me,
+      /* Illustration: the campaign's own colour, as its card in the queue. */
+      preview: { gradient: `linear-gradient(150deg, ${palette.primary}, #1f2937)`, badge: AD_KIND_PRESETS[adKind].noun, metric: `${adCount} ads`, metricLabel: accounts.join(" · ") },
+      stages: assetReview.stages,
+      check: { flags, summary: flags ? "A search combination failed a check before submission." : "Every claim resolves to an approved source." },
+    });
+    showToast(item.status === "in_review" ? `Submitted for review · ${item.stages[item.stageIndex]?.name} is next` : "Published · Opened the shared review view");
+  };
 
   let toolbarSelection: ToolbarSelection | null = null;
   if (selected?.startsWith("search.") && searchPlan && !submitted) {
@@ -879,7 +1028,7 @@ export function AdsStudioScreen() {
                     >
                       <span className="shrink-0 overflow-hidden rounded-glyph border border-hair">
                         <Scaled w={DOC_SIZE.w} h={DOC_SIZE.h} width={32}>
-                          <AdDocPage page={page} index={i} total={pages.length} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={still()} />
+                          <AdDocPage page={page} index={i} total={pages.length} layout={documentLayout} number={number} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={still()} />
                         </Scaled>
                       </span>
                       <span className="min-w-0 flex-1">
@@ -984,7 +1133,7 @@ export function AdsStudioScreen() {
             {pages.map((page, i) => (
               <OverviewTile key={i} label={`Page ${i + 1}`} sub={page.role} onOpen={() => { setPageIndex(i); openAd("document"); }}>
                 <Scaled w={DOC_SIZE.w} h={DOC_SIZE.h} width={136}>
-                  <AdDocPage page={page} index={i} total={pages.length} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={still()} />
+                  <AdDocPage page={page} index={i} total={pages.length} layout={documentLayout} number={number} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={still()} />
                 </Scaled>
                 {making(itemReady.document)}
               </OverviewTile>
@@ -1001,12 +1150,14 @@ export function AdsStudioScreen() {
   );
   const barTitle = (text: string) => <span className="shrink-0 text-caption font-bold text-ink">{text}</span>;
   const barNote = (text: string) => <span className="hidden min-w-0 truncate text-caption text-ink-3 xl:inline">{text}</span>;
-  const barToggle = (checked: boolean, onChange: (v: boolean) => void, label: string) => (
-    <label className="inline-flex shrink-0 items-center gap-2 text-caption font-bold text-ink-2">
-      <Toggle checked={checked} onChange={onChange} label={label} />
-      {label}
-    </label>
-  );
+  /* The shared review is read-only: nothing to apply edits to. */
+  const barToggle = (checked: boolean, onChange: (v: boolean) => void, label: string) =>
+    submitted ? null : (
+      <label className="inline-flex shrink-0 items-center gap-2 text-caption font-bold text-ink-2">
+        <Toggle checked={checked} onChange={onChange} label={label} />
+        {label}
+      </label>
+    );
   const editOnceToggle = barToggle(editOnce, setEditOnce, "Edit once, update every size");
 
   /* ── Full preview: the whole story, scene after scene ── */
@@ -1153,7 +1304,7 @@ export function AdsStudioScreen() {
                 adType={adType}
                 logoCorner={logoCorner[videoShape]}
                 prefix={`scene:${scene.id}`}
-                edit={submitted ? still(videoShape) : editing(videoShape)}
+                edit={editing(videoShape)}
               />
             </Scaled>
             {making(itemReady.video)}
@@ -1194,7 +1345,7 @@ export function AdsStudioScreen() {
           {(width) => (
             <div className="relative overflow-hidden rounded-chip shadow-float">
               <Scaled w={STILL_SIZE[imageSize].w} h={STILL_SIZE[imageSize].h} width={width}>
-                <AdStill size={imageSize} layout={imageLayout} copy={copy} palette={palette} brandName={brandName} adType={adType} edit={submitted ? still(imageSize) : editing(imageSize)} />
+                <AdStill size={imageSize} layout={imageLayout} copy={copy} palette={palette} brandName={brandName} adType={adType} edit={editing(imageSize)} />
               </Scaled>
               {making(itemReady.image)}
             </div>
@@ -1251,7 +1402,7 @@ export function AdsStudioScreen() {
             {(width) => (
               <div className="relative overflow-hidden rounded-chip shadow-float">
                 <Scaled w={CARD_SIZE.w} h={CARD_SIZE.h} width={width}>
-                  <AdCard card={card} index={cardIndex} layout={carouselLayout} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} safetyText={safetyText} number={number} edit={submitted ? still() : editing()} />
+                  <AdCard card={card} index={cardIndex} layout={carouselLayout} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} safetyText={safetyText} number={number} edit={editing()} />
                 </Scaled>
                 {making(itemReady.carousel)}
               </div>
@@ -1279,7 +1430,8 @@ export function AdsStudioScreen() {
       {canvasBar(
         <>
           {barTitle(`Page ${pageIndex + 1} of ${pages.length} · ${page.role}`)}
-          {barNote(page.claimId ? `Written from ${page.claimId}` : "PDF · 4:5")}
+          {barNote(lookNote ?? `Template: ${documentTemplate?.name ?? "Clinical summary"}`)}
+          {page.claimId && barNote(`Written from ${page.claimId}`)}
           <span className="ml-auto" />
           {barToggle(sameLook, setSameLook, "Same look on every page")}
         </>
@@ -1291,7 +1443,7 @@ export function AdsStudioScreen() {
             {(width) => (
               <div className="relative overflow-hidden rounded-chip shadow-float">
                 <Scaled w={DOC_SIZE.w} h={DOC_SIZE.h} width={width}>
-                  <AdDocPage page={page} index={pageIndex} total={pages.length} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={submitted ? still() : editing()} />
+                  <AdDocPage page={page} index={pageIndex} total={pages.length} layout={documentLayout} number={number} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={editing()} />
                 </Scaled>
                 {making(itemReady.document)}
               </div>
@@ -1340,8 +1492,8 @@ export function AdsStudioScreen() {
           ))}
         </div>
         <div className="mx-auto grid max-w-[960px] gap-4 lg:grid-cols-2" onClick={(e) => e.stopPropagation()}>
-          <SearchLines title="Headlines" lines={searchPlan.headlines} max={HEADLINE_MAX} limit={15} idPrefix="search.h" selected={selected} onSelect={submitted ? undefined : setSelected} />
-          <SearchLines title="Descriptions" lines={searchPlan.descriptions} max={DESCRIPTION_MAX} limit={4} idPrefix="search.d" selected={selected} onSelect={submitted ? undefined : setSelected} />
+          <SearchLines title="Headlines" lines={searchPlan.headlines} max={HEADLINE_MAX} limit={15} idPrefix="search.h" selected={selected} onSelect={setSelected} />
+          <SearchLines title="Descriptions" lines={searchPlan.descriptions} max={DESCRIPTION_MAX} limit={4} idPrefix="search.d" selected={selected} onSelect={setSelected} />
         </div>
         <div className="mx-auto max-w-[960px] rounded-card border border-hair bg-card p-4" onClick={(e) => e.stopPropagation()}>
           <p className="mb-2 text-label font-bold text-ink-2">Checked against every combination</p>
@@ -1351,8 +1503,149 @@ export function AdsStudioScreen() {
     </>
   );
 
+  /* ── Every ad for Preview and Publish: tiles, and each one opened large ── */
+  const galleryGroups: GalleryGroup[] = [
+    ...(hasVideo
+      ? [
+          {
+            title: `Video story · ${filmLength} sec`,
+            items: [
+              {
+                key: "video",
+                label: "Video story",
+                sub: `${story.length} scenes · ${sizeWords(videoShapes)}`,
+                thumb: (
+                  <Scaled w={VIDEO_SIZE[railThumbShape].w} h={VIDEO_SIZE[railThumbShape].h} width={railThumbShape === "16:9" ? 220 : 110}>
+                    <AdVideoFrame scene={story[0]} shape={railThumbShape} brandName={brandName} adType={adType} logoCorner={logoCorner[railThumbShape]} prefix="gallery" edit={still(railThumbShape)} />
+                  </Scaled>
+                ),
+                full: <GalleryFilm story={story} shapes={videoShapes} brandName={brandName} adType={adType} logoCorner={logoCorner} edit={(sz) => still(sz)} width={520} />,
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(hasImage
+      ? [
+          {
+            title: "Image ad",
+            items: imageSizes.map((size) => {
+              const box = STILL_SIZE[size];
+              const ratio = box.w / box.h;
+              return {
+                key: `image:${size}`,
+                label: size,
+                sub: BANNER_SIZES.includes(size) ? "Display banner" : outputs.find((o) => o.shape === size && o.format === "image")?.placements.map((p) => p.split(" · ")[1]).join(" · ") ?? "",
+                thumb: (
+                  <Scaled w={box.w} h={box.h} width={ratio > 2 ? Math.min(box.w * 0.5, 240) : Math.round(ratio * 130)}>
+                    <AdStill size={size} layout={imageLayout} copy={copy} palette={palette} brandName={brandName} adType={adType} prefix={`gallery:${size}`} edit={still(size)} />
+                  </Scaled>
+                ),
+                full: (
+                  <div className="flex justify-center">
+                    <div className="overflow-hidden rounded-chip shadow-float">
+                      <Scaled w={box.w} h={box.h} width={ratio > 2 ? Math.min(box.w, 600) : Math.round(Math.min(440, 420 * ratio))}>
+                        <AdStill size={size} layout={imageLayout} copy={copy} palette={palette} brandName={brandName} adType={adType} prefix={`gallery-full:${size}`} edit={still(size)} />
+                      </Scaled>
+                    </div>
+                  </div>
+                ),
+              };
+            }),
+          },
+        ]
+      : []),
+    ...(hasCarousel
+      ? [
+          {
+            title: `Carousel · ${cards.length} cards`,
+            items: [
+              {
+                key: "carousel",
+                label: "Carousel",
+                sub: `${cards.length} cards · 1:1`,
+                thumb: (
+                  <Scaled w={CARD_SIZE.w} h={CARD_SIZE.h} width={130}>
+                    <AdCard card={cards[0]} index={0} layout={carouselLayout} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} safetyText={safetyText} number={number} edit={still()} />
+                  </Scaled>
+                ),
+                full: (
+                  <GalleryPager
+                    width={400}
+                    label={(i) => `Card ${i + 1} · ${cards[i]?.role}`}
+                    pages={cards.map((c, i) => (
+                      <Scaled key={i} w={CARD_SIZE.w} h={CARD_SIZE.h} width={400}>
+                        <AdCard card={c} index={i} layout={carouselLayout} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} safetyText={safetyText} number={number} edit={still()} />
+                      </Scaled>
+                    ))}
+                  />
+                ),
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(hasDocument
+      ? [
+          {
+            title: `Document · ${pages.length} pages`,
+            items: [
+              {
+                key: "document",
+                label: "Document",
+                sub: `${pages.length} pages · 4:5 PDF`,
+                thumb: (
+                  <Scaled w={DOC_SIZE.w} h={DOC_SIZE.h} width={110}>
+                    <AdDocPage page={pages[0]} index={0} total={pages.length} layout={documentLayout} number={number} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={still()} />
+                  </Scaled>
+                ),
+                full: (
+                  <GalleryPager
+                    width={340}
+                    label={(i) => `Page ${i + 1} · ${pages[i]?.role}`}
+                    pages={pages.map((pg, i) => (
+                      <Scaled key={i} w={DOC_SIZE.w} h={DOC_SIZE.h} width={340}>
+                        <AdDocPage page={pg} index={i} total={pages.length} layout={documentLayout} number={number} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={still()} />
+                      </Scaled>
+                    ))}
+                  />
+                ),
+              },
+            ],
+          },
+        ]
+      : []),
+    ...(searchPlan
+      ? [
+          {
+            title: "Search ad · Google",
+            items: [
+              {
+                key: "search",
+                label: "Search ad",
+                sub: `${searchPlan.headlines.length} headlines · ${searchPlan.descriptions.length} descriptions`,
+                thumb: (
+                  <span className="block w-[300px] p-2">
+                    <SearchAdCard plan={searchPlan} combo={searchCombination(searchPlan, 0)} />
+                  </span>
+                ),
+                full: (
+                  <div className="mx-auto max-w-[620px] space-y-4">
+                    <SearchAdCard plan={searchPlan} combo={searchCombination(searchPlan, 0)} />
+                    <SearchLines title="Headlines" lines={searchPlan.headlines} max={HEADLINE_MAX} limit={15} idPrefix="gallery.h" />
+                    <SearchLines title="Descriptions" lines={searchPlan.descriptions} max={DESCRIPTION_MAX} limit={4} idPrefix="gallery.d" />
+                  </div>
+                ),
+              },
+            ],
+          },
+        ]
+      : []),
+  ];
+
   const main = (
     <section className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-[#eef1ed]">
+      {submitted && assetReview.item && <ReviewStatusBanner item={assetReview.item} onEdit={startEditing} />}
       {focus === "all" ? overview : focus === "video" ? videoCanvas : focus === "image" ? imageCanvas : focus === "search" ? searchCanvas : focus === "document" ? documentCanvas : carouselCanvas}
     </section>
   );
@@ -1363,13 +1656,18 @@ export function AdsStudioScreen() {
         <span className="text-label font-bold text-ink">Search ad</span>
         <span className="text-label text-ink-3">Select a headline or description to pin it or rewrite it.</span>
       </div>
-    ) : focus === "all" || submitted ? (
+    ) : submitted ? (
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
-        <span className="text-label font-bold text-ink">{submitted ? "In MLR review" : "All ads"}</span>
+        <span className="shrink-0 text-label font-bold text-ink">Shared review</span>
+        <span className="truncate text-label text-ink-3">
+          {selected ? `Commenting on ${commentAt}. Write it in Comments.` : "Open any ad and select a part of it to pin a comment there."}
+        </span>
+      </div>
+    ) : focus === "all" ? (
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
+        <span className="text-label font-bold text-ink">All ads</span>
         <span className="text-label text-ink-3">
-          {submitted
-            ? "Locked while the review runs. Comments from reviewers come back here."
-            : `${adCount} ${adCount === 1 ? "ad" : "ads"} in ${sizeCount} sizes · ${allReady ? "all ready" : `${readyCount} of ${outputs.length} ready`} · open one to edit it`}
+          {`${adCount} ${adCount === 1 ? "ad" : "ads"} in ${sizeCount} sizes · ${allReady ? "all ready" : `${readyCount} of ${outputs.length} ready`} · open one to edit it`}
         </span>
       </div>
     ) : (
@@ -1387,21 +1685,50 @@ export function AdsStudioScreen() {
       />
     );
 
-  /* ── The panel: chat and claims ── */
+  /* ── The panel: chat and claims while editing; comments and claims on the review ── */
+  const tab: PanelTab = submitted && panelTab === "assistant" ? "comments" : panelTab;
+  const openComments = comments.filter((c) => c.status === "open").length;
   const panel = (
     <>
       <div className="border-b border-hair bg-subtle p-2.5">
         <div className={cn(INSPECTOR_TAB_STRIP, "bg-[#e6ebe6] shadow-inner-xs")}>
-          <InspectorTabButton tab="assistant" current={panelTab} onClick={setPanelTab} icon={MessageCircle} badge={<span className="size-1.5 shrink-0 rounded-full bg-ok" />}>
-            Chat
-          </InspectorTabButton>
-          <InspectorTabButton tab="evidence" current={panelTab} onClick={setPanelTab} icon={ShieldCheck} count={allClaims.length}>
+          {!submitted && (
+            <InspectorTabButton tab="assistant" current={tab} onClick={setPanelTab} icon={MessageCircle} badge={<span className="size-1.5 shrink-0 rounded-full bg-ok" />}>
+              Chat
+            </InspectorTabButton>
+          )}
+          {(submitted || comments.length > 0) && (
+            <InspectorTabButton tab="comments" current={tab} onClick={setPanelTab} icon={MessageSquare} count={openComments}>
+              Comments
+            </InspectorTabButton>
+          )}
+          <InspectorTabButton tab="evidence" current={tab} onClick={setPanelTab} icon={ShieldCheck} count={allClaims.length}>
             Claims
           </InspectorTabButton>
         </div>
       </div>
 
-      {panelTab === "assistant" ? (
+      {tab === "comments" ? (
+        <ReviewComments
+          comments={comments}
+          stampLabel={commentAt}
+          review={assetReview.item}
+          canClose={!submitted}
+          onAddAsSuggestion={
+            submitted
+              ? undefined
+              : (id) => {
+                  const c = comments.find((x) => x.id === id);
+                  if (!c) return;
+                  handToChat({ id: `comment-${id}`, label: `${c.containerLabel} · ${c.elementLabel}`, detail: c.text }, "Address this review comment: ");
+                  setComments((prev) => prev.map((x) => (x.id === id ? { ...x, sentToChat: true } : x)));
+                }
+          }
+          onResolve={(id, note) => closeComment(id, "resolved", note)}
+          onReject={(id, note) => closeComment(id, "rejected", note)}
+          onPost={postComment}
+        />
+      ) : tab === "assistant" ? (
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="flex items-center gap-2 border-b border-hair bg-tint px-3.5 py-2 text-label font-bold text-brand-deep">
             <MessageSquare className="size-3.5 shrink-0" />
@@ -1483,17 +1810,18 @@ export function AdsStudioScreen() {
       autoCollapsePanelBelow="laptop"
       panelMinCanvas={240 + 420}
       header={
-        <ScreenHeader onClose={() => exit.requestExit()}>
+        <ScreenHeader onClose={() => (submitted ? exit.leave() : exit.requestExit())}>
           <SwishXMark compact />
           <div className="mx-3 h-5 w-px bg-hair" />
           <div className="min-w-0">
             <ProjectTitle kind="ad" fallback={title} className="text-body font-[800]" />
             <div className="mt-0.5 hidden text-micro text-ink-3 sm:block">
-              Saved just now · {adCount} {adCount === 1 ? "ad" : "ads"} in {sizeCount} sizes
+              {submitted ? `Published · ${adCount} ${adCount === 1 ? "ad" : "ads"} in ${sizeCount} sizes` : `Saved just now · ${adCount} ${adCount === 1 ? "ad" : "ads"} in ${sizeCount} sizes`}
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <ProjectMenu kind="ad" fallback={title} />
+            {/* Rename and sharing belong to the draft, not the published review. */}
+            {!submitted && <ProjectMenu kind="ad" fallback={title} />}
             <button
               type="button"
               onClick={toggleCopilotPanel}
@@ -1506,22 +1834,33 @@ export function AdsStudioScreen() {
             >
               <PanelRight className="size-4" />
             </button>
-            <VersionChip versions={DRAFT_ONLY} variant="button" />
+            <VersionChip versions={versions} variant="button" />
             {submitted ? (
-              <span className="inline-flex h-8 items-center gap-1.5 rounded-chip border border-info-line bg-info-bg px-3 text-label font-bold text-info">
-                <Clapperboard className="size-3.5" />
-                In MLR review
-              </span>
+              <>
+                {/* A published campaign opens here from the library; Edit starts the next draft. */}
+                {assetReview.canEdit && (
+                  <Button size="sm" variant="secondary" onClick={startEditing} className="gap-1.5 px-3.5 font-bold">
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Button>
+                )}
+                {assetReview.canEdit && (
+                  <Button size="sm" onClick={() => setShareOpen(true)} disabled={assetReview.shareLocked} title={assetReview.shareNote} className="gap-1.5 px-4 font-bold">
+                    <Share2 className="size-3.5" />
+                    Share Link
+                  </Button>
+                )}
+              </>
             ) : (
               <Button
                 size="sm"
-                onClick={submitForMlr}
+                onClick={() => setPublishOpen(true)}
                 disabled={!allReady}
                 title={allReady ? undefined : `${outputs.length - readyCount} ${outputs.length - readyCount === 1 ? "ad is" : "ads are"} still being made`}
                 className="gap-1.5 px-4 font-bold disabled:cursor-not-allowed disabled:opacity-45"
               >
-                <Send className="size-3.5" />
-                Submit for MLR
+                <LogoMark size={14} />
+                Preview and Publish
               </Button>
             )}
           </div>
@@ -1586,6 +1925,32 @@ export function AdsStudioScreen() {
             />
           )}
           <DossierReaderModal dossier={dossier} onClose={() => setDossier(null)} />
+          {publishOpen && (
+            <PreviewPublishModal
+              title={title}
+              version={`Version ${publishedCount + 1}`}
+              kind="ad"
+              review={mlrReview}
+              checks={publishChecks}
+              submit={
+                assetReview.stages.length
+                  ? { label: assetReview.item?.status === "changes" ? "Resubmit for review" : "Submit for review", route: assetReview.stages.map((st) => st.name) }
+                  : undefined
+              }
+              onClose={() => setPublishOpen(false)}
+              onPublish={publish}
+              preview={<AdsPreviewGallery groups={galleryGroups} />}
+            />
+          )}
+          <ShareReviewModal
+            open={shareOpen}
+            onClose={() => setShareOpen(false)}
+            assetType="ad"
+            assetTitle={title}
+            assetSummary={`${adCount} ${adCount === 1 ? "ad" : "ads"} in ${sizeCount} sizes`}
+            brandName={brandName}
+            onShowToast={(msg) => showToast(msg)}
+          />
           <SaveOrDiscardDialog
             open={!!exit.pending}
             destinationLabel={exit.pending?.label}

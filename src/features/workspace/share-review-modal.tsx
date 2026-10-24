@@ -21,7 +21,9 @@ import { Portal } from "@/components/ui/portal";
 interface ShareReviewModalProps {
   open: boolean;
   onClose: () => void;
-  assetType: "video" | "infographic" | "deck";
+  assetType: "video" | "infographic" | "deck" | "ad";
+  /** For ads: "6 ads in 9 sizes", shown under the title. */
+  assetSummary?: string;
   assetTitle: string;
   brandName?: string;
   durationSeconds?: number;
@@ -33,6 +35,7 @@ export function ShareReviewModal({
   open,
   onClose,
   assetType,
+  assetSummary,
   assetTitle,
   brandName = "Brand",
   durationSeconds,
@@ -45,7 +48,7 @@ export function ShareReviewModal({
 
   if (!open) return null;
 
-  const slug = `${brandName.toLowerCase()}-${assetType === "video" ? "hcp-launch" : "hcp-infographic"}-v1`;
+  const slug = `${brandName.toLowerCase()}-${assetType === "video" ? "hcp-launch" : assetType === "ad" ? "campaign" : "hcp-infographic"}-v1`;
   const reviewUrl = `https://swishx.biz/review/${assetType}/${slug}`;
 
   const handleCopyLink = () => {
@@ -78,7 +81,9 @@ export function ShareReviewModal({
   };
 
   const handleExport = () => {
-    if (assetType === "video") {
+    if (assetType === "ad") {
+      onShowToast?.(`✓ Starting download: ${assetTitle} · every ad, in every size, named by placement`);
+    } else if (assetType === "video") {
       if (onExportDirect) {
         onExportDirect();
       } else {
@@ -123,7 +128,7 @@ export function ShareReviewModal({
                   Share &amp; Distribute Asset
                 </h2>
                 <p className="text-body text-ink-3">
-                  {assetTitle} · {assetType === "video" ? `Video (${durationSeconds || 50}s)` : "Infographic (Print-Ready)"}
+                  {assetTitle} · {assetType === "video" ? `Video (${durationSeconds || 50}s)` : assetType === "ad" ? `Ad campaign${assetSummary ? ` (${assetSummary})` : ""}` : "Infographic (Print-Ready)"}
                 </p>
               </div>
             </div>
@@ -253,7 +258,30 @@ export function ShareReviewModal({
                 </button>
 
                 {/* Option C: Export Master File (Video MP4 or Creative PDF/PNG/JPG) */}
-                {assetType === "video" ? (
+                {assetType === "ad" ? (
+                  <button
+                    type="button"
+                    onClick={handleExport}
+                    className="w-full flex items-center justify-between p-3 rounded-panel border border-hair-2 bg-card hover:border-brand hover:bg-tint transition-all text-left shadow-2xs group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="size-9 rounded-control bg-tint text-brand grid place-items-center shrink-0 border border-tint-line">
+                        <Download className="size-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-body-lg font-bold text-ink flex items-center gap-1.5">
+                          <span>Export the ad package</span>
+                          <span className="rounded-glyph bg-tint text-brand-deep text-caption font-bold px-1.5 py-0.2 border border-tint-line">ZIP</span>
+                        </h4>
+                        <p className="text-label text-ink-3">Every ad in every size, named by placement, ready to upload to each platform</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-label font-bold text-brand opacity-80 group-hover:opacity-100 shrink-0 ml-2">
+                      <span>Download</span>
+                      <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </button>
+                ) : assetType === "video" ? (
                   <button
                     type="button"
                     onClick={handleExport}

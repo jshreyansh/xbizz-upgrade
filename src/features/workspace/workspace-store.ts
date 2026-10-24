@@ -38,7 +38,7 @@ export interface AdCampaignSnapshot {
   closing: string;
   /** AdOutput ids, e.g. "v-16x9", "s-4x5", "b-set", "c-1x1". */
   keptIds: string[];
-  look: { mode: "fresh" | "references" | "template"; image?: string; carousel?: string };
+  look: { mode: "fresh" | "references" | "template"; image?: string; carousel?: string; document?: string };
 }
 
 /** What an Ads project is about: a drug, a medical device or a disease. */

@@ -1,6 +1,7 @@
 /**
  * Templates for the still ads: one for the image ad (it covers 4:5, 9:16 and
- * every banner size), one for the carousel's cards.
+ * every banner size), one for the carousel's cards, one for the document's
+ * pages.
  *
  * A template is a composition, not finished art: where the picture, the
  * headline, the claim, the packshot and the safety band sit. Each one is
@@ -36,6 +37,16 @@ export const CAROUSEL_TEMPLATES: AdTemplate[] = [
   { id: "car-photo", name: "Full-picture cards", blurb: "Each card is a moment, words over it.", layout: "photo" },
   { id: "car-stat", name: "Number-led cards", blurb: "Results lead on the proof cards.", layout: "stat" },
   { id: "car-headline", name: "Solid colour cards", blurb: "Brand colour, one line per card.", layout: "headline" },
+];
+
+/* A document is read, not glanced at: its templates are page designs, with
+   the safety and reference pages always plain text whichever is chosen. */
+export const DOCUMENT_TEMPLATES: AdTemplate[] = [
+  { id: "doc-split", name: "Clinical summary", blurb: "Picture on top, the finding beneath, on white.", layout: "split" },
+  { id: "doc-stat", name: "Data-first pages", blurb: "Each result leads with its number.", layout: "stat" },
+  { id: "doc-photo", name: "Picture-led pages", blurb: "A full picture on every page, words over it.", layout: "photo" },
+  { id: "doc-headline", name: "Brand colour pages", blurb: "Solid colour, one finding per page.", layout: "headline" },
+  { id: "doc-minimal", name: "Quiet and minimal", blurb: "Mostly words and space, a small picture.", layout: "minimal" },
 ];
 
 export interface TemplateFit {

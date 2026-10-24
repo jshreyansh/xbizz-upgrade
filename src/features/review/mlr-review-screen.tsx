@@ -2,7 +2,7 @@
 
 import { PageHeading } from "@/components/patterns/page-heading";
 import { useState } from "react";
-import { Check, Circle, Clapperboard, FileText, MessageSquare, RotateCcw, ShieldCheck, X } from "lucide-react";
+import { Check, Circle, Clapperboard, FileText, Megaphone, MessageSquare, RotateCcw, ShieldCheck, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
@@ -21,6 +21,8 @@ import {
   type ReviewItem,
 } from "@/features/review/review-store";
 import { cn } from "@/lib/cn";
+
+const KIND_LABEL: Record<ReviewItem["kind"], string> = { video: "Video", document: "Document", ad: "Ad campaign" };
 
 /**
  * MLR Review: where a reviewer finds what is waiting on them, and decides it.
@@ -145,7 +147,7 @@ export function MlrReviewScreen() {
                     <StatusChip item={item} />
                   </div>
                   <Text size="caption" tone="muted" className="mt-0.5 block truncate">
-                    {item.kind === "video" ? "Video" : "Document"} · {item.spec} · {item.version} · by {nameOf(item.ownerId)}
+                    {KIND_LABEL[item.kind]} · {item.spec} · {item.version} · by {nameOf(item.ownerId)}
                   </Text>
                   <Text size="label" className="mt-1 block truncate text-ink-2">{waitingLine(item, members, me)}</Text>
                 </div>
@@ -204,7 +206,7 @@ function Thumb({ item, large }: { item: ReviewItem; large?: boolean }) {
       )}
       {!large && (
         <span className="absolute left-1 top-1 grid size-4 place-items-center rounded-glyph bg-black/40">
-          {item.kind === "video" ? <Clapperboard className="size-2.5" /> : <FileText className="size-2.5" />}
+          {item.kind === "video" ? <Clapperboard className="size-2.5" /> : item.kind === "ad" ? <Megaphone className="size-2.5" /> : <FileText className="size-2.5" />}
         </span>
       )}
     </span>
@@ -243,7 +245,7 @@ function ReviewItemModal({ item, onClose }: { item: ReviewItem; onClose: () => v
       onClose={onClose}
       size="xl"
       title={item.title}
-      description={`${item.kind === "video" ? "Video" : "Document"} · ${item.spec} · ${item.version} · submitted by ${nameOf(item.ownerId)}`}
+      description={`${KIND_LABEL[item.kind]} · ${item.spec} · ${item.version} · submitted by ${nameOf(item.ownerId)}`}
       footer={
         <div className="flex w-full flex-wrap items-center justify-end gap-2">
           {!mayDecide && (

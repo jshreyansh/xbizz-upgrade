@@ -261,8 +261,8 @@ export function AdsCampaignStoryboard({
   /* The search ad's words: written here, with every combination checked. */
   const searchPlan = hasSearch ? buildSearchAd({ ...input, boxedWarning: brandAdFacts(brandId).boxedWarning }) : null;
   const [searchCombo, setSearchCombo] = useState(0);
-  /* Image ads and carousels both get a template next; video-only goes straight on. */
-  const hasStills = hasImage || hasCarousel;
+  /* Image ads, carousels and documents get a template next; video and search go straight on. */
+  const hasStills = hasImage || hasCarousel || hasDocument;
   const storyLength = story.reduce((sum, s) => sum + s.duration, 0);
 
   const tabs: Array<{ id: Tab; label: string }> = [

@@ -47,7 +47,7 @@ export interface ReviewItem {
   /** The workspace it was submitted in; the samples belong to the first one. */
   workspaceId?: string;
   title: string;
-  kind: "video" | "document";
+  kind: "video" | "document" | "ad";
   brand: string;
   spec: string;
   /** "Version 2". */

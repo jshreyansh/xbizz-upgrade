@@ -2,11 +2,12 @@
 
 import { PageHeading } from "@/components/patterns/page-heading";
 import { useMemo, useState } from "react";
-import { Search, Grid3x3, List, Film, Image as ImageIcon, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
+import { Search, Grid3x3, List, Film, Image as ImageIcon, Megaphone, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { DataList } from "@/components/patterns/data-list";
 import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
+import type { AssetType } from "@/types/content";
 import { useWorkspaceReviewItems } from "@/features/review/review-store";
 import { SEED_WORKSPACE_ID, useSettingsStore } from "@/features/settings/settings-store";
 import { canSeeDraft, sharedWith, useSharingStore, visibilityLabel } from "@/features/workspace/project-sharing";
@@ -34,7 +35,10 @@ const STATUS_STYLE: Record<LibraryAsset["status"], { bg: string; fg: string; lin
   "Changes requested": { bg: "var(--warn-bg)", fg: "var(--warn)", line: "var(--warn-line)" },
 };
 
-type KindFilter = "all" | "video" | "infographic";
+type KindFilter = "all" | "video" | "infographic" | "ad";
+
+const KIND_ICON: Record<AssetType, typeof Film> = { video: Film, infographic: ImageIcon, visual: ImageIcon, carousel: ImageIcon, ad: Megaphone };
+const KIND_LABEL: Record<AssetType, string> = { video: "Video", infographic: "Doc / image", visual: "Doc / image", carousel: "Doc / image", ad: "Ads" };
 export type StageFilter = "all" | "draft" | "shared" | "published" | "archived";
 
 export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: StageFilter }) {
@@ -109,6 +113,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
             { id: "all" as const, label: "All" },
             { id: "video" as const, label: "Video" },
             { id: "infographic" as const, label: "Doc & image" },
+            { id: "ad" as const, label: "Ads" },
           ]).map((opt) => (
             <SegmentedButton key={opt.id} active={kind === opt.id} onClick={() => setKind(opt.id)}>
               {opt.label}
@@ -152,7 +157,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 18 }}>
         {filtered.map((a, i) => {
           const status = STATUS_STYLE[a.status];
-          const KindIcon = a.kind === "video" ? Film : ImageIcon;
+          const KindIcon = KIND_ICON[a.kind];
           return (
             <LibraryTile
               key={a.id}
@@ -186,7 +191,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
               mediaTopLeft={
                 <span className="inline-flex items-center gap-1.5 rounded-chip bg-black/40 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90 backdrop-blur-sm">
                   <KindIcon size={10} />
-                  {a.kind === "video" ? "Video" : "Doc / image"}
+                  {KIND_LABEL[a.kind]}
                 </span>
               }
               mediaTopRight={
@@ -265,8 +270,11 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
               width: 110,
               cell: (a) => (
                 <span className="inline-flex items-center gap-1.5 rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">
-                  {a.kind === "video" ? <Film size={11} /> : <ImageIcon size={11} />}
-                  {a.kind === "video" ? "Video" : "Doc"}
+                  {(() => {
+                    const Icon = KIND_ICON[a.kind];
+                    return <Icon size={11} />;
+                  })()}
+                  {KIND_LABEL[a.kind] === "Doc / image" ? "Doc" : KIND_LABEL[a.kind]}
                 </span>
               ),
             },

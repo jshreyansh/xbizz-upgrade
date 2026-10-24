@@ -12,6 +12,7 @@ import { useSettingsStore } from "@/features/settings/settings-store";
 import type { AdType } from "@/features/workspace/ad-options";
 import {
   CAROUSEL_TEMPLATES,
+  DOCUMENT_TEMPLATES,
   IMAGE_TEMPLATES,
   rankTemplates,
   templateFit,
@@ -23,9 +24,11 @@ import {
  * Choosing the templates for the still ads — the Ads version of the Docs
  * template step.
  *
- * Only what the campaign makes is asked: an image ad, a carousel, or both.
- * One image template covers every image size and banner, and the carousel
- * matches it unless you say otherwise, so most campaigns are one choice.
+ * Only what the campaign makes is asked: an image ad, a carousel, a document,
+ * in any mix. One image template covers every image size and banner, and the
+ * carousel matches it unless you say otherwise. The document has its own
+ * templates, because a page that is read is designed differently from a card
+ * that is swiped.
  * Each template is previewed with the campaign's own words in the real
  * shapes; the picture stays a placeholder, because this chooses the
  * composition, not the art. Above the templates, one choice decides whether
@@ -57,6 +60,9 @@ export function AdsTemplateStep({
   copy,
   hasImage,
   hasCarousel,
+  hasDocument = false,
+  carouselFor,
+  documentFor,
   imageShapes,
   hasBanners,
   references,
@@ -72,6 +78,10 @@ export function AdsTemplateStep({
   copy: Copy;
   hasImage: boolean;
   hasCarousel: boolean;
+  hasDocument?: boolean;
+  /** Where the carousel and the document run, in words: "Meta Ads · Feed". */
+  carouselFor?: string;
+  documentFor?: string;
   imageShapes: string[];
   hasBanners: boolean;
   references: AdReference[];
@@ -81,7 +91,7 @@ export function AdsTemplateStep({
   onAddSuggested: (asset: WorkspaceAsset) => void;
   adCount: number;
   credits: number;
-  onContinue: (choice: { mode: LookMode; image?: string; carousel?: string }) => void;
+  onContinue: (choice: { mode: LookMode; image?: string; carousel?: string; document?: string }) => void;
 }) {
   const kitColors = useSettingsStore((s) => s.brandKit.colors);
   /* Unbranded ads can't look like the brand, so they get a neutral palette. */
@@ -91,12 +101,14 @@ export function AdsTemplateStep({
 
   const imageList = rankTemplates(IMAGE_TEMPLATES, { adType, hasReferences });
   const carouselList = rankTemplates(CAROUSEL_TEMPLATES, { adType, hasReferences });
+  const documentList = rankTemplates(DOCUMENT_TEMPLATES, { adType, hasReferences });
   const firstFit = (list: AdTemplate[]) => list.find((t) => templateFit(t, ctx).ok)?.id ?? list[0].id;
 
   /* The look applies to every still: the image ad and the carousel alike. */
   const [mode, setMode] = useState<LookMode>(hasReferences ? "references" : "template");
   const [imageChoice, setImageChoice] = useState(firstFit(imageList));
   const [carouselChoice, setCarouselChoice] = useState(firstFit(carouselList));
+  const [documentChoice, setDocumentChoice] = useState(firstFit(documentList));
   const [matches, setMatches] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const templatesOn = mode === "template";
@@ -128,13 +140,22 @@ export function AdsTemplateStep({
         ? hasReferences
           ? `Following ${references.length === 1 ? "your reference" : `your ${references.length} references`}`
           : "Add a reference to follow"
-        : [hasImage ? `Image: ${nameOf(imageChoice, IMAGE_TEMPLATES)}` : null, hasCarousel ? `Carousel: ${nameOf(effectiveCarousel, CAROUSEL_TEMPLATES)}` : null].filter(Boolean).join(" · ");
+        : [
+            hasImage ? `Image: ${nameOf(imageChoice, IMAGE_TEMPLATES)}` : null,
+            hasCarousel ? `Carousel: ${nameOf(effectiveCarousel, CAROUSEL_TEMPLATES)}` : null,
+            hasDocument ? `Document: ${nameOf(documentChoice, DOCUMENT_TEMPLATES)}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ");
+  /* "the image, carousel and document ads": only what this campaign makes. */
+  const kinds = [hasImage && "image", hasCarousel && "carousel", hasDocument && "document"].filter(Boolean) as string[];
+  const kindsLabel = kinds.length > 1 ? `${kinds.slice(0, -1).join(", ")} and ${kinds[kinds.length - 1]}` : kinds[0] ?? "still";
 
   return (
     <>
       <div className="shrink-0">
         <h2 className="text-display font-[850] tracking-tight text-ink">Choose templates</h2>
-        <p className="mt-0.5 text-body text-ink-3">How the image and carousel ads should look. Previews use your own words.</p>
+        <p className="mt-0.5 text-body text-ink-3">How the {kindsLabel} ads should look. Previews use your own words.</p>
       </div>
 
       {/* How the look is decided, for every still ad. */}
@@ -264,7 +285,7 @@ export function AdsTemplateStep({
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h3 className="text-subhead font-[850] tracking-tight text-ink">Carousel template</h3>
-                <p className="text-label text-ink-3">The cards for Meta Feed, in the order planned on the storyboard.</p>
+                <p className="text-label text-ink-3">The cards for {carouselFor || "the feed"}, in the order planned on the storyboard.</p>
               </div>
               {hasImage && (
                 <label className="flex cursor-pointer items-center gap-2.5 rounded-control border border-hair-2 bg-card px-3 py-2">
@@ -299,6 +320,32 @@ export function AdsTemplateStep({
             )}
           </section>
         )}
+
+        {hasDocument && (
+          <section className="space-y-3">
+            <div>
+              <h3 className="text-subhead font-[850] tracking-tight text-ink">Document template</h3>
+              <p className="text-label text-ink-3">
+                The pages for {documentFor || "LinkedIn"}, in the order planned on the storyboard{adType === "product-claim" ? ". The safety and reference pages stay plain text in every template" : ""}.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {documentList.map((t) => (
+                <TemplateCard
+                  key={t.id}
+                  template={t}
+                  fit={templateFit(t, ctx)}
+                  selected={templatesOn && documentChoice === t.id}
+                  onSelect={() => setDocumentChoice(t.id)}
+                  copy={copy}
+                  palette={palette}
+                  adType={adType}
+                  shapes={["page"]}
+                />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       <ActionBar
@@ -313,6 +360,7 @@ export function AdsTemplateStep({
                 mode,
                 image: templatesOn && hasImage ? imageChoice : undefined,
                 carousel: templatesOn && hasCarousel ? effectiveCarousel : undefined,
+                document: templatesOn && hasDocument ? documentChoice : undefined,
               })
             }
             className="h-9 shrink-0 cursor-pointer rounded-control bg-brand px-5 text-body font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-deep disabled:opacity-40"
@@ -345,10 +393,10 @@ function TemplateCard({
   copy: Copy;
   palette: { primary: string; callout: string };
   adType: AdType;
-  shapes: Array<"4:5" | "9:16" | "banner" | "card">;
+  shapes: Array<"4:5" | "9:16" | "banner" | "card" | "page">;
 }) {
   /* A div acting as the button, so the carousel's arrows can be real buttons inside it. */
-  const carousel = shapes[0] === "card";
+  const paged = shapes[0] === "card" || shapes[0] === "page";
   return (
     <div
       role="button"
@@ -371,8 +419,8 @@ function TemplateCard({
             : "cursor-pointer border-hair bg-card hover:border-brand/50 hover:shadow-soft"
       )}
     >
-      {carousel ? (
-        <CarouselPreview layout={template.layout} copy={copy} palette={palette} adType={adType} />
+      {paged ? (
+        <CarouselPreview layout={template.layout} copy={copy} palette={palette} adType={adType} page={shapes[0] === "page"} />
       ) : (
         <div className="flex h-36 items-end justify-center gap-2 overflow-hidden rounded-control bg-subtle p-2.5">
           {shapes.map((shape, i) => (
@@ -400,17 +448,21 @@ function TemplateCard({
 /**
  * A carousel as people see it: one card, with arrows to the next. Showing
  * every card side by side read as several ads rather than one that swipes.
+ * A document pages the same way, at 4:5.
  */
 function CarouselPreview({
   layout,
   copy,
   palette,
   adType,
+  page = false,
 }: {
   layout: AdTemplateLayout;
   copy: Copy;
   palette: { primary: string; callout: string };
   adType: AdType;
+  /** Document pages rather than carousel cards. */
+  page?: boolean;
 }) {
   const count = adType === "product-claim" ? 4 : 3;
   const [index, setIndex] = useState(0);
@@ -421,7 +473,7 @@ function CarouselPreview({
   const arrow = (dir: "prev" | "next") => (
     <button
       type="button"
-      aria-label={dir === "prev" ? "Previous card" : "Next card"}
+      aria-label={dir === "prev" ? `Previous ${page ? "page" : "card"}` : `Next ${page ? "page" : "card"}`}
       onClick={(e) => go(e, dir === "prev" ? -1 : 1)}
       className="grid size-6 shrink-0 cursor-pointer place-items-center rounded-full border border-hair-2 bg-card text-label font-bold text-ink-2 shadow-2xs transition hover:border-brand hover:text-brand"
     >
@@ -433,7 +485,7 @@ function CarouselPreview({
       <div className="flex h-[82%] w-full items-center justify-center gap-2">
         {arrow("prev")}
         {index === 3 ? (
-          <div className="flex aspect-square h-full shrink-0 flex-col justify-center gap-1 rounded-[4px] border border-hair-2 bg-card p-2 shadow-2xs">
+          <div className={cn("flex h-full shrink-0 flex-col justify-center gap-1 rounded-[4px] border border-hair-2 bg-card p-2 shadow-2xs", page ? "aspect-[4/5]" : "aspect-square")}>
             <div className="text-micro font-[850] text-ink">Important Safety Information</div>
             <div className="h-1 w-full rounded-[1px] bg-ink/15" />
             <div className="h-1 w-4/5 rounded-[1px] bg-ink/15" />
@@ -441,12 +493,12 @@ function CarouselPreview({
           </div>
         ) : (
           <div className="flex h-full shrink-0 items-center">
-            <TemplatePreview layout={layout} shape="card" copy={copy} palette={palette} adType={adType} cardIndex={index} fill />
+            <TemplatePreview layout={layout} shape={page ? "page" : "card"} copy={copy} palette={palette} adType={adType} cardIndex={index} fill />
           </div>
         )}
         {arrow("next")}
       </div>
-      <div className="flex gap-1" aria-label={`Card ${index + 1} of ${count}`}>
+      <div className="flex gap-1" aria-label={`${page ? "Page" : "Card"} ${index + 1} of ${count}`}>
         {Array.from({ length: count }, (_, i) => (
           <span key={i} className={cn("size-1.5 rounded-full", i === index ? "bg-brand" : "bg-hair-3")} />
         ))}
@@ -469,7 +521,7 @@ function TemplatePreview({
   fill,
 }: {
   layout: AdTemplateLayout;
-  shape: "4:5" | "9:16" | "banner" | "card";
+  shape: "4:5" | "9:16" | "banner" | "card" | "page";
   copy: Copy;
   palette: { primary: string; callout: string };
   adType: AdType;
@@ -477,7 +529,8 @@ function TemplatePreview({
   /** Fill the height it's given, for the single-card carousel preview. */
   fill?: boolean;
 }) {
-  const box = shape === "4:5" ? "h-full aspect-[4/5]" : shape === "9:16" ? "h-full aspect-[9/16]" : shape === "banner" ? "h-[60%] aspect-[6/5]" : fill ? "h-full aspect-square" : "w-[30%] aspect-square";
+  const paged = shape === "card" || shape === "page";
+  const box = shape === "4:5" || shape === "page" ? "h-full aspect-[4/5]" : shape === "9:16" ? "h-full aspect-[9/16]" : shape === "banner" ? "h-[60%] aspect-[6/5]" : fill ? "h-full aspect-square" : "w-[30%] aspect-square";
   const dark = layout === "headline";
   const words = (
     <div className="space-y-0.5">
@@ -488,9 +541,9 @@ function TemplatePreview({
       )}
       {layout === "quote" && <div className="text-body font-[850] leading-none" style={{ color: palette.primary }}>&ldquo;</div>}
       <div className={cn("line-clamp-3 text-micro font-[850] leading-tight", dark ? "text-white" : "text-ink")}>
-        {shape === "card" && cardIndex > 0 ? (cardIndex === 1 ? copy.support ?? copy.headline : "Ask your doctor") : copy.headline}
+        {paged && cardIndex > 0 ? (cardIndex === 1 ? copy.support ?? copy.headline : "Ask your doctor") : copy.headline}
       </div>
-      {shape !== "banner" && shape !== "card" && copy.support && layout !== "minimal" && (
+      {shape !== "banner" && !paged && copy.support && layout !== "minimal" && (
         <div className={cn("line-clamp-2 text-micro leading-tight", dark ? "text-white/80" : "text-ink-3")}>{copy.support}</div>
       )}
     </div>
@@ -509,7 +562,7 @@ function TemplatePreview({
           <div className="rounded-[3px] bg-card/90 p-1">{words}</div>
         </div>
       ) : layout === "split" ? (
-        <div className={cn("flex min-h-0 flex-1 gap-1", shape === "9:16" || shape === "card" ? "flex-col" : "flex-row")}>
+        <div className={cn("flex min-h-0 flex-1 gap-1", shape === "9:16" || paged ? "flex-col" : "flex-row")}>
           {picture("min-h-[30%] flex-1")}
           <div className="flex flex-1 flex-col justify-between">{words}{pack}</div>
         </div>

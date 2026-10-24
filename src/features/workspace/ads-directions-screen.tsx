@@ -437,7 +437,7 @@ export function AdsDirectionsScreen() {
     { label: `Fitted ${kept.length} ads to their placements`, seconds: 1.0 },
   ];
   /* Into the Ads studio, with what the plan settled. */
-  const createAds = (look: { mode: "fresh" | "references" | "template"; image?: string; carousel?: string }) => {
+  const createAds = (look: { mode: "fresh" | "references" | "template"; image?: string; carousel?: string; document?: string }) => {
     setAdCampaign({ leadMessage, claimIds: usedClaims.map((c) => c.id), closing, keptIds: kept.map((o) => o.id), look });
     addChatMessage({
       role: "swishx",
@@ -548,6 +548,9 @@ export function AdsDirectionsScreen() {
               })()}
               hasImage={kept.some((o) => o.format === "image" || o.format === "banner")}
               hasCarousel={kept.some((o) => o.format === "carousel")}
+              hasDocument={kept.some((o) => o.format === "document")}
+              carouselFor={kept.find((o) => o.format === "carousel")?.placements.join(" and ")}
+              documentFor={kept.find((o) => o.format === "document")?.placements.join(" and ")}
               imageShapes={kept.filter((o) => o.format === "image").map((o) => o.shape)}
               hasBanners={kept.some((o) => o.format === "banner")}
               references={references.map((r) => ({ id: r.id, name: r.name, note: r.note, previewUrl: r.previewUrl }))}

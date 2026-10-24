@@ -1,4 +1,6 @@
-import type { AssetType } from "@/types/content";
+import type { AssetType, Audience } from "@/types/content";
+import type { AdFormatChoice, AdKind, AdPlacement, AdType } from "@/features/workspace/ad-options";
+import type { AdSubject } from "@/features/workspace/workspace-store";
 
 /**
  * Assets that have been published — the ones a shared link already points at.
@@ -38,9 +40,38 @@ export interface LibraryAsset {
   badge?: string;
   metric?: string;
   metricLabel?: string;
+  /** Ad campaigns: what rebuilds the campaign, since a demo scenario is a single asset. */
+  ad?: { kind: AdKind; type: AdType; audience: Audience; placements: AdPlacement[]; formats?: AdFormatChoice; subject: AdSubject };
 }
 
 export const LIBRARY_ASSETS: LibraryAsset[] = [
+  {
+    id: "velmora-launch-ads",
+    title: "Velmora · Launch Ads",
+    kind: "ad",
+    scenarioId: "patient-education",
+    brand: "Velmora",
+    audience: "Patients",
+    spec: "5 ads · 6 sizes",
+    status: "Published",
+    stage: "published",
+    updated: "Oct 22, 2026",
+    ownerId: "m1",
+    views: 128,
+    comments: 3,
+    gradient: "linear-gradient(150deg,#7c2d12,#c2410c 55%,#f97316)",
+    badge: "Launch Ads",
+    metric: "5 ads",
+    metricLabel: "YouTube · Meta · LinkedIn · Search",
+    ad: {
+      kind: "brand-launch",
+      type: "product-claim",
+      audience: "Patient",
+      placements: ["youtube", "meta-feed", "linkedin-feed", "google-search"],
+      formats: { "linkedin-feed": ["document"] },
+      subject: { kind: "drug", id: "velmora", name: "Velmora" },
+    },
+  },
   {
     id: "velmora-hcp-launch",
     title: "Velmora HCP Launch Film",
