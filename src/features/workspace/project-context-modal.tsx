@@ -182,7 +182,7 @@ export function ProjectContextModal({
 
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
             {field === "audience" && (
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className={cn("grid gap-2", ad ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
                 {audienceOptions.map((option) => {
                   const Icon = option.icon;
                   const active = draft.audience === option.id;

@@ -806,7 +806,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             {/* Expanded Body for Step 1 */}
             {stage === "audience" && (
               <div className="pt-4 space-y-4 animate-in fade-in duration-150">
-                <div className={cn("grid gap-3.5", isAd ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6")}>
+                <div className={cn("grid gap-3.5", isAd ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6")}>
                   {audienceOptions.map((item) => {
                     const isSel = audience === item.id;
                     const IconComp = item.icon;

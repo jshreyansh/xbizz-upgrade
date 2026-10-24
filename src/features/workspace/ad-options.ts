@@ -58,7 +58,7 @@ export type AdPlacement =
 
 /** Ads are for the people a platform can reach. Trade and market-access
  *  audiences are reached through dossiers and portals, not ad accounts. */
-export const AD_AUDIENCES: Audience[] = ["Patient", "HCP"];
+export const AD_AUDIENCES: Audience[] = ["HCP", "Patient", "Consumer"];
 
 /* Labelled in the words MLR reviewers use — branded, reminder, unbranded —
    so "Branding" is never mistaken for the ad formats, which come from the
@@ -116,17 +116,17 @@ export const AD_PLACEMENTS: Array<{
   /** Who the placement can reach. */
   audiences: Audience[];
 }> = [
-  { id: "youtube", account: "Google Ads", label: "YouTube", makes: ["video"], sizes: "16:9 skippable in-stream, 9:16 Shorts · 6 sec bumpers for reminders", audiences: ["Patient", "HCP"] },
-  { id: "google-search", account: "Google Ads", label: "Search", makes: ["text"], sizes: "Up to 15 headlines and 4 descriptions · Google mixes them", audiences: ["Patient", "HCP"] },
-  { id: "google-display", account: "Google Ads", label: "Display", makes: ["banner"], sizes: "Image banners in fixed sizes, with a static safety band", audiences: ["Patient", "HCP"] },
-  { id: "meta-feed", account: "Meta Ads", label: "Feed", makes: ["video", "image", "carousel"], sizes: "1:1 and 4:5", audiences: ["Patient", "HCP"] },
-  { id: "meta-reels-stories", account: "Meta Ads", label: "Reels & Stories", makes: ["video", "image"], sizes: "9:16 full screen", audiences: ["Patient", "HCP"] },
-  { id: "linkedin-feed", account: "LinkedIn Ads", label: "Feed", makes: ["image", "video", "carousel", "document"], sizes: "1:1 image and video, square carousel, PDF document", audiences: ["HCP", "Patient"] },
-  { id: "programmatic-display", account: "Programmatic", label: "Display", makes: ["banner"], sizes: "HTML5 banners with scrolling safety information", audiences: ["Patient", "HCP"] },
-  { id: "programmatic-video", account: "Programmatic", label: "Online video", makes: ["video"], sizes: "16:9 · 15 or 30 sec", audiences: ["Patient", "HCP"] },
-  { id: "ctv", account: "Programmatic", label: "Connected TV", makes: ["video"], sizes: "16:9 TV spot · 15, 30 or 60 sec", audiences: ["Patient"] },
+  { id: "youtube", account: "Google Ads", label: "YouTube", makes: ["video"], sizes: "16:9 skippable in-stream, 9:16 Shorts · 6 sec bumpers for reminders", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "google-search", account: "Google Ads", label: "Search", makes: ["text"], sizes: "Up to 15 headlines and 4 descriptions · Google mixes them", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "google-display", account: "Google Ads", label: "Display", makes: ["banner"], sizes: "Image banners in fixed sizes, with a static safety band", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "meta-feed", account: "Meta Ads", label: "Feed", makes: ["video", "image", "carousel"], sizes: "1:1 and 4:5", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "meta-reels-stories", account: "Meta Ads", label: "Reels & Stories", makes: ["video", "image"], sizes: "9:16 full screen", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "linkedin-feed", account: "LinkedIn Ads", label: "Feed", makes: ["image", "video", "carousel", "document"], sizes: "1:1 image and video, square carousel, PDF document", audiences: ["HCP", "Patient", "Consumer"] },
+  { id: "programmatic-display", account: "Programmatic", label: "Display", makes: ["banner"], sizes: "HTML5 banners with scrolling safety information", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "programmatic-video", account: "Programmatic", label: "Online video", makes: ["video"], sizes: "16:9 · 15 or 30 sec", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "ctv", account: "Programmatic", label: "Connected TV", makes: ["video"], sizes: "16:9 TV spot · 15, 30 or 60 sec", audiences: ["Patient", "Consumer"] },
   { id: "hcp-networks", account: "HCP networks", label: "In-feed and banners", makes: ["video", "image"], sizes: "Each network's own specs", audiences: ["HCP"] },
-  { id: "tiktok", account: "TikTok Ads", label: "In-feed", makes: ["video", "carousel"], sizes: "9:16 video and image carousels", audiences: ["Patient", "HCP"] },
+  { id: "tiktok", account: "TikTok Ads", label: "In-feed", makes: ["video", "carousel"], sizes: "9:16 video and image carousels", audiences: ["Patient", "Consumer", "HCP"] },
 ];
 
 export const AD_FORMATS: Array<{ id: AdFormat; label: string; icon: LucideIcon }> = [
