@@ -280,7 +280,10 @@ export function AdsCampaignStoryboard({
   closing,
   kept,
   onConfirm,
+  condition,
 }: {
+  /** What the ads are about, when it isn't the product's own condition. */
+  condition?: string;
   brandId: string;
   brandName: string;
   adType: AdType;
@@ -290,10 +293,10 @@ export function AdsCampaignStoryboard({
   kept: AdOutput[];
   onConfirm: (result: { ads: number; credits: number; hasStills: boolean }) => void;
 }) {
-  const input = { brandId, brand: brandName, adType, claims, leadMessage, closing };
+  const input = { brandId, brand: brandName, adType, claims, leadMessage, closing, condition: condition ?? conditionFor(brandId) };
   const story = buildAdStory(input);
   const imageAd = buildImageAd(input);
-  const carousel = buildCarousel({ ...input, condition: conditionFor(brandId) });
+  const carousel = buildCarousel(input);
   const credits = kept.reduce((sum, o) => sum + o.credits, 0);
 
   const videoShapes = kept.filter((o) => o.format === "video").map((o) => o.shape as VideoShape);
@@ -434,7 +437,7 @@ export function AdsCampaignStoryboard({
                         ["Supporting claim", imageAd.support],
                         ["Picture", imageAd.imageIdea],
                         ["Safety", imageAd.riskLine],
-                        ["Packshot", imageAd.packshot ? "From Product & Device Visual Assets" : "None. Unbranded ads can't show the product"],
+                        ["Packshot", imageAd.packshot ? "From Product & Device Visual Assets" : "None. Help-seeking ads can't show the product"],
                       ] as const)
                         .filter(([, value]) => !!value)
                         .map(([label, value]) => (

@@ -62,6 +62,11 @@ export interface ResearchSourcesSectionProps {
   onDossierInUseChange: (inUse: boolean) => void;
   /** A rule from elsewhere that changes how these sources are used, if any. */
   notice?: string | null;
+  /**
+   * What SwishX prepared, when it isn't a drug's evidence dossier: a medical
+   * device's source pack, or a disease's CDC information for help-seeking ads.
+   */
+  sourcePack?: { band: string; name: string; line: string; count: string; countLabel: string };
 }
 
 /** The Research and Sources summary line: only what has actually been added. */
@@ -85,6 +90,7 @@ export function ResearchSourcesContent({
   dossierInUse,
   onDossierInUseChange,
   notice,
+  sourcePack,
 }: ResearchSourcesSectionProps) {
   /* Files picked but not yet attached — they are waiting on their note. */
   const [pending, setPending] = useState<Array<PendingFile & { size: string; previewUrl?: string }>>([]);
@@ -93,7 +99,8 @@ export function ResearchSourcesContent({
   const docUploadRef = useRef<HTMLInputElement>(null);
   const [viewing, setViewing] = useState<UploadedDoc | null>(null);
   const researching = Boolean(research?.researching);
-  const pack = evidencePack(brandName);
+  const basePack = evidencePack(brandName);
+  const pack = sourcePack ? { ...basePack, name: sourcePack.name } : basePack;
   const audience = useWorkspaceStore((st) => st.audience);
   const market = useWorkspaceStore((st) => st.market);
   const dossierPhrase = dossierFor(market, audience);
@@ -164,12 +171,16 @@ export function ResearchSourcesContent({
           the dossier is the base, your files narrow or add to it. */}
       <div className="overflow-hidden rounded-card border border-brand/30 bg-card">
         <StepBand number={1} tone="brand">
-          {researching
-            ? `SwishX is preparing ${dossierPhrase} for you`
-            : `SwishX has already made ${dossierPhrase} for you`}
+          {sourcePack
+            ? sourcePack.band
+            : researching
+              ? `SwishX is preparing ${dossierPhrase} for you`
+              : `SwishX has already made ${dossierPhrase} for you`}
         </StepBand>
         <DossierRow
           pack={pack}
+          line={sourcePack?.line}
+          count={sourcePack ? { value: sourcePack.count, label: sourcePack.countLabel } : undefined}
           inUse={dossierInUse}
           research={researching ? research : undefined}
           onView={onPreviewDossier}
@@ -387,12 +398,17 @@ const VIEW_BUTTON = "gap-1.5 border-transparent bg-ink font-bold text-white hove
  */
 function DossierRow({
   pack,
+  line,
+  count,
   inUse,
   research,
   onView,
   onToggle,
 }: {
   pack: EvidencePack;
+  /** What it holds, when it isn't a drug's approved claims. */
+  line?: string;
+  count?: { value: string; label: string };
   inUse: boolean;
   /** Set while the plan is still being researched. */
   research?: PlanResearch;
@@ -411,7 +427,7 @@ function DossierRow({
       <div className="min-w-[11rem] flex-1">
         <div className="text-subhead font-[850] tracking-tight text-ink">{pack.name}</div>
         <p className="text-body leading-snug text-ink-2">
-          Every line in your script will cite one of its approved claims.
+          {line ?? "Every line in your script will cite one of its approved claims."}
         </p>
       </div>
 
@@ -437,8 +453,8 @@ function DossierRow({
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="grid grid-cols-2 divide-x divide-hair rounded-panel border border-hair bg-card">
             <div className="px-4 py-1.5">
-              <div className="text-subhead font-[850] tabular-nums leading-tight text-brand-deep">{pack.totalClaims}</div>
-              <div className="text-label text-ink-3">Approved claims</div>
+              <div className="text-subhead font-[850] tabular-nums leading-tight text-brand-deep">{count?.value ?? pack.totalClaims}</div>
+              <div className="text-label text-ink-3">{count?.label ?? "Approved claims"}</div>
             </div>
             <div className="px-4 py-1.5">
               <div className="text-subhead font-[850] tabular-nums leading-tight text-ink">
@@ -465,7 +481,7 @@ function DossierRow({
             ) : (
               <Button size="sm" onClick={onToggle} className="h-10 gap-1.5 px-4 font-bold">
                 <Plus className="size-3.5" />
-                Use dossier
+                {line ? "Use sources" : "Use dossier"}
               </Button>
             )}
           </div>

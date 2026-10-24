@@ -23,6 +23,8 @@ import {
   placementsFor,
   type AdPlacement,
   type AdType,
+  formatsOf,
+  type AdFormatChoice,
 } from "@/features/workspace/ad-options";
 
 /**
@@ -61,6 +63,8 @@ export interface ProjectContext {
   shape: OutputShape;
   adType?: AdType;
   placements?: AdPlacement[];
+  /** Which formats each placement makes. */
+  formats?: AdFormatChoice;
 }
 
 export function ProjectContextModal({
@@ -102,7 +106,7 @@ export function ProjectContextModal({
   const boxedWarning = brandAdFacts(draft.brandId).boxedWarning;
 
   const summary: Record<ContextField, string> = {
-    adType: AD_TYPES.find((t) => t.id === draft.adType)?.label ?? "Branded",
+    adType: AD_TYPES.find((t) => t.id === draft.adType)?.label ?? "Product Claim Ads",
     placements: `${placements.length} ${placements.length === 1 ? "placement" : "placements"}`,
     brand: brand.name,
     audience: AUDIENCE_OPTIONS.find((a) => a.id === draft.audience)?.title ?? draft.audience,
@@ -316,11 +320,21 @@ export function ProjectContextModal({
               <PlacementPicker
                 audience={draft.audience}
                 selected={placements}
+                formats={draft.formats}
                 onToggle={(id) =>
                   setDraft((prev) => {
                     const current = prev.placements ?? [];
                     const next = current.includes(id) ? (current.length > 1 ? current.filter((p) => p !== id) : current) : [...current, id];
-                    return { ...prev, placements: next };
+                    const formats = { ...(prev.formats ?? {}) };
+                    delete formats[id];
+                    return { ...prev, placements: next, formats };
+                  })
+                }
+                onToggleFormat={(id, format) =>
+                  setDraft((prev) => {
+                    const current = formatsOf(id, prev.formats);
+                    const next = current.includes(format) ? current.filter((f) => f !== format) : [...current, format];
+                    return next.length ? { ...prev, formats: { ...(prev.formats ?? {}), [id]: next } } : prev;
                   })
                 }
               />

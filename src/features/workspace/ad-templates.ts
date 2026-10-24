@@ -49,7 +49,7 @@ export function templateFit(template: AdTemplate, ctx: { adType: AdType; hasNumb
     return { ok: false, note: "Needs a result with a number. None of the chosen claims has one." };
   }
   if (template.layout === "product" && ctx.adType === "unbranded") {
-    return { ok: false, note: "Unbranded ads can't show the product." };
+    return { ok: false, note: "Help-seeking ads can't show the product." };
   }
   if (template.layout === "headline" && ctx.headline.length > 48) {
     return { ok: true, note: "Long headline: the 320×50 banner uses the short claim instead." };

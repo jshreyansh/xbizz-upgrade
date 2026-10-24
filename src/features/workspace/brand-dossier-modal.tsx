@@ -3,6 +3,7 @@
 import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components/patterns/pick-list";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { PlacementPicker } from "@/features/workspace/placement-picker";
+import { conditionPhrase } from "@/features/workspace/ad-subject";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -19,6 +20,7 @@ import {
   Megaphone,
   Info,
   ShieldAlert,
+  Stethoscope,
   Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,12 +36,21 @@ import {
   AD_AUDIENCES,
   AD_KIND_PRESETS,
   AD_PLACEMENTS,
+  AD_TYPES,
   adSamplePrompts,
   brandAdFacts,
   placementsFromMediaPlan,
   promptKindFor,
   type AdPlacement,
   type AdType,
+  formatsOf,
+  type AdFormat,
+  type AdFormatChoice,
+  CDC_DISEASES,
+  MEDTECH_DEVICES,
+  cdcDisease,
+  medtechDevice,
+  type MedtechDevice,
 } from "@/features/workspace/ad-options";
 export {
   INITIAL_BRANDS,
@@ -70,7 +81,8 @@ import type {
  * Therapy Area toggle had to show both options to everyone, including the four
  * audiences for which therapy-area grounding makes no sense.
  */
-type RevealStage = "audience" | "grounding" | "details";
+/** Ads add a step between the brand and where the ads run: which kind of ad. */
+type RevealStage = "audience" | "grounding" | "adtype" | "details";
 
 /** The chip that means "no narrowing", kept out of the real variant names. */
 const ALL_VARIANTS = "__all__";
@@ -93,6 +105,20 @@ function BrandThumb({ brand, className }: { brand: BrandItem; className?: string
       {brand.name.slice(0, 2).toUpperCase()}
     </div>
   );
+}
+
+/** A medical device in the shape the product tiles use, so it is shown the same way. */
+function deviceAsBrand(device: MedtechDevice): BrandItem {
+  return {
+    id: device.id,
+    name: device.name,
+    genericName: `${device.kind} · ${device.clearance}`,
+    therapyAreas: [device.therapyArea],
+    hasDossier: true,
+    type: "Device",
+    gradient: device.gradient,
+    referenceImageUrl: device.image,
+  };
 }
 
 /**
@@ -169,46 +195,18 @@ function SelectedBrandTile({ brand, onChange }: { brand: BrandItem; onChange: ()
 function AdLabelChecks({
   brandName,
   adKind,
-  adType,
   facts,
   indication,
   onIndication,
-  onMakeProductClaim,
 }: {
   brandName: string;
   adKind: string;
-  adType: AdType;
   facts: ReturnType<typeof brandAdFacts>;
   indication: string;
   onIndication: (label: string) => void;
-  onMakeProductClaim: () => void;
 }) {
   return (
     <div className="space-y-2.5">
-      {adType === "reminder" && facts.boxedWarning && (
-        <div className="flex items-start gap-2.5 rounded-control border border-danger-line bg-danger-bg p-3">
-          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-danger" />
-          <div className="min-w-0 flex-1">
-            <p className="text-body font-bold text-ink">Reminder ads aren&apos;t allowed for {brandName}</p>
-            <p className="text-label text-ink-2">
-              {brandName} carries a boxed warning, so every ad must include its claims and safety information.
-            </p>
-          </div>
-          <Button size="sm" variant="secondary" onClick={onMakeProductClaim} className="h-7.5 shrink-0 text-label font-bold">
-            Make them branded ads
-          </Button>
-        </div>
-      )}
-
-      {adType === "unbranded" && (
-        <div className="flex items-start gap-2.5 rounded-control border border-hair-2 bg-subtle p-3">
-          <Info className="mt-0.5 size-4 shrink-0 text-ink-3" />
-          <p className="text-label text-ink-2">
-            {brandName} sets the condition. It won&apos;t be named or shown in the ads, and they will look different from the brand.
-          </p>
-        </div>
-      )}
-
       {adKind === "savings" && facts.genericAvailable && (
         <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
           <Info className="mt-0.5 size-4 shrink-0 text-warn" />
@@ -307,12 +305,21 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
      cover: an ad carries one message, and the placements decide every size,
      length, format and how the safety information fits. */
   const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
+  /* Formats turned off per placement; a ticked placement starts with all of them on. */
+  const [adFormats, setAdFormats] = useState<AdFormatChoice>({});
   /* The media agency's plan, when there is one: it already names the
      placements, so reading it beats ticking them again. */
   const [mediaPlanName, setMediaPlanName] = useState("");
   const mediaPlanInputRef = useRef<HTMLInputElement>(null);
-  const [adType, setAdType] = useState<AdType>("product-claim");
+  const [adType, setAdType] = useState<AdType | null>(null);
   const [adIndication, setAdIndication] = useState("");
+  /* Ads only: what the campaign is about, a drug, a medical device or a disease. */
+  const [adSubjectKind, setAdSubjectKind] = useState<"drug" | "device" | "disease">("drug");
+  const [selectedDeviceId, setSelectedDeviceId] = useState("");
+  const [selectedDiseaseId, setSelectedDiseaseId] = useState("");
+  const [subjectQuery, setSubjectQuery] = useState("");
+  /* A help-seeking campaign about one of the product's conditions. */
+  const [helpCondition, setHelpCondition] = useState("");
 
   // Project name. Lives in the header rather than as a step: naming is not a
   // focus decision, and asking for one up front is asking before the user has
@@ -346,12 +353,18 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setSelectedTopics([]);
       if (isAd) {
         setAdPlacements([]);
+        setAdFormats({});
         setMediaPlanName("");
-        setAdType(adPreset.adType);
+        setAdType(null);
         setAdIndication("");
+        setAdSubjectKind("drug");
+        setSelectedDeviceId("");
+        setSelectedDiseaseId("");
+        setSubjectQuery("");
+        setHelpCondition("");
       }
     }
-  }, [open, assetType, isAd, adPreset.adType]);
+  }, [open, assetType, isAd]);
 
   useEffect(() => {
     if (!audience) return;
@@ -438,14 +451,21 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   void groundingModes;
 
   /** What the project is grounded in, in one phrase, for the name and chips. */
-  const groundingLabel = useMemo(() => {
+  const selectedDevice = medtechDevice(selectedDeviceId);
+  const selectedDisease = cdcDisease(selectedDiseaseId);
+  const adSubjectId = adSubjectKind === "device" ? selectedDeviceId : adSubjectKind === "disease" ? selectedDiseaseId : selectedBrandId;
+  const adSubjectName =
+    adSubjectKind === "device" ? (selectedDevice?.name ?? "") : adSubjectKind === "disease" ? (selectedDisease?.label ?? "") : (selectedBrand?.name ?? "");
+  /* Plain, not memoised: a handful of lookups on every render. */
+  const groundingLabel = (() => {
+    if (isAd && adSubjectKind !== "drug") return adSubjectName;
     if (sourceMode === "brand") return selectedBrand?.name ?? "";
     if (selectedDiseaseIds.length === 0) return "";
     const first = allDiseases.find((d) => d.id === selectedDiseaseIds[0])?.label ?? "";
     return selectedDiseaseIds.length > 1 ? `${first} +${selectedDiseaseIds.length - 1}` : first;
-  }, [sourceMode, selectedBrand, selectedDiseaseIds, allDiseases]);
+  })();
 
-  const suggestedName = useMemo(() => {
+  const suggestedName = (() => {
     if (!groundingLabel) return "";
     /* The tile's name, unless the kind of ad changed away from it. */
     if (isAd) {
@@ -453,14 +473,17 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       return `${groundingLabel} · ${keepsTileName ? adPreset.noun : `${audienceTitle} Ads`}`;
     }
     return `${groundingLabel} · ${audienceTitle} ${studioNoun}`;
-  }, [groundingLabel, audienceTitle, studioNoun, isAd, adPreset, adType]);
+  })();
 
   /* What the label allows, checked the moment the brand is picked rather
      than discovered at MLR. */
-  const adFacts = brandAdFacts(selectedBrandId);
+  const adFacts = brandAdFacts(isAd ? adSubjectId : selectedBrandId);
+  /* A help-seeking campaign about a product with several conditions names one of them. */
+  const needsCondition = isAd && adType === "unbranded" && adSubjectKind !== "disease" && adFacts.indications.length > 1;
+  const pickedCondition = adFacts.indications.find((i) => i.label === helpCondition);
   const reminderBlocked = isAd && adType === "reminder" && adFacts.boxedWarning;
   const needsIndication = isAd && adKind === "new-indication";
-  const brandStepBlocked = reminderBlocked || (needsIndication && !adIndication);
+  const brandStepBlocked = needsIndication && !adIndication;
 
   /**
    * Derived, not synced. Until the user types, the name IS the suggestion and
@@ -477,14 +500,27 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const hasReachedFocusTopics = stage === "details";
   const canProceed =
     !!audience &&
-    (sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
+    (isAd ? !!adSubjectId && (!needsCondition || !!pickedCondition) : sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
     hasReachedFocusTopics &&
-    (isAd ? adPlacements.length > 0 && !brandStepBlocked : selectedTopics.length > 0);
+    (isAd ? !!adType && !reminderBlocked && adPlacements.length > 0 && !brandStepBlocked : selectedTopics.length > 0);
 
-  const toggleAdPlacement = (id: AdPlacement) =>
+  const toggleAdPlacement = (id: AdPlacement) => {
+    /* Ticked again, a placement starts over with every format on. */
+    setAdFormats((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
     setAdPlacements((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
+  };
+  const toggleAdFormat = (id: AdPlacement, format: AdFormat) =>
+    setAdFormats((prev) => {
+      const current = formatsOf(id, prev);
+      const next = current.includes(format) ? current.filter((f) => f !== format) : [...current, format];
+      return next.length ? { ...prev, [id]: next } : prev;
+    });
 
   const toggleTopic = (label: string) => {
     if (selectedTopics.includes(label)) {
@@ -555,13 +591,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   };
 
   const handleStartProject = () => {
-    /* Start Project is only enabled once an audience is picked. */
-    if (!audience) return;
+    /* Start Project is only enabled once these are picked. */
+    if (!audience || (isAd && !adType)) return;
     // A fresh project walks the flow, whatever the last thing opened was — the
     // Content Library sets this to "review" and nothing else would clear it.
     useWorkspaceStore.getState().setStudioEntry("create");
     setSourceType("dossier");
-    if (sourceMode === "brand") {
+    if (isAd && adSubjectKind !== "drug") {
+      /* A device or a disease grounds the campaign in its own record. */
+      setSourcePayload({ dossierId: adSubjectId });
+    } else if (sourceMode === "brand") {
       const primaryDossier = selectedBrand?.dossierIds?.[0] || selectedBrandId;
       setSourcePayload({ dossierId: primaryDossier });
       if (onSelectDossier && selectedBrandId) onSelectDossier(selectedBrandId, primaryDossier);
@@ -587,10 +626,19 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
      */
     if (isAd) {
       const store = useWorkspaceStore.getState();
-      store.setAdType(adType);
+      store.setAdType(adType ?? "product-claim");
       store.setAdPlacements(adPlacements);
+      store.setAdFormats(Object.fromEntries(adPlacements.map((id) => [id, formatsOf(id, adFormats)])));
       setTopicsStore(needsIndication ? [adIndication] : []);
-      store.setBrief(adSamplePrompts(promptKindFor(adKind, adType, audience), selectedBrand?.name ?? groundingLabel)[0].prompt);
+      store.setBrief(adSamplePrompts(promptKindFor(adKind, adType ?? "product-claim", audience), adSubjectName || groundingLabel)[0].prompt);
+      /* What the campaign is about, and the condition its copy names. */
+      const onlyCondition = adType === "unbranded" && adSubjectKind !== "disease" ? (pickedCondition ?? adFacts.indications[0]) : undefined;
+      store.setAdSubject({
+        kind: adSubjectKind,
+        id: adSubjectId,
+        name: adSubjectName,
+        condition: adSubjectKind === "disease" ? conditionPhrase(adSubjectName) : onlyCondition?.condition,
+      });
     } else if (assetType === "infographic") {
       setPageShapeStore("3:4");
     } else {
@@ -849,7 +897,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   2
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  Select Brand
+                  {isAd ? "What's It About?" : "Select Brand"}
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -867,12 +915,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 <div className="flex items-center gap-2.5">
                   <div className={cn(
                     "grid size-6 place-items-center rounded-full text-label font-extrabold transition-colors",
-                    stage === "details" && groundingLabel ? "bg-ok-bg text-ok" : "bg-black/8 text-ink-3"
+                    (stage === "details" || stage === "adtype") && groundingLabel ? "bg-ok-bg text-ok" : "bg-black/8 text-ink-3"
                   )}>
-                    {stage === "details" && groundingLabel ? "✓" : "2"}
+                    {(stage === "details" || stage === "adtype") && groundingLabel ? "✓" : "2"}
                   </div>
                   <span className="text-body-lg font-extrabold text-ink">
-                    Select Brand
+                    {isAd ? "What's It About?" : "Select Brand"}
                   </span>
                   {stage !== "grounding" && groundingLabel && (
                     <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
@@ -923,12 +971,146 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               {/* Expanded Body for Step 2 */}
               {stage === "grounding" && (
                 <div className="pt-4 space-y-3 animate-in fade-in duration-150">
+                  {/* Ads can be about a drug, a medical device or a disease. */}
+                  {isAd && (
+                    <div className="inline-flex gap-0.5 rounded-chip border border-hair bg-card p-1 shadow-2xs" role="tablist" aria-label="What the ads are about">
+                      {(["drug", "device", "disease"] as const).map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          role="tab"
+                          aria-selected={adSubjectKind === k}
+                          onClick={() => {
+                            if (k === adSubjectKind) return;
+                            /* One subject per campaign: a new tab starts the choice again. */
+                            setAdSubjectKind(k);
+                            setSubjectQuery("");
+                            setHelpCondition("");
+                            setSelectedBrandId("");
+                            setBrandSearch("");
+                            setSelectedVariations([]);
+                            setSelectedDeviceId("");
+                            setSelectedDiseaseId("");
+                            /* A disease takes only help-seeking ads; a device has no reminder ads. */
+                            if ((k === "disease" && adType && adType !== "unbranded") || (k === "device" && adType === "reminder")) setAdType(null);
+                          }}
+                          className={cn(
+                            "cursor-pointer rounded-glyph px-3 py-1 text-label font-bold transition-all",
+                            adSubjectKind === k ? "bg-brand text-white" : "text-ink-3 hover:text-ink"
+                          )}
+                        >
+                          {k === "drug" ? "Drug" : k === "device" ? "Medical device" : "Disease"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <p className="text-label text-ink-3">
-                    Every asset is grounded in a specific product, so its claims can be traced back
-                    to an approved source.
+                    {isAd && adSubjectKind === "device"
+                      ? "Grounded in the device's Instructions for Use and its FDA clearance, so every claim traces back to them."
+                      : isAd && adSubjectKind === "disease"
+                        ? "About the condition itself, for help-seeking ads. No product is named."
+                        : "Every asset is grounded in a specific product, so its claims can be traced back to an approved source."}
                   </p>
 
-                  {sourceMode === "brand" ? (
+                  {isAd && adSubjectKind !== "drug" ? (
+                    <div className="space-y-3">
+                      {adSubjectKind === "device" && selectedDevice ? (
+                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => setSelectedDeviceId("")} />
+                      ) : adSubjectKind === "disease" && selectedDisease ? (
+                        <div className="flex items-center gap-3 rounded-control border border-brand bg-tint p-3 ring-2 ring-brand/15">
+                          <span className="grid size-10 shrink-0 place-items-center rounded-chip border border-tint-line bg-card text-brand">
+                            <Stethoscope className="size-4.5" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-body font-bold text-ink">{adSubjectName}</div>
+                            <div className="truncate text-label text-ink-3">
+                              {selectedDisease.group} · From the CDC&apos;s Health Topics A–Z
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDiseaseId("")}
+                            className="flex shrink-0 cursor-pointer items-center gap-1 text-label font-bold text-brand hover:underline"
+                          >
+                            <Edit3 className="size-3" />
+                            <span>Change</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <PickSearch
+                            value={subjectQuery}
+                            onChange={setSubjectQuery}
+                            placeholder={adSubjectKind === "device" ? "Search medical devices (e.g. Glucora, Cardiyn)..." : "Search diseases and conditions (e.g. Asthma, Heart Failure)..."}
+                            autoFocus
+                          />
+                          {!subjectQuery.trim() ? (
+                            <div className="rounded-panel border border-dashed border-hair-2 bg-card px-4 py-6 text-center">
+                              <p className="text-body font-bold text-ink-2">{adSubjectKind === "device" ? "Start typing to find a device" : "Start typing to find a condition"}</p>
+                              <p className="mt-0.5 text-label text-ink-4">
+                                {adSubjectKind === "device"
+                                  ? "Search your medical devices by name, type or therapy area."
+                                  : "Search the CDC's list of diseases and conditions."}
+                              </p>
+                            </div>
+                          ) : (
+                            <PickList>
+                              {adSubjectKind === "device"
+                                ? MEDTECH_DEVICES.filter((d) => `${d.name} ${d.kind} ${d.therapyArea}`.toLowerCase().includes(subjectQuery.trim().toLowerCase())).map((d) => (
+                                    <PickRow
+                                      key={d.id}
+                                      onSelect={() => setSelectedDeviceId(d.id)}
+                                      thumb={<BrandThumb brand={deviceAsBrand(d)} className="size-10 shrink-0" />}
+                                      title={d.name}
+                                      detail={`${d.kind} · ${d.clearance}`}
+                                      chip={<PickChip tone={d.restricted ? "warn" : "ok"}>{d.restricted ? "Restricted device" : "Cleared"}</PickChip>}
+                                    />
+                                  ))
+                                : CDC_DISEASES.filter((d) => `${d.label} ${d.group}`.toLowerCase().includes(subjectQuery.trim().toLowerCase()))
+                                    .slice(0, 40)
+                                    .map((d) => (
+                                      <PickRow
+                                        key={d.id}
+                                        onSelect={() => setSelectedDiseaseId(d.id)}
+                                        thumb={<span className="grid size-10 shrink-0 place-items-center rounded-chip bg-subtle text-ink-3"><Stethoscope className="size-4.5" /></span>}
+                                        title={d.label}
+                                        detail={d.group}
+                                      />
+                                    ))}
+                              {(adSubjectKind === "device"
+                                ? MEDTECH_DEVICES.filter((d) => `${d.name} ${d.kind} ${d.therapyArea}`.toLowerCase().includes(subjectQuery.trim().toLowerCase()))
+                                : CDC_DISEASES.filter((d) => `${d.label} ${d.group}`.toLowerCase().includes(subjectQuery.trim().toLowerCase()))
+                              ).length === 0 && (
+                                <PickEmpty title={<>Nothing matching &quot;{subjectQuery}&quot;</>}>
+                                  {adSubjectKind === "device"
+                                    ? "Only devices in the Product Library, with their Instructions for Use, can ground an ad."
+                                    : "The list follows the CDC's Health Topics A–Z. Try another name for the condition."}
+                                </PickEmpty>
+                              )}
+                            </PickList>
+                          )}
+                        </>
+                      )}
+                      {adSubjectKind === "device" && selectedDevice && (
+                        <div className={cn("flex items-start gap-2.5 rounded-control border p-3", selectedDevice.restricted ? "border-warn-line bg-warn-bg" : "border-hair-2 bg-subtle")}>
+                          <Info className={cn("mt-0.5 size-4 shrink-0", selectedDevice.restricted ? "text-warn" : "text-ink-3")} />
+                          <p className="text-label text-ink-2">
+                            {selectedDevice.restricted
+                              ? `${selectedDevice.name} is a restricted device, so the FDA's advertising rules apply: every ad carries a brief statement of its intended use, warnings and contraindications.`
+                              : `${selectedDevice.name}'s ads answer to the FTC: every claim must be truthful and backed by evidence. No brief statement is required.`}
+                          </p>
+                        </div>
+                      )}
+                      {(adSubjectKind === "device" ? selectedDevice : selectedDisease) && (
+                        <div className="flex justify-end pt-1">
+                          <Button size="sm" variant="primary" onClick={() => setStage("adtype")} className="h-7.5 cursor-pointer px-4 text-label font-bold shadow-sm">
+                            <span>Continue</span>
+                            <ChevronRight className="size-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : sourceMode === "brand" ? (
                     <div className="space-y-3">
                       {/* The search hides once a brand is chosen — the tile
                           below is the answer, and leaving a half-filled search
@@ -1027,11 +1209,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             <AdLabelChecks
                               brandName={selectedBrand.name}
                               adKind={adKind}
-                              adType={adType}
                               facts={adFacts}
                               indication={adIndication}
                               onIndication={setAdIndication}
-                              onMakeProductClaim={() => setAdType("product-claim")}
                             />
                           )}
 
@@ -1040,7 +1220,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               size="sm"
                               variant="primary"
                               disabled={brandStepBlocked}
-                              onClick={() => setStage("details")}
+                              onClick={() => setStage(isAd ? "adtype" : "details")}
                               className="h-7.5 text-label font-bold px-4 cursor-pointer shadow-sm disabled:opacity-40"
                             >
                               <span>Continue</span>
@@ -1098,12 +1278,171 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             </div>
           )}
 
+          {/* ══════════════ 3. AD TYPE (ads only) ══════════════
+              Which of the FDA's three kinds of drug ad. It decides what
+              every ad must carry, so it is asked here, not guessed later. */}
+          {isAd && (stage === "audience" || stage === "grounding") && (
+            <div className="rounded-panel border border-dashed border-hair-2 bg-canvas p-3.5 flex items-center justify-between opacity-60">
+              <div className="flex items-center gap-2.5">
+                <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">3</div>
+                <span className="text-body font-bold text-ink-3">Ad Type</span>
+              </div>
+              <span className="text-label text-ink-3 flex items-center gap-1">
+                <Lock className="size-3" /> {stage === "audience" ? "Confirm audience first" : "Select a brand first"}
+              </span>
+            </div>
+          )}
+          {isAd && (stage === "adtype" || stage === "details") && (
+            <div
+              className={cn(
+                "rounded-panel border transition-all duration-200",
+                stage === "adtype" ? "border-brand/20 bg-[#f9faf9] shadow-xs p-5" : "border-hair bg-card hover:border-hair-3 p-3.5"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className={cn("grid size-6 place-items-center rounded-full text-label font-extrabold transition-colors", stage === "details" && adType ? "bg-ok-bg text-ok" : "bg-black/8 text-ink-3")}>
+                    {stage === "details" && adType ? "✓" : "3"}
+                  </div>
+                  <span className="text-body-lg font-extrabold text-ink">Ad Type</span>
+                  {stage === "details" && adType && (
+                    <span className="ml-2 rounded-chip border border-tint-line bg-tint px-2.5 py-0.5 text-body font-semibold text-brand-deep">
+                      {AD_TYPES.find((t) => t.id === adType)?.label}
+                    </span>
+                  )}
+                </div>
+                {stage === "details" && (
+                  <button type="button" onClick={() => setStage("adtype")} className="flex cursor-pointer items-center gap-1 text-label font-bold text-brand hover:underline">
+                    <Edit3 className="size-3" />
+                    <span>Change</span>
+                  </button>
+                )}
+              </div>
+              {stage === "adtype" && (
+                <div className="space-y-3 pt-4 animate-in fade-in duration-150">
+                  <p className="text-label text-ink-3">Decides what every ad must include. These are the FDA&apos;s three kinds of drug ad.</p>
+                  <div className="grid gap-2">
+                    {AD_TYPES.map((option) => {
+                      const blockedReason =
+                        adSubjectKind === "disease" && option.id !== "unbranded"
+                          ? "A disease campaign names no product, so only help-seeking ads fit."
+                          : adSubjectKind === "device" && option.id === "reminder"
+                            ? "Reminder ads are a prescription-drug category; devices don't have them."
+                            : option.id === "reminder" && adFacts.boxedWarning
+                              ? `${adSubjectName || "This brand"} carries a boxed warning, so every ad must include its claims and safety information. Reminder ads aren't allowed.`
+                              : null;
+                      const blocked = !!blockedReason;
+                      const on = adType === option.id;
+                      const usual = adPreset.id !== "scratch" && adPreset.adType === option.id;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          disabled={blocked}
+                          aria-pressed={on}
+                          onClick={() => setAdType(option.id)}
+                          className={cn(
+                            "flex items-start gap-3 rounded-control border p-3 text-left transition",
+                            blocked
+                              ? "cursor-not-allowed border-hair bg-canvas opacity-60"
+                              : on
+                                ? "cursor-pointer border-brand bg-tint shadow-2xs ring-2 ring-brand/15"
+                                : "cursor-pointer border-hair-2 bg-card hover:border-hair-3"
+                          )}
+                        >
+                          <span className={cn("mt-0.5 size-4 shrink-0 rounded-full border", on ? "border-[5px] border-brand" : "border-hair-3 bg-card")} />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex flex-wrap items-center gap-2">
+                              <span className="text-body font-bold text-ink">{option.label}</span>
+                              {usual && (
+                                <span className="rounded-chip border border-hair-2 bg-subtle px-1.5 py-0.5 text-micro font-bold text-ink-3">Usual for this starting point</span>
+                              )}
+                            </span>
+                            <span className="mt-0.5 block text-label text-ink-3">
+                              {blockedReason ?? option.hint}
+                            </span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Help-seeking by condition: one campaign per condition the product treats. */}
+                  {needsCondition && (
+                    /* Sub-options of Help-Seeking, so set in under it. */
+                    <div className="ml-7 space-y-2 border-l-2 border-tint-line pl-4">
+                      <span className="text-label font-bold text-ink-2">Which condition are these ads about?</span>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {adFacts.indications.map((option) => {
+                          const on = helpCondition === option.label;
+                          return (
+                            <button
+                              key={option.label}
+                              type="button"
+                              aria-pressed={on}
+                              onClick={() => setHelpCondition(option.label)}
+                              className={cn(
+                                "flex h-full cursor-pointer items-start gap-2.5 rounded-control border p-2.5 text-left transition",
+                                on ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3"
+                              )}
+                            >
+                              <span className={cn("mt-0.5 size-4 shrink-0 rounded-full border", on ? "border-[5px] border-brand" : "border-hair-3")} />
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-body font-semibold text-ink">
+                                  {option.condition ? option.condition.charAt(0).toUpperCase() + option.condition.slice(1) : option.label}
+                                </span>
+                                <span className="block text-caption text-ink-3">{option.label}</span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {pickedCondition?.onlyTreatment && (
+                        <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
+                          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warn" />
+                          <p className="text-label text-ink-2">
+                            {adSubjectName} is the only approved treatment for {pickedCondition.condition ?? "this condition"}, so a help-seeking ad about it can read as promoting {adSubjectName}. MLR will look closely at it.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {adType === "unbranded" && adSubjectKind !== "disease" && adSubjectName && (
+                    <div className="flex items-start gap-2.5 rounded-control border border-hair-2 bg-subtle p-3">
+                      <Info className="mt-0.5 size-4 shrink-0 text-ink-3" />
+                      <p className="text-label text-ink-2">
+                        {`${adSubjectName} sets the condition. It won't be named or shown in the ads, and they will look different from the brand.`}
+                      </p>
+                    </div>
+                  )}
+                  {adType === "product-claim" && adSubjectKind === "device" && selectedDevice?.restricted && (
+                    <div className="flex items-start gap-2.5 rounded-control border border-hair-2 bg-subtle p-3">
+                      <Info className="mt-0.5 size-4 shrink-0 text-ink-3" />
+                      <p className="text-label text-ink-2">Every ad will carry {selectedDevice.name}&apos;s brief statement: intended use, warnings and contraindications.</p>
+                    </div>
+                  )}
+                  <div className="flex justify-end pt-1">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      disabled={!adType || reminderBlocked || (needsCondition && !pickedCondition)}
+                      onClick={() => setStage("details")}
+                      className="h-7.5 cursor-pointer px-4 text-label font-bold shadow-sm disabled:opacity-40"
+                    >
+                      <span>Continue</span>
+                      <ChevronRight className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ══════════════ 3. CLINICAL FOCUS TOPICS ══════════════ */}
           {stage !== "details" ? (
             <div className="rounded-panel border border-dashed border-hair-2 bg-canvas p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
                 <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">
-                  3
+                  {isAd ? 4 : 3}
                 </div>
                 <span className="text-body font-bold text-ink-3">
                   {isAd ? "Where It Runs" : "Clinical Focus Topics"}
@@ -1111,7 +1450,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
                 <Lock className="size-3" />{" "}
-                {stage === "audience" ? "Confirm audience first" : "Select a brand first"}
+                {stage === "audience" ? "Confirm audience first" : stage === "adtype" ? "Choose the ad type first" : "Select a brand first"}
               </span>
             </div>
           ) : (
@@ -1126,7 +1465,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
-                        3
+                        4
                       </div>
                       <div>
                         <h3 className="text-body-lg font-extrabold text-ink">Where It Runs</h3>
@@ -1158,7 +1497,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         const file = e.target.files?.[0];
                         if (!file) return;
                         setMediaPlanName(file.name);
-                        if (audience) setAdPlacements(placementsFromMediaPlan(audience));
+                        if (audience) {
+                          setAdPlacements(placementsFromMediaPlan(audience));
+                          setAdFormats({});
+                        }
                         e.target.value = "";
                       }}
                     />
@@ -1174,7 +1516,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   )}
 
                   <div className="pt-1">
-                    {audience && <PlacementPicker audience={audience} selected={adPlacements} onToggle={toggleAdPlacement} />}
+                    {audience && (
+                      <PlacementPicker
+                        audience={audience}
+                        selected={adPlacements}
+                        onToggle={toggleAdPlacement}
+                        formats={adFormats}
+                        onToggleFormat={toggleAdFormat}
+                      />
+                    )}
                   </div>
                 </div>
               )}

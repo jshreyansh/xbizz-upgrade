@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Check, Network, Stethoscope, Tv } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
-import { AD_ACCOUNTS, AD_FORMATS, AD_PLACEMENTS, type AdAccount, type AdPlacement } from "@/features/workspace/ad-options";
+import { AD_ACCOUNTS, AD_FORMATS, AD_PLACEMENTS, formatsOf, type AdAccount, type AdFormat, type AdFormatChoice, type AdPlacement } from "@/features/workspace/ad-options";
 import { GoogleAdsLogo, MetaLogo, TikTokLogo } from "@/features/workspace/platform-logos";
 
 /**
@@ -14,6 +14,11 @@ import { GoogleAdsLogo, MetaLogo, TikTokLogo } from "@/features/workspace/platfo
  * platform's own mark. Each tile shows the shapes it will make, as small
  * frames, and what goes in them, as format chips — the specs are there for
  * whoever wants them, not the thing you have to read to choose.
+ *
+ * Where and what are separate choices, as they are in the ad platforms: the
+ * tile is where the ads run, and on a chosen tile each format chip can be
+ * turned off, so "Meta Feed, video only" is a tile and two taps. A tile starts
+ * with all its formats on, and keeps at least one.
  */
 
 const ACCOUNT_MARK: Record<AdAccount, ReactNode> = {
@@ -76,10 +81,15 @@ export function PlacementPicker({
   audience,
   selected,
   onToggle,
+  formats = {},
+  onToggleFormat,
 }: {
   audience: Audience;
   selected: AdPlacement[];
   onToggle: (id: AdPlacement) => void;
+  /** Formats chosen per placement; a placement not listed makes all it can. */
+  formats?: AdFormatChoice;
+  onToggleFormat?: (id: AdPlacement, format: AdFormat) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -93,18 +103,26 @@ export function PlacementPicker({
               <span className="text-body font-extrabold text-ink">{account.id}</span>
               {account.detail && <span className="text-caption text-ink-4">{account.detail}</span>}
             </div>
+            <p className="-mt-1 pl-9 text-caption text-ink-4">{account.note}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {rows.map((placement) => {
                 const on = selected.includes(placement.id);
                 const via = audience === "HCP" ? HCP_VIA[placement.id] : undefined;
                 return (
-                  <button
+                  <div
                     key={placement.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     aria-pressed={on}
                     onClick={() => onToggle(placement.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onToggle(placement.id);
+                      }
+                    }}
                     className={cn(
-                      "group relative flex cursor-pointer items-center gap-3 rounded-control border p-2.5 pr-3 text-left transition-all duration-150",
+                      "focus-ring group relative flex cursor-pointer items-center gap-3 rounded-control border p-2.5 pr-3 text-left transition-all duration-150",
                       on ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3 hover:shadow-2xs"
                     )}
                   >
@@ -119,14 +137,32 @@ export function PlacementPicker({
                           const format = AD_FORMATS.find((o) => o.id === f);
                           if (!format) return null;
                           const Icon = format.icon;
-                          return (
-                            <span
+                          const chosen = formatsOf(placement.id, formats);
+                          const active = on && chosen.includes(f);
+                          const last = active && chosen.length === 1;
+                          const chip = cn(
+                            "inline-flex items-center gap-1 rounded-chip border px-1.5 py-0.5 text-micro font-bold transition-colors",
+                            active ? "border-brand/40 bg-card text-brand-deep" : on ? "border-dashed border-hair-3 bg-transparent text-ink-4" : "border-transparent bg-subtle text-ink-3"
+                          );
+                          return on && onToggleFormat && placement.makes.length > 1 ? (
+                            <button
                               key={f}
-                              className={cn(
-                                "inline-flex items-center gap-1 rounded-chip px-1.5 py-0.5 text-micro font-bold",
-                                on ? "bg-card text-brand-deep" : "bg-subtle text-ink-3"
-                              )}
+                              type="button"
+                              aria-pressed={active}
+                              disabled={last}
+                              title={last ? "Each placement makes at least one format" : active ? `Don't make ${format.label.toLowerCase()} here` : `Make ${format.label.toLowerCase()} here too`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onToggleFormat(placement.id, f);
+                              }}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              className={cn(chip, "cursor-pointer hover:border-brand disabled:cursor-default")}
                             >
+                              {active ? <Check className="size-3 stroke-[3]" /> : <Icon className="size-3" />}
+                              {format.label}
+                            </button>
+                          ) : (
+                            <span key={f} className={chip}>
                               <Icon className="size-3" />
                               {format.label}
                             </span>
@@ -145,7 +181,7 @@ export function PlacementPicker({
                     >
                       {on && <Check className="size-3 stroke-[3]" />}
                     </span>
-                  </button>
+                  </div>
                 );
               })}
             </div>

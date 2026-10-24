@@ -142,22 +142,31 @@ export function AdsTemplateStep({
         <div className="grid gap-2.5 sm:grid-cols-3" role="radiogroup" aria-label="How the still ads should look">
           {modes.map((m) => {
             const on = mode === m.id;
+            /* SwishX's own design isn't ready yet: shown, so it's known to be coming, but not choosable. */
+            const soon = m.id === "fresh";
             return (
               <button
                 key={m.id}
                 type="button"
                 role="radio"
                 aria-checked={on}
+                aria-disabled={soon}
+                disabled={soon}
                 onClick={() => setMode(m.id)}
                 className={cn(
-                  "flex cursor-pointer items-start gap-3 rounded-control border p-3 text-left transition",
-                  on ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-brand/50"
+                  "flex items-start gap-3 rounded-control border p-3 text-left transition",
+                  soon
+                    ? "cursor-not-allowed border-hair bg-canvas opacity-60"
+                    : on
+                      ? "cursor-pointer border-brand bg-tint ring-2 ring-brand/15"
+                      : "cursor-pointer border-hair-2 bg-card hover:border-brand/50"
                 )}
               >
                 <span className={cn("grid size-8 shrink-0 place-items-center rounded-control", on ? "bg-brand text-white" : "bg-tint text-brand")}>{m.icon}</span>
                 <span className="min-w-0">
                   <span className="flex items-center gap-1.5 text-body font-[850] text-ink">
                     {m.title}
+                    {soon && <span className="rounded-chip border border-hair-2 bg-subtle px-1.5 py-0.5 text-micro font-bold text-ink-3">Coming soon</span>}
                     {on && <Check className="size-3.5 text-brand" />}
                   </span>
                   <span className="mt-0.5 block text-label leading-snug text-ink-3">{m.blurb}</span>
@@ -209,7 +218,7 @@ export function AdsTemplateStep({
 
         <p className="text-caption text-ink-4">
           {adType === "unbranded"
-            ? "Unbranded: a neutral campaign look, never the brand's colours or logo."
+            ? "Help-seeking: a neutral campaign look, never the brand's colours or logo."
             : `Every option uses the ${brandName} brand kit: logo, colours and typefaces.`}
         </p>
       </section>

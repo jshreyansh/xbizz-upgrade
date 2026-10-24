@@ -33,7 +33,7 @@ import { AudienceIcon } from "@/components/ui/select-icons";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
 import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
-import { useBrandName } from "@/features/workspace/brand-catalogue";
+import { useAdSubject } from "@/features/workspace/ad-subject";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { useProjectExit } from "@/features/workspace/project-exit";
@@ -72,7 +72,7 @@ import {
   brandVariations,
   workspaceAssets,
 } from "@/features/workspace/workspace-assets";
-import { DOSSIERS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
+import { INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
 import {
   buildIntakeQuestions,
   filedAttachments,
@@ -115,15 +115,10 @@ type Stage = "input" | "building" | "campaign" | "templates";
 
 const DRAFT_ONLY: AssetVersion[] = [{ label: "Draft v1", state: "current", at: "Saved just now" }];
 
-function brandIdFor(dossierId: string | undefined) {
-  if (!dossierId) return "";
-  return DOSSIERS[dossierId]?.brandId ?? dossierId;
-}
 
 export function AdsDirectionsScreen() {
   const {
     brief,
-    sourcePayload,
     setSourcePayload,
     audience,
     setAudience,
@@ -147,8 +142,8 @@ export function AdsDirectionsScreen() {
     toggleCopilotPanel,
   } = useWorkspaceStore();
   const exit = useProjectExit();
-  const brandName = useBrandName(sourcePayload?.dossierId);
-  const brandId = brandIdFor(sourcePayload?.dossierId);
+  /* A drug, a medical device or a disease, and the condition the copy names. */
+  const { brandName, brandId, condition, kind: subjectKind } = useAdSubject();
   const facts = brandAdFacts(brandId);
   const claims = adClaims(brandId);
   const who: Audience = audience === "HCP" ? "HCP" : "Patient";
@@ -211,7 +206,7 @@ export function AdsDirectionsScreen() {
   const [nextStep, setNextStep] = useState(() => readBriefDefaults(brief).nextStep ?? defaultNextStep(adKind, who));
   /* Options SwishX wrote from what the marketer said in the chat, first in the list. */
   const [crafted, setCrafted] = useState<string[]>([]);
-  const messages = [...new Set([...crafted, ...leadMessages(adType, brandName, claims)])];
+  const messages = [...new Set([...crafted, ...leadMessages(adType, brandName, claims, condition)])];
   const [chosenMessage, setChosenMessage] = useState("");
   const leadMessage = messages.includes(chosenMessage) ? chosenMessage : messages[0] ?? brandName;
   const [pickedClaims, setPickedClaims] = useState<string[]>(claims.slice(0, 2).map((c) => c.text));
@@ -221,7 +216,8 @@ export function AdsDirectionsScreen() {
   const [beforeCraft, setBeforeCraft] = useState<{ crafted: string[]; chosen: string; picked: string[]; nextStep: string } | null>(null);
 
   /* What the campaign makes. Unticked ads aren't written, made, charged or sent to MLR. */
-  const outputs = buildAdOutputs(adPlacements, adType);
+  const adFormats = useWorkspaceStore((st) => st.adFormats);
+  const outputs = buildAdOutputs(adPlacements, adType, adFormats);
   const [removed, setRemoved] = useState<string[]>([]);
   const kept = outputs.filter((o) => !removed.includes(o.id));
   const credits = kept.reduce((sum, o) => sum + o.credits, 0);
@@ -262,9 +258,9 @@ export function AdsDirectionsScreen() {
     : extraction === "extracting"
       ? { title: "Extracting key messages and claims", detail: `Reading the ${brandName} dossier and your files` }
       : noClaims
-        ? { title: `No approved claims for ${brandName}`, detail: "Add claims in the Claims Library, or make the ads unbranded." }
+        ? { title: `No approved claims for ${brandName}`, detail: "Add claims in the Claims Library, or make them help-seeking ads." }
         : reminderBlocked
-          ? { title: "Reminder ads aren't allowed", detail: `${brandName} has a boxed warning. Choose Branded or Unbranded.` }
+          ? { title: "Reminder ads aren't allowed", detail: `${brandName} has a boxed warning. Choose Product Claim or Help-Seeking Ads.` }
           : kept.length === 0
             ? { title: "No ads to make", detail: "Tick at least one ad in Ads to make." }
             : null;
@@ -402,9 +398,9 @@ export function AdsDirectionsScreen() {
         (stage === "input" && extraction === "ready" && /key message|tagline|headline|claim|closing line|my line/.test(lower));
       if (aboutMessage && !noClaims) {
         reply = craftFromChat(text, attached.map((f) => f.name));
-      } else if (/unbranded|disease awareness/.test(lower)) {
+      } else if (/unbranded|help-seeking|help seeking|disease awareness/.test(lower)) {
         changeBranding("unbranded");
-        reply = `Switched to **unbranded** ads. ${brandName} won't be named or shown, so the packshots are gone too.`;
+        reply = `Switched to **help-seeking** ads. ${brandName} won't be named or shown, so the packshots are gone too.`;
       } else if (/hcp|doctor|physician/.test(lower) && /audience|switch|for/.test(lower)) {
         setAudience("HCP");
         reply = "The ads are now for **HCPs**. Pick a specialty in **Audience and branding** if you want to narrow it.";
@@ -503,6 +499,7 @@ export function AdsDirectionsScreen() {
 
           {planPhase === "plan" && stage === "campaign" && (
             <AdsCampaignStoryboard
+              condition={condition}
               brandId={brandId}
               brandName={brandName}
               adType={adType}
@@ -529,7 +526,7 @@ export function AdsDirectionsScreen() {
               brandName={brandName}
               adType={adType}
               copy={(() => {
-                const plan = buildImageAd({ brandId, brand: brandName, adType, claims: usedClaims, leadMessage, closing });
+                const plan = buildImageAd({ brandId, brand: brandName, adType, claims: usedClaims, leadMessage, closing, condition });
                 const number = usedClaims.map((c) => c.text.match(/\d+%/)?.[0]).find(Boolean);
                 return { headline: plan.headline, support: plan.support, riskLine: plan.riskLine, number, packshot: plan.packshot };
               })()}
@@ -591,7 +588,30 @@ export function AdsDirectionsScreen() {
                     onToast={showToast}
                     dossierInUse={dossierInUse}
                     onDossierInUseChange={changeDossierInUse}
-                    notice={`Safety information comes from the ${brandName} ${labelVersion(brandId)}.${facts.boxedWarning ? " It carries a boxed warning, which every branded ad shows in full." : ""}`}
+                    notice={
+                      subjectKind === "disease"
+                        ? "These ads name no product, so they carry no safety information. Their facts come from the CDC and your sources."
+                        : `Safety information comes from ${brandName}'s ${labelVersion(brandId)}.${facts.boxedWarning ? " It carries a boxed warning, which every branded ad shows in full." : ""}`
+                    }
+                    sourcePack={
+                      subjectKind === "device"
+                        ? {
+                            band: "SwishX has gathered the device's approved sources for you",
+                            name: `${brandName} source pack`,
+                            line: "Instructions for Use, the FDA clearance summary and the studies behind it. Every claim traces back to them.",
+                            count: String(claims.length),
+                            countLabel: "Supported claims",
+                          }
+                        : subjectKind === "disease"
+                          ? {
+                              band: "SwishX has gathered trusted disease information for you",
+                              name: `${brandName}: CDC disease information`,
+                              line: "What the condition is, who it affects and when to see a doctor. No product claims come from it.",
+                              count: "CDC",
+                              countLabel: "Source",
+                            }
+                          : undefined
+                    }
                   />
                 </PlanSectionShell>
 
@@ -646,7 +666,7 @@ export function AdsDirectionsScreen() {
                         A branded ad can only say what the Claims Library has approved. Add claims there, or make these ads unbranded.
                       </p>
                       <Button size="sm" variant="secondary" className="mt-2.5" onClick={() => changeBranding("unbranded")}>
-                        Make them unbranded
+                        Make them help-seeking ads
                       </Button>
                     </div>
                   )}
@@ -982,7 +1002,7 @@ export function AdsDirectionsScreen() {
                   title="Brand mark"
                   summary={
                     adType === "unbranded"
-                      ? "No logo. Unbranded ads carry no brand mark"
+                      ? "No logo. Help-seeking ads carry no brand mark"
                       : logoMark.position === "none"
                         ? "No logo"
                         : `${LOGO_CORNERS.find((c) => c.id === logoMark.position)?.label} · ${logoMark.name}`
@@ -1059,7 +1079,7 @@ export function AdsDirectionsScreen() {
                         ? ["Make it feel calmer", "More of the brand colour", "Show the product bigger"]
                         : stage === "campaign"
                         ? ["Make the opening about a caregiver", "Warmer light in scene 1", "Slow down the safety scene"]
-                        : ["Make it unbranded", "Switch the audience to HCPs", "Close on the savings card"]
+                        : ["Make them help-seeking ads", "Switch the audience to HCPs", "Close on the savings card"]
                       ).map((chip) => (
                         <button
                           key={chip}
@@ -1164,6 +1184,7 @@ export function AdsDirectionsScreen() {
                 shape: "landscape",
                 adType,
                 placements: adPlacements,
+                formats: adFormats,
               }}
               onClose={() => setChangingPlacements(false)}
               onSave={(next) => {
@@ -1172,6 +1193,7 @@ export function AdsDirectionsScreen() {
                 const blocked = next.adType === "reminder" && brandAdFacts(next.brandId).boxedWarning;
                 changeBranding(blocked ? "product-claim" : next.adType ?? adType);
                 setAdPlacements(next.placements ?? adPlacements);
+                useWorkspaceStore.getState().setAdFormats(next.formats ?? adFormats);
                 setChangingPlacements(false);
               }}
             />

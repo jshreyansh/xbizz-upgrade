@@ -3,7 +3,7 @@ import { SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { creativeDirections } from "@/features/workspace/mock-data";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, LogoMark, OnboardingBeat, PresentationMode } from "@/types/content";
 import type { BriefAttachment } from "@/features/workspace/plan-intake";
-import type { AdKind, AdPlacement, AdType } from "@/features/workspace/ad-options";
+import type { AdFormatChoice, AdKind, AdPlacement, AdType } from "@/features/workspace/ad-options";
 
 export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
@@ -39,6 +39,15 @@ export interface AdCampaignSnapshot {
   /** AdOutput ids, e.g. "v-16x9", "s-4x5", "b-set", "c-1x1". */
   keptIds: string[];
   look: { mode: "fresh" | "references" | "template"; image?: string; carousel?: string };
+}
+
+/** What an Ads project is about: a drug, a medical device or a disease. */
+export interface AdSubject {
+  kind: "drug" | "device" | "disease";
+  id: string;
+  name: string;
+  /** How the ads name the condition, when it isn't the product's own (a disease, or one indication). */
+  condition?: string;
 }
 
 /** A video being assembled after Publish, so the Content Library can say so. */
@@ -157,6 +166,9 @@ interface WorkspaceState {
   adKind: AdKind;
   adType: AdType;
   adPlacements: AdPlacement[];
+  /** Which formats each placement makes; a placement not listed makes all it can. */
+  adFormats: AdFormatChoice;
+  adSubject: AdSubject | null;
   adCampaign: AdCampaignSnapshot | null;
   // Setters
   setView: (view: AppView) => void;
@@ -227,6 +239,8 @@ interface WorkspaceState {
   setAdKind: (adKind: AdKind) => void;
   setAdType: (adType: AdType) => void;
   setAdPlacements: (adPlacements: AdPlacement[]) => void;
+  setAdFormats: (adFormats: AdFormatChoice) => void;
+  setAdSubject: (adSubject: AdSubject | null) => void;
   setAdCampaign: (adCampaign: AdCampaignSnapshot | null) => void;
   reset: () => void;
 }
@@ -299,6 +313,8 @@ const initialState = {
   adKind: "scratch" as AdKind,
   adType: "product-claim" as AdType,
   adPlacements: ["youtube", "meta-feed", "meta-reels-stories", "google-display"] as AdPlacement[],
+  adFormats: {} as AdFormatChoice,
+  adSubject: null as AdSubject | null,
   adCampaign: null as AdCampaignSnapshot | null,
 };
 
@@ -389,6 +405,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setAdKind: (adKind) => set({ adKind }),
   setAdType: (adType) => set({ adType }),
   setAdPlacements: (adPlacements) => set({ adPlacements }),
+  setAdFormats: (adFormats) => set({ adFormats }),
+  setAdSubject: (adSubject) => set({ adSubject }),
   setAdCampaign: (adCampaign) => set({ adCampaign }),
   reset: () => set(initialState),
 }));

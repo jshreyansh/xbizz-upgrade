@@ -50,8 +50,7 @@ import { dossierFor } from "@/features/dossiers/dossier-for";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { moleculeFor } from "@/features/workspace/grounding-dossiers";
 import { useWorkspaceStore, type AdCampaignSnapshot } from "@/features/workspace/workspace-store";
-import { useBrandName } from "@/features/workspace/brand-catalogue";
-import { DOSSIERS } from "@/features/workspace/brand-modal-data";
+import { useAdSubject } from "@/features/workspace/ad-subject";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
@@ -82,7 +81,6 @@ import {
   buildAdStory,
   buildCarousel,
   buildImageAd,
-  conditionFor,
   majorStatement,
 } from "@/features/workspace/ad-campaign";
 import { CAROUSEL_TEMPLATES, IMAGE_TEMPLATES } from "@/features/workspace/ad-templates";
@@ -165,18 +163,14 @@ const CORNERS: Array<{ id: LogoCorner; icon: LucideIcon; label: string }> = [
   { id: "br", icon: ArrowDownRight, label: "Bottom right" },
 ];
 
-function brandIdFor(dossierId: string | undefined) {
-  if (!dossierId) return "";
-  return DOSSIERS[dossierId]?.brandId ?? dossierId;
-}
 
 export function AdsStudioScreen() {
   const {
-    sourcePayload,
     audience,
     adKind,
     adType,
     adPlacements,
+    adFormats,
     adCampaign,
     projectName,
     chatMessages,
@@ -191,25 +185,24 @@ export function AdsStudioScreen() {
   const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
 
   /* ── The campaign, rebuilt from what the plan settled ── */
-  const brandName = useBrandName(sourcePayload?.dossierId);
-  const brandId = brandIdFor(sourcePayload?.dossierId);
+  const { brandName, brandId, condition } = useAdSubject();
   const allClaims = adClaims(brandId);
   const who = audience === "HCP" ? "HCP" : "Patient";
   const title = projectName || `${brandName} · ${AD_KIND_PRESETS[adKind].noun}`;
   /* Opened without going through the plan (a reload, a dev shortcut): the plan's own defaults. */
   const campaign: AdCampaignSnapshot = adCampaign ?? {
-    leadMessage: leadMessages(adType, brandName, allClaims)[0] ?? brandName,
+    leadMessage: leadMessages(adType, brandName, allClaims, condition)[0] ?? brandName,
     claimIds: allClaims.slice(0, 2).map((c) => c.id),
     closing: closingLine(defaultNextStep(adKind, who), adType, brandName),
-    keptIds: buildAdOutputs(adPlacements, adType).map((o) => o.id),
+    keptIds: buildAdOutputs(adPlacements, adType, adFormats).map((o) => o.id),
     look: { mode: "template" },
   };
   const claims = allClaims.filter((c) => campaign.claimIds.includes(c.id));
-  const words = { brandId, brand: brandName, adType, claims, leadMessage: campaign.leadMessage, closing: campaign.closing };
-  const outputs = buildAdOutputs(adPlacements, adType).filter((o) => campaign.keptIds.includes(o.id));
+  const words = { brandId, brand: brandName, adType, claims, leadMessage: campaign.leadMessage, closing: campaign.closing, condition };
+  const outputs = buildAdOutputs(adPlacements, adType, adFormats).filter((o) => campaign.keptIds.includes(o.id));
   const story = buildAdStory(words);
   const imagePlan = buildImageAd(words);
-  const cards = buildCarousel({ ...words, condition: conditionFor(brandId) });
+  const cards = buildCarousel(words);
   const safetyText = majorStatement(brandId, brandName);
   const number = claims.map((c) => c.text.match(/\d+%/)?.[0]).find(Boolean);
   const copy = { headline: imagePlan.headline, support: imagePlan.support, riskLine: imagePlan.riskLine, number, packshot: imagePlan.packshot };
@@ -1481,7 +1474,7 @@ function AdClaimsPanel({
         <span className="rounded-chip border border-ok-line bg-ok-bg px-2.5 py-0.5 text-micro font-bold text-ok">✓ PromoMats verified</span>
       </div>
       {claims.length === 0 && (
-        <p className="text-body text-ink-3">This campaign is unbranded, so it makes no product claims. Its words come from the disease-awareness statements in the dossier.</p>
+        <p className="text-body text-ink-3">These are help-seeking ads, so they make no product claims. Its words come from the disease-awareness statements in the dossier.</p>
       )}
       <div className="space-y-2.5">
         {ordered.map((claim) => {

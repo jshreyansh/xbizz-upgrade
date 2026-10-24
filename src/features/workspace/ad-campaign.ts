@@ -15,7 +15,7 @@
 
 import type { Scene, SceneGraph, Shot } from "@/types/content";
 import type { AdClaim, AdFormat, AdPlacement, AdType } from "@/features/workspace/ad-options";
-import { AD_PLACEMENTS } from "@/features/workspace/ad-options";
+import { AD_PLACEMENTS, formatsOf, type AdFormatChoice } from "@/features/workspace/ad-options";
 
 /* ── Brand facts the story needs ── */
 
@@ -25,6 +25,9 @@ const CONDITION: Record<string, string> = {
   nirvexa: "rheumatoid arthritis",
   cardioxa: "heart failure",
   pulmovax: "asthma",
+  "device-glucora": "diabetes",
+  "device-cardiyn": "a slow heart rhythm",
+  "device-pulseva": "atrial fibrillation",
 };
 
 export function conditionFor(brandId: string): string {
@@ -65,6 +68,11 @@ const MAJOR_STATEMENT: Record<string, string> = {
     "Nirvexa has a boxed warning for serious bleeding. Tell your doctor if you have a bleeding disorder or are taking blood thinners.",
   pulmovax:
     "PulmoVax can cause serious side effects, including worsening breathing right after use. Common side effects include headache and throat irritation.",
+  /* A restricted device's brief statement: intended use, then the risks. */
+  "device-cardiyn":
+    "Cardiyn is a leadless pacemaker for people with slow heart rhythms. Don't use it if you have an implanted device that may interact with it. Risks include device movement, infection and heart injury during implant. See the full Instructions for Use.",
+  "device-glucora": "Glucora CGM is for glucose monitoring. Results may differ from a fingerstick; confirm before treatment decisions. See the Instructions for Use.",
+  "device-pulseva": "Pulseva Patch records your heart rhythm; it does not diagnose. Talk to your doctor about any result. See the Instructions for Use.",
 };
 
 export function majorStatement(brandId: string, brand: string): string {
@@ -144,9 +152,11 @@ export function buildAdStory(input: {
   claims: AdClaim[];
   leadMessage: string;
   closing: string;
+  /** What the ads are about, when that isn't the product's own condition. */
+  condition?: string;
 }): Scene[] {
   const { brandId, brand, adType, claims, leadMessage, closing } = input;
-  const condition = conditionFor(brandId);
+  const condition = input.condition ?? conditionFor(brandId);
 
   if (adType === "reminder") {
     return [
@@ -207,10 +217,10 @@ export interface ImageAdPlan {
   packshot: boolean;
 }
 
-export function buildImageAd(input: { brandId: string; brand: string; adType: AdType; claims: AdClaim[]; leadMessage: string; closing: string }): ImageAdPlan {
+export function buildImageAd(input: { brandId: string; brand: string; adType: AdType; claims: AdClaim[]; leadMessage: string; closing: string; condition?: string }): ImageAdPlan {
   const { brandId, brand, adType, claims, leadMessage, closing } = input;
   if (adType === "unbranded") {
-    return { headline: leadMessage, support: closing, imageIdea: `A warm, candid portrait of someone living with ${conditionFor(brandId)}, looking toward the light.`, packshot: false };
+    return { headline: leadMessage, support: closing, imageIdea: `A warm, candid portrait of someone living with ${input.condition ?? conditionFor(brandId)}, looking toward the light.`, packshot: false };
   }
   if (adType === "reminder") {
     return { headline: brand, support: closing, imageIdea: "The brand name and logo on a clean, bright field.", packshot: true };
@@ -284,7 +294,7 @@ const PLACEMENT_LABEL = (id: AdPlacement) => {
  * placements that output serves. Credits: video by length, a still, a
  * banner set, a carousel.
  */
-export function buildAdOutputs(placements: AdPlacement[], adType: AdType): AdOutput[] {
+export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice: AdFormatChoice = {}): AdOutput[] {
   const reminder = adType === "reminder";
   const safety = (format: AdFormat) =>
     adType === "reminder"
@@ -318,7 +328,7 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType): AdOut
       case "ctv": return [wide30];
       case "meta-feed": return reminder ? [square, still45] : [square, still45, carousel];
       case "meta-reels-stories": return [tall, still916];
-      case "tiktok": return [tall];
+      case "tiktok": return reminder ? [tall] : [tall, carousel];
       case "google-display":
       case "programmatic-display": return [banners];
       case "hcp-networks": return [square, still11];
@@ -327,7 +337,9 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType): AdOut
 
   const byKey = new Map<string, AdOutput>();
   for (const id of placements) {
-    for (const spec of specsFor(id)) {
+    /* Only the formats chosen for this placement. */
+    const allowed = formatsOf(id, choice);
+    for (const spec of specsFor(id).filter((sp) => allowed.includes(sp.format))) {
       const existing = byKey.get(spec.key);
       if (existing) {
         if (!existing.placements.includes(PLACEMENT_LABEL(id))) existing.placements.push(PLACEMENT_LABEL(id));

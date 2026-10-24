@@ -62,30 +62,33 @@ export const AD_AUDIENCES: Audience[] = ["Patient", "HCP"];
 export const AD_TYPES: Array<{ id: AdType; label: string; hint: string }> = [
   {
     id: "product-claim",
-    label: "Branded",
-    hint: "A product claim ad. Names the drug and what it treats, with safety information alongside the claim.",
+    label: "Product Claim Ads",
+    hint: "Names the product and what it's for, with the safety information alongside the claim.",
   },
   {
     id: "reminder",
-    label: "Reminder",
+    label: "Reminder Ads",
     hint: "Brand and generic name only, no claims. Not allowed for a drug with a boxed warning.",
   },
   {
     id: "unbranded",
-    label: "Unbranded",
-    hint: "Disease awareness. About the condition, \u201ctalk to your doctor\u201d. No drug named or implied.",
+    label: "Help-Seeking Ads",
+    hint: "About the condition, ending with \u201ctalk to your doctor\u201d. No product named or implied.",
   },
 ];
 
 /** The account each group of placements is bought through, with the tools
  *  behind it where the name alone would not say. */
-export const AD_ACCOUNTS: Array<{ id: AdAccount; detail?: string }> = [
-  { id: "Google Ads" },
-  { id: "Meta Ads", detail: "Facebook and Instagram" },
-  { id: "Programmatic", detail: "DV360 and The Trade Desk" },
-  { id: "HCP networks", detail: "Doximity, Medscape, Epocrates" },
-  { id: "TikTok Ads" },
+export const AD_ACCOUNTS: Array<{ id: AdAccount; detail?: string; note: string }> = [
+  { id: "Google Ads", note: "Needs Google's pharmaceutical manufacturer certification." },
+  { id: "Meta Ads", detail: "Facebook and Instagram", note: "Needs Meta's prescription drug authorization · 18+ · US, Canada and New Zealand. Placements stay as chosen; Meta never moves the ads." },
+  { id: "Programmatic", detail: "DV360 and The Trade Desk", note: "Bought through your DSP, served from your ad server." },
+  { id: "HCP networks", detail: "Doximity, Medscape, Epocrates", note: "Booked with each network directly, on its own specs." },
+  { id: "TikTok Ads", note: "Needs proof of FDA approval · 18+." },
 ];
+
+/** Which formats each chosen placement makes. A placement not listed makes all it can. */
+export type AdFormatChoice = Partial<Record<AdPlacement, AdFormat[]>>;
 
 /**
  * Where an ad can run, and what running there means it is.
@@ -105,15 +108,15 @@ export const AD_PLACEMENTS: Array<{
   /** Who the placement can reach. */
   audiences: Audience[];
 }> = [
-  { id: "youtube", account: "Google Ads", label: "YouTube", makes: ["video"], sizes: "16:9 in-stream, 9:16 Shorts · 15 or 30 sec", audiences: ["Patient", "HCP"] },
-  { id: "google-display", account: "Google Ads", label: "Display", makes: ["banner"], sizes: "300×250, 728×90, 300×600, 160×600, 320×50", audiences: ["Patient", "HCP"] },
+  { id: "youtube", account: "Google Ads", label: "YouTube", makes: ["video"], sizes: "16:9 skippable in-stream, 9:16 Shorts · 6 sec bumpers for reminders", audiences: ["Patient", "HCP"] },
+  { id: "google-display", account: "Google Ads", label: "Display", makes: ["banner"], sizes: "Image banners in fixed sizes, with a static safety band", audiences: ["Patient", "HCP"] },
   { id: "meta-feed", account: "Meta Ads", label: "Feed", makes: ["video", "image", "carousel"], sizes: "1:1 and 4:5", audiences: ["Patient", "HCP"] },
   { id: "meta-reels-stories", account: "Meta Ads", label: "Reels & Stories", makes: ["video", "image"], sizes: "9:16 full screen", audiences: ["Patient", "HCP"] },
-  { id: "programmatic-display", account: "Programmatic", label: "Display", makes: ["banner"], sizes: "Standard banner sizes", audiences: ["Patient", "HCP"] },
+  { id: "programmatic-display", account: "Programmatic", label: "Display", makes: ["banner"], sizes: "HTML5 banners with scrolling safety information", audiences: ["Patient", "HCP"] },
   { id: "programmatic-video", account: "Programmatic", label: "Online video", makes: ["video"], sizes: "16:9 · 15 or 30 sec", audiences: ["Patient", "HCP"] },
   { id: "ctv", account: "Programmatic", label: "Connected TV", makes: ["video"], sizes: "16:9 TV spot · 15, 30 or 60 sec", audiences: ["Patient"] },
   { id: "hcp-networks", account: "HCP networks", label: "In-feed and banners", makes: ["video", "image"], sizes: "Each network's own specs", audiences: ["HCP"] },
-  { id: "tiktok", account: "TikTok Ads", label: "In-feed", makes: ["video"], sizes: "9:16 · 15 to 60 sec", audiences: ["Patient", "HCP"] },
+  { id: "tiktok", account: "TikTok Ads", label: "In-feed", makes: ["video", "carousel"], sizes: "9:16 video and image carousels", audiences: ["Patient", "HCP"] },
 ];
 
 export const AD_FORMATS: Array<{ id: AdFormat; label: string; icon: LucideIcon }> = [
@@ -128,14 +131,21 @@ export function placementName(id: AdPlacement): string {
   return p ? `${p.account} · ${p.label}` : id;
 }
 
+/** The formats one placement will make: what was chosen for it, or everything it takes. */
+export function formatsOf(id: AdPlacement, choice: AdFormatChoice = {}): AdFormat[] {
+  const makes = AD_PLACEMENTS.find((p) => p.id === id)?.makes ?? [];
+  const chosen = choice[id]?.filter((f) => makes.includes(f));
+  return chosen && chosen.length ? chosen : makes;
+}
+
 /** What the chosen placements add up to, in the order formats are listed. */
-export function formatsFor(placements: AdPlacement[]): AdFormat[] {
-  const made = new Set(AD_PLACEMENTS.filter((p) => placements.includes(p.id)).flatMap((p) => p.makes));
+export function formatsFor(placements: AdPlacement[], choice: AdFormatChoice = {}): AdFormat[] {
+  const made = new Set(placements.flatMap((id) => formatsOf(id, choice)));
   return AD_FORMATS.map((f) => f.id).filter((f) => made.has(f));
 }
 
-export function formatsLabel(placements: AdPlacement[]): string {
-  return formatsFor(placements)
+export function formatsLabel(placements: AdPlacement[], choice: AdFormatChoice = {}): string {
+  return formatsFor(placements, choice)
     .map((f) => AD_FORMATS.find((o) => o.id === f)?.label)
     .join(" · ");
 }
@@ -241,7 +251,9 @@ export function placementsFromMediaPlan(audience: Audience): AdPlacement[] {
 export interface BrandAdFacts {
   boxedWarning: boolean;
   genericAvailable: boolean;
-  indications: Array<{ label: string; isNew?: boolean }>;
+  /** Approved uses. `condition` is how a help-seeking ad names it; `onlyTreatment`
+   *  marks a condition this product is the only approved treatment for. */
+  indications: Array<{ label: string; isNew?: boolean; condition?: string; onlyTreatment?: boolean }>;
 }
 
 const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
@@ -249,37 +261,114 @@ const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      { label: "Cardiovascular risk reduction in plaque psoriasis", isNew: true },
-      { label: "Moderate-to-severe plaque psoriasis in adults" },
+      { label: "Cardiovascular risk reduction in plaque psoriasis", isNew: true, condition: "heart risk in psoriasis" },
+      { label: "Moderate-to-severe plaque psoriasis in adults", condition: "plaque psoriasis" },
     ],
   },
   onkavia: {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      { label: "Polycythemia vera after hydroxyurea", isNew: true },
-      { label: "Intermediate or high-risk myelofibrosis" },
+      { label: "Polycythemia vera after hydroxyurea", isNew: true, condition: "polycythemia vera" },
+      { label: "Intermediate or high-risk myelofibrosis", condition: "myelofibrosis", onlyTreatment: true },
     ],
   },
   nirvexa: {
     boxedWarning: true,
     genericAvailable: false,
-    indications: [{ label: "Moderate-to-severe rheumatoid arthritis in adults" }],
+    indications: [{ label: "Moderate-to-severe rheumatoid arthritis in adults", condition: "rheumatoid arthritis" }],
   },
   cardioxa: {
     boxedWarning: true,
     genericAvailable: false,
-    indications: [{ label: "Heart failure with reduced ejection fraction" }],
+    indications: [{ label: "Heart failure with reduced ejection fraction", condition: "heart failure" }],
   },
   pulmovax: {
     boxedWarning: false,
     genericAvailable: true,
     indications: [
-      { label: "As-needed relief in asthma, ages 12 and up", isNew: true },
-      { label: "As-needed relief in asthma, adults" },
+      { label: "As-needed relief in asthma, ages 12 and up", isNew: true, condition: "asthma in teens" },
+      { label: "As-needed relief in asthma, adults", condition: "asthma" },
     ],
   },
+  /* Medical devices: their intended use stands in for an indication. */
+  "device-glucora": { boxedWarning: false, genericAvailable: false, indications: [{ label: "Glucose monitoring in people with diabetes, ages 2 and up", condition: "diabetes" }] },
+  "device-cardiyn": { boxedWarning: false, genericAvailable: false, indications: [{ label: "Pacing for slow heart rhythms (bradycardia)", condition: "a slow heart rhythm" }] },
+  "device-pulseva": { boxedWarning: false, genericAvailable: false, indications: [{ label: "Detecting atrial fibrillation from a wearable ECG", condition: "atrial fibrillation" }] },
 };
+
+/* ── What an ad is about: a drug, a medical device or a disease ── */
+
+/**
+ * Medical devices, for Ads. Mock records standing in for the Product Library.
+ *
+ * Who regulates a device's ads depends on it: a "restricted" device (most
+ * that went through FDA premarket approval) is held to FDA advertising
+ * rules and every ad carries a brief statement of its intended use and
+ * risks; most others answer to the FTC, where every claim must be truthful
+ * and substantiated, with no brief statement required.
+ */
+export interface MedtechDevice {
+  id: string;
+  name: string;
+  kind: string;
+  clearance: string;
+  restricted: boolean;
+  therapyArea: string;
+  /** Placeholder picture and backing until the Product Library holds device photos. */
+  image: string;
+  gradient: string;
+}
+
+export const MEDTECH_DEVICES: MedtechDevice[] = [
+  { id: "device-glucora", name: "Glucora CGM", kind: "Continuous glucose monitor", clearance: "FDA 510(k) cleared", restricted: false, therapyArea: "Diabetes", image: "/products/device.jpg", gradient: "linear-gradient(150deg,#0f766e,#14b8a6 55%,#99f6e4)" },
+  { id: "device-cardiyn", name: "Cardiyn", kind: "Leadless pacemaker", clearance: "FDA premarket approval (PMA)", restricted: true, therapyArea: "Cardiology", image: "/products/device.jpg", gradient: "linear-gradient(150deg,#9f1239,#e11d48 55%,#fda4af)" },
+  { id: "device-pulseva", name: "Pulseva Patch", kind: "Wearable ECG monitor", clearance: "FDA 510(k) cleared", restricted: false, therapyArea: "Cardiology", image: "/products/device.jpg", gradient: "linear-gradient(150deg,#1e40af,#3b82f6 55%,#bfdbfe)" },
+];
+
+export const isDeviceId = (id: string) => id.startsWith("device-");
+export const isDiseaseId = (id: string) => id.startsWith("disease-");
+export const medtechDevice = (id: string) => MEDTECH_DEVICES.find((d) => d.id === id);
+
+/**
+ * Diseases and conditions for help-seeking ads, a curated subset of the
+ * CDC's Health Topics A–Z (cdc.gov/az). The index covers all of CDC.gov,
+ * so only diseases and conditions are kept, under their common names.
+ */
+export const CDC_DISEASES: Array<{ id: string; label: string; group: string }> = (
+  [
+    ["Alzheimer's Disease", "Brain and nerves"], ["ALS (Amyotrophic Lateral Sclerosis)", "Brain and nerves"], ["Autism Spectrum Disorder", "Brain and nerves"],
+    ["ADHD", "Brain and nerves"], ["Cerebral Palsy", "Brain and nerves"], ["Epilepsy", "Brain and nerves"], ["Migraine", "Brain and nerves"],
+    ["Multiple Sclerosis", "Brain and nerves"], ["Parkinson's Disease", "Brain and nerves"], ["Stroke", "Brain and nerves"], ["Traumatic Brain Injury", "Brain and nerves"],
+    ["Depression", "Mental health"], ["Anxiety Disorders", "Mental health"], ["Bipolar Disorder", "Mental health"], ["Schizophrenia", "Mental health"], ["Postpartum Depression", "Mental health"],
+    ["Heart Disease", "Heart and blood"], ["Heart Failure", "Heart and blood"], ["Atrial Fibrillation", "Heart and blood"], ["High Blood Pressure", "Heart and blood"],
+    ["High Cholesterol", "Heart and blood"], ["Congenital Heart Defects", "Heart and blood"], ["Peripheral Artery Disease", "Heart and blood"], ["Sickle Cell Disease", "Heart and blood"],
+    ["Hemophilia", "Heart and blood"], ["Venous Thromboembolism (Blood Clots)", "Heart and blood"], ["Anemia", "Heart and blood"],
+    ["Diabetes", "Hormones and metabolism"], ["Type 1 Diabetes", "Hormones and metabolism"], ["Type 2 Diabetes", "Hormones and metabolism"], ["Prediabetes", "Hormones and metabolism"],
+    ["Gestational Diabetes", "Hormones and metabolism"], ["Obesity", "Hormones and metabolism"], ["Thyroid Disease", "Hormones and metabolism"], ["Osteoporosis", "Hormones and metabolism"],
+    ["Asthma", "Lungs"], ["COPD", "Lungs"], ["Cystic Fibrosis", "Lungs"], ["Pulmonary Fibrosis", "Lungs"], ["Pneumonia", "Lungs"], ["Tuberculosis", "Lungs"], ["Sleep Apnea", "Lungs"],
+    ["Chronic Kidney Disease", "Kidney and liver"], ["Hepatitis B", "Kidney and liver"], ["Hepatitis C", "Kidney and liver"], ["Fatty Liver Disease", "Kidney and liver"], ["Kidney Stones", "Kidney and liver"],
+    ["Breast Cancer", "Cancer"], ["Lung Cancer", "Cancer"], ["Colorectal Cancer", "Cancer"], ["Prostate Cancer", "Cancer"], ["Cervical Cancer", "Cancer"], ["Ovarian Cancer", "Cancer"],
+    ["Skin Cancer (Melanoma)", "Cancer"], ["Leukemia", "Cancer"], ["Lymphoma", "Cancer"], ["Multiple Myeloma", "Cancer"], ["Myelofibrosis", "Cancer"], ["Pancreatic Cancer", "Cancer"],
+    ["Liver Cancer", "Cancer"], ["Bladder Cancer", "Cancer"], ["Kidney Cancer", "Cancer"], ["Thyroid Cancer", "Cancer"], ["Head and Neck Cancer", "Cancer"],
+    ["Rheumatoid Arthritis", "Bones, joints and immune system"], ["Osteoarthritis", "Bones, joints and immune system"], ["Lupus", "Bones, joints and immune system"],
+    ["Psoriatic Arthritis", "Bones, joints and immune system"], ["Gout", "Bones, joints and immune system"], ["Fibromyalgia", "Bones, joints and immune system"],
+    ["Ankylosing Spondylitis", "Bones, joints and immune system"], ["Myasthenia Gravis", "Bones, joints and immune system"], ["Celiac Disease", "Bones, joints and immune system"],
+    ["Psoriasis", "Skin"], ["Eczema (Atopic Dermatitis)", "Skin"], ["Hidradenitis Suppurativa", "Skin"], ["Alopecia Areata", "Skin"], ["Vitiligo", "Skin"], ["Shingles", "Skin"],
+    ["Crohn's Disease", "Digestive system"], ["Ulcerative Colitis", "Digestive system"], ["Irritable Bowel Syndrome", "Digestive system"], ["GERD (Acid Reflux)", "Digestive system"],
+    ["HIV", "Infections"], ["Influenza (Flu)", "Infections"], ["COVID-19", "Infections"], ["RSV", "Infections"], ["HPV", "Infections"], ["Lyme Disease", "Infections"],
+    ["Measles", "Infections"], ["Meningococcal Disease", "Infections"], ["Pneumococcal Disease", "Infections"], ["Sepsis", "Infections"], ["Urinary Tract Infection", "Infections"],
+    ["Chlamydia", "Infections"], ["Syphilis", "Infections"], ["Malaria", "Infections"],
+    ["Glaucoma", "Eyes and ears"], ["Macular Degeneration", "Eyes and ears"], ["Diabetic Retinopathy", "Eyes and ears"], ["Hearing Loss", "Eyes and ears"], ["Cataracts", "Eyes and ears"],
+    ["Endometriosis", "Women's and men's health"], ["Polycystic Ovary Syndrome (PCOS)", "Women's and men's health"], ["Menopause", "Women's and men's health"],
+    ["Infertility", "Women's and men's health"], ["Overactive Bladder", "Women's and men's health"], ["Erectile Dysfunction", "Women's and men's health"],
+    ["Down Syndrome", "Genetic and rare conditions"], ["Fragile X Syndrome", "Genetic and rare conditions"], ["Muscular Dystrophy", "Genetic and rare conditions"],
+    ["Spina Bifida", "Genetic and rare conditions"], ["Hereditary Angioedema", "Genetic and rare conditions"], ["Paroxysmal Nocturnal Hemoglobinuria (PNH)", "Genetic and rare conditions"],
+    ["Chronic Pain", "Other conditions"], ["Chronic Fatigue Syndrome (ME/CFS)", "Other conditions"], ["Insomnia", "Other conditions"], ["Dementia", "Other conditions"],
+  ] as Array<[string, string]>
+).map(([label, group]) => ({ id: `disease-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`, label, group }));
+
+export const cdcDisease = (id: string) => CDC_DISEASES.find((d) => d.id === id);
 
 export function brandAdFacts(brandId: string): BrandAdFacts {
   return (
@@ -377,6 +466,19 @@ const AD_CLAIMS: Record<string, AdClaim[]> = {
     { id: "CL-201", text: "27% fewer severe asthma attacks vs albuterol alone", source: "MANDALA · Primary endpoint" },
     { id: "CL-204", text: "Rescue and anti-inflammatory in one inhaler", source: "Prescribing Information §1", short: true },
   ],
+  /* Device claims trace to the clearance summary, the study behind it, or the Instructions for Use. */
+  "device-glucora": [
+    { id: "DC-201", text: "Glucose readings every minute, without routine fingersticks", source: "510(k) summary · Indications for Use" },
+    { id: "DC-204", text: "14 days of wear per sensor", source: "Instructions for Use §1", short: true },
+  ],
+  "device-cardiyn": [
+    { id: "DC-301", text: "98% free of major complications at 12 months", source: "LEAP pivotal study · Primary safety endpoint" },
+    { id: "DC-305", text: "No leads, no chest pocket", source: "Instructions for Use §1", short: true },
+  ],
+  "device-pulseva": [
+    { id: "DC-401", text: "Detected atrial fibrillation with 96% sensitivity vs a 12-lead ECG", source: "PULSE-AF validation study" },
+    { id: "DC-404", text: "Wear for up to 14 days", source: "Instructions for Use §2", short: true },
+  ],
 };
 
 export function adClaims(brandId: string): AdClaim[] {
@@ -385,17 +487,26 @@ export function adClaims(brandId: string): AdClaim[] {
 
 /** The label the ads are built from, for the Sources row. */
 export function labelVersion(brandId: string): string {
+  if (isDeviceId(brandId)) return `Instructions for Use and ${medtechDevice(brandId)?.clearance ?? "FDA clearance"} summary`;
+  if (isDiseaseId(brandId)) return "CDC disease information and your sources";
   return brandId in AD_CLAIMS ? "Prescribing Information, Rev. 04/2026" : "Prescribing Information on file";
 }
 
 /** One recommended headline and two alternatives, for the kind of ad. */
-export function leadMessages(adType: AdType, brandName: string, claims: AdClaim[]): string[] {
+export function leadMessages(adType: AdType, brandName: string, claims: AdClaim[], condition?: string): string[] {
   if (adType === "unbranded") {
-    return [
-      "It's more than skin deep. Talk to your doctor.",
-      "You don't have to settle for living with symptoms.",
-      "Ask your doctor what your options really are.",
-    ];
+    /* About the condition, never the product. */
+    return condition
+      ? [
+          `Living with ${condition}? Talk to your doctor.`,
+          `${condition.charAt(0).toUpperCase()}${condition.slice(1)} is more than what people see.`,
+          `Ask your doctor what your options for ${condition} really are.`,
+        ]
+      : [
+          "You don't have to settle for living with symptoms.",
+          "It's more than what people see. Talk to your doctor.",
+          "Ask your doctor what your options really are.",
+        ];
   }
   if (adType === "reminder") {
     return [`${brandName}. Ask your doctor.`, `Remember ${brandName}.`, `${brandName}: talk to your doctor today.`];

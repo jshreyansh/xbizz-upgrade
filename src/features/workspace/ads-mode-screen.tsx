@@ -34,7 +34,7 @@ const clip = (
 const STARTING_POINTS: { id: Exclude<AdKind, "scratch">; subtitle: string; examples: StartingPointExample[] }[] = [
   {
     id: "brand-launch",
-    subtitle: "Branded ads for a newly approved drug",
+    subtitle: "Product claim ads for a newly approved drug",
     examples: [
       clip("launch-1", "/21617-319452308_medium.mp4", PLUM, "YouTube In-Stream", "16:9 · 30 sec"),
       clip("launch-2", "/133898-758336558_medium.mp4", DARK, "Instagram Reels", "9:16 · 15 sec"),

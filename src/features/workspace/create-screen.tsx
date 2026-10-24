@@ -29,6 +29,7 @@ import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/featu
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
+import { useAdSubject } from "@/features/workspace/ad-subject";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
 import type { PlanningSource } from "@/types/content";
@@ -158,6 +159,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   const adKind = useWorkspaceStore((s) => s.adKind);
   const adType = useWorkspaceStore((s) => s.adType);
   const adPlacements = useWorkspaceStore((s) => s.adPlacements);
+  const adFormats = useWorkspaceStore((s) => s.adFormats);
   const storedProjectName = useWorkspaceStore((s) => s.projectName);
   const activeHeadlines = isAd ? AD_HEADLINES : isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
   // Longest by character count, which is what decides the wrap.
@@ -270,7 +272,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   /* From the catalogue, so a brand that only exists in the Product Library
      still answers to its own name. */
-  const currentBrandName = useBrandName(sourcePayload.dossierId);
+  const drugName = useBrandName(sourcePayload.dossierId);
+  /* An Ads project can be about a medical device or a disease instead of a drug. */
+  const adSubject = useAdSubject();
+  const currentBrandName = isAd ? adSubject.brandName : drugName;
 
   /* Which of the four context questions is open, or none. Clicking a tile
      above the prompt opens that one; the modal keeps the other three
@@ -473,7 +478,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <div className="flex flex-wrap items-center gap-1.5 border-b border-hair px-3 py-2.5">
               {(isAd
                 ? [
-                    { id: "brand" as const, icon: ShieldCheck, label: currentBrandName, sub: "Dossier", tinted: true },
+                    { id: "brand" as const, icon: ShieldCheck, label: currentBrandName, sub: adSubject.kind === "device" ? "Medical device" : adSubject.kind === "disease" ? "Disease" : "Dossier", tinted: true },
                     {
                       id: "audience" as const,
                       icon: Users,
@@ -481,7 +486,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                       sub: "Audience",
                       tinted: false,
                     },
-                    { id: "adType" as const, icon: Target, label: AD_TYPES.find((t) => t.id === adType)?.label ?? "Branded", sub: "Branding", tinted: false },
+                    { id: "adType" as const, icon: Target, label: AD_TYPES.find((t) => t.id === adType)?.label ?? "Product Claim Ads", sub: "Branding", tinted: false },
                     {
                       id: "placements" as const,
                       icon: Megaphone,
@@ -494,7 +499,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                     {
                       id: "placements" as const,
                       icon: Layers,
-                      label: formatsLabel(adPlacements),
+                      label: formatsLabel(adPlacements, adFormats),
                       sub: "Makes",
                       tinted: false,
                     },
@@ -709,6 +714,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           context={{
             adType,
             placements: adPlacements,
+            formats: adFormats,
             brandId:
               INITIAL_BRANDS.find(
                 (b) => b.name.toLowerCase() === currentBrandName.toLowerCase()
@@ -728,6 +734,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
               const blocked = next.adType === "reminder" && brand && brandAdFacts(brand.id).boxedWarning;
               store.setAdType(blocked ? "product-claim" : next.adType ?? adType);
               store.setAdPlacements(next.placements ?? adPlacements);
+              store.setAdFormats(next.formats ?? adFormats);
               setContextField(null);
               return;
             }
