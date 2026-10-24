@@ -17,10 +17,12 @@
 
 import {
   Clapperboard,
+  FileText,
   Image as ImageIcon,
   LayoutGrid,
   PanelsTopLeft,
   type LucideIcon,
+  TextCursorInput,
 } from "lucide-react";
 import type { Audience } from "@/types/content";
 
@@ -37,12 +39,13 @@ export type AdType = "product-claim" | "reminder" | "unbranded";
 
 /** What a placement produces. A banner is the animated HTML5 kind with a
  *  scrolling safety panel, the standard pharma display ad. */
-export type AdFormat = "video" | "image" | "carousel" | "banner";
+export type AdFormat = "video" | "image" | "carousel" | "banner" | "text" | "document";
 
-export type AdAccount = "Google Ads" | "Meta Ads" | "Programmatic" | "HCP networks" | "TikTok Ads";
+export type AdAccount = "Google Ads" | "Meta Ads" | "LinkedIn Ads" | "Programmatic" | "HCP networks" | "TikTok Ads";
 
 export type AdPlacement =
   | "youtube"
+  | "google-search"
   | "google-display"
   | "meta-feed"
   | "meta-reels-stories"
@@ -50,7 +53,8 @@ export type AdPlacement =
   | "programmatic-video"
   | "ctv"
   | "hcp-networks"
-  | "tiktok";
+  | "tiktok"
+  | "linkedin-feed";
 
 /** Ads are for the people a platform can reach. Trade and market-access
  *  audiences are reached through dossiers and portals, not ad accounts. */
@@ -82,6 +86,10 @@ export const AD_TYPES: Array<{ id: AdType; label: string; hint: string }> = [
 export const AD_ACCOUNTS: Array<{ id: AdAccount; detail?: string; note: string }> = [
   { id: "Google Ads", note: "Needs Google's pharmaceutical manufacturer certification." },
   { id: "Meta Ads", detail: "Facebook and Instagram", note: "Needs Meta's prescription drug authorization · 18+ · US, Canada and New Zealand. Placements stay as chosen; Meta never moves the ads." },
+  {
+    id: "LinkedIn Ads",
+    note: "Prescription ads follow LinkedIn's healthcare ad policy; check it before booking. Reaches HCPs by job title and specialty, but anyone can still see a shared ad.",
+  },
   { id: "Programmatic", detail: "DV360 and The Trade Desk", note: "Bought through your DSP, served from your ad server." },
   { id: "HCP networks", detail: "Doximity, Medscape, Epocrates", note: "Booked with each network directly, on its own specs." },
   { id: "TikTok Ads", note: "Needs proof of FDA approval · 18+." },
@@ -109,9 +117,11 @@ export const AD_PLACEMENTS: Array<{
   audiences: Audience[];
 }> = [
   { id: "youtube", account: "Google Ads", label: "YouTube", makes: ["video"], sizes: "16:9 skippable in-stream, 9:16 Shorts · 6 sec bumpers for reminders", audiences: ["Patient", "HCP"] },
+  { id: "google-search", account: "Google Ads", label: "Search", makes: ["text"], sizes: "Up to 15 headlines and 4 descriptions · Google mixes them", audiences: ["Patient", "HCP"] },
   { id: "google-display", account: "Google Ads", label: "Display", makes: ["banner"], sizes: "Image banners in fixed sizes, with a static safety band", audiences: ["Patient", "HCP"] },
   { id: "meta-feed", account: "Meta Ads", label: "Feed", makes: ["video", "image", "carousel"], sizes: "1:1 and 4:5", audiences: ["Patient", "HCP"] },
   { id: "meta-reels-stories", account: "Meta Ads", label: "Reels & Stories", makes: ["video", "image"], sizes: "9:16 full screen", audiences: ["Patient", "HCP"] },
+  { id: "linkedin-feed", account: "LinkedIn Ads", label: "Feed", makes: ["image", "video", "carousel", "document"], sizes: "1:1 image and video, square carousel, PDF document", audiences: ["HCP", "Patient"] },
   { id: "programmatic-display", account: "Programmatic", label: "Display", makes: ["banner"], sizes: "HTML5 banners with scrolling safety information", audiences: ["Patient", "HCP"] },
   { id: "programmatic-video", account: "Programmatic", label: "Online video", makes: ["video"], sizes: "16:9 · 15 or 30 sec", audiences: ["Patient", "HCP"] },
   { id: "ctv", account: "Programmatic", label: "Connected TV", makes: ["video"], sizes: "16:9 TV spot · 15, 30 or 60 sec", audiences: ["Patient"] },
@@ -124,6 +134,8 @@ export const AD_FORMATS: Array<{ id: AdFormat; label: string; icon: LucideIcon }
   { id: "image", label: "Image", icon: ImageIcon },
   { id: "carousel", label: "Carousel", icon: LayoutGrid },
   { id: "banner", label: "Banner", icon: PanelsTopLeft },
+  { id: "text", label: "Text", icon: TextCursorInput },
+  { id: "document", label: "Document", icon: FileText },
 ];
 
 export function placementName(id: AdPlacement): string {

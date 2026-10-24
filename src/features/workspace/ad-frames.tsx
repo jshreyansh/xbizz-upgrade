@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 import type { Scene } from "@/types/content";
 import type { AdType } from "@/features/workspace/ad-options";
 import type { AdTemplateLayout } from "@/features/workspace/ad-templates";
-import type { CarouselCard } from "@/features/workspace/ad-campaign";
+import type { CarouselCard, DocPage } from "@/features/workspace/ad-campaign";
 import { textStyleCss, type TextStyle } from "@/features/workspace/canvas-text-toolbar";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 
@@ -46,6 +46,7 @@ export const STILL_SIZE: Record<StillSize, { w: number; h: number }> = {
 
 export const BANNER_SIZES: StillSize[] = ["300×250", "728×90", "300×600", "160×600", "320×50"];
 export const CARD_SIZE = { w: 450, h: 450 };
+export const DOC_SIZE = { w: 400, h: 500 };
 
 /* The pictures: frames from the same footage the video story is cut from,
    so the image ad and the carousel look like the same campaign. */
@@ -659,3 +660,113 @@ export function AdCard({
     </div>
   );
 }
+
+/* ── The document page ── */
+
+const PAGE_FOOTAGE: Partial<Record<DocPage["role"], string>> = {
+  Cover: FOOTAGE.people,
+  Context: FOOTAGE.calm,
+  Evidence: FOOTAGE.science,
+};
+
+/**
+ * One page of the document ad, at 4:5. The cover and the evidence pages carry
+ * a picture; the ask closes on the brand; safety and references are text
+ * only. A product claim document keeps its risk line on every page but the
+ * safety page itself.
+ */
+export function AdDocPage({
+  page,
+  index,
+  total,
+  palette,
+  brandName,
+  adType,
+  riskLine,
+  edit = {},
+}: {
+  page: DocPage;
+  index: number;
+  total: number;
+  palette: Palette;
+  brandName: string;
+  adType: AdType;
+  riskLine?: string;
+  edit?: FrameEditing;
+}) {
+  const { w, h } = DOC_SIZE;
+  const id = (part: string) => `page:${index}.${part}`;
+  const branded = adType !== "unbranded";
+  const folio = (
+    <div className="flex items-center justify-between" style={{ fontSize: 10, fontWeight: 700, color: "#8a909c", padding: "10px 22px" }}>
+      <span>{branded ? brandName : "Talk to your doctor"}</span>
+      <span>
+        {index + 1} / {total}
+      </span>
+    </div>
+  );
+  const band =
+    riskLine && page.role !== "Safety" && page.role !== "References" ? (
+      <Part id={id("safety")} edit={edit} className="shrink-0">
+        <div style={{ fontSize: 10, lineHeight: 1.35, color: "#3c414d", background: "#f1f3f0", padding: "6px 22px" }}>See Important Safety Information on page {total - 1}</div>
+      </Part>
+    ) : null;
+
+  if (page.role === "Safety" || page.role === "References") {
+    return (
+      <div className="flex flex-col" style={{ width: w, height: h, background: "#fff", fontFamily: FONT }}>
+        <div className="flex min-h-0 flex-1 flex-col" style={{ padding: "26px 26px 0", gap: 12 }}>
+          <Words id={id("title")} edit={edit} text={page.title} style={{ fontSize: 20, fontWeight: 900, color: "#0a0d14" }} />
+          <Words id={id("body")} edit={edit} text={page.body} style={{ fontSize: page.role === "Safety" ? 12.5 : 11, lineHeight: 1.6, color: "#3c414d" }} />
+        </div>
+        {folio}
+      </div>
+    );
+  }
+
+  if (page.role === "Cover") {
+    return (
+      <div className="relative flex flex-col overflow-hidden" style={{ width: w, height: h, background: "#0f2d22", fontFamily: FONT }}>
+        <Part id={id("picture")} edit={edit} className="absolute inset-0 overflow-hidden">
+          <Picture src={PAGE_FOOTAGE.Cover!} at={1.2} />
+        </Part>
+        <div className="pointer-events-none absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,.05) 30%, rgba(0,0,0,.8) 100%)" }} />
+        {branded && (
+          <Part id={id("logo")} edit={edit} className="absolute" style={{ left: 22, top: 22 }}>
+            <span style={{ display: "block", fontSize: 13, fontWeight: 900, background: "#fff", color: palette.primary, borderRadius: 7, padding: "4px 9px" }}>{brandName}</span>
+          </Part>
+        )}
+        <div className="relative mt-auto space-y-2" style={{ padding: "0 26px 20px" }}>
+          <Words id={id("title")} edit={edit} text={page.title} style={{ color: "#fff", fontSize: 30, fontWeight: 900, lineHeight: 1.08 }} />
+          <Words id={id("body")} edit={edit} text={page.body} style={{ color: "rgba(255,255,255,.82)", fontSize: 14 }} />
+        </div>
+        <div className="relative">{band}</div>
+      </div>
+    );
+  }
+
+  const ask = page.role === "Ask";
+  const footage = PAGE_FOOTAGE[page.role];
+  return (
+    <div className="relative flex flex-col overflow-hidden" style={{ width: w, height: h, background: ask ? palette.primary : "#fff", fontFamily: FONT }}>
+      {footage && (
+        <Part id={id("picture")} edit={edit} className="shrink-0 overflow-hidden" style={{ height: "42%" }}>
+          <Picture src={footage} at={1 + index} />
+        </Part>
+      )}
+      <div className={cn("flex min-h-0 flex-1 flex-col space-y-2", ask ? "justify-end" : "justify-center")} style={{ padding: "18px 26px" }}>
+        <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: ask ? "rgba(255,255,255,.7)" : palette.primary }}>{page.role}</span>
+        <Words id={id("title")} edit={edit} text={page.title} style={{ color: ask ? "#fff" : "#0a0d14", fontSize: ask ? 28 : 22, fontWeight: 900, lineHeight: 1.12 }} />
+        <Words id={id("body")} edit={edit} text={page.body} style={{ color: ask ? "rgba(255,255,255,.82)" : "#6b7280", fontSize: 13, lineHeight: 1.45 }} />
+      </div>
+      {ask && branded && (
+        <Part id={id("logo")} edit={edit} className="absolute" style={{ right: 22, top: 22 }}>
+          <span style={{ display: "block", fontSize: 12, fontWeight: 900, background: "#fff", color: palette.primary, borderRadius: 7, padding: "3px 8px" }}>{brandName}</span>
+        </Part>
+      )}
+      {!ask && folio}
+      {band}
+    </div>
+  );
+}
+

@@ -30,11 +30,8 @@ import {
   PanelRight,
   PanelRightClose,
   PanelRightOpen,
-  Pause,
-  Play,
   ShieldCheck,
   Target,
-  Upload,
   Users,
   X,
   Stethoscope,
@@ -63,6 +60,7 @@ import { moleculeFor } from "@/features/workspace/grounding-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { ResearchSourcesContent, researchSummary, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { PRESENTERS as presenters } from "@/features/workspace/presenters";
+import { AudioChoices, CharacterLibrary, FacePhoto, VoiceLibrary, playMusicTone, stopAudioPreview } from "@/features/workspace/character-voice-sound";
 import {
   AUDIENCE_OPTIONS,
   BrandMarkContent,
@@ -114,7 +112,6 @@ import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
-import { LibraryModalHeader, LibraryModalGoTo } from "@/components/patterns/library-modal";
 
 import { Portal } from "@/components/ui/portal";
 
@@ -136,16 +133,6 @@ const SECTION_TITLES: Record<PlanSectionId, string> = {
 // Destinations (parked): const useOptions = ["HCP meeting", "LinkedIn", "Instagram", "YouTube", "Email", "Website", "Congress / event", "Internal presentation"];
 const topics = ["Product introduction", "Mechanism", "Pivotal evidence", "Dosing & safety", "Patient impact"];
 
-const voiceList = [
-  { name: "Rohan", role: "clear and measured", accent: "Indian / US English", tag: "Authoritative" },
-  { name: "Riya", role: "friendly and clear", accent: "Neutral English", tag: "Warm & Caring" },
-  { name: "Dev", role: "warm and conversational", accent: "US English", tag: "Conversational" },
-  { name: "Sarah", role: "clinical and precise", accent: "British English", tag: "Clinical Lead" },
-  { name: "Marcus", role: "deep and trustworthy", accent: "North American", tag: "Physician" },
-  { name: "Elena", role: "calm and scientific", accent: "International", tag: "Research" },
-  { name: "Liam", role: "energetic and direct", accent: "Australian", tag: "Patient Briefing" },
-  { name: "Priya", role: "empathetic and reassuring", accent: "Neutral English", tag: "Patient Care" },
-];
 
 /* Partial: the Ads plan is not built yet, so an ad falls back to the video profile. */
 const profiles: Partial<Record<AssetType, {
@@ -2895,100 +2882,6 @@ function SteppedControl({
   );
 }
 
-function AudioChoices({
-  label,
-  value,
-  options,
-  onChange,
-  previewing,
-  onPreview,
-  onOpenLibrary,
-  onUpload,
-  uploadedName,
-  music = false,
-}: {
-  label: string;
-  value: string;
-  options: readonly string[];
-  onChange: (value: string) => void;
-  previewing?: string | null;
-  onPreview?: (option: string) => void;
-  onOpenLibrary?: () => void;
-  /** Music only: opens the file picker for a track the team owns. */
-  onUpload?: () => void;
-  /** Which row in the list is that track, so it can say where it came from. */
-  uploadedName?: string;
-  music?: boolean;
-}) {
-  return (
-    <div>
-      <div className="flex items-center justify-between">
-        <span className="text-body-lg font-semibold text-ink-3">{label}</span>
-        {onOpenLibrary && (
-          <button
-            type="button"
-            onClick={onOpenLibrary}
-            className="text-body font-bold text-brand hover:underline cursor-pointer"
-          >
-            Voice Library →
-          </button>
-        )}
-      </div>
-      <div className="mt-2.5 space-y-2">
-        {options.map((option) => {
-          const base = option.split("·")[0].trim();
-          const active = value === option || value === base;
-          const isPlaying = previewing === option || previewing === base;
-          return (
-            <div
-              key={option}
-              className={cn(
-                "flex items-center justify-between rounded-control border p-2.5 transition",
-                active ? "border-hair-3 bg-subtle" : "border-hair-2"
-              )}
-            >
-              <button
-                type="button"
-                onClick={() => onChange(base)}
-                className="flex min-w-0 flex-1 items-center gap-2 text-left text-body-lg font-medium text-ink cursor-pointer"
-              >
-                <span className="truncate">{option}</span>
-                {uploadedName === option && (
-                  <span className="shrink-0 rounded-chip bg-tint px-1.5 py-0.5 text-micro font-extrabold uppercase tracking-wide text-brand-deep">
-                    Your track
-                  </span>
-                )}
-              </button>
-              {onPreview && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onPreview(base)}
-                  className={cn("size-8 p-0 rounded-full", isPlaying && "text-brand")}
-                  aria-label="Preview"
-                >
-                  {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-                </Button>
-              )}
-            </div>
-          );
-        })}
-
-        {onUpload && (
-          <button
-            type="button"
-            onClick={onUpload}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-control border border-dashed border-hair-3 p-2.5 text-body font-bold text-ink-3 transition hover:border-brand hover:bg-tint hover:text-brand-deep"
-          >
-            <Upload className="size-3.5" />
-            {uploadedName ? "Replace with another track" : "Use your own track"}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function StructureChoices({
   value,
   options,
@@ -3041,118 +2934,6 @@ function structureDescription(option: string) {
   if (option.includes("Solution")) return "Establish problem states, then introduce product value.";
   if (option.includes("Evidence")) return "Focus on dual inhibition pathway and clinical study outcomes.";
   return "Organized around clear narrative chapters.";
-}
-
-function FacePhoto({ person, className }: { person: (typeof presenters)[number]; className: string }) {
-  return <img src={person.image} alt={person.name} className={cn("object-cover", className)} />;
-}
-
-function CharacterLibrary({
-  selected,
-  onSelect,
-  onClose,
-  onGoToLibrary,
-}: {
-  selected: string;
-  onSelect: (name: string) => void;
-  onClose: () => void;
-  /** The full shelf lives on its own page — this modal is a shortlist. */
-  onGoToLibrary: () => void;
-}) {
-  return (
-    <Portal>
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-[680px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
-        <LibraryModalHeader title="Choose characters for your video" onClose={onClose} />
-        <div className="max-h-[460px] overflow-y-auto grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
-          {presenters.map((person) => {
-            const active = selected === person.name;
-            return (
-              <button
-                key={person.name}
-                type="button"
-                onClick={() => onSelect(person.name)}
-                className={cn(
-                  "flex items-center gap-3 rounded-panel border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
-                  active ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 hover:border-hair-3"
-                )}
-              >
-                <FacePhoto person={person} className="size-14 rounded-control" />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-body-lg font-bold text-ink">{person.name}</span>
-                  <span className="mt-0.5 block text-body leading-4 text-ink-3">{person.role}</span>
-                </span>
-                {active && <Check className="size-4 text-brand shrink-0" strokeWidth={3} />}
-              </button>
-            );
-          })}
-        </div>
-        <LibraryModalGoTo label="Go to Character Library" onClick={onGoToLibrary} />
-      </div>
-    </div>
-    </Portal>
-  );
-}
-
-function VoiceLibrary({
-  selected,
-  onSelect,
-  onClose,
-  previewing,
-  onPreview,
-  onGoToLibrary,
-}: {
-  selected: string;
-  onSelect: (name: string) => void;
-  onClose: () => void;
-  previewing?: string | null;
-  onPreview: (name: string) => void;
-  /** The full shelf lives on its own page — this modal is a shortlist. */
-  onGoToLibrary: () => void;
-}) {
-  return (
-    <Portal>
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="w-full max-w-[620px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
-        <LibraryModalHeader title="Select narrator voice" onClose={onClose} />
-        <div className="max-h-[460px] overflow-y-auto space-y-2 p-4 sm:p-6">
-          {voiceList.map((v) => {
-            const active = selected.includes(v.name);
-            const isPlaying = previewing === v.name;
-            return (
-              <div
-                key={v.name}
-                className={cn(
-                  "flex items-center justify-between rounded-control border p-3 transition",
-                  active ? "border-brand bg-tint" : "border-hair-2"
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-body-lg text-ink">{v.name}</span>
-                    <span className="rounded-chip bg-card px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line">
-                      {v.tag}
-                    </span>
-                  </div>
-                  <span className="text-body text-ink-3 block mt-0.5">{v.accent} · {v.role}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => onPreview(v.name)}>
-                    {isPlaying ? <Pause className="size-4 text-brand" /> : <Play className="size-4" />}
-                  </Button>
-                  <Button size="sm" variant={active ? "primary" : "secondary"} onClick={() => onSelect(v.name)}>
-                    {active ? "Selected" : "Select"}
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <LibraryModalGoTo label="Go to Voice Library" onClick={onGoToLibrary} />
-      </div>
-    </div>
-    </Portal>
-  );
 }
 
 function SourceManager({
@@ -3220,31 +3001,4 @@ function structureForTreatment(assetType: AssetType, treatmentId: string) {
     return "The unresolved need · Product introduction · How it works · Pivotal evidence · Close and fair balance";
   }
   return "Cover · Clinical need · Product introduction · Mechanism · Pivotal evidence · Close";
-}
-
-function stopAudioPreview() {
-  if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
-  }
-}
-
-function playMusicTone(label: string) {
-  if (typeof window === "undefined" || !("AudioContext" in window || "webkitAudioContext" in window)) return;
-  try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new AudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = label.includes("Warm") ? "triangle" : "sine";
-    osc.frequency.setValueAtTime(label.includes("Warm") ? 330 : 260, ctx.currentTime);
-    gain.gain.setValueAtTime(0.001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.07, ctx.currentTime + 0.1);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.8);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 1.9);
-  } catch {
-    // Ignore audio autoplay restrictions
-  }
 }

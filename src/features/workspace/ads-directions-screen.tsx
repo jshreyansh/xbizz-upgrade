@@ -10,6 +10,7 @@ import {
   ListChecks,
   MessageSquare,
   MessageSquareQuote,
+  Mic2,
   RotateCcw,
   Palette,
   PanelRight,
@@ -51,6 +52,7 @@ import { GenerationProgress } from "@/features/workspace/generation-progress";
 import { AdsCampaignStoryboard, AdsToMakeList, KeyMessageFields } from "@/features/workspace/ads-campaign-plan";
 import { buildAdOutputs, buildImageAd } from "@/features/workspace/ad-campaign";
 import { AdsTemplateStep } from "@/features/workspace/ads-template-step";
+import { CharacterVoiceSoundFields } from "@/features/workspace/character-voice-sound";
 import {
   BrandMarkContent,
   ChipChoices,
@@ -91,6 +93,7 @@ import {
   closingLine,
   craftKeyMessage,
   defaultNextStep,
+  formatsOf,
   labelVersion,
   leadMessages,
   type AdType,
@@ -105,7 +108,7 @@ import {
  * the brand mark. Confirming writes the campaign storyboard: the video
  * storyboard and the image and carousel plan.
  */
-type SectionId = "sources" | "message" | "audience" | "ads" | "visuals" | "references" | "logo";
+type SectionId = "sources" | "message" | "audience" | "ads" | "voice" | "visuals" | "references" | "logo";
 type Extraction = "waiting" | "extracting" | "ready";
 /** Long enough to read as work on the dossier, short enough not to stall the demo. */
 const EXTRACT_MS = 6000;
@@ -218,13 +221,23 @@ export function AdsDirectionsScreen() {
   /* What the campaign makes. Unticked ads aren't written, made, charged or sent to MLR. */
   const adFormats = useWorkspaceStore((st) => st.adFormats);
   const outputs = buildAdOutputs(adPlacements, adType, adFormats);
-  const [removed, setRemoved] = useState<string[]>([]);
-  const kept = outputs.filter((o) => !removed.includes(o.id));
+  /* Every output is made: an ad comes out by turning its format off. */
+  const kept = outputs;
   const credits = kept.reduce((sum, o) => sum + o.credits, 0);
   const creditBalance = useSettingsStore((st) => st.creditBalance);
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
   const [changingPlacements, setChangingPlacements] = useState(false);
   const showsProduct = adType !== "unbranded";
+  /* Who appears, who narrates and what plays under it: only asked when the
+     campaign makes video. Narrated by default, so a character is optional. */
+  const makesVideo = kept.some((o) => o.format === "video");
+  const [presenter, setPresenter] = useState("");
+  const language = useWorkspaceStore((s) => s.language);
+  const voice = useWorkspaceStore((s) => s.voice);
+  const music = useWorkspaceStore((s) => s.music);
+  const setLanguage = useWorkspaceStore((s) => s.setLanguage);
+  const setVoice = useWorkspaceStore((s) => s.setVoice);
+  const setMusic = useWorkspaceStore((s) => s.setMusic);
 
   const [packshots, setPackshots] = useState<Array<{ id: string; name: string; url: string; note?: string; variation?: string }>>([]);
   const [references, setReferences] = useState<Array<{ id: string; name: string; note?: string; previewUrl?: string; kind: "image" | "video" }>>([]);
@@ -239,12 +252,13 @@ export function AdsDirectionsScreen() {
     message: extraction === "ready" && noClaims,
     audience: reminderBlocked,
     ads: kept.length === 0,
+    voice: false,
     visuals: false,
     references: false,
     logo: false,
   };
   const messageState: PlanState = extraction !== "ready" ? "waiting" : planState(needsYou.message);
-  const order: SectionId[] = ["sources", "message", "audience", "ads", ...(showsProduct ? (["visuals"] as const) : []), "references", "logo"];
+  const order: SectionId[] = ["sources", "message", "audience", "ads", ...(makesVideo ? (["voice"] as const) : []), ...(showsProduct ? (["visuals"] as const) : []), "references", "logo"];
 
   const [openSection, setOpenSection] = useState<SectionId | null>("sources");
   const toggleSection = (id: SectionId) => setOpenSection(openSection === id ? null : id);
@@ -417,7 +431,9 @@ export function AdsDirectionsScreen() {
     { label: `Read the ${brandName} dossier${uploadedDocs.length ? ` and ${uploadedDocs.length} ${uploadedDocs.length === 1 ? "file" : "files"}` : ""}`, seconds: 1.4 },
     { label: `Built every scene around "${leadMessage}"`, seconds: 1.4 },
     ...(kept.some((o) => o.format === "video") ? [{ label: "Wrote the video story and drew each shot", seconds: 1.8 }] : []),
-    ...(kept.some((o) => o.format !== "video") ? [{ label: "Planned the image and carousel ads", seconds: 1.2 }] : []),
+    ...(kept.some((o) => o.format !== "video")
+      ? [{ label: `Planned the ${[...new Set(kept.filter((o) => o.format !== "video").map((o) => (o.format === "banner" ? "image" : o.format === "text" ? "search" : o.format)))].join(", ").replace(/, ([^,]*)$/, " and $1")} ads`, seconds: 1.2 }]
+      : []),
     { label: `Fitted ${kept.length} ads to their placements`, seconds: 1.0 },
   ];
   /* Into the Ads studio, with what the plan settled. */
@@ -814,12 +830,20 @@ export function AdsDirectionsScreen() {
                 >
                   <div className="space-y-3">
                     <p className="text-body leading-snug text-ink-2">
-                      One video story and one image ad, adapted to each placement. Untick what you don&apos;t need: it won&apos;t be made, charged, sent to MLR or exported.
+                      What each placement makes. Turn off a format you don&apos;t need, or remove the placement: it won&apos;t be made, charged, sent to MLR or exported.
                     </p>
                     <AdsToMakeList
                       outputs={outputs}
-                      removed={removed}
-                      onToggle={(id) => setRemoved((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))}
+                      placements={adPlacements}
+                      formats={adFormats}
+                      onToggleFormat={(id, format) => {
+                        const current = formatsOf(id, adFormats);
+                        const next = current.includes(format) ? current.filter((f) => f !== format) : [...current, format];
+                        if (next.length) useWorkspaceStore.getState().setAdFormats({ ...adFormats, [id]: next });
+                      }}
+                      onRemovePlacement={(id) => {
+                        if (adPlacements.length > 1) setAdPlacements(adPlacements.filter((p) => p !== id));
+                      }}
                     />
                     <Button size="sm" variant="secondary" onClick={() => setChangingPlacements(true)}>
                       Change placements
@@ -831,6 +855,8 @@ export function AdsDirectionsScreen() {
                       const videos = count(["video"]);
                       const stills = count(["image", "banner"]);
                       const carousels = count(["carousel"]);
+                      const documents = count(["document"]);
+                      const searches = count(["text"]);
                       const over = credits > creditBalance;
                       return (
                         <div className="rounded-panel border border-white/10 bg-[#121614] p-4 text-white shadow-md">
@@ -847,7 +873,7 @@ export function AdsDirectionsScreen() {
                           <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-label text-white/75">
                             <span>
                               Ads: <strong className="font-semibold text-white">{kept.length}</strong>
-                              {" "}({[videos && `${videos} video`, stills && `${stills} image`, carousels && `${carousels} carousel`].filter(Boolean).join(", ")})
+                              {" "}({[videos && `${videos} video`, stills && `${stills} image`, carousels && `${carousels} carousel`, documents && `${documents} document`, searches && `${searches} search`].filter(Boolean).join(", ")})
                             </span>
                             <span>
                               Placements: <strong className="font-semibold text-white">{adPlacements.length}</strong>
@@ -867,6 +893,34 @@ export function AdsDirectionsScreen() {
                   </div>
                   <PlanSectionContinue onClick={() => advanceFrom("ads")} />
                 </PlanSectionShell>
+
+                {/* Character, voice and sound — the same section as the Video
+                    plan, and only when there is a video ad to voice. */}
+                {makesVideo && (
+                  <PlanSectionShell
+                    icon={Mic2}
+                    title="Character, voice and sound"
+                    summary={`${presenter || "Narrated, no character"} · ${language} · ${music}`}
+                    state={planState(false, !presenter)}
+                    source={presenter || undefined}
+                    open={openSection === "voice"}
+                    onToggle={() => toggleSection("voice")}
+                  >
+                    <CharacterVoiceSoundFields
+                      presenter={presenter}
+                      onPresenter={setPresenter}
+                      language={language}
+                      onLanguage={setLanguage}
+                      voice={voice}
+                      onVoice={setVoice}
+                      music={music}
+                      onMusic={setMusic}
+                      brandName={brandName}
+                      onGoTo={(href, label) => exit.requestExit({ href, label })}
+                    />
+                    <PlanSectionContinue onClick={() => advanceFrom("voice")} />
+                  </PlanSectionShell>
+                )}
 
                 {/* 5. Product & device visuals — not for unbranded ads, which
                     can't show the product. */}

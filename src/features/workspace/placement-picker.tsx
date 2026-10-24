@@ -5,7 +5,7 @@ import { Check, Network, Stethoscope, Tv } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
 import { AD_ACCOUNTS, AD_FORMATS, AD_PLACEMENTS, formatsOf, type AdAccount, type AdFormat, type AdFormatChoice, type AdPlacement } from "@/features/workspace/ad-options";
-import { GoogleAdsLogo, MetaLogo, TikTokLogo } from "@/features/workspace/platform-logos";
+import { GoogleAdsLogo, LinkedInLogo, MetaLogo, TikTokLogo } from "@/features/workspace/platform-logos";
 
 /**
  * Where the ads run, as tiles you recognise before you read them.
@@ -21,18 +21,20 @@ import { GoogleAdsLogo, MetaLogo, TikTokLogo } from "@/features/workspace/platfo
  * with all its formats on, and keeps at least one.
  */
 
-const ACCOUNT_MARK: Record<AdAccount, ReactNode> = {
+export const ACCOUNT_MARK: Record<AdAccount, ReactNode> = {
   "Google Ads": <GoogleAdsLogo size={18} />,
   "Meta Ads": <MetaLogo size={18} />,
   "TikTok Ads": <TikTokLogo size={17} />,
+  "LinkedIn Ads": <LinkedInLogo size={17} />,
   Programmatic: <Network className="size-4 text-accent-violet" />,
   "HCP networks": <Stethoscope className="size-4 text-accent-blue" />,
 };
 
 /* The frames each placement produces: w×h ratios, and whether they move. */
-type Frame = { w: number; h: number; video?: boolean };
+type Frame = { w: number; h: number; video?: boolean; text?: boolean; doc?: boolean };
 const FRAMES: Record<AdPlacement, Frame[]> = {
   youtube: [{ w: 16, h: 9, video: true }, { w: 9, h: 16, video: true }],
+  "google-search": [{ w: 16, h: 8, text: true }],
   "google-display": [{ w: 6, h: 5 }, { w: 16, h: 2 }, { w: 3, h: 7 }],
   "meta-feed": [{ w: 1, h: 1, video: true }, { w: 4, h: 5 }],
   "meta-reels-stories": [{ w: 9, h: 16, video: true }],
@@ -41,6 +43,7 @@ const FRAMES: Record<AdPlacement, Frame[]> = {
   ctv: [{ w: 16, h: 9, video: true }],
   "hcp-networks": [{ w: 1, h: 1, video: true }, { w: 6, h: 5 }],
   tiktok: [{ w: 9, h: 16, video: true }],
+  "linkedin-feed": [{ w: 1, h: 1, video: true }, { w: 3, h: 4, doc: true }],
 };
 
 /* Consumer platforms reach doctors only through a matched list, never by targeting "doctors". */
@@ -50,6 +53,7 @@ const HCP_VIA: Partial<Record<AdPlacement, string>> = {
   "meta-feed": "HCPs via an NPI-matched audience",
   "meta-reels-stories": "HCPs via an NPI-matched audience",
   tiktok: "HCPs via an NPI-matched audience",
+  "linkedin-feed": "HCPs by job title and specialty, or an NPI-matched list",
 };
 
 function Frames({ frames, on }: { frames: Frame[]; on: boolean }) {
@@ -64,12 +68,86 @@ function Frames({ frames, on }: { frames: Frame[]; on: boolean }) {
             className={cn("relative grid shrink-0 place-items-center rounded-[3px] border-[1.5px]", on ? "border-brand bg-tint" : "border-ink-4/50 bg-card")}
             style={{ width: Math.max(6, f.w * scale * 0.9), height: Math.max(6, f.h * scale * 0.9) }}
           >
+            {f.doc && (
+              <span aria-hidden className="flex w-full flex-col gap-0.5 px-1">
+                <span className={cn("h-0.5 w-3/5 rounded-full", on ? "bg-brand" : "bg-ink-3")} />
+                <span className="h-px w-full rounded-full bg-ink-4" />
+                <span className="h-px w-full rounded-full bg-ink-4" />
+                <span className="h-px w-4/5 rounded-full bg-ink-4" />
+              </span>
+            )}
+            {f.text && (
+              <span aria-hidden className="flex w-full flex-col gap-0.5 px-1">
+                <span className={cn("h-0.5 w-4/5 rounded-full", on ? "bg-brand" : "bg-ink-3")} />
+                <span className="h-px w-full rounded-full bg-ink-4" />
+                <span className="h-px w-3/5 rounded-full bg-ink-4" />
+              </span>
+            )}
             {f.video && (
               <span
                 aria-hidden
                 className={cn("block size-0 border-y-[4px] border-l-[6px] border-y-transparent", on ? "border-l-brand" : "border-l-ink-3")}
               />
             )}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+/**
+ * What a placement makes, as chips. On a chosen placement that makes more
+ * than one format, each chip turns that format on or off; it keeps at least one.
+ */
+export function FormatChips({
+  placement,
+  on = true,
+  formats = {},
+  onToggleFormat,
+  className,
+}: {
+  placement: AdPlacement;
+  on?: boolean;
+  formats?: AdFormatChoice;
+  onToggleFormat?: (id: AdPlacement, format: AdFormat) => void;
+  className?: string;
+}) {
+  const makes = AD_PLACEMENTS.find((p) => p.id === placement)?.makes ?? [];
+  const chosen = formatsOf(placement, formats);
+  return (
+    <span className={cn("flex flex-wrap items-center gap-1", className)}>
+      {makes.map((f) => {
+        const format = AD_FORMATS.find((o) => o.id === f);
+        if (!format) return null;
+        const Icon = format.icon;
+        const active = on && chosen.includes(f);
+        const last = active && chosen.length === 1;
+        const chip = cn(
+          "inline-flex items-center gap-1 rounded-chip border px-1.5 py-0.5 text-micro font-bold transition-colors",
+          active ? "border-brand/40 bg-card text-brand-deep" : on ? "border-dashed border-hair-3 bg-transparent text-ink-4" : "border-transparent bg-subtle text-ink-3"
+        );
+        return on && onToggleFormat && makes.length > 1 ? (
+          <button
+            key={f}
+            type="button"
+            aria-pressed={active}
+            disabled={last}
+            title={last ? "Each placement makes at least one format" : active ? `Don't make ${format.label.toLowerCase()} here` : `Make ${format.label.toLowerCase()} here too`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFormat(placement, f);
+            }}
+            onKeyDown={(e) => e.stopPropagation()}
+            className={cn(chip, "cursor-pointer hover:border-brand disabled:cursor-default")}
+          >
+            {active ? <Check className="size-3 stroke-[3]" /> : <Icon className="size-3" />}
+            {format.label}
+          </button>
+        ) : (
+          <span key={f} className={chip}>
+            <Icon className="size-3" />
+            {format.label}
           </span>
         );
       })}
@@ -132,43 +210,7 @@ export function PlacementPicker({
                         <span className="truncate text-body font-bold text-ink">{placement.label}</span>
                         {placement.id === "ctv" && <Tv className="size-3.5 shrink-0 text-ink-4" />}
                       </span>
-                      <span className="mt-1 flex flex-wrap items-center gap-1">
-                        {placement.makes.map((f) => {
-                          const format = AD_FORMATS.find((o) => o.id === f);
-                          if (!format) return null;
-                          const Icon = format.icon;
-                          const chosen = formatsOf(placement.id, formats);
-                          const active = on && chosen.includes(f);
-                          const last = active && chosen.length === 1;
-                          const chip = cn(
-                            "inline-flex items-center gap-1 rounded-chip border px-1.5 py-0.5 text-micro font-bold transition-colors",
-                            active ? "border-brand/40 bg-card text-brand-deep" : on ? "border-dashed border-hair-3 bg-transparent text-ink-4" : "border-transparent bg-subtle text-ink-3"
-                          );
-                          return on && onToggleFormat && placement.makes.length > 1 ? (
-                            <button
-                              key={f}
-                              type="button"
-                              aria-pressed={active}
-                              disabled={last}
-                              title={last ? "Each placement makes at least one format" : active ? `Don't make ${format.label.toLowerCase()} here` : `Make ${format.label.toLowerCase()} here too`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onToggleFormat(placement.id, f);
-                              }}
-                              onKeyDown={(e) => e.stopPropagation()}
-                              className={cn(chip, "cursor-pointer hover:border-brand disabled:cursor-default")}
-                            >
-                              {active ? <Check className="size-3 stroke-[3]" /> : <Icon className="size-3" />}
-                              {format.label}
-                            </button>
-                          ) : (
-                            <span key={f} className={chip}>
-                              <Icon className="size-3" />
-                              {format.label}
-                            </span>
-                          );
-                        })}
-                      </span>
+                      <FormatChips placement={placement.id} on={on} formats={formats} onToggleFormat={onToggleFormat} className="mt-1" />
                       <span className="mt-1 block truncate text-caption text-ink-4" title={placement.sizes}>
                         {via ?? placement.sizes}
                       </span>

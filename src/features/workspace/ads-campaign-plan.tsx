@@ -2,24 +2,21 @@
 
 import { useState } from "react";
 import {
-  AlertTriangle,
   ArrowRight,
   Check,
   CheckCircle2,
-  Clapperboard,
-  Image as ImageIcon,
-  LayoutGrid,
   MessageSquareQuote,
   MousePointerClick,
-  PanelsTopLeft,
   ShieldCheck,
+  X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { cn } from "@/lib/cn";
 import { ChipChoices, ChoiceGroup, DecisionRow } from "@/features/workspace/plan-decisions";
 import { NarrationPlayer } from "@/features/workspace/narration-player";
+import { brandAdFacts } from "@/features/workspace/ad-options";
 import {
   RegenerateShotModal,
   ShotPreviewModal,
@@ -29,16 +26,24 @@ import {
   type StoryboardLayout,
 } from "@/features/workspace/storyboard";
 import { useShotPreviews } from "@/features/workspace/use-shot-previews";
-import { AD_FORMATS, NEXT_STEPS, closingLine, type AdClaim, type AdFormat, type AdType } from "@/features/workspace/ad-options";
+import { AD_PLACEMENTS, NEXT_STEPS, closingLine, type AdClaim, type AdFormat, type AdFormatChoice, type AdPlacement, type AdType } from "@/features/workspace/ad-options";
 import {
   buildAdStory,
   buildCarousel,
+  buildDocumentAd,
   buildImageAd,
   conditionFor,
   type AdOutput,
   type CarouselCard,
+  type DocPage,
   type ImageAdPlan,
+  buildSearchAd,
+  searchCombination,
+  HEADLINE_MAX,
+  DESCRIPTION_MAX,
 } from "@/features/workspace/ad-campaign";
+import { SearchAdCard, SearchChecks, SearchLines } from "@/features/workspace/search-ad-preview";
+import { ACCOUNT_MARK, FormatChips } from "@/features/workspace/placement-picker";
 
 /**
  * The Ads campaign, in three parts.
@@ -50,13 +55,6 @@ import {
  * storyboard then shows only what follows from those decisions: the video
  * storyboard, and the plan for the image and carousel ads.
  */
-
-const FORMAT_ICON: Record<AdFormat, typeof Clapperboard> = {
-  video: Clapperboard,
-  image: ImageIcon,
-  carousel: LayoutGrid,
-  banner: PanelsTopLeft,
-};
 
 /* ── Key message & claims — decided on Need your input ── */
 
@@ -152,117 +150,67 @@ export function KeyMessageFields({
 
 /* ── Ads to make — decided on Need your input ── */
 
-/** The ad's shape as small frames: what it will look like before it is made. */
-function AdShapePreview({ ad, on }: { ad: AdOutput; on: boolean }) {
-  const frames: Array<{ w: number; h: number; stack?: boolean }> =
-    ad.format === "banner"
-      ? [{ w: 6, h: 5 }, { w: 16, h: 2.4 }, { w: 3, h: 7 }]
-      : ad.format === "carousel"
-        ? [{ w: 1, h: 1, stack: true }]
-        : [{ w: Number(ad.shape.split(":")[0]) || 1, h: Number(ad.shape.split(":")[1]) || 1 }];
-  const box = 34;
-  return (
-    <span className={cn("flex h-12 w-[72px] shrink-0 items-center justify-center gap-1.5 rounded-chip", on ? "bg-tint" : "bg-subtle")}>
-      {frames.map((f, i) => {
-        const scale = box / Math.max(f.w, f.h);
-        const style = { width: Math.max(6, f.w * scale * 0.9), height: Math.max(6, f.h * scale * 0.9) };
-        const frame = cn("grid place-items-center rounded-[3px] border-[1.5px]", on ? "border-brand bg-card" : "border-ink-4/50 bg-card");
-        return f.stack ? (
-          <span key={i} className="relative" style={style}>
-            <span className={cn(frame, "absolute inset-0 translate-x-1.5 -translate-y-1 opacity-60")} />
-            <span className={cn(frame, "absolute inset-0")} />
-          </span>
-        ) : (
-          <span key={i} className={frame} style={style}>
-            {ad.format === "video" && (
-              <span aria-hidden className={cn("block size-0 border-y-[4px] border-l-[6px] border-y-transparent", on ? "border-l-brand" : "border-l-ink-3")} />
-            )}
-          </span>
-        );
-      })}
-    </span>
-  );
-}
-
+/**
+ * What the campaign makes, one row per placement: its formats as chips, and
+ * the ads those formats produce. Turning a chip off is how an ad comes out;
+ * the × drops a placement the campaign no longer needs. One list, not a list
+ * and a grid of the same ads.
+ */
 export function AdsToMakeList({
   outputs,
-  removed,
-  onToggle,
+  placements,
+  formats,
+  onToggleFormat,
+  onRemovePlacement,
 }: {
   outputs: AdOutput[];
-  removed: string[];
-  onToggle: (id: string) => void;
+  placements: AdPlacement[];
+  formats?: AdFormatChoice;
+  onToggleFormat: (id: AdPlacement, format: AdFormat) => void;
+  onRemovePlacement: (id: AdPlacement) => void;
 }) {
-  const kept = outputs.filter((o) => !removed.includes(o.id));
-  /* A placement whose every ad was unticked has nothing to run. */
-  const orphaned = (ad: AdOutput) => ad.placements.filter((p) => !kept.some((k) => k.id !== ad.id && k.placements.includes(p)));
-
   return (
-    <div className="space-y-2">
-      {/* Cards, not rows: seven ads read at a glance in a grid, and each card
-          still says what it is, where it runs and what it costs. */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-        {outputs.map((ad) => {
-          const on = !removed.includes(ad.id);
-          const Icon = FORMAT_ICON[ad.format];
-          const lost = on ? [] : orphaned(ad);
-          const spec =
-            ad.format === "banner"
-              ? `${ad.shape.split(" · ").length} sizes`
-              : `${AD_FORMATS.find((f) => f.id === ad.format)?.label} · ${ad.shape}${ad.length ? ` · ${ad.length}` : ""}`;
-          return (
-            <label
-              key={ad.id}
-              className={cn(
-                "relative flex cursor-pointer flex-col gap-2.5 rounded-control border p-3 transition-all duration-150",
-                on ? "border-brand bg-card shadow-2xs ring-2 ring-brand/10" : "border-hair-2 bg-canvas hover:border-hair-3"
-              )}
+    <div className="divide-y divide-hair rounded-control border border-hair-2 bg-canvas">
+      {placements.map((id) => {
+        const placement = AD_PLACEMENTS.find((p) => p.id === id);
+        if (!placement) return null;
+        const label = `${placement.account} · ${placement.label}`;
+        /* The ads this placement gets, by shape: "1:1 video · 4:5 image". */
+        const makes = outputs
+          .filter((o) => o.placements.includes(label))
+          .map((o) =>
+            o.format === "banner" ? `${o.shape.split(" · ").length} banner sizes` : o.format === "text" ? "15 headlines · 4 descriptions" : o.format === "document" ? "6-page PDF" : `${o.shape.split(" · ")[0]} ${o.format}`
+          )
+          .join(" · ");
+        return (
+          <div key={id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2 pl-3 pr-1.5">
+            <span className="flex min-w-0 items-center gap-2 sm:w-56">
+              <span className="grid size-6 shrink-0 place-items-center rounded-chip border border-hair bg-card">{ACCOUNT_MARK[placement.account]}</span>
+              <span className="truncate text-label font-bold text-ink">
+                {placement.account.replace(/ Ads$/, "")} · {placement.label}
+              </span>
+            </span>
+            <FormatChips placement={id} formats={formats} onToggleFormat={onToggleFormat} />
+            <span className="ml-auto truncate text-caption text-ink-4">{makes}</span>
+            <IconButton
+              aria-label={`Remove ${label}`}
+              title={placements.length === 1 ? "The campaign needs at least one placement" : `Remove ${label}`}
+              size={7}
+              disabled={placements.length === 1}
+              onClick={() => onRemovePlacement(id)}
             >
-              <input type="checkbox" checked={on} onChange={() => onToggle(ad.id)} className="sr-only" aria-label={`Make ${ad.name}`} />
-              <span className="flex items-start justify-between gap-2">
-                <AdShapePreview ad={ad} on={on} />
-                <span
-                  aria-hidden
-                  className={cn("grid size-5 shrink-0 place-items-center rounded-full border transition-colors", on ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}
-                >
-                  {on && <Check className="size-3 stroke-[3]" />}
-                </span>
-              </span>
-              <span className={cn("min-w-0", !on && "opacity-55")}>
-                <span className="flex items-center gap-1.5 text-body font-bold text-ink">
-                  <Icon className="size-3.5 shrink-0 text-brand" />
-                  <span className="truncate">{ad.name}</span>
-                </span>
-                <span className="block text-label text-ink-3" title={ad.format === "banner" ? ad.shape : undefined}>
-                  {spec}
-                </span>
-                <span className="mt-1 line-clamp-2 block text-caption leading-snug text-ink-3">{ad.placements.join(", ")}</span>
-              </span>
-              <span className="mt-auto flex items-center justify-between gap-2 border-t border-hair pt-2">
-                {lost.length > 0 ? (
-                  <span className="flex min-w-0 items-start gap-1 text-caption font-semibold text-danger">
-                    <AlertTriangle className="mt-px size-3 shrink-0" />
-                    <span>{lost.join(" and ")} will have no ad</span>
-                  </span>
-                ) : (
-                  <span className={cn("text-caption font-semibold", on ? "text-ink-3" : "text-ink-4")}>{on ? "Will be made" : "Not made"}</span>
-                )}
-                <span className={cn("shrink-0 text-label font-bold tabular-nums", on ? "text-ink" : "text-ink-4")}>{ad.credits.toLocaleString()} cr</span>
-              </span>
-            </label>
-          );
-        })}
-      </div>
-      <p className="text-label font-bold text-ink-2">
-        {kept.length} of {outputs.length} ads
-      </p>
+              <X className="size-3.5" />
+            </IconButton>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
 /* ── The campaign storyboard ── */
 
-type Tab = "video" | "visuals";
+type Tab = "video" | "visuals" | "document" | "search";
 type VideoShape = "16:9" | "9:16" | "1:1";
 
 const SHAPE_HINT: Record<VideoShape, string> = {
@@ -297,6 +245,7 @@ export function AdsCampaignStoryboard({
   const story = buildAdStory(input);
   const imageAd = buildImageAd(input);
   const carousel = buildCarousel(input);
+  const docPages = buildDocumentAd(input);
   const credits = kept.reduce((sum, o) => sum + o.credits, 0);
 
   const videoShapes = kept.filter((o) => o.format === "video").map((o) => o.shape as VideoShape);
@@ -305,6 +254,13 @@ export function AdsCampaignStoryboard({
   const hasBanners = kept.some((o) => o.format === "banner");
   const hasImage = imageShapes.length > 0 || hasBanners;
   const hasCarousel = kept.some((o) => o.format === "carousel");
+  const hasSearch = kept.some((o) => o.format === "text");
+  const hasDocument = kept.some((o) => o.format === "document");
+  /* Where a format runs, in words: "Meta Ads · Feed and LinkedIn Ads · Feed". */
+  const runsOn = (format: AdFormat) => kept.find((o) => o.format === format)?.placements.join(" and ") ?? "";
+  /* The search ad's words: written here, with every combination checked. */
+  const searchPlan = hasSearch ? buildSearchAd({ ...input, boxedWarning: brandAdFacts(brandId).boxedWarning }) : null;
+  const [searchCombo, setSearchCombo] = useState(0);
   /* Image ads and carousels both get a template next; video-only goes straight on. */
   const hasStills = hasImage || hasCarousel;
   const storyLength = story.reduce((sum, s) => sum + s.duration, 0);
@@ -312,6 +268,8 @@ export function AdsCampaignStoryboard({
   const tabs: Array<{ id: Tab; label: string }> = [
     ...(hasVideo ? [{ id: "video" as const, label: "Video Ads" }] : []),
     ...(hasImage || hasCarousel ? [{ id: "visuals" as const, label: hasImage && hasCarousel ? "Image and Carousel Ads" : hasImage ? "Image Ads" : "Carousel Ads" }] : []),
+    ...(hasDocument ? [{ id: "document" as const, label: "Document Ads" }] : []),
+    ...(hasSearch ? [{ id: "search" as const, label: "Search Ads" }] : []),
   ];
   const [chosenTab, setTab] = useState<Tab>("video");
   const tab: Tab = tabs.some((t) => t.id === chosenTab) ? chosenTab : tabs[0]?.id ?? "video";
@@ -422,6 +380,47 @@ export function AdsCampaignStoryboard({
           </section>
         )}
 
+        {/* ── Search ads: the lines Google mixes, and the checks on every mix ── */}
+        {tab === "search" && searchPlan && (
+          <section className="space-y-4">
+            {sectionHead("Search Ads", "Text ads on Google's results. Google mixes these lines, up to three headlines and two descriptions at a time, so every combination is checked.")}
+            <div className="space-y-2 rounded-card border border-hair bg-subtle p-4">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-label text-ink-3">
+                  When someone searches <b className="font-bold text-ink-2">&ldquo;{searchPlan.query}&rdquo;</b>
+                </span>
+                <Button size="sm" variant="secondary" onClick={() => setSearchCombo((n) => n + 1)}>
+                  Show another combination
+                </Button>
+              </div>
+              <SearchAdCard plan={searchPlan} combo={searchCombination(searchPlan, searchCombo)} />
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <SearchLines title="Headlines" lines={searchPlan.headlines} max={HEADLINE_MAX} limit={15} idPrefix="h" />
+              <SearchLines title="Descriptions" lines={searchPlan.descriptions} max={DESCRIPTION_MAX} limit={4} idPrefix="d" />
+            </div>
+            <div className="rounded-card border border-hair bg-card p-4">
+              <p className="mb-2 text-label font-bold text-ink-2">Checked against every combination</p>
+              <SearchChecks checks={searchPlan.checks} />
+            </div>
+          </section>
+        )}
+
+        {/* ── Document plan: what each page says, in reading order ── */}
+        {tab === "document" && (
+          <section className="space-y-3">
+            {sectionHead(
+              "Document",
+              `For ${runsOn("document")}. A short PDF people page through in the feed, one approved claim to a page${adType === "product-claim" ? ", ending on the safety information and the references" : ""}. The pages are designed in the editor.`
+            )}
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {docPages.map((page, i) => (
+                <DocPageWireframe key={i} page={page} index={i} adType={adType} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── Image & carousel plan: what goes on each, as wireframes ── */}
         {tab === "visuals" && (
           <div className="space-y-8">
@@ -457,7 +456,7 @@ export function AdsCampaignStoryboard({
               <section className="space-y-3">
                 {sectionHead(
                   "Carousel",
-                  `For Meta Feed. What each card does, in the order it's swiped${adType === "product-claim" ? "; the last card is the safety information" : ""}. The art is made in the editor.`
+                  `For ${runsOn("carousel")}. What each card does, in the order it's swiped${adType === "product-claim" ? "; the last card is the safety information" : ""}. The art is made in the editor.`
                 )}
                 <div className="flex gap-3 overflow-x-auto pb-2">
                   {carousel.map((card, i) => (
@@ -533,6 +532,32 @@ function ImageAdWireframe({ plan, adType }: { plan: ImageAdPlan; adType: AdType 
       </div>
       <span className="text-caption font-bold text-ink-4">Wireframe · 4:5</span>
     </div>
+  );
+}
+
+function DocPageWireframe({ page, index, adType }: { page: DocPage; index: number; adType: AdType }) {
+  const textOnly = page.role === "Safety" || page.role === "References";
+  return (
+    <article className="flex w-44 shrink-0 flex-col gap-1.5">
+      <div className="flex aspect-[4/5] flex-col gap-1.5 rounded-control border border-hair-2 bg-card p-2.5">
+        <span className="flex items-center justify-between gap-1">
+          <span className="w-fit rounded-chip bg-tint px-2 py-0.5 text-caption font-bold text-brand-deep">
+            {index + 1} · {page.role}
+          </span>
+          {page.claimId && <span className="rounded-chip border border-ok-line bg-ok-bg px-1.5 py-0.5 text-micro font-bold text-ok">{page.claimId}</span>}
+        </span>
+        {textOnly ? (
+          <Block label={page.role === "Safety" ? "Safety information" : "References"} text="Full text, no imagery" className="flex-1" />
+        ) : (
+          <>
+            {page.role !== "Ask" && <Block label="Picture" text={page.visual} className="flex-1 overflow-hidden" />}
+            <Block label="Headline" text={page.title} className={page.role === "Ask" ? "flex-1" : undefined} />
+            {adType === "product-claim" && <Block label="Safety line" className="py-1" />}
+          </>
+        )}
+      </div>
+      <span className="line-clamp-2 px-0.5 text-caption text-ink-3">{page.body}</span>
+    </article>
   );
 }
 

@@ -1338,85 +1338,88 @@ export function EditorToolbar({
           <span className="mx-0.5 h-5 w-px shrink-0 bg-hair-2" />
         </>
       )}
-      <div ref={insertRef} data-insert-root className="relative flex h-full shrink-0 items-center gap-0.5">
-        {selection ? (
-          <>
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={listOpen || menu !== null}
-              onClick={() => (listOpen || menu ? closeMenu() : setListOpen(true))}
-              className={cn(TOOL, INSERT_BUTTON, (listOpen || menu) && "bg-tint text-brand-deep")}
-            >
-              <Plus className="size-3.5 shrink-0" />
-              <span>Insert</span>
-              <ChevronDown className="size-3 shrink-0 opacity-50" />
-            </button>
-            {listOpen && (
-              /* The five menus, then the chosen one's options in the same place. */
-              <div
-                role="menu"
-                className="step-transition absolute left-0 top-full z-30 mt-1.5 grid w-60 gap-0.5 rounded-control border border-hair-2 bg-card p-1.5 shadow-float"
+      {/* An editor with nothing to insert (a search ad) shows only the selection's options. */}
+      {menus.length > 0 && (
+        <div ref={insertRef} data-insert-root className="relative flex h-full shrink-0 items-center gap-0.5">
+          {selection ? (
+            <>
+              <button
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={listOpen || menu !== null}
+                onClick={() => (listOpen || menu ? closeMenu() : setListOpen(true))}
+                className={cn(TOOL, INSERT_BUTTON, (listOpen || menu) && "bg-tint text-brand-deep")}
               >
-                {menus.map((id) => {
-                  const Icon = INSERT_MENUS[id].icon;
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      role="menuitem"
-                      onClick={(e) => openMenu(id, e.currentTarget.closest("[data-insert-root]")?.querySelector("button") ?? e.currentTarget)}
-                      className="focus-ring flex cursor-pointer items-center gap-2.5 rounded-chip px-2.5 py-2 text-left transition hover:bg-subtle"
-                    >
-                      <Icon className="size-4 shrink-0 text-brand" />
-                      {/* Name, then what is inside on its own line, so neither runs out of the list. */}
-                      <span className="grid min-w-0 flex-1 gap-0.5">
-                        <span className="truncate text-body font-semibold text-ink">{INSERT_MENUS[id].label}</span>
-                        <span className="truncate text-caption text-ink-3">{INSERT_MENUS[id].tip}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <span className="mr-1 text-micro font-extrabold uppercase tracking-wider text-ink-4">Insert</span>
-            {menus.map((id) => {
-              const m = INSERT_MENUS[id];
-              const Icon = m.icon;
-              const open = menu === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  aria-haspopup="dialog"
-                  aria-expanded={open}
-                  onClick={(e) => openMenu(id, e.currentTarget)}
-                  className={cn(TOOL, INSERT_BUTTON, "group relative", open && "bg-tint text-brand-deep")}
+                <Plus className="size-3.5 shrink-0" />
+                <span>Insert</span>
+                <ChevronDown className="size-3 shrink-0 opacity-50" />
+              </button>
+              {listOpen && (
+                /* The five menus, then the chosen one's options in the same place. */
+                <div
+                  role="menu"
+                  className="step-transition absolute left-0 top-full z-30 mt-1.5 grid w-60 gap-0.5 rounded-control border border-hair-2 bg-card p-1.5 shadow-float"
                 >
-                  <Icon className="size-3.5 shrink-0" />
-                  <span>{m.label}</span>
-                  <ChevronDown className="size-3 shrink-0 opacity-50" />
-                  {/* What is inside, on hover; hidden while the menu is open. */}
-                  {!open && (
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute left-1/2 top-full z-40 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-chip bg-ink px-2 py-1 text-caption font-semibold text-card opacity-0 shadow-soft transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-                    >
-                      {m.tip}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </>
-        )}
-        {panel}
-      </div>
+                  {menus.map((id) => {
+                    const Icon = INSERT_MENUS[id].icon;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        role="menuitem"
+                        onClick={(e) => openMenu(id, e.currentTarget.closest("[data-insert-root]")?.querySelector("button") ?? e.currentTarget)}
+                        className="focus-ring flex cursor-pointer items-center gap-2.5 rounded-chip px-2.5 py-2 text-left transition hover:bg-subtle"
+                      >
+                        <Icon className="size-4 shrink-0 text-brand" />
+                        {/* Name, then what is inside on its own line, so neither runs out of the list. */}
+                        <span className="grid min-w-0 flex-1 gap-0.5">
+                          <span className="truncate text-body font-semibold text-ink">{INSERT_MENUS[id].label}</span>
+                          <span className="truncate text-caption text-ink-3">{INSERT_MENUS[id].tip}</span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <span className="mr-1 text-micro font-extrabold uppercase tracking-wider text-ink-4">Insert</span>
+              {menus.map((id) => {
+                const m = INSERT_MENUS[id];
+                const Icon = m.icon;
+                const open = menu === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={open}
+                    onClick={(e) => openMenu(id, e.currentTarget)}
+                    className={cn(TOOL, INSERT_BUTTON, "group relative", open && "bg-tint text-brand-deep")}
+                  >
+                    <Icon className="size-3.5 shrink-0" />
+                    <span>{m.label}</span>
+                    <ChevronDown className="size-3 shrink-0 opacity-50" />
+                    {/* What is inside, on hover; hidden while the menu is open. */}
+                    {!open && (
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute left-1/2 top-full z-40 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-chip bg-ink px-2 py-1 text-caption font-semibold text-card opacity-0 shadow-soft transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                      >
+                        {m.tip}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </>
+          )}
+          {panel}
+        </div>
+      )}
 
-      {selection && <span className="mx-1 h-5 w-px shrink-0 bg-hair-2" />}
+      {selection && menus.length > 0 && <span className="mx-1 h-5 w-px shrink-0 bg-hair-2" />}
 
       {selection ? (
         <div key={selection.id} className="step-transition flex min-w-0 flex-1 items-center gap-1.5">

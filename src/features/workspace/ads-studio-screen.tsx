@@ -27,6 +27,8 @@ import {
   RefreshCw,
   Send,
   ShieldCheck,
+  FileText,
+  TextCursorInput,
   Type,
   Upload,
   type LucideIcon,
@@ -56,6 +58,7 @@ import { ProjectMenu, ProjectTitle } from "@/features/workspace/project-title";
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { InspectorTabButton, INSPECTOR_TAB_STRIP } from "@/features/workspace/inspector-tabs";
 import { ChapterScrubber } from "@/features/workspace/chapter-scrubber";
+import { SearchAdCard, SearchChecks, SearchLines } from "@/features/workspace/search-ad-preview";
 import { FormattedMessageText, ChatChips } from "@/features/workspace/chat-message";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { EMPTY_STYLE, IconToggle, type TextStyle } from "@/features/workspace/canvas-text-toolbar";
@@ -71,6 +74,7 @@ import {
 import {
   AD_KIND_PRESETS,
   adClaims,
+  brandAdFacts,
   closingLine,
   defaultNextStep,
   leadMessages,
@@ -80,16 +84,26 @@ import {
   buildAdOutputs,
   buildAdStory,
   buildCarousel,
+  buildDocumentAd,
   buildImageAd,
+  conditionFor,
   majorStatement,
+  buildSearchAd,
+  searchCombination,
+  HEADLINE_MAX,
+  DESCRIPTION_MAX,
+  type SearchAdPlan,
+  type SearchLine,
 } from "@/features/workspace/ad-campaign";
 import { CAROUSEL_TEMPLATES, IMAGE_TEMPLATES } from "@/features/workspace/ad-templates";
 import {
   AdCard,
+  AdDocPage,
   AdStill,
   AdVideoFrame,
   BANNER_SIZES,
   CARD_SIZE,
+  DOC_SIZE,
   STILL_SIZE,
   Scaled,
   VIDEO_SIZE,
@@ -104,9 +118,9 @@ import {
  * The Ads studio: every ad the campaign makes, edited in one place.
  *
  * Built after the video and document editors rather than out of them. The
- * rail lists the ads — the video story, the image ad, the carousel — and an
- * ad opens like an accordion onto what it is made of: the story's scenes, the
- * carousel's cards. The canvas shows the one being edited; All ads shows them
+ * rail lists the ads — the video story, the image ad, the carousel, the
+ * document — and an ad opens like an accordion onto what it is made of: the
+ * story's scenes, the carousel's cards, the document's pages. The canvas shows the one being edited; All ads shows them
  * all at their real sizes. One toolbar across the top, like the document
  * editor's, changes with whatever is selected on the canvas — a headline, a
  * shot's footage, the packshot — and the panel beside it is the chat and the
@@ -117,7 +131,7 @@ import {
  * was made in, and that size is marked as edited.
  */
 
-type Focus = "all" | "video" | "image" | "carousel";
+type Focus = "all" | "video" | "image" | "carousel" | "document" | "search";
 type PanelTab = "assistant" | "evidence";
 
 const DRAFT_ONLY: AssetVersion[] = [{ label: "Draft v1", state: "current", at: "Saved just now" }];
@@ -135,6 +149,13 @@ const PART_LABEL: Record<string, string> = {
   title: "Card title",
   body: "Card line",
   chart: "Chart",
+};
+
+/* A document page's words are a headline and its text, not a card's. */
+const PAGE_PART_LABEL: Record<string, string> = { title: "Page headline", body: "Page text" };
+const partLabelOf = (id: string) => {
+  const part = id.split(".").pop() ?? "";
+  return (id.startsWith("page:") ? PAGE_PART_LABEL[part] : undefined) ?? PART_LABEL[part];
 };
 
 /** The size each run of words is drawn at, so the size stepper starts somewhere true. */
@@ -203,6 +224,10 @@ export function AdsStudioScreen() {
   const story = buildAdStory(words);
   const imagePlan = buildImageAd(words);
   const cards = buildCarousel(words);
+  const pages = buildDocumentAd({ ...words, condition: condition ?? conditionFor(brandId) });
+  /* The search ad's lines, with any pins moved in the editor. 0 means unpinned. */
+  const [pins, setPins] = useState<Record<string, 0 | 1 | 2 | 3>>({});
+  const [searchCombo, setSearchCombo] = useState(0);
   const safetyText = majorStatement(brandId, brandName);
   const number = claims.map((c) => c.text.match(/\d+%/)?.[0]).find(Boolean);
   const copy = { headline: imagePlan.headline, support: imagePlan.support, riskLine: imagePlan.riskLine, number, packshot: imagePlan.packshot };
@@ -217,8 +242,18 @@ export function AdsStudioScreen() {
   const hasVideo = videoShapes.length > 0;
   const hasImage = imageSizes.length > 0;
   const hasCarousel = outputs.some((o) => o.format === "carousel");
-  const sizeCount = videoShapes.length + stillShapes.length + (hasBanners ? BANNER_SIZES.length : 0) + (hasCarousel ? 1 : 0);
-  const adCount = Number(hasVideo) + Number(hasImage) + Number(hasCarousel);
+  const hasSearch = outputs.some((o) => o.format === "text");
+  const hasDocument = outputs.some((o) => o.format === "document");
+  const searchBase = hasSearch ? buildSearchAd({ ...words, boxedWarning: brandAdFacts(brandId).boxedWarning }) : null;
+  const withPin = (prefix: string) => (line: SearchLine, i: number): SearchLine => {
+    const p = pins[`${prefix}.${i}`];
+    return p === undefined ? line : { ...line, pin: p === 0 ? undefined : p };
+  };
+  const searchPlan: SearchAdPlan | null = searchBase
+    ? { ...searchBase, headlines: searchBase.headlines.map(withPin("search.h")), descriptions: searchBase.descriptions.map(withPin("search.d")) }
+    : null;
+  const sizeCount = videoShapes.length + stillShapes.length + (hasBanners ? BANNER_SIZES.length : 0) + (hasCarousel ? 1 : 0) + (hasDocument ? 1 : 0) + (hasSearch ? 1 : 0);
+  const adCount = Number(hasVideo) + Number(hasImage) + Number(hasCarousel) + Number(hasDocument) + Number(hasSearch);
 
   const imageTemplate = IMAGE_TEMPLATES.find((t) => t.id === campaign.look.image);
   const carouselTemplate =
@@ -247,6 +282,8 @@ export function AdsStudioScreen() {
     video: outputs.filter((o) => o.format === "video").every((o) => isReady(o.id)),
     image: outputs.filter((o) => o.format === "image" || o.format === "banner").every((o) => isReady(o.id)),
     carousel: outputs.filter((o) => o.format === "carousel").every((o) => isReady(o.id)),
+    search: isReady("t-search"),
+    document: isReady("d-doc"),
   };
 
   /* ── Where you are ── */
@@ -255,6 +292,7 @@ export function AdsStudioScreen() {
   const [sceneId, setSceneId] = useState(story[0]?.id ?? "");
   const scene = story.find((s) => s.id === sceneId) ?? story[0];
   const [cardIndex, setCardIndex] = useState(0);
+  const [pageIndex, setPageIndex] = useState(0);
   const [videoShape, setVideoShape] = useState<VideoShape>(videoShapes[0] ?? "16:9");
   const [imageSize, setImageSize] = useState<StillSize>(imageSizes[0] ?? "4:5");
   const [selected, setSelected] = useState<string | null>(null);
@@ -307,7 +345,7 @@ export function AdsStudioScreen() {
 
   /* A style lives on the part, or on the part in one size when edits stay in that size. */
   const sizeOf = (id: string) => (id.startsWith("scene:") ? videoShape : id.startsWith("image.") ? imageSize : null);
-  const baseKey = (id: string) => (sameLook ? id.replace(/^card:\d+/, "card") : id);
+  const baseKey = (id: string) => (sameLook ? id.replace(/^card:\d+/, "card").replace(/^page:\d+/, "page") : id);
   const styleKey = (id: string) => {
     const size = sizeOf(id);
     return !editOnce && size ? `${baseKey(id)}@${size}` : baseKey(id);
@@ -334,6 +372,8 @@ export function AdsStudioScreen() {
     if (id === "image.support") return claims.find((c) => c.text === imagePlan.support);
     const card = id.match(/^card:(\d+)\.title$/);
     if (card) return claims.find((c) => c.text === cards[+card[1]]?.title);
+    const page = id.match(/^page:(\d+)\.title$/);
+    if (page) return claims.find((c) => c.id === pages[+page[1]]?.claimId);
     const sceneOf = id.match(/^scene:([^.]+)\./);
     if (sceneOf && (part === "caption" || part === "claim")) {
       const sc = story.find((s) => s.id === sceneOf[1]);
@@ -356,7 +396,11 @@ export function AdsStudioScreen() {
   /* What a change made now reaches: one size, or every size of this ad. */
   const scopeLabel = (() => {
     if (focus === "all") return "Every ad in the campaign";
-    const part = selected ? PART_LABEL[selected.split(".").pop() ?? ""] : null;
+    if (focus === "search") {
+      const [, kind, idx] = (selected ?? "").split(".");
+      return selected?.startsWith("search.") ? `Search ad · ${kind === "h" ? "headline" : "description"} ${+idx + 1}` : "The search ad, in every combination";
+    }
+    const part = selected ? partLabelOf(selected) : null;
     if (focus === "video") {
       const where = `Scene ${scene?.number}${part ? ` · ${part.toLowerCase()}` : ""}`;
       return editOnce ? `${where}, in every video size` : `${where}, in ${videoShape} only`;
@@ -364,6 +408,10 @@ export function AdsStudioScreen() {
     if (focus === "image") {
       const what = part ? `The ${part.toLowerCase()} on the image ad` : "The image ad";
       return editOnce ? `${what}, in every size` : `${what}, in ${imageSize} only`;
+    }
+    if (focus === "document") {
+      const what = part ? `Page ${pageIndex + 1} · ${part.toLowerCase()}` : `Page ${pageIndex + 1} of the document`;
+      return sameLook && part ? `${what}, same look on every page` : what;
     }
     const what = part ? `Card ${cardIndex + 1} · ${part.toLowerCase()}` : `Card ${cardIndex + 1} of the carousel`;
     return sameLook && part ? `${what}, same look on every card` : what;
@@ -423,6 +471,10 @@ export function AdsStudioScreen() {
         ? ["Make the headline shorter", "Bigger packshot", "Swap the picture"]
         : focus === "carousel"
           ? ["Reorder the cards", "Make card 1 a photo", "Lead with the number"]
+          : focus === "document"
+            ? ["Add a page on dosing", "Make the cover shorter", "Lead with the number"]
+          : focus === "search"
+            ? ["Add more headlines", "Make headline 2 shorter", "Write a reminder version"]
           : ["Check every ad for safe areas", "Make the headline shorter everywhere", "Warmer colour across all"];
 
   /* ── Requests that open a dialog ── */
@@ -445,13 +497,66 @@ export function AdsStudioScreen() {
   /* ── The toolbar's selection ── */
   const part = selected?.split(".").pop() ?? "";
   const owner = selected?.split(".")[0] ?? "";
-  const partLabel = PART_LABEL[part] ?? part;
+  const partLabel = (selected ? partLabelOf(selected) : undefined) ?? part;
   const ownerLabel =
-    owner === "image" ? "Image ad" : owner.startsWith("card:") ? `Card ${+owner.slice(5) + 1}` : owner.startsWith("scene:") ? `Scene ${scene?.number}` : "";
+    owner === "image" ? "Image ad" : owner.startsWith("card:") ? `Card ${+owner.slice(5) + 1}` : owner.startsWith("page:") ? `Page ${+owner.slice(5) + 1}` : owner.startsWith("scene:") ? `Scene ${scene?.number}` : "";
   const selectedClaim = claimFor(selected);
 
   let toolbarSelection: ToolbarSelection | null = null;
-  if (selected && !submitted) {
+  if (selected?.startsWith("search.") && searchPlan && !submitted) {
+    const [, kind, idx] = selected.split(".");
+    const isHeadline = kind === "h";
+    const line = (isHeadline ? searchPlan.headlines : searchPlan.descriptions)[+idx];
+    const max = isHeadline ? HEADLINE_MAX : DESCRIPTION_MAX;
+    const name = `${isHeadline ? "Headline" : "Description"} ${+idx + 1}`;
+    if (line) {
+      /* The brand and the safety line hold position 1, so no claim ever shows without them. */
+      const locked = line.pin === 1 && (line.role === "Brand" || line.role === "Safety");
+      toolbarSelection = {
+        id: selected,
+        icon: TextCursorInput,
+        name,
+        path: `Search ad · ${name}`,
+        items: [
+          { key: "len", node: <ToolNote icon={TextCursorInput} tone={line.text.length <= max ? "ok" : "warn"}>{line.text.length}/{max} characters</ToolNote> },
+          ...(line.claimId ? [{ key: "claim", node: <ToolNote icon={BadgeCheck} tone="ok">Claim {line.claimId}</ToolNote> }] : []),
+          toolbarDivider("d1"),
+          ...(locked
+            ? [{ key: "locked", node: <ToolNote icon={Lock}>{line.role === "Brand" ? "Pinned to 1: the brand leads every combination" : "Pinned to 1: safety shows in every combination"}</ToolNote> }]
+            : [
+                { key: "pin-label", node: <span className="shrink-0 text-caption font-bold text-ink-3">Pin to</span> },
+                ...(isHeadline ? [1, 2, 3] : [1, 2]).map((n) => ({
+                  key: `pin-${n}`,
+                  node: (
+                    <IconToggle
+                      active={line.pin === n}
+                      title={line.pin === n ? `Unpin from position ${n}` : `Pin to position ${n}`}
+                      onClick={() => setPins((prev) => ({ ...prev, [selected]: line.pin === n ? 0 : (n as 1 | 2 | 3) }))}
+                    >
+                      <span className="text-caption font-bold">{n}</span>
+                    </IconToggle>
+                  ),
+                })),
+              ]),
+          toolbarDivider("d2"),
+          {
+            key: "rewrite",
+            node: (
+              <ToolButton
+                icon={RefreshCw}
+                label="Rewrite with SwishX"
+                onClick={() => handToChat({ id: selected, label: `Search ad · ${name}`, detail: `"${line.text}"` }, `Rewrite this ${isHeadline ? "headline" : "description"} so that `)}
+              />
+            ),
+          },
+        ],
+        onAddToChat: () => {
+          handToChat({ id: selected, label: `Search ad · ${name}`, detail: `"${line.text}"` }, `Change this ${isHeadline ? "headline" : "description"} so that `);
+          showToast(`${name} added to the chat`);
+        },
+      };
+    }
+  } else if (selected && !submitted) {
     let items: ToolbarItem[] = [];
     if (TEXT_BASE[part]) {
       const [baseSize, baseWeight] = TEXT_BASE[part];
@@ -692,6 +797,16 @@ export function AdsStudioScreen() {
             ),
           })}
 
+        {hasSearch &&
+          searchPlan &&
+          railItem({
+            item: "search",
+            label: "Search ad",
+            sub: `${searchPlan.headlines.length} headlines · ${searchPlan.descriptions.length} descriptions`,
+            ready: itemReady.search,
+            thumb: <TextCursorInput className="size-4 text-ink-3" />,
+          })}
+
         {hasCarousel &&
           railItem({
             item: "carousel",
@@ -729,6 +844,47 @@ export function AdsStudioScreen() {
                       <span className="min-w-0 flex-1">
                         <span className="block text-caption font-bold text-ink">Card {i + 1}</span>
                         <span className="block truncate text-micro text-ink-3">{card.role}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </>
+            ),
+          })}
+
+        {hasDocument &&
+          railItem({
+            item: "document",
+            label: "Document",
+            sub: `${pages.length} pages · 4:5 PDF`,
+            ready: itemReady.document,
+            thumb: <FileText className="size-4 text-ink-3" />,
+            children: (
+              <>
+                {pages.map((page, i) => {
+                  const on = focus === "document" && i === pageIndex;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        setPageIndex(i);
+                        setSelected(null);
+                        openAd("document");
+                      }}
+                      className={cn(
+                        "flex w-full cursor-pointer items-center gap-2 rounded-control border bg-card p-1.5 text-left transition",
+                        on ? "border-brand ring-2 ring-brand/15" : "border-hair hover:border-hair-3"
+                      )}
+                    >
+                      <span className="shrink-0 overflow-hidden rounded-glyph border border-hair">
+                        <Scaled w={DOC_SIZE.w} h={DOC_SIZE.h} width={32}>
+                          <AdDocPage page={page} index={i} total={pages.length} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={still()} />
+                        </Scaled>
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-caption font-bold text-ink">Page {i + 1}</span>
+                        <span className="block truncate text-micro text-ink-3">{page.role}</span>
                       </span>
                     </button>
                   );
@@ -801,6 +957,16 @@ export function AdsStudioScreen() {
             })}
           </OverviewGroup>
         )}
+        {hasSearch && searchPlan && (
+          <OverviewGroup title="Search ad · Google">
+            <OverviewTile label="Search ad" sub={`${searchPlan.headlines.length} headlines · ${searchPlan.descriptions.length} descriptions`} onOpen={() => openAd("search")}>
+              <span className="block w-[420px] max-w-full p-2">
+                <SearchAdCard plan={searchPlan} combo={searchCombination(searchPlan, 0)} />
+              </span>
+              {making(itemReady.search)}
+            </OverviewTile>
+          </OverviewGroup>
+        )}
         {hasCarousel && (
           <OverviewGroup title={`Carousel · ${cards.length} cards`}>
             {cards.map((card, i) => (
@@ -809,6 +975,18 @@ export function AdsStudioScreen() {
                   <AdCard card={card} index={i} layout={carouselLayout} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} safetyText={safetyText} number={number} edit={still()} />
                 </Scaled>
                 {making(isReady("c-1x1"))}
+              </OverviewTile>
+            ))}
+          </OverviewGroup>
+        )}
+        {hasDocument && (
+          <OverviewGroup title={`Document · ${pages.length} pages`}>
+            {pages.map((page, i) => (
+              <OverviewTile key={i} label={`Page ${i + 1}`} sub={page.role} onOpen={() => { setPageIndex(i); openAd("document"); }}>
+                <Scaled w={DOC_SIZE.w} h={DOC_SIZE.h} width={136}>
+                  <AdDocPage page={page} index={i} total={pages.length} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={still()} />
+                </Scaled>
+                {making(itemReady.document)}
               </OverviewTile>
             ))}
           </OverviewGroup>
@@ -1090,14 +1268,102 @@ export function AdsStudioScreen() {
     </>
   );
 
+  /* The document, a page at a time, paged like the carousel. */
+  const page = pages[pageIndex] ?? pages[0];
+  const stepPage = (step: number) => {
+    setPageIndex((i) => (i + step + pages.length) % pages.length);
+    setSelected(null);
+  };
+  const documentCanvas = hasDocument && page && (
+    <>
+      {canvasBar(
+        <>
+          {barTitle(`Page ${pageIndex + 1} of ${pages.length} · ${page.role}`)}
+          {barNote(page.claimId ? `Written from ${page.claimId}` : "PDF · 4:5")}
+          <span className="ml-auto" />
+          {barToggle(sameLook, setSameLook, "Same look on every page")}
+        </>
+      )}
+      <div className="relative flex min-h-0 flex-1 flex-col" onClick={() => setSelected(null)}>
+        <div className="flex min-h-0 flex-1 items-stretch justify-center gap-5 px-6 pt-6">
+          <CardArrow dir="prev" onClick={() => stepPage(-1)} />
+          <FitCanvas ratio={DOC_SIZE.w / DOC_SIZE.h} onClear={() => setSelected(null)} className="max-w-[480px] p-0">
+            {(width) => (
+              <div className="relative overflow-hidden rounded-chip shadow-float">
+                <Scaled w={DOC_SIZE.w} h={DOC_SIZE.h} width={width}>
+                  <AdDocPage page={page} index={pageIndex} total={pages.length} palette={palette} brandName={brandName} adType={adType} riskLine={copy.riskLine} edit={submitted ? still() : editing()} />
+                </Scaled>
+                {making(itemReady.document)}
+              </div>
+            )}
+          </FitCanvas>
+          <CardArrow dir="next" onClick={() => stepPage(1)} />
+        </div>
+        <div className="flex shrink-0 justify-center gap-1.5 py-4" aria-label={`Page ${pageIndex + 1} of ${pages.length}`}>
+          {pages.map((_, i) => (
+            <span key={i} className={cn("size-2 rounded-full", i === pageIndex ? "bg-brand" : "bg-hair-3")} />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  /* The search ad as Google shows it, and the lines it is mixed from. */
+  const searchCanvas = searchPlan && (
+    <>
+      {canvasBar(
+        <>
+          {barTitle("Search ad")}
+          {barNote(`When someone searches "${searchPlan.query}"`)}
+          <span className="ml-auto" />
+          <Button size="sm" variant="secondary" onClick={() => setSearchCombo((n) => n + 1)} className="h-7 shrink-0 px-2.5 text-caption">
+            Show another combination
+          </Button>
+        </>
+      )}
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6" onClick={() => setSelected(null)}>
+        <div className="mx-auto max-w-[720px] space-y-3 rounded-card border border-hair bg-card p-5 shadow-soft" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-2 rounded-full border border-hair-2 bg-card px-4 py-2 shadow-2xs">
+            <span className="text-body text-ink-2">{searchPlan.query}</span>
+          </div>
+          <div className="relative">
+            <SearchAdCard plan={searchPlan} combo={searchCombination(searchPlan, searchCombo)} className="border-transparent shadow-none" />
+            {making(itemReady.search)}
+          </div>
+          {/* Where the ordinary results would follow. */}
+          {[0, 1].map((i) => (
+            <div key={i} aria-hidden className="space-y-1.5 px-4 py-2 opacity-60">
+              <div className="h-2.5 w-2/5 rounded-full bg-hair-2" />
+              <div className="h-3.5 w-3/5 rounded-full bg-hair-3" />
+              <div className="h-2.5 w-full rounded-full bg-hair-2" />
+            </div>
+          ))}
+        </div>
+        <div className="mx-auto grid max-w-[960px] gap-4 lg:grid-cols-2" onClick={(e) => e.stopPropagation()}>
+          <SearchLines title="Headlines" lines={searchPlan.headlines} max={HEADLINE_MAX} limit={15} idPrefix="search.h" selected={selected} onSelect={submitted ? undefined : setSelected} />
+          <SearchLines title="Descriptions" lines={searchPlan.descriptions} max={DESCRIPTION_MAX} limit={4} idPrefix="search.d" selected={selected} onSelect={submitted ? undefined : setSelected} />
+        </div>
+        <div className="mx-auto max-w-[960px] rounded-card border border-hair bg-card p-4" onClick={(e) => e.stopPropagation()}>
+          <p className="mb-2 text-label font-bold text-ink-2">Checked against every combination</p>
+          <SearchChecks checks={searchPlan.checks} />
+        </div>
+      </div>
+    </>
+  );
+
   const main = (
     <section className="relative flex min-h-0 min-w-0 flex-1 flex-col bg-[#eef1ed]">
-      {focus === "all" ? overview : focus === "video" ? videoCanvas : focus === "image" ? imageCanvas : carouselCanvas}
+      {focus === "all" ? overview : focus === "video" ? videoCanvas : focus === "image" ? imageCanvas : focus === "search" ? searchCanvas : focus === "document" ? documentCanvas : carouselCanvas}
     </section>
   );
 
   const toolbar =
-    focus === "all" || submitted ? (
+    focus === "search" && !submitted && !toolbarSelection ? (
+      <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
+        <span className="text-label font-bold text-ink">Search ad</span>
+        <span className="text-label text-ink-3">Select a headline or description to pin it or rewrite it.</span>
+      </div>
+    ) : focus === "all" || submitted ? (
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
         <span className="text-label font-bold text-ink">{submitted ? "In MLR review" : "All ads"}</span>
         <span className="text-label text-ink-3">
@@ -1109,7 +1375,7 @@ export function AdsStudioScreen() {
     ) : (
       <EditorToolbar
         selection={toolbarSelection}
-        menus={["text", "image"]}
+        menus={focus === "search" ? [] : ["text", "image"]}
         onInsert={(menu, option) => {
           const where = focus === "video" ? `Scene ${scene?.number}` : focus === "image" ? "the image ad" : `card ${cardIndex + 1}`;
           handToChat(
@@ -1197,6 +1463,8 @@ export function AdsStudioScreen() {
             ...story.filter((sc) => sc.claim.startsWith(claim.id)).map((sc) => `Video · Scene ${sc.number}`),
             ...(hasImage && (imagePlan.headline === claim.text || imagePlan.support === claim.text) ? ["Image ad"] : []),
             ...(hasCarousel ? cards.flatMap((c, i) => (c.title === claim.text ? [`Card ${i + 1}`] : [])) : []),
+            ...(hasDocument ? pages.flatMap((p, i) => (p.claimId === claim.id ? [`Page ${i + 1}`] : [])) : []),
+            ...(searchPlan && [...searchPlan.headlines, ...searchPlan.descriptions].some((l) => l.claimId === claim.id) ? ["Search ad"] : []),
           ]}
           onDossier={() => setDossier(dossierFor(brandName, moleculeFor(brandName)))}
         />

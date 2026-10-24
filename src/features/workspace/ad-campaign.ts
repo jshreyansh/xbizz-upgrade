@@ -270,6 +270,53 @@ export function buildCarousel(input: { brand: string; adType: AdType; claims: Ad
   ];
 }
 
+/* ── The document ad: a short PDF read in the feed ── */
+
+export interface DocPage {
+  role: "Cover" | "Context" | "Evidence" | "Ask" | "Safety" | "References";
+  title: string;
+  body: string;
+  /** The approved claim the page is written from. */
+  claimId?: string;
+  /** What the page shows besides the words. */
+  visual: string;
+}
+
+/**
+ * The document's pages, in reading order. Written from the same key message
+ * and approved claims as every other ad, one claim to a page, so each page
+ * can be checked on its own. A product claim document carries a risk line on
+ * every page and ends on the full safety information and the references.
+ */
+export function buildDocumentAd(input: { brandId: string; brand: string; adType: AdType; claims: AdClaim[]; leadMessage: string; closing: string; condition: string }): DocPage[] {
+  const { brandId, brand, adType, claims, leadMessage, closing, condition } = input;
+  if (adType === "unbranded") {
+    return [
+      { role: "Cover", title: leadMessage, body: `A short guide to ${condition}`, visual: "A candid portrait, morning light." },
+      { role: "Context", title: `What ${condition} can feel like`, body: "It reaches past what people see: sleep, work and the people you love.", visual: "Three small everyday moments." },
+      { role: "Context", title: "Signs worth mentioning", body: "Changes that last, come back, or get in the way of everyday life.", visual: "A simple checklist." },
+      { role: "Ask", title: "Questions to take to your doctor", body: "What could be causing this? What are my options? What happens next?", visual: "Three questions, written large." },
+      { role: "Ask", title: "Talk to your doctor", body: closing, visual: "A clean page with the campaign line." },
+    ];
+  }
+  const evidence = claims.filter((c) => c.text !== leadMessage).slice(0, 3);
+  const lead = claims.find((c) => c.text === leadMessage);
+  return [
+    { role: "Cover", title: leadMessage, body: brand, claimId: lead?.id, visual: "The campaign's key visual, with the logo." },
+    { role: "Context", title: `Living with ${condition}`, body: "Who it affects, and what treatment needs to change for them.", visual: "One clear figure from the dossier." },
+    ...evidence.map((c, i) => ({
+      role: "Evidence" as const,
+      title: c.text,
+      body: c.source,
+      claimId: c.id,
+      visual: i === 0 ? "The result as a simple chart." : "The finding, drawn simply.",
+    })),
+    { role: "Ask", title: closing, body: "Prescribing Information and the full safety information are at the link.", visual: "Logo lockup and the closing line." },
+    { role: "Safety", title: "Important Safety Information", body: majorStatement(brandId, brand), visual: "Text only, no imagery." },
+    { role: "References", title: "References", body: [...new Set(claims.map((c) => c.source))].join(" · "), visual: "Text only." },
+  ];
+}
+
 /* ── The ad list ── */
 
 export interface AdOutput {
@@ -278,7 +325,7 @@ export interface AdOutput {
   format: AdFormat;
   shape: string;
   length?: string;
-  from: "Video story" | "Image ad" | "Carousel";
+  from: "Video story" | "Image ad" | "Carousel" | "Search ad" | "Document";
   placements: string[];
   safety: string;
   credits: number;
@@ -307,6 +354,8 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice
             ? "Scrolling safety panel beside the claim"
             : format === "carousel"
               ? "Risk line on every card, last card is safety information"
+              : format === "document"
+                ? "Safety information on every page, in full on the last page"
               : "Risk line on the image, full safety in the post and link";
 
   type Spec = { key: string; name: string; format: AdFormat; shape: string; length?: string; from: AdOutput["from"]; credits: number };
@@ -322,8 +371,11 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice
     const still11: Spec = { key: "s-1x1", name: "Image ad, square", format: "image", shape: "1:1", from: "Image ad", credits: 300 };
     const banners: Spec = { key: "b-set", name: "Banner set", format: "banner", shape: "300×250 · 728×90 · 300×600 · 160×600 · 320×50", from: "Image ad", credits: 900 };
     const carousel: Spec = { key: "c-1x1", name: "Carousel", format: "carousel", shape: "1:1 · 5 cards", from: "Carousel", credits: 750 };
+    const doc: Spec = { key: "d-doc", name: "Document ad", format: "document", shape: "PDF · 4:5 · 6 pages", from: "Document", credits: 600 };
+    const search: Spec = { key: "t-search", name: "Search ad", format: "text", shape: "15 headlines · 4 descriptions", from: "Search ad", credits: 150 };
     switch (id) {
       case "youtube": return [wide30];
+      case "google-search": return [search];
       case "programmatic-video": return [wide30];
       case "ctv": return [wide30];
       case "meta-feed": return reminder ? [square, still45] : [square, still45, carousel];
@@ -332,6 +384,8 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice
       case "google-display":
       case "programmatic-display": return [banners];
       case "hcp-networks": return [square, still11];
+      /* A reminder names the brand and nothing else: no carousel, no document to read. */
+      case "linkedin-feed": return reminder ? [still11, square] : [still11, square, carousel, doc];
     }
   };
 
@@ -358,6 +412,157 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice
       }
     }
   }
-  const order: AdFormat[] = ["video", "image", "carousel", "banner"];
+  const order: AdFormat[] = ["video", "image", "carousel", "document", "banner", "text"];
   return [...byKey.values()].sort((a, b) => order.indexOf(a.format) - order.indexOf(b.format));
+}
+
+/* ── The search ad: text, mixed and matched by Google ── */
+
+export interface SearchLine {
+  text: string;
+  role: "Brand" | "Claim" | "Ask" | "Condition" | "Safety" | "Site";
+  /** The approved claim the words come from. */
+  claimId?: string;
+  /** Held at this position in every combination Google shows. */
+  pin?: 1 | 2 | 3;
+}
+
+export interface SearchAdPlan {
+  /** What someone might search for to see it. */
+  query: string;
+  displayUrl: string;
+  headlines: SearchLine[];
+  descriptions: SearchLine[];
+  /** Checked against every combination Google could show. */
+  checks: Array<{ label: string; ok: boolean }>;
+}
+
+export const HEADLINE_MAX = 30;
+export const DESCRIPTION_MAX = 90;
+const fits = (max: number) => (line: SearchLine) => line.text.length <= max;
+const title = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/**
+ * A responsive search ad, written from approved claims.
+ *
+ * Google shows up to three headlines and two descriptions in any order, so
+ * every combination has to be compliant on its own. A product claim ad pins
+ * the brand to headline 1 and the safety line to description 1, so no claim
+ * ever shows without them; a reminder ad says the name and nothing about
+ * what it's for; a help-seeking ad never names the product.
+ */
+export function buildSearchAd(input: {
+  brandId: string;
+  brand: string;
+  adType: AdType;
+  claims: AdClaim[];
+  leadMessage: string;
+  closing: string;
+  condition?: string;
+  boxedWarning?: boolean;
+}): SearchAdPlan {
+  const { brand, adType, claims, closing } = input;
+  const condition = input.condition ?? conditionFor(input.brandId);
+  const site = `${brand.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`;
+
+  let headlines: SearchLine[];
+  let descriptions: SearchLine[];
+  let query: string;
+  let displayUrl = site;
+
+  if (adType === "unbranded") {
+    const c = title(condition);
+    query = `${condition} symptoms`;
+    displayUrl = `know${condition.toLowerCase().replace(/[^a-z0-9]/g, "")}.com`;
+    headlines = [
+      { text: `Living With ${c}?`, role: "Condition" },
+      { text: "Talk to Your Doctor", role: "Ask" },
+      { text: "Know the Symptoms", role: "Condition" },
+      { text: `${c} Explained`, role: "Condition" },
+      { text: "When to See a Doctor", role: "Ask" },
+    ];
+    descriptions = [
+      { text: `Learn what ${condition} is, who it affects and when to see a doctor.`, role: "Condition" },
+      { text: closing, role: "Ask" },
+    ];
+  } else if (adType === "reminder") {
+    query = brand;
+    headlines = [
+      { text: brand, role: "Brand", pin: 1 },
+      { text: `${brand} Official Site`, role: "Site" },
+      { text: `Ask Your Doctor About ${brand}`, role: "Ask" },
+      { text: "Talk to Your Doctor", role: "Ask" },
+      { text: `Learn More About ${brand}`, role: "Site" },
+      { text: "Full Prescribing Information", role: "Site" },
+    ];
+    descriptions = [
+      { text: `Visit the official ${brand} site. See the full Prescribing Information.`, role: "Site" },
+      { text: closing, role: "Ask" },
+    ];
+  } else {
+    query = brand;
+    const shortClaims = claims.filter((c) => c.text.length <= HEADLINE_MAX);
+    const longClaims = claims.filter((c) => c.text.length > HEADLINE_MAX && c.text.length <= DESCRIPTION_MAX);
+    headlines = [
+      { text: brand, role: "Brand", pin: 1 },
+      ...shortClaims.map<SearchLine>((c) => ({ text: c.text, role: "Claim", claimId: c.id })),
+      { text: `For ${title(condition)}`, role: "Condition" },
+      { text: `Ask Your Doctor About ${brand}`, role: "Ask" },
+      { text: `${brand} Official Site`, role: "Site" },
+      /* Claim-free lines, safe in any combination, so Google has enough to mix. */
+      { text: "Talk to Your Doctor", role: "Ask" },
+      { text: `Learn More About ${brand}`, role: "Site" },
+      { text: "Important Safety Information", role: "Safety" },
+      { text: "Full Prescribing Information", role: "Site" },
+    ];
+    descriptions = [
+      {
+        text: `See Important Safety Information${input.boxedWarning ? ", including Boxed Warning" : ""} and full Prescribing Information.`,
+        role: "Safety",
+        pin: 1,
+      },
+      ...longClaims.map<SearchLine>((c) => ({ text: `${c.text}.`, role: "Claim", claimId: c.id })),
+      { text: closing, role: "Ask" },
+    ];
+  }
+
+  headlines = headlines.filter(fits(HEADLINE_MAX)).slice(0, 15);
+  descriptions = descriptions.filter(fits(DESCRIPTION_MAX)).slice(0, 4);
+
+  const brandLower = brand.toLowerCase();
+  const everything = [...headlines, ...descriptions].map((l) => l.text.toLowerCase());
+  const checks: SearchAdPlan["checks"] = [
+    { label: `Every headline is ${HEADLINE_MAX} characters or fewer`, ok: headlines.every(fits(HEADLINE_MAX)) },
+    { label: `Every description is ${DESCRIPTION_MAX} characters or fewer`, ok: descriptions.every(fits(DESCRIPTION_MAX)) },
+    { label: "Enough lines for Google to mix: at least 3 headlines and 2 descriptions", ok: headlines.length >= 3 && descriptions.length >= 2 },
+    ...(adType === "product-claim"
+      ? [
+          { label: "The brand leads every combination (pinned to headline 1)", ok: headlines.some((h) => h.role === "Brand" && h.pin === 1) },
+          { label: "Safety information shows in every combination (pinned to description 1)", ok: descriptions.some((d) => d.role === "Safety" && d.pin === 1) },
+          { label: "Every claim is approved wording", ok: [...headlines, ...descriptions].filter((l) => l.role === "Claim").every((l) => !!l.claimId) },
+        ]
+      : adType === "reminder"
+        ? [{ label: "No claim and no condition in any line, as a reminder ad requires", ok: ![...headlines, ...descriptions].some((l) => l.role === "Claim" || l.role === "Condition") }]
+        : [{ label: "The product is never named, in any combination", ok: !everything.some((t) => t.includes(brandLower)) }]),
+  ];
+
+  return { query, displayUrl, headlines, descriptions, checks };
+}
+
+/** One combination Google might show: pinned lines in place, the rest rotating. */
+export function searchCombination(plan: SearchAdPlan, n: number): { headlines: SearchLine[]; descriptions: SearchLine[] } {
+  const pick = (lines: SearchLine[], slots: number) => {
+    const out: Array<SearchLine | undefined> = Array.from({ length: slots }, (_, i) => lines.find((l) => l.pin === i + 1));
+    const free = lines.filter((l) => !l.pin);
+    let k = n;
+    for (let i = 0; i < slots; i++) {
+      if (!out[i] && free.length) {
+        out[i] = free[k % free.length];
+        free.splice(k % free.length, 1);
+        k += 1;
+      }
+    }
+    return out.filter((l): l is SearchLine => !!l);
+  };
+  return { headlines: pick(plan.headlines, 3), descriptions: pick(plan.descriptions, 2) };
 }
