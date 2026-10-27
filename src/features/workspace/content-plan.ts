@@ -137,9 +137,7 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
     ? "narrated"
     : /presenter|avatar|doctor speaking|spokesperson|digital twin/.test(brief)
       ? "presenter"
-      : /visual.only|silent|without (a )?voice|no narration/.test(brief)
-        ? "visual-only"
-        : "narrated";
+      : "narrated";
 
   const treatmentId = inputs.assetType === "video"
     ? presentationMode
@@ -168,7 +166,8 @@ export function deriveContentPlan(inputs: PlanInputs): DerivedContentPlan {
     ? "Rohan · clear and measured"
     : "Dev · warm and conversational";
 
-  const music = inputs.assetType === "video" && presentationMode === "visual-only" && intendedUses.some((use) => ["Social channel", "LinkedIn", "Instagram", "YouTube"].includes(use)) ? "Calm clinical" : "No music";
+  /* Social cuts get a quiet bed under the narration; everything else starts silent. */
+  const music = inputs.assetType === "video" && /silent|no narration|on-screen copy/.test(brief) && intendedUses.some((use) => ["Social channel", "LinkedIn", "Instagram", "YouTube"].includes(use)) ? "Calm clinical" : "No music";
 
   /**
    * Two approved labels from different markets cannot both govern one asset —

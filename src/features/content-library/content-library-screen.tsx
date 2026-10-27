@@ -2,8 +2,9 @@
 
 import { PageHeading } from "@/components/patterns/page-heading";
 import { useMemo, useState } from "react";
-import { Search, Grid3x3, List, Film, Image as ImageIcon, Megaphone, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
+import { Grid3x3, List, Film, Image as ImageIcon, Megaphone, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { FilterBar, FilterTabs } from "@/components/patterns/filter-bar";
 import { DataList } from "@/components/patterns/data-list";
 import { LibraryTile, TileOpen } from "@/components/patterns/library-tile";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
@@ -73,21 +74,17 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
   );
   const draftSharing = (a: LibraryAsset) => (a.stage === "draft" ? sharing[`lib:${a.id}`] : undefined);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return assets.filter((a) => {
-      if (kind !== "all" && a.kind !== kind) return false;
-      if (stage === "shared") {
-        if (a.stage !== "draft" || !sharedWith(sharing[`lib:${a.id}`], me)) return false;
-      } else if (stage !== "all" && a.stage !== stage) return false;
-      if (!q) return true;
-      return (
-        a.title.toLowerCase().includes(q) ||
-        a.brand.toLowerCase().includes(q) ||
-        a.audience.toLowerCase().includes(q)
-      );
-    });
-  }, [assets, query, kind, stage, sharing, me]);
+  /* Everything but the kind, so each kind tab can say how many it holds. */
+  const q = query.trim().toLowerCase();
+  const passes = (a: LibraryAsset) => {
+    if (stage === "shared") {
+      if (a.stage !== "draft" || !sharedWith(sharing[`lib:${a.id}`], me)) return false;
+    } else if (stage !== "all" && a.stage !== stage) return false;
+    return !q || a.title.toLowerCase().includes(q) || a.brand.toLowerCase().includes(q) || a.audience.toLowerCase().includes(q);
+  };
+  const kindCount = (k: KindFilter) => assets.filter((a) => (k === "all" || a.kind === k) && passes(a)).length;
+
+  const filtered = assets.filter((a) => (kind === "all" || a.kind === kind) && passes(a));
 
   return (
     <div className="page-enter space-y-6">
@@ -96,61 +93,52 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
         description="Everything published in this workspace, with the comments your reviewers left on it, plus your drafts and drafts shared with you."
       />
 
-      {/* Search, kind filter, view toggle */}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <div style={{ position: "relative", flex: 1, minWidth: 220, maxWidth: 420 }}>
-          <Search size={15} style={{ position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)", color: "var(--ink-4)" }} />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search assets, brands or audiences…"
-            style={{ width: "100%", padding: "10px 13px 10px 36px", borderRadius: "var(--r)", border: "1px solid var(--hair-2)", fontSize: 13.5, color: "var(--ink)", background: "#fff" }}
-          />
-        </div>
-
-        <Segmented>
-          {([
-            { id: "all" as const, label: "All" },
-            { id: "video" as const, label: "Video" },
-            { id: "infographic" as const, label: "Doc & image" },
-            { id: "ad" as const, label: "Ads" },
-          ]).map((opt) => (
-            <SegmentedButton key={opt.id} active={kind === opt.id} onClick={() => setKind(opt.id)}>
-              {opt.label}
-            </SegmentedButton>
-          ))}
-        </Segmented>
-
-        <Segmented>
-          {([
-            { id: "all" as const, label: "All" },
-            { id: "draft" as const, label: "Drafts" },
-            { id: "shared" as const, label: "Shared with me" },
-            { id: "published" as const, label: "Published" },
-            { id: "archived" as const, label: "Archived" },
-          ]).map((opt) => (
-            <SegmentedButton key={opt.id} active={stage === opt.id} onClick={() => setStage(opt.id)}>
-              {opt.label}
-            </SegmentedButton>
-          ))}
-        </Segmented>
-
-        <Segmented>
-          {([
-            { id: "grid" as const, Icon: Grid3x3, label: "Grid view" },
-            { id: "list" as const, Icon: List, label: "List view" },
-          ]).map(({ id, Icon, label }) => (
-            <SegmentedButton
-              key={id}
-              active={view === id}
-              onClick={() => setView(id)}
-              aria-label={label}
-              className="w-8 px-0"
-            >
-              <Icon size={15} />
-            </SegmentedButton>
-          ))}
-        </Segmented>
+      {/* Kind as tabs, then search, the rest under Filters, and the view. */}
+      <div className="space-y-4">
+        <FilterTabs
+          ariaLabel="Kind of content"
+          activeId={kind}
+          onSelect={(id) => setKind(id as KindFilter)}
+          items={[
+            { id: "all", label: "All", count: kindCount("all") },
+            { id: "video", label: "Video", count: kindCount("video") },
+            { id: "infographic", label: "Doc & image", count: kindCount("infographic") },
+            { id: "ad", label: "Ads", count: kindCount("ad") },
+          ]}
+        />
+        <FilterBar
+          query={query}
+          onQuery={setQuery}
+          placeholder="Search assets, brands or audiences…"
+          filters={[
+            {
+              id: "stage",
+              label: "Status",
+              value: stage,
+              defaultValue: "all",
+              onChange: (v) => setStage(v as StageFilter),
+              options: [
+                { id: "all", label: "Any status" },
+                { id: "draft", label: "Drafts" },
+                { id: "shared", label: "Shared with me" },
+                { id: "published", label: "Published" },
+                { id: "archived", label: "Archived" },
+              ],
+            },
+          ]}
+          trailing={
+            <Segmented className="h-10 items-center">
+              {([
+                { id: "grid" as const, Icon: Grid3x3, label: "Grid view" },
+                { id: "list" as const, Icon: List, label: "List view" },
+              ]).map(({ id, Icon, label }) => (
+                <SegmentedButton key={id} active={view === id} onClick={() => setView(id)} aria-label={label} className="w-8 px-0">
+                  <Icon size={15} />
+                </SegmentedButton>
+              ))}
+            </Segmented>
+          }
+        />
       </div>
 
       {view === "grid" ? (

@@ -1,13 +1,16 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowRight, Check, Globe2, Mic2, Music2, Pause, Play, Upload } from "lucide-react";
+import { ArrowRight, Check, Globe2, Mic, Mic2, Music2, Pause, Play, ShieldCheck, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Portal } from "@/components/ui/portal";
 import { LibraryModalGoTo, LibraryModalHeader } from "@/components/patterns/library-modal";
 import { cn } from "@/lib/cn";
 import { PRESENTERS as presenters } from "@/features/workspace/presenters";
 import { ChoiceGroup, DecisionRow } from "@/features/workspace/plan-decisions";
+import { voiceLanguage, type Voice } from "@/features/content-library/voices-data";
+import { playVoicePreview, stopVoicePreview, useVoicesStore } from "@/features/content-library/voices-store";
+import { VoiceCloneModal } from "@/features/content-library/voice-clone-modal";
 
 /**
  * Character, voice and sound: who appears, who narrates and what plays under it.
@@ -16,17 +19,6 @@ import { ChoiceGroup, DecisionRow } from "@/features/workspace/plan-decisions";
  * so both ask it the same way: two suggested characters and the Character
  * Library, then language, voice and background music, each previewable.
  */
-
-const voiceList = [
-  { name: "Rohan", role: "clear and measured", accent: "Indian / US English", tag: "Authoritative" },
-  { name: "Riya", role: "friendly and clear", accent: "Neutral English", tag: "Warm & Caring" },
-  { name: "Dev", role: "warm and conversational", accent: "US English", tag: "Conversational" },
-  { name: "Sarah", role: "clinical and precise", accent: "British English", tag: "Clinical Lead" },
-  { name: "Marcus", role: "deep and trustworthy", accent: "North American", tag: "Physician" },
-  { name: "Elena", role: "calm and scientific", accent: "International", tag: "Research" },
-  { name: "Liam", role: "energetic and direct", accent: "Australian", tag: "Patient Briefing" },
-  { name: "Priya", role: "empathetic and reassuring", accent: "Neutral English", tag: "Patient Care" },
-];
 
 export function AudioChoices({
   label,
@@ -132,25 +124,34 @@ export function CharacterLibrary({
   onSelect,
   onClose,
   onGoToLibrary,
+  multiple = false,
+  title = "Choose characters for your video",
 }: {
-  selected: string;
+  /** One name, or several when `multiple`. */
+  selected: string | string[];
+  /** Picks one (the caller closes), or toggles one when `multiple`. */
   onSelect: (name: string) => void;
   onClose: () => void;
   /** The full shelf lives on its own page — this modal is a shortlist. */
   onGoToLibrary: () => void;
+  /** Characters in a story are several; the presenter is one. */
+  multiple?: boolean;
+  title?: string;
 }) {
+  const picked = Array.isArray(selected) ? selected : selected ? [selected] : [];
   return (
     <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-[680px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
-        <LibraryModalHeader title="Choose characters for your video" onClose={onClose} />
+        <LibraryModalHeader title={title} onClose={onClose} />
         <div className="max-h-[460px] overflow-y-auto grid gap-3 p-4 sm:grid-cols-2 sm:p-6">
           {presenters.map((person) => {
-            const active = selected === person.name;
+            const active = picked.includes(person.name);
             return (
               <button
                 key={person.name}
                 type="button"
+                aria-pressed={active}
                 onClick={() => onSelect(person.name)}
                 className={cn(
                   "flex items-center gap-3 rounded-panel border p-3 text-left transition hover:-translate-y-px hover:shadow-sm cursor-pointer",
@@ -162,75 +163,305 @@ export function CharacterLibrary({
                   <span className="block text-body-lg font-bold text-ink">{person.name}</span>
                   <span className="mt-0.5 block text-body leading-4 text-ink-3">{person.role}</span>
                 </span>
-                {active && <Check className="size-4 text-brand shrink-0" strokeWidth={3} />}
+                {multiple ? (
+                  <span className={cn("grid size-5 shrink-0 place-items-center rounded-glyph border", active ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
+                    {active && <Check className="size-3.5" strokeWidth={3} />}
+                  </span>
+                ) : (
+                  active && <Check className="size-4 text-brand shrink-0" strokeWidth={3} />
+                )}
               </button>
             );
           })}
         </div>
-        <LibraryModalGoTo label="Go to Character Library" onClick={onGoToLibrary} />
+        {multiple ? (
+          <div className="flex items-center justify-between gap-3 border-t border-hair px-4 py-3 sm:px-6">
+            <LibraryModalGoTo label="Go to Character Library" onClick={onGoToLibrary} />
+            <Button onClick={onClose} className="shrink-0 px-5 font-bold">
+              Done{picked.length ? ` · ${picked.length} selected` : ""}
+            </Button>
+          </div>
+        ) : (
+          <LibraryModalGoTo label="Go to Character Library" onClick={onGoToLibrary} />
+        )}
       </div>
     </div>
     </Portal>
   );
 }
 
+/* ── Who is on screen: a presenter, and the characters in the story ── */
+
+export type CastTreatment = "narrated" | "presenter";
+
+/** "Presenter: Dr. Maya Kapoor · 2 characters", or "No characters" — for a section's summary. */
+export function castSummary(treatment: CastTreatment, presenter: string, characters: string[]) {
+  const people = characters.length ? `${characters.length} ${characters.length === 1 ? "character" : "characters"}` : "No characters";
+  if (treatment === "presenter") return `${presenter ? `Presenter: ${presenter}` : "Choose a presenter"}${characters.length ? ` · ${people}` : ""}`;
+  return people;
+}
+
+/**
+ * Two lanes. Characters are everyone who can appear in the story — a patient,
+ * a physician, a caregiver — so they are several, and always optional: a
+ * narrated story can be visuals and voice alone. A presenter-led video adds a
+ * second lane above it: the one person who speaks to camera, required. The
+ * presenter may also appear in the story as a character.
+ */
+export function CastLanes({
+  treatment,
+  presenter,
+  onPresenter,
+  characters,
+  onCharacters,
+  onGoTo,
+}: {
+  treatment: CastTreatment;
+  presenter: string;
+  onPresenter: (name: string) => void;
+  characters: string[];
+  onCharacters: (names: string[]) => void;
+  onGoTo: (href: string, label: string) => void;
+}) {
+  const [library, setLibrary] = useState<"presenter" | "characters" | null>(null);
+  const toggleCharacter = (name: string) => onCharacters(characters.includes(name) ? characters.filter((n) => n !== name) : [...characters, name]);
+  const suggested = presenters.slice(0, 3);
+  /* Picked from the library, beyond the suggestions shown as tiles. */
+  const extra = characters.filter((n) => !suggested.some((p) => p.name === n));
+
+  const tile = (person: (typeof presenters)[number], on: boolean, onClick: () => void, multi: boolean) => (
+    <button
+      key={person.name}
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={cn(
+        "focus-ring flex min-h-[64px] cursor-pointer items-center gap-3 rounded-control border p-3 text-left transition-all duration-200 hover:-translate-y-0.5",
+        on ? "border-brand bg-tint text-brand-deep shadow-xs ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+      )}
+    >
+      <FacePhoto person={person} className="size-10 shrink-0 rounded-full shadow-xs ring-2 ring-white" />
+      <div className="min-w-0 flex-1">
+        <span className="block truncate text-body-lg font-bold">{person.name}</span>
+        <span className="block truncate text-label font-normal text-ink-3">{person.role}</span>
+      </div>
+      {multi ? (
+        <span className={cn("grid size-5 shrink-0 place-items-center rounded-glyph border", on ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
+          {on && <Check className="size-3.5" strokeWidth={3} />}
+        </span>
+      ) : (
+        on && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />
+      )}
+    </button>
+  );
+  const libraryTile = (label: string, onClick: () => void) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className="focus-ring flex min-h-[64px] cursor-pointer items-center gap-2.5 rounded-control border border-dashed border-hair-3 bg-card p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-brand hover:bg-canvas"
+    >
+      <span className="flex -space-x-2.5">
+        {presenters.slice(3).map((person) => (
+          <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
+        ))}
+      </span>
+      <span className="ml-1 text-body-lg font-semibold text-ink-2">{label}</span>
+      <ArrowRight className="ml-auto size-4 text-ink-3" />
+    </button>
+  );
+  const laneHead = (title: string, tag: string, required: boolean, hint: string) => (
+    <div className="mb-2.5">
+      <div className="flex items-center gap-2">
+        <span className="text-body-lg font-bold text-ink">{title}</span>
+        <span className={cn("rounded-chip px-2 py-0.5 text-micro font-bold", required ? "bg-warn-bg text-warn" : "bg-subtle text-ink-3")}>{tag}</span>
+      </div>
+      <p className="mt-0.5 text-label text-ink-3">{hint}</p>
+    </div>
+  );
+
+  return (
+    <div className="mb-4 space-y-5">
+      {treatment === "presenter" && (
+        <div>
+          {laneHead("Presenter", presenter ? "Required · chosen" : "Required", !presenter, "The one person who speaks to camera and delivers the story.")}
+          <div className="grid gap-2.5 sm:grid-cols-3">
+            {presenters.slice(0, 2).map((person) => tile(person, presenter === person.name, () => onPresenter(person.name), false))}
+            {presenter && !presenters.slice(0, 2).some((p) => p.name === presenter)
+              ? tile(presenters.find((p) => p.name === presenter) ?? presenters[0], true, () => setLibrary("presenter"), false)
+              : libraryTile("Choose from library", () => setLibrary("presenter"))}
+          </div>
+        </div>
+      )}
+
+      <div>
+        {laneHead(
+          "Characters in the story",
+          characters.length ? `Optional · ${characters.length} selected` : "Optional",
+          false,
+          treatment === "presenter" ? "Anyone else who appears in the scenes. Choose as many as you need." : "Everyone who can appear in the story. Choose as many as you need, or none."
+        )}
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+          {suggested.map((person) => tile(person, characters.includes(person.name), () => toggleCharacter(person.name), true))}
+          {libraryTile(extra.length ? `Library · ${extra.length} more` : "Character Library", () => setLibrary("characters"))}
+        </div>
+        {extra.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {extra.map((name) => {
+              const person = presenters.find((p) => p.name === name);
+              return (
+                <span key={name} className="inline-flex items-center gap-1.5 rounded-chip border border-brand/30 bg-tint py-0.5 pl-0.5 pr-1.5 text-label font-semibold text-brand-deep">
+                  {person && <FacePhoto person={person} className="size-5 rounded-full" />}
+                  {name}
+                  <button type="button" aria-label={`Remove ${name}`} onClick={() => toggleCharacter(name)} className="cursor-pointer text-ink-3 hover:text-ink">
+                    ×
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {library === "presenter" && (
+        <CharacterLibrary
+          title="Choose a presenter"
+          selected={presenter}
+          onSelect={(name) => {
+            onPresenter(name);
+            setLibrary(null);
+          }}
+          onClose={() => setLibrary(null)}
+          onGoToLibrary={() => onGoTo("/content-library/characters", "the Character Library")}
+        />
+      )}
+      {library === "characters" && (
+        <CharacterLibrary
+          multiple
+          title="Choose characters for the story"
+          selected={characters}
+          onSelect={toggleCharacter}
+          onClose={() => setLibrary(null)}
+          onGoToLibrary={() => onGoTo("/content-library/characters", "the Character Library")}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The narrator picker: the team's own voices first, then SwishX's, and a way
+ * to clone a new one without leaving the project. A voice cloned here is
+ * saved to the Voices library and selected for this project in one go.
+ */
 export function VoiceLibrary({
   selected,
   onSelect,
   onClose,
-  previewing,
-  onPreview,
   onGoToLibrary,
 }: {
   selected: string;
   onSelect: (name: string) => void;
   onClose: () => void;
+  /** Kept for callers that preview through their own player; this modal plays voices itself. */
   previewing?: string | null;
-  onPreview: (name: string) => void;
+  onPreview?: (name: string) => void;
   /** The full shelf lives on its own page — this modal is a shortlist. */
   onGoToLibrary: () => void;
 }) {
+  const voices = useVoicesStore((s) => s.voices);
+  const addVoice = useVoicesStore((s) => s.add);
+  const [playing, setPlaying] = useState<string | null>(null);
+  const [cloning, setCloning] = useState(false);
+  const team = voices.filter((v) => v.source === "team" && !v.archived);
+  const stock = voices.filter((v) => v.source === "swishx");
+
+  const play = (voice: Voice) => {
+    if (playing === voice.id) {
+      stopVoicePreview();
+      setPlaying(null);
+      return;
+    }
+    setPlaying(voice.id);
+    playVoicePreview(voice, () => setPlaying((p) => (p === voice.id ? null : p)));
+  };
+  const close = () => {
+    stopVoicePreview();
+    onClose();
+  };
+
+  const row = (v: Voice) => {
+    const active = selected === v.name || selected.split(" · ")[0] === v.name;
+    const isPlaying = playing === v.id;
+    return (
+      <div key={v.id} className={cn("flex items-center justify-between gap-3 rounded-control border p-3 transition", active ? "border-brand bg-tint" : "border-hair-2")}>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="truncate text-body-lg font-bold text-ink">{v.name}</span>
+            <span className="rounded-chip border border-tint-line bg-card px-2 py-0.5 text-caption font-bold text-brand-deep">{voiceLanguage(v.languageId).label}</span>
+            <span className="rounded-chip bg-subtle px-2 py-0.5 text-caption font-bold text-ink-3">{v.gender}</span>
+            {v.consent && <ShieldCheck className="size-3.5 text-ok" aria-label="Consent on file" />}
+          </div>
+          <span className="mt-0.5 block truncate text-body text-ink-3">
+            {v.accent} · {v.style}
+            {v.description ? ` · ${v.description}` : ""}
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => play(v)} aria-label={isPlaying ? `Stop ${v.name}` : `Play ${v.name}`}>
+            {isPlaying ? <Pause className="size-4 text-brand" /> : <Play className="size-4" />}
+          </Button>
+          <Button size="sm" variant={active ? "primary" : "secondary"} onClick={() => onSelect(v.name)}>
+            {active ? "Selected" : "Select"}
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Portal>
     <div className="fixed inset-0 z-50 grid place-items-center bg-ink/42 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="w-full max-w-[620px] overflow-hidden rounded-card border border-white/60 bg-card shadow-2xl">
-        <LibraryModalHeader title="Select narrator voice" onClose={onClose} />
-        <div className="max-h-[460px] overflow-y-auto space-y-2 p-4 sm:p-6">
-          {voiceList.map((v) => {
-            const active = selected.includes(v.name);
-            const isPlaying = previewing === v.name;
-            return (
-              <div
-                key={v.name}
-                className={cn(
-                  "flex items-center justify-between rounded-control border p-3 transition",
-                  active ? "border-brand bg-tint" : "border-hair-2"
-                )}
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-body-lg text-ink">{v.name}</span>
-                    <span className="rounded-chip bg-card px-2 py-0.5 text-caption font-bold text-brand-deep border border-tint-line">
-                      {v.tag}
-                    </span>
-                  </div>
-                  <span className="text-body text-ink-3 block mt-0.5">{v.accent} · {v.role}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => onPreview(v.name)}>
-                    {isPlaying ? <Pause className="size-4 text-brand" /> : <Play className="size-4" />}
-                  </Button>
-                  <Button size="sm" variant={active ? "primary" : "secondary"} onClick={() => onSelect(v.name)}>
-                    {active ? "Selected" : "Select"}
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
+        <LibraryModalHeader title="Select narrator voice" onClose={close} />
+        <div className="max-h-[480px] space-y-4 overflow-y-auto p-4 sm:p-6">
+          <button
+            type="button"
+            onClick={() => setCloning(true)}
+            className="flex w-full cursor-pointer items-center gap-3 rounded-control border border-dashed border-brand/40 bg-tint p-3 text-left transition hover:border-brand"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-white">
+              <Mic className="size-4" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-body-lg font-bold text-brand-deep">Clone a new voice</span>
+              <span className="block text-body text-ink-3">Record with a teleprompter or upload a clip. Saved to Voices and used here.</span>
+            </span>
+          </button>
+          {team.length > 0 && (
+            <div className="space-y-2">
+              <div className="text-caption font-bold uppercase tracking-wider text-ink-3">Your team&apos;s voices</div>
+              {team.map(row)}
+            </div>
+          )}
+          <div className="space-y-2">
+            <div className="text-caption font-bold uppercase tracking-wider text-ink-3">SwishX voices</div>
+            {stock.map(row)}
+          </div>
         </div>
         <LibraryModalGoTo label="Go to Voice Library" onClick={onGoToLibrary} />
       </div>
     </div>
+    {cloning && (
+      <VoiceCloneModal
+        saveLabel="Save and use"
+        onCancel={() => setCloning(false)}
+        onSave={(voice) => {
+          addVoice(voice);
+          setCloning(false);
+          onSelect(voice.name);
+        }}
+      />
+    )}
     </Portal>
   );
 }
@@ -269,8 +500,12 @@ const VOICES = ["Rohan · clear and measured", "Riya · friendly and clear", "De
 
 /** The whole section's fields, holding their own previews and library pickers. */
 export function CharacterVoiceSoundFields({
+  treatment,
+  onTreatment,
   presenter,
   onPresenter,
+  characters,
+  onCharacters,
   language,
   onLanguage,
   voice,
@@ -280,8 +515,13 @@ export function CharacterVoiceSoundFields({
   brandName,
   onGoTo,
 }: {
+  treatment: CastTreatment;
+  /** When given, the section asks how the video is told (the Ads plan has no treatment step). */
+  onTreatment?: (next: CastTreatment) => void;
   presenter: string;
   onPresenter: (name: string) => void;
+  characters: string[];
+  onCharacters: (names: string[]) => void;
   language: string;
   onLanguage: (next: string) => void;
   voice: string;
@@ -294,7 +534,6 @@ export function CharacterVoiceSoundFields({
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [previewing, setPreviewing] = useState<string | null>(null);
-  const [characters, setCharacters] = useState(false);
   const [voices, setVoices] = useState(false);
   const [customMusic, setCustomMusic] = useState<{ name: string; url: string } | null>(null);
   const musicRef = useRef<HTMLInputElement>(null);
@@ -329,42 +568,41 @@ export function CharacterVoiceSoundFields({
 
   return (
     <>
-      <div className="mb-4">
-        <div className="mb-2.5 text-body-lg font-semibold text-ink-3">Add characters for the video</div>
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          {presenters.slice(0, 2).map((person) => (
-            <button
-              key={person.name}
-              type="button"
-              onClick={() => onPresenter(presenter === person.name ? "" : person.name)}
-              className={cn(
-                "focus-ring flex min-h-[64px] cursor-pointer items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5",
-                presenter === person.name ? "border-brand bg-tint text-brand-deep shadow-xs ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-              )}
-            >
-              <FacePhoto person={person} className="size-10 shrink-0 rounded-full shadow-xs ring-2 ring-white" />
-              <div className="min-w-0 flex-1">
-                <span className="block truncate text-body-lg font-bold">{person.name}</span>
-                <span className="block text-label font-normal text-ink-3">{person.role}</span>
-              </div>
-              {presenter === person.name && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setCharacters(true)}
-            className="focus-ring flex min-h-[64px] cursor-pointer items-center gap-2.5 rounded-control border border-hair-2 bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-3 hover:bg-canvas"
-          >
-            <span className="flex -space-x-2.5">
-              {presenters.slice(2).map((person) => (
-                <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
-              ))}
-            </span>
-            <span className="ml-1 text-body-lg text-ink-2">Character Library</span>
-            <ArrowRight className="ml-auto size-4 text-ink-3" />
-          </button>
+      {onTreatment && (
+        <div className="mb-5">
+          <div className="mb-2.5 text-body-lg font-bold text-ink">How is the video told?</div>
+          <div className="grid gap-2.5 sm:grid-cols-2" role="radiogroup" aria-label="How the video is told">
+            {([
+              { id: "narrated" as const, title: "Narrated visual story", blurb: "A voiceover over branded scenes. Characters appear in the story." },
+              { id: "presenter" as const, title: "Presenter-led", blurb: "A doctor or approved presenter speaks to camera, with characters in the scenes." },
+            ]).map((t) => {
+              const on = treatment === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => onTreatment(t.id)}
+                  className={cn(
+                    "flex cursor-pointer items-start justify-between gap-3 rounded-control border p-3.5 text-left transition",
+                    on ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-brand/50"
+                  )}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-body-lg font-bold text-ink">{t.title}</span>
+                    <span className="mt-0.5 block text-label leading-snug text-ink-3">{t.blurb}</span>
+                  </span>
+                  <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border", on ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
+                    {on && <Check className="size-3" strokeWidth={3} />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+      <CastLanes treatment={treatment} presenter={presenter} onPresenter={onPresenter} characters={characters} onCharacters={onCharacters} onGoTo={onGoTo} />
       <div className="space-y-2">
         <DecisionRow label="Language" value={language} icon={<Globe2 className="size-4" />} editing={editing === "language"} onEdit={() => setEditing(editing === "language" ? null : "language")}>
           <ChoiceGroup
@@ -441,17 +679,6 @@ export function CharacterVoiceSoundFields({
           setEditing(null);
         }}
       />
-      {characters && (
-        <CharacterLibrary
-          selected={presenter}
-          onSelect={(name) => {
-            onPresenter(name);
-            setCharacters(false);
-          }}
-          onClose={() => setCharacters(false)}
-          onGoToLibrary={() => onGoTo("/content-library/characters", "the Character Library")}
-        />
-      )}
       {voices && (
         <VoiceLibrary
           selected={voice}

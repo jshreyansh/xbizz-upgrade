@@ -16,7 +16,7 @@ export interface DemoScenario {
   expected: string;
   assertions: {
     shouldClarify?: boolean;
-    presentationMode?: "narrated" | "presenter" | "visual-only";
+    presentationMode?: "narrated" | "presenter";
     treatmentId?: string;
     format?: string;
     length?: string;
@@ -81,12 +81,12 @@ export const demoScenarios: DemoScenario[] = [
   },
   {
     id: "visual-only",
-    label: "Visual-only social video",
+    label: "Short social video",
     category: "Dynamic branches",
-    description: "No narration or character should appear.",
-    expected: "Voice and character hidden · on-screen copy prioritized · 9:16",
-    assertions: { presentationMode: "visual-only", format: "9:16", length: "30 sec" },
-    inputs: { assetType: "video", brief: "Create a silent visual-only social video introducing DERMORA. Use on-screen copy and no narration.", audience: "HCP", market: "United States", intendedUse: "Instagram", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
+    description: "A narrated social cut that leans on on-screen copy, with a quiet music bed.",
+    expected: "Narrated visual story · on-screen copy prioritized · 9:16",
+    assertions: { presentationMode: "narrated", format: "9:16", length: "30 sec" },
+    inputs: { assetType: "video", brief: "Create a short social video introducing DERMORA. Lead with on-screen copy and keep the narration light.", audience: "HCP", market: "United States", intendedUse: "Instagram", selectedSourceIds: ["dermora-core", "dermora-claims", "dermora-brand"] },
   },
   {
     id: "own-script",

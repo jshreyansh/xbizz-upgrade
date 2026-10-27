@@ -1126,7 +1126,7 @@ export function StudioScreen() {
       id: "voice",
       icon: Mic2,
       label: "Voice",
-      value: presentationMode === "visual-only" ? "No narration" : voice,
+      value: voice,
     },
     { id: "language", icon: Languages, label: "Language", value: language },
     { id: "music", icon: Music, label: "Background music", value: music },
@@ -1135,11 +1135,7 @@ export function StudioScreen() {
       icon: Clapperboard,
       label: "Creative treatment",
       value:
-        presentationMode === "presenter"
-          ? "Presenter-led"
-          : presentationMode === "visual-only"
-          ? "Visual-only"
-          : "Narrated visual story",
+        presentationMode === "presenter" ? "Presenter-led" : "Narrated visual story",
     },
     {
       id: "frame",
@@ -2193,7 +2189,7 @@ export function StudioScreen() {
                          is on the list, not the window, because the chat
                          panel decides how wide this column is. */
                       <div className="pb-24">
-                        {presentationMode !== "visual-only" && <NarrationPlayer scenes={sceneList} voice={voice} />}
+                        <NarrationPlayer scenes={sceneList} voice={voice} />
                         <h3 className="pb-2.5 text-subhead font-[850] tracking-tight text-ink">Scenes</h3>
                         <StoryboardSummary
                           sceneCount={sceneList.length}

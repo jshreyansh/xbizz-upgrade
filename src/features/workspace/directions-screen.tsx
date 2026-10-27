@@ -60,7 +60,7 @@ import { moleculeFor } from "@/features/workspace/grounding-dossiers";
 import type { BrandDossier } from "@/features/dossiers/dossier-types";
 import { ResearchSourcesContent, researchSummary, type UploadedDoc } from "@/features/workspace/research-sources-section";
 import { PRESENTERS as presenters } from "@/features/workspace/presenters";
-import { AudioChoices, CharacterLibrary, FacePhoto, VoiceLibrary, playMusicTone, stopAudioPreview } from "@/features/workspace/character-voice-sound";
+import { AudioChoices, CastLanes, CharacterLibrary, FacePhoto, VoiceLibrary, castSummary, playMusicTone, stopAudioPreview } from "@/features/workspace/character-voice-sound";
 import {
   AUDIENCE_OPTIONS,
   BrandMarkContent,
@@ -151,7 +151,6 @@ const profiles: Partial<Record<AssetType, {
     treatments: [
       { id: "narrated", label: "Narrated visual story", description: "Voiceover with branded scenes, evidence and restrained motion." },
       { id: "presenter", label: "Presenter-led", description: "A doctor or approved presenter delivers the story on screen." },
-      { id: "visual-only", label: "Visual-only", description: "On-screen copy and visuals carry the story without narration." },
     ],
     units: [
       { title: "The unresolved need", detail: "Establish the clinical context", time: "8s" },
@@ -392,6 +391,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
    * assembled.
    */
   const [planLanded, setPlanLanded] = useState(false);
+  /* Everyone else who can appear in the story: several, and always optional. */
+  const [storyCharacters, setStoryCharacters] = useState<string[]>([]);
 
   if (assetType === "infographic") {
     return <InfographicDirectionsScreen />;
@@ -574,8 +575,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
      *
      * content-plan short-circuits on it — "magic-reel" forces narrated before
      * the brief is even read — so the tile someone happened to click on the
-     * way in was overriding every case, and the visual-only case arrived
-     * narrated with a Voice section it has no use for. Once a use case is
+     * way in was overriding every case, so a presenter-led brief arrived
+     * narrated. Once a use case is
      * chosen it is the statement of intent, so the brief governs, exactly as
      * the scenario's own assertions are written and verified.
      */
@@ -810,10 +811,8 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     "message",
     "delivery",
     // Avatar mode already voiced it in slot 2, so there is no separate Voice
-    // section to advance into there. Visual-only still gets one: a
-    // character can appear inside a scene under any treatment, not only a
-    // presenter narrating to camera, so the choice belongs here regardless
-    // of which treatment is picked.
+    // section to advance into there. Both treatments get one: characters can
+    // appear in the story either way, and presenter-led adds the presenter.
     ...(isMagicAvatar ? [] : (["voice"] as PlanSectionId[])),
     "story",
   ];
@@ -1031,7 +1030,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
     /* Credits are taken here, where the storyboard starts being built. */
     showToast(`${estimatedCredits.toLocaleString()} credits deducted`);
     /* What the editor's Video section will show: confirmed here, once. */
-    setPlanChoices({ characters: presenter ? [presenter] : [], storyStructure });
+    setPlanChoices({ characters: [...new Set([...(presenter ? [presenter] : []), ...storyCharacters])], storyStructure });
 
     addChatMessage({
       role: "user",
@@ -2223,50 +2222,19 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     <PlanSection
                       icon={Mic2}
                       title="Character, voice and sound"
-                      summary={`${presenter || "Choose character"} · ${language} · ${music}`}
+                      summary={`${castSummary(needsPresenter ? "presenter" : "narrated", presenter, storyCharacters)} · ${language} · ${music}`}
                       state={planState(sectionNeedsYou("voice"))}
-                      source={presenter ?? undefined}
                       open={openSection === "voice"}
                       onToggle={() => toggleSection("voice")}
                     >
-                      <div className="mb-4">
-                        <div className="text-body-lg font-semibold text-ink-3 mb-2.5">
-                          Add characters for the video
-                        </div>
-                        <div className="grid gap-2.5 sm:grid-cols-3">
-                          {presenters.slice(0, 2).map((person) => (
-                            <button
-                              key={person.name}
-                              onClick={() => selectPresenter(person.name)}
-                              className={cn(
-                                "focus-ring flex min-h-[64px] items-center gap-3 rounded-control border p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 cursor-pointer",
-                                presenter === person.name
-                                  ? "border-brand bg-tint ring-2 ring-brand/15 text-brand-deep shadow-xs"
-                                  : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
-                              )}
-                            >
-                              <FacePhoto person={person} className="size-10 rounded-full ring-2 ring-white shadow-xs shrink-0" />
-                              <div className="min-w-0 flex-1">
-                                <span className="block truncate font-bold text-body-lg">{person.name}</span>
-                                <span className="block text-label text-ink-3 font-normal">{person.role}</span>
-                              </div>
-                              {presenter === person.name && <Check className="size-4 shrink-0 text-brand" strokeWidth={3} />}
-                            </button>
-                          ))}
-                          <button
-                            onClick={() => setPresenterLibraryOpen(true)}
-                            className="focus-ring flex min-h-[64px] items-center gap-2.5 rounded-control border border-hair-2 bg-card p-3 text-left text-body-lg font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:border-hair-3 hover:bg-canvas cursor-pointer"
-                          >
-                            <span className="flex -space-x-2.5">
-                              {presenters.slice(2).map((person) => (
-                                <FacePhoto key={person.name} person={person} className="size-8 rounded-full border-2 border-white shadow-2xs" />
-                              ))}
-                            </span>
-                            <span className="ml-1 text-body-lg text-ink-2">Character Library</span>
-                            <ArrowRight className="ml-auto size-4 text-ink-3" />
-                          </button>
-                        </div>
-                      </div>
+                      <CastLanes
+                        treatment={needsPresenter ? "presenter" : "narrated"}
+                        presenter={presenter}
+                        onPresenter={selectPresenter}
+                        characters={storyCharacters}
+                        onCharacters={setStoryCharacters}
+                        onGoTo={(href, label) => exit.requestExit({ href, label })}
+                      />
                       <div className="space-y-2">
                         <DecisionRow
                           label="Language"
@@ -2997,7 +2965,6 @@ function SourceManager({
 function structureForTreatment(assetType: AssetType, treatmentId: string) {
   if (assetType === "video") {
     if (treatmentId === "presenter") return "Presenter introduction · Mechanism · Study outcomes · Practice summary";
-    if (treatmentId === "visual-only") return "Message statement · Mechanism graphic · Result callout · Required safety";
     return "The unresolved need · Product introduction · How it works · Pivotal evidence · Close and fair balance";
   }
   return "Cover · Clinical need · Product introduction · Mechanism · Pivotal evidence · Close";

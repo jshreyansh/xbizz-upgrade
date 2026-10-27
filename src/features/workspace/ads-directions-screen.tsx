@@ -52,7 +52,7 @@ import { GenerationProgress } from "@/features/workspace/generation-progress";
 import { AdsCampaignStoryboard, AdsToMakeList, KeyMessageFields } from "@/features/workspace/ads-campaign-plan";
 import { buildAdOutputs, buildImageAd } from "@/features/workspace/ad-campaign";
 import { AdsTemplateStep } from "@/features/workspace/ads-template-step";
-import { CharacterVoiceSoundFields } from "@/features/workspace/character-voice-sound";
+import { CharacterVoiceSoundFields, castSummary, type CastTreatment } from "@/features/workspace/character-voice-sound";
 import {
   BrandMarkContent,
   ChipChoices,
@@ -231,7 +231,11 @@ export function AdsDirectionsScreen() {
   /* Who appears, who narrates and what plays under it: only asked when the
      campaign makes video. Narrated by default, so a character is optional. */
   const makesVideo = kept.some((o) => o.format === "video");
+  /* How the video ads are told: a narrated story, or a presenter to camera. */
+  const [adTreatment, setAdTreatment] = useState<CastTreatment>("narrated");
   const [presenter, setPresenter] = useState("");
+  const [characters, setCharacters] = useState<string[]>([]);
+  const needsPresenter = makesVideo && adTreatment === "presenter" && !presenter;
   const language = useWorkspaceStore((s) => s.language);
   const voice = useWorkspaceStore((s) => s.voice);
   const music = useWorkspaceStore((s) => s.music);
@@ -252,7 +256,7 @@ export function AdsDirectionsScreen() {
     message: extraction === "ready" && noClaims,
     audience: reminderBlocked,
     ads: kept.length === 0,
-    voice: false,
+    voice: needsPresenter,
     visuals: false,
     references: false,
     logo: false,
@@ -277,7 +281,9 @@ export function AdsDirectionsScreen() {
           ? { title: "Reminder ads aren't allowed", detail: `${brandName} has a boxed warning. Choose Product Claim or Help-Seeking Ads.` }
           : kept.length === 0
             ? { title: "No ads to make", detail: "Tick at least one ad in Ads to make." }
-            : null;
+            : needsPresenter
+              ? { title: "Choose a presenter", detail: "The video ads are presenter-led. Pick who speaks to camera in Character, voice and sound." }
+              : null;
   const planReady = planPhase === "plan" && !blocker;
 
   const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
@@ -903,15 +909,21 @@ export function AdsDirectionsScreen() {
                   <PlanSectionShell
                     icon={Mic2}
                     title="Character, voice and sound"
-                    summary={`${presenter || "Narrated, no character"} · ${language} · ${music}`}
-                    state={planState(false, !presenter)}
-                    source={presenter || undefined}
+                    summary={`${adTreatment === "presenter" ? "Presenter-led" : "Narrated"} · ${castSummary(adTreatment, presenter, characters)} · ${language} · ${music}`}
+                    state={planState(needsPresenter, adTreatment === "narrated" && characters.length === 0)}
                     open={openSection === "voice"}
                     onToggle={() => toggleSection("voice")}
                   >
                     <CharacterVoiceSoundFields
+                      treatment={adTreatment}
+                      onTreatment={(next) => {
+                        setAdTreatment(next);
+                        if (next === "narrated") setPresenter("");
+                      }}
                       presenter={presenter}
                       onPresenter={setPresenter}
+                      characters={characters}
+                      onCharacters={setCharacters}
                       language={language}
                       onLanguage={setLanguage}
                       voice={voice}

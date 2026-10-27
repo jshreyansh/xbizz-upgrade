@@ -113,7 +113,7 @@ const ASSET_GROUPS: NavGroup[] = [
         children: [
           { label: "All Content", href: "/content-library" },
           { label: "Characters", href: "/content-library/characters", requires: ["create"] },
-          { label: "Voices", href: "#", soon: true },
+          { label: "Voices", href: "/content-library/voices", requires: ["create"] },
         ],
       },
       { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library", requires: [...LIBRARY_ACCESS] },
