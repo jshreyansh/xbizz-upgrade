@@ -42,6 +42,10 @@ export interface ModalProps {
   children: ReactNode;
 }
 
+/* Open dialogs, newest last: Escape and the focus trap belong to the top one,
+   so closing a preview opened over a form doesn't close the form too. */
+const openStack: symbol[] = [];
+
 const FOCUSABLE =
   'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
@@ -50,9 +54,11 @@ export function Modal({
   footer, hideClose, className, children,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const token = useRef(Symbol("modal"));
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      if (openStack[openStack.length - 1] !== token.current) return;
       if (e.key === "Escape") {
         onClose();
         return;
@@ -75,6 +81,8 @@ export function Modal({
 
   useEffect(() => {
     if (!open) return;
+    const self = token.current;
+    openStack.push(self);
     const previous = document.activeElement as HTMLElement | null;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -83,6 +91,7 @@ export function Modal({
     return () => {
       document.body.style.overflow = overflow;
       document.removeEventListener("keydown", onKeyDown);
+      openStack.splice(openStack.indexOf(self), 1);
       previous?.focus();
     };
   }, [open, onKeyDown]);

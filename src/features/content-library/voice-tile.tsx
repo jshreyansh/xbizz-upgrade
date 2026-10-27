@@ -105,9 +105,9 @@ export function VoiceTile({
       }
       footerRight={
         team && voice.consent ? (
-          <span className="inline-flex items-center gap-1 font-semibold text-ok" title={voice.consent.whose === "own" ? "Their own voice" : `Signed consent from ${voice.consent.person}`}>
+          <span className="inline-flex items-center gap-1 font-semibold text-ok" title={voice.consent.whose === "own" ? "Their own voice" : voice.consent.file ? `Signed consent form from ${voice.consent.person}` : `${voice.consent.person}'s consent confirmed by ${voice.consent.confirmedBy}`}>
             <ShieldCheck className="size-3" />
-            {voice.consent.whose === "own" ? "Own voice" : "Consent on file"}
+            {voice.consent.whose === "own" ? "Own voice" : voice.consent.file ? "Consent on file" : "Consent confirmed"}
           </span>
         ) : undefined
       }

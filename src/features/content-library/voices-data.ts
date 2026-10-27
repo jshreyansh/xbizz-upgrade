@@ -238,8 +238,11 @@ export interface VoiceConsent {
   whose: "own" | "other";
   /** The person speaking, when it isn't the person who cloned it. */
   person?: string;
-  /** The signed consent form, kept on the record. */
+  /** The signed consent form, kept on the record. Optional. */
   file?: string;
+  /** The form itself, for preview. Session-only. */
+  fileUrl?: string;
+  fileType?: string;
   /** Who confirmed it, and when. */
   confirmedBy: string;
   confirmedOn: string;

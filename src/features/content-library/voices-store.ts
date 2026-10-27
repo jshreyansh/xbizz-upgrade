@@ -66,8 +66,10 @@ export function speakAs(voice: Pick<Voice, "languageId" | "gender">, text: strin
 /** The recording a cloned voice was made from. */
 export function playOriginal(voice: Voice, onEnd: () => void) {
   stopVoicePreview();
+  /* No recording held this session (an example, or a sample take): read the
+     script it was recorded from instead, so there is always something to hear. */
   if (!voice.sampleUrl) {
-    setTimeout(onEnd, 300);
+    speakAs(voice, voiceLanguage(voice.languageId).script.join(" "), onEnd);
     return;
   }
   const audio = new Audio(voice.sampleUrl);

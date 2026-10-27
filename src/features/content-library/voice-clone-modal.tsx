@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowLeft, Check, FileUp, Mic, Pause, Play, RotateCcw, ShieldCheck, Sparkles, Square, Upload, UserRound, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Eye, FileText, FileUp, Mic, Pause, Play, RefreshCw, RotateCcw, ShieldCheck, Square, Upload, UserRound, Users, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
-import { Button } from "@/components/ui/button";
+import { Button, IconButton } from "@/components/ui/button";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
 import { Toggle } from "@/features/settings/settings-parts";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { speakAs, stopVoicePreview } from "@/features/content-library/voices-store";
-import { FieldLabel, FormSection, GenderSwitch, LanguageSelect, StyleSelect } from "@/features/content-library/voice-form-parts";
+import { DocPreviewModal, FieldLabel, GenderSwitch, LanguageSelect, StyleSelect, type AttachedDoc } from "@/features/content-library/voice-form-parts";
 import {
   VOICE_LANGUAGES,
   voiceLanguage,
@@ -116,11 +117,13 @@ export function VoiceCloneModal({
   };
   /* Leaving mid-recording must let go of the microphone. */
   const cloneTimerRef = useRef<number | null>(null);
+  const generateTimerRef = useRef<number | null>(null);
   useEffect(() => () => {
     if (recorderRef.current?.state === "recording") recorderRef.current.stop();
     release();
     stopVoicePreview();
     if (cloneTimerRef.current) window.clearInterval(cloneTimerRef.current);
+    if (generateTimerRef.current) window.clearTimeout(generateTimerRef.current);
   }, []);
 
   const finishTake = (next: Take) => {
@@ -261,7 +264,9 @@ export function VoiceCloneModal({
   const [cleanup, setCleanup] = useState(false);
   const [whose, setWhose] = useState<"own" | "other">("own");
   const [person, setPerson] = useState("");
-  const [consentFile, setConsentFile] = useState<string | null>(null);
+  /* The signed form is optional; once attached it can be previewed, replaced or removed. */
+  const [consentFile, setConsentFile] = useState<AttachedDoc | null>(null);
+  const [previewingDoc, setPreviewingDoc] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const consentRef = useRef<HTMLInputElement>(null);
 
@@ -271,17 +276,25 @@ export function VoiceCloneModal({
   /* Named for the speaker until the user names it themselves. */
   const suggestedName = `${whose === "other" ? person.trim() || "New voice" : myName} · ${lang.label}`;
   const voiceName = nameTouched ? name : suggestedName;
-  const consentOk = agreed && (whose === "own" || (person.trim().length > 0 && !!consentFile));
+  const consentOk = agreed && (whose === "own" || person.trim().length > 0);
   const ready = !!take && voiceName.trim().length > 0 && consentOk;
 
   /* ── Playback of the take ── */
   const [playingTake, setPlayingTake] = useState(false);
   const playerRef = useRef<HTMLAudioElement | null>(null);
   const toggleTake = () => {
-    if (!take?.url) return;
+    if (!take) return;
     if (playingTake) {
       playerRef.current?.pause();
+      stopVoicePreview();
       setPlayingTake(false);
+      return;
+    }
+    /* A sample take (no microphone) has no audio of its own: it plays the
+       script it stands in for, read aloud, so the comparison still works. */
+    if (!take.url) {
+      setPlayingTake(true);
+      speakAs({ languageId: take.languageId, gender: take.gender }, voiceLanguage(take.languageId).script.join(" "), () => setPlayingTake(false));
       return;
     }
     const audio = playerRef.current ?? new Audio();
@@ -329,9 +342,33 @@ export function VoiceCloneModal({
   const similarity = take ? Math.min(97, 86 + (Math.round(take.seconds) % 9) + (take.method === "recorded" ? 2 : 0) - (cleanup ? 3 : 0)) : 0;
 
   /* ── The result: the recording and the clone, side by side ── */
+  /* What's typed, and what the clone has actually said. They differ until
+     Generate runs, and the clone card always plays the one it said. */
+  const defaultLine = lang.script[1] ?? lang.script[0];
   const [tryLine, setTryLine] = useState<string | null>(null);
-  const line = tryLine ?? lang.script[1] ?? lang.script[0];
+  const draft = tryLine ?? defaultLine;
+  const [generatedLine, setGeneratedLine] = useState<string | null>(null);
+  const line = generatedLine ?? defaultLine;
+  const stale = draft.trim() !== line.trim();
+  const [generating, setGenerating] = useState(false);
   const [playingClone, setPlayingClone] = useState(false);
+  const generate = () => {
+    const text = draft.trim();
+    if (!text || generating) return;
+    stopVoicePreview();
+    playerRef.current?.pause();
+    setPlayingTake(false);
+    setPlayingClone(false);
+    setGenerating(true);
+    generateTimerRef.current = window.setTimeout(() => {
+      generateTimerRef.current = null;
+      setGeneratedLine(text);
+      setGenerating(false);
+      /* Heard straight away: generating is for listening. */
+      setPlayingClone(true);
+      speakAs({ languageId: lang.id, gender: voiceGender }, text, () => setPlayingClone(false));
+    }, 1300);
+  };
   const playClone = () => {
     if (playingClone) {
       stopVoicePreview();
@@ -372,7 +409,9 @@ export function VoiceCloneModal({
       consent: {
         whose,
         person: whose === "other" ? person.trim() : undefined,
-        file: whose === "other" ? consentFile ?? undefined : undefined,
+        file: whose === "other" ? consentFile?.name : undefined,
+        fileUrl: whose === "other" ? consentFile?.url : undefined,
+        fileType: whose === "other" ? consentFile?.type : undefined,
         confirmedBy: myName,
         confirmedOn: "Just now",
       },
@@ -397,7 +436,7 @@ export function VoiceCloneModal({
           {take?.method === "uploaded" ? "Use another clip" : "Record again"}
         </Button>
         <Button onClick={clone} disabled={!ready} title={ready ? undefined : "Name the voice and confirm whose it is first"} className="gap-1.5 px-5 font-bold">
-          <Sparkles className="size-4" />
+          <LogoMark size={15} />
           Clone voice
         </Button>
       </div>
@@ -609,33 +648,35 @@ export function VoiceCloneModal({
 
       {/* ── What SwishX heard, and whose voice it is ── */}
       {step === "details" && take && (
-        <div className="space-y-5">
-          <div className="flex items-center gap-3 rounded-control border border-ok-line bg-ok-bg px-3.5 py-3">
+        /* One screen, no scroll: the recording, two rows of fields, consent. */
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 rounded-control border border-ok-line bg-ok-bg py-2 pl-2 pr-3.5">
             <button
               type="button"
               onClick={toggleTake}
-              disabled={!take.url}
               aria-label={playingTake ? "Pause the recording" : "Play the recording"}
-              className="grid size-9 shrink-0 cursor-pointer place-items-center rounded-full bg-ok text-white transition hover:opacity-90 disabled:cursor-default disabled:opacity-50"
+              className="grid size-8 shrink-0 cursor-pointer place-items-center rounded-full bg-ok text-white transition hover:opacity-90 disabled:cursor-default disabled:opacity-50"
             >
-              {playingTake ? <Pause className="size-4 fill-current" /> : <Play className="ml-0.5 size-4 fill-current" />}
+              {playingTake ? <Pause className="size-3.5 fill-current" /> : <Play className="ml-0.5 size-3.5 fill-current" />}
             </button>
-            <div className="flex h-8 min-w-0 flex-1 items-center gap-[2px]" aria-hidden>
-              {Array.from({ length: 60 }, (_, i) => {
-                const src = take.levels.length ? take.levels[Math.floor((i / 60) * take.levels.length)] ?? 0 : 0.3;
-                return <span key={i} className="flex-1 rounded-full bg-ok/70" style={{ height: `${Math.max(10, src * 100)}%` }} />;
+            <div className="flex h-6 min-w-0 flex-1 items-center gap-[2px]" aria-hidden>
+              {Array.from({ length: 64 }, (_, i) => {
+                const src = take.levels.length ? take.levels[Math.floor((i / 64) * take.levels.length)] ?? 0 : 0.3;
+                return <span key={i} className="flex-1 rounded-full bg-ok/70" style={{ height: `${Math.max(18, src * 100)}%` }} />;
               })}
             </div>
-            <div className="shrink-0 text-right">
-              <div className="text-label font-bold text-ok">{clock(take.seconds)} · {take.method === "recorded" ? "Recorded" : "Uploaded"}</div>
-              <div className="text-caption text-ok/80">{take.fileName ?? "Clear enough to clone"}</div>
-            </div>
+            <span className="shrink-0 text-label font-bold text-ok">
+              {clock(take.seconds)} · {take.method === "recorded" ? "Recorded" : take.fileName ?? "Uploaded"}
+            </span>
           </div>
 
-          <FormSection title="Name and description">
-            <div>
+          {/* What it is — name and description — then how it's tagged. */}
+          <div className="grid grid-cols-1 gap-x-3 gap-y-3 sm:grid-cols-12">
+            <div className="sm:col-span-6">
               <FieldLabel label="Name" source={nameTouched ? undefined : { text: "Suggested", guessed: true }} />
               <Field
+                size="sm"
+                className="h-9"
                 value={voiceName}
                 onChange={(e) => {
                   setNameTouched(true);
@@ -644,60 +685,53 @@ export function VoiceCloneModal({
                 placeholder="e.g. Dr. Maya Kapoor · English"
               />
             </div>
-            <div>
+            <div className="sm:col-span-6">
               <FieldLabel label="Description" optional />
-              <Field multiline rows={2} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Who it is, and what it's for: e.g. Our dermatology KOL, for patient explainers." />
+              <Field size="sm" className="h-9" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Who it is and what it's for, e.g. our dermatology KOL" />
             </div>
-          </FormSection>
-
-          {/* The tags, each saying where its value came from. */}
-          <FormSection title="How it's tagged" hint="Projects filter voices by these">
-            <div className="grid gap-x-4 gap-y-3.5 sm:grid-cols-2">
-              <div>
-                <FieldLabel
-                  label="Language"
-                  source={languageId ? undefined : take.languageFrom === "chosen" ? { text: "You recorded in it" } : { text: `Detected · ${take.confidence}% sure`, guessed: true }}
-                />
-                <LanguageSelect
-                  value={lang.id}
-                  onChange={(id) => {
-                    setLanguageId(id);
-                    setAccent(null);
-                  }}
-                />
-              </div>
-              <div>
-                <FieldLabel label="Voice" source={gender ? undefined : { text: "SwishX's guess", guessed: true }} />
-                <GenderSwitch value={voiceGender} onChange={setGender} />
-              </div>
-              <div>
-                <FieldLabel label="Accent" source={accent === null ? { text: `From ${lang.label}`, guessed: true } : undefined} />
-                <Field value={voiceAccent} onChange={(e) => setAccent(e.target.value)} />
-              </div>
-              <div>
-                <FieldLabel label="Style" />
-                <StyleSelect value={style} onChange={setStyle} />
-              </div>
+            <div className="sm:col-span-3">
+              <FieldLabel
+                label="Language"
+                source={languageId ? undefined : take.languageFrom === "chosen" ? { text: "Recorded" } : { text: `Detected ${take.confidence}%`, guessed: true }}
+              />
+              <LanguageSelect
+                value={lang.id}
+                onChange={(id) => {
+                  setLanguageId(id);
+                  setAccent(null);
+                }}
+              />
             </div>
-          </FormSection>
+            <div className="sm:col-span-3">
+              <FieldLabel label="Voice" source={gender ? undefined : { text: "Guess", guessed: true }} />
+              <GenderSwitch value={voiceGender} onChange={setGender} />
+            </div>
+            <div className="sm:col-span-3">
+              <FieldLabel label="Accent" />
+              <Field size="sm" className="h-9" value={voiceAccent} onChange={(e) => setAccent(e.target.value)} />
+            </div>
+            <div className="sm:col-span-3">
+              <FieldLabel label="Style" />
+              <StyleSelect value={style} onChange={setStyle} />
+            </div>
+          </div>
 
-          <FormSection title="Recording">
-            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-control border border-hair-2 bg-card px-3.5 py-3">
-              <span className="min-w-0">
-                <span className="block text-body font-bold text-ink">Clean up background noise</span>
-                <span className="block text-caption text-ink-3">Only if the room was noisy. Cleaning a clean clip makes the clone sound less like the speaker.</span>
-              </span>
-              <Toggle checked={cleanup} onChange={setCleanup} label="Clean up background noise" />
-            </label>
-          </FormSection>
+          <label className="flex w-fit cursor-pointer items-center gap-2.5" title="Only if the room was noisy. Cleaning a clean clip makes the clone sound less like the speaker.">
+            <Toggle checked={cleanup} onChange={setCleanup} label="Clean up background noise" />
+            <span className="text-label font-semibold text-ink-2">Clean up background noise</span>
+            <span className="text-caption text-ink-4">only if the room was noisy</span>
+          </label>
 
           {/* ── Consent ── */}
-          <FormSection title="Whose voice is this?" hint="Kept with the voice for audits">
-          <div className="space-y-3 rounded-card border border-hair-2 bg-canvas p-4">
-            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Whose voice">
+          <div className="space-y-2.5 rounded-control border border-hair-2 bg-canvas p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="mr-1 flex items-center gap-1.5 text-label font-bold text-ink">
+                <ShieldCheck className="size-3.5 text-ok" />
+                Whose voice is this?
+              </span>
               {([
-                { id: "own" as const, icon: UserRound, title: "My own voice", blurb: `${myName}, speaking` },
-                { id: "other" as const, icon: Users, title: "Someone else's", blurb: "A doctor, presenter or actor, with their signed consent" },
+                { id: "own" as const, icon: UserRound, title: `My own · ${myName}` },
+                { id: "other" as const, icon: Users, title: "Someone else's" },
               ]).map((o) => {
                 const on = whose === o.id;
                 const Icon = o.icon;
@@ -711,46 +745,75 @@ export function VoiceCloneModal({
                       setWhose(o.id);
                       setAgreed(false);
                     }}
-                    className={cn("flex cursor-pointer items-start gap-2.5 rounded-control border bg-card p-3 text-left transition", on ? "border-brand ring-2 ring-brand/15" : "border-hair-2 hover:border-brand/50")}
+                    className={cn(
+                      "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-chip border px-3 text-label font-semibold transition",
+                      on ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-2 hover:border-brand/50"
+                    )}
                   >
-                    <Icon className={cn("mt-0.5 size-4 shrink-0", on ? "text-brand" : "text-ink-3")} />
-                    <span className="min-w-0">
-                      <span className="block text-body font-bold text-ink">{o.title}</span>
-                      <span className="block text-caption text-ink-3">{o.blurb}</span>
-                    </span>
+                    <Icon className="size-3.5" />
+                    {o.title}
                   </button>
                 );
               })}
             </div>
 
             {whose === "other" && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Their name" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="e.g. Dr. Maya Kapoor" />
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-label font-semibold text-ink-3">Signed consent form</span>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Field size="sm" className="h-9" value={person} onChange={(e) => setPerson(e.target.value)} placeholder="Their name, e.g. Dr. Maya Kapoor" aria-label="Their name" />
+                {consentFile ? (
+                  /* Attached: what it is, and what can be done with it. */
+                  <div className="flex h-9 min-w-0 items-center gap-1 rounded-control border border-ok-line bg-ok-bg pl-3 pr-1 text-ok">
+                    <FileText className="size-4 shrink-0" />
+                    <button
+                      type="button"
+                      onClick={() => setPreviewingDoc(true)}
+                      className="min-w-0 flex-1 cursor-pointer truncate text-left text-body font-semibold hover:underline"
+                      title={`Preview ${consentFile.name}`}
+                    >
+                      {consentFile.name}
+                    </button>
+                    <IconButton aria-label="Preview the consent form" title="Preview" size={7} onClick={() => setPreviewingDoc(true)}>
+                      <Eye className="size-3.5" />
+                    </IconButton>
+                    <IconButton aria-label="Replace the consent form" title="Replace" size={7} onClick={() => consentRef.current?.click()}>
+                      <RefreshCw className="size-3.5" />
+                    </IconButton>
+                    <IconButton
+                      aria-label="Remove the consent form"
+                      title="Remove"
+                      size={7}
+                      onClick={() => {
+                        URL.revokeObjectURL(consentFile.url);
+                        setConsentFile(null);
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </IconButton>
+                  </div>
+                ) : (
                   <button
                     type="button"
                     onClick={() => consentRef.current?.click()}
-                    className={cn(
-                      "flex h-10 cursor-pointer items-center gap-2 rounded-control border px-3 text-left text-body transition",
-                      consentFile ? "border-ok-line bg-ok-bg text-ok" : "border-dashed border-hair-3 bg-card text-ink-3 hover:border-brand"
-                    )}
+                    className="flex h-9 cursor-pointer items-center gap-2 rounded-control border border-dashed border-hair-3 bg-card px-3 text-left text-body text-ink-3 transition hover:border-brand"
                   >
-                    {consentFile ? <Check className="size-4 shrink-0" /> : <FileUp className="size-4 shrink-0" />}
-                    <span className="truncate">{consentFile ?? "Attach PDF or image"}</span>
+                    <FileUp className="size-4 shrink-0" />
+                    <span className="truncate">Attach signed consent form</span>
+                    <span className="ml-auto shrink-0 text-caption text-ink-4">optional</span>
                   </button>
-                  <input
-                    ref={consentRef}
-                    type="file"
-                    accept=".pdf,image/*"
-                    hidden
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      e.target.value = "";
-                      if (file) setConsentFile(file.name);
-                    }}
-                  />
-                </div>
+                )}
+                <input
+                  ref={consentRef}
+                  type="file"
+                  accept=".pdf,image/*"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    if (consentFile) URL.revokeObjectURL(consentFile.url);
+                    setConsentFile({ name: file.name, url: URL.createObjectURL(file), type: file.type });
+                  }}
+                />
               </div>
             )}
 
@@ -759,17 +822,14 @@ export function VoiceCloneModal({
               <span className="text-label leading-snug text-ink-2">
                 {whose === "own"
                   ? "This is my voice, and I agree to SwishX cloning it for this workspace's content."
-                  : `I have ${person.trim() || "this person"}'s written consent to clone their voice and use it in this workspace's content. The form is attached.`}
+                  : `I have ${person.trim() || "this person"}'s written consent to clone their voice for this workspace's content.`}
+                <span className="text-ink-4"> Kept with the voice for audits.</span>
               </span>
             </label>
-            <p className="flex items-center gap-1.5 text-caption text-ink-4">
-              <ShieldCheck className="size-3.5 text-ok" />
-              Anyone using this voice can see whose it is and the consent behind it.
-            </p>
           </div>
-          </FormSection>
         </div>
       )}
+
       {/* ── Cloning ── */}
       {step === "cloning" && (
         <div className="space-y-5 py-4">
@@ -828,8 +888,8 @@ export function VoiceCloneModal({
 
           <div className="grid gap-3 sm:grid-cols-2">
             {([
-              { id: "source", title: "Your recording", sub: `${clock(take.seconds)} · ${take.method === "recorded" ? "recorded" : "uploaded"}${cleanup ? " · noise removed" : ""}`, playing: playingTake, tone: "ok", disabled: !take.url },
-              { id: "clone", title: "Cloned voice", sub: "Reading the line below", playing: playingClone, tone: "brand", disabled: false },
+              { id: "source", title: "Your recording", sub: `${clock(take.seconds)} · ${take.method === "recorded" ? "recorded" : "uploaded"}${cleanup ? " · noise removed" : ""}`, playing: playingTake, tone: "ok", disabled: false },
+              { id: "clone", title: "Cloned voice", sub: generating ? "Generating your line…" : stale ? "Still the previous line. Generate to hear yours" : "Reading the line below", playing: playingClone, tone: "brand", disabled: generating },
             ] as const).map((card) => (
               <div key={card.id} className={cn("space-y-3 rounded-card border p-4", card.tone === "brand" ? "border-brand/30 bg-tint" : "border-hair-2 bg-card")}>
                 <div className="flex items-center justify-between gap-2">
@@ -847,7 +907,13 @@ export function VoiceCloneModal({
                       card.tone === "brand" ? "bg-brand" : "bg-ok"
                     )}
                   >
-                    {card.playing ? <Pause className="size-4 fill-current" /> : <Play className="ml-0.5 size-4 fill-current" />}
+                    {card.id === "clone" && generating ? (
+                      <LogoMark size={16} className="animate-spin" />
+                    ) : card.playing ? (
+                      <Pause className="size-4 fill-current" />
+                    ) : (
+                      <Play className="ml-0.5 size-4 fill-current" />
+                    )}
                   </button>
                 </div>
                 <div className="flex h-9 items-center gap-[2px]" aria-hidden>
@@ -862,28 +928,53 @@ export function VoiceCloneModal({
             ))}
           </div>
 
-          <Field
-            label={`Try a line in ${lang.label}`}
-            multiline
-            rows={2}
-            value={line}
-            onChange={(e) => {
-              setTryLine(e.target.value);
-              if (playingClone) {
-                stopVoicePreview();
-                setPlayingClone(false);
-              }
-            }}
-            hint="Type anything and press play on Cloned voice. This line becomes the voice's preview in the library."
-          />
+          <div>
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <span className="text-label font-semibold text-ink-2">Try a line in {lang.label}</span>
+              {stale && !generating && <span className="text-caption font-semibold text-warn">Not generated yet</span>}
+            </div>
+            <div className={cn("rounded-control border bg-card transition focus-within:ring-1", stale ? "border-warn-line focus-within:border-warn focus-within:ring-warn/20" : "border-hair-2 focus-within:border-brand focus-within:ring-brand/20")}>
+              <textarea
+                rows={2}
+                value={draft}
+                maxLength={240}
+                onChange={(e) => {
+                  setTryLine(e.target.value);
+                  if (playingClone) {
+                    stopVoicePreview();
+                    setPlayingClone(false);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  /* Enter generates; Shift+Enter is a new line. */
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    generate();
+                  }
+                }}
+                placeholder="Type what the voice should say"
+                className="block w-full resize-none bg-transparent px-3.5 pt-2.5 text-body text-ink outline-none placeholder:text-ink-4"
+              />
+              <div className="flex items-center justify-between gap-3 px-2.5 pb-2 pl-3.5">
+                <span className="text-caption text-ink-4">
+                  {draft.length}/240 · Enter to generate · this line becomes the voice&apos;s preview
+                </span>
+                <Button size="sm" onClick={generate} disabled={!draft.trim() || generating || !stale} className="h-8 shrink-0 gap-1.5 px-3 font-bold">
+                  <LogoMark size={13} className={generating ? "animate-spin" : undefined} />
+                  {generating ? "Generating…" : stale ? "Generate in this voice" : "Generated"}
+                </Button>
+              </div>
+            </div>
+          </div>
 
           <div className="flex flex-wrap items-center gap-1.5 text-caption text-ink-3">
             <ShieldCheck className="size-3.5 text-ok" />
-            {whose === "own" ? `${myName}'s own voice` : `${person.trim()}'s voice · ${consentFile}`}
+            {whose === "own" ? `${myName}'s own voice` : `${person.trim()}'s voice${consentFile ? ` · ${consentFile.name}` : " · no form attached"}`}
             <span className="text-ink-4">· consent kept with the voice</span>
           </div>
         </div>
       )}
+      {previewingDoc && consentFile && <DocPreviewModal doc={consentFile} onClose={() => setPreviewingDoc(false)} />}
     </Modal>
   );
 }
