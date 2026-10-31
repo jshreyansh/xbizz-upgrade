@@ -277,15 +277,17 @@ export interface Indication {
   isNew?: boolean;
   condition?: string;
   onlyTreatment?: boolean;
-  /** The therapy area this use sits in, which a brand's indications can differ by. */
-  therapyArea?: string;
+  /** The therapy areas this use sits in, the main one first. A use can span
+   *  several (heart risk in psoriasis is cardiology and dermatology), and the
+   *  person picks which the content speaks to. */
+  therapyAreas?: string[];
 }
 
-/* Shorthand for the label data below: name, therapy area, plain-language
+/* Shorthand for the label data below: name, therapy areas, plain-language
    condition, the label's wording, and any flags. */
-const ind = (label: string, therapyArea: string, condition: string, wording: string, flags?: Pick<Indication, "isNew" | "onlyTreatment">): Indication => ({
+const ind = (label: string, therapyAreas: string[], condition: string, wording: string, flags?: Pick<Indication, "isNew" | "onlyTreatment">): Indication => ({
   label,
-  therapyArea,
+  therapyAreas,
   condition,
   wording,
   ...flags,
@@ -296,161 +298,161 @@ const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("CV risk in psoriasis", "Cardiology", "heart risk in psoriasis", "To reduce the risk of major adverse cardiovascular events in adults with moderate-to-severe plaque psoriasis and established cardiovascular disease.", { isNew: true }),
-      ind("Plaque psoriasis", "Dermatology", "plaque psoriasis", "Moderate-to-severe plaque psoriasis in adults who are candidates for systemic therapy or phototherapy."),
-      ind("Psoriatic arthritis", "Rheumatology", "psoriatic arthritis", "Active psoriatic arthritis in adults, alone or in combination with a conventional synthetic DMARD such as methotrexate."),
-      ind("Crohn's disease", "Gastroenterology", "Crohn's disease", "Moderately to severely active Crohn's disease in adults who have had an inadequate response, lost response or were intolerant to conventional therapy or a TNF blocker."),
-      ind("Ulcerative colitis", "Gastroenterology", "ulcerative colitis", "Moderately to severely active ulcerative colitis in adults who have had an inadequate response or were intolerant to conventional therapy."),
-      ind("Non-infectious uveitis", "Ophthalmology", "uveitis", "Non-infectious intermediate, posterior and panuveitis in adults, to reduce the risk of flare and preserve vision."),
+      ind("CV risk in psoriasis", ["Cardiology", "Dermatology"], "heart risk in psoriasis", "To reduce the risk of major adverse cardiovascular events in adults with moderate-to-severe plaque psoriasis and established cardiovascular disease.", { isNew: true }),
+      ind("Plaque psoriasis", ["Dermatology", "Immunology"], "plaque psoriasis", "Moderate-to-severe plaque psoriasis in adults who are candidates for systemic therapy or phototherapy."),
+      ind("Psoriatic arthritis", ["Rheumatology", "Dermatology", "Immunology"], "psoriatic arthritis", "Active psoriatic arthritis in adults, alone or in combination with a conventional synthetic DMARD such as methotrexate."),
+      ind("Crohn's disease", ["Gastroenterology", "Immunology"], "Crohn's disease", "Moderately to severely active Crohn's disease in adults who have had an inadequate response, lost response or were intolerant to conventional therapy or a TNF blocker."),
+      ind("Ulcerative colitis", ["Gastroenterology", "Immunology"], "ulcerative colitis", "Moderately to severely active ulcerative colitis in adults who have had an inadequate response or were intolerant to conventional therapy."),
+      ind("Non-infectious uveitis", ["Ophthalmology", "Rheumatology"], "uveitis", "Non-infectious intermediate, posterior and panuveitis in adults, to reduce the risk of flare and preserve vision."),
     ],
   },
   onkavia: {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      ind("Polycythemia vera", "Hematology", "polycythemia vera", "Polycythemia vera in adults who have had an inadequate response to or are intolerant of hydroxyurea.", { isNew: true }),
-      ind("Myelofibrosis", "Oncology", "myelofibrosis", "Intermediate or high-risk myelofibrosis in adults, including primary myelofibrosis, post-polycythemia vera and post-essential thrombocythemia myelofibrosis.", { onlyTreatment: true }),
-      ind("Acute GVHD", "Transplant Medicine", "graft-versus-host disease", "Steroid-refractory acute graft-versus-host disease in adult and pediatric patients 12 years and older."),
-      ind("Chronic GVHD", "Transplant Medicine", "chronic graft-versus-host disease", "Chronic graft-versus-host disease after failure of one or two lines of systemic therapy in adult and pediatric patients 12 years and older."),
-      ind("Atopic dermatitis", "Dermatology", "eczema", "Short-term and non-continuous chronic treatment of mild to moderate atopic dermatitis in non-immunocompromised patients 12 years and older (cream only)."),
-      ind("Nonsegmental vitiligo", "Dermatology", "vitiligo", "Topical treatment of nonsegmental vitiligo in adult and pediatric patients 12 years and older (cream only)."),
+      ind("Polycythemia vera", ["Hematology", "Oncology"], "polycythemia vera", "Polycythemia vera in adults who have had an inadequate response to or are intolerant of hydroxyurea.", { isNew: true }),
+      ind("Myelofibrosis", ["Oncology", "Hematology"], "myelofibrosis", "Intermediate or high-risk myelofibrosis in adults, including primary myelofibrosis, post-polycythemia vera and post-essential thrombocythemia myelofibrosis.", { onlyTreatment: true }),
+      ind("Acute GVHD", ["Transplant Medicine", "Hematology"], "graft-versus-host disease", "Steroid-refractory acute graft-versus-host disease in adult and pediatric patients 12 years and older."),
+      ind("Chronic GVHD", ["Transplant Medicine", "Hematology", "Dermatology"], "chronic graft-versus-host disease", "Chronic graft-versus-host disease after failure of one or two lines of systemic therapy in adult and pediatric patients 12 years and older."),
+      ind("Atopic dermatitis", ["Dermatology", "Allergy & Immunology", "Pediatrics"], "eczema", "Short-term and non-continuous chronic treatment of mild to moderate atopic dermatitis in non-immunocompromised patients 12 years and older (cream only)."),
+      ind("Nonsegmental vitiligo", ["Dermatology", "Immunology"], "vitiligo", "Topical treatment of nonsegmental vitiligo in adult and pediatric patients 12 years and older (cream only)."),
     ],
   },
   nirvexa: {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      ind("Alopecia areata", "Dermatology", "alopecia areata", "Severe alopecia areata in adults.", { isNew: true }),
-      ind("Rheumatoid arthritis", "Rheumatology", "rheumatoid arthritis", "Moderately to severely active rheumatoid arthritis in adults who have had an inadequate response or intolerance to one or more TNF blockers."),
-      ind("Juvenile idiopathic arthritis", "Pediatrics", "juvenile arthritis", "Active polyarticular juvenile idiopathic arthritis in patients 2 years of age and older."),
-      ind("Ulcerative colitis", "Gastroenterology", "ulcerative colitis", "Moderately to severely active ulcerative colitis in adults who have had an inadequate response or intolerance to one or more TNF blockers."),
-      ind("Atopic dermatitis", "Dermatology", "eczema", "Refractory, moderate-to-severe atopic dermatitis in adults and adolescents 12 and older whose disease is not adequately controlled with other systemic drugs."),
-      ind("COVID-19 in hospital", "Infectious Diseases", "COVID-19", "COVID-19 in hospitalized adults requiring supplemental oxygen, non-invasive or invasive mechanical ventilation, or ECMO."),
+      ind("Alopecia areata", ["Dermatology", "Immunology"], "alopecia areata", "Severe alopecia areata in adults.", { isNew: true }),
+      ind("Rheumatoid arthritis", ["Rheumatology", "Immunology"], "rheumatoid arthritis", "Moderately to severely active rheumatoid arthritis in adults who have had an inadequate response or intolerance to one or more TNF blockers."),
+      ind("Juvenile idiopathic arthritis", ["Pediatrics", "Rheumatology"], "juvenile arthritis", "Active polyarticular juvenile idiopathic arthritis in patients 2 years of age and older."),
+      ind("Ulcerative colitis", ["Gastroenterology", "Immunology"], "ulcerative colitis", "Moderately to severely active ulcerative colitis in adults who have had an inadequate response or intolerance to one or more TNF blockers."),
+      ind("Atopic dermatitis", ["Dermatology", "Allergy & Immunology", "Pediatrics"], "eczema", "Refractory, moderate-to-severe atopic dermatitis in adults and adolescents 12 and older whose disease is not adequately controlled with other systemic drugs."),
+      ind("COVID-19 in hospital", ["Infectious Diseases", "Respiratory", "Hospital Medicine"], "COVID-19", "COVID-19 in hospitalized adults requiring supplemental oxygen, non-invasive or invasive mechanical ventilation, or ECMO."),
     ],
   },
   cardioxa: {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      ind("HFpEF", "Cardiology", "heart failure", "To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure and left ventricular ejection fraction above 40%.", { isNew: true }),
-      ind("HFrEF", "Cardiology", "heart failure", "To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure with reduced ejection fraction (NYHA class II–IV)."),
-      ind("Chronic kidney disease", "Nephrology", "chronic kidney disease", "To reduce the risk of sustained eGFR decline, end-stage kidney disease, cardiovascular death and hospitalization in adults with chronic kidney disease at risk of progression."),
-      ind("Type 2 diabetes", "Endocrinology", "type 2 diabetes", "As an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus."),
-      ind("Type 2 diabetes, ages 10+", "Pediatrics", "type 2 diabetes in children", "As an adjunct to diet and exercise to improve glycemic control in pediatric patients aged 10 years and older with type 2 diabetes mellitus."),
+      ind("HFpEF", ["Cardiology", "Internal Medicine"], "heart failure", "To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure and left ventricular ejection fraction above 40%.", { isNew: true }),
+      ind("HFrEF", ["Cardiology", "Internal Medicine"], "heart failure", "To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure with reduced ejection fraction (NYHA class II–IV)."),
+      ind("Chronic kidney disease", ["Nephrology", "Cardiology", "Endocrinology"], "chronic kidney disease", "To reduce the risk of sustained eGFR decline, end-stage kidney disease, cardiovascular death and hospitalization in adults with chronic kidney disease at risk of progression."),
+      ind("Type 2 diabetes", ["Endocrinology", "Primary Care", "Cardiology"], "type 2 diabetes", "As an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus."),
+      ind("Type 2 diabetes, ages 10+", ["Pediatrics", "Endocrinology"], "type 2 diabetes in children", "As an adjunct to diet and exercise to improve glycemic control in pediatric patients aged 10 years and older with type 2 diabetes mellitus."),
     ],
   },
   pulmovax: {
     boxedWarning: false,
     genericAvailable: true,
     indications: [
-      ind("Asthma, ages 12–17", "Pediatrics", "asthma in teens", "As-needed treatment or prevention of bronchoconstriction, and to reduce the risk of exacerbations, in patients 12 to 17 years of age with asthma.", { isNew: true }),
-      ind("Asthma, adults", "Respiratory", "asthma", "As-needed treatment or prevention of bronchoconstriction, and to reduce the risk of exacerbations, in adults with asthma."),
-      ind("COPD", "Respiratory", "COPD", "Maintenance treatment of airflow obstruction in adults with chronic obstructive pulmonary disease, including chronic bronchitis and emphysema."),
-      ind("Exercise-induced bronchoconstriction", "Sports Medicine", "exercise-induced asthma", "Prevention of exercise-induced bronchoconstriction in patients 12 years and older, taken 15 to 30 minutes before exercise."),
-      ind("Seasonal allergic asthma", "Allergy & Immunology", "allergic asthma", "Relief of acute bronchospasm in patients 12 years and older with seasonal allergic asthma during pollen season."),
+      ind("Asthma, ages 12–17", ["Pediatrics", "Respiratory", "Allergy & Immunology"], "asthma in teens", "As-needed treatment or prevention of bronchoconstriction, and to reduce the risk of exacerbations, in patients 12 to 17 years of age with asthma.", { isNew: true }),
+      ind("Asthma, adults", ["Respiratory", "Allergy & Immunology", "Primary Care"], "asthma", "As-needed treatment or prevention of bronchoconstriction, and to reduce the risk of exacerbations, in adults with asthma."),
+      ind("COPD", ["Respiratory", "Primary Care"], "COPD", "Maintenance treatment of airflow obstruction in adults with chronic obstructive pulmonary disease, including chronic bronchitis and emphysema."),
+      ind("Exercise-induced bronchoconstriction", ["Sports Medicine", "Respiratory"], "exercise-induced asthma", "Prevention of exercise-induced bronchoconstriction in patients 12 years and older, taken 15 to 30 minutes before exercise."),
+      ind("Seasonal allergic asthma", ["Allergy & Immunology", "Respiratory"], "allergic asthma", "Relief of acute bronchospasm in patients 12 years and older with seasonal allergic asthma during pollen season."),
     ],
   },
   "3d": {
     boxedWarning: true,
     genericAvailable: true,
     indications: [
-      ind("Migraine attacks", "Neurology", "migraine", "Acute treatment of migraine attacks, with or without aura, in adults 18 years of age or older (oral solution only).", { isNew: true }),
-      ind("Osteoarthritis", "Rheumatology & Musculoskeletal", "osteoarthritis", "Relief of the signs and symptoms of osteoarthritis."),
-      ind("Rheumatoid arthritis", "Rheumatology & Musculoskeletal", "rheumatoid arthritis", "Relief of the signs and symptoms of rheumatoid arthritis."),
-      ind("Acute pain", "Pain Management", "acute pain", "Management of mild to moderate acute pain in adults."),
-      ind("Primary dysmenorrhea", "Women's Health", "period pain", "Treatment of primary dysmenorrhea."),
-      ind("Actinic keratosis", "Dermatology", "actinic keratosis", "Topical treatment of actinic keratoses (3% gel only)."),
+      ind("Migraine attacks", ["Neurology", "Pain Management"], "migraine", "Acute treatment of migraine attacks, with or without aura, in adults 18 years of age or older (oral solution only).", { isNew: true }),
+      ind("Osteoarthritis", ["Rheumatology & Musculoskeletal", "Orthopedics"], "osteoarthritis", "Relief of the signs and symptoms of osteoarthritis."),
+      ind("Rheumatoid arthritis", ["Rheumatology & Musculoskeletal", "Immunology"], "rheumatoid arthritis", "Relief of the signs and symptoms of rheumatoid arthritis."),
+      ind("Acute pain", ["Pain Management", "Primary Care"], "acute pain", "Management of mild to moderate acute pain in adults."),
+      ind("Primary dysmenorrhea", ["Women's Health", "Pain Management"], "period pain", "Treatment of primary dysmenorrhea."),
+      ind("Actinic keratosis", ["Dermatology", "Oncology"], "actinic keratosis", "Topical treatment of actinic keratoses (3% gel only)."),
     ],
   },
   "3d-flam": {
     boxedWarning: true,
     genericAvailable: true,
     indications: [
-      ind("Acute gout flare", "Rheumatology & Musculoskeletal", "gout", "Relief of pain and inflammation in acute gout flares in adults.", { isNew: true }),
-      ind("Acute pain", "Pain Management", "acute pain", "Relief of mild to moderate acute pain in adults, where a rapid onset of action is needed."),
-      ind("Post-operative pain", "Pain Management", "pain after surgery", "Short-term management of post-operative pain, including after dental and orthopedic procedures."),
-      ind("Primary dysmenorrhea", "Women's Health", "period pain", "Treatment of primary dysmenorrhea in adults and adolescents 14 years and older."),
-      ind("Migraine attacks", "Neurology", "migraine", "Acute treatment of migraine attacks, with or without aura, in adults."),
-      ind("Sprains and strains", "Sports Medicine", "sprains and strains", "Relief of pain and swelling from soft-tissue injuries such as sprains, strains and contusions."),
+      ind("Acute gout flare", ["Rheumatology & Musculoskeletal", "Primary Care"], "gout", "Relief of pain and inflammation in acute gout flares in adults.", { isNew: true }),
+      ind("Acute pain", ["Pain Management", "Primary Care"], "acute pain", "Relief of mild to moderate acute pain in adults, where a rapid onset of action is needed."),
+      ind("Post-operative pain", ["Pain Management", "Orthopedics"], "pain after surgery", "Short-term management of post-operative pain, including after dental and orthopedic procedures."),
+      ind("Primary dysmenorrhea", ["Women's Health", "Pain Management"], "period pain", "Treatment of primary dysmenorrhea in adults and adolescents 14 years and older."),
+      ind("Migraine attacks", ["Neurology", "Pain Management"], "migraine", "Acute treatment of migraine attacks, with or without aura, in adults."),
+      ind("Sprains and strains", ["Sports Medicine", "Orthopedics"], "sprains and strains", "Relief of pain and swelling from soft-tissue injuries such as sprains, strains and contusions."),
     ],
   },
   "3d-plus": {
     boxedWarning: true,
     genericAvailable: true,
     indications: [
-      ind("Acute musculoskeletal pain", "Rheumatology & Musculoskeletal", "muscle and joint pain", "Short-term relief of acute musculoskeletal pain and inflammation in adults."),
-      ind("Low back pain", "Rheumatology & Musculoskeletal", "back pain", "Short-term relief of acute low back pain in adults, alongside physical therapy."),
-      ind("Post-operative pain", "Pain Management", "pain after surgery", "Management of mild to moderate post-operative pain in adults."),
-      ind("Dental pain", "Dentistry", "toothache", "Relief of acute dental pain, including after tooth extraction, in adults."),
-      ind("Primary dysmenorrhea", "Women's Health", "period pain", "Relief of pain in primary dysmenorrhea in adults."),
+      ind("Acute musculoskeletal pain", ["Rheumatology & Musculoskeletal", "Orthopedics"], "muscle and joint pain", "Short-term relief of acute musculoskeletal pain and inflammation in adults."),
+      ind("Low back pain", ["Rheumatology & Musculoskeletal", "Pain Management"], "back pain", "Short-term relief of acute low back pain in adults, alongside physical therapy."),
+      ind("Post-operative pain", ["Pain Management", "Orthopedics"], "pain after surgery", "Management of mild to moderate post-operative pain in adults."),
+      ind("Dental pain", ["Dentistry", "Pain Management"], "toothache", "Relief of acute dental pain, including after tooth extraction, in adults."),
+      ind("Primary dysmenorrhea", ["Women's Health", "Pain Management"], "period pain", "Relief of pain in primary dysmenorrhea in adults."),
     ],
   },
   "abd-1": {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      ind("HIV-1 in pregnancy", "Obstetrics", "HIV in pregnancy", "Continuation of treatment of HIV-1 infection in pregnant people who are virologically suppressed and HLA-B*5701-negative.", { isNew: true }),
-      ind("HIV-1, treatment-naive", "Anti-infectives", "HIV", "Treatment of HIV-1 infection in adults who have not received antiretroviral therapy and are HLA-B*5701-negative."),
-      ind("HIV-1, switching", "Anti-infectives", "HIV", "To replace the current antiretroviral regimen in adults who are virologically suppressed on a stable regimen, with no history of treatment failure."),
-      ind("HIV-1, adolescents", "Pediatrics", "HIV in teens", "Treatment of HIV-1 infection in adolescents 12 years and older weighing at least 40 kg."),
-      ind("HIV-1 with tuberculosis", "Respiratory", "HIV and TB", "Treatment of HIV-1 infection in adults receiving rifampin for tuberculosis, with the dolutegravir dose adjusted as labeled."),
+      ind("HIV-1 in pregnancy", ["Obstetrics", "Anti-infectives"], "HIV in pregnancy", "Continuation of treatment of HIV-1 infection in pregnant people who are virologically suppressed and HLA-B*5701-negative.", { isNew: true }),
+      ind("HIV-1, treatment-naive", ["Anti-infectives", "Primary Care"], "HIV", "Treatment of HIV-1 infection in adults who have not received antiretroviral therapy and are HLA-B*5701-negative."),
+      ind("HIV-1, switching", ["Anti-infectives", "Primary Care"], "HIV", "To replace the current antiretroviral regimen in adults who are virologically suppressed on a stable regimen, with no history of treatment failure."),
+      ind("HIV-1, adolescents", ["Pediatrics", "Anti-infectives"], "HIV in teens", "Treatment of HIV-1 infection in adolescents 12 years and older weighing at least 40 kg."),
+      ind("HIV-1 with tuberculosis", ["Respiratory", "Anti-infectives"], "HIV and TB", "Treatment of HIV-1 infection in adults receiving rifampin for tuberculosis, with the dolutegravir dose adjusted as labeled."),
     ],
   },
   dermora: {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("Radiation dermatitis", "Oncology Supportive Care", "skin reactions to radiation", "Prevention and treatment of radiation dermatitis in adults receiving radiotherapy for cancer.", { isNew: true }),
-      ind("Atopic dermatitis", "Dermatology", "eczema", "Short-term treatment of moderate atopic dermatitis flares in adults and children 2 years and older."),
-      ind("Chronic hand eczema", "Dermatology", "hand eczema", "Moderate to severe chronic hand eczema in adults when topical corticosteroids are inadequate or inappropriate."),
-      ind("Insect bite reactions", "Allergy & Immunology", "bite and sting reactions", "Relief of itching and swelling from local hypersensitivity reactions to insect bites and stings."),
-      ind("Diaper dermatitis", "Pediatrics", "diaper rash", "Short-term treatment of moderate diaper dermatitis in infants 3 months and older (cream only)."),
+      ind("Radiation dermatitis", ["Oncology Supportive Care", "Dermatology"], "skin reactions to radiation", "Prevention and treatment of radiation dermatitis in adults receiving radiotherapy for cancer.", { isNew: true }),
+      ind("Atopic dermatitis", ["Dermatology", "Allergy & Immunology", "Pediatrics"], "eczema", "Short-term treatment of moderate atopic dermatitis flares in adults and children 2 years and older."),
+      ind("Chronic hand eczema", ["Dermatology", "Allergy & Immunology"], "hand eczema", "Moderate to severe chronic hand eczema in adults when topical corticosteroids are inadequate or inappropriate."),
+      ind("Insect bite reactions", ["Allergy & Immunology", "Dermatology"], "bite and sting reactions", "Relief of itching and swelling from local hypersensitivity reactions to insect bites and stings."),
+      ind("Diaper dermatitis", ["Pediatrics", "Dermatology"], "diaper rash", "Short-term treatment of moderate diaper dermatitis in infants 3 months and older (cream only)."),
     ],
   },
   pulmavia: {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("SSc-associated ILD", "Rheumatology", "scleroderma lung disease", "To slow the rate of decline in pulmonary function in adults with systemic sclerosis-associated interstitial lung disease.", { isNew: true }),
-      ind("Idiopathic pulmonary fibrosis", "Respiratory", "pulmonary fibrosis", "Treatment of idiopathic pulmonary fibrosis in adults."),
-      ind("Progressive fibrosing ILD", "Respiratory", "lung scarring", "Chronic fibrosing interstitial lung diseases with a progressive phenotype in adults."),
-      ind("Pulmonary arterial hypertension", "Cardiology", "pulmonary hypertension", "Pulmonary arterial hypertension (WHO Group 1) in adults, to improve exercise ability and delay disease progression."),
-      ind("EGFR-mutated NSCLC", "Oncology", "lung cancer", "Metastatic non-small cell lung cancer in adults whose tumors have EGFR exon 19 deletions or exon 21 L858R mutations."),
-      ind("Lymphangioleiomyomatosis", "Rare Diseases", "LAM", "Treatment of lymphangioleiomyomatosis in adults with declining lung function."),
+      ind("SSc-associated ILD", ["Rheumatology", "Respiratory"], "scleroderma lung disease", "To slow the rate of decline in pulmonary function in adults with systemic sclerosis-associated interstitial lung disease.", { isNew: true }),
+      ind("Idiopathic pulmonary fibrosis", ["Respiratory", "Rare Diseases"], "pulmonary fibrosis", "Treatment of idiopathic pulmonary fibrosis in adults."),
+      ind("Progressive fibrosing ILD", ["Respiratory", "Rheumatology"], "lung scarring", "Chronic fibrosing interstitial lung diseases with a progressive phenotype in adults."),
+      ind("Pulmonary arterial hypertension", ["Cardiology", "Respiratory"], "pulmonary hypertension", "Pulmonary arterial hypertension (WHO Group 1) in adults, to improve exercise ability and delay disease progression."),
+      ind("EGFR-mutated NSCLC", ["Oncology", "Respiratory"], "lung cancer", "Metastatic non-small cell lung cancer in adults whose tumors have EGFR exon 19 deletions or exon 21 L858R mutations."),
+      ind("Lymphangioleiomyomatosis", ["Rare Diseases", "Respiratory", "Women's Health"], "LAM", "Treatment of lymphangioleiomyomatosis in adults with declining lung function."),
     ],
   },
   renalis: {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("IgA nephropathy", "Nephrology", "IgA nephropathy", "To slow kidney function decline in adults with primary IgA nephropathy at risk of disease progression.", { isNew: true }),
-      ind("Polycystic kidney disease", "Nephrology", "polycystic kidney disease", "To slow kidney function decline in adults at risk of rapidly progressing autosomal dominant polycystic kidney disease."),
-      ind("Diabetic kidney disease", "Endocrinology", "kidney disease in diabetes", "To reduce the risk of eGFR decline and end-stage kidney disease in adults with chronic kidney disease associated with type 2 diabetes."),
-      ind("Overactive bladder", "Urology", "overactive bladder", "Overactive bladder with symptoms of urge urinary incontinence, urgency and urinary frequency in adults."),
-      ind("Kidney transplant", "Transplant Medicine", "kidney transplant", "Prophylaxis of organ rejection in adult kidney transplant recipients, in combination with other immunosuppressants."),
-      ind("Hyperkalemia in heart failure", "Cardiology", "high potassium", "Treatment of hyperkalemia in adults with heart failure, to allow continued use of RAAS inhibitors."),
+      ind("IgA nephropathy", ["Nephrology", "Immunology"], "IgA nephropathy", "To slow kidney function decline in adults with primary IgA nephropathy at risk of disease progression.", { isNew: true }),
+      ind("Polycystic kidney disease", ["Nephrology", "Rare Diseases"], "polycystic kidney disease", "To slow kidney function decline in adults at risk of rapidly progressing autosomal dominant polycystic kidney disease."),
+      ind("Diabetic kidney disease", ["Endocrinology", "Nephrology"], "kidney disease in diabetes", "To reduce the risk of eGFR decline and end-stage kidney disease in adults with chronic kidney disease associated with type 2 diabetes."),
+      ind("Overactive bladder", ["Urology", "Women's Health"], "overactive bladder", "Overactive bladder with symptoms of urge urinary incontinence, urgency and urinary frequency in adults."),
+      ind("Kidney transplant", ["Transplant Medicine", "Nephrology"], "kidney transplant", "Prophylaxis of organ rejection in adult kidney transplant recipients, in combination with other immunosuppressants."),
+      ind("Hyperkalemia in heart failure", ["Cardiology", "Nephrology"], "high potassium", "Treatment of hyperkalemia in adults with heart failure, to allow continued use of RAAS inhibitors."),
     ],
   },
   affolmy: {
     boxedWarning: true,
     genericAvailable: true,
     indications: [
-      ind("Stroke risk with LVH", "Neurology", "stroke risk", "To reduce the risk of stroke in adults with hypertension and left ventricular hypertrophy.", { isNew: true }),
-      ind("Hypertension, adults", "Cardiology", "high blood pressure", "Treatment of hypertension in adults, alone or with other antihypertensive agents, to lower blood pressure."),
-      ind("Hypertension, ages 6–16", "Pediatrics", "high blood pressure in children", "Treatment of hypertension in pediatric patients 6 to 16 years of age."),
-      ind("Diabetic nephropathy", "Nephrology", "kidney disease in diabetes", "Treatment of diabetic nephropathy with elevated serum creatinine and proteinuria in adults with type 2 diabetes and hypertension."),
-      ind("Microalbuminuria in type 2 diabetes", "Endocrinology", "kidney damage in diabetes", "To delay the onset of microalbuminuria in adults with type 2 diabetes and hypertension."),
+      ind("Stroke risk with LVH", ["Neurology", "Cardiology"], "stroke risk", "To reduce the risk of stroke in adults with hypertension and left ventricular hypertrophy.", { isNew: true }),
+      ind("Hypertension, adults", ["Cardiology", "Primary Care"], "high blood pressure", "Treatment of hypertension in adults, alone or with other antihypertensive agents, to lower blood pressure."),
+      ind("Hypertension, ages 6–16", ["Pediatrics", "Cardiology"], "high blood pressure in children", "Treatment of hypertension in pediatric patients 6 to 16 years of age."),
+      ind("Diabetic nephropathy", ["Nephrology", "Endocrinology"], "kidney disease in diabetes", "Treatment of diabetic nephropathy with elevated serum creatinine and proteinuria in adults with type 2 diabetes and hypertension."),
+      ind("Microalbuminuria in type 2 diabetes", ["Endocrinology", "Nephrology"], "kidney damage in diabetes", "To delay the onset of microalbuminuria in adults with type 2 diabetes and hypertension."),
     ],
   },
   abdec: {
     boxedWarning: false,
     genericAvailable: true,
     indications: [
-      ind("H. pylori eradication", "Gastroenterology", "H. pylori", "In combination therapy, to eradicate H. pylori and reduce the risk of duodenal ulcer recurrence in adults.", { isNew: true }),
-      ind("Ear, nose and throat infections", "ENT", "ear and throat infections", "Infections of the ear, nose and throat, including acute otitis media and streptococcal pharyngitis, caused by susceptible bacteria."),
-      ind("Lower respiratory tract infections", "Respiratory", "chest infections", "Lower respiratory tract infections caused by susceptible strains of Streptococcus, Staphylococcus or Haemophilus influenzae."),
-      ind("Urinary tract infections", "Urology", "urinary tract infections", "Infections of the genitourinary tract caused by susceptible strains of E. coli, Proteus mirabilis or Enterococcus faecalis."),
-      ind("Skin infections", "Dermatology", "skin infections", "Infections of the skin and skin structure caused by susceptible streptococci, staphylococci or E. coli."),
+      ind("H. pylori eradication", ["Gastroenterology", "Infectious Diseases"], "H. pylori", "In combination therapy, to eradicate H. pylori and reduce the risk of duodenal ulcer recurrence in adults.", { isNew: true }),
+      ind("Ear, nose and throat infections", ["ENT", "Pediatrics", "Primary Care"], "ear and throat infections", "Infections of the ear, nose and throat, including acute otitis media and streptococcal pharyngitis, caused by susceptible bacteria."),
+      ind("Lower respiratory tract infections", ["Respiratory", "Infectious Diseases"], "chest infections", "Lower respiratory tract infections caused by susceptible strains of Streptococcus, Staphylococcus or Haemophilus influenzae."),
+      ind("Urinary tract infections", ["Urology", "Women's Health"], "urinary tract infections", "Infections of the genitourinary tract caused by susceptible strains of E. coli, Proteus mirabilis or Enterococcus faecalis."),
+      ind("Skin infections", ["Dermatology", "Infectious Diseases"], "skin infections", "Infections of the skin and skin structure caused by susceptible streptococci, staphylococci or E. coli."),
     ],
   },
   /* Medical devices: their intended use stands in for an indication. */
@@ -458,32 +460,32 @@ const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("Diabetes in pregnancy", "Obstetrics", "diabetes in pregnancy", "Glucose monitoring in pregnant people with type 1, type 2 or gestational diabetes.", { isNew: true }),
-      ind("Diabetes, ages 2+", "Diabetes", "diabetes", "Real-time glucose monitoring to replace fingerstick testing for treatment decisions in people with diabetes, ages 2 and up."),
-      ind("Not on insulin", "Primary Care", "type 2 diabetes", "Over-the-counter glucose monitoring for adults 18 and up who do not use insulin."),
-      ind("In hospital", "Hospital Medicine", "diabetes in hospital", "Glucose monitoring in hospitalized adults, including critical care, under the supervision of a healthcare professional."),
+      ind("Diabetes in pregnancy", ["Obstetrics", "Diabetes"], "diabetes in pregnancy", "Glucose monitoring in pregnant people with type 1, type 2 or gestational diabetes.", { isNew: true }),
+      ind("Diabetes, ages 2+", ["Diabetes", "Pediatrics"], "diabetes", "Real-time glucose monitoring to replace fingerstick testing for treatment decisions in people with diabetes, ages 2 and up."),
+      ind("Not on insulin", ["Primary Care", "Diabetes"], "type 2 diabetes", "Over-the-counter glucose monitoring for adults 18 and up who do not use insulin."),
+      ind("In hospital", ["Hospital Medicine", "Diabetes"], "diabetes in hospital", "Glucose monitoring in hospitalized adults, including critical care, under the supervision of a healthcare professional."),
     ],
   },
   "device-cardiyn": {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("AV block, dual chamber", "Cardiology", "heart block", "Dual-chamber leadless pacing for adults with high-grade atrioventricular block who need atrial and ventricular synchrony.", { isNew: true }),
-      ind("Bradycardia with AF", "Electrophysiology", "a slow heart rhythm", "Symptomatic bradycardia in adults with permanent atrial fibrillation who need single-chamber ventricular pacing."),
-      ind("Sinus node dysfunction", "Electrophysiology", "a slow heart rhythm", "Symptomatic sinus node dysfunction in adults with infrequent pauses or unexplained syncope."),
-      ind("Limited venous access", "Nephrology", "a slow heart rhythm", "Pacing in adults with limited venous access or high infection risk, such as people on hemodialysis."),
-      ind("Bradyarrhythmia in older adults", "Geriatrics", "fainting from a slow heart rhythm", "Syncope from documented bradyarrhythmia in adults 75 and older, where a transvenous lead is not preferred."),
+      ind("AV block, dual chamber", ["Cardiology", "Electrophysiology"], "heart block", "Dual-chamber leadless pacing for adults with high-grade atrioventricular block who need atrial and ventricular synchrony.", { isNew: true }),
+      ind("Bradycardia with AF", ["Electrophysiology", "Cardiology"], "a slow heart rhythm", "Symptomatic bradycardia in adults with permanent atrial fibrillation who need single-chamber ventricular pacing."),
+      ind("Sinus node dysfunction", ["Electrophysiology", "Cardiology"], "a slow heart rhythm", "Symptomatic sinus node dysfunction in adults with infrequent pauses or unexplained syncope."),
+      ind("Limited venous access", ["Nephrology", "Electrophysiology"], "a slow heart rhythm", "Pacing in adults with limited venous access or high infection risk, such as people on hemodialysis."),
+      ind("Bradyarrhythmia in older adults", ["Geriatrics", "Cardiology"], "fainting from a slow heart rhythm", "Syncope from documented bradyarrhythmia in adults 75 and older, where a transvenous lead is not preferred."),
     ],
   },
   "device-pulseva": {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("AF after stroke", "Neurology", "atrial fibrillation after stroke", "Long-term ECG monitoring to detect atrial fibrillation in adults after a cryptogenic stroke or TIA.", { isNew: true }),
-      ind("Atrial fibrillation", "Cardiology", "atrial fibrillation", "Continuous ECG recording for up to 14 days to detect atrial fibrillation in adults with suspected arrhythmia."),
-      ind("Palpitations and syncope", "Electrophysiology", "palpitations", "Evaluation of palpitations, dizziness or unexplained syncope in adults with suspected arrhythmia."),
-      ind("After cardiac surgery", "Cardiac Surgery", "heart rhythm after surgery", "Detection of post-operative atrial fibrillation in adults discharged after cardiac surgery."),
-      ind("Remote monitoring", "Primary Care", "an irregular heartbeat", "Remote ECG monitoring ordered in primary care for adults with intermittent symptoms."),
+      ind("AF after stroke", ["Neurology", "Cardiology"], "atrial fibrillation after stroke", "Long-term ECG monitoring to detect atrial fibrillation in adults after a cryptogenic stroke or TIA.", { isNew: true }),
+      ind("Atrial fibrillation", ["Cardiology", "Electrophysiology"], "atrial fibrillation", "Continuous ECG recording for up to 14 days to detect atrial fibrillation in adults with suspected arrhythmia."),
+      ind("Palpitations and syncope", ["Electrophysiology", "Primary Care"], "palpitations", "Evaluation of palpitations, dizziness or unexplained syncope in adults with suspected arrhythmia."),
+      ind("After cardiac surgery", ["Cardiac Surgery", "Cardiology"], "heart rhythm after surgery", "Detection of post-operative atrial fibrillation in adults discharged after cardiac surgery."),
+      ind("Remote monitoring", ["Primary Care", "Cardiology"], "an irregular heartbeat", "Remote ECG monitoring ordered in primary care for adults with intermittent symptoms."),
     ],
   },
 };
@@ -589,19 +591,19 @@ export const diseaseTherapyArea = (group: string) => THERAPY_AREA_BY_GROUP[group
 export const labelIndications = (subjectId: string): Indication[] => BRAND_AD_FACTS[subjectId]?.indications ?? [];
 
 /**
- * The therapy area, which is never asked: the picked indication's, or every
+ * The therapy areas the person picks from: the picked indication's, or every
  * area the label's indications cover while all of them are in play. The
  * product's own areas only stand in when there is no label data.
  */
 export function therapyAreasFor(indications: Indication[], picked: string, productAreas: string[]): string[] {
   const one = indications.find((i) => i.label === picked) ?? (indications.length === 1 ? indications[0] : undefined);
-  if (one?.therapyArea) return [one.therapyArea];
+  if (one?.therapyAreas?.length) return one.therapyAreas;
   const fromLabel = labelTherapyAreas(indications);
   return fromLabel.length > 0 ? fromLabel : productAreas;
 }
 
 /** Every therapy area a label's indications sit in, in label order. */
-export const labelTherapyAreas = (indications: Indication[]) => [...new Set(indications.map((i) => i.therapyArea).filter((a): a is string => !!a))];
+export const labelTherapyAreas = (indications: Indication[]) => [...new Set(indications.flatMap((i) => i.therapyAreas ?? []))];
 
 /** Who a therapy area's prescribers are, for sample prompts that name them. */
 const PRESCRIBERS: Record<string, string> = {
@@ -630,6 +632,12 @@ const PRESCRIBERS: Record<string, string> = {
   Obstetrics: "obstetricians",
   Electrophysiology: "electrophysiologists",
   "Primary Care": "primary care physicians",
+  ENT: "ENT specialists",
+  Dentistry: "dentists",
+  Geriatrics: "geriatricians",
+  "Hospital Medicine": "hospitalists",
+  Orthopedics: "orthopedic surgeons",
+  "Internal Medicine": "internists",
 };
 /** One area names its prescribers; several, while every indication is in play, don't single one out. */
 export const prescribersFor = (areas: string[]) => (areas.length === 1 ? (PRESCRIBERS[areas[0]] ?? "specialists") : "specialists");

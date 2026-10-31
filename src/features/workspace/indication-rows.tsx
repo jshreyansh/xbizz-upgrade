@@ -1,11 +1,10 @@
 "use client";
 
 import { Shapes, Target } from "lucide-react";
-import { cn } from "@/lib/cn";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { useBrandCatalogue } from "@/features/workspace/brand-catalogue";
 import { DOSSIERS } from "@/features/workspace/brand-modal-data";
-import { cdcDisease, diseaseTherapyArea, labelIndications, labelTherapyAreas, medtechDevice, therapyAreasFor, type Indication } from "@/features/workspace/ad-options";
+import { cdcDisease, diseaseTherapyArea, labelIndications, medtechDevice, therapyAreasFor, type Indication } from "@/features/workspace/ad-options";
 import { ChipChoices, DecisionRow } from "@/features/workspace/plan-decisions";
 
 /** "All 6 indications", or "All 4 uses" for a device. */
@@ -30,7 +29,7 @@ export function IndicationWording({ options, picked, allowAll = true }: { option
     <div className="mt-2 rounded-control border border-hair bg-card px-3 py-2.5">
       <div className="flex items-center justify-between gap-2">
         <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">{picked ? "Approved wording" : `Covers all ${options.length}`}</span>
-        {picked?.therapyArea && <span className="text-caption font-semibold text-ink-3">{picked.therapyArea}</span>}
+        {picked?.therapyAreas && <span className="text-caption font-semibold text-ink-3">{picked.therapyAreas.join(" · ")}</span>}
       </div>
       {picked ? (
         <p className="mt-1 text-body text-ink">{picked.wording ?? picked.label}</p>
@@ -38,25 +37,6 @@ export function IndicationWording({ options, picked, allowAll = true }: { option
         <p className="mt-1 text-body text-ink-3">{options.map((i) => i.label).join(" · ")}. The content stays at brand level and can draw on any of them.</p>
       )}
     </div>
-  );
-}
-
-/** Every area the label covers, the ones in play solid and the rest faded, so picking an indication visibly narrows them. */
-export function TherapyAreaChips({ areas, active }: { areas: string[]; active: string[] }) {
-  return (
-    <>
-      {areas.map((area) => (
-        <span
-          key={area}
-          className={cn(
-            "rounded-chip border px-2 py-0.5 text-label",
-            active.includes(area) ? "border-hair-2 bg-subtle font-bold text-ink-2" : "border-dashed border-hair-2 font-semibold text-ink-4"
-          )}
-        >
-          {area}
-        </span>
-      ))}
-    </>
   );
 }
 
@@ -104,8 +84,8 @@ export function useProjectIndication() {
  *
  * Shared by the Video, Docs and Ads plans, and laid out like the start step:
  * short names as chips, the picked one's label wording under them. Changing
- * the indication moves the therapy area with it; the area can still be set by
- * hand after that.
+ * the indication resets the therapy areas to all of its own; any of them can
+ * then be dropped.
  */
 export function IndicationRows({ editing, onEdit }: { editing: string | null; onEdit: (id: string | null) => void }) {
   const setIndication = useWorkspaceStore((s) => s.setIndication);
@@ -113,7 +93,8 @@ export function IndicationRows({ editing, onEdit }: { editing: string | null; on
   const { kind, options, picked, productAreas, therapyAreas } = useProjectIndication();
   const isDevice = kind === "device";
   const all = allIndicationsLabel(options.length, isDevice);
-  const candidateAreas = [...new Set([...labelTherapyAreas(options), ...(options.length === 0 ? productAreas : []), ...therapyAreas])];
+  /* The picked indication's areas, or every area the label covers on All. */
+  const candidateAreas = [...new Set([...therapyAreasFor(options, picked?.label ?? "", productAreas), ...therapyAreas])];
 
   return (
     <>
@@ -158,7 +139,7 @@ export function IndicationRows({ editing, onEdit }: { editing: string | null; on
             if (next.length > 0) setTherapyAreas(next);
           }}
           onDone={() => onEdit(null)}
-          footnote="Follows the indication. Set it by hand only when the content spans more than one."
+          footnote="The areas the indication sits in. Keep the ones the content speaks to."
         />
       </DecisionRow>
     </>

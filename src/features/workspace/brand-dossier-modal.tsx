@@ -53,10 +53,9 @@ import {
   type MedtechDevice,
   diseaseTherapyArea,
   labelIndications,
-  labelTherapyAreas,
   therapyAreasFor,
 } from "@/features/workspace/ad-options";
-import { allIndicationsLabel, areasLabel, IndicationWording, indicationChipLabel, TherapyAreaChips } from "@/features/workspace/indication-rows";
+import { allIndicationsLabel, areasLabel, IndicationWording, indicationChipLabel } from "@/features/workspace/indication-rows";
 import { LogoMark } from "@/components/ui/logo-mark";
 export {
   INITIAL_BRANDS,
@@ -326,6 +325,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   /* Which of the label's indications the project is about. Empty is All,
      or the only one when there is just one. */
   const [indication, setIndication] = useState("");
+  /* Which of its therapy areas the content speaks to, for one product and
+     indication (the key). Empty, or a stale key, is all of them. */
+  const [areaPick, setAreaPick] = useState<{ key: string; areas: string[] }>({ key: "", areas: [] });
   /* Ads only: what the campaign is about, a drug, a medical device or a disease. */
   const [adSubjectKind, setAdSubjectKind] = useState<"drug" | "device" | "disease">("drug");
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
@@ -499,7 +501,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       : isDiseaseSubject
         ? selectedDisease ? [diseaseTherapyArea(selectedDisease.group)] : []
         : (selectedBrand?.therapyAreas ?? []);
-  const therapyAreas = therapyAreasFor(subjectIndications, pickedIndication?.label ?? "", subjectAreas);
+  /* The areas to pick from follow the indication, all ticked until narrowed.
+     Picks belong to one product and indication, so changing either starts
+     from all of the new one's areas again. */
+  const areaOptions = therapyAreasFor(subjectIndications, pickedIndication?.label ?? "", subjectAreas);
+  const areaKey = `${isAd ? adSubjectId : selectedBrandId}:${pickedIndication?.label ?? ""}`;
+  const pickedAreas = areaPick.key === areaKey ? areaPick.areas.filter((a) => areaOptions.includes(a)) : [];
+  const therapyAreas = pickedAreas.length > 0 ? pickedAreas : areaOptions;
   const reminderBlocked = isAd && adType === "reminder" && adFacts.boxedWarning;
   /* A new-indication campaign is about one indication, never all of them. */
   const needsIndication = isAd && adKind === "new-indication" && subjectIndications.length > 1;
@@ -714,21 +722,45 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           </>
         )}
       </SubjectRow>
-      <SubjectRow label="Therapy area" note="Not asked">
-        <div className="flex flex-wrap items-center gap-1.5 sm:pt-0.5">
-          <TherapyAreaChips areas={subjectIndications.length > 1 ? labelTherapyAreas(subjectIndications) : therapyAreas} active={therapyAreas} />
-          <span className="text-caption text-ink-4">
-            {isDiseaseSubject
-              ? "From the condition"
-              : pickedIndication && subjectIndications.length > 1
-                ? "Follows the indication"
-                : subjectIndications.length > 1
-                  ? "Every area its indications cover. Picking one narrows it."
-                  : subjectIndications.length === 1
-                    ? `From the ${indicationLabel.toLowerCase()}`
-                    : "From the product"}
-          </span>
-        </div>
+      <SubjectRow
+        label="Therapy area"
+        note={
+          pickedAreas.length > 0 && pickedAreas.length < areaOptions.length ? (
+            <button type="button" onClick={() => setAreaPick({ key: "", areas: [] })} className="cursor-pointer font-semibold hover:text-ink-2">
+              Reset to all
+            </button>
+          ) : undefined
+        }
+      >
+        {areaOptions.length > 1 ? (
+          <ChipMultiSelect
+            size="sm"
+            options={areaOptions.map((area) => ({ id: area, label: area }))}
+            selected={therapyAreas}
+            onToggle={(area) => {
+              const next = therapyAreas.includes(area) ? therapyAreas.filter((a) => a !== area) : [...therapyAreas, area];
+              /* Never none: the area decides which terms and specialists the content speaks to. */
+              if (next.length > 0) setAreaPick({ key: areaKey, areas: next });
+            }}
+          />
+        ) : (
+          <div className="flex flex-wrap items-center gap-1.5 sm:pt-0.5">
+            {therapyAreas.map((area) => (
+              <span key={area} className="rounded-chip border border-hair-2 bg-subtle px-2 py-0.5 text-label font-bold text-ink-2">
+                {area}
+              </span>
+            ))}
+          </div>
+        )}
+        <p className="mt-1.5 text-caption text-ink-4">
+          {isDiseaseSubject
+            ? "From the condition"
+            : areaOptions.length <= 1
+              ? subjectIndications.length > 0 ? `From the ${indicationLabel.toLowerCase()}` : "From the product"
+              : pickedIndication
+                ? "The areas this indication sits in. Keep the ones the content speaks to."
+                : "Every area its indications cover. Keep the ones the content speaks to."}
+        </p>
       </SubjectRow>
     </>
   );
