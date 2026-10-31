@@ -52,10 +52,12 @@ import {
   medtechDevice,
   type MedtechDevice,
   diseaseTherapyArea,
+  indicationsForVariants,
   labelIndications,
+  onlyIndication,
   therapyAreasFor,
 } from "@/features/workspace/ad-options";
-import { allIndicationsLabel, areasLabel, IndicationWording, indicationChipLabel } from "@/features/workspace/indication-rows";
+import { allIndicationsLabel, areasLabel, IndicationWording, indicationChipLabel, indicationsLabel, toggleChip } from "@/features/workspace/indication-rows";
 import { LogoMark } from "@/components/ui/logo-mark";
 export {
   INITIAL_BRANDS,
@@ -93,6 +95,7 @@ type RevealStage = "audience" | "grounding" | "adtype" | "details";
 const ALL_VARIANTS = "__all__";
 /** The same for indications: every approved use is in play. */
 const ALL_INDICATIONS = "__all-indications__";
+const ALL_AREAS = "__all-areas__";
 
 /** The brand's packshot at thumbnail size — the Product Library's own
  *  photography, so a row here looks like the row there. */
@@ -322,11 +325,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [mediaPlanName, setMediaPlanName] = useState("");
   const mediaPlanInputRef = useRef<HTMLInputElement>(null);
   const [adType, setAdType] = useState<AdType | null>(null);
-  /* Which of the label's indications the project is about. Empty is All,
-     or the only one when there is just one. */
-  const [indication, setIndication] = useState("");
-  /* Which of its therapy areas the content speaks to, for one product and
-     indication (the key). Empty, or a stale key, is all of them. */
+  /* Which of the label's indications the project is about, among those the
+     picked variants carry. Empty is All. */
+  const [indications, setIndications] = useState<string[]>([]);
+  /* Which of their therapy areas the content speaks to, for one product,
+     variant set and indication set (the key). Empty, or a stale key, is all. */
   const [areaPick, setAreaPick] = useState<{ key: string; areas: string[] }>({ key: "", areas: [] });
   /* Ads only: what the campaign is about, a drug, a medical device or a disease. */
   const [adSubjectKind, setAdSubjectKind] = useState<"drug" | "device" | "disease">("drug");
@@ -364,7 +367,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setAudience(null);
       setSelectedSpecialities([]);
       setSelectedTopics([]);
-      setIndication("");
+      setIndications([]);
       if (isAd) {
         setAdPlacements([]);
         setAdFormats({});
@@ -490,22 +493,29 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   /* What the label allows, checked the moment the brand is picked rather
      than discovered at MLR. */
   const adFacts = brandAdFacts(isAd ? adSubjectId : selectedBrandId);
-  /* The indications in the label, and the therapy area that follows from the
-     one picked. A disease is its own indication, so it has no list. */
+  /* The label's indications, narrowed to the ones the picked variants carry
+     (no variants picked is all of them), then the ones picked from those. A
+     disease is its own indication, so it has no list. */
   const isDiseaseSubject = isAd && adSubjectKind === "disease";
-  const subjectIndications = isDiseaseSubject ? [] : labelIndications(isAd ? adSubjectId : selectedBrandId);
-  const pickedIndication = subjectIndications.find((i) => i.label === indication) ?? (subjectIndications.length === 1 ? subjectIndications[0] : undefined);
+  const labelOptions = isDiseaseSubject ? [] : labelIndications(isAd ? adSubjectId : selectedBrandId);
+  const pickedVariants = selectedVariations.length < variationOptions.length ? selectedVariations : [];
+  const subjectIndications = indicationsForVariants(labelOptions, isAd && adSubjectKind !== "drug" ? [] : pickedVariants);
+  /* Picks the variants no longer carry drop out; none left is All. */
+  const pickedIndications = subjectIndications.filter((i) => indications.includes(i.label));
+  const pickedLabels = pickedIndications.map((i) => i.label);
+  /* The one indication the project is about, when it is about exactly one. */
+  const pickedIndication = onlyIndication(subjectIndications, pickedLabels);
   const subjectAreas =
     isAd && adSubjectKind === "device"
       ? selectedDevice ? [selectedDevice.therapyArea] : []
       : isDiseaseSubject
         ? selectedDisease ? [diseaseTherapyArea(selectedDisease.group)] : []
         : (selectedBrand?.therapyAreas ?? []);
-  /* The areas to pick from follow the indication, all ticked until narrowed.
-     Picks belong to one product and indication, so changing either starts
-     from all of the new one's areas again. */
-  const areaOptions = therapyAreasFor(subjectIndications, pickedIndication?.label ?? "", subjectAreas);
-  const areaKey = `${isAd ? adSubjectId : selectedBrandId}:${pickedIndication?.label ?? ""}`;
+  /* The areas to pick from are the ones the indications in play sit in, all
+     ticked until narrowed. Picks belong to one product, variant set and
+     indication set, so changing any of them starts from all again. */
+  const areaOptions = therapyAreasFor(subjectIndications, pickedLabels, subjectAreas);
+  const areaKey = [isAd ? adSubjectId : selectedBrandId, pickedVariants.join("|"), pickedLabels.join("|")].join(":");
   const pickedAreas = areaPick.key === areaKey ? areaPick.areas.filter((a) => areaOptions.includes(a)) : [];
   const therapyAreas = pickedAreas.length > 0 ? pickedAreas : areaOptions;
   const reminderBlocked = isAd && adType === "reminder" && adFacts.boxedWarning;
@@ -514,7 +524,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const brandStepBlocked = needsIndication && !pickedIndication;
   /* So is a help-seeking one: it names one condition. */
   const needsOneCondition = isAd && adType === "unbranded" && !isDiseaseSubject && subjectIndications.length > 1 && !pickedIndication;
-  const indicationShort = pickedIndication ? (pickedIndication.condition ?? pickedIndication.label) : subjectIndications.length > 1 ? "All indications" : "";
+  const indicationShort = pickedIndication ? (pickedIndication.condition ?? pickedIndication.label) : indicationsLabel(pickedIndications, subjectIndications.length);
 
   /**
    * Derived, not synced. Until the user types, the name IS the suggestion and
@@ -593,7 +603,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedVariations([]);
     /* All, unless the campaign is about a new indication: then the newest,
        which is usually the reason for it. */
-    setIndication(isAd && adKind === "new-indication" ? (labelIndications(brand.id).find((i) => i.isNew)?.label ?? "") : "");
+    const newest = labelIndications(brand.id).find((i) => i.isNew);
+    setIndications(isAd && adKind === "new-indication" && newest ? [newest.label] : []);
   };
 
   /**
@@ -646,7 +657,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     // Stored as a concrete list either way, so everything downstream asks
     // about this brand's presentations rather than a generic set.
     setVariationsStore(selectedVariations.length > 0 ? selectedVariations : variationOptions);
-    useWorkspaceStore.getState().setIndication(pickedIndication?.label ?? "");
+    useWorkspaceStore.getState().setIndications(pickedLabels);
     useWorkspaceStore.getState().setTherapyAreas(therapyAreas);
     setProjectNameStore(nameValue.trim() || suggestedName);
     
@@ -691,7 +702,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const indicationLabel = isAd && adSubjectKind === "device" ? "Intended use" : "Indication";
   const subjectRows = (
     <>
-      <SubjectRow label={indicationLabel} note={subjectIndications.length > 1 ? `${subjectIndications.length} in the label` : undefined}>
+      <SubjectRow
+        label={indicationLabel}
+        note={
+          subjectIndications.length < labelOptions.length
+            ? `${subjectIndications.length} of ${labelOptions.length} for these variants`
+            : subjectIndications.length > 1
+              ? `${subjectIndications.length} in the label`
+              : undefined
+        }
+      >
         {isDiseaseSubject ? (
           <SubjectAuto>
             <b className="font-bold text-ink">{adSubjectName}</b>. The condition is the indication.
@@ -703,22 +723,28 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         ) : subjectIndications.length === 1 ? (
           <>
             <SubjectAuto>
-              <b className="font-bold text-ink">{subjectIndications[0].label}</b>. The only one, so it&apos;s set.
+              <b className="font-bold text-ink">{subjectIndications[0].label}</b>. The only one{subjectIndications.length < labelOptions.length ? " these variants carry" : ""}, so it&apos;s set.
             </SubjectAuto>
-            <IndicationWording options={subjectIndications} picked={subjectIndications[0]} />
+            <IndicationWording options={subjectIndications} picked={subjectIndications} />
           </>
         ) : (
           <>
+            {/* All, several or one, like variants. A new-indication campaign is
+                about exactly one, so there the chips pick one and All is gone. */}
             <ChipMultiSelect
               size="sm"
               options={[
                 ...(needsIndication ? [] : [{ id: ALL_INDICATIONS, label: allIndicationsLabel(subjectIndications.length, adSubjectKind === "device" && isAd) }]),
                 ...subjectIndications.map((i) => ({ id: i.label, label: indicationChipLabel(i) })),
               ]}
-              selected={[pickedIndication?.label ?? ALL_INDICATIONS]}
-              onToggle={(id) => setIndication(id === ALL_INDICATIONS ? "" : id)}
+              selected={needsIndication || pickedLabels.length > 0 ? pickedLabels : [ALL_INDICATIONS, ...subjectIndications.map((i) => i.label)]}
+              onToggle={(id) =>
+                setIndications(
+                  needsIndication ? [id] : id === ALL_INDICATIONS ? [] : toggleChip(subjectIndications.map((i) => i.label), pickedLabels, id)
+                )
+              }
             />
-            <IndicationWording options={subjectIndications} picked={pickedIndication} allowAll={!needsIndication} />
+            {!(needsIndication && pickedLabels.length === 0) && <IndicationWording options={subjectIndications} picked={pickedIndications} />}
           </>
         )}
       </SubjectRow>
@@ -735,13 +761,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         {areaOptions.length > 1 ? (
           <ChipMultiSelect
             size="sm"
-            options={areaOptions.map((area) => ({ id: area, label: area }))}
-            selected={therapyAreas}
-            onToggle={(area) => {
-              const next = therapyAreas.includes(area) ? therapyAreas.filter((a) => a !== area) : [...therapyAreas, area];
-              /* Never none: the area decides which terms and specialists the content speaks to. */
-              if (next.length > 0) setAreaPick({ key: areaKey, areas: next });
-            }}
+            options={[{ id: ALL_AREAS, label: "All areas" }, ...areaOptions.map((area) => ({ id: area, label: area }))]}
+            selected={pickedAreas.length === 0 ? [ALL_AREAS, ...areaOptions] : pickedAreas}
+            /* Never none: emptying it goes back to All, because the area decides
+               which terms and specialists the content speaks to. */
+            onToggle={(id) => setAreaPick({ key: areaKey, areas: id === ALL_AREAS ? [] : toggleChip(areaOptions, pickedAreas, id) })}
           />
         ) : (
           <div className="flex flex-wrap items-center gap-1.5 sm:pt-0.5">
@@ -757,8 +781,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             ? "From the condition"
             : areaOptions.length <= 1
               ? subjectIndications.length > 0 ? `From the ${indicationLabel.toLowerCase()}` : "From the product"
-              : pickedIndication
-                ? "The areas this indication sits in. Keep the ones the content speaks to."
+              : pickedLabels.length > 0
+                ? "The areas the picked indications sit in. Keep the ones the content speaks to."
                 : "Every area its indications cover. Keep the ones the content speaks to."}
         </p>
       </SubjectRow>
@@ -1100,7 +1124,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             /* One subject per campaign: a new tab starts the choice again. */
                             setAdSubjectKind(k);
                             setSubjectQuery("");
-                            setIndication("");
+                            setIndications([]);
                             setSelectedBrandId("");
                             setBrandSearch("");
                             setSelectedVariations([]);
@@ -1130,7 +1154,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   {isAd && adSubjectKind !== "drug" ? (
                     <div className="space-y-3">
                       {adSubjectKind === "device" && selectedDevice ? (
-                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => { setSelectedDeviceId(""); setIndication(""); }}>
+                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => { setSelectedDeviceId(""); setIndications([]); }}>
                           {subjectRows}
                         </SelectedBrandTile>
                       ) : adSubjectKind === "disease" && selectedDisease ? (
@@ -1246,7 +1270,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       {selectedBrand ? (
                         <SelectedBrandTile
                           brand={selectedBrand}
-                          onChange={() => { setSelectedBrandId(""); setBrandSearch(""); setSelectedVariations([]); setIndication(""); }}
+                          onChange={() => { setSelectedBrandId(""); setBrandSearch(""); setSelectedVariations([]); setIndications([]); }}
                         >
                           <SubjectRow
                             label="Variants"
@@ -1484,7 +1508,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
                       <Info className="mt-0.5 size-4 shrink-0 text-warn" />
                       <p className="min-w-0 flex-1 text-label text-ink-2">
-                        Help-seeking ads are about one condition. Choose which of {adSubjectName}&apos;s indications in step 2.
+                        Help-seeking ads are about one condition. Choose one of {adSubjectName}&apos;s indications in step 2.
                       </p>
                       <Button size="sm" variant="secondary" onClick={() => setStage("grounding")} className="h-7 shrink-0 text-label font-bold">
                         Choose indication

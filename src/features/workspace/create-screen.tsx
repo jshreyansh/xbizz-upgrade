@@ -280,8 +280,10 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   /* The indication and therapy area from the start step, so the examples are
      about what this project is about rather than the brand in general. */
   const projectIndication = useProjectIndication();
-  const condition = projectIndication.picked?.condition;
-  const subjectPhrase = condition ? `${currentBrandName} for ${condition}` : currentBrandName;
+  const condition = projectIndication.only?.condition;
+  /* One or two indications are named in the examples; more read as a list, so the brand alone. */
+  const named = projectIndication.picked.length > 0 ? projectIndication.picked : projectIndication.only ? [projectIndication.only] : [];
+  const subjectPhrase = named.length > 0 && named.length <= 2 ? `${currentBrandName} for ${named.map((i) => i.condition ?? i.label).join(" and ")}` : currentBrandName;
   const prescribers = prescribersFor(projectIndication.therapyAreas);
 
   /* Which of the four context questions is open, or none. Clicking a tile
@@ -735,7 +737,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             const brand = INITIAL_BRANDS.find((b) => b.id === next.brandId);
             if (brand && brand.name.toLowerCase() !== currentBrandName.toLowerCase()) {
               /* Another product has other indications: start again from all of them. */
-              useWorkspaceStore.getState().setIndication("");
+              useWorkspaceStore.getState().setIndications([]);
               useWorkspaceStore.getState().setTherapyAreas([]);
             }
             if (brand) setSourcePayload({ dossierId: brand.id });

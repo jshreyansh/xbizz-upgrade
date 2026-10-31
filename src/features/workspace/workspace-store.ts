@@ -77,9 +77,10 @@ interface WorkspaceState {
   topics: string[];
   /** Which presentations of the brand this project covers. Empty means all. */
   variations: string[];
-  /** The label indication the project is about, from the dossier. Empty means all approved ones. */
-  indication: string;
-  /** Never asked: follows the indication, or the product's areas while all are in play. */
+  /** The label indications the project is about, from the dossier, among those
+   *  the picked variants carry. Empty means all of them. */
+  indications: string[];
+  /** Picked from the areas the indications sit in. */
   therapyAreas: string[];
   market: string;
   intendedUse: string;
@@ -192,7 +193,7 @@ interface WorkspaceState {
   setTopics: (topics: string[]) => void;
   toggleTopic: (topic: string) => void;
   setVariations: (variations: string[]) => void;
-  setIndication: (indication: string) => void;
+  setIndications: (indications: string[]) => void;
   setTherapyAreas: (therapyAreas: string[]) => void;
   setMarket: (market: string) => void;
   setIntendedUse: (intendedUse: string) => void;
@@ -265,7 +266,7 @@ const initialState = {
   goal: "",
   topics: [] as string[],
   variations: [] as string[],
-  indication: "",
+  indications: [] as string[],
   therapyAreas: [] as string[],
   market: "United States",
   intendedUse: "HCP meeting",
@@ -363,7 +364,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
         : [...state.topics, topic],
     })),
   setVariations: (variations) => set({ variations }),
-  setIndication: (indication) => set({ indication }),
+  setIndications: (indications) => set({ indications }),
   setTherapyAreas: (therapyAreas) => set({ therapyAreas }),
   setMarket: (market) => set({ market }),
   setIntendedUse: (intendedUse) => set({ intendedUse }),

@@ -83,16 +83,16 @@ export interface DossierItem {
 export const INITIAL_BRANDS: BrandItem[] = [
   { id: "velmora", name: "Velmora", genericName: "tirzelamide", therapyAreas: ["Dermatology", "Cardiology"], hasDossier: true, variants: ["150 mg prefilled pen", "150 mg prefilled syringe", "300 mg starter pack"], dossierIds: ["velmora-commercial", "velmora-smpc", "velmora-heor"] },
   { id: "onkavia", name: "Onkavia", genericName: "relunocitinib", therapyAreas: ["Oncology"], hasDossier: true, variants: ["5 mg tablet", "10 mg tablet", "15 mg tablet", "20 mg tablet", "1.5% cream · 60 g"], dossierIds: ["onkavia-ema", "onkavia-fda"] },
-  { id: "nirvexa", name: "Nirvexa", genericName: "brentaxaban", therapyAreas: ["Immunology"], hasDossier: true, variants: ["5 mg tablet", "10 mg tablet", "11 mg extended-release tablet"], dossierIds: ["nirvexa-mhra", "nirvexa-fda"] },
+  { id: "nirvexa", name: "Nirvexa", genericName: "brentaxaban", therapyAreas: ["Immunology"], hasDossier: true, variants: ["5 mg tablet", "10 mg tablet", "11 mg extended-release tablet", "1 mg/mL oral solution"], dossierIds: ["nirvexa-mhra", "nirvexa-fda"] },
   { id: "cardioxa", name: "Cardioxa", genericName: "levomilnacipran ER", therapyAreas: ["Cardiology"], hasDossier: true, variants: ["20 mg ER capsule", "40 mg ER capsule", "80 mg ER capsule"], dossierIds: ["cardioxa-sample"], type: "Tablet", gradient: "linear-gradient(150deg,#0f766e,#14b8a6 55%,#5eead4)" },
-  { id: "pulmovax", name: "PulmoVax", genericName: "albuterol / budesonide", therapyAreas: ["Respiratory"], hasDossier: true, variants: ["80/160 µg inhaler · 60 doses", "80/160 µg inhaler · 120 doses"], dossierIds: ["pulmovax-sample"], type: "Device", gradient: "linear-gradient(150deg,#1d4ed8,#3b82f6 55%,#93c5fd)" },
-  { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
-  { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
-  { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false },
-  { id: "abd-1", name: "ABD 1", genericName: "Abacavir + Dolutegravir", therapyAreas: ["Anti-infectives"], hasDossier: false },
-  { id: "dermora", name: "Dermora", genericName: "dermoclizine fumarate", therapyAreas: ["Dermatology"], hasDossier: false },
-  { id: "pulmavia", name: "Pulmavia", genericName: "pulmavatinib citrate", therapyAreas: ["Respiratory"], hasDossier: false },
-  { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyAreas: ["Nephrology & Urology"], hasDossier: false },
+  { id: "pulmovax", name: "PulmoVax", genericName: "albuterol / budesonide", therapyAreas: ["Respiratory"], hasDossier: true, variants: ["40/80 µg inhaler · 120 doses", "80/160 µg inhaler · 60 doses", "80/160 µg inhaler · 120 doses"], dossierIds: ["pulmovax-sample"], type: "Device", gradient: "linear-gradient(150deg,#1d4ed8,#3b82f6 55%,#93c5fd)" },
+  { id: "3d", name: "3D", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false, variants: ["50 mg tablet", "75 mg SR tablet", "25 mg/mL oral solution", "3% topical gel"] },
+  { id: "3d-flam", name: "3D Flam", genericName: "Diclofenac", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false, variants: ["50 mg tablet", "50 mg sachet"] },
+  { id: "3d-plus", name: "3D-Plus", genericName: "Diclofenac + Paracetamol", therapyAreas: ["Rheumatology & Musculoskeletal"], hasDossier: false, variants: ["50/325 mg tablet", "50/500 mg tablet"] },
+  { id: "abd-1", name: "ABD 1", genericName: "Abacavir + Dolutegravir", therapyAreas: ["Anti-infectives"], hasDossier: false, variants: ["600/50 mg tablet", "Dispersible tablet for oral suspension"] },
+  { id: "dermora", name: "Dermora", genericName: "dermoclizine fumarate", therapyAreas: ["Dermatology"], hasDossier: false, variants: ["0.1% cream · 30 g", "0.1% ointment · 30 g", "Lotion · 60 mL"] },
+  { id: "pulmavia", name: "Pulmavia", genericName: "pulmavatinib citrate", therapyAreas: ["Respiratory"], hasDossier: false, variants: ["100 mg capsule", "150 mg capsule"] },
+  { id: "renalis", name: "Renalis", genericName: "renalisertib sodium", therapyAreas: ["Nephrology & Urology"], hasDossier: false, variants: ["4 mg tablet", "8 mg tablet", "16 mg tablet"] },
 ];
 
 export const DOSSIERS: Record<string, DossierItem> = {

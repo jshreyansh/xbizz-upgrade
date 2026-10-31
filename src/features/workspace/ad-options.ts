@@ -281,11 +281,14 @@ export interface Indication {
    *  several (heart risk in psoriasis is cardiology and dermatology), and the
    *  person picks which the content speaks to. */
   therapyAreas?: string[];
+  /** The variants that carry this use, where not every one does: a cream's
+   *  indications are not a tablet's. Absent means all of them. */
+  variants?: string[];
 }
 
 /* Shorthand for the label data below: name, therapy areas, plain-language
    condition, the label's wording, and any flags. */
-const ind = (label: string, therapyAreas: string[], condition: string, wording: string, flags?: Pick<Indication, "isNew" | "onlyTreatment">): Indication => ({
+const ind = (label: string, therapyAreas: string[], condition: string, wording: string, flags?: Pick<Indication, "isNew" | "onlyTreatment" | "variants">): Indication => ({
   label,
   therapyAreas,
   condition,
@@ -298,56 +301,56 @@ const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("CV risk in psoriasis", ["Cardiology", "Dermatology"], "heart risk in psoriasis", "To reduce the risk of major adverse cardiovascular events in adults with moderate-to-severe plaque psoriasis and established cardiovascular disease.", { isNew: true }),
-      ind("Plaque psoriasis", ["Dermatology", "Immunology"], "plaque psoriasis", "Moderate-to-severe plaque psoriasis in adults who are candidates for systemic therapy or phototherapy."),
-      ind("Psoriatic arthritis", ["Rheumatology", "Dermatology", "Immunology"], "psoriatic arthritis", "Active psoriatic arthritis in adults, alone or in combination with a conventional synthetic DMARD such as methotrexate."),
-      ind("Crohn's disease", ["Gastroenterology", "Immunology"], "Crohn's disease", "Moderately to severely active Crohn's disease in adults who have had an inadequate response, lost response or were intolerant to conventional therapy or a TNF blocker."),
-      ind("Ulcerative colitis", ["Gastroenterology", "Immunology"], "ulcerative colitis", "Moderately to severely active ulcerative colitis in adults who have had an inadequate response or were intolerant to conventional therapy."),
-      ind("Non-infectious uveitis", ["Ophthalmology", "Rheumatology"], "uveitis", "Non-infectious intermediate, posterior and panuveitis in adults, to reduce the risk of flare and preserve vision."),
+      ind("CV risk in psoriasis", ["Cardiology", "Dermatology"], "heart risk in psoriasis", "To reduce the risk of major adverse cardiovascular events in adults with moderate-to-severe plaque psoriasis and established cardiovascular disease.", { isNew: true, variants: ["150 mg prefilled pen", "150 mg prefilled syringe"] }),
+      ind("Plaque psoriasis", ["Dermatology", "Immunology"], "plaque psoriasis", "Moderate-to-severe plaque psoriasis in adults who are candidates for systemic therapy or phototherapy.", { variants: ["150 mg prefilled pen", "150 mg prefilled syringe"] }),
+      ind("Psoriatic arthritis", ["Rheumatology", "Dermatology", "Immunology"], "psoriatic arthritis", "Active psoriatic arthritis in adults, alone or in combination with a conventional synthetic DMARD such as methotrexate.", { variants: ["150 mg prefilled pen", "150 mg prefilled syringe"] }),
+      ind("Crohn's disease", ["Gastroenterology", "Immunology"], "Crohn's disease", "Moderately to severely active Crohn's disease in adults who have had an inadequate response, lost response or were intolerant to conventional therapy or a TNF blocker.", { variants: ["150 mg prefilled pen", "300 mg starter pack"] }),
+      ind("Ulcerative colitis", ["Gastroenterology", "Immunology"], "ulcerative colitis", "Moderately to severely active ulcerative colitis in adults who have had an inadequate response or were intolerant to conventional therapy.", { variants: ["150 mg prefilled pen", "300 mg starter pack"] }),
+      ind("Non-infectious uveitis", ["Ophthalmology", "Rheumatology"], "uveitis", "Non-infectious intermediate, posterior and panuveitis in adults, to reduce the risk of flare and preserve vision.", { variants: ["150 mg prefilled syringe"] }),
     ],
   },
   onkavia: {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      ind("Polycythemia vera", ["Hematology", "Oncology"], "polycythemia vera", "Polycythemia vera in adults who have had an inadequate response to or are intolerant of hydroxyurea.", { isNew: true }),
-      ind("Myelofibrosis", ["Oncology", "Hematology"], "myelofibrosis", "Intermediate or high-risk myelofibrosis in adults, including primary myelofibrosis, post-polycythemia vera and post-essential thrombocythemia myelofibrosis.", { onlyTreatment: true }),
-      ind("Acute GVHD", ["Transplant Medicine", "Hematology"], "graft-versus-host disease", "Steroid-refractory acute graft-versus-host disease in adult and pediatric patients 12 years and older."),
-      ind("Chronic GVHD", ["Transplant Medicine", "Hematology", "Dermatology"], "chronic graft-versus-host disease", "Chronic graft-versus-host disease after failure of one or two lines of systemic therapy in adult and pediatric patients 12 years and older."),
-      ind("Atopic dermatitis", ["Dermatology", "Allergy & Immunology", "Pediatrics"], "eczema", "Short-term and non-continuous chronic treatment of mild to moderate atopic dermatitis in non-immunocompromised patients 12 years and older (cream only)."),
-      ind("Nonsegmental vitiligo", ["Dermatology", "Immunology"], "vitiligo", "Topical treatment of nonsegmental vitiligo in adult and pediatric patients 12 years and older (cream only)."),
+      ind("Polycythemia vera", ["Hematology", "Oncology"], "polycythemia vera", "Polycythemia vera in adults who have had an inadequate response to or are intolerant of hydroxyurea.", { isNew: true, variants: ["5 mg tablet", "10 mg tablet"] }),
+      ind("Myelofibrosis", ["Oncology", "Hematology"], "myelofibrosis", "Intermediate or high-risk myelofibrosis in adults, including primary myelofibrosis, post-polycythemia vera and post-essential thrombocythemia myelofibrosis.", { onlyTreatment: true, variants: ["5 mg tablet", "10 mg tablet", "15 mg tablet", "20 mg tablet"] }),
+      ind("Acute GVHD", ["Transplant Medicine", "Hematology"], "graft-versus-host disease", "Steroid-refractory acute graft-versus-host disease in adult and pediatric patients 12 years and older.", { variants: ["5 mg tablet", "10 mg tablet"] }),
+      ind("Chronic GVHD", ["Transplant Medicine", "Hematology", "Dermatology"], "chronic graft-versus-host disease", "Chronic graft-versus-host disease after failure of one or two lines of systemic therapy in adult and pediatric patients 12 years and older.", { variants: ["5 mg tablet", "10 mg tablet"] }),
+      ind("Atopic dermatitis", ["Dermatology", "Allergy & Immunology", "Pediatrics"], "eczema", "Short-term and non-continuous chronic treatment of mild to moderate atopic dermatitis in non-immunocompromised patients 12 years and older (cream only).", { variants: ["1.5% cream · 60 g"] }),
+      ind("Nonsegmental vitiligo", ["Dermatology", "Immunology"], "vitiligo", "Topical treatment of nonsegmental vitiligo in adult and pediatric patients 12 years and older (cream only).", { variants: ["1.5% cream · 60 g"] }),
     ],
   },
   nirvexa: {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      ind("Alopecia areata", ["Dermatology", "Immunology"], "alopecia areata", "Severe alopecia areata in adults.", { isNew: true }),
-      ind("Rheumatoid arthritis", ["Rheumatology", "Immunology"], "rheumatoid arthritis", "Moderately to severely active rheumatoid arthritis in adults who have had an inadequate response or intolerance to one or more TNF blockers."),
-      ind("Juvenile idiopathic arthritis", ["Pediatrics", "Rheumatology"], "juvenile arthritis", "Active polyarticular juvenile idiopathic arthritis in patients 2 years of age and older."),
-      ind("Ulcerative colitis", ["Gastroenterology", "Immunology"], "ulcerative colitis", "Moderately to severely active ulcerative colitis in adults who have had an inadequate response or intolerance to one or more TNF blockers."),
-      ind("Atopic dermatitis", ["Dermatology", "Allergy & Immunology", "Pediatrics"], "eczema", "Refractory, moderate-to-severe atopic dermatitis in adults and adolescents 12 and older whose disease is not adequately controlled with other systemic drugs."),
-      ind("COVID-19 in hospital", ["Infectious Diseases", "Respiratory", "Hospital Medicine"], "COVID-19", "COVID-19 in hospitalized adults requiring supplemental oxygen, non-invasive or invasive mechanical ventilation, or ECMO."),
+      ind("Alopecia areata", ["Dermatology", "Immunology"], "alopecia areata", "Severe alopecia areata in adults.", { isNew: true, variants: ["5 mg tablet", "10 mg tablet"] }),
+      ind("Rheumatoid arthritis", ["Rheumatology", "Immunology"], "rheumatoid arthritis", "Moderately to severely active rheumatoid arthritis in adults who have had an inadequate response or intolerance to one or more TNF blockers.", { variants: ["5 mg tablet", "11 mg extended-release tablet"] }),
+      ind("Juvenile idiopathic arthritis", ["Pediatrics", "Rheumatology"], "juvenile arthritis", "Active polyarticular juvenile idiopathic arthritis in patients 2 years of age and older.", { variants: ["1 mg/mL oral solution", "5 mg tablet"] }),
+      ind("Ulcerative colitis", ["Gastroenterology", "Immunology"], "ulcerative colitis", "Moderately to severely active ulcerative colitis in adults who have had an inadequate response or intolerance to one or more TNF blockers.", { variants: ["10 mg tablet", "11 mg extended-release tablet"] }),
+      ind("Atopic dermatitis", ["Dermatology", "Allergy & Immunology", "Pediatrics"], "eczema", "Refractory, moderate-to-severe atopic dermatitis in adults and adolescents 12 and older whose disease is not adequately controlled with other systemic drugs.", { variants: ["5 mg tablet", "10 mg tablet"] }),
+      ind("COVID-19 in hospital", ["Infectious Diseases", "Respiratory", "Hospital Medicine"], "COVID-19", "COVID-19 in hospitalized adults requiring supplemental oxygen, non-invasive or invasive mechanical ventilation, or ECMO.", { variants: ["5 mg tablet", "10 mg tablet"] }),
     ],
   },
   cardioxa: {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      ind("HFpEF", ["Cardiology", "Internal Medicine"], "heart failure", "To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure and left ventricular ejection fraction above 40%.", { isNew: true }),
-      ind("HFrEF", ["Cardiology", "Internal Medicine"], "heart failure", "To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure with reduced ejection fraction (NYHA class II–IV)."),
-      ind("Chronic kidney disease", ["Nephrology", "Cardiology", "Endocrinology"], "chronic kidney disease", "To reduce the risk of sustained eGFR decline, end-stage kidney disease, cardiovascular death and hospitalization in adults with chronic kidney disease at risk of progression."),
-      ind("Type 2 diabetes", ["Endocrinology", "Primary Care", "Cardiology"], "type 2 diabetes", "As an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus."),
-      ind("Type 2 diabetes, ages 10+", ["Pediatrics", "Endocrinology"], "type 2 diabetes in children", "As an adjunct to diet and exercise to improve glycemic control in pediatric patients aged 10 years and older with type 2 diabetes mellitus."),
+      ind("HFpEF", ["Cardiology", "Internal Medicine"], "heart failure", "To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure and left ventricular ejection fraction above 40%.", { isNew: true, variants: ["40 mg ER capsule", "80 mg ER capsule"] }),
+      ind("HFrEF", ["Cardiology", "Internal Medicine"], "heart failure", "To reduce the risk of cardiovascular death and hospitalization for heart failure in adults with heart failure with reduced ejection fraction (NYHA class II–IV).", { variants: ["40 mg ER capsule", "80 mg ER capsule"] }),
+      ind("Chronic kidney disease", ["Nephrology", "Cardiology", "Endocrinology"], "chronic kidney disease", "To reduce the risk of sustained eGFR decline, end-stage kidney disease, cardiovascular death and hospitalization in adults with chronic kidney disease at risk of progression.", { variants: ["40 mg ER capsule"] }),
+      ind("Type 2 diabetes", ["Endocrinology", "Primary Care", "Cardiology"], "type 2 diabetes", "As an adjunct to diet and exercise to improve glycemic control in adults with type 2 diabetes mellitus.", { variants: ["20 mg ER capsule", "40 mg ER capsule"] }),
+      ind("Type 2 diabetes, ages 10+", ["Pediatrics", "Endocrinology"], "type 2 diabetes in children", "As an adjunct to diet and exercise to improve glycemic control in pediatric patients aged 10 years and older with type 2 diabetes mellitus.", { variants: ["20 mg ER capsule"] }),
     ],
   },
   pulmovax: {
     boxedWarning: false,
     genericAvailable: true,
     indications: [
-      ind("Asthma, ages 12–17", ["Pediatrics", "Respiratory", "Allergy & Immunology"], "asthma in teens", "As-needed treatment or prevention of bronchoconstriction, and to reduce the risk of exacerbations, in patients 12 to 17 years of age with asthma.", { isNew: true }),
-      ind("Asthma, adults", ["Respiratory", "Allergy & Immunology", "Primary Care"], "asthma", "As-needed treatment or prevention of bronchoconstriction, and to reduce the risk of exacerbations, in adults with asthma."),
-      ind("COPD", ["Respiratory", "Primary Care"], "COPD", "Maintenance treatment of airflow obstruction in adults with chronic obstructive pulmonary disease, including chronic bronchitis and emphysema."),
+      ind("Asthma, ages 12–17", ["Pediatrics", "Respiratory", "Allergy & Immunology"], "asthma in teens", "As-needed treatment or prevention of bronchoconstriction, and to reduce the risk of exacerbations, in patients 12 to 17 years of age with asthma.", { isNew: true, variants: ["40/80 µg inhaler · 120 doses"] }),
+      ind("Asthma, adults", ["Respiratory", "Allergy & Immunology", "Primary Care"], "asthma", "As-needed treatment or prevention of bronchoconstriction, and to reduce the risk of exacerbations, in adults with asthma.", { variants: ["80/160 µg inhaler · 60 doses", "80/160 µg inhaler · 120 doses"] }),
+      ind("COPD", ["Respiratory", "Primary Care"], "COPD", "Maintenance treatment of airflow obstruction in adults with chronic obstructive pulmonary disease, including chronic bronchitis and emphysema.", { variants: ["80/160 µg inhaler · 120 doses"] }),
       ind("Exercise-induced bronchoconstriction", ["Sports Medicine", "Respiratory"], "exercise-induced asthma", "Prevention of exercise-induced bronchoconstriction in patients 12 years and older, taken 15 to 30 minutes before exercise."),
       ind("Seasonal allergic asthma", ["Allergy & Immunology", "Respiratory"], "allergic asthma", "Relief of acute bronchospasm in patients 12 years and older with seasonal allergic asthma during pollen season."),
     ],
@@ -356,24 +359,24 @@ const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
     boxedWarning: true,
     genericAvailable: true,
     indications: [
-      ind("Migraine attacks", ["Neurology", "Pain Management"], "migraine", "Acute treatment of migraine attacks, with or without aura, in adults 18 years of age or older (oral solution only).", { isNew: true }),
-      ind("Osteoarthritis", ["Rheumatology & Musculoskeletal", "Orthopedics"], "osteoarthritis", "Relief of the signs and symptoms of osteoarthritis."),
-      ind("Rheumatoid arthritis", ["Rheumatology & Musculoskeletal", "Immunology"], "rheumatoid arthritis", "Relief of the signs and symptoms of rheumatoid arthritis."),
-      ind("Acute pain", ["Pain Management", "Primary Care"], "acute pain", "Management of mild to moderate acute pain in adults."),
-      ind("Primary dysmenorrhea", ["Women's Health", "Pain Management"], "period pain", "Treatment of primary dysmenorrhea."),
-      ind("Actinic keratosis", ["Dermatology", "Oncology"], "actinic keratosis", "Topical treatment of actinic keratoses (3% gel only)."),
+      ind("Migraine attacks", ["Neurology", "Pain Management"], "migraine", "Acute treatment of migraine attacks, with or without aura, in adults 18 years of age or older (oral solution only).", { isNew: true, variants: ["25 mg/mL oral solution"] }),
+      ind("Osteoarthritis", ["Rheumatology & Musculoskeletal", "Orthopedics"], "osteoarthritis", "Relief of the signs and symptoms of osteoarthritis.", { variants: ["50 mg tablet", "75 mg SR tablet"] }),
+      ind("Rheumatoid arthritis", ["Rheumatology & Musculoskeletal", "Immunology"], "rheumatoid arthritis", "Relief of the signs and symptoms of rheumatoid arthritis.", { variants: ["50 mg tablet", "75 mg SR tablet"] }),
+      ind("Acute pain", ["Pain Management", "Primary Care"], "acute pain", "Management of mild to moderate acute pain in adults.", { variants: ["50 mg tablet"] }),
+      ind("Primary dysmenorrhea", ["Women's Health", "Pain Management"], "period pain", "Treatment of primary dysmenorrhea.", { variants: ["50 mg tablet"] }),
+      ind("Actinic keratosis", ["Dermatology", "Oncology"], "actinic keratosis", "Topical treatment of actinic keratoses (3% gel only).", { variants: ["3% topical gel"] }),
     ],
   },
   "3d-flam": {
     boxedWarning: true,
     genericAvailable: true,
     indications: [
-      ind("Acute gout flare", ["Rheumatology & Musculoskeletal", "Primary Care"], "gout", "Relief of pain and inflammation in acute gout flares in adults.", { isNew: true }),
+      ind("Acute gout flare", ["Rheumatology & Musculoskeletal", "Primary Care"], "gout", "Relief of pain and inflammation in acute gout flares in adults.", { isNew: true, variants: ["50 mg tablet"] }),
       ind("Acute pain", ["Pain Management", "Primary Care"], "acute pain", "Relief of mild to moderate acute pain in adults, where a rapid onset of action is needed."),
       ind("Post-operative pain", ["Pain Management", "Orthopedics"], "pain after surgery", "Short-term management of post-operative pain, including after dental and orthopedic procedures."),
       ind("Primary dysmenorrhea", ["Women's Health", "Pain Management"], "period pain", "Treatment of primary dysmenorrhea in adults and adolescents 14 years and older."),
-      ind("Migraine attacks", ["Neurology", "Pain Management"], "migraine", "Acute treatment of migraine attacks, with or without aura, in adults."),
-      ind("Sprains and strains", ["Sports Medicine", "Orthopedics"], "sprains and strains", "Relief of pain and swelling from soft-tissue injuries such as sprains, strains and contusions."),
+      ind("Migraine attacks", ["Neurology", "Pain Management"], "migraine", "Acute treatment of migraine attacks, with or without aura, in adults.", { variants: ["50 mg sachet"] }),
+      ind("Sprains and strains", ["Sports Medicine", "Orthopedics"], "sprains and strains", "Relief of pain and swelling from soft-tissue injuries such as sprains, strains and contusions.", { variants: ["50 mg tablet"] }),
     ],
   },
   "3d-plus": {
@@ -381,9 +384,9 @@ const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
     genericAvailable: true,
     indications: [
       ind("Acute musculoskeletal pain", ["Rheumatology & Musculoskeletal", "Orthopedics"], "muscle and joint pain", "Short-term relief of acute musculoskeletal pain and inflammation in adults."),
-      ind("Low back pain", ["Rheumatology & Musculoskeletal", "Pain Management"], "back pain", "Short-term relief of acute low back pain in adults, alongside physical therapy."),
+      ind("Low back pain", ["Rheumatology & Musculoskeletal", "Pain Management"], "back pain", "Short-term relief of acute low back pain in adults, alongside physical therapy.", { variants: ["50/500 mg tablet"] }),
       ind("Post-operative pain", ["Pain Management", "Orthopedics"], "pain after surgery", "Management of mild to moderate post-operative pain in adults."),
-      ind("Dental pain", ["Dentistry", "Pain Management"], "toothache", "Relief of acute dental pain, including after tooth extraction, in adults."),
+      ind("Dental pain", ["Dentistry", "Pain Management"], "toothache", "Relief of acute dental pain, including after tooth extraction, in adults.", { variants: ["50/325 mg tablet"] }),
       ind("Primary dysmenorrhea", ["Women's Health", "Pain Management"], "period pain", "Relief of pain in primary dysmenorrhea in adults."),
     ],
   },
@@ -391,22 +394,22 @@ const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
     boxedWarning: true,
     genericAvailable: false,
     indications: [
-      ind("HIV-1 in pregnancy", ["Obstetrics", "Anti-infectives"], "HIV in pregnancy", "Continuation of treatment of HIV-1 infection in pregnant people who are virologically suppressed and HLA-B*5701-negative.", { isNew: true }),
-      ind("HIV-1, treatment-naive", ["Anti-infectives", "Primary Care"], "HIV", "Treatment of HIV-1 infection in adults who have not received antiretroviral therapy and are HLA-B*5701-negative."),
-      ind("HIV-1, switching", ["Anti-infectives", "Primary Care"], "HIV", "To replace the current antiretroviral regimen in adults who are virologically suppressed on a stable regimen, with no history of treatment failure."),
+      ind("HIV-1 in pregnancy", ["Obstetrics", "Anti-infectives"], "HIV in pregnancy", "Continuation of treatment of HIV-1 infection in pregnant people who are virologically suppressed and HLA-B*5701-negative.", { isNew: true, variants: ["600/50 mg tablet"] }),
+      ind("HIV-1, treatment-naive", ["Anti-infectives", "Primary Care"], "HIV", "Treatment of HIV-1 infection in adults who have not received antiretroviral therapy and are HLA-B*5701-negative.", { variants: ["600/50 mg tablet"] }),
+      ind("HIV-1, switching", ["Anti-infectives", "Primary Care"], "HIV", "To replace the current antiretroviral regimen in adults who are virologically suppressed on a stable regimen, with no history of treatment failure.", { variants: ["600/50 mg tablet"] }),
       ind("HIV-1, adolescents", ["Pediatrics", "Anti-infectives"], "HIV in teens", "Treatment of HIV-1 infection in adolescents 12 years and older weighing at least 40 kg."),
-      ind("HIV-1 with tuberculosis", ["Respiratory", "Anti-infectives"], "HIV and TB", "Treatment of HIV-1 infection in adults receiving rifampin for tuberculosis, with the dolutegravir dose adjusted as labeled."),
+      ind("HIV-1 with tuberculosis", ["Respiratory", "Anti-infectives"], "HIV and TB", "Treatment of HIV-1 infection in adults receiving rifampin for tuberculosis, with the dolutegravir dose adjusted as labeled.", { variants: ["600/50 mg tablet"] }),
     ],
   },
   dermora: {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("Radiation dermatitis", ["Oncology Supportive Care", "Dermatology"], "skin reactions to radiation", "Prevention and treatment of radiation dermatitis in adults receiving radiotherapy for cancer.", { isNew: true }),
+      ind("Radiation dermatitis", ["Oncology Supportive Care", "Dermatology"], "skin reactions to radiation", "Prevention and treatment of radiation dermatitis in adults receiving radiotherapy for cancer.", { isNew: true, variants: ["0.1% cream · 30 g", "Lotion · 60 mL"] }),
       ind("Atopic dermatitis", ["Dermatology", "Allergy & Immunology", "Pediatrics"], "eczema", "Short-term treatment of moderate atopic dermatitis flares in adults and children 2 years and older."),
-      ind("Chronic hand eczema", ["Dermatology", "Allergy & Immunology"], "hand eczema", "Moderate to severe chronic hand eczema in adults when topical corticosteroids are inadequate or inappropriate."),
-      ind("Insect bite reactions", ["Allergy & Immunology", "Dermatology"], "bite and sting reactions", "Relief of itching and swelling from local hypersensitivity reactions to insect bites and stings."),
-      ind("Diaper dermatitis", ["Pediatrics", "Dermatology"], "diaper rash", "Short-term treatment of moderate diaper dermatitis in infants 3 months and older (cream only)."),
+      ind("Chronic hand eczema", ["Dermatology", "Allergy & Immunology"], "hand eczema", "Moderate to severe chronic hand eczema in adults when topical corticosteroids are inadequate or inappropriate.", { variants: ["0.1% ointment · 30 g"] }),
+      ind("Insect bite reactions", ["Allergy & Immunology", "Dermatology"], "bite and sting reactions", "Relief of itching and swelling from local hypersensitivity reactions to insect bites and stings.", { variants: ["0.1% cream · 30 g", "Lotion · 60 mL"] }),
+      ind("Diaper dermatitis", ["Pediatrics", "Dermatology"], "diaper rash", "Short-term treatment of moderate diaper dermatitis in infants 3 months and older (cream only).", { variants: ["0.1% cream · 30 g"] }),
     ],
   },
   pulmavia: {
@@ -417,20 +420,20 @@ const BRAND_AD_FACTS: Record<string, BrandAdFacts> = {
       ind("Idiopathic pulmonary fibrosis", ["Respiratory", "Rare Diseases"], "pulmonary fibrosis", "Treatment of idiopathic pulmonary fibrosis in adults."),
       ind("Progressive fibrosing ILD", ["Respiratory", "Rheumatology"], "lung scarring", "Chronic fibrosing interstitial lung diseases with a progressive phenotype in adults."),
       ind("Pulmonary arterial hypertension", ["Cardiology", "Respiratory"], "pulmonary hypertension", "Pulmonary arterial hypertension (WHO Group 1) in adults, to improve exercise ability and delay disease progression."),
-      ind("EGFR-mutated NSCLC", ["Oncology", "Respiratory"], "lung cancer", "Metastatic non-small cell lung cancer in adults whose tumors have EGFR exon 19 deletions or exon 21 L858R mutations."),
-      ind("Lymphangioleiomyomatosis", ["Rare Diseases", "Respiratory", "Women's Health"], "LAM", "Treatment of lymphangioleiomyomatosis in adults with declining lung function."),
+      ind("EGFR-mutated NSCLC", ["Oncology", "Respiratory"], "lung cancer", "Metastatic non-small cell lung cancer in adults whose tumors have EGFR exon 19 deletions or exon 21 L858R mutations.", { variants: ["150 mg capsule"] }),
+      ind("Lymphangioleiomyomatosis", ["Rare Diseases", "Respiratory", "Women's Health"], "LAM", "Treatment of lymphangioleiomyomatosis in adults with declining lung function.", { variants: ["100 mg capsule"] }),
     ],
   },
   renalis: {
     boxedWarning: false,
     genericAvailable: false,
     indications: [
-      ind("IgA nephropathy", ["Nephrology", "Immunology"], "IgA nephropathy", "To slow kidney function decline in adults with primary IgA nephropathy at risk of disease progression.", { isNew: true }),
-      ind("Polycystic kidney disease", ["Nephrology", "Rare Diseases"], "polycystic kidney disease", "To slow kidney function decline in adults at risk of rapidly progressing autosomal dominant polycystic kidney disease."),
-      ind("Diabetic kidney disease", ["Endocrinology", "Nephrology"], "kidney disease in diabetes", "To reduce the risk of eGFR decline and end-stage kidney disease in adults with chronic kidney disease associated with type 2 diabetes."),
-      ind("Overactive bladder", ["Urology", "Women's Health"], "overactive bladder", "Overactive bladder with symptoms of urge urinary incontinence, urgency and urinary frequency in adults."),
-      ind("Kidney transplant", ["Transplant Medicine", "Nephrology"], "kidney transplant", "Prophylaxis of organ rejection in adult kidney transplant recipients, in combination with other immunosuppressants."),
-      ind("Hyperkalemia in heart failure", ["Cardiology", "Nephrology"], "high potassium", "Treatment of hyperkalemia in adults with heart failure, to allow continued use of RAAS inhibitors."),
+      ind("IgA nephropathy", ["Nephrology", "Immunology"], "IgA nephropathy", "To slow kidney function decline in adults with primary IgA nephropathy at risk of disease progression.", { isNew: true, variants: ["8 mg tablet", "16 mg tablet"] }),
+      ind("Polycystic kidney disease", ["Nephrology", "Rare Diseases"], "polycystic kidney disease", "To slow kidney function decline in adults at risk of rapidly progressing autosomal dominant polycystic kidney disease.", { variants: ["16 mg tablet"] }),
+      ind("Diabetic kidney disease", ["Endocrinology", "Nephrology"], "kidney disease in diabetes", "To reduce the risk of eGFR decline and end-stage kidney disease in adults with chronic kidney disease associated with type 2 diabetes.", { variants: ["8 mg tablet"] }),
+      ind("Overactive bladder", ["Urology", "Women's Health"], "overactive bladder", "Overactive bladder with symptoms of urge urinary incontinence, urgency and urinary frequency in adults.", { variants: ["4 mg tablet"] }),
+      ind("Kidney transplant", ["Transplant Medicine", "Nephrology"], "kidney transplant", "Prophylaxis of organ rejection in adult kidney transplant recipients, in combination with other immunosuppressants.", { variants: ["4 mg tablet", "8 mg tablet"] }),
+      ind("Hyperkalemia in heart failure", ["Cardiology", "Nephrology"], "high potassium", "Treatment of hyperkalemia in adults with heart failure, to allow continued use of RAAS inhibitors.", { variants: ["4 mg tablet"] }),
     ],
   },
   affolmy: {
@@ -591,15 +594,29 @@ export const diseaseTherapyArea = (group: string) => THERAPY_AREA_BY_GROUP[group
 export const labelIndications = (subjectId: string): Indication[] => BRAND_AD_FACTS[subjectId]?.indications ?? [];
 
 /**
- * The therapy areas the person picks from: the picked indication's, or every
- * area the label's indications cover while all of them are in play. The
+ * The indications the picked variants carry. No variants picked means all of
+ * them, so every indication in the label is available.
+ */
+export function indicationsForVariants(indications: Indication[], variants: string[]): Indication[] {
+  if (variants.length === 0) return indications;
+  return indications.filter((i) => !i.variants || i.variants.some((v) => variants.includes(v)));
+}
+
+/**
+ * The therapy areas the person picks from: every area the picked indications
+ * sit in, or that all the available ones do when none are picked. The
  * product's own areas only stand in when there is no label data.
  */
-export function therapyAreasFor(indications: Indication[], picked: string, productAreas: string[]): string[] {
-  const one = indications.find((i) => i.label === picked) ?? (indications.length === 1 ? indications[0] : undefined);
-  if (one?.therapyAreas?.length) return one.therapyAreas;
-  const fromLabel = labelTherapyAreas(indications);
-  return fromLabel.length > 0 ? fromLabel : productAreas;
+export function therapyAreasFor(indications: Indication[], picked: string[], productAreas: string[]): string[] {
+  const inPlay = picked.length > 0 ? indications.filter((i) => picked.includes(i.label)) : indications;
+  const areas = labelTherapyAreas(inPlay);
+  return areas.length > 0 ? areas : productAreas;
+}
+
+/** The one indication a project is about, when it is about exactly one. */
+export function onlyIndication(indications: Indication[], picked: string[]): Indication | undefined {
+  const inPlay = picked.length > 0 ? indications.filter((i) => picked.includes(i.label)) : indications;
+  return inPlay.length === 1 ? inPlay[0] : undefined;
 }
 
 /** Every therapy area a label's indications sit in, in label order. */
