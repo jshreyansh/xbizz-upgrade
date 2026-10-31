@@ -77,6 +77,10 @@ interface WorkspaceState {
   topics: string[];
   /** Which presentations of the brand this project covers. Empty means all. */
   variations: string[];
+  /** The label indication the project is about, from the dossier. Empty means all approved ones. */
+  indication: string;
+  /** Never asked: follows the indication, or the product's areas while all are in play. */
+  therapyAreas: string[];
   market: string;
   intendedUse: string;
   format: string;
@@ -188,6 +192,8 @@ interface WorkspaceState {
   setTopics: (topics: string[]) => void;
   toggleTopic: (topic: string) => void;
   setVariations: (variations: string[]) => void;
+  setIndication: (indication: string) => void;
+  setTherapyAreas: (therapyAreas: string[]) => void;
   setMarket: (market: string) => void;
   setIntendedUse: (intendedUse: string) => void;
   setFormat: (format: string) => void;
@@ -259,6 +265,8 @@ const initialState = {
   goal: "",
   topics: [] as string[],
   variations: [] as string[],
+  indication: "",
+  therapyAreas: [] as string[],
   market: "United States",
   intendedUse: "HCP meeting",
   format: "16:9",
@@ -355,6 +363,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
         : [...state.topics, topic],
     })),
   setVariations: (variations) => set({ variations }),
+  setIndication: (indication) => set({ indication }),
+  setTherapyAreas: (therapyAreas) => set({ therapyAreas }),
   setMarket: (market) => set({ market }),
   setIntendedUse: (intendedUse) => set({ intendedUse }),
   setFormat: (format) => set({ format }),

@@ -72,6 +72,7 @@ import {
   HCP_SPECIALITIES,
   specialityLabel,
 } from "@/features/workspace/plan-decisions";
+import { IndicationRows } from "@/features/workspace/indication-rows";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
 import {
   AssetStrip,
@@ -1958,6 +1959,7 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
                     onToggle={() => toggleSection("message")}
                   >
                     <div className="space-y-2">
+                      <IndicationRows editing={editingDecision} onEdit={setEditingDecision} />
                       <DecisionRow
                         label="Audience"
                         value={audience}

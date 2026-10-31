@@ -53,6 +53,7 @@ import {
   pageCountLabel,
   specialityLabel,
 } from "@/features/workspace/plan-decisions";
+import { IndicationRows } from "@/features/workspace/indication-rows";
 import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
 import { AudienceIcon } from "@/components/ui/select-icons";
 import type { Audience } from "@/types/content";
@@ -1119,6 +1120,7 @@ export function InfographicDirectionsScreen() {
                     onToggle={() => setOpenSection(openSection === "audience" ? null : "audience")}
                   >
                     <div className="space-y-2">
+                      <IndicationRows editing={editingDecision} onEdit={setEditingDecision} />
                       <DecisionRow
                         label="Audience"
                         value={audience || "HCP"}

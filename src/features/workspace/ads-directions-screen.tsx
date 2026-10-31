@@ -61,6 +61,7 @@ import {
   HCP_SPECIALITIES,
   specialityLabel,
 } from "@/features/workspace/plan-decisions";
+import { IndicationRows } from "@/features/workspace/indication-rows";
 import { LOGO_CORNERS } from "@/features/workspace/logo-watermark";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
@@ -757,6 +758,7 @@ export function AdsDirectionsScreen() {
                   onToggle={() => toggleSection("audience")}
                 >
                   <div className="space-y-2">
+                    <IndicationRows editing={editingDecision} onEdit={setEditingDecision} />
                     <DecisionRow
                       label="Audience"
                       value={who === "HCP" ? "HCPs" : "Patients"}

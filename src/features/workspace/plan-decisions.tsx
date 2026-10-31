@@ -149,6 +149,7 @@ export function ChipChoices({
   onToggle,
   onDone,
   footnote,
+  children,
 }: {
   label: string;
   options: readonly string[];
@@ -156,6 +157,8 @@ export function ChipChoices({
   onToggle: (value: string) => void;
   onDone: () => void;
   footnote?: string;
+  /** Anything that explains the current pick, between the chips and Done. */
+  children?: React.ReactNode;
 }) {
   return (
     <div>
@@ -180,6 +183,7 @@ export function ChipChoices({
           );
         })}
       </div>
+      {children}
       <div className="mt-3 flex items-center justify-between gap-3">
         <span className="text-label text-ink-3">{footnote}</span>
         <Button size="sm" onClick={onDone}>

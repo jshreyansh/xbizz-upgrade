@@ -39,7 +39,8 @@ import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialo
 import { VersionChip, type AssetVersion } from "@/features/workspace/version-trail";
 import { AUDIENCE_OPTIONS, INITIAL_BRANDS } from "@/features/workspace/brand-modal-data";
 import { Portal } from "@/components/ui/portal";
-import { AD_KIND_PRESETS, AD_TYPES, adSamplePrompts, brandAdFacts, formatsLabel, promptKindFor } from "@/features/workspace/ad-options";
+import { AD_KIND_PRESETS, AD_TYPES, adSamplePrompts, brandAdFacts, formatsLabel, prescribersFor, promptKindFor } from "@/features/workspace/ad-options";
+import { areasLabel, useProjectIndication } from "@/features/workspace/indication-rows";
 
 import {
   ProjectContextModal,
@@ -276,6 +277,12 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
   /* An Ads project can be about a medical device or a disease instead of a drug. */
   const adSubject = useAdSubject();
   const currentBrandName = isAd ? adSubject.brandName : drugName;
+  /* The indication and therapy area from the start step, so the examples are
+     about what this project is about rather than the brand in general. */
+  const projectIndication = useProjectIndication();
+  const condition = projectIndication.picked?.condition;
+  const subjectPhrase = condition ? `${currentBrandName} for ${condition}` : currentBrandName;
+  const prescribers = prescribersFor(projectIndication.therapyAreas);
 
   /* Which of the four context questions is open, or none. Clicking a tile
      above the prompt opens that one; the modal keeps the other three
@@ -348,30 +355,30 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
 
   const samplePrompts = useMemo(
-    () => isAd ? adSamplePrompts(promptKindFor(adKind, adType, audience), currentBrandName) : [
+    () => isAd ? adSamplePrompts(promptKindFor(adKind, adType, audience), currentBrandName, condition ?? (adSubject.kind === "disease" ? adSubject.condition : undefined)) : [
       {
         id: "hcp-launch",
         tag: isInfographic ? "HCP Clinical Leave-Behind" : "HCP Launch Video",
         prompt: isInfographic
-          ? `Create a high-impact clinical leave-behind infographic for ${currentBrandName} summarizing pivotal Phase III PASI 90 clearance, dual mechanism of action, and licensed indication cut-offs.`
-          : `Create a concise HCP launch video for dermatologists that explains the clinical need, mechanism, and pivotal evidence for ${currentBrandName}.`,
+          ? `Create a high-impact clinical leave-behind for ${prescribers} on ${subjectPhrase}, summarizing the pivotal Phase III result, mechanism of action and licensed indication cut-offs.`
+          : `Create a concise HCP launch video for ${prescribers} that explains the clinical need, mechanism, and pivotal evidence of ${subjectPhrase}.`,
       },
       {
         id: "moa-efficacy",
         tag: isInfographic ? "3D MoA Cellular Cascade" : "Mechanism & Efficacy",
         prompt: isInfographic
-          ? `Design a 3D cellular mechanism of action visual flow showing receptor binding, downstream kinase blockade, and plaque reduction for ${currentBrandName}.`
-          : `Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety for ${currentBrandName}.`,
+          ? `Design a 3D mechanism of action visual flow showing receptor binding and the downstream effect of ${subjectPhrase}.`
+          : `Produce a 45-second clinical education video highlighting the Phase III efficacy endpoints and dosing safety of ${subjectPhrase}.`,
       },
       {
         id: "presenter-briefing",
         tag: isInfographic ? "Clinical Readout & Cut-Offs" : "Clinical Briefing",
         prompt: isInfographic
-          ? `Summarize the EMBRACE-3 pivotal trial endpoints (52% PASI 90 vs 18% placebo) with eGFR ≥25 prescribing cut-offs and mandatory ISI fair balance for ${currentBrandName}.`
-          : `Generate a presenter-led clinical briefing explaining the dual mechanism of action and fair balance safety profile for ${currentBrandName}.`,
+          ? `Summarize the pivotal trial endpoints with prescribing cut-offs and mandatory ISI fair balance, on ${subjectPhrase}.`
+          : `Generate a presenter-led clinical briefing for ${prescribers} explaining the mechanism of action and fair balance safety profile of ${subjectPhrase}.`,
       },
     ],
-    [currentBrandName, isInfographic, isAd, adKind, adType, audience]
+    [currentBrandName, isInfographic, isAd, adKind, adType, audience, condition, subjectPhrase, prescribers, adSubject.kind, adSubject.condition]
   );
 
 
@@ -478,7 +485,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
             <div className="flex flex-wrap items-center gap-1.5 border-b border-hair px-3 py-2.5">
               {(isAd
                 ? [
-                    { id: "brand" as const, icon: ShieldCheck, label: currentBrandName, sub: adSubject.kind === "device" ? "Medical device" : adSubject.kind === "disease" ? "Disease" : "Dossier", tinted: true },
+                    { id: "brand" as const, icon: ShieldCheck, label: [currentBrandName, adSubject.kind === "disease" ? "" : projectIndication.short].filter(Boolean).join(" · "), sub: [adSubject.kind === "device" ? "Medical device" : adSubject.kind === "disease" ? "Disease" : "Dossier", areasLabel(projectIndication.therapyAreas)].join(" · "), tinted: true },
                     {
                       id: "audience" as const,
                       icon: Users,
@@ -508,8 +515,8 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 {
                   id: "brand" as const,
                   icon: ShieldCheck,
-                  label: currentBrandName,
-                  sub: "Dossier",
+                  label: [currentBrandName, projectIndication.short].filter(Boolean).join(" · "),
+                  sub: ["Dossier", areasLabel(projectIndication.therapyAreas)].join(" · "),
                   tinted: true,
                 },
                 {
@@ -726,6 +733,11 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           onClose={() => setContextField(null)}
           onSave={(next) => {
             const brand = INITIAL_BRANDS.find((b) => b.id === next.brandId);
+            if (brand && brand.name.toLowerCase() !== currentBrandName.toLowerCase()) {
+              /* Another product has other indications: start again from all of them. */
+              useWorkspaceStore.getState().setIndication("");
+              useWorkspaceStore.getState().setTherapyAreas([]);
+            }
             if (brand) setSourcePayload({ dossierId: brand.id });
             setAudience(next.audience);
             if (isAd) {

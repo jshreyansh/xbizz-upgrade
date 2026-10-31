@@ -51,7 +51,13 @@ import {
   cdcDisease,
   medtechDevice,
   type MedtechDevice,
+  diseaseTherapyArea,
+  labelIndications,
+  labelTherapyAreas,
+  therapyAreasFor,
 } from "@/features/workspace/ad-options";
+import { allIndicationsLabel, areasLabel, IndicationWording, indicationChipLabel, TherapyAreaChips } from "@/features/workspace/indication-rows";
+import { LogoMark } from "@/components/ui/logo-mark";
 export {
   INITIAL_BRANDS,
   DOSSIERS,
@@ -86,6 +92,8 @@ type RevealStage = "audience" | "grounding" | "adtype" | "details";
 
 /** The chip that means "no narrowing", kept out of the real variant names. */
 const ALL_VARIANTS = "__all__";
+/** The same for indications: every approved use is in play. */
+const ALL_INDICATIONS = "__all-indications__";
 
 /** The brand's packshot at thumbnail size — the Product Library's own
  *  photography, so a row here looks like the row there. */
@@ -128,9 +136,10 @@ function deviceAsBrand(device: MedtechDevice): BrandItem {
  * — the same strip as the four you did not pick. A choice that has been made
  * deserves to look like an object: the packshot, the molecule, what it treats.
  */
-function SelectedBrandTile({ brand, onChange }: { brand: BrandItem; onChange: () => void }) {
+function SelectedBrandTile({ brand, onChange, children }: { brand: BrandItem; onChange: () => void; children?: React.ReactNode }) {
   return (
-    <div className="group flex items-stretch gap-3.5 rounded-panel border border-brand/30 bg-card p-3 shadow-2xs ring-2 ring-brand/10 animate-in fade-in slide-in-from-top-1 duration-200">
+    <SubjectCard details={children}>
+    <div className="group flex items-stretch gap-3.5 p-3">
       <div
         className="relative grid size-[84px] shrink-0 place-items-center overflow-hidden rounded-control"
         style={{ background: brand.gradient ?? "linear-gradient(150deg,var(--brand-deep),var(--brand) 55%,#ffb38a)" }}
@@ -159,7 +168,8 @@ function SelectedBrandTile({ brand, onChange }: { brand: BrandItem; onChange: ()
           </span>
         </div>
         <span className="truncate text-label italic text-ink-3">{brand.genericName}</span>
-        {brand.therapyAreas.length > 0 && (
+        {/* With details below, the therapy area is a row of its own there. */}
+        {!children && brand.therapyAreas.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-1">
             {brand.therapyAreas.map((area) => (
               <span
@@ -182,6 +192,45 @@ function SelectedBrandTile({ brand, onChange }: { brand: BrandItem; onChange: ()
         <span>Change</span>
       </button>
     </div>
+    </SubjectCard>
+  );
+}
+
+/**
+ * The picked product, or condition, as one object: what it is on top, and
+ * under it the narrower answers that belong to it — which variants, which
+ * indication, and the therapy area that follows. Asked here, not as steps of
+ * their own, because none of them can be asked before the product is known.
+ */
+function SubjectCard({ children, details }: { children: React.ReactNode; details?: React.ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-panel border border-brand/30 bg-card shadow-2xs ring-2 ring-brand/10 animate-in fade-in slide-in-from-top-1 duration-200">
+      {children}
+      {details && <div className="divide-y divide-hair border-t border-tint-line">{details}</div>}
+    </div>
+  );
+}
+
+/** One answer under the picked product: a label on the left, the choice beside it. */
+function SubjectRow({ label, note, children }: { label: string; note?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="grid gap-1.5 px-3.5 py-3 sm:grid-cols-[120px_minmax(0,1fr)] sm:gap-3">
+      <div className="flex flex-col items-start gap-0.5 sm:pt-1">
+        <span className="text-label font-bold text-ink-2">{label}</span>
+        {note && <span className="text-caption text-ink-4">{note}</span>}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+/** An answer SwishX set itself, because there was only one. */
+function SubjectAuto({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 pt-0.5 text-label text-ink-2 sm:pt-1">
+      <LogoMark size={12} title="Set by SwishX" className="mt-0.5 shrink-0" />
+      <span>{children}</span>
+    </div>
   );
 }
 
@@ -196,56 +245,18 @@ function AdLabelChecks({
   brandName,
   adKind,
   facts,
-  indication,
-  onIndication,
 }: {
   brandName: string;
   adKind: string;
   facts: ReturnType<typeof brandAdFacts>;
-  indication: string;
-  onIndication: (label: string) => void;
 }) {
+  if (!(adKind === "savings" && facts.genericAvailable)) return null;
   return (
-    <div className="space-y-2.5">
-      {adKind === "savings" && facts.genericAvailable && (
-        <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
-          <Info className="mt-0.5 size-4 shrink-0 text-warn" />
-          <p className="text-label text-ink-2">
-            A generic of {brandName} is available. California limits copay coupons when a cheaper generic exists, so the plan will flag California placements.
-          </p>
-        </div>
-      )}
-
-      {adKind === "new-indication" && (
-        <div className="space-y-2">
-          <span className="text-label font-bold text-ink-2">Which indication are these ads about?</span>
-          <div className="grid gap-2">
-            {facts.indications.map((option) => {
-              const isSel = indication === option.label;
-              return (
-                <button
-                  key={option.label}
-                  type="button"
-                  onClick={() => onIndication(option.label)}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-control border p-2.5 text-left transition cursor-pointer",
-                    isSel ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3"
-                  )}
-                >
-                  <span className={cn("size-4 shrink-0 rounded-full border", isSel ? "border-[5px] border-brand" : "border-hair-3")} />
-                  <span className="min-w-0 flex-1 text-body font-semibold text-ink">{option.label}</span>
-                  {option.isNew && (
-                    <span className="shrink-0 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-caption font-bold text-ok">
-                      Newly approved
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-caption text-ink-4">Only indications in the current label are listed.</p>
-        </div>
-      )}
+    <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
+      <Info className="mt-0.5 size-4 shrink-0 text-warn" />
+      <p className="text-label text-ink-2">
+        A generic of {brandName} is available. California limits copay coupons when a cheaper generic exists, so the plan will flag California placements.
+      </p>
     </div>
   );
 }
@@ -312,14 +323,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [mediaPlanName, setMediaPlanName] = useState("");
   const mediaPlanInputRef = useRef<HTMLInputElement>(null);
   const [adType, setAdType] = useState<AdType | null>(null);
-  const [adIndication, setAdIndication] = useState("");
+  /* Which of the label's indications the project is about. Empty is All,
+     or the only one when there is just one. */
+  const [indication, setIndication] = useState("");
   /* Ads only: what the campaign is about, a drug, a medical device or a disease. */
   const [adSubjectKind, setAdSubjectKind] = useState<"drug" | "device" | "disease">("drug");
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [selectedDiseaseId, setSelectedDiseaseId] = useState("");
   const [subjectQuery, setSubjectQuery] = useState("");
-  /* A help-seeking campaign about one of the product's conditions. */
-  const [helpCondition, setHelpCondition] = useState("");
 
   // Project name. Lives in the header rather than as a step: naming is not a
   // focus decision, and asking for one up front is asking before the user has
@@ -351,17 +362,16 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setAudience(null);
       setSelectedSpecialities([]);
       setSelectedTopics([]);
+      setIndication("");
       if (isAd) {
         setAdPlacements([]);
         setAdFormats({});
         setMediaPlanName("");
         setAdType(null);
-        setAdIndication("");
         setAdSubjectKind("drug");
         setSelectedDeviceId("");
         setSelectedDiseaseId("");
         setSubjectQuery("");
-        setHelpCondition("");
       }
     }
   }, [open, assetType, isAd]);
@@ -400,7 +410,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
    * list would have offered an autoinjector pen for an oral antihypertensive.
    */
   const variationOptions = useMemo(
-    () => (selectedBrand?.type ? variationLabelsFor(selectedBrand.type) : BRAND_VARIATIONS),
+    () => selectedBrand?.variants ?? (selectedBrand?.type ? variationLabelsFor(selectedBrand.type) : BRAND_VARIATIONS),
     [selectedBrand]
   );
 
@@ -478,12 +488,25 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   /* What the label allows, checked the moment the brand is picked rather
      than discovered at MLR. */
   const adFacts = brandAdFacts(isAd ? adSubjectId : selectedBrandId);
-  /* A help-seeking campaign about a product with several conditions names one of them. */
-  const needsCondition = isAd && adType === "unbranded" && adSubjectKind !== "disease" && adFacts.indications.length > 1;
-  const pickedCondition = adFacts.indications.find((i) => i.label === helpCondition);
+  /* The indications in the label, and the therapy area that follows from the
+     one picked. A disease is its own indication, so it has no list. */
+  const isDiseaseSubject = isAd && adSubjectKind === "disease";
+  const subjectIndications = isDiseaseSubject ? [] : labelIndications(isAd ? adSubjectId : selectedBrandId);
+  const pickedIndication = subjectIndications.find((i) => i.label === indication) ?? (subjectIndications.length === 1 ? subjectIndications[0] : undefined);
+  const subjectAreas =
+    isAd && adSubjectKind === "device"
+      ? selectedDevice ? [selectedDevice.therapyArea] : []
+      : isDiseaseSubject
+        ? selectedDisease ? [diseaseTherapyArea(selectedDisease.group)] : []
+        : (selectedBrand?.therapyAreas ?? []);
+  const therapyAreas = therapyAreasFor(subjectIndications, pickedIndication?.label ?? "", subjectAreas);
   const reminderBlocked = isAd && adType === "reminder" && adFacts.boxedWarning;
-  const needsIndication = isAd && adKind === "new-indication";
-  const brandStepBlocked = needsIndication && !adIndication;
+  /* A new-indication campaign is about one indication, never all of them. */
+  const needsIndication = isAd && adKind === "new-indication" && subjectIndications.length > 1;
+  const brandStepBlocked = needsIndication && !pickedIndication;
+  /* So is a help-seeking one: it names one condition. */
+  const needsOneCondition = isAd && adType === "unbranded" && !isDiseaseSubject && subjectIndications.length > 1 && !pickedIndication;
+  const indicationShort = pickedIndication ? (pickedIndication.condition ?? pickedIndication.label) : subjectIndications.length > 1 ? "All indications" : "";
 
   /**
    * Derived, not synced. Until the user types, the name IS the suggestion and
@@ -500,7 +523,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const hasReachedFocusTopics = stage === "details";
   const canProceed =
     !!audience &&
-    (isAd ? !!adSubjectId && (!needsCondition || !!pickedCondition) : sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
+    (isAd ? !!adSubjectId && !needsOneCondition : sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
     hasReachedFocusTopics &&
     (isAd ? !!adType && !reminderBlocked && adPlacements.length > 0 && !brandStepBlocked : selectedTopics.length > 0);
 
@@ -560,8 +583,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setSelectedBrandId(brand.id);
     setBrandSearch(brand.name);
     setSelectedVariations([]);
-    /* The newest indication is usually the reason for a new-indication campaign. */
-    setAdIndication(brandAdFacts(brand.id).indications.find((i) => i.isNew)?.label ?? "");
+    /* All, unless the campaign is about a new indication: then the newest,
+       which is usually the reason for it. */
+    setIndication(isAd && adKind === "new-indication" ? (labelIndications(brand.id).find((i) => i.isNew)?.label ?? "") : "");
   };
 
   /**
@@ -614,6 +638,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     // Stored as a concrete list either way, so everything downstream asks
     // about this brand's presentations rather than a generic set.
     setVariationsStore(selectedVariations.length > 0 ? selectedVariations : variationOptions);
+    useWorkspaceStore.getState().setIndication(pickedIndication?.label ?? "");
+    useWorkspaceStore.getState().setTherapyAreas(therapyAreas);
     setProjectNameStore(nameValue.trim() || suggestedName);
     
     /**
@@ -629,10 +655,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       store.setAdType(adType ?? "product-claim");
       store.setAdPlacements(adPlacements);
       store.setAdFormats(Object.fromEntries(adPlacements.map((id) => [id, formatsOf(id, adFormats)])));
-      setTopicsStore(needsIndication ? [adIndication] : []);
-      store.setBrief(adSamplePrompts(promptKindFor(adKind, adType ?? "product-claim", audience), adSubjectName || groundingLabel)[0].prompt);
+      setTopicsStore(adKind === "new-indication" && pickedIndication ? [pickedIndication.label] : []);
+      const condition = isDiseaseSubject ? conditionPhrase(adSubjectName) : pickedIndication?.condition;
+      store.setBrief(adSamplePrompts(promptKindFor(adKind, adType ?? "product-claim", audience), adSubjectName || groundingLabel, condition)[0].prompt);
       /* What the campaign is about, and the condition its copy names. */
-      const onlyCondition = adType === "unbranded" && adSubjectKind !== "disease" ? (pickedCondition ?? adFacts.indications[0]) : undefined;
+      const onlyCondition = adType === "unbranded" && adSubjectKind !== "disease" ? (pickedIndication ?? adFacts.indications[0]) : undefined;
       store.setAdSubject({
         kind: adSubjectKind,
         id: adSubjectId,
@@ -649,6 +676,62 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     setVideoSubStage("intake");
     onClose();
   };
+
+  /* The indication and therapy area rows, under whichever product or
+     condition was picked. Plain JSX rather than a component: they read this
+     render's state directly. */
+  const indicationLabel = isAd && adSubjectKind === "device" ? "Intended use" : "Indication";
+  const subjectRows = (
+    <>
+      <SubjectRow label={indicationLabel} note={subjectIndications.length > 1 ? `${subjectIndications.length} in the label` : undefined}>
+        {isDiseaseSubject ? (
+          <SubjectAuto>
+            <b className="font-bold text-ink">{adSubjectName}</b>. The condition is the indication.
+          </SubjectAuto>
+        ) : subjectIndications.length === 0 ? (
+          <SubjectAuto>
+            No indications in {groundingLabel}&apos;s label data yet, so SwishX works from the therapy area.
+          </SubjectAuto>
+        ) : subjectIndications.length === 1 ? (
+          <>
+            <SubjectAuto>
+              <b className="font-bold text-ink">{subjectIndications[0].label}</b>. The only one, so it&apos;s set.
+            </SubjectAuto>
+            <IndicationWording options={subjectIndications} picked={subjectIndications[0]} />
+          </>
+        ) : (
+          <>
+            <ChipMultiSelect
+              size="sm"
+              options={[
+                ...(needsIndication ? [] : [{ id: ALL_INDICATIONS, label: allIndicationsLabel(subjectIndications.length, adSubjectKind === "device" && isAd) }]),
+                ...subjectIndications.map((i) => ({ id: i.label, label: indicationChipLabel(i) })),
+              ]}
+              selected={[pickedIndication?.label ?? ALL_INDICATIONS]}
+              onToggle={(id) => setIndication(id === ALL_INDICATIONS ? "" : id)}
+            />
+            <IndicationWording options={subjectIndications} picked={pickedIndication} allowAll={!needsIndication} />
+          </>
+        )}
+      </SubjectRow>
+      <SubjectRow label="Therapy area" note="Not asked">
+        <div className="flex flex-wrap items-center gap-1.5 sm:pt-0.5">
+          <TherapyAreaChips areas={subjectIndications.length > 1 ? labelTherapyAreas(subjectIndications) : therapyAreas} active={therapyAreas} />
+          <span className="text-caption text-ink-4">
+            {isDiseaseSubject
+              ? "From the condition"
+              : pickedIndication && subjectIndications.length > 1
+                ? "Follows the indication"
+                : subjectIndications.length > 1
+                  ? "Every area its indications cover. Picking one narrows it."
+                  : subjectIndications.length === 1
+                    ? `From the ${indicationLabel.toLowerCase()}`
+                    : "From the product"}
+          </span>
+        </div>
+      </SubjectRow>
+    </>
+  );
 
   if (!open || !mounted) return null;
 
@@ -930,8 +1013,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     </span>
                   )}
                   {stage !== "grounding" && sourceMode === "brand" && groundingLabel && (
-                    <span className="text-label font-semibold text-ink-3 truncate max-w-[220px]">
-                      {variationLabel}
+                    <span className="text-label font-semibold text-ink-3 truncate max-w-[320px]">
+                      {[isAd && adSubjectKind !== "drug" ? "" : variationLabel, indicationShort, areasLabel(therapyAreas)].filter(Boolean).join(" · ")}
                     </span>
                   )}
                 </div>
@@ -985,7 +1068,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             /* One subject per campaign: a new tab starts the choice again. */
                             setAdSubjectKind(k);
                             setSubjectQuery("");
-                            setHelpCondition("");
+                            setIndication("");
                             setSelectedBrandId("");
                             setBrandSearch("");
                             setSelectedVariations([]);
@@ -1015,9 +1098,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   {isAd && adSubjectKind !== "drug" ? (
                     <div className="space-y-3">
                       {adSubjectKind === "device" && selectedDevice ? (
-                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => setSelectedDeviceId("")} />
+                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => { setSelectedDeviceId(""); setIndication(""); }}>
+                          {subjectRows}
+                        </SelectedBrandTile>
                       ) : adSubjectKind === "disease" && selectedDisease ? (
-                        <div className="flex items-center gap-3 rounded-control border border-brand bg-tint p-3 ring-2 ring-brand/15">
+                        <SubjectCard details={subjectRows}>
+                        <div className="flex items-center gap-3 bg-tint p-3">
                           <span className="grid size-10 shrink-0 place-items-center rounded-chip border border-tint-line bg-card text-brand">
                             <Stethoscope className="size-4.5" />
                           </span>
@@ -1036,6 +1122,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             <span>Change</span>
                           </button>
                         </div>
+                        </SubjectCard>
                       ) : (
                         <>
                           <PickSearch
@@ -1127,8 +1214,47 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       {selectedBrand ? (
                         <SelectedBrandTile
                           brand={selectedBrand}
-                          onChange={() => { setSelectedBrandId(""); setBrandSearch(""); setSelectedVariations([]); }}
-                        />
+                          onChange={() => { setSelectedBrandId(""); setBrandSearch(""); setSelectedVariations([]); setIndication(""); }}
+                        >
+                          <SubjectRow
+                            label="Variants"
+                            note={
+                              selectedVariations.length > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedVariations([])}
+                                  className="cursor-pointer font-semibold hover:text-ink-2"
+                                >
+                                  Reset to all
+                                </button>
+                              ) : undefined
+                            }
+                          >
+                            <ChipMultiSelect
+                              size="sm"
+                              options={[
+                                { id: ALL_VARIANTS, label: "All variants" },
+                                ...variationOptions.map((v) => ({ id: v, label: v })),
+                              ]}
+                              /* All means all: the individual chips tick with
+                                 it, because "every presentation" and "each of
+                                 these presentations" are the same answer, and
+                                 showing one ticked chip beside three empty ones
+                                 said the opposite. */
+                              selected={
+                                selectedVariations.length === 0
+                                  ? [ALL_VARIANTS, ...variationOptions]
+                                  : selectedVariations.length === variationOptions.length
+                                    ? [ALL_VARIANTS, ...selectedVariations]
+                                    : selectedVariations
+                              }
+                              onToggle={(id) =>
+                                id === ALL_VARIANTS ? setSelectedVariations([]) : toggleVariation(id)
+                              }
+                            />
+                          </SubjectRow>
+                          {subjectRows}
+                        </SelectedBrandTile>
                       ) : !brandSearch.trim() ? (
                         /* Nothing until there is a query — see filteredBrands. */
                         <div className="rounded-panel border border-dashed border-hair-2 bg-card px-4 py-6 text-center">
@@ -1163,56 +1289,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         </PickList>
                       )}
 
-                      {/* ── Which presentations, asked the way the speciality
-                          chips are asked in step 1: a rule, a label, chips. ── */}
                       {selectedBrand && (
-                        <div className="pt-3 border-t border-hair-2/80 space-y-2.5 animate-in fade-in duration-150">
-                          <div className="flex items-center justify-between">
-                            <span className="text-label font-bold text-ink-2">
-                              {selectedBrand.name} Variants:
-                            </span>
-                            {selectedVariations.length > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedVariations([])}
-                                className="text-caption font-semibold text-ink-4 hover:text-ink-2 cursor-pointer"
-                              >
-                                Reset to all
-                              </button>
-                            )}
-                          </div>
-
-                          <ChipMultiSelect
-                            size="sm"
-                            options={[
-                              { id: ALL_VARIANTS, label: "All variants" },
-                              ...variationOptions.map((v) => ({ id: v, label: v })),
-                            ]}
-                            /* All means all: the individual chips tick with
-                               it, because "every presentation" and "each of
-                               these presentations" are the same answer, and
-                               showing one ticked chip beside three empty ones
-                               said the opposite. */
-                            selected={
-                              selectedVariations.length === 0
-                                ? [ALL_VARIANTS, ...variationOptions]
-                                : selectedVariations.length === variationOptions.length
-                                  ? [ALL_VARIANTS, ...selectedVariations]
-                                  : selectedVariations
-                            }
-                            onToggle={(id) =>
-                              id === ALL_VARIANTS ? setSelectedVariations([]) : toggleVariation(id)
-                            }
-                          />
-
+                        <div className="space-y-2.5 animate-in fade-in duration-150">
                           {isAd && (
-                            <AdLabelChecks
-                              brandName={selectedBrand.name}
-                              adKind={adKind}
-                              facts={adFacts}
-                              indication={adIndication}
-                              onIndication={setAdIndication}
-                            />
+                            <AdLabelChecks brandName={selectedBrand.name} adKind={adKind} facts={adFacts} />
                           )}
 
                           <div className="flex justify-end pt-1">
@@ -1366,51 +1446,32 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       );
                     })}
                   </div>
-                  {/* Help-seeking by condition: one campaign per condition the product treats. */}
-                  {needsCondition && (
-                    /* Sub-options of Help-Seeking, so set in under it. */
-                    <div className="ml-7 space-y-2 border-l-2 border-tint-line pl-4">
-                      <span className="text-label font-bold text-ink-2">Which condition are these ads about?</span>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {adFacts.indications.map((option) => {
-                          const on = helpCondition === option.label;
-                          return (
-                            <button
-                              key={option.label}
-                              type="button"
-                              aria-pressed={on}
-                              onClick={() => setHelpCondition(option.label)}
-                              className={cn(
-                                "flex h-full cursor-pointer items-start gap-2.5 rounded-control border p-2.5 text-left transition",
-                                on ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3"
-                              )}
-                            >
-                              <span className={cn("mt-0.5 size-4 shrink-0 rounded-full border", on ? "border-[5px] border-brand" : "border-hair-3")} />
-                              <span className="min-w-0 flex-1">
-                                <span className="block text-body font-semibold text-ink">
-                                  {option.condition ? option.condition.charAt(0).toUpperCase() + option.condition.slice(1) : option.label}
-                                </span>
-                                <span className="block text-caption text-ink-3">{option.label}</span>
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {pickedCondition?.onlyTreatment && (
-                        <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
-                          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warn" />
-                          <p className="text-label text-ink-2">
-                            {adSubjectName} is the only approved treatment for {pickedCondition.condition ?? "this condition"}, so a help-seeking ad about it can read as promoting {adSubjectName}. MLR will look closely at it.
-                          </p>
-                        </div>
-                      )}
+                  {/* Help-seeking ads name one condition: the indication picked in
+                      step 2. With all of them in play there is none to name yet. */}
+                  {needsOneCondition && (
+                    <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
+                      <Info className="mt-0.5 size-4 shrink-0 text-warn" />
+                      <p className="min-w-0 flex-1 text-label text-ink-2">
+                        Help-seeking ads are about one condition. Choose which of {adSubjectName}&apos;s indications in step 2.
+                      </p>
+                      <Button size="sm" variant="secondary" onClick={() => setStage("grounding")} className="h-7 shrink-0 text-label font-bold">
+                        Choose indication
+                      </Button>
                     </div>
                   )}
-                  {adType === "unbranded" && adSubjectKind !== "disease" && adSubjectName && (
+                  {adType === "unbranded" && pickedIndication?.onlyTreatment && (
+                    <div className="flex items-start gap-2.5 rounded-control border border-warn-line bg-warn-bg p-3">
+                      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-warn" />
+                      <p className="text-label text-ink-2">
+                        {adSubjectName} is the only approved treatment for {pickedIndication.condition ?? "this condition"}, so a help-seeking ad about it can read as promoting {adSubjectName}. MLR will look closely at it.
+                      </p>
+                    </div>
+                  )}
+                  {adType === "unbranded" && adSubjectKind !== "disease" && adSubjectName && !needsOneCondition && (
                     <div className="flex items-start gap-2.5 rounded-control border border-hair-2 bg-subtle p-3">
                       <Info className="mt-0.5 size-4 shrink-0 text-ink-3" />
                       <p className="text-label text-ink-2">
-                        {`${adSubjectName} sets the condition. It won't be named or shown in the ads, and they will look different from the brand.`}
+                        {`${adSubjectName} sets the condition${pickedIndication?.condition ? `, ${pickedIndication.condition}` : ""}. It won't be named or shown in the ads, and they will look different from the brand.`}
                       </p>
                     </div>
                   )}
@@ -1424,7 +1485,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     <Button
                       size="sm"
                       variant="primary"
-                      disabled={!adType || reminderBlocked || (needsCondition && !pickedCondition)}
+                      disabled={!adType || reminderBlocked || needsOneCondition}
                       onClick={() => setStage("details")}
                       className="h-7.5 cursor-pointer px-4 text-label font-bold shadow-sm disabled:opacity-40"
                     >
