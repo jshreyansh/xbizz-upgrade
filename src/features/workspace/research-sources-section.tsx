@@ -67,6 +67,8 @@ export interface ResearchSourcesSectionProps {
    * device's source pack, or a disease's CDC information for help-seeking ads.
    */
   sourcePack?: { band: string; name: string; line: string; count: string; countLabel: string };
+  /** A studio's own source question, asked before Continue — an email's starting piece. */
+  children?: ReactNode;
 }
 
 /** The Research and Sources summary line: only what has actually been added. */
@@ -91,6 +93,7 @@ export function ResearchSourcesContent({
   onDossierInUseChange,
   notice,
   sourcePack,
+  children,
 }: ResearchSourcesSectionProps) {
   /* Files picked but not yet attached — they are waiting on their note. */
   const [pending, setPending] = useState<Array<PendingFile & { size: string; previewUrl?: string }>>([]);
@@ -334,6 +337,8 @@ export function ResearchSourcesContent({
           onClose={() => setViewing(null)}
         />
       )}
+
+      {children}
 
       <PlanSectionContinue onClick={onContinue} />
     </div>

@@ -16,8 +16,11 @@ import {
   CalendarRange,
   CaseUpper,
   ChevronDown,
+  FileText,
+  Film,
   Filter,
   FolderOpen,
+  Globe,
   Hash,
   Heading,
   Info,
@@ -86,7 +89,7 @@ import {
 
 /* ───────────────────────────────── Insert ───────────────────────────────── */
 
-export type InsertMenuId = "text" | "image" | "layout" | "chart" | "diagram";
+export type InsertMenuId = "text" | "image" | "layout" | "chart" | "diagram" | "video" | "link";
 
 type FrameKind = "two" | "three" | "imageText" | "statRow" | "steps" | "table";
 
@@ -213,9 +216,42 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       },
     ],
   },
+  video: {
+    label: "Video",
+    icon: Film,
+    tip: "Approved videos, upload",
+    sub: "Sent as a thumbnail with the play button drawn in. Most inboxes can't play video.",
+    groups: [
+      {
+        title: "Video",
+        options: [
+          { label: "Video library", icon: Film, hint: "Approved videos for this drug" },
+          { label: "Upload video", icon: Upload, hint: "Goes to MLR as a new item" },
+        ],
+      },
+    ],
+  },
+  link: {
+    label: "Link",
+    icon: Link2,
+    tip: "Pages and documents",
+    sub: "Every link is tracked. Documents are linked, never attached.",
+    groups: [
+      {
+        title: "Links",
+        options: [
+          { label: "Approved page", icon: Globe, hint: "From the brand's approved list" },
+          { label: "Paste a URL", icon: Link2, hint: "Checked, then reviewed by MLR" },
+          { label: "Document", icon: FileText, hint: "A leave-behind, detail aid or reprint" },
+          { label: "Upload document", icon: Upload, hint: "PDF, goes to MLR" },
+        ],
+      },
+    ],
+  },
 };
 
-const MENU_IDS = Object.keys(INSERT_MENUS) as InsertMenuId[];
+/* Video and links are for email; the other editors offer the rest. */
+const MENU_IDS: InsertMenuId[] = ["text", "image", "layout", "chart", "diagram"];
 
 /** One option, looked up by its menu and name. */
 export function insertOption(menu: InsertMenuId, label: string): InsertOption | undefined {
@@ -407,7 +443,7 @@ export function ToolButton({
 }
 
 /** A control that opens a small panel under itself. */
-function ToolMenu({
+export function ToolMenu({
   label,
   trigger,
   children,
@@ -1268,6 +1304,7 @@ export function EditorToolbar({
   history,
   onTemplates,
   menus = MENU_IDS,
+  idle,
 }: {
   selection: ToolbarSelection | null;
   onInsert: (menu: InsertMenuId, option: string) => void;
@@ -1278,6 +1315,8 @@ export function EditorToolbar({
   onTemplates?: () => void;
   /** The Insert menus this editor offers; the document editor has all of them. */
   menus?: InsertMenuId[];
+  /** Whole-asset controls shown while nothing is selected — a video's captions. */
+  idle?: ReactNode;
 }) {
   const [menu, setMenu] = useState<InsertMenuId | null>(null);
   /* The folded Insert button's list of menus, open before a menu is. */
@@ -1436,6 +1475,11 @@ export function EditorToolbar({
             Add to chat
           </Button>
         </div>
+      ) : idle ? (
+        <>
+          <span className="mx-0.5 h-5 w-px shrink-0 bg-hair-2" />
+          {idle}
+        </>
       ) : onTemplates ? (
         /* Beside the inserts, not off at the far end: it is the same kind of
            choice, made for the whole document rather than one spot on it. */

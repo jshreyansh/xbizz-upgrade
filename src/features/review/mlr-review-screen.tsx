@@ -2,7 +2,7 @@
 
 import { PageHeading } from "@/components/patterns/page-heading";
 import { useState } from "react";
-import { Check, Circle, Clapperboard, FileText, Megaphone, MessageSquare, RotateCcw, ShieldCheck, X } from "lucide-react";
+import { Check, Circle, Clapperboard, FileText, Mail, Megaphone, MessageSquare, RotateCcw, ShieldCheck, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Text } from "@/components/ui/text";
 import { Chip } from "@/components/ui/chip";
@@ -22,7 +22,7 @@ import {
 } from "@/features/review/review-store";
 import { cn } from "@/lib/cn";
 
-const KIND_LABEL: Record<ReviewItem["kind"], string> = { video: "Video", document: "Document", ad: "Ad campaign" };
+const KIND_LABEL: Record<ReviewItem["kind"], string> = { video: "Video", document: "Document", ad: "Ad campaign", email: "Approved email" };
 
 /**
  * MLR Review: where a reviewer finds what is waiting on them, and decides it.
@@ -206,7 +206,7 @@ function Thumb({ item, large }: { item: ReviewItem; large?: boolean }) {
       )}
       {!large && (
         <span className="absolute left-1 top-1 grid size-4 place-items-center rounded-glyph bg-black/40">
-          {item.kind === "video" ? <Clapperboard className="size-2.5" /> : item.kind === "ad" ? <Megaphone className="size-2.5" /> : <FileText className="size-2.5" />}
+          {item.kind === "video" ? <Clapperboard className="size-2.5" /> : item.kind === "ad" ? <Megaphone className="size-2.5" /> : item.kind === "email" ? <Mail className="size-2.5" /> : <FileText className="size-2.5" />}
         </span>
       )}
     </span>

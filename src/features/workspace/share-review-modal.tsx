@@ -17,11 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { Portal } from "@/components/ui/portal";
+import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
+import { captionLabel, type CaptionStyle } from "@/features/workspace/subtitle-sync";
 
 interface ShareReviewModalProps {
   open: boolean;
   onClose: () => void;
-  assetType: "video" | "infographic" | "deck" | "ad";
+  assetType: "video" | "infographic" | "deck" | "ad" | "email";
   /** For ads: "6 ads in 9 sizes", shown under the title. */
   assetSummary?: string;
   assetTitle: string;
@@ -29,7 +31,11 @@ interface ShareReviewModalProps {
   durationSeconds?: number;
   onExportDirect?: () => void;
   onShowToast?: (message: string) => void;
+  /** Video: the captions burned into the published video, which decides what Download offers. */
+  captions?: CaptionStyle;
 }
+
+type VideoDownload = "with" | "without";
 
 export function ShareReviewModal({
   open,
@@ -41,10 +47,26 @@ export function ShareReviewModal({
   durationSeconds,
   onExportDirect,
   onShowToast,
+  captions = "off",
 }: ShareReviewModalProps) {
   const [copied, setCopied] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
   const [creativeFormat, setCreativeFormat] = useState<"pdf" | "png" | "jpg">("pdf");
+  const hasCaptions = captions !== "off";
+  const [videoDownload, setVideoDownload] = useState<VideoDownload>(hasCaptions ? "with" : "without");
+  /* What each download is, said the way the button and the toast say it. */
+  const VIDEO_DOWNLOADS: Array<{ id: VideoDownload; label: string; detail: string; file: string }> = [
+    ...(hasCaptions
+      ? [{ id: "with" as const, label: "With captions", detail: `1080p MP4 with ${captionLabel(captions).toLowerCase()} captions burned into the picture. Plays anywhere, captions always on.`, file: "MP4 with captions" }]
+      : []),
+    {
+      id: "without",
+      label: hasCaptions ? "Without captions" : "MP4",
+      detail: "1080p MP4 with the voiceover and no captions.",
+      file: hasCaptions ? "MP4 without captions" : "MP4",
+    },
+  ];
+  const chosenDownload = VIDEO_DOWNLOADS.find((d) => d.id === videoDownload) ?? VIDEO_DOWNLOADS[0];
 
   if (!open) return null;
 
@@ -84,11 +106,8 @@ export function ShareReviewModal({
     if (assetType === "ad") {
       onShowToast?.(`✓ Starting download: ${assetTitle} · every ad, in every size, named by placement`);
     } else if (assetType === "video") {
-      if (onExportDirect) {
-        onExportDirect();
-      } else {
-        onShowToast?.(`✓ Starting download: ${assetTitle} · MP4 (1080p Master)`);
-      }
+      if (onExportDirect) onExportDirect();
+      onShowToast?.(`✓ Starting download: ${assetTitle} · ${chosenDownload.file}`);
     } else {
       const formatLabel =
         creativeFormat === "pdf"
@@ -99,10 +118,6 @@ export function ShareReviewModal({
       onShowToast?.(`✓ Starting download: ${assetTitle} · ${formatLabel}`);
     }
     onClose();
-  };
-
-  const handleSocialComingSoon = (channelName: string) => {
-    onShowToast?.(`Direct 1-click publishing to ${channelName} is coming soon in Q4.`);
   };
 
   return (
@@ -282,32 +297,35 @@ export function ShareReviewModal({
                     </div>
                   </button>
                 ) : assetType === "video" ? (
-                  <button
-                    type="button"
-                    onClick={handleExport}
-                    className="w-full flex items-center justify-between p-3 rounded-panel border border-hair-2 bg-card hover:border-brand hover:bg-[#fff9f6] transition-all text-left shadow-2xs group cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="size-9 rounded-control bg-tint text-brand grid place-items-center shrink-0 border border-tint-line">
-                        <Download className="size-5" />
+                  /* The same card as a document's export: pick the file, then download it. */
+                  <div className="w-full flex flex-col p-3.5 rounded-panel border border-hair-2 bg-card shadow-2xs space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="size-8 rounded-control bg-tint text-brand grid place-items-center shrink-0 border border-tint-line">
+                          <Download className="size-4.5" />
+                        </div>
+                        <h4 className="text-body-lg font-bold text-ink">Download the video</h4>
                       </div>
-                      <div>
-                        <h4 className="text-body-lg font-bold text-ink flex items-center gap-1.5">
-                          <span>Export as MP4</span>
-                          <span className="rounded-glyph bg-tint text-brand-deep text-caption font-bold px-1.5 py-0.2 border border-tint-line">
-                            1080p HD
-                          </span>
-                        </h4>
-                        <p className="text-label text-ink-3">
-                          Download final high-bitrate video master with full narration &amp; captions
-                        </p>
-                      </div>
+                      {/* A choice only when there is one to make: without captions, there is just the MP4. */}
+                      {VIDEO_DOWNLOADS.length > 1 && (
+                      <Segmented className="shrink-0">
+                        {VIDEO_DOWNLOADS.map((d) => (
+                          <SegmentedButton key={d.id} active={chosenDownload.id === d.id} onClick={() => setVideoDownload(d.id)}>
+                            {d.label}
+                          </SegmentedButton>
+                        ))}
+                      </Segmented>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1 text-label font-bold text-brand opacity-80 group-hover:opacity-100 shrink-0 ml-2">
-                      <span>Download</span>
-                      <ArrowRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+
+                    <div className="flex items-center justify-between pt-2 border-t border-hair">
+                      <p className="text-label text-ink-3 pr-3 leading-snug">{chosenDownload.detail}</p>
+                      <Button size="sm" onClick={handleExport} className="h-8 shrink-0 gap-1 px-4 text-label font-bold">
+                        <Download className="size-3.5" />
+                        <span>Download</span>
+                      </Button>
                     </div>
-                  </button>
+                  </div>
                 ) : (
                   <div className="w-full flex flex-col p-3.5 rounded-panel border border-hair-2 bg-card shadow-2xs space-y-3">
                     <div className="flex items-center justify-between gap-2">
@@ -372,94 +390,6 @@ export function ShareReviewModal({
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* 3. Social Media Destinations (ALL WITH COMING SOON) */}
-            <div className="space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-label font-extrabold uppercase tracking-wider text-ink-3">
-                  Social &amp; Digital Channels
-                </span>
-                <span className="text-caption text-ink-3 font-medium">Direct publishing</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                {/* Instagram */}
-                <button
-                  type="button"
-                  onClick={() => handleSocialComingSoon("Instagram")}
-                  className="flex items-center justify-between p-2.5 px-3 rounded-control border border-hair bg-canvas hover:bg-card hover:border-hair-3 transition-all text-left group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="size-7 rounded-chip bg-gradient-to-tr from-[#f09433] via-[#e6683c] via-[#dc2743] via-[#cc2366] to-[#bc1888] text-white grid place-items-center shrink-0">
-                      <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                      </svg>
-                    </div>
-                    <span className="text-body font-bold text-ink">Instagram</span>
-                  </div>
-                  <span className="rounded-chip bg-black/5 px-2 py-0.5 text-micro font-bold text-ink-3">
-                    Coming Soon
-                  </span>
-                </button>
-
-                {/* LinkedIn */}
-                <button
-                  type="button"
-                  onClick={() => handleSocialComingSoon("LinkedIn")}
-                  className="flex items-center justify-between p-2.5 px-3 rounded-control border border-hair bg-canvas hover:bg-card hover:border-hair-3 transition-all text-left group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="size-7 rounded-chip bg-[#0a66c2] text-white grid place-items-center shrink-0">
-                      <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
-                      </svg>
-                    </div>
-                    <span className="text-body font-bold text-ink">LinkedIn</span>
-                  </div>
-                  <span className="rounded-chip bg-black/5 px-2 py-0.5 text-micro font-bold text-ink-3">
-                    Coming Soon
-                  </span>
-                </button>
-
-                {/* YouTube */}
-                <button
-                  type="button"
-                  onClick={() => handleSocialComingSoon("YouTube")}
-                  className="flex items-center justify-between p-2.5 px-3 rounded-control border border-hair bg-canvas hover:bg-card hover:border-hair-3 transition-all text-left group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="size-7 rounded-chip bg-[#ff0000] text-white grid place-items-center shrink-0">
-                      <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                      </svg>
-                    </div>
-                    <span className="text-body font-bold text-ink">YouTube</span>
-                  </div>
-                  <span className="rounded-chip bg-black/5 px-2 py-0.5 text-micro font-bold text-ink-3">
-                    Coming Soon
-                  </span>
-                </button>
-
-                {/* Twitter / X */}
-                <button
-                  type="button"
-                  onClick={() => handleSocialComingSoon("Twitter / X")}
-                  className="flex items-center justify-between p-2.5 px-3 rounded-control border border-hair bg-canvas hover:bg-card hover:border-hair-3 transition-all text-left group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="size-7 rounded-chip bg-black text-white grid place-items-center shrink-0">
-                      <svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                      </svg>
-                    </div>
-                    <span className="text-body font-bold text-ink">Twitter / X</span>
-                  </div>
-                  <span className="rounded-chip bg-black/5 px-2 py-0.5 text-micro font-bold text-ink-3">
-                    Coming Soon
-                  </span>
-                </button>
               </div>
             </div>
           </div>

@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
  * the same sharing dialog as the ⋮ menu. Only the owner changes either.
  */
 
-type Kind = "video" | "document" | "ad";
+type Kind = "video" | "document" | "ad" | "email";
 
 export function ProjectTitle({
   kind, fallback, className, published,

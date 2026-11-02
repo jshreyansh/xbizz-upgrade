@@ -178,6 +178,7 @@ export function MediaPickerModal({
   icon,
   items,
   empty,
+  noun = "image",
   onUse,
   onClose,
 }: {
@@ -185,6 +186,8 @@ export function MediaPickerModal({
   sub: string;
   icon: LucideIcon;
   items: MediaItem[];
+  /** What the items are, for the count and the button: "image" unless said otherwise. */
+  noun?: string;
   /** Said when there is nothing to show at all. */
   empty?: string;
   onUse: (item: MediaItem) => void;
@@ -210,10 +213,10 @@ export function MediaPickerModal({
       footer={
         <>
           <span className="truncate text-label text-ink-3">
-            {chosen ? chosen.name : `${shown.length} ${shown.length === 1 ? "image" : "images"}`}
+            {chosen ? chosen.name : `${shown.length} ${shown.length === 1 ? noun : `${noun}s`}`}
           </span>
           <Button size="sm" disabled={!chosen} onClick={() => chosen && onUse(chosen)} className="shrink-0">
-            Use this image
+            Use this {noun}
           </Button>
         </>
       }

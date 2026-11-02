@@ -41,7 +41,7 @@ export function PreviewPublishModal({
   title: string;
   /** "Version 1" — what publishing creates. */
   version: string;
-  kind: "video" | "document" | "ad";
+  kind: "video" | "document" | "ad" | "email";
   /** The asset itself, frozen by the caller while the review runs. */
   preview: ReactNode;
   /** What the last review found. Shown only once a review has run. */

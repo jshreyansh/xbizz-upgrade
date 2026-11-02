@@ -10,6 +10,8 @@ import { HomeScreen } from "@/features/workspace/home-screen";
 import { StudioScreen } from "@/features/workspace/studio-screen";
 import { InfographicStudioScreen } from "@/features/workspace/infographic-studio-screen";
 import { AdsStudioScreen } from "@/features/workspace/ads-studio-screen";
+import { EmailStudioScreen } from "@/features/workspace/email-studio-screen";
+import { EmailModeScreen } from "@/features/workspace/email-mode-screen";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { useCan } from "@/features/settings/view-as";
 
@@ -43,6 +45,9 @@ export function SwishXApplication() {
     if (assetType === "ad") {
       return <AdsStudioScreen />;
     }
+    if (assetType === "email") {
+      return <EmailStudioScreen />;
+    }
     return <StudioScreen />;
   }
 
@@ -52,6 +57,13 @@ export function SwishXApplication() {
         return (
           <AppShell pageTitle="Create Ads">
             <AdsModeScreen />
+          </AppShell>
+        );
+      }
+      if (assetType === "email") {
+        return (
+          <AppShell pageTitle="Create Email">
+            <EmailModeScreen />
           </AppShell>
         );
       }

@@ -17,6 +17,7 @@ import {
   X,
   FileImage,
   Video,
+  Mail,
   Megaphone,
   Info,
   ShieldAlert,
@@ -24,6 +25,9 @@ import {
   Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEmailStore } from "@/features/workspace/email-store";
+import { EmailAboutFields } from "@/features/workspace/email-about-fields";
+import { EMAIL_AUDIENCES, EMAIL_PURPOSES, approvedPieces, emailSamplePrompts, suggestedPiece, type EmailAudience } from "@/features/workspace/email-options";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { ChipMultiSelect } from "@/components/patterns/chip-multi-select";
 import { cn } from "@/lib/cn";
@@ -283,6 +287,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const setVariationsStore = useWorkspaceStore((s) => s.setVariations);
   const adKind = useWorkspaceStore((s) => s.adKind);
   const isAd = assetType === "ad";
+  /* Approved email: HCPs only, and a third step about the email instead of topics. */
+  const isEmail = assetType === "email";
+  const emailPurpose = useEmailStore((s) => s.purpose);
   const adPreset = AD_KIND_PRESETS[adKind];
 
   // Progressive Stage: "audience" -> "grounding" -> "details"
@@ -451,9 +458,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   /* Ads reach patients and HCPs. Trade and market-access audiences are
      reached through dossiers and portals, not ad accounts. */
-  const audienceOptions = isAd ? AUDIENCE_OPTIONS.filter((a) => AD_AUDIENCES.includes(a.id)) : AUDIENCE_OPTIONS;
+  const audienceOptions = isAd
+    ? AUDIENCE_OPTIONS.filter((a) => AD_AUDIENCES.includes(a.id))
+    : isEmail
+      ? AUDIENCE_OPTIONS.filter((a) => (EMAIL_AUDIENCES as Audience[]).includes(a.id))
+      : AUDIENCE_OPTIONS;
   const audienceTitle = AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title ?? "";
-  const studioNoun = isAd ? "Ads" : assetType === "infographic" ? "Creative" : "Video";
+  const studioNoun = isAd ? "Ads" : isEmail ? "Email" : assetType === "infographic" ? "Creative" : "Video";
   const groundingModes = (audience && GROUNDING_BY_AUDIENCE[audience]) || ["brand"];
   /**
    * Therapy-area grounding is hidden for now — every audience grounds in a
@@ -487,6 +498,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       const keepsTileName = adPreset.id !== "scratch" && adType === adPreset.adType;
       return `${groundingLabel} · ${keepsTileName ? adPreset.noun : `${audienceTitle} Ads`}`;
     }
+    if (isEmail) return `${groundingLabel} · ${EMAIL_PURPOSES[emailPurpose].label} email`;
     return `${groundingLabel} · ${audienceTitle} ${studioNoun}`;
   })();
 
@@ -543,7 +555,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     !!audience &&
     (isAd ? !!adSubjectId && !needsOneCondition : sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
     hasReachedFocusTopics &&
-    (isAd ? !!adType && !reminderBlocked && adPlacements.length > 0 && !brandStepBlocked : selectedTopics.length > 0);
+    (isAd ? !!adType && !reminderBlocked && adPlacements.length > 0 && !brandStepBlocked : isEmail || selectedTopics.length > 0);
 
   const toggleAdPlacement = (id: AdPlacement) => {
     /* Ticked again, a placement starts over with every format on. */
@@ -626,6 +638,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const handleSelectAudience = (itemAudience: Audience) => {
     setAudience(itemAudience);
+    if (isEmail) useEmailStore.getState().setAbout({ audience: itemAudience as EmailAudience });
     // HCP holds the step open for the optional speciality chips; every other
     // audience has nothing left to answer here, so it moves on.
     if (itemAudience !== "HCP") {
@@ -685,6 +698,26 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
         name: adSubjectName,
         condition: adSubjectKind === "disease" ? conditionPhrase(adSubjectName) : onlyCondition?.condition,
       });
+    } else if (isEmail) {
+      /* SwishX pre-picks the piece a follow-up is built from; the plan can change it. */
+      const about = useEmailStore.getState();
+      const brandName = selectedBrand?.name ?? groundingLabel;
+      const piece = suggestedPiece(brandName, about.audience, about.purpose);
+      about.start({
+        audience: about.audience,
+        sender: about.sender,
+        purpose: about.purpose,
+        startPiece: piece,
+        attached: piece ? [piece] : approvedPieces(brandName, about.audience).slice(0, 2).map((pc) => pc.id),
+        media: [],
+      });
+      setTopicsStore([]);
+      const area = therapyAreas[0];
+      useWorkspaceStore
+        .getState()
+        .setBrief(
+          emailSamplePrompts(about.audience, about.sender, about.purpose, brandName, area ? `${area.toLowerCase()} specialists` : "specialists", pickedIndication?.condition ?? subjectIndications[0]?.condition ?? "the condition")[0].prompt
+        );
     } else if (assetType === "infographic") {
       setPageShapeStore("3:4");
     } else {
@@ -834,6 +867,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             <div className="grid size-9 place-items-center rounded-control bg-tint text-brand-deep border border-tint-line shadow-2xs">
               {isAd ? (
                 <Megaphone className="size-4.5" strokeWidth={1.9} />
+              ) : isEmail ? (
+                <Mail className="size-4.5" strokeWidth={1.9} />
               ) : assetType === "infographic" ? (
                 <FileImage className="size-4.5" strokeWidth={1.9} />
               ) : (
@@ -881,7 +916,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
               ) : (
                 <>
                   <h2 className="text-title font-[850] text-ink tracking-tight">
-                    New {isAd ? "Ads" : assetType === "infographic" ? "Creative / Infographic" : "Video"} Project
+                    New {isAd ? "Ads" : isEmail ? "Email" : assetType === "infographic" ? "Creative / Infographic" : "Video"} Project
                   </h2>
                   <p className="text-body text-ink-3">
                     Answer each focus decision to configure your project.
@@ -1562,7 +1597,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   {isAd ? 4 : 3}
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  {isAd ? "Where It Runs" : "Clinical Focus Topics"}
+                  {isAd ? "Where It Runs" : isEmail ? "About This Email" : "Clinical Focus Topics"}
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -1646,8 +1681,22 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                 </div>
               )}
 
+              {/* 3. About this email: who sends it, what it is for, what it starts from. */}
+              {isEmail && (
+                <div className="rounded-panel border border-hair bg-card p-5 space-y-3 shadow-2xs">
+                  <div className="flex items-center gap-2">
+                    <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">3</div>
+                    <div>
+                      <h3 className="text-body-lg font-extrabold text-ink">About This Email</h3>
+                      <p className="text-label text-ink-3">Who sends it decides what can be personalised. SwishX drafts the rest.</p>
+                    </div>
+                  </div>
+                  <EmailAboutFields />
+                </div>
+              )}
+
               {/* 3. Clinical Focus Topics (Audience-tailored Hero Cards) */}
-              {!isAd && (
+              {!isAd && !isEmail && (
               <div className="rounded-panel border border-hair bg-card p-5 space-y-3 shadow-2xs">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

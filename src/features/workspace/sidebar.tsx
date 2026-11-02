@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   BarChart3,
   Settings,
+  Mail,
 } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
@@ -65,6 +66,7 @@ const CREATE_TILES: CreateTile[] = [
   { label: "Video", icon: "video", targetAsset: "video" },
   { label: "Docs", icon: "image", targetAsset: "infographic" },
   { label: "Ads", icon: "megaphone", targetAsset: "ad" },
+  { label: "Email", icon: "mail", targetAsset: "email" },
   { label: "Web", icon: "globe", targetAsset: "web", soon: true },
 ];
 
@@ -146,6 +148,7 @@ function NavIcon({ name }: { name: string }): ReactNode {
     image: <FileImage size={16} strokeWidth={1.75} />,
     globe: <Globe size={16} strokeWidth={1.75} />,
     megaphone: <Megaphone size={16} strokeWidth={1.75} />,
+    mail: <Mail size={16} strokeWidth={1.75} />,
     dossier: <FileText size={16} strokeWidth={1.75} />,
     library: <Library size={16} strokeWidth={1.75} />,
     package: <Package size={16} strokeWidth={1.75} />,
@@ -240,8 +243,8 @@ export function Sidebar() {
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
       useWorkspaceStore.getState().setView("create");
       router.push("/create");
-    } else if (targetAsset === "ad") {
-      useWorkspaceStore.getState().setAssetType("ad");
+    } else if (targetAsset === "ad" || targetAsset === "email") {
+      useWorkspaceStore.getState().setAssetType(targetAsset);
       useWorkspaceStore.getState().setVideoSubStage("mode-select");
       useWorkspaceStore.getState().setView("create");
       router.push("/create");
@@ -698,16 +701,20 @@ export function Sidebar() {
                 <button
                   key={tile.label}
                   onClick={() => handleCreateNav(tile.targetAsset)}
-                  className={`group flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-left transition-all duration-150 cursor-pointer ${
-                    isTileActive
-                      ? "bg-brand text-white shadow-brand-lift font-bold"
-                      : "text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
+                  disabled={tile.soon}
+                  className={`group flex w-full items-center gap-2.5 rounded-control px-2.5 py-2 text-left transition-all duration-150 ${
+                    tile.soon
+                      ? "cursor-not-allowed text-ink-4"
+                      : isTileActive
+                        ? "cursor-pointer bg-brand text-white shadow-brand-lift font-bold"
+                        : "cursor-pointer text-ink-2 font-normal hover:font-bold hover:bg-tint hover:text-brand-deep"
                   }`}
                 >
-                  <span className={`transition-colors ${isTileActive ? "text-white" : "text-ink-3 group-hover:text-brand"}`}>
+                  <span className={`transition-colors ${tile.soon ? "text-ink-4" : isTileActive ? "text-white" : "text-ink-3 group-hover:text-brand"}`}>
                     <NavIcon name={tile.icon} />
                   </span>
                   <span className="truncate text-body-lg tracking-tight">{tile.label}</span>
+                  {tile.soon && <span className="ml-auto rounded-chip bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep">Soon</span>}
                 </button>
               );
             })}

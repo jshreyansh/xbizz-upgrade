@@ -2,7 +2,7 @@
 
 import { PageHeading } from "@/components/patterns/page-heading";
 import { useMemo, useState } from "react";
-import { Grid3x3, List, Film, Image as ImageIcon, Megaphone, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
+import { Grid3x3, List, Film, Image as ImageIcon, Mail, Megaphone, MessageSquare, Play, Lock, Globe, Users } from "lucide-react";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { FilterBar, FilterTabs } from "@/components/patterns/filter-bar";
 import { DataList } from "@/components/patterns/data-list";
@@ -14,6 +14,7 @@ import { SEED_WORKSPACE_ID, useSettingsStore } from "@/features/settings/setting
 import { canSeeDraft, sharedWith, useSharingStore, visibilityLabel } from "@/features/workspace/project-sharing";
 import { useOpenPublishedAsset } from "@/features/content-library/use-open-published-asset";
 import { AssetVideo } from "@/features/workspace/asset-video";
+import { AssetPreview, STATUS_STYLE } from "@/features/content-library/asset-preview";
 
 /**
  * Published work, and the way back into it.
@@ -28,18 +29,10 @@ import { AssetVideo } from "@/features/workspace/asset-video";
  * review — the same screen the link in the email opens.
  */
 
-const STATUS_STYLE: Record<LibraryAsset["status"], { bg: string; fg: string; line: string }> = {
-  Draft: { bg: "var(--color-subtle)", fg: "var(--ink-3)", line: "var(--hair-2)" },
-  Published: { bg: "var(--ok-bg)", fg: "var(--ok)", line: "var(--ok-line)" },
-  Approved: { bg: "var(--tint-2)", fg: "var(--brand-deep)", line: "var(--tint-line)" },
-  "In MLR review": { bg: "#fff4e5", fg: "#b45309", line: "#fcd9a4" },
-  "Changes requested": { bg: "var(--warn-bg)", fg: "var(--warn)", line: "var(--warn-line)" },
-};
-
 type KindFilter = "all" | "video" | "infographic" | "ad";
 
-const KIND_ICON: Record<AssetType, typeof Film> = { video: Film, infographic: ImageIcon, visual: ImageIcon, carousel: ImageIcon, ad: Megaphone };
-const KIND_LABEL: Record<AssetType, string> = { video: "Video", infographic: "Doc / image", visual: "Doc / image", carousel: "Doc / image", ad: "Ads" };
+const KIND_ICON: Record<AssetType, typeof Film> = { video: Film, infographic: ImageIcon, visual: ImageIcon, carousel: ImageIcon, ad: Megaphone, email: Mail };
+const KIND_LABEL: Record<AssetType, string> = { video: "Video", infographic: "Doc / image", visual: "Doc / image", carousel: "Doc / image", ad: "Ads", email: "Email" };
 export type StageFilter = "all" | "draft" | "shared" | "published" | "archived";
 
 export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: StageFilter }) {
@@ -152,29 +145,7 @@ export function ContentLibraryScreen({ initialStage = "all" }: { initialStage?: 
               delayMs={80 + i * 45}
               onClick={() => openReview(a)}
               media={
-                /* The asset itself, not a coloured rectangle standing in for
-                   it. A film plays its own reel and a deck shows the figure it
-                   leads on — the only thing that tells two of these apart at a
-                   glance. */
-                <div className="relative h-[168px] w-full overflow-hidden" style={{ background: a.gradient }}>
-                  {a.videoSrc && <AssetVideo src={a.videoSrc} />}
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute rounded-full"
-                    style={{ width: "70%", height: "70%", right: "-10%", top: "-10%", background: "radial-gradient(circle,rgba(255,255,255,.22),transparent 70%)" }}
-                  />
-                  {!a.videoSrc && a.metric && (
-                    <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col justify-end p-3.5">
-                      <span className="text-micro font-extrabold uppercase tracking-[.06em] text-white/60">
-                        {a.badge}
-                      </span>
-                      <span className="mt-0.5 text-subhead font-black leading-tight tracking-tight text-white">
-                        {a.metric}
-                      </span>
-                      <span className="mt-0.5 text-caption text-white/65">{a.metricLabel}</span>
-                    </div>
-                  )}
-                </div>
+                <AssetPreview asset={a} className="h-[168px]" />
               }
               mediaTopLeft={
                 <span className="inline-flex items-center gap-1.5 rounded-chip bg-black/40 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[.04em] text-white/90 backdrop-blur-sm">

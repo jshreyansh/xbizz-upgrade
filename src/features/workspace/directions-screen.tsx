@@ -97,6 +97,7 @@ import {
   type IntakeAnswer,
 } from "@/features/workspace/plan-intake";
 import { AdsDirectionsScreen } from "@/features/workspace/ads-directions-screen";
+import { EmailDirectionsScreen } from "@/features/workspace/email-directions-screen";
 import { IntakeQuestionCard } from "@/features/workspace/intake-question-card";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
 import { cn } from "@/lib/cn";
@@ -400,6 +401,9 @@ export function DirectionsScreen({ embedded = false }: { embedded?: boolean }) {
   }
   if (assetType === "ad") {
     return <AdsDirectionsScreen />;
+  }
+  if (assetType === "email") {
+    return <EmailDirectionsScreen />;
   }
 
   const {

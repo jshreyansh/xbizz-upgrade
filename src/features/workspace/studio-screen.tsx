@@ -123,6 +123,9 @@ import { sceneAssets, shotIdsOf } from "@/features/workspace/scene-generation";
 import { SceneProgressStrip } from "@/features/workspace/scene-progress-strip";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
 import { SubtitleStrip, SubtitleSyncPanel } from "@/features/workspace/subtitle-sync";
+import { EditorToolbar } from "@/features/workspace/editor-toolbar";
+import { CaptionsMenu, videoSelection } from "@/features/workspace/video-toolbar";
+import { EMPTY_STYLE, textStyleCss, type TextStyle } from "@/features/workspace/canvas-text-toolbar";
 import { ScreenHeader } from "@/components/patterns/screen-header";
 import { useProjectExit } from "@/features/workspace/project-exit";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
@@ -241,6 +244,9 @@ export function StudioScreen() {
     setCopilotPanelOpen,
     toggleCopilotPanel,
     logoMark,
+    setLogoMark,
+    videoCaptions,
+    setVideoCaptions,
   } = useWorkspaceStore();
   const exit = useProjectExit();
 
@@ -730,6 +736,9 @@ export function StudioScreen() {
       const target = e.target as HTMLElement | null;
       // Clicking inside the actions themselves must not move them.
       if (target?.closest("[data-element-actions]")) return;
+      /* The toolbar edits the selection, so using it must not clear it —
+         nor its dropdowns, which open in a layer of their own. */
+      if (target?.closest("[data-editor-toolbar]") || target?.closest('[role="listbox"]')) return;
       /* The player chrome sits INSIDE the stage, so pressing play or dragging
          the scrubber was reading as "you selected an element" and popping Add
          to chat over the controls. Driving the video is not selecting a thing
@@ -1206,6 +1215,40 @@ export function StudioScreen() {
     addToChat({ id: `element-${selectedScene.id}-${elementId}`, label, detail });
   };
 
+  /* ── The toolbar: the Docs editor's, changing with the part selected ── */
+  /** Text formatting per scene and part, "scene-3:headline". */
+  const [videoTextStyles, setVideoTextStyles] = useState<Record<string, TextStyle>>({});
+  const textStyleKey = (elementId: string) => `${selectedScene.id}:${elementId}`;
+  const changeCaptions = (style: typeof videoCaptions) => {
+    setVideoCaptions(style);
+    showToast(style === "off" ? "Captions off. People watching muted won't hear the claims." : "Captions updated for the whole video");
+  };
+  const videoToolbarSelection =
+    isEditor && previewMode === "scene" && selectedCanvasElementId
+      ? videoSelection({
+          elementId: selectedCanvasElementId,
+          sceneId: selectedScene.id,
+          sceneNumber: selectedScene.number,
+          captions: videoCaptions,
+          onCaptions: changeCaptions,
+          textStyle: videoTextStyles[textStyleKey(selectedCanvasElementId)],
+          onTextStyle: (patch) => {
+            const key = textStyleKey(selectedCanvasElementId);
+            setVideoTextStyles((prev) => ({ ...prev, [key]: { ...EMPTY_STYLE, ...prev[key], ...patch } }));
+          },
+          logo: logoMark,
+          onLogo: (position) => setLogoMark({ position }),
+          shotReady: activeShotReady,
+          onRegenerateVideo: () => {
+            const ref = { sceneId: selectedScene.id, shotId: activeShotId };
+            if (findShot(ref)) setRegenAt(ref);
+            else addToChat({ id: `element-${selectedScene.id}-${selectedCanvasElementId}`, ...describeElement(selectedCanvasElementId) }, "Regenerate this footage so that ");
+          },
+          ask: (prompt) => addToChat({ id: `element-${selectedScene.id}-${selectedCanvasElementId}`, ...describeElement(selectedCanvasElementId) }, prompt),
+          onAddToChat: () => attachElementToChat(selectedCanvasElementId),
+        })
+      : null;
+
 
   useEffect(() => {
     if (!scenePlaying) return;
@@ -1348,6 +1391,16 @@ export function StudioScreen() {
           title: "Narration density over 150 wpm",
           detail: "Scene 3 voiceover exceeds speech pacing limits with redundant words.",
         },
+    videoCaptions === "off"
+      ? {
+          id: "captions",
+          source: "Quality",
+          severity: "warning" as const,
+          title: "No captions",
+          detail: "People watching with the sound off won't hear the claims. Most social video plays muted.",
+          onFix: () => setVideoCaptions("standard"),
+        }
+      : { id: "captions", source: "Quality", title: "Captions burned in", detail: "Every word of the voiceover, on screen" },
     { id: "isi", source: "MLR", title: "Fair balance and ISI present", detail: "Contraindication footnotes verified" },
     { id: "terms", source: "Quality", title: "Medical terminology clear", detail: "Generic name and dosing accurate" },
     { id: "refs", source: "MLR", title: "Reference list complete", detail: "All citations resolve to approved sources" },
@@ -1983,6 +2036,25 @@ export function StudioScreen() {
           </div>
         </ScreenHeader>
       }
+      /* The Docs editor's toolbar, across the scene rail and the canvas the
+         way the Ads editor has it; the chat keeps its full height. Always
+         given and hidden outside the editor, so the rail and canvas keep one
+         place in the tree and the storyboard ↔ editor cross-fade survives. */
+      toolbar={
+        <div hidden={!isEditor}>
+          <EditorToolbar
+            selection={videoToolbarSelection}
+            menus={["text", "image"]}
+            onInsert={(menu, option) => {
+              addToChat(
+                { id: `insert-${menu}-${option}`, label: `Insert ${option.toLowerCase()}`, detail: `In scene ${selectedScene.number}` },
+                `Add ${option.toLowerCase()} to scene ${selectedScene.number} `
+              );
+            }}
+            idle={<CaptionsMenu value={videoCaptions} onChange={changeCaptions} />}
+          />
+        </div>
+      }
       rail={
           <aside
             style={{
@@ -2603,7 +2675,7 @@ export function StudioScreen() {
                         )}
                       >
                         <span className="size-2 rounded-full bg-lime-bg" />
-                        <span>{selectedScene.narrativeTag || "PIVOTAL EVIDENCE"}</span>
+                        <span style={textStyleCss(videoTextStyles[textStyleKey("tag")])}>{selectedScene.narrativeTag || "PIVOTAL EVIDENCE"}</span>
                         <span className="text-micro font-bold text-white/50 lowercase ml-1 tabular-nums">
                           ({(timingFor(selectedScene, "narration")?.inAt ?? 0).toFixed(1)}s–
                           {(timingFor(selectedScene, "narration")?.outAt ?? selectedScene.duration).toFixed(1)}s)
@@ -2942,7 +3014,10 @@ export function StudioScreen() {
                             : ""
                         )}
                       >
-                        <h3 className={cn("font-[850] tracking-tight leading-tight text-white drop-shadow-md select-none", isPortrait ? "text-display" : "text-display sm:text-display-lg")}>
+                        <h3
+                          style={textStyleCss(videoTextStyles[textStyleKey("headline")])}
+                          className={cn("font-[850] tracking-tight leading-tight text-white drop-shadow-md select-none", isPortrait ? "text-display" : "text-display sm:text-display-lg")}
+                        >
                           {selectedScene.title}
                         </h3>
 
@@ -3024,6 +3099,7 @@ export function StudioScreen() {
                         <SubtitleStrip
                           scene={selectedScene}
                           currentTime={sceneCurrentTime}
+                          captionStyle={videoCaptions}
                           className={cn(
                             "rounded-control transition-all",
                             selectedCanvasElementId === "narration"
@@ -3426,9 +3502,11 @@ export function StudioScreen() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="text-caption font-extrabold uppercase bg-white/10 px-2 py-0.5 rounded-glyph text-white/80">
-                            CC
-                          </span>
+                          {videoCaptions !== "off" && (
+                            <span title="Captions burned in" className="text-caption font-extrabold uppercase bg-white/10 px-2 py-0.5 rounded-glyph text-white/80">
+                              CC
+                            </span>
+                          )}
                           <span className="text-caption font-extrabold text-brand bg-brand/15 px-2 py-0.5 rounded-glyph">
                             HD 1080p
                           </span>
@@ -4092,9 +4170,7 @@ export function StudioScreen() {
           assetTitle={projectTitle}
           brandName={brandName}
           durationSeconds={totalDurationSeconds}
-          onExportDirect={() => {
-            showToast("Preparing high-res 1080p MP4 master download...");
-          }}
+          captions={videoCaptions}
           onShowToast={(msg) => {
             showToast(msg);
           }}

@@ -4,6 +4,17 @@ import { Mic2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Scene } from "@/types/content";
 
+/** How the captions burned into the video look, or none at all. One setting for the whole video. */
+export type CaptionStyle = "standard" | "clean" | "large" | "off";
+
+export const CAPTION_STYLES: Array<{ id: Exclude<CaptionStyle, "off">; label: string; hint: string }> = [
+  { id: "standard", label: "Standard", hint: "A dark band, the spoken word highlighted" },
+  { id: "clean", label: "Clean", hint: "White words with a soft shadow, no band" },
+  { id: "large", label: "Large", hint: "Bigger words over two lines, easier to read" },
+];
+
+export const captionLabel = (style: CaptionStyle) => (style === "off" ? "Off" : CAPTION_STYLES.find((c) => c.id === style)!.label);
+
 /**
  * Which word the voiceover is on, from the playhead.
  *
@@ -33,24 +44,35 @@ function wordStateAt(scene: Scene, currentTime: number) {
 export function SubtitleStrip({
   scene,
   currentTime,
+  captionStyle = "standard",
   style,
   className,
 }: {
   scene: Scene;
   currentTime: number;
+  captionStyle?: CaptionStyle;
   style?: React.CSSProperties;
   className?: string;
 }) {
   const { words, currentIndex } = wordStateAt(scene, currentTime);
-  if (words.length === 0) return null;
+  if (words.length === 0 || captionStyle === "off") return null;
 
   // A caption's worth: the phrase around the current word, not the paragraph.
-  const start = Math.max(0, Math.min(currentIndex - 4, words.length - 9));
-  const window = words.slice(start, start + 9);
+  // Large captions get two lines' worth, so they change less often.
+  const size = captionStyle === "large" ? 12 : 9;
+  const start = Math.max(0, Math.min(currentIndex - Math.floor(size / 2), words.length - size));
+  const window = words.slice(start, start + size);
 
   return (
-    <div style={style} className={cn("pointer-events-auto max-w-[78%]", className)}>
-      <p className="rounded-control bg-black/55 px-2.5 py-1 text-center text-body font-medium leading-snug text-white backdrop-blur-sm">
+    <div style={style} className={cn("pointer-events-auto", captionStyle === "large" ? "max-w-[88%]" : "max-w-[78%]", className)}>
+      <p
+        className={cn(
+          "rounded-control px-2.5 py-1 text-center leading-snug text-white",
+          captionStyle === "clean" ? "text-body font-semibold drop-shadow-md" : "bg-black/55 backdrop-blur-sm",
+          captionStyle === "standard" && "text-body font-medium",
+          captionStyle === "large" && "text-subhead font-bold"
+        )}
+      >
         {window.map((word, index) => {
           const absolute = start + index;
           return (
@@ -58,7 +80,7 @@ export function SubtitleStrip({
               key={`${word}-${absolute}`}
               className={cn(
                 "mr-1 inline-block transition-colors duration-150",
-                absolute === currentIndex ? "font-bold text-brand-light" : "text-white/85"
+                absolute === currentIndex && captionStyle !== "clean" ? "font-bold text-brand-light" : captionStyle === "clean" ? "text-white" : "text-white/85"
               )}
             >
               {word}

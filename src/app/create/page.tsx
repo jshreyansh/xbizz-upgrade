@@ -11,6 +11,8 @@ import { DirectionsScreen } from "@/features/workspace/directions-screen";
 import { StudioScreen } from "@/features/workspace/studio-screen";
 import { InfographicStudioScreen } from "@/features/workspace/infographic-studio-screen";
 import { AdsStudioScreen } from "@/features/workspace/ads-studio-screen";
+import { EmailStudioScreen } from "@/features/workspace/email-studio-screen";
+import { EmailModeScreen } from "@/features/workspace/email-mode-screen";
 import { VideoCreationWizard } from "@/features/workspace/video-creation-wizard";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { NoAccess, useCan } from "@/features/settings/view-as";
@@ -48,6 +50,9 @@ export default function CreatePage() {
     if (assetType === "ad") {
       return <AdsStudioScreen />;
     }
+    if (assetType === "email") {
+      return <EmailStudioScreen />;
+    }
     return <StudioScreen />;
   }
 
@@ -57,6 +62,13 @@ export default function CreatePage() {
       return (
         <AppShell pageTitle="Create Ads">
           <AdsModeScreen />
+        </AppShell>
+      );
+    }
+    if (assetType === "email") {
+      return (
+        <AppShell pageTitle="Create Email">
+          <EmailModeScreen />
         </AppShell>
       );
     }

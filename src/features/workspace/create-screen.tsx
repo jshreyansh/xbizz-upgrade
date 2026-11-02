@@ -20,6 +20,7 @@ import {
   UserCircle2,
   Users,
   X,
+  Mail,
 } from "lucide-react";
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,10 @@ import { defaultDemoScenarioId, demoScenarios, type DemoScenario } from "@/featu
 import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
+import { useEmailStore } from "@/features/workspace/email-store";
+import { AUDIENCE_LABEL, EMAIL_PURPOSES, emailSamplePrompts, senderInfo } from "@/features/workspace/email-options";
+import { EmailAboutFields } from "@/features/workspace/email-about-fields";
+import { Modal } from "@/components/ui/modal";
 import { useAdSubject } from "@/features/workspace/ad-subject";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { cn } from "@/lib/cn";
@@ -74,6 +79,12 @@ const AD_HEADLINES = [
   "What ads would you like to create today?",
   "Describe your campaign to generate ads from approved claims",
   "Use the example prompts below to start a campaign",
+];
+
+const EMAIL_HEADLINES = [
+  "What should this email say?",
+  "Describe the email to draft it from approved claims",
+  "Use the example prompts below to start an approved email",
 ];
 
 const PRESENTERS = [
@@ -157,12 +168,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
   const isInfographic = assetType === "infographic";
   const isAd = assetType === "ad";
+  const isEmail = assetType === "email";
+  const emailSender = useEmailStore((s) => s.sender);
+  const emailAudience = useEmailStore((s) => s.audience);
+  const emailPurpose = useEmailStore((s) => s.purpose);
+  const [emailAboutOpen, setEmailAboutOpen] = useState(false);
   const adKind = useWorkspaceStore((s) => s.adKind);
   const adType = useWorkspaceStore((s) => s.adType);
   const adPlacements = useWorkspaceStore((s) => s.adPlacements);
   const adFormats = useWorkspaceStore((s) => s.adFormats);
   const storedProjectName = useWorkspaceStore((s) => s.projectName);
-  const activeHeadlines = isAd ? AD_HEADLINES : isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
+  const activeHeadlines = isAd ? AD_HEADLINES : isEmail ? EMAIL_HEADLINES : isInfographic ? INFOGRAPHIC_HEADLINES : VIDEO_HEADLINES;
   // Longest by character count, which is what decides the wrap.
   const longestHeadline = activeHeadlines.reduce((a, b) => (b.length > a.length ? b : a));
 
@@ -357,7 +373,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
 
 
   const samplePrompts = useMemo(
-    () => isAd ? adSamplePrompts(promptKindFor(adKind, adType, audience), currentBrandName, condition ?? (adSubject.kind === "disease" ? adSubject.condition : undefined)) : [
+    () => isEmail ? emailSamplePrompts(emailAudience, emailSender, emailPurpose, subjectPhrase, prescribers, condition ?? projectIndication.options[0]?.condition ?? "the condition") : isAd ? adSamplePrompts(promptKindFor(adKind, adType, audience), currentBrandName, condition ?? (adSubject.kind === "disease" ? adSubject.condition : undefined)) : [
       {
         id: "hcp-launch",
         tag: isInfographic ? "HCP Clinical Leave-Behind" : "HCP Launch Video",
@@ -380,12 +396,14 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
           : `Generate a presenter-led clinical briefing for ${prescribers} explaining the mechanism of action and fair balance safety profile of ${subjectPhrase}.`,
       },
     ],
-    [currentBrandName, isInfographic, isAd, adKind, adType, audience, condition, subjectPhrase, prescribers, adSubject.kind, adSubject.condition]
+    [isEmail, emailAudience, emailSender, emailPurpose, projectIndication.options, currentBrandName, isInfographic, isAd, adKind, adType, audience, condition, subjectPhrase, prescribers, adSubject.kind, adSubject.condition]
   );
 
 
-  const projectKind = isAd ? "ad" : isInfographic ? "document" : "video";
-  const projectName = isAd
+  const projectKind = isAd ? "ad" : isEmail ? "email" : isInfographic ? "document" : "video";
+  const projectName = isEmail
+    ? storedProjectName || `${currentBrandName} · ${EMAIL_PURPOSES[emailPurpose].label} email`
+    : isAd
     ? storedProjectName || `${currentBrandName} · ${AD_KIND_PRESETS[adKind].noun}`
     : sourceType === "dossier"
       ? `${currentBrandName} ${isInfographic ? "HCP Infographic" : "HCP launch"}`
@@ -513,6 +531,18 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                       tinted: false,
                     },
                   ]
+                : isEmail
+                  ? [
+                      {
+                        id: "brand" as const,
+                        icon: ShieldCheck,
+                        label: [currentBrandName, projectIndication.short].filter(Boolean).join(" · "),
+                        sub: ["Dossier", areasLabel(projectIndication.therapyAreas)].join(" · "),
+                        tinted: true,
+                      },
+                      { id: "email" as const, icon: Users, label: AUDIENCE_LABEL[emailAudience].title, sub: "Audience", tinted: false },
+                      { id: "email" as const, icon: Mail, label: `${senderInfo(emailSender, emailAudience).label} · ${EMAIL_PURPOSES[emailPurpose].label}`, sub: "Who sends it · what it's for", tinted: false },
+                    ]
                 : [
                 {
                   id: "brand" as const,
@@ -548,7 +578,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   <button
                     key={chip.sub}
                     type="button"
-                    onClick={() => setContextField(chip.id)}
+                    onClick={() => (chip.id === "email" ? setEmailAboutOpen(true) : setContextField(chip.id))}
                     title={`Change ${chip.sub.toLowerCase()}`}
                     className={cn(
                       "group flex cursor-pointer items-center gap-2 rounded-control border px-2.5 py-1.5 text-left transition",
@@ -614,7 +644,9 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                 }}
                 rows={4}
                 placeholder={
-                  isAd
+                  isEmail
+                    ? "Describe the email: who it's for, the one thing it should say, and what you want the doctor to do next."
+                    : isAd
                     ? `Describe the campaign: who it's for, the message, and where people should land (e.g. "Launch ${currentBrandName} to adults with plaque psoriasis and drive sign-ups to the savings card")...`
                     : `Ask SwishX or describe what you want to create (e.g. "Create a concise ${currentBrandName} HCP launch video for dermatologists explaining clinical need, mechanism, and pivotal PASI 90 evidence")...`
                 }
@@ -716,6 +748,24 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
       {/* The start modal's four questions, asked again from here. Update
           rather than Start Project, because this amends a project that
           already exists. */}
+      {emailAboutOpen && (
+        <Modal
+          open
+          onClose={() => setEmailAboutOpen(false)}
+          title="About this email"
+          description="Who it's for and who sends it decide what can be personalised."
+          size="lg"
+          footer={
+            <div className="flex justify-end">
+              <Button onClick={() => setEmailAboutOpen(false)} className="px-5 font-bold">
+                Done
+              </Button>
+            </div>
+          }
+        >
+          <EmailAboutFields withAudience />
+        </Modal>
+      )}
       {contextField && (
         <ProjectContextModal
           ad={isAd}

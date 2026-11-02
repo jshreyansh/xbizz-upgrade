@@ -229,6 +229,8 @@ const INSERT_MENU_LABEL: Record<InsertMenuId, string> = {
   layout: "Layout",
   chart: "Chart",
   diagram: "Diagram",
+  video: "Video",
+  link: "Link",
 };
 
 /** The hidden file input behind the toolbar's Replace. */

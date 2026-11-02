@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { SIDE_PANEL_DEFAULT_WIDTH } from "@/components/patterns/side-panel";
 import { creativeDirections } from "@/features/workspace/mock-data";
+import type { CaptionStyle } from "@/features/workspace/subtitle-sync";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, LogoMark, OnboardingBeat, PresentationMode } from "@/types/content";
 import type { BriefAttachment } from "@/features/workspace/plan-intake";
 import type { AdFormatChoice, AdKind, AdPlacement, AdType } from "@/features/workspace/ad-options";
@@ -148,6 +149,8 @@ interface WorkspaceState {
   copilotPanelResizing: boolean;
   /** The brand mark, across every scene and page — see LogoMark. */
   logoMark: LogoMark;
+  /** The captions burned into a video: a style, or off. On by default. */
+  videoCaptions: CaptionStyle;
   // Infographic / Creative specific states
   pageShape: "3:4" | "16:9" | "A4";
   infographicPages: "1" | "2" | "3" | string;
@@ -229,6 +232,7 @@ interface WorkspaceState {
   setInfographicTemplate: (template: "stat-hero" | "trial-summary" | "bench-data" | "moa-scroll" | "burden-disease") => void;
   setInfographicLogoPlacement: (placement: "bottom-right" | "bottom-left" | "top-right" | "top-left" | "none") => void;
   setLogoMark: (patch: Partial<LogoMark>) => void;
+  setVideoCaptions: (style: CaptionStyle) => void;
   setStudioEntry: (entry: StudioEntry) => void;
   setCreativeStep: (step: CreativeStep) => void;
   setInfographicActivePage: (page: number) => void;
@@ -311,6 +315,7 @@ const initialState = {
     position: "bottom-right",
     scale: 0.085,
   } as LogoMark,
+  videoCaptions: "standard" as CaptionStyle,
   infographicActivePage: 1 as 1 | 2,
   documentType: "infographic" as DocumentType,
   congressId: null as string | null,
@@ -402,6 +407,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setInfographicTemplate: (infographicTemplate) => set({ infographicTemplate }),
   setInfographicLogoPlacement: (infographicLogoPlacement) => set({ infographicLogoPlacement }),
   setLogoMark: (patch) => set((state) => ({ logoMark: { ...state.logoMark, ...patch } })),
+  setVideoCaptions: (videoCaptions) => set({ videoCaptions }),
   setInfographicActivePage: (infographicActivePage) => set({ infographicActivePage }),
   setDocumentType: (documentType) => set({ documentType }),
   setCongress: (congressId, posterType, posterSizeIndex) =>

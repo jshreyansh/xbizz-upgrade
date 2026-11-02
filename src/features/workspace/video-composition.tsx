@@ -7,6 +7,7 @@ import { SceneAvatarLayer } from "@/features/workspace/scene-avatar";
 import type { Scene } from "@/types/content";
 import { elementMotion, motionTransition } from "@/features/workspace/element-motion";
 import { SceneGraphLayer } from "@/features/workspace/scene-graph";
+import { SubtitleStrip } from "@/features/workspace/subtitle-sync";
 import { scenes as defaultScenes } from "@/features/workspace/mock-data";
 
 export interface SceneCompositionProps {
@@ -41,6 +42,10 @@ export function DynamicSceneComposition({
      draw them differently, and the first anyone would hear of it is a
      reviewer asking why the share link does not match what was approved. */
   const logoMark = useWorkspaceStore((state) => state.logoMark);
+  /* The captions as they are burned in. A playing composition shows them as
+     the editor does; a still (the rail) keeps the line as copy, unless the
+     video has none. */
+  const captions = useWorkspaceStore((state) => state.videoCaptions);
   /* The frame's small print follows who it is for. A patient piece saying
      "For US Healthcare Professionals Only" is wrong, and an unbranded ad
      can't carry the brand name at all. */
@@ -480,7 +485,7 @@ export function DynamicSceneComposition({
             />
           )}
 
-          <p
+          {sceneTime === undefined && captions !== "off" && <p
             style={{
               ...motionOf("narration"),
               fontSize: 13.5,
@@ -495,7 +500,7 @@ export function DynamicSceneComposition({
             }}
           >
             {scene.narration}
-          </p>
+          </p>}
         </div>
 
         {/* Bottom Compliance & Footnote Info */}
@@ -516,6 +521,13 @@ export function DynamicSceneComposition({
           <span>{chromeSource}</span>
         </div>
       </div>
+
+      {/* The captions, across the whole frame rather than the copy column. */}
+      {sceneTime !== undefined && (
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: "16%", display: "flex", justifyContent: "center", zIndex: 20, pointerEvents: "none" }}>
+          <SubtitleStrip scene={scene} currentTime={sceneTime} captionStyle={captions} />
+        </div>
+      )}
     </div>
   );
 }
