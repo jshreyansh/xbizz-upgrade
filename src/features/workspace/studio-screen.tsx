@@ -2030,7 +2030,7 @@ export function StudioScreen() {
                 className="bg-brand hover:bg-brand-deep text-white font-bold px-4 cursor-pointer shadow-xs gap-1.5"
               >
                 <Share2 className="size-3.5" />
-                <span>Share Link</span>
+                <span>Share</span>
               </Button>
             )}
           </div>
@@ -2058,9 +2058,11 @@ export function StudioScreen() {
       rail={
           <aside
             style={{
-              width: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-              minWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
-              maxWidth: isReview ? 240 : isEditor ? 220 : copilotPanelOpen ? `calc(100% - ${copilotPanelWidth}px)` : "100%",
+              /* The toolbar column holds the rail and canvas apart from the chat,
+                 so the storyboard's full width is already what the chat leaves. */
+              width: isReview ? 240 : isEditor ? 220 : "100%",
+              minWidth: isReview ? 240 : isEditor ? 220 : "100%",
+              maxWidth: isReview ? 240 : isEditor ? 220 : "100%",
               transition: copilotPanelResizing ? "none" : "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
             }}
             className={cn(

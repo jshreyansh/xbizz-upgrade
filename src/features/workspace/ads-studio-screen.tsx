@@ -1847,7 +1847,7 @@ export function AdsStudioScreen() {
                 {assetReview.canEdit && (
                   <Button size="sm" onClick={() => setShareOpen(true)} disabled={assetReview.shareLocked} title={assetReview.shareNote} className="gap-1.5 px-4 font-bold">
                     <Share2 className="size-3.5" />
-                    Share Link
+                    Share
                   </Button>
                 )}
               </>

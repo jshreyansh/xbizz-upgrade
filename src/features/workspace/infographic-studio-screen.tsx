@@ -1765,7 +1765,7 @@ export function InfographicStudioScreen() {
                 className="gap-1.5 bg-brand hover:bg-brand-deep text-white text-body font-bold shadow-xs cursor-pointer px-4 hover:scale-[1.02] transition-transform"
               >
                 <Share2 className="size-3.5" />
-                <span>Share Link</span>
+                <span>Share</span>
               </Button>
             )}
 
