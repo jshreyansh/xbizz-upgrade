@@ -339,7 +339,7 @@ export function FormatChoices({
  * The brand mark, as both plans ask about it: the artwork, and its corner.
  * The corner is a decision row like every other, closed until changed.
  */
-export function BrandMarkContent({ unit }: { unit: "scene" | "page" | "ad" }) {
+export function BrandMarkContent({ unit }: { unit: "scene" | "page" | "ad" | "email" }) {
   const logoMark = useWorkspaceStore((s) => s.logoMark);
   const setLogoMark = useWorkspaceStore((s) => s.setLogoMark);
   const [editing, setEditing] = useState(false);
@@ -394,6 +394,10 @@ export function BrandMarkContent({ unit }: { unit: "scene" | "page" | "ad" }) {
         />
       </div>
 
+      {/* An email has no corners to choose: the mark sits in its header. */}
+      {unit === "email" ? (
+        <p className="text-label text-ink-3">It sits in the email&apos;s header, at the size and clear space the kit sets.</p>
+      ) : (
       <DecisionRow
         label="Placement"
         value={corner.label}
@@ -448,6 +452,7 @@ export function BrandMarkContent({ unit }: { unit: "scene" | "page" | "ad" }) {
           })}
         </div>
       </DecisionRow>
+      )}
     </div>
   );
 }

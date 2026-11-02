@@ -139,7 +139,7 @@ export function EmailStudioScreen() {
       greeting: "Filled from the CRM record",
       note: `The ${one} types it, up to 255 characters`,
       blocks: t === "choose" ? `The ${one} picks 1 to ${email.maxBlocks} of the ${p.included.length} approved blocks` : "Every block is sent",
-      piece: t === "choose" ? `The ${one} picks one of the approved pieces` : "The first piece is always attached",
+      piece: t === "choose" ? `The ${one} ticks which documents to send` : "Every document goes as a link card",
       cta: p.cta.status === "missing" ? "Goes nowhere yet" : `Goes to ${p.cta.dest}`,
       signoff: p.isHQ ? "The brand team" : "Filled from the sender's profile",
       isi: "Current ISI, inserted by SwishX",
@@ -508,7 +508,6 @@ export function EmailStudioScreen() {
             </div>
             <span className="rounded-chip border border-ok-line bg-ok-bg px-2.5 py-0.5 text-micro font-bold text-ok">✓ PromoMats verified</span>
           </div>
-          {p.blocks.length === 0 && <p className="text-body text-ink-3">A consent request carries no claims.</p>}
           {p.blocks.map((b) => {
             const used = !email.offBlocks.includes(b.id);
             return (

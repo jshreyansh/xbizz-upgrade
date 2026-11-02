@@ -3,16 +3,20 @@
 import { Play } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { AssetPreview } from "@/features/content-library/asset-preview";
-import type { EmailMedia } from "@/features/workspace/email-options";
+import type { EmailMedia, EmailTemplate } from "@/features/workspace/email-options";
 import { ZONE_TYPE_LABEL, type EmailProject, type ZoneType } from "@/features/workspace/email-project";
 
 /** Who the sample email is to, by audience. */
 export const RECIPIENT = {
   HCP: { name: "Dr. Daniel Okafor", role: "Hematology-oncology · Lakeview Cancer Institute", greeting: "Dear Dr. Okafor,", initials: "DO" },
-  Hospital: { name: "Maria Alvarez, PharmD", role: "Director of Pharmacy · Lakeview Health", greeting: "Dear Dr. Alvarez,", initials: "MA" },
+  Pharmacy: { name: "Maria Alvarez, PharmD", role: "Director of Pharmacy · Lakeview Health", greeting: "Dear Dr. Alvarez,", initials: "MA" },
   Patient: { name: "Jordan Lee", role: "Patient · enrolled in the support programme", greeting: "Hi Jordan,", initials: "JL" },
   Consumer: { name: "Sam Patel", role: "Signed up on the website", greeting: "Hi Sam,", initials: "SP" },
 } as const;
+
+/** Formulary and value emails go to a pharmacy or P&T lead rather than a prescriber. */
+export const recipientFor = (p: Pick<EmailProject, "audience" | "email">) =>
+  p.email.purpose === "formulary" || p.email.purpose === "value" ? RECIPIENT.Pharmacy : RECIPIENT[p.audience];
 
 /** How the email is being looked at. */
 export type EmailView = "zones" | "inbox" | "phone" | "nopics" | "rep";
@@ -106,8 +110,10 @@ export function EmailCanvas({
   onSelect,
   note,
   picked,
-  pieceId,
+  pieceIds,
   expired = [],
+  template,
+  subject,
 }: {
   project: EmailProject;
   view: EmailView;
@@ -117,9 +123,14 @@ export function EmailCanvas({
   note?: string;
   /** The blocks the rep picked, when reps choose. */
   picked?: string[];
-  pieceId?: string;
+  /** The documents the rep ticked, when reps choose. */
+  pieceIds?: string[];
   /** Blocks whose approval has ended. */
   expired?: string[];
+  /** A template to draw instead of the chosen one: the template step's previews. */
+  template?: EmailTemplate | null;
+  /** The subject line the rep picked, in the rep preview. */
+  subject?: string;
 }) {
   const zones = view === "zones";
   const live = !zones;
@@ -146,9 +157,11 @@ export function EmailCanvas({
   const chooses = p.zoneType("blocks") === "choose";
   const shownBlocks = live && chooses ? p.included.filter((b) => (picked ?? p.included.slice(0, 2).map((x) => x.id)).includes(b.id)) : p.included;
   const refs = shownBlocks.map((b) => b.source);
-  const pieceChoice = live && p.zoneType("piece") === "choose" && pieceId ? p.attachedPieces.find((x) => x.id === pieceId) : undefined;
-  const piece = pieceChoice ?? p.attachedPieces[0];
-  const recipient = RECIPIENT[p.audience];
+  /* Documents go as link cards at the end. When the rep chooses, the ones they ticked. */
+  const pieces = live && p.zoneType("piece") === "choose" && pieceIds ? p.attachedPieces.filter((x) => pieceIds.includes(x.id)) : p.attachedPieces;
+  const look = template === undefined ? p.template : template;
+  const packshot = email.packshots[0];
+  const recipient = recipientFor(p);
   const greeting = zones ? (
     p.professional ? <>Dear <Token>Title</Token> <Token>Last name</Token>,</> : <>Hi <Token>First name</Token>,</>
   ) : (
@@ -164,7 +177,7 @@ export function EmailCanvas({
     <div className={cn("w-full overflow-hidden rounded-control bg-card text-body-lg leading-relaxed text-ink-2 shadow-float", view === "phone" ? "max-w-[360px]" : "max-w-[600px]")}>
       {live && (
         <div className="grid gap-0.5 border-b border-hair bg-subtle px-4 py-2.5 text-label text-ink-3">
-          <b className="text-body-lg text-ink">{p.subject}</b>
+          <b className="text-body-lg text-ink">{subject ?? p.subject}</b>
           <span>
             {isHQ ? `${heading} <${sender.address}>` : `${sender.signoff[0]} <${sender.address}>`} · to {recipient.name}
           </span>
@@ -172,12 +185,12 @@ export function EmailCanvas({
       )}
       {zone(
         "header",
-        p.template?.header === "letter" ? (
+        look?.header === "letter" ? (
           <div className="border-b-2 border-accent-violet px-6 pb-3 pt-5">
             <div className="text-title font-black leading-tight text-accent-violet">{heading}</div>
             <span className="block text-caption font-semibold text-ink-3">{strapline}</span>
           </div>
-        ) : p.template?.header === "banner" ? (
+        ) : look?.header === "banner" ? (
           <div className="px-6 pb-5 pt-7 text-white" style={{ background: HEADER_ART }}>
             <span className="block text-micro font-extrabold uppercase tracking-wide opacity-75">{strapline}</span>
             <div className="mt-1 text-display font-black leading-tight">{heading}</div>
@@ -204,8 +217,7 @@ export function EmailCanvas({
             )}
           </>
         )}
-        {!purpose.noBlocks &&
-          zone(
+        {zone(
             "blocks",
             <>
               {zones && chooses && shownBlocks.length > 0 && (
@@ -215,7 +227,8 @@ export function EmailCanvas({
               )}
               {zones && shownBlocks.length === 0 && <p className="py-1.5 italic text-ink-4">No blocks in the set. Add some in the plan.</p>}
               {shownBlocks.map((b, i) => (
-                <div key={b.id} className={cn("my-2 grid gap-1 rounded-control border border-hair p-3", expired.includes(b.id) && "opacity-45 line-through")}>
+                <div key={b.id} className={cn("my-2 flex gap-3 rounded-control border border-hair p-3", expired.includes(b.id) && "opacity-45 line-through")}>
+                  <div className="grid min-w-0 flex-1 gap-1">
                   <h4 className="text-body-lg font-bold text-accent-violet">{b.title}</h4>
                   {b.stat ? (
                     <div className="flex items-center gap-3">
@@ -232,22 +245,36 @@ export function EmailCanvas({
                     </p>
                   )}
                   {b.link && <span className="text-body font-bold text-accent-violet underline">{b.link}</span>}
+                  </div>
+                  {/* The product shot, beside the lead claim. Images off: its alt text. */}
+                  {i === 0 && packshot &&
+                    (imagesOff ? (
+                      <span className="grid w-24 shrink-0 place-items-center rounded-chip border border-dashed border-hair-3 p-1 text-center text-caption text-ink-4">{packshot.note || packshot.name}</span>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- a hosted email image, not a page asset
+                      <img src={packshot.url} alt={packshot.note || `${p.brandName} pack`} className="h-24 w-24 shrink-0 rounded-chip object-cover" />
+                    ))}
                 </div>
               ))}
             </>
           )}
         {email.media.map((m) => zone(`m:${m.uid}`, <MediaPart m={m} imagesOff={imagesOff} />))}
-        {piece &&
+        {pieces.length > 0 &&
           zone(
             "piece",
-            <div className="my-2 flex items-center gap-3 rounded-control border border-hair-2 bg-subtle p-2.5">
-              <AssetPreview asset={{ gradient: piece.asset.gradient }} className={cn("shrink-0 rounded-chip", piece.kind === "Video" ? "h-8 w-12" : "h-10 w-8")} />
-              <span className="min-w-0">
-                <b className="block text-body-lg text-ink">{piece.title}</b>
-                <span className="text-label text-ink-3">
-                  {zones && p.zoneType("piece") === "choose" && p.attachedPieces.length > 1 ? `Rep picks one of ${p.attachedPieces.length} approved pieces` : `${piece.kind} · ${piece.spec} · opens in the browser`}
-                </span>
-              </span>
+            <div className="my-2 grid gap-1.5">
+              {zones && p.zoneType("piece") === "choose" && <p className="text-label font-bold text-accent-blue">The rep ticks which of these {pieces.length} go with the email:</p>}
+              {pieces.map((piece) => (
+                <div key={piece.id} className="flex items-center gap-3 rounded-control border border-hair-2 bg-subtle p-2.5">
+                  <AssetPreview asset={{ gradient: piece.asset.gradient }} className={cn("shrink-0 rounded-chip", piece.kind === "Video" ? "h-8 w-12" : "h-10 w-8")} />
+                  <span className="min-w-0">
+                    <b className="block text-body-lg text-ink">{piece.title}</b>
+                    <span className="text-label text-ink-3">
+                      {piece.kind === "Video" ? "Video" : "Document"} · {piece.spec} · opens in the browser
+                    </span>
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         {zone(

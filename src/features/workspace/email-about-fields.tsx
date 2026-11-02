@@ -3,19 +3,15 @@
 import {
   BookOpen,
   Briefcase,
-  Building2,
   Calculator,
   CalendarCheck,
   CalendarDays,
   ChartLine,
   ClipboardList,
-  FlaskConical,
   HandCoins,
   HeartHandshake,
   Lightbulb,
-  ListChecks,
   Lock,
-  MailCheck,
   Megaphone,
   MessageCircleQuestion,
   PenLine,
@@ -34,7 +30,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { AUDIENCE_OPTIONS } from "@/features/workspace/brand-modal-data";
 import { AUDIENCE_LABEL, EMAIL_AUDIENCES, EMAIL_PURPOSES, isPersonalSender, purposesFor, senderInfo, sendersFor, type EmailPurpose, type EmailSender } from "@/features/workspace/email-options";
 
-const SENDER_ICON: Record<EmailSender, LucideIcon> = { rep: Briefcase, msl: Stethoscope, kam: Building2, hq: Megaphone, support: HeartHandshake };
+const SENDER_ICON: Record<EmailSender, LucideIcon> = { rep: Briefcase, msl: Stethoscope, hq: Megaphone, support: HeartHandshake };
 
 const PURPOSE_ICON: Record<EmailPurpose, LucideIcon> = {
   followup: Reply,
@@ -42,7 +38,6 @@ const PURPOSE_ICON: Record<EmailPurpose, LucideIcon> = {
   launch: Rocket,
   congress: CalendarDays,
   access: HandCoins,
-  consent: MailCheck,
   medq: MessageCircleQuestion,
   pub: BookOpen,
   mslcongress: Presentation,
@@ -56,15 +51,9 @@ const PURPOSE_ICON: Record<EmailPurpose, LucideIcon> = {
   signup: UserPlus,
 };
 
-/** What this sender can change in the email, as the chips under its name. */
-function senderFreedoms(sender: EmailSender): Array<{ icon: LucideIcon; label: string }> {
-  if (!isPersonalSender(sender)) return [{ icon: Lock, label: "Sent as approved" }];
-  return [
-    { icon: PenLine, label: "Personal note" },
-    { icon: ListChecks, label: "Picks blocks" },
-    ...(sender === "msl" ? [{ icon: FlaskConical, label: "Medical only" }] : []),
-  ];
-}
+/** What this sender can change, as one short line under its name. */
+const senderFreedoms = (sender: EmailSender) =>
+  !isPersonalSender(sender) ? "Sent as approved" : sender === "msl" ? "Medical only · adds a note" : "Adds a note · picks blocks";
 
 /* The start modal's own row: an icon tile, the choice, and its state on the right. */
 const ROW = "group relative flex items-center gap-2.5 rounded-control border p-3 text-left shadow-2xs transition-all duration-150 cursor-pointer";
@@ -125,18 +114,13 @@ export function EmailAboutFields({ withAudience = false }: { withAudience?: bool
               const info = senderInfo(id, audience);
               const on = sender === id;
               return (
-                <button key={id} type="button" aria-pressed={on} onClick={() => setAbout({ sender: id })} className={cn(ROW, "items-start", rowState(on))}>
+                <button key={id} type="button" aria-pressed={on} title={info.hint} onClick={() => setAbout({ sender: id })} className={cn(ROW, rowState(on))}>
                   <IconTile icon={SENDER_ICON[id]} on={on} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-body font-bold text-ink">{info.long}</span>
-                    <span className="mt-0.5 block text-label text-ink-3">{info.hint}</span>
-                    <span className="mt-2 flex flex-wrap gap-1">
-                      {senderFreedoms(id).map(({ icon: Icon, label }) => (
-                        <span key={label} className="inline-flex items-center gap-1 rounded-chip bg-subtle px-1.5 py-0.5 text-caption font-bold text-ink-3">
-                          <Icon className="size-3" />
-                          {label}
-                        </span>
-                      ))}
+                    <span className="mt-0.5 flex items-center gap-1 text-caption font-semibold text-ink-3">
+                      {isPersonalSender(id) ? <PenLine className="size-3 shrink-0" /> : <Lock className="size-3 shrink-0" />}
+                      <span className="truncate">{senderFreedoms(id)}</span>
                     </span>
                   </span>
                   <Dot on={on} />

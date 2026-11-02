@@ -32,7 +32,7 @@ export function emailPackage(p: EmailProject) {
   const code = (n: number) => `US-${p.brandName.slice(0, 3).toUpperCase()}-2611-00${42 + n}`;
   return [
     { item: `${p.purpose.label} template`, type: "Email template", detail: `${p.template ? `On ${p.template.title} · ` : ""}Subject: ${p.email.subjects.map((i) => `"${p.subjects[i]}"`).join(", ")}`, claims: 0, code: code(0), already: false, expires: undefined as string | undefined },
-    ...p.included.map((b, i) => ({ item: b.title, type: "Fragment", detail: b.source, claims: 1, code: code(i + 1), already: false, expires: b.expires })),
+    ...p.included.map((b, i) => ({ item: b.title, type: "Fragment", detail: b.newClaim ? `New claim to approve, from your file ${b.source}` : b.source, claims: 1, code: code(i + 1), already: false, expires: b.expires })),
     ...p.email.media.map((m) => {
       const known = m.from === "platform" || m.code !== "New";
       const noun = { image: "Image", video: "Video", doc: "Document", link: "Link" }[m.kind];
@@ -40,7 +40,7 @@ export function emailPackage(p: EmailProject) {
         ? { item: m.title, type: m.kind === "link" ? "Approved link" : `${noun} from SwishX`, detail: m.kind === "link" ? (m.url ?? "") : "Already approved. Not reviewed again.", claims: m.claims.length, code: m.code, already: true, expires: undefined }
         : { item: m.title, type: m.kind === "link" ? "Linked destination" : `Uploaded ${noun.toLowerCase()}`, detail: m.kind === "link" ? (m.url ?? "") : m.newClaims.length ? `New claim to approve: ${m.newClaims.join(", ")}` : "New file", claims: m.claims.length + m.newClaims.length, code: "New", already: false, expires: undefined };
     }),
-    ...p.attachedPieces.map((pc) => ({ item: pc.title, type: "Linked piece", detail: `${pc.approval} in the Content Library. Not reviewed again.`, claims: 0, code: "Library", already: true, expires: undefined })),
+    ...p.attachedPieces.map((pc) => ({ item: pc.title, type: "Linked document", detail: `${pc.approval} in the Content Library. Not reviewed again.`, claims: 0, code: "Library", already: true, expires: undefined })),
     ...(p.cta.status === "review" ? [{ item: `"${p.purpose.cta}" button`, type: "Linked destination", detail: p.cta.dest, claims: 0, code: "New", already: false, expires: undefined }] : []),
   ];
 }
@@ -135,7 +135,7 @@ export function EmailPublishPreview({ p, approved }: { p: EmailProject; approved
   );
 }
 
-/* HCP and hospital email goes to the CRM reps already use; patient and consumer email to the brand's email platform. */
+/* HCP email goes to the CRM reps already use; patient and consumer email to the brand's email platform. */
 const CRM_DESTINATIONS = [
   { id: "veeva", name: "Veeva Vault", sub: "PromoMats + Vault CRM Approved Email" },
   { id: "oce", name: "IQVIA OCE", sub: "OCE Personal approved email" },
@@ -162,7 +162,7 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
   const consumerTokens: Array<[string, string]> = [
     ["First name", "%%FirstName%%"],
     ...(p.showNote ? ([["Personal note, 255 characters", "%%SenderNote%%"]] as Array<[string, string]>) : []),
-    ...(!p.purpose.noBlocks && p.zoneType("blocks") === "choose" ? ([[`Sender picks 1 to ${p.email.maxBlocks} blocks`, "Content blocks, one per block"]] as Array<[string, string]>) : []),
+    ...(p.zoneType("blocks") === "choose" ? ([[`Sender picks 1 to ${p.email.maxBlocks} blocks`, "Content blocks, one per block"]] as Array<[string, string]>) : []),
     ...(p.unbranded ? [] : ([["Medication Guide · safety information", "Hosted pages, linked"]] as Array<[string, string]>)),
     ["Unsubscribe and preferences", "%%unsub_center_url%%"],
     ["Web links", "Tracked by the platform, labelled as below"],
@@ -170,10 +170,8 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
   const tokens: Array<[string, string]> = !p.professional ? consumerTokens : [
     ["Doctor's name", "{{accTitle}} {{accLname}}"],
     ...(p.showNote ? ([["Personal note, 255 characters", "{{customText(255)}}"]] as Array<[string, string]>) : []),
-    ...(!p.purpose.noBlocks
-      ? ([[p.zoneType("blocks") === "choose" ? `Rep picks 1 to ${p.email.maxBlocks} blocks` : "Fixed blocks", p.zoneType("blocks") === "choose" ? `{{insertEmailFragments(1,${p.email.maxBlocks})}}` : "inline in the template"]] as Array<[string, string]>)
-      : []),
-    ...(p.attachedPieces.length ? ([["Attached piece", "{{PieceLink}}"]] as Array<[string, string]>) : []),
+    [p.zoneType("blocks") === "choose" ? `Rep picks 1 to ${p.email.maxBlocks} blocks` : "Fixed blocks", p.zoneType("blocks") === "choose" ? `{{insertEmailFragments(1,${p.email.maxBlocks})}}` : "inline in the template"],
+    ...(p.attachedPieces.length ? ([[p.zoneType("piece") === "choose" ? "Documents, rep ticks which" : "Documents", "{{PieceLink}}, one per document"]] as Array<[string, string]>) : []),
     ["Prescribing Information · safety information", "{{PILink}} · {{ISILink}}"],
     ...(p.email.media.some((m) => m.kind === "doc") ? ([["Other linked documents", "{{$VaultDocID}}"]] as Array<[string, string]>) : []),
     ["Sender's name and contact", "{{userName}} {{userEmailAddress}}"],

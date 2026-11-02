@@ -1,7 +1,24 @@
 "use client";
 
 import { create } from "zustand";
+import type { UploadedDoc } from "@/features/workspace/research-sources-section";
 import { CTA_DEFAULT, isPersonalSender, purposesFor, sendersFor, type CtaTarget, type EmailAudience, type EmailMedia, type EmailPurpose, type EmailSender } from "@/features/workspace/email-options";
+
+export interface EmailPackshot {
+  id: string;
+  name: string;
+  url: string;
+  note?: string;
+  variation?: string;
+}
+
+export interface EmailReference {
+  id: string;
+  name: string;
+  note?: string;
+  previewUrl?: string;
+  kind: "image" | "video";
+}
 
 interface EmailState {
   audience: EmailAudience;
@@ -11,6 +28,12 @@ interface EmailState {
   startPiece: string | null;
   /** One of the brand's approved email shells, or null when SwishX designs it. */
   template: string | null;
+  /** Product and device shots, placed in the email by SwishX. */
+  packshots: EmailPackshot[];
+  /** The look the user is after, or their own assets to use, each with a note. Grounds no claims. */
+  references: EmailReference[];
+  /** Files the user added as sources, each with what it is for. */
+  files: UploadedDoc[];
   /** Indexes into the purpose's subject lines. One unless senders pick from options. */
   subjects: number[];
   subjectMode: "one" | "choice";
@@ -52,6 +75,9 @@ export const useEmailStore = create<EmailState>((set) => ({
   purpose: "followup",
   startPiece: null,
   template: null,
+  packshots: [],
+  references: [],
+  files: [],
   subjects: [0],
   subjectMode: "one",
   offBlocks: [],
@@ -83,6 +109,9 @@ export const useEmailStore = create<EmailState>((set) => ({
       maxBlocks: 3,
       repEdit: editsFor(fitted.sender),
       template: null,
+      packshots: [],
+      references: [],
+      files: [],
       cta: { ...CTA_DEFAULT },
       customLink: "",
     });

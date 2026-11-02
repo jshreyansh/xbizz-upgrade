@@ -6,7 +6,7 @@ import { DOSSIERS } from "@/features/workspace/brand-modal-data";
 import { brandAdFacts } from "@/features/workspace/ad-options";
 import { useProjectIndication } from "@/features/workspace/indication-rows";
 import { useEmailStore } from "@/features/workspace/email-store";
-import { EMAIL_PURPOSES, approvedLinks, ctaLink, emailBlocks, emailLinks, emailTemplates, isProfessional, libraryPieces, senderInfo } from "@/features/workspace/email-options";
+import { EMAIL_PURPOSES, approvedLinks, ctaLink, emailBlocks, emailLinks, emailTemplates, isProfessional, libraryPieces, senderInfo, sourceBlocks } from "@/features/workspace/email-options";
 
 /** The parts of an email, top to bottom. Inserted images and links are "m:" + their id. */
 export type EmailZone = "header" | "greeting" | "note" | "opening" | "blocks" | "piece" | "cta" | "signoff" | "isi" | "footer";
@@ -18,7 +18,7 @@ export const ZONE_NAME: Record<EmailZone, string> = {
   note: "Personal note",
   opening: "Opening and indication",
   blocks: "Content blocks",
-  piece: "Attached piece",
+  piece: "Documents",
   cta: "Call to action",
   signoff: "Sign-off",
   isi: "Important Safety Information",
@@ -46,19 +46,23 @@ export function useEmailProject() {
   const unbranded = !!purpose.unbranded;
   const sender = senderInfo(email.sender, audience);
   const isHQ = email.sender === "hq";
-  const blocks = purpose.noBlocks ? [] : emailBlocks(brandId, brandName, email.sender, audience, condition);
-  const included = blocks.filter((b) => !email.offBlocks.includes(b.id));
   const library = libraryPieces(brandName, audience);
   const pieces = library.filter((p) => p.linkable);
   const startPiece = unbranded ? undefined : pieces.find((p) => p.id === email.startPiece);
+  /* The dossier's blocks, then one from the piece it's built from and one per file the user added. */
+  const blocks = [
+    ...emailBlocks(brandId, brandName, email.sender, audience, condition, email.purpose).map((b) => ({ ...b, group: "dossier" as const })),
+    ...sourceBlocks(startPiece, email.files),
+  ];
+  const included = blocks.filter((b) => !email.offBlocks.includes(b.id));
   /* The piece it is built from comes first: it is the one a lone attachment shows. */
-  const attachedPieces = purpose.noBlocks || unbranded ? [] : pieces.filter((p) => email.attached.includes(p.id)).sort((a, b) => Number(b.id === startPiece?.id) - Number(a.id === startPiece?.id));
+  const attachedPieces = unbranded ? [] : pieces.filter((p) => email.attached.includes(p.id)).sort((a, b) => Number(b.id === startPiece?.id) - Number(a.id === startPiece?.id));
   const templates = emailTemplates(brandName, audience, condition);
   const template = templates.find((t) => t.id === email.template);
   const showNote = !isHQ && email.repEdit.note;
   const links = approvedLinks(brandName, audience, condition);
   const cta = ctaLink(email.purpose, email.cta[email.purpose], email.customLink, links);
-  const allLinks = emailLinks(cta, email.media, attachedPieces[0], audience, unbranded);
+  const allLinks = emailLinks(cta, email.media, attachedPieces, audience, unbranded);
   const subjects = purpose.subjects(brandName, condition);
 
   const zoneType = (id: string): ZoneType => {
@@ -66,7 +70,7 @@ export function useEmailProject() {
     if (id === "signoff") return isHQ ? "lock" : "auto";
     if (id === "note") return "type";
     if (id === "blocks") return isHQ || !email.repEdit.blocks ? "lock" : "choose";
-    if (id === "piece") return isHQ || !email.repEdit.piece ? "lock" : "choose";
+    if (id === "piece") return isHQ || !email.repEdit.piece || attachedPieces.length < 2 ? "lock" : "choose";
     return "lock";
   };
 
@@ -76,7 +80,7 @@ export function useEmailProject() {
     "greeting",
     ...(showNote ? ["note"] : []),
     "opening",
-    ...(purpose.noBlocks ? [] : ["blocks"]),
+    "blocks",
     ...email.media.map((m) => `m:${m.uid}`),
     ...(attachedPieces.length ? ["piece"] : []),
     "cta",
@@ -118,7 +122,7 @@ export function useEmailProject() {
     zones,
     title: projectName || `${unbranded ? condition[0].toUpperCase() + condition.slice(1) : brandName} · ${purpose.label} email`,
     /** Every claim the email shows: its blocks and anything inserted with a claim on it. */
-    claimIds: [...new Set([...included.map((b) => b.claimId), ...email.media.flatMap((m) => m.claims)])],
+    claimIds: [...new Set([...included.filter((b) => !b.newClaim).map((b) => b.claimId), ...email.media.flatMap((m) => m.claims)])],
   };
 }
 

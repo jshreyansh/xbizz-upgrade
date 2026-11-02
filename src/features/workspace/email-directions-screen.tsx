@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, CheckCircle2, Image as ImageIcon, LayoutTemplate, Link2, ListChecks, Mail, PanelRight, PenLine, ShieldCheck, Type, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, CheckCircle2, Image as ImageIcon, Link2, ListChecks, Mail, MousePointerClick, Palette, Stamp, PanelRight, PenLine, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { SwishXMark } from "@/components/ui/swishx-mark";
@@ -11,7 +11,6 @@ import { ScreenHeader } from "@/components/patterns/screen-header";
 import { ActionBar } from "@/components/patterns/action-bar";
 import { SplitLayout } from "@/components/patterns/workbench-layout";
 import { SaveOrDiscardDialog } from "@/components/patterns/save-or-discard-dialog";
-import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { Toast, useToast } from "@/components/patterns/toast";
 import { cn } from "@/lib/cn";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
@@ -27,60 +26,23 @@ import { usePlanResearch } from "@/features/workspace/use-plan-research";
 import { PlanSectionShell, planState } from "@/features/workspace/plan-status";
 import { PlanSectionContinue } from "@/features/workspace/plan-section-continue";
 import { GenerationProgress } from "@/features/workspace/generation-progress";
-import { ChipChoices, DecisionRow } from "@/features/workspace/plan-decisions";
+import { BrandMarkContent, ChipChoices, DecisionRow } from "@/features/workspace/plan-decisions";
 import { IndicationRows } from "@/features/workspace/indication-rows";
 import { ChatAttachmentRow, useChatAttachments } from "@/features/workspace/chat-attachments";
 import { FormattedMessageText } from "@/features/workspace/chat-message";
 import { labelVersion } from "@/features/workspace/ad-options";
 import { useEmailStore } from "@/features/workspace/email-store";
 import { useEmailProject } from "@/features/workspace/email-project";
-import { EmailInsertDialogs, type EmailInsertRequest } from "@/features/workspace/email-insert";
 import { EmailPiecePicker } from "@/features/workspace/email-piece-picker";
-import { HEADER_ART } from "@/features/workspace/email-canvas";
+import { Tag, TickRow } from "@/features/workspace/email-plan-parts";
+import { EmailPlanStep } from "@/features/workspace/email-plan-step";
+import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
+import { AssetStrip, MediaAssetTile, MediaAttachmentGrid, brandVariations, workspaceAssets } from "@/features/workspace/workspace-assets";
 import { AUDIENCE_LABEL, EMAIL_AUDIENCES, EMAIL_PURPOSES, LINK_STATUS, SENDER_PLURAL, audienceNoun, purposesFor, senderInfo, sendersFor, type EmailAudience } from "@/features/workspace/email-options";
 
-type SectionId = "sources" | "subject" | "blocks" | "edit" | "media" | "template" | "audience";
+type SectionId = "sources" | "visuals" | "references" | "logo" | "button" | "edit";
 
 const DRAFT_ONLY: AssetVersion[] = [{ label: "Draft v1", state: "current", at: "Saved just now" }];
-
-/** A row of the plan that is a tick box, the same in every section here. */
-function TickRow({ on, onToggle, title, detail, tag, disabled }: { on: boolean; onToggle: () => void; title: React.ReactNode; detail?: React.ReactNode; tag?: React.ReactNode; disabled?: boolean }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={on}
-      disabled={disabled}
-      onClick={onToggle}
-      className={cn(
-        "flex w-full items-start gap-3 rounded-control border p-3 text-left transition",
-        disabled ? "cursor-not-allowed border-hair bg-canvas opacity-60" : "cursor-pointer",
-        !disabled && (on ? "border-brand/40 bg-tint/60" : "border-hair-2 bg-card hover:border-hair-3")
-      )}
-    >
-      <span className={cn("mt-0.5 grid size-4 shrink-0 place-items-center rounded-chip border", on ? "border-brand bg-brand text-white" : "border-hair-3 bg-card")}>
-        {on && <Check className="size-3 stroke-[3]" />}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center gap-2 text-body font-bold text-ink">
-          {title}
-          {tag}
-        </span>
-        {detail && <span className="mt-0.5 block text-label text-ink-3">{detail}</span>}
-      </span>
-    </button>
-  );
-}
-
-const Tag = ({ tone, children }: { tone: "ok" | "lock" | "warn" | "danger"; children: React.ReactNode }) => (
-  <span
-    className={cn(
-      "rounded-chip px-1.5 py-0.5 text-micro font-extrabold",
-      tone === "ok" ? "bg-ok-bg text-ok" : tone === "warn" ? "bg-warn-bg text-warn" : tone === "danger" ? "bg-danger-bg text-danger" : "bg-subtle text-ink-3"
-    )}
-  >
-    {children}
-  </span>
-);
 
 /**
  * The plan for an approved email: one drafted email and only the decisions a
@@ -102,34 +64,43 @@ export function EmailDirectionsScreen() {
   const setEmail = useEmailStore((s) => s.set);
   const setAbout = useEmailStore((s) => s.setAbout);
   const links = p.approved;
-  /* "reps", "account managers", "support nurses": whoever personalises this email. */
+  /* "reps", "MSLs", "support nurses": whoever personalises this email. */
   const who = SENDER_PLURAL[email.sender];
   const Who = who[0].toUpperCase() + who.slice(1);
 
   /* ── Sources: the dossier the start step picked is in use already ── */
   const [dossierInUse, setDossierInUse] = useState(true);
-  const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([]);
+  /* In the store, so the email plan can draft a block from each file. */
+  const uploadedDocs = email.files;
+  const setUploadedDocs: React.Dispatch<React.SetStateAction<UploadedDoc[]>> = (next) =>
+    setEmail({ files: typeof next === "function" ? next(useEmailStore.getState().files) : next });
+  /* Uploads wait here for their note, as in every plan. */
+  const [pendingPackshot, setPendingPackshot] = useState<Array<{ id: string; name: string; url: string }>>([]);
+  const [pendingReference, setPendingReference] = useState<Array<{ id: string; name: string; previewUrl: string }>>([]);
+  const logoMark = useWorkspaceStore((s) => s.logoMark);
   const [previewDossier, setPreviewDossier] = useState<BrandDossier | null>(null);
   const research = usePlanResearch();
   const hasSources = dossierInUse || uploadedDocs.length > 0;
 
-  const [stage, setStage] = useState<"input" | "building">("input");
+  const [stage, setStage] = useState<"input" | "drafting" | "emailplan" | "building">("input");
+  /* The summary bar's Change: audience, sender, purpose and indication, set at the start. */
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [insert, setInsert] = useState<EmailInsertRequest | null>(null);
   const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
 
   const ctaTarget = email.cta[email.purpose];
   const needsYou: Record<SectionId, boolean> = {
     sources: !hasSources,
-    subject: false,
-    blocks: !purpose.noBlocks && p.included.length === 0,
+    visuals: false,
+    references: false,
+    logo: false,
+    button: p.cta.status === "missing",
     edit: false,
-    media: p.cta.status === "missing",
-    template: false,
-    audience: false,
   };
-  const order: SectionId[] = ["sources", "subject", ...(purpose.noBlocks ? [] : (["blocks"] as const)), ...(p.isHQ ? [] : (["edit"] as const)), "media", "template", "audience"];
-  const [openSection, setOpenSection] = useState<SectionId | null>("media");
+  /* What SwishX needs first; everything it could decide follows. */
+  /* Sources first: the blocks, subject lines and look are drafted from them, on the email plan. */
+  const order: SectionId[] = ["sources", ...(p.unbranded ? [] : (["visuals"] as const)), "references", ...(p.unbranded ? [] : (["logo"] as const)), "button", ...(p.isHQ ? [] : (["edit"] as const))];
+  const [openSection, setOpenSection] = useState<SectionId | null>("sources");
   const toggleSection = (id: SectionId) => setOpenSection(openSection === id ? null : id);
   const advanceFrom = (section: SectionId) => {
     const rest = order.slice(order.indexOf(section) + 1);
@@ -138,11 +109,9 @@ export function EmailDirectionsScreen() {
 
   const blocker = !hasSources
     ? { title: "Add a source to start", detail: "Use the evidence dossier or add files in Research and Sources." }
-    : needsYou.blocks
-      ? { title: "No blocks in the email", detail: "Tick at least one block in Content blocks." }
-      : needsYou.media
-        ? { title: `Choose where "${purpose.cta}" goes`, detail: "Every button needs a destination. Choose one in Images and links." }
-        : null;
+    : needsYou.button
+      ? { title: `Choose where "${purpose.cta}" goes`, detail: "Choose the page it opens in The email's button." }
+      : null;
   const planReady = planPhase === "plan" && !blocker;
 
   const handleResearched = () => {
@@ -150,7 +119,7 @@ export function EmailDirectionsScreen() {
       role: "swishx",
       text: `I've drafted a **${purpose.label.toLowerCase()}** email for ${audienceNoun(p.audience)}, sent by the ${p.sender.long.toLowerCase()}, from the **${brandName}** dossier${p.startPiece ? `, led by the **${p.startPiece.title}** it follows up` : ""}. ${
         p.isHQ ? `The ${p.sender.long.toLowerCase()} sends it as it is.` : `${Who} pick up to ${email.maxBlocks} of ${p.included.length} approved blocks${p.showNote ? " and can add a short note" : ""}.`
-      }${p.cta.status === "missing" ? ` One thing I couldn't tell: where **${purpose.cta}** should go. Choose it in **Images and links**.` : ""}`,
+      }${p.cta.status === "missing" ? ` One thing I couldn't tell: where **${purpose.cta}** should go. Choose it in **The email's button**.` : ""}`,
     });
     setPlanPhase("plan");
   };
@@ -188,12 +157,27 @@ export function EmailDirectionsScreen() {
     }, 450);
   };
 
+  /* After Need your input: the content can only be drafted once the sources are settled. */
+  const draftSteps = [
+    { label: `Read the ${p.unbranded ? "disease information" : `${brandName} dossier`}${email.files.length ? ` and ${email.files.length} of your files` : ""}`, seconds: 1.1 },
+    ...(p.startPiece ? [{ label: `Took the lead claim from the ${p.startPiece.title}`, seconds: 0.8 }] : []),
+    { label: `Drafted ${p.blocks.length} blocks, each from one approved claim`, seconds: 1.1 },
+    { label: email.subjectMode === "choice" ? `Wrote ${p.subjects.length} subject lines for ${who} to choose from` : "Wrote the subject line", seconds: 0.7 },
+  ];
   const buildSteps = [
-    { label: `Read the ${brandName} dossier and approved claims`, seconds: 1.2 },
-    { label: `Wrote ${p.included.length} blocks, each from one approved claim`, seconds: 1.2 },
+    { label: `Laid out the email in ${p.template ? p.template.title : "SwishX's design"}`, seconds: 1.0 },
+    ...(email.packshots.length ? [{ label: "Placed the product shot beside the lead claim", seconds: 0.7 }] : []),
     { label: p.unbranded ? "Added the unsubscribe link, privacy policy and job code" : "Added the safety information, unsubscribe link and job code", seconds: 1.0 },
     { label: p.isHQ ? "Locked every part: nothing is personalised" : `Marked what ${who} can change`, seconds: 0.8 },
   ];
+  const draftEmail = () => setStage("drafting");
+  const openEmailPlan = () => {
+    setStage("emailplan");
+    addChatMessage({
+      role: "swishx",
+      text: `Here's the email plan, drafted from your sources: ${p.included.length} blocks${p.startPiece ? `, led by the **${p.startPiece.title}**` : ""}, and ${email.subjectMode === "choice" ? `${p.subjects.length} subject lines` : "a subject line"}. Untick anything that shouldn't go in, and pick the look on the right.`,
+    });
+  };
   const openEditor = () => {
     addChatMessage({
       role: "swishx",
@@ -201,12 +185,6 @@ export function EmailDirectionsScreen() {
     });
     setView("studio");
   };
-
-  const insertChoice = (request: EmailInsertRequest, label: string) => (
-    <Button key={request} size="sm" variant="secondary" onClick={() => setInsert(request)} className="h-7.5 text-label font-bold">
-      {label}
-    </Button>
-  );
 
   return (
     <SplitLayout
@@ -259,6 +237,10 @@ export function EmailDirectionsScreen() {
             />
           )}
 
+          {planPhase === "plan" && stage === "drafting" && (
+            <GenerationProgress title="Drafting the email plan..." subtitle="Writing the blocks and subject lines from your sources." steps={draftSteps} onDone={openEmailPlan} />
+          )}
+
           {planPhase === "plan" && stage === "building" && (
             <GenerationProgress title="Building the email..." subtitle={`Writing the ${purpose.label.toLowerCase()} email from approved claims.`} steps={buildSteps} onDone={openEditor} />
           )}
@@ -268,12 +250,71 @@ export function EmailDirectionsScreen() {
               <div className="flex shrink-0 items-center justify-between pb-1">
                 <div>
                   <h2 className="text-display font-[850] tracking-tight text-ink">Need your input</h2>
-                  <p className="mt-0.5 text-body text-ink-3">Answer below and SwishX builds the email.</p>
+                  <p className="mt-0.5 text-body text-ink-3">What SwishX needs comes first. Everything else is drafted; open a section to change it.</p>
                 </div>
               </div>
 
-              <div className="stagger-children w-full min-w-0 space-y-3">
-                {/* 1. Research and Sources, the same tile as every plan. */}
+              {/* What the email is, as set at the start. One line, one Change, rather than a section at the bottom. */}
+              <div className="rounded-panel border border-hair bg-card shadow-2xs">
+                <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+                  {[
+                    { icon: <ShieldCheck className="size-3.5" />, text: brandName },
+                    { icon: <Users className="size-3.5" />, text: AUDIENCE_LABEL[p.audience].title },
+                    { icon: <Mail className="size-3.5" />, text: p.sender.long },
+                    { icon: <Link2 className="size-3.5" />, text: purpose.label },
+                    { icon: <ListChecks className="size-3.5" />, text: p.condition[0].toUpperCase() + p.condition.slice(1) },
+                  ].map((c) => (
+                    <span key={c.text} className="inline-flex items-center gap-1.5 rounded-chip bg-subtle px-2.5 py-1 text-label font-bold text-ink-2">
+                      <span className="text-brand-deep">{c.icon}</span>
+                      {c.text}
+                    </span>
+                  ))}
+                  <Button size="sm" variant="secondary" onClick={() => setAboutOpen(!aboutOpen)} className="ml-auto h-7.5 text-label font-bold">
+                    {aboutOpen ? "Done" : "Change"}
+                  </Button>
+                </div>
+                {aboutOpen && (
+                  <div className="space-y-2 border-t border-hair p-4">
+                    <IndicationRows editing={editing} onEdit={setEditing} />
+                    <DecisionRow label="Audience" value={AUDIENCE_LABEL[p.audience].title} icon={<Users className="size-4" />} editing={editing === "audience"} onEdit={() => setEditing(editing === "audience" ? null : "audience")}>
+                      <ChipChoices
+                        label="Who is it for?"
+                        options={EMAIL_AUDIENCES.map((a) => AUDIENCE_LABEL[a].title)}
+                        values={[AUDIENCE_LABEL[p.audience].title]}
+                        onToggle={(title) => {
+                          const a = EMAIL_AUDIENCES.find((x) => AUDIENCE_LABEL[x].title === title) as EmailAudience;
+                          setAbout({ audience: a });
+                          useWorkspaceStore.getState().setAudience(a);
+                        }}
+                        onDone={() => setEditing(null)}
+                        footnote="HCP emails are Approved Email, sent from your CRM. Patient and consumer emails go out from your email platform."
+                      />
+                    </DecisionRow>
+                    <DecisionRow label="Sent by" value={p.sender.long} icon={<Mail className="size-4" />} editing={editing === "sender"} onEdit={() => setEditing(editing === "sender" ? null : "sender")}>
+                      <ChipChoices
+                        label="Who sends it?"
+                        options={sendersFor(p.audience).map((id) => senderInfo(id, p.audience).long)}
+                        values={[p.sender.long]}
+                        onToggle={(long) => setAbout({ sender: sendersFor(p.audience).find((id) => senderInfo(id, p.audience).long === long)! })}
+                        onDone={() => setEditing(null)}
+                        footnote="Changes what can be personalised: a note and a choice of blocks for a rep or support nurse; medical material only for an MSL; nothing from head office."
+                      />
+                    </DecisionRow>
+                    <DecisionRow label="For" value={purpose.label} icon={<Link2 className="size-4" />} editing={editing === "purpose"} onEdit={() => setEditing(editing === "purpose" ? null : "purpose")}>
+                      <ChipChoices
+                        label="What is it for?"
+                        options={purposesFor(email.sender, p.audience).map((id) => EMAIL_PURPOSES[id].label)}
+                        values={[purpose.label]}
+                        onToggle={(label) => setAbout({ purpose: purposesFor(email.sender, p.audience).find((id) => EMAIL_PURPOSES[id].label === label)! })}
+                        onDone={() => setEditing(null)}
+                      />
+                    </DecisionRow>
+                  </div>
+                )}
+              </div>
+
+              <div className="stagger-children w-full min-w-0 space-y-3 pb-24">
+                {/* 1. Research and Sources, first: everything SwishX drafts later comes from here. */}
                 <PlanSectionShell
                   icon={ShieldCheck}
                   title="Research and Sources"
@@ -301,143 +342,172 @@ export function EmailDirectionsScreen() {
                   </ResearchSourcesContent>
                 </PlanSectionShell>
 
-                {/* 2. Subject line. Reps can't type their own. */}
+                {/* 2. Product & device visuals, as in every module. Not for unbranded emails, which can't show the product. */}
+                {!p.unbranded && (
+                  <PlanSectionShell
+                    icon={ImageIcon}
+                    title="Product & Device Visual Assets"
+                    summary={email.packshots.length > 0 ? `${email.packshots.length} packshot${email.packshots.length === 1 ? "" : "s"} attached` : "Packshots SwishX can place in the email"}
+                    state={planState(false, email.packshots.length === 0)}
+                    open={openSection === "visuals"}
+                    onToggle={() => toggleSection("visuals")}
+                  >
+                    <div className="space-y-3">
+                      <MediaAttachmentGrid
+                        items={email.packshots.map((ps) => ({ id: ps.id, name: ps.name, note: ps.note, previewUrl: ps.url, kind: "image" as const, variation: ps.variation }))}
+                        uploadLabel={email.packshots.length === 0 ? "Upload product image" : "Add another"}
+                        uploadHint="PNG, JPG"
+                        onUpload={() =>
+                          setPendingPackshot([
+                            {
+                              id: `ps-${Date.now()}`,
+                              name: `${brandName}_${brandVariations(brandName)[0].replace(/[^a-zA-Z0-9]+/g, "_")}_Pack_Front.png`,
+                              url: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=400&q=80",
+                            },
+                          ])
+                        }
+                        onRemove={(id) => setEmail({ packshots: email.packshots.filter((ps) => ps.id !== id) })}
+                      />
+                      {(() => {
+                        const reusable = workspaceAssets(brandName, "product").filter((a) => !email.packshots.some((ps) => ps.name === a.name));
+                        if (reusable.length === 0) return null;
+                        return (
+                          <div>
+                            <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from platform</span>
+                            <AssetStrip>
+                              {reusable.map((asset) => (
+                                <MediaAssetTile
+                                  key={asset.id}
+                                  source="workspace"
+                                  name={asset.name}
+                                  note={asset.note}
+                                  origin={asset.origin}
+                                  previewUrl={asset.previewUrl}
+                                  kind={asset.kind}
+                                  variation={asset.variation}
+                                  onAdd={() =>
+                                    setEmail({
+                                      packshots: [
+                                        ...useEmailStore.getState().packshots,
+                                        { id: `ps-${asset.id}-${Date.now()}`, name: asset.name, url: asset.previewUrl ?? "", note: asset.note, variation: asset.variation },
+                                      ],
+                                    })
+                                  }
+                                />
+                              ))}
+                            </AssetStrip>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    <PlanSectionContinue label={email.packshots.length === 0 ? "Skip & Continue" : "Save & Continue"} onClick={() => advanceFrom("visuals")} />
+                  </PlanSectionShell>
+                )}
+
+                {/* 3. Visual & creative references: the look, and the user's own assets, each with what to take from it. */}
                 <PlanSectionShell
-                  icon={Type}
-                  title="Subject line"
-                  summary={email.subjectMode === "one" ? `"${p.subject}"` : `${email.subjects.length} approved options, ${who} pick`}
-                  state={planState(false)}
-                  source="drafted from the brief"
-                  open={openSection === "subject"}
-                  onToggle={() => toggleSection("subject")}
+                  icon={Palette}
+                  title="Visual & creative references"
+                  summary={email.references.length > 0 ? `${email.references.length} reference${email.references.length === 1 ? "" : "s"}` : "The look you are after, or your own assets to use"}
+                  state={planState(false, email.references.length === 0)}
+                  source={email.references.length > 0 ? `${email.references.length} attached` : undefined}
+                  open={openSection === "references"}
+                  onToggle={() => toggleSection("references")}
                 >
-                  <div className="space-y-2">
-                    {!p.isHQ && (
-                      <Segmented className="w-fit">
-                        <SegmentedButton active={email.subjectMode === "one"} onClick={() => setEmail({ subjectMode: "one", subjects: [email.subjects[0] ?? 0] })}>
-                          One subject line
-                        </SegmentedButton>
-                        <SegmentedButton active={email.subjectMode === "choice"} onClick={() => setEmail({ subjectMode: "choice" })}>
-                          {Who} pick from approved options
-                        </SegmentedButton>
-                      </Segmented>
-                    )}
-                    {p.subjects.map((line, i) => {
-                      const on = email.subjects.includes(i);
+                  <div className="space-y-3">
+                    <p className="text-body leading-snug text-ink-3">
+                      Emails or campaigns with the look you want, or images of your own to use, with a note on each. <strong className="font-bold text-ink-2">Grounds no claims.</strong>
+                    </p>
+                    <MediaAttachmentGrid
+                      items={email.references.map((r) => ({ id: r.id, name: r.name, note: r.note, previewUrl: r.previewUrl, kind: r.kind }))}
+                      uploadLabel={email.references.length === 0 ? "Upload a reference" : "Add another"}
+                      uploadHint="PNG, JPG, PDF · an email screenshot works well"
+                      onUpload={() =>
+                        setPendingReference([
+                          {
+                            id: `ref-${Date.now()}`,
+                            name: "Email_Look_Reference.png",
+                            previewUrl: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=400&q=80",
+                          },
+                        ])
+                      }
+                      onRemove={(id) => setEmail({ references: email.references.filter((r) => r.id !== id) })}
+                    />
+                    {(() => {
+                      const reusable = workspaceAssets(brandName, "reference").filter((a) => !email.references.some((r) => r.name === a.name));
+                      if (reusable.length === 0) return null;
                       return (
-                        <TickRow
-                          key={line}
-                          on={on}
-                          title={line}
-                          tag={<span className="text-label font-semibold text-ink-4">{line.length} characters</span>}
-                          onToggle={() =>
-                            setEmail({
-                              subjects: email.subjectMode === "one" ? [i] : on ? (email.subjects.length > 1 ? email.subjects.filter((x) => x !== i) : email.subjects) : [...email.subjects, i].sort(),
-                            })
-                          }
-                        />
+                        <div>
+                          <span className="mb-1.5 block text-label font-bold uppercase tracking-wider text-ink-3">Suggested from platform</span>
+                          <AssetStrip>
+                            {reusable.map((asset) => (
+                              <MediaAssetTile
+                                key={asset.id}
+                                source="workspace"
+                                name={asset.name}
+                                note={asset.note}
+                                origin={asset.origin}
+                                previewUrl={asset.previewUrl}
+                                kind={asset.kind}
+                                onAdd={() =>
+                                  setEmail({
+                                    references: [
+                                      ...useEmailStore.getState().references,
+                                      { id: `ref-${asset.id}-${Date.now()}`, name: asset.name, note: asset.note, previewUrl: asset.previewUrl, kind: asset.kind === "video" ? "video" : "image" },
+                                    ],
+                                  })
+                                }
+                              />
+                            ))}
+                          </AssetStrip>
+                        </div>
                       );
-                    })}
-                    <p className="text-label text-ink-3">Every subject line goes to MLR with the email. Senders can&apos;t type their own.</p>
+                    })()}
                   </div>
-                  <PlanSectionContinue onClick={() => advanceFrom("subject")} />
+                  <PlanSectionContinue label={email.references.length === 0 ? "Skip & Continue" : "Save & Continue"} onClick={() => advanceFrom("references")} />
                 </PlanSectionShell>
 
-                {/* 3. The blocks: Veeva's fragments, each reviewed on its own. */}
-                {!purpose.noBlocks && (
+                {/* 4. Brand mark, the same section as every plan. It sits in the email's header. */}
+                {!p.unbranded && (
                   <PlanSectionShell
-                    icon={ListChecks}
-                    title={p.isHQ ? "Blocks in the email" : email.sender === "msl" ? "Materials" : `Blocks ${who} pick from`}
-                    summary={p.isHQ ? `${p.included.length} blocks, all sent` : `${p.included.length} approved blocks · ${who} pick up to ${email.maxBlocks}`}
-                    state={planState(needsYou.blocks)}
-                    source="from Claims Library"
-                    open={openSection === "blocks"}
-                    onToggle={() => toggleSection("blocks")}
+                    icon={Stamp}
+                    title="Brand mark"
+                    summary={logoMark.position === "none" ? "No logo" : `In the header · ${logoMark.name}`}
+                    state={planState(false, true)}
+                    source="from brand kit"
+                    open={openSection === "logo"}
+                    onToggle={() => toggleSection("logo")}
                   >
-                    <div className="space-y-2">
-                      {p.blocks.map((b) => {
-                        const on = !email.offBlocks.includes(b.id);
-                        return (
-                          <TickRow
-                            key={b.id}
-                            on={on}
-                            onToggle={() => setEmail({ offBlocks: on ? [...email.offBlocks, b.id] : email.offBlocks.filter((x) => x !== b.id) })}
-                            title={b.title}
-                            tag={b.expires ? <Tag tone="warn">Source approval ends {b.expires}</Tag> : undefined}
-                            detail={
-                              <>
-                                {b.text}
-                                <span className="mt-0.5 block text-ink-4">
-                                  {b.claimId} · {b.source}
-                                </span>
-                              </>
-                            }
-                          />
-                        );
-                      })}
-                      {!p.isHQ && (
-                        <div className="flex items-center gap-2 pt-1 text-body text-ink-2">
-                          {Who} pick at most
-                          <Button size="sm" variant="secondary" aria-label="Fewer" onClick={() => setEmail({ maxBlocks: Math.max(1, email.maxBlocks - 1) })} className="size-7 p-0">
-                            −
-                          </Button>
-                          <b className="w-4 text-center text-ink">{email.maxBlocks}</b>
-                          <Button size="sm" variant="secondary" aria-label="More" onClick={() => setEmail({ maxBlocks: Math.min(5, email.maxBlocks + 1) })} className="size-7 p-0">
-                            +
-                          </Button>
-                          blocks per email
-                        </div>
-                      )}
-                      <p className="text-label text-ink-3">Each block goes to MLR on its own, so one can be updated or withdrawn without re-reviewing the email.</p>
-                    </div>
-                    <PlanSectionContinue onClick={() => advanceFrom("blocks")} />
+                    <BrandMarkContent unit="email" />
+                    <PlanSectionContinue onClick={() => advanceFrom("logo")} />
                   </PlanSectionShell>
                 )}
 
-                {/* 4. What reps can change. Head office sends it as it is. */}
-                {!p.isHQ && (
-                  <PlanSectionShell
-                    icon={PenLine}
-                    title={`What ${who} can change`}
-                    summary={[email.repEdit.note && "Personal note", email.repEdit.blocks && "which blocks", email.repEdit.piece && "which piece"].filter(Boolean).join(", ") || "Nothing"}
-                    state={planState(false)}
-                    source={`for a ${p.sender.long.toLowerCase()}`}
-                    open={openSection === "edit"}
-                    onToggle={() => toggleSection("edit")}
-                  >
-                    <div className="space-y-2">
-                      {([
-                        ["note", "Personal note", "Up to 255 characters at the top, in the sender's own words. Plain text, so no claims can be formatted into it."],
-                        ["blocks", "Which blocks", `Picks 1 to ${email.maxBlocks} from the approved set.`],
-                        ["piece", "Which piece to attach", "Picks one of the approved pieces in Images and links."],
-                      ] as const).map(([k, title, detail]) => (
-                        <TickRow key={k} on={email.repEdit[k]} title={title} detail={detail} onToggle={() => setEmail({ repEdit: { ...email.repEdit, [k]: !email.repEdit[k] } })} />
-                      ))}
-                    </div>
-                    <PlanSectionContinue onClick={() => advanceFrom("edit")} />
-                  </PlanSectionShell>
-                )}
-
-                {/* 5. Images and links: where the button goes, what is inserted, what is attached. */}
+                {/* 5. The email's button: the one thing SwishX can't always tell. */}
                 <PlanSectionShell
-                  icon={ImageIcon}
-                  title="Images and links"
-                  summary={`${email.media.filter((m) => m.kind !== "link").length} images and media · ${p.links.length} links${p.cta.status === "missing" ? " · the button has no destination" : ""}`}
-                  state={planState(needsYou.media)}
-                  error={needsYou.media ? { title: "The button goes nowhere", detail: "Choose where it goes below." } : null}
+                  icon={MousePointerClick}
+                  title="The email's button"
+                  summary={p.cta.status === "missing" ? `Choose the page "${purpose.cta}" opens` : `"${purpose.cta}" opens ${p.cta.dest}`}
+                  state={planState(needsYou.button)}
                   source="from approved pages"
-                  open={openSection === "media"}
-                  onToggle={() => toggleSection("media")}
+                  open={openSection === "button"}
+                  onToggle={() => toggleSection("button")}
                 >
-                  <div className="space-y-4">
+                  {/* What the button is, before where it goes. */}
+                  <div className="mb-4 flex flex-wrap items-center gap-3 rounded-control border border-hair bg-canvas px-3 py-2.5">
+                    <span className="inline-block rounded-full bg-accent-violet px-4 py-1.5 text-body font-extrabold text-white">{purpose.cta}</span>
+                    <ArrowRight className="size-3.5 shrink-0 text-ink-4" />
+                    <span className={cn("min-w-0 flex-1 truncate text-label font-semibold", p.cta.status === "missing" ? "text-danger" : "text-ink-2")}>
+                      {p.cta.status === "missing" ? "Opens: not chosen yet" : `Opens ${p.cta.dest}`}
+                    </span>
+                    <span className="w-full text-label text-ink-3">Every email ends with one button. It&apos;s what the reader clicks to act, so it has to open an approved page.</span>
+                  </div>
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2 text-body font-bold text-ink-2">
-                        Where should &ldquo;{purpose.cta}&rdquo; go?
-                        <Tag tone={LINK_STATUS[p.cta.status].tone}>{p.cta.status === "missing" ? "Needed" : LINK_STATUS[p.cta.status].label}</Tag>
+                        Which page should it open?
+                        {p.cta.status !== "missing" && <Tag tone={LINK_STATUS[p.cta.status].tone}>{LINK_STATUS[p.cta.status].label}</Tag>}
                       </div>
-                      {email.purpose === "consent" ? (
-                        <p className="text-label text-ink-3">The button opens the CRM&apos;s consent capture page. Nothing to choose.</p>
-                      ) : (
+                      {(
                         <>
                           <div className="flex flex-wrap gap-1.5">
                             {([...(p.isHQ ? [] : [["scheduler", `The ${p.sender.label.toLowerCase()}'s booking link`]]), ...Object.entries(links).map(([k, l]) => [k, l.label]), ["custom", "Paste a URL"]] as Array<[string, string]>).map(([id, label]) => (
@@ -461,166 +531,76 @@ export function EmailDirectionsScreen() {
                         </>
                       )}
                     </div>
+                  <PlanSectionContinue onClick={() => advanceFrom("button")} />
+                </PlanSectionShell>
 
+                {/* 6. What the sender can change: every freedom in one place. Head office sends it as it is. */}
+                {!p.isHQ && (
+                  <PlanSectionShell
+                    icon={PenLine}
+                    title={`What ${who} can change`}
+                    summary={
+                      [
+                        email.repEdit.note && "a note",
+                        email.subjectMode === "choice" && "the subject line",
+                        email.repEdit.blocks && `up to ${email.maxBlocks} blocks`,
+                        email.repEdit.piece && "which documents",
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "Nothing"
+                    }
+                    state={planState(false)}
+                    source={`for a ${p.sender.long.toLowerCase()}`}
+                    open={openSection === "edit"}
+                    onToggle={() => toggleSection("edit")}
+                  >
                     <div className="space-y-2">
-                      <div className="text-body font-bold text-ink-2">Images, video and documents</div>
-                      {email.media.filter((m) => m.kind !== "link").length === 0 && <p className="text-label text-ink-3">Nothing yet. Add from SwishX or upload your own.</p>}
-                      {email.media
-                        .filter((m) => m.kind !== "link")
-                        .map((m) => (
-                          <div key={m.uid} className="flex items-center gap-3 rounded-control border border-hair bg-card p-2.5">
-                            <span className="relative h-8 w-12 shrink-0 overflow-hidden rounded-chip" style={{ background: m.gradient || undefined }}>
-                              {m.visual}
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <b className="block truncate text-body text-ink">{m.title}</b>
-                              <span className="block text-label text-ink-3">
-                                {m.from === "platform" ? `${m.src} · Approved ${m.code}` : "Uploaded · goes to MLR as a new item"}
-                                {m.kind !== "doc" && (m.alt ? " · alt text set" : " · no alt text")}
-                              </span>
-                            </span>
-                            <Tag tone={m.from === "platform" ? "ok" : "warn"}>{m.from === "platform" ? "From SwishX" : "Upload"}</Tag>
-                            <button type="button" aria-label={`Remove ${m.title}`} onClick={() => setEmail({ media: email.media.filter((x) => x.uid !== m.uid) })} className="grid size-7 cursor-pointer place-items-center rounded-chip text-ink-3 hover:bg-subtle hover:text-ink">
-                              <X className="size-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      <div className="flex flex-wrap gap-1.5">
-                        {insertChoice("brand-images", "Brand image")}
-                        {insertChoice("upload-image", "Upload image")}
-                        {insertChoice("videos", "Video")}
-                        {insertChoice("documents", "Document")}
-                        {insertChoice("approved-link", "Link")}
-                      </div>
+                      <TickRow
+                        on={email.repEdit.note}
+                        title="Add a personal note"
+                        detail="Up to 255 characters at the top, in their own words. Plain text, so no claims can be formatted into it."
+                        onToggle={() => setEmail({ repEdit: { ...email.repEdit, note: !email.repEdit.note } })}
+                      />
+                      <TickRow
+                        on={email.subjectMode === "choice"}
+                        title="Choose the subject line"
+                        detail="SwishX drafts several on the email plan; they pick one when sending."
+                        onToggle={() => setEmail(email.subjectMode === "choice" ? { subjectMode: "one", subjects: [email.subjects[0] ?? 0] } : { subjectMode: "choice", subjects: p.subjects.map((_, i) => i) })}
+                      />
+                      <TickRow
+                        on={email.repEdit.blocks}
+                        title="Choose which blocks"
+                        detail={`Picks 1 to ${email.maxBlocks} of the ${p.included.length} approved blocks.`}
+                        onToggle={() => setEmail({ repEdit: { ...email.repEdit, blocks: !email.repEdit.blocks } })}
+                      />
+                      {email.repEdit.blocks && (
+                        <div className="flex items-center gap-2 pl-7 text-body text-ink-2">
+                          At most
+                          <Button size="sm" variant="secondary" aria-label="Fewer" onClick={() => setEmail({ maxBlocks: Math.max(1, email.maxBlocks - 1) })} className="size-7 p-0">
+                            −
+                          </Button>
+                          <b className="w-4 text-center text-ink">{email.maxBlocks}</b>
+                          <Button size="sm" variant="secondary" aria-label="More" onClick={() => setEmail({ maxBlocks: Math.min(5, email.maxBlocks + 1) })} className="size-7 p-0">
+                            +
+                          </Button>
+                          blocks per email
+                        </div>
+                      )}
+                      <TickRow
+                        on={email.repEdit.piece}
+                        title="Choose which documents to include"
+                        detail="When the email has more than one document, they tick which go with it."
+                        onToggle={() => setEmail({ repEdit: { ...email.repEdit, piece: !email.repEdit.piece } })}
+                      />
+                      <p className="text-label text-ink-3">{Who} never upload files, add their own links or type their own subject line.</p>
                     </div>
-
-                    {!purpose.noBlocks && p.pieces.length > 0 && (
-                      <div className="space-y-2">
-                        <div className="text-body font-bold text-ink-2">Attached pieces</div>
-                        {p.pieces.map((pc) => {
-                          const on = email.attached.includes(pc.id);
-                          return (
-                            <TickRow
-                              key={pc.id}
-                              on={on}
-                              onToggle={() => setEmail({ attached: on ? email.attached.filter((x) => x !== pc.id) : [...email.attached, pc.id] })}
-                              title={pc.title}
-                              tag={pc.id === p.startPiece?.id ? <Tag tone="lock">Built from</Tag> : undefined}
-                              detail={`${pc.kind} · ${pc.spec} · ${pc.approval}. Linked, not reviewed again.`}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    <p className="text-label text-ink-3">Always added by SwishX: {p.unbranded ? "" : p.professional ? "Prescribing Information, safety information, " : "Medication Guide, safety information, "}unsubscribe and privacy links. Every link is tracked and labelled for click reports.</p>
-                  </div>
-                  <PlanSectionContinue onClick={() => advanceFrom("media")} />
-                </PlanSectionShell>
-
-                {/* 6. Template: SwishX's layout, or one of the brand's approved shells. */}
-                <PlanSectionShell
-                  icon={LayoutTemplate}
-                  title="Template"
-                  summary={p.template ? p.template.title : "SwishX designs it"}
-                  state={planState(false)}
-                  source="from the brand kit"
-                  open={openSection === "template"}
-                  onToggle={() => toggleSection("template")}
-                >
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                    {[{ id: null, title: "SwishX designs it", detail: `Single column in the ${p.unbranded ? "disease awareness" : brandName} brand kit, built for this email.`, header: "plain" as const, approval: "Recommended" }, ...p.templates].map((t) => {
-                      const on = (email.template ?? null) === t.id;
-                      return (
-                        <button
-                          key={t.id ?? "swishx"}
-                          type="button"
-                          aria-pressed={on}
-                          onClick={() => setEmail({ template: t.id })}
-                          className={cn(
-                            "flex cursor-pointer flex-col overflow-hidden rounded-control border text-left transition",
-                            on ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3"
-                          )}
-                        >
-                          {/* A thumbnail of the shell: its header, then lines of body. */}
-                          <span className="grid h-24 w-full place-items-center border-b border-hair bg-canvas">
-                            <span className="grid w-28 overflow-hidden rounded-chip border border-hair bg-card shadow-2xs">
-                              {t.header === "letter" ? (
-                                <span className="mx-2 mb-1 mt-2 h-2.5 border-b-2 border-accent-violet" />
-                              ) : (
-                                <span className={t.header === "banner" ? "h-8" : "h-4"} style={{ background: HEADER_ART }} />
-                              )}
-                              <span className="grid gap-1 p-2">
-                                <span className="h-1 w-4/5 rounded-full bg-hair-2" />
-                                <span className="h-1 w-full rounded-full bg-hair-2" />
-                                <span className="h-1 w-3/5 rounded-full bg-hair-2" />
-                              </span>
-                            </span>
-                          </span>
-                          <span className="grid gap-0.5 p-2.5">
-                            <b className="text-body text-ink">{t.title}</b>
-                            <span className="text-label text-ink-3">{t.detail}</span>
-                            <span className={cn("text-label font-bold", t.id ? "text-ink-4" : "text-brand-deep")}>{t.approval}</span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="pt-2 text-label text-ink-3">A brand template changes the header and spacing. The blocks, safety information and footer stay the same.</p>
-                  <PlanSectionContinue onClick={() => advanceFrom("template")} />
-                </PlanSectionShell>
-
-                {/* 7. Audience, sender and indication — answered at the start, changeable here. */}
-                <PlanSectionShell
-                  icon={Users}
-                  title="Audience and sender"
-                  summary={`${AUDIENCE_LABEL[p.audience].title} · ${p.sender.long} · ${purpose.label}`}
-                  state={planState(false)}
-                  source="from project start"
-                  open={openSection === "audience"}
-                  onToggle={() => toggleSection("audience")}
-                >
-                  <div className="space-y-2">
-                    <IndicationRows editing={editing} onEdit={setEditing} />
-                    <DecisionRow label="Audience" value={AUDIENCE_LABEL[p.audience].title} icon={<Users className="size-4" />} editing={editing === "audience"} onEdit={() => setEditing(editing === "audience" ? null : "audience")}>
-                      <ChipChoices
-                        label="Who is it for?"
-                        options={EMAIL_AUDIENCES.map((a) => AUDIENCE_LABEL[a].title)}
-                        values={[AUDIENCE_LABEL[p.audience].title]}
-                        onToggle={(title) => {
-                          const a = EMAIL_AUDIENCES.find((x) => AUDIENCE_LABEL[x].title === title) as EmailAudience;
-                          setAbout({ audience: a });
-                          useWorkspaceStore.getState().setAudience(a);
-                        }}
-                        onDone={() => setEditing(null)}
-                        footnote="HCP and hospital emails are Approved Email, sent from your CRM. Patient and consumer emails go out from your email platform."
-                      />
-                    </DecisionRow>
-                    <DecisionRow label="Sent by" value={p.sender.long} icon={<Mail className="size-4" />} editing={editing === "sender"} onEdit={() => setEditing(editing === "sender" ? null : "sender")}>
-                      <ChipChoices
-                        label="Who sends it?"
-                        options={sendersFor(p.audience).map((id) => senderInfo(id, p.audience).long)}
-                        values={[p.sender.long]}
-                        onToggle={(long) => setAbout({ sender: sendersFor(p.audience).find((id) => senderInfo(id, p.audience).long === long)! })}
-                        onDone={() => setEditing(null)}
-                        footnote="Changes what can be personalised: a note and a choice of blocks for a rep, account manager or support nurse; medical material only for an MSL; nothing from head office."
-                      />
-                    </DecisionRow>
-                    <DecisionRow label="For" value={purpose.label} icon={<Link2 className="size-4" />} editing={editing === "purpose"} onEdit={() => setEditing(editing === "purpose" ? null : "purpose")}>
-                      <ChipChoices
-                        label="What is it for?"
-                        options={purposesFor(email.sender, p.audience).map((id) => EMAIL_PURPOSES[id].label)}
-                        values={[purpose.label]}
-                        onToggle={(label) => setAbout({ purpose: purposesFor(email.sender, p.audience).find((id) => EMAIL_PURPOSES[id].label === label)! })}
-                        onDone={() => setEditing(null)}
-                      />
-                    </DecisionRow>
-                  </div>
-                  <PlanSectionContinue onClick={() => setOpenSection(null)} />
-                </PlanSectionShell>
+                    <PlanSectionContinue onClick={() => advanceFrom("edit")} />
+                  </PlanSectionShell>
+                )}
 
                 {/* What SwishX decided, shown rather than asked. */}
                 <div className="rounded-panel border border-hair bg-card p-4 shadow-2xs">
-                  <div className="text-micro font-extrabold uppercase tracking-wide text-ink-4">SwishX decided</div>
+                  <div className="text-micro font-extrabold uppercase tracking-wide text-ink-4">Handled by SwishX</div>
                   <ul className="mt-2 space-y-1.5 text-body text-ink-2">
                     {[
                       p.unbranded
@@ -630,6 +610,7 @@ export function EmailDirectionsScreen() {
                       ["Job code", `US-${brandName.slice(0, 3).toUpperCase()}-2611-0042, the number MLR approves this email under`],
                       ["Layout", "single column, 600 px wide, reads on a phone and with images off"],
                       ["References", "numbered automatically from each block's claim"],
+                      ["Links added for you", `${p.unbranded ? "" : p.professional ? "Prescribing Information, safety information, " : "Medication Guide, safety information, "}unsubscribe and privacy, each tracked for click reports`],
                     ].map(([title, detail]) => (
                       <li key={title} className="flex items-start gap-2">
                         <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-ok" />
@@ -652,14 +633,40 @@ export function EmailDirectionsScreen() {
               action={
                 <Button
                   disabled={!planReady}
-                  onClick={() => setStage("building")}
+                  onClick={draftEmail}
                   className="h-9 shrink-0 cursor-pointer rounded-control bg-brand px-5 text-body font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-deep disabled:opacity-40"
                 >
-                  <span>Confirm Plan &amp; Build Email</span>
+                  <span>Confirm &amp; Draft Email Plan</span>
                   <ArrowRight className="ml-1.5 size-3.5" />
                 </Button>
               }
             />
+          )}
+
+          {planPhase === "plan" && stage === "emailplan" && (
+            <>
+              <EmailPlanStep project={p} />
+              <ActionBar
+                icon={p.included.length ? <CheckCircle2 className="size-4.5 shrink-0 text-ok-on-dark" /> : <AlertTriangle className="size-4.5 shrink-0 text-warn-on-dark" />}
+                title={p.included.length ? "Ready to build the email" : "No blocks in the email"}
+                description={p.included.length ? `${p.included.length} blocks · ${p.template ? p.template.title : "SwishX's design"}${p.attachedPieces.length ? ` · ${p.attachedPieces.length} documents` : ""}` : "Tick at least one block."}
+                action={
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Button variant="ghost" onClick={() => setStage("input")} className="h-9 text-body font-bold text-white hover:bg-white/10">
+                      Back to Need your input
+                    </Button>
+                    <Button
+                      disabled={p.included.length === 0}
+                      onClick={() => setStage("building")}
+                      className="h-9 shrink-0 cursor-pointer rounded-control bg-brand px-5 text-body font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-brand-deep disabled:opacity-40"
+                    >
+                      <span>Build Email</span>
+                      <ArrowRight className="ml-1.5 size-3.5" />
+                    </Button>
+                  </div>
+                }
+              />
+            </>
           )}
         </section>
       }
@@ -682,9 +689,9 @@ export function EmailDirectionsScreen() {
                   <div className={cn("rounded-panel p-3 text-body leading-relaxed", msg.role === "user" ? "rounded-tr-xs bg-brand text-white" : "rounded-tl-xs border border-hair bg-subtle text-ink")}>
                     <FormattedMessageText text={msg.text} />
                   </div>
-                  {msg.role === "swishx" && idx === chatMessages.length - 1 && planPhase === "plan" && stage === "input" && (
+                  {msg.role === "swishx" && idx === chatMessages.length - 1 && planPhase === "plan" && stage !== "building" && (
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {["Send it from head office", "Open the booking link from the button", "No personal note"].map((chip) => (
+                      {(stage === "emailplan" ? ["Make the header plainer", "Use the brand colour more", "Make it read like a letter"] : ["Send it from head office", "Open the booking link from the button", "No personal note"]).map((chip) => (
                         <button
                           key={chip}
                           type="button"
@@ -717,10 +724,10 @@ export function EmailDirectionsScreen() {
                   type="button"
                   size="sm"
                   disabled={!planReady}
-                  onClick={() => setStage("building")}
+                  onClick={draftEmail}
                   className="h-7.5 shrink-0 cursor-pointer rounded-chip bg-brand px-3 text-label font-bold text-white shadow-xs transition-all hover:scale-[1.02] hover:bg-brand-deep disabled:opacity-40"
                 >
-                  <span>Build Email</span>
+                  <span>Draft Email Plan</span>
                   <ArrowRight className="ml-1 size-3" />
                 </Button>
               </div>
@@ -740,19 +747,33 @@ export function EmailDirectionsScreen() {
       overlay={
         <>
           <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
-          <EmailInsertDialogs
-            request={insert}
-            brandName={brandName}
-            audience={p.audience}
-            condition={p.condition}
-            lead={p.included[0]}
-            onClose={() => setInsert(null)}
-            onInsert={(m) => {
-              setEmail({ media: [...useEmailStore.getState().media, m] });
-              setInsert(null);
-              showToast(`${m.title} added`);
-            }}
-          />
+          {pendingPackshot.length > 0 && (
+            <FileNoteDialog
+              files={pendingPackshot.map((m) => ({ id: m.id, name: m.name, kind: "media" as const, previewUrl: m.url, mediaKind: "image" as const }))}
+              title="What is this asset for?"
+              prompt="A note and a variant travel with each asset, so SwishX places it in the right part of the email."
+              placeholder="e.g. the packshot beside the primary claim"
+              variations={brandVariations(brandName)}
+              onCancel={() => setPendingPackshot([])}
+              onConfirm={(notes, variations) => {
+                setEmail({ packshots: [...email.packshots, ...pendingPackshot.map((m) => ({ ...m, note: notes[m.id].trim(), variation: variations[m.id] }))] });
+                setPendingPackshot([]);
+              }}
+            />
+          )}
+          {pendingReference.length > 0 && (
+            <FileNoteDialog
+              files={pendingReference.map((r) => ({ id: r.id, name: r.name, kind: "media" as const, previewUrl: r.previewUrl, mediaKind: "image" as const }))}
+              title="What should we take from this reference?"
+              prompt="Say whether it's the look to follow or an image to use, and which part matters."
+              placeholder="e.g. use this clinic photo in the header, or follow this layout"
+              onCancel={() => setPendingReference([])}
+              onConfirm={(notes) => {
+                setEmail({ references: [...email.references, ...pendingReference.map((r) => ({ ...r, note: notes[r.id].trim(), kind: "image" as const }))] });
+                setPendingReference([]);
+              }}
+            />
+          )}
           {previewDossier && <DossierReaderModal dossier={previewDossier} onClose={() => setPreviewDossier(null)} />}
           <SaveOrDiscardDialog
             open={!!exit.pending}

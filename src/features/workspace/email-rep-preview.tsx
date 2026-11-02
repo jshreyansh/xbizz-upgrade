@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { cn } from "@/lib/cn";
-import { EmailCanvas, RECIPIENT } from "@/features/workspace/email-canvas";
+import { EmailCanvas, recipientFor } from "@/features/workspace/email-canvas";
 import { SENDER_AS, SENDER_PLURAL } from "@/features/workspace/email-options";
 import type { EmailProject } from "@/features/workspace/email-project";
 
@@ -29,13 +29,16 @@ const CONSENT: Record<Consent, { title: string; detail: string; tone: string }> 
  */
 export function EmailRepPreview({ project: p, onClose }: { project: EmailProject; onClose: () => void }) {
   const { email, purpose } = p;
-  const chooses = p.zoneType("blocks") === "choose" && !purpose.noBlocks;
-  const choosesPiece = p.zoneType("piece") === "choose" && p.attachedPieces.length > 1;
+  const chooses = p.zoneType("blocks") === "choose";
+  const choosesPiece = p.zoneType("piece") === "choose";
   const [picked, setPicked] = useState<string[]>(p.included.slice(0, Math.min(2, email.maxBlocks)).map((b) => b.id));
   const [note, setNote] = useState(p.sender.sampleNote);
-  const recipient = RECIPIENT[p.audience];
+  const recipient = recipientFor(p);
   const lastName = recipient.name.split(",")[0];
-  const [piece, setPiece] = useState(p.attachedPieces[0]?.id);
+  const [pieces, setPieces] = useState<string[]>(p.attachedPieces.map((pc) => pc.id));
+  /* Several approved subject lines: the rep picks one. */
+  const subjectOptions = email.subjectMode === "choice" ? email.subjects.map((i) => p.subjects[i]).filter(Boolean) : [];
+  const [subject, setSubject] = useState(subjectOptions[0] ?? p.subject);
   const [consent, setConsent] = useState<Consent>("in");
   const [future, setFuture] = useState(false);
   const [sent, setSent] = useState(false);
@@ -48,7 +51,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
       ? `${lastName} opted out of this brand's email on 2 Oct 2026. It won't be sent.`
       : consent === "none"
         ? p.professional
-          ? `No email consent on record for ${lastName}. Send the consent request first; it is its own approved email.`
+          ? `No email consent on record for ${lastName}. Capture it in the CRM before sending.`
           : `${lastName} hasn't authorised contact. Patients sign up, and consent to being contacted, before any email.`
         : chooses && picked.length === 0
           ? "Pick at least one block."
@@ -82,8 +85,34 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
           <div className="rounded-control border border-hair bg-canvas px-3 py-2">
             <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">Template</span>
             <b className="block text-body text-ink">{purpose.label} · Approved</b>
-            <span className="block truncate text-label text-ink-3">{p.subject}</span>
+            <span className="block truncate text-label text-ink-3">{subject}</span>
           </div>
+
+          {subjectOptions.length > 1 && (
+            <div className="space-y-1.5">
+              <span className="text-label font-bold text-ink-2">
+                Subject line <span className="font-semibold text-ink-4">· pick one</span>
+              </span>
+              {subjectOptions.map((line) => {
+                const on = subject === line;
+                return (
+                  <button
+                    key={line}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => {
+                      setSubject(line);
+                      setSent(false);
+                    }}
+                    className={cn("flex w-full cursor-pointer items-center gap-2.5 rounded-control border p-2 text-left text-body transition", on ? "border-brand/40 bg-tint/60" : "border-hair-2 bg-card")}
+                  >
+                    <span className={cn("size-4 shrink-0 rounded-full border", on ? "border-[5px] border-brand" : "border-hair-3")} />
+                    <span className="min-w-0 flex-1 font-semibold text-ink">{line}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {chooses && (
             <div className="space-y-1.5">
@@ -121,20 +150,27 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
 
           {choosesPiece && (
             <div className="space-y-1.5">
-              <span className="text-label font-bold text-ink-2">Attach</span>
-              <div className="flex flex-wrap gap-1.5">
-                {p.attachedPieces.map((pc) => (
+              <span className="text-label font-bold text-ink-2">
+                Documents <span className="font-semibold text-ink-4">· tick which to send</span>
+              </span>
+              {p.attachedPieces.map((pc) => {
+                const on = pieces.includes(pc.id);
+                return (
                   <button
                     key={pc.id}
                     type="button"
-                    aria-pressed={piece === pc.id}
-                    onClick={() => setPiece(pc.id)}
-                    className={cn("cursor-pointer rounded-control border px-2.5 py-1 text-label font-semibold", piece === pc.id ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-2")}
+                    aria-pressed={on}
+                    onClick={() => {
+                      setPieces(on ? pieces.filter((x) => x !== pc.id) : [...pieces, pc.id]);
+                      setSent(false);
+                    }}
+                    className={cn("flex w-full cursor-pointer items-center gap-2.5 rounded-control border p-2 text-left text-body transition", on ? "border-brand/40 bg-tint/60" : "border-hair-2 bg-card")}
                   >
-                    {pc.title}
+                    <span className={cn("grid size-4 shrink-0 place-items-center rounded-chip border", on ? "border-brand bg-brand text-white" : "border-hair-3")}>{on && <Check className="size-3 stroke-[3]" />}</span>
+                    <span className="min-w-0 flex-1 font-semibold text-ink">{pc.title}</span>
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
           )}
 
@@ -201,7 +237,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
         </div>
         <div className="grid justify-items-center gap-2 rounded-panel bg-canvas p-4">
           <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">What {lastName} gets</span>
-          <EmailCanvas project={p} view="rep" note={note} picked={picked} pieceId={piece} expired={expired} />
+          <EmailCanvas project={p} view="rep" note={note} picked={picked} pieceIds={pieces} expired={expired} subject={subject} />
         </div>
       </div>
     </Modal>

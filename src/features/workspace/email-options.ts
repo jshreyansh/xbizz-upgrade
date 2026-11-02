@@ -5,17 +5,17 @@ import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/co
 /**
  * Email: what a marketer builds for others to send.
  *
- * For HCPs and hospitals it is Approved Email — reps, MSLs and account
- * managers send it from the CRM (Veeva Vault CRM, IQVIA OCE, Salesforce). For
+ * For HCPs, including pharmacy and formulary teams, it is Approved Email —
+ * reps, MSLs and head office send it from the CRM (Veeva Vault CRM, IQVIA OCE, Salesforce). For
  * patients and consumers the brand or the patient-support team sends it from
  * the consumer email platform. Either way SwishX makes it and gets it through
  * MLR; nothing here sends, captures consent or tracks opens.
  */
 
-export type EmailAudience = "HCP" | "Hospital" | "Patient" | "Consumer";
-export type EmailSender = "rep" | "msl" | "kam" | "hq" | "support";
+export type EmailAudience = "HCP" | "Patient" | "Consumer";
+export type EmailSender = "rep" | "msl" | "hq" | "support";
 export type EmailPurpose =
-  | "followup" | "newdata" | "launch" | "congress" | "access" | "consent" | "medq" | "pub" | "mslcongress"
+  | "followup" | "newdata" | "launch" | "congress" | "access" | "medq" | "pub" | "mslcongress"
   | "formulary" | "value"
   | "onboarding" | "savings" | "adherence" | "supportfu"
   | "awareness" | "signup";
@@ -23,17 +23,16 @@ export type EmailPurpose =
 /** Today, for approvals that are about to end. */
 export const EMAIL_TODAY = "2 Nov 2026";
 
-export const EMAIL_AUDIENCES: EmailAudience[] = ["HCP", "Hospital", "Patient", "Consumer"];
+export const EMAIL_AUDIENCES: EmailAudience[] = ["HCP", "Patient", "Consumer"];
 export const AUDIENCE_LABEL: Record<EmailAudience, { title: string; hint: string }> = {
   HCP: { title: "HCPs", hint: "Doctors, nurses and pharmacists" },
-  Hospital: { title: "Hospitals", hint: "Formulary, P&T and value teams" },
   Patient: { title: "Patients", hint: "People prescribed the drug, and their carers" },
   Consumer: { title: "Consumers", hint: "The public, about the condition" },
 };
 /** The audience mid-sentence: "for HCPs", "for patients". */
 export const audienceNoun = (a: EmailAudience) => (a === "HCP" ? "HCPs" : AUDIENCE_LABEL[a].title.toLowerCase());
-/** HCP and hospital emails are Approved Email, sent from the CRM. */
-export const isProfessional = (a: EmailAudience) => a === "HCP" || a === "Hospital";
+/** HCP emails are Approved Email, sent from the CRM. */
+export const isProfessional = (a: EmailAudience) => a === "HCP";
 
 interface SenderDef {
   label: string;
@@ -54,7 +53,6 @@ interface SenderDef {
 const SENDERS: Record<EmailSender, SenderDef> = {
   rep: { label: "Rep", long: "Sales rep", hint: "Adds a personal note and picks from the approved blocks. Promotional.", signoff: ["Priya Menon", "Specialty Representative"], address: "priya.menon@corvane.com", sampleNote: "Good to see you at Tuesday's tumour board. Here is the data you asked about." },
   msl: { label: "MSL", long: "Medical science liaison", hint: "Scientific exchange. No promotional claims or calls to action.", signoff: ["Dr. Arjun Rao", "Medical Science Liaison"], address: "arjun.rao@corvane.com", sampleNote: "Thank you for the question at Tuesday's meeting. The information is below." },
-  kam: { label: "KAM", long: "Key account manager", hint: "Adds a note and picks blocks, for formulary and value conversations.", signoff: ["Marcus Hill", "Key Account Manager"], address: "marcus.hill@corvane.com", sampleNote: "Thanks for the time at Thursday's P&T prep meeting. Here is the summary you asked for." },
   hq: { label: "Head office", long: "Head office", hint: "Sent from the brand to opted-in doctors. Nothing personalised.", signoff: ["The brand team", "Corvane Pharma US"], address: "updates@corvane-hcp.com", sampleNote: "" },
   support: { label: "Support nurse", long: "Patient support nurse", hint: "Adds a short note and picks from approved patient blocks. Never promotional.", signoff: ["Alex Rivera, RN", "Patient Support Nurse"], address: "support@corvane-care.com", sampleNote: "It was good to speak with you this morning. Here is what we went over." },
 };
@@ -67,7 +65,7 @@ export function senderInfo(id: EmailSender, audience: EmailAudience): SenderDef 
 }
 
 export const sendersFor = (audience: EmailAudience): EmailSender[] =>
-  audience === "HCP" ? ["rep", "msl", "hq"] : audience === "Hospital" ? ["kam", "hq"] : audience === "Patient" ? ["hq", "support"] : ["hq"];
+  audience === "HCP" ? ["rep", "msl", "hq"] : audience === "Patient" ? ["hq", "support"] : ["hq"];
 
 /** The ones who write their own note and pick blocks; head office sends as it is. */
 export const isPersonalSender = (s: EmailSender) => s !== "hq";
@@ -81,8 +79,6 @@ interface PurposeDef {
   cta: string;
   opening: (brand: string, condition: string) => string;
   subjects: (brand: string, condition: string) => string[];
-  /** A consent request carries no claims, so no blocks or attachments. */
-  noBlocks?: boolean;
   /** About the condition only: no product named, so no safety information. */
   unbranded?: boolean;
 }
@@ -113,11 +109,6 @@ export const EMAIL_PURPOSES: Record<EmailPurpose, PurposeDef> = {
     opening: (b) => `Starting a patient on ${b}? Here is how the support programme can help.`,
     subjects: (b) => [`${b} support for your patients`, `Helping your patients start ${b}`, `Copay and pharmacy support for ${b}`],
   },
-  consent: {
-    label: "Consent request", subtitle: "Ask permission to email before anything else", audience: "HCP", senders: ["rep"], cta: "Yes, email me updates", noBlocks: true,
-    opening: (b) => `With your permission, I would like to send you ${b} updates by email. You can change this at any time.`,
-    subjects: (b) => [`May I email you ${b} updates?`, `Your email preferences for ${b}`, `Stay updated on ${b} by email`],
-  },
   medq: {
     label: "Answer a medical question", subtitle: "Reply to a doctor's unsolicited question", audience: "HCP", senders: ["msl"], cta: "Ask another question",
     opening: () => "Thank you for your question. The information you asked for is below.",
@@ -134,12 +125,12 @@ export const EMAIL_PURPOSES: Record<EmailPurpose, PurposeDef> = {
     subjects: (b) => [`${b} presentations from congress`, `The ${b} poster you asked about`, "The congress data you asked about"],
   },
   formulary: {
-    label: "Formulary review", subtitle: "Ahead of a P&T or formulary decision", audience: "Hospital", senders: ["kam", "hq"], cta: "Request the formulary kit",
+    label: "Formulary review", subtitle: "Ahead of a P&T or formulary decision", audience: "HCP", senders: ["rep", "hq"], cta: "Request the formulary kit",
     opening: (b, c) => `Ahead of your formulary review, here is a summary of ${b} for ${c}.`,
     subjects: (b) => [`${b}: summary for your formulary review`, `${b} formulary kit`, `Preparing for P&T: ${b}`],
   },
   value: {
-    label: "Value & outcomes", subtitle: "Budget impact and health outcomes", audience: "Hospital", senders: ["kam", "hq"], cta: "Open the value dossier",
+    label: "Value & outcomes", subtitle: "Budget impact and health outcomes", audience: "HCP", senders: ["rep", "hq"], cta: "Open the value dossier",
     opening: (b) => `Here is the budget impact and outcomes evidence for ${b} that you asked about.`,
     subjects: (b) => [`${b}: budget impact and outcomes`, `The ${b} value dossier`, `Health economics for ${b}`],
   },
@@ -180,9 +171,9 @@ export const purposesFor = (sender: EmailSender, audience: EmailAudience): Email
 
 /** The prompt screen's examples, by who it is for and who sends it. */
 export function emailSamplePrompts(audience: EmailAudience, sender: EmailSender, purpose: EmailPurpose, subject: string, prescribers: string, condition: string) {
-  if (audience === "Hospital")
+  if (purpose === "formulary" || purpose === "value")
     return [
-      { id: "formulary", tag: "Formulary review", prompt: `Write an email a key account manager can send a hospital pharmacy director before the P&T review of ${subject}, with the formulary kit linked.` },
+      { id: "formulary", tag: "Formulary review", prompt: `Write an email a rep or account manager can send a hospital pharmacy director before the P&T review of ${subject}, with the formulary kit linked.` },
       { id: "value", tag: "Value & outcomes", prompt: `Draft an email for formulary decision makers on the budget impact and outcomes evidence for ${subject}.` },
       { id: "dossier", tag: "Value dossier", prompt: `Create a short email offering the AMCP-format value dossier for ${subject} to a health system's value analysis team.` },
     ];
@@ -234,6 +225,40 @@ export interface EmailBlock {
   /** When the claim's source approval ends, if soon. */
   expires?: string;
   link?: string;
+  /** Where it was drafted from: the dossier, the approved piece, or a file the user added. */
+  group?: "dossier" | "piece" | "file";
+  /** Drafted from the user's own file: a new claim, reviewed by MLR. */
+  newClaim?: boolean;
+}
+
+/**
+ * Blocks drafted from what the plan added beyond the dossier: the approved
+ * piece leads with its own figure, and each file gives one block from what its
+ * note says it is for.
+ */
+export function sourceBlocks(piece: EmailPiece | undefined, files: Array<{ name: string; note?: string }>): EmailBlock[] {
+  return [
+    ...(piece
+      ? [{
+          id: `piece-${piece.id}`,
+          title: piece.asset.badge ?? piece.title,
+          claimId: `LB-${piece.id.slice(0, 3).toUpperCase()}`,
+          text: piece.asset.metric ? `${piece.asset.metric}: ${piece.asset.metricLabel ?? ""}`.trim() : `The key message from the ${piece.title}.`,
+          source: `${piece.title} · approved piece`,
+          stat: piece.asset.metric?.match(/^[\d.]+%?/)?.[0],
+          group: "piece" as const,
+        }]
+      : []),
+    ...files.map((f) => ({
+      id: `file-${f.name}`,
+      title: "From your file",
+      claimId: "New",
+      text: f.note || `Content from ${f.name}.`,
+      source: f.name,
+      group: "file" as const,
+      newClaim: true,
+    })),
+  ];
 }
 
 const statOf = (text: string) => text.match(/\d+(\.\d+)?%/)?.[0];
@@ -251,7 +276,7 @@ const EXTRA_CLAIMS: Record<string, Array<{ id: string; text: string; source: str
  * number traces to a claim; patients get the same facts in plain language,
  * from the patient leaflet; consumers get the condition and no product.
  */
-export function emailBlocks(brandId: string, brandName: string, sender: EmailSender, audience: EmailAudience, condition: string): EmailBlock[] {
+export function emailBlocks(brandId: string, brandName: string, sender: EmailSender, audience: EmailAudience, condition: string, purpose?: EmailPurpose): EmailBlock[] {
   if (audience === "Consumer")
     return [
       { id: "c-about", title: `About ${condition}`, claimId: "DA-01", text: `${condition[0].toUpperCase()}${condition.slice(1)} affects many adults, and symptoms can build slowly.`, source: "CDC disease information" },
@@ -275,7 +300,8 @@ export function emailBlocks(brandId: string, brandName: string, sender: EmailSen
   const base = claims.length ? claims : [{ id: "CL-001", text: `${brandName} met its primary endpoint`, source: "Pivotal study · Primary endpoint" }];
   const trial = base[0].source.split(" · ")[0];
   const primary = { id: `b-${base[0].id}`, title: "Primary endpoint", claimId: base[0].id, text: base[0].text, source: base[0].source, stat: statOf(base[0].text) };
-  if (audience === "Hospital")
+  /* Formulary and value emails go to pharmacy and P&T teams: the formulary kit, not the efficacy story. */
+  if (purpose === "formulary" || purpose === "value")
     return [
       primary,
       { id: "h-formulary", title: "Formulary summary", claimId: "FK-01", text: "Dosing, packaging, storage and how it is covered, on one page for your committee.", source: "Formulary kit v3", link: "Download the summary" },
@@ -394,12 +420,6 @@ export function approvedLinks(brandName: string, audience: EmailAudience, condit
   const hcp = `https://www.${slugOf(brandName)}-hcp.com`;
   const patient = `https://www.${slugOf(brandName)}.com`;
   const aware = `https://www.understanding${slugOf(condition)}.com`;
-  if (audience === "Hospital")
-    return {
-      formulary: { label: "Formulary kit request", url: `${hcp}/formulary`, code: "US-HCP-2606-0018" },
-      site: { label: `${brandName} HCP website`, url: hcp, code: "US-HCP-2604-0012" },
-      medinfo: { label: "Medical information request", url: "https://medinfo.corvane.com/request", code: "US-MED-2601-0003" },
-    };
   if (audience === "Patient")
     return {
       patientsite: { label: `${brandName} patient website`, url: patient, code: "US-PAT-2604-0007" },
@@ -415,13 +435,14 @@ export function approvedLinks(brandName: string, audience: EmailAudience, condit
     site: { label: `${brandName} HCP website`, url: hcp, code: "US-HCP-2604-0012" },
     access: { label: `${brandName} support enrolment`, url: `${hcp}/support/enrol`, code: "US-HCP-2605-0020" },
     symposium: { label: "Symposium sign-up", url: `${hcp}/symposium`, code: "US-HCP-2610-0051" },
+    formulary: { label: "Formulary kit request", url: `${hcp}/formulary`, code: "US-HCP-2606-0018" },
     medinfo: { label: "Medical information request", url: "https://medinfo.corvane.com/request", code: "US-MED-2601-0003" },
   };
 }
 
 /**
  * Where the button goes: one of the audience's approved pages, the sender's
- * booking link, the CRM's consent page, a pasted URL, or not chosen yet.
+ * booking link, a pasted URL, or not chosen yet.
  */
 export type CtaTarget = string | null;
 
@@ -432,7 +453,6 @@ export const CTA_DEFAULT: Record<EmailPurpose, CtaTarget> = {
   launch: "site",
   congress: "symposium",
   access: "access",
-  consent: "consent",
   medq: "medinfo",
   pub: "medinfo",
   mslcongress: "medinfo",
@@ -533,14 +553,13 @@ export const linkTag = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_"
 export function ctaLink(purpose: EmailPurpose, target: CtaTarget, customLink: string, links: Record<string, ApprovedLink>): EmailLink {
   const base = { label: `Button: ${EMAIL_PURPOSES[purpose].cta}`, tag: linkTag(EMAIL_PURPOSES[purpose].cta), cta: true };
   if (target === "scheduler") return { ...base, dest: "The sender's booking link, from the CRM", status: "auto" };
-  if (target === "consent") return { ...base, dest: "Consent capture page, from the CRM", status: "auto" };
   if (target === "custom") return { ...base, dest: customLink || "No URL entered", status: customLink ? "review" : "missing" };
   if (target && links[target]) return { ...base, dest: links[target].url, status: "approved" };
   return { ...base, dest: "Not chosen yet", status: "missing" };
 }
 
-/** Every link in the email: the button, what was inserted, the attached piece, and the ones SwishX always adds. */
-export function emailLinks(cta: EmailLink, media: EmailMedia[], piece: EmailPiece | undefined, audience: EmailAudience, unbranded: boolean): EmailLink[] {
+/** Every link in the email: the button, what was inserted, the documents, and the ones SwishX always adds. */
+export function emailLinks(cta: EmailLink, media: EmailMedia[], pieces: EmailPiece[], audience: EmailAudience, unbranded: boolean): EmailLink[] {
   const list: EmailLink[] = [cta];
   const professional = isProfessional(audience);
   for (const m of media) {
@@ -548,7 +567,7 @@ export function emailLinks(cta: EmailLink, media: EmailMedia[], piece: EmailPiec
     if (m.kind === "doc") list.push({ label: `Document: ${m.title}`, dest: m.code !== "New" ? (professional ? `{{$VaultDocID}} · ${m.code}` : `Hosted PDF · ${m.code}`) : "New document, hosted once approved", status: m.code !== "New" ? "approved" : "review", tag: linkTag(m.title) });
     if (m.kind === "link") list.push({ label: `Link: ${m.title}`, dest: m.url ?? "", status: m.approved ? "approved" : "review", tag: linkTag(m.title) });
   }
-  if (piece) list.push({ label: `Piece: ${piece.title}`, dest: professional ? `{{PieceLink}} · ${piece.approval}` : `Hosted ${piece.kind === "Video" ? "video" : "PDF"} · ${piece.approval}`, status: "approved", tag: linkTag(piece.title) });
+  for (const piece of pieces) list.push({ label: `Document: ${piece.title}`, dest: professional ? `{{PieceLink}} · ${piece.approval}` : `Hosted ${piece.kind === "Video" ? "video" : "PDF"} · ${piece.approval}`, status: "approved", tag: linkTag(piece.title) });
   if (!unbranded)
     list.push(
       professional
@@ -564,6 +583,6 @@ export function emailLinks(cta: EmailLink, media: EmailMedia[], piece: EmailPiec
 }
 
 /** The sender in the plural, for "What reps can change". */
-export const SENDER_PLURAL: Record<EmailSender, string> = { rep: "reps", msl: "MSLs", kam: "account managers", hq: "head office", support: "support nurses" };
+export const SENDER_PLURAL: Record<EmailSender, string> = { rep: "reps", msl: "MSLs", hq: "head office", support: "support nurses" };
 /** "a rep", "an MSL", for "Try it as …". */
-export const SENDER_AS: Record<EmailSender, string> = { rep: "a rep", msl: "an MSL", kam: "an account manager", hq: "head office", support: "a support nurse" };
+export const SENDER_AS: Record<EmailSender, string> = { rep: "a rep", msl: "an MSL", hq: "head office", support: "a support nurse" };
