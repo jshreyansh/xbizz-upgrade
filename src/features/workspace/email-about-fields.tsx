@@ -1,13 +1,80 @@
 "use client";
 
+import {
+  BookOpen,
+  Briefcase,
+  Building2,
+  Calculator,
+  CalendarCheck,
+  CalendarDays,
+  ChartLine,
+  ClipboardList,
+  FlaskConical,
+  HandCoins,
+  HeartHandshake,
+  Lightbulb,
+  ListChecks,
+  Lock,
+  MailCheck,
+  Megaphone,
+  MessageCircleQuestion,
+  PenLine,
+  PiggyBank,
+  Presentation,
+  Reply,
+  Rocket,
+  Sprout,
+  Stethoscope,
+  UserPlus,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useEmailStore } from "@/features/workspace/email-store";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { AUDIENCE_LABEL, EMAIL_AUDIENCES, EMAIL_PURPOSES, purposesFor, senderInfo, sendersFor } from "@/features/workspace/email-options";
+import { AUDIENCE_OPTIONS } from "@/features/workspace/brand-modal-data";
+import { AUDIENCE_LABEL, EMAIL_AUDIENCES, EMAIL_PURPOSES, isPersonalSender, purposesFor, senderInfo, sendersFor, type EmailPurpose, type EmailSender } from "@/features/workspace/email-options";
 
-const RADIO = "flex items-start gap-3 rounded-control border p-3 text-left transition cursor-pointer";
-const radioState = (on: boolean) => (on ? "border-brand bg-tint shadow-2xs ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3");
-const Dot = ({ on }: { on: boolean }) => <span className={cn("mt-0.5 size-4 shrink-0 rounded-full border", on ? "border-[5px] border-brand" : "border-hair-3 bg-card")} />;
+const SENDER_ICON: Record<EmailSender, LucideIcon> = { rep: Briefcase, msl: Stethoscope, kam: Building2, hq: Megaphone, support: HeartHandshake };
+
+const PURPOSE_ICON: Record<EmailPurpose, LucideIcon> = {
+  followup: Reply,
+  newdata: ChartLine,
+  launch: Rocket,
+  congress: CalendarDays,
+  access: HandCoins,
+  consent: MailCheck,
+  medq: MessageCircleQuestion,
+  pub: BookOpen,
+  mslcongress: Presentation,
+  formulary: ClipboardList,
+  value: Calculator,
+  onboarding: Sprout,
+  savings: PiggyBank,
+  adherence: CalendarCheck,
+  supportfu: HeartHandshake,
+  awareness: Lightbulb,
+  signup: UserPlus,
+};
+
+/** What this sender can change in the email, as the chips under its name. */
+function senderFreedoms(sender: EmailSender): Array<{ icon: LucideIcon; label: string }> {
+  if (!isPersonalSender(sender)) return [{ icon: Lock, label: "Sent as approved" }];
+  return [
+    { icon: PenLine, label: "Personal note" },
+    { icon: ListChecks, label: "Picks blocks" },
+    ...(sender === "msl" ? [{ icon: FlaskConical, label: "Medical only" }] : []),
+  ];
+}
+
+/* The start modal's own row: an icon tile, the choice, and its state on the right. */
+const ROW = "group relative flex items-center gap-2.5 rounded-control border p-3 text-left shadow-2xs transition-all duration-150 cursor-pointer";
+const rowState = (on: boolean) => (on ? "border-brand bg-tint ring-2 ring-brand/15 shadow-sm" : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas");
+const IconTile = ({ icon: Icon, on }: { icon: LucideIcon; on: boolean }) => (
+  <span className={cn("grid size-7 shrink-0 place-items-center rounded-glyph transition-colors", on ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
+    <Icon className="size-3.5" />
+  </span>
+);
+const Dot = ({ on }: { on: boolean }) => <span className={cn("size-4 shrink-0 rounded-full border transition-colors", on ? "border-[5px] border-brand" : "border-hair-3 bg-card")} />;
 
 /**
  * The questions only an email asks: who sends it and what it is for — and,
@@ -27,7 +94,7 @@ export function EmailAboutFields({ withAudience = false }: { withAudience?: bool
       {withAudience && (
         <div className="space-y-2">
           <span className="text-label font-bold text-ink-2">Who is it for?</span>
-          <div className="grid gap-2 sm:grid-cols-4">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {EMAIL_AUDIENCES.map((a) => (
               <button
                 key={a}
@@ -37,12 +104,12 @@ export function EmailAboutFields({ withAudience = false }: { withAudience?: bool
                   setAbout({ audience: a });
                   useWorkspaceStore.getState().setAudience(a);
                 }}
-                className={cn(RADIO, radioState(audience === a))}
+                className={cn(ROW, rowState(audience === a))}
               >
-                <Dot on={audience === a} />
-                <span className="min-w-0">
+                <IconTile icon={AUDIENCE_OPTIONS.find((o) => o.id === a)?.icon ?? Stethoscope} on={audience === a} />
+                <span className="min-w-0 flex-1">
                   <span className="block text-body font-bold text-ink">{AUDIENCE_LABEL[a].title}</span>
-                  <span className="mt-0.5 block text-label text-ink-3">{AUDIENCE_LABEL[a].hint}</span>
+                  <span className="block truncate text-caption text-ink-3">{AUDIENCE_LABEL[a].hint}</span>
                 </span>
               </button>
             ))}
@@ -56,45 +123,53 @@ export function EmailAboutFields({ withAudience = false }: { withAudience?: bool
           <div className={cn("grid gap-2", senders.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2")}>
             {senders.map((id) => {
               const info = senderInfo(id, audience);
+              const on = sender === id;
               return (
-                <button key={id} type="button" aria-pressed={sender === id} onClick={() => setAbout({ sender: id })} className={cn(RADIO, radioState(sender === id))}>
-                  <Dot on={sender === id} />
-                  <span className="min-w-0">
+                <button key={id} type="button" aria-pressed={on} onClick={() => setAbout({ sender: id })} className={cn(ROW, "items-start", rowState(on))}>
+                  <IconTile icon={SENDER_ICON[id]} on={on} />
+                  <span className="min-w-0 flex-1">
                     <span className="block text-body font-bold text-ink">{info.long}</span>
                     <span className="mt-0.5 block text-label text-ink-3">{info.hint}</span>
+                    <span className="mt-2 flex flex-wrap gap-1">
+                      {senderFreedoms(id).map(({ icon: Icon, label }) => (
+                        <span key={label} className="inline-flex items-center gap-1 rounded-chip bg-subtle px-1.5 py-0.5 text-caption font-bold text-ink-3">
+                          <Icon className="size-3" />
+                          {label}
+                        </span>
+                      ))}
+                    </span>
                   </span>
+                  <Dot on={on} />
                 </button>
               );
             })}
           </div>
         </div>
       ) : (
-        <p className="rounded-control border border-hair bg-canvas px-3 py-2 text-label text-ink-3">
-          Sent by the <b className="font-bold text-ink-2">{senderInfo(senders[0], audience).long.toLowerCase()}</b> from your consumer email platform. Nobody personalises it.
+        <p className="flex items-center gap-2.5 rounded-control border border-hair bg-canvas px-3 py-2.5 text-label text-ink-3">
+          <IconTile icon={SENDER_ICON[senders[0]]} on={false} />
+          <span>
+            Sent by the <b className="font-bold text-ink-2">{senderInfo(senders[0], audience).long.toLowerCase()}</b> from your consumer email platform. Nobody personalises it.
+          </span>
         </p>
       )}
 
       <div className="space-y-2">
         <span className="text-label font-bold text-ink-2">What is it for?</span>
-        <div className="flex flex-wrap gap-1.5">
-          {purposesFor(sender, audience).map((id) => (
-            <button
-              key={id}
-              type="button"
-              aria-pressed={purpose === id}
-              onClick={() => setAbout({ purpose: id })}
-              className={cn(
-                "cursor-pointer rounded-control border px-3 py-1.5 text-body font-semibold transition",
-                purpose === id ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-2 hover:border-hair-3"
-              )}
-            >
-              {EMAIL_PURPOSES[id].label}
-            </button>
-          ))}
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {purposesFor(sender, audience).map((id) => {
+            const on = purpose === id;
+            return (
+              <button key={id} type="button" aria-pressed={on} title={EMAIL_PURPOSES[id].subtitle} onClick={() => setAbout({ purpose: id })} className={cn(ROW, rowState(on))}>
+                <IconTile icon={PURPOSE_ICON[id]} on={on} />
+                <span className="min-w-0 flex-1 text-body font-bold leading-snug text-ink">{EMAIL_PURPOSES[id].label}</span>
+                <Dot on={on} />
+              </button>
+            );
+          })}
         </div>
         {EMAIL_PURPOSES[purpose].unbranded && <p className="text-label text-ink-3">About the condition only: no product is named, so the email carries no safety information.</p>}
       </div>
-
     </div>
   );
 }
