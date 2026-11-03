@@ -31,7 +31,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
   const { email, purpose } = p;
   const chooses = p.zoneType("blocks") === "choose";
   const choosesPiece = p.zoneType("piece") === "choose";
-  const [picked, setPicked] = useState<string[]>(p.included.slice(0, Math.min(2, email.maxBlocks)).map((b) => b.id));
+  const [picked, setPicked] = useState<string[]>(p.included.slice(0, 2).map((b) => b.id));
   const [note, setNote] = useState(p.sender.sampleNote);
   const recipient = recipientFor(p);
   const lastName = recipient.name.split(",")[0];
@@ -117,17 +117,15 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
           {chooses && (
             <div className="space-y-1.5">
               <span className="text-label font-bold text-ink-2">
-                Blocks <span className="font-semibold text-ink-4">· pick up to {email.maxBlocks}</span>
+                Blocks <span className="font-semibold text-ink-4">· pick which to send</span>
               </span>
               {p.included.map((b) => {
                 const on = picked.includes(b.id);
-                const full = !on && picked.length >= email.maxBlocks;
                 const isGone = expired.includes(b.id);
                 return (
                   <button
                     key={b.id}
                     type="button"
-                    disabled={full}
                     aria-pressed={on}
                     onClick={() => {
                       setPicked(on ? picked.filter((x) => x !== b.id) : [...picked, b.id]);
@@ -135,7 +133,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
                     }}
                     className={cn(
                       "flex w-full items-center gap-2.5 rounded-control border p-2 text-left text-body transition",
-                      full ? "cursor-not-allowed border-hair opacity-50" : "cursor-pointer",
+                      "cursor-pointer",
                       on ? "border-brand/40 bg-tint/60" : "border-hair-2 bg-card"
                     )}
                   >

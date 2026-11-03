@@ -391,19 +391,29 @@ export interface EmailTemplate {
   title: string;
   detail: string;
   /** How its header is drawn. */
-  header: "letter" | "banner";
+  header: "plain" | "letter" | "banner";
+  /** How many blocks the layout is designed around. */
+  holds: number;
+  /** A SwishX layout in the brand kit, or one of the brand's own approved shells. */
+  from: "swishx" | "brand";
   approval: string;
 }
 
-/** The brand's approved email shells, kept in the brand kit. */
+/** SwishX's layouts, each built in the brand kit, then the brand's approved email shells. */
 export function emailTemplates(brandName: string, audience: EmailAudience, condition: string): EmailTemplate[] {
+  const swishx: EmailTemplate[] = [
+    { id: "sx-highlight", title: "Data highlight", detail: "A colour header, then the lead number large", header: "plain", holds: 4, from: "swishx", approval: "Brand kit" },
+    { id: "sx-letter", title: "Simple letter", detail: "Reads like a personal email, with a signature", header: "letter", holds: 3, from: "swishx", approval: "Brand kit" },
+    { id: "sx-news", title: "Newsletter", detail: "A banner, then several short sections", header: "banner", holds: 6, from: "swishx", approval: "Brand kit" },
+  ];
   if (audience === "Consumer")
-    return [{ id: "aware-news", title: `Understanding ${condition} newsletter`, detail: "Banner header and a sign-up footer", header: "banner", approval: "Approved Jul 2026" }];
+    return [...swishx, { id: "aware-news", title: `Understanding ${condition} newsletter`, detail: "Banner header and a sign-up footer", header: "banner", holds: 4, from: "brand", approval: "Approved Jul 2026" }];
   if (audience === "Patient")
-    return [{ id: "patient-update", title: `${brandName} patient update`, detail: "Banner header, plain-language safety at the foot", header: "banner", approval: "Approved Aug 2026" }];
+    return [...swishx, { id: "patient-update", title: `${brandName} patient update`, detail: "Banner header, plain-language safety at the foot", header: "banner", holds: 4, from: "brand", approval: "Approved Aug 2026" }];
   return [
-    { id: "letter", title: `${brandName} rep letter`, detail: "Plain header and a signature. Reads like a personal email.", header: "letter", approval: "Approved Jun 2026" },
-    { id: "news", title: `${brandName} news`, detail: "Banner header, for new data and congress news", header: "banner", approval: "Approved Sep 2026" },
+    ...swishx,
+    { id: "letter", title: `${brandName} rep letter`, detail: "Plain header and a signature", header: "letter", holds: 3, from: "brand", approval: "Approved Jun 2026" },
+    { id: "news", title: `${brandName} news`, detail: "Banner header, for new data and congress news", header: "banner", holds: 5, from: "brand", approval: "Approved Sep 2026" },
   ];
 }
 
@@ -440,31 +450,8 @@ export function approvedLinks(brandName: string, audience: EmailAudience, condit
   };
 }
 
-/**
- * Where the button goes: one of the audience's approved pages, the sender's
- * booking link, a pasted URL, or not chosen yet.
- */
-export type CtaTarget = string | null;
-
-/** Where each email's button goes until someone says otherwise. A follow-up has no obvious page, so SwishX asks. */
-export const CTA_DEFAULT: Record<EmailPurpose, CtaTarget> = {
-  followup: null,
-  newdata: "site",
-  launch: "site",
-  congress: "symposium",
-  access: "access",
-  medq: "medinfo",
-  pub: "medinfo",
-  mslcongress: "medinfo",
-  formulary: "formulary",
-  value: "formulary",
-  onboarding: "support",
-  savings: "savings",
-  adherence: "patientsite",
-  supportfu: "scheduler",
-  awareness: "specialist",
-  signup: "awarenesssite",
-};
+/** A web address SwishX can link a button to. */
+export const isUrl = (url: string) => /^https?:\/\/[^\s/]+\.[^\s]+$/i.test(url.trim());
 
 /* ── What goes in the email besides the blocks ── */
 
@@ -549,13 +536,13 @@ export const LINK_STATUS: Record<LinkStatus, { tone: "ok" | "lock" | "warn" | "d
 
 export const linkTag = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 
-/** Where the button goes, as a link. */
-export function ctaLink(purpose: EmailPurpose, target: CtaTarget, customLink: string, links: Record<string, ApprovedLink>): EmailLink {
-  const base = { label: `Button: ${EMAIL_PURPOSES[purpose].cta}`, tag: linkTag(EMAIL_PURPOSES[purpose].cta), cta: true };
-  if (target === "scheduler") return { ...base, dest: "The sender's booking link, from the CRM", status: "auto" };
-  if (target === "custom") return { ...base, dest: customLink || "No URL entered", status: customLink ? "review" : "missing" };
-  if (target && links[target]) return { ...base, dest: links[target].url, status: "approved" };
-  return { ...base, dest: "Not chosen yet", status: "missing" };
+/**
+ * The button, as a link. SwishX has no list of the brand's approved pages, so
+ * the URL is the one the marketer gives, and it goes to MLR with the email.
+ */
+export function ctaLink(text: string, url: string): EmailLink {
+  const base = { label: `Button: ${text}`, tag: linkTag(text), cta: true };
+  return isUrl(url) ? { ...base, dest: url.trim(), status: "review" } : { ...base, dest: url.trim() ? "Not a web address yet" : "No URL yet", status: "missing" };
 }
 
 /** Every link in the email: the button, what was inserted, the documents, and the ones SwishX always adds. */

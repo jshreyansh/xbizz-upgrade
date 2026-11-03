@@ -31,7 +31,7 @@ const TD = "border-b border-hair px-3 py-2 align-top text-body";
 export function emailPackage(p: EmailProject) {
   const code = (n: number) => `US-${p.brandName.slice(0, 3).toUpperCase()}-2611-00${42 + n}`;
   return [
-    { item: `${p.purpose.label} template`, type: "Email template", detail: `${p.template ? `On ${p.template.title} · ` : ""}Subject: ${p.email.subjects.map((i) => `"${p.subjects[i]}"`).join(", ")}`, claims: 0, code: code(0), already: false, expires: undefined as string | undefined },
+    { item: `${p.purpose.label} template`, type: "Email template", detail: `On ${p.template.title} · Subject: ${p.email.subjects.map((i) => `"${p.subjects[i]}"`).join(", ")}`, claims: 0, code: code(0), already: false, expires: undefined as string | undefined },
     ...p.included.map((b, i) => ({ item: b.title, type: "Fragment", detail: b.newClaim ? `New claim to approve, from your file ${b.source}` : b.source, claims: 1, code: code(i + 1), already: false, expires: b.expires })),
     ...p.email.media.map((m) => {
       const known = m.from === "platform" || m.code !== "New";
@@ -41,7 +41,7 @@ export function emailPackage(p: EmailProject) {
         : { item: m.title, type: m.kind === "link" ? "Linked destination" : `Uploaded ${noun.toLowerCase()}`, detail: m.kind === "link" ? (m.url ?? "") : m.newClaims.length ? `New claim to approve: ${m.newClaims.join(", ")}` : "New file", claims: m.claims.length + m.newClaims.length, code: "New", already: false, expires: undefined };
     }),
     ...p.attachedPieces.map((pc) => ({ item: pc.title, type: "Linked document", detail: `${pc.approval} in the Content Library. Not reviewed again.`, claims: 0, code: "Library", already: true, expires: undefined })),
-    ...(p.cta.status === "review" ? [{ item: `"${p.purpose.cta}" button`, type: "Linked destination", detail: p.cta.dest, claims: 0, code: "New", already: false, expires: undefined }] : []),
+    ...(p.cta.status === "review" ? [{ item: `"${p.ctaText}" button`, type: "Linked destination", detail: p.cta.dest, claims: 0, code: "New", already: false, expires: undefined }] : []),
   ];
 }
 
@@ -162,7 +162,7 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
   const consumerTokens: Array<[string, string]> = [
     ["First name", "%%FirstName%%"],
     ...(p.showNote ? ([["Personal note, 255 characters", "%%SenderNote%%"]] as Array<[string, string]>) : []),
-    ...(p.zoneType("blocks") === "choose" ? ([[`Sender picks 1 to ${p.email.maxBlocks} blocks`, "Content blocks, one per block"]] as Array<[string, string]>) : []),
+    ...(p.zoneType("blocks") === "choose" ? ([["Sender picks which blocks", "Content blocks, one per block"]] as Array<[string, string]>) : []),
     ...(p.unbranded ? [] : ([["Medication Guide · safety information", "Hosted pages, linked"]] as Array<[string, string]>)),
     ["Unsubscribe and preferences", "%%unsub_center_url%%"],
     ["Web links", "Tracked by the platform, labelled as below"],
@@ -170,7 +170,7 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
   const tokens: Array<[string, string]> = !p.professional ? consumerTokens : [
     ["Doctor's name", "{{accTitle}} {{accLname}}"],
     ...(p.showNote ? ([["Personal note, 255 characters", "{{customText(255)}}"]] as Array<[string, string]>) : []),
-    [p.zoneType("blocks") === "choose" ? `Rep picks 1 to ${p.email.maxBlocks} blocks` : "Fixed blocks", p.zoneType("blocks") === "choose" ? `{{insertEmailFragments(1,${p.email.maxBlocks})}}` : "inline in the template"],
+    [p.zoneType("blocks") === "choose" ? "Rep picks which blocks" : "Fixed blocks", p.zoneType("blocks") === "choose" ? `{{insertEmailFragments(1,${p.included.length})}}` : "inline in the template"],
     ...(p.attachedPieces.length ? ([[p.zoneType("piece") === "choose" ? "Documents, rep ticks which" : "Documents", "{{PieceLink}}, one per document"]] as Array<[string, string]>) : []),
     ["Prescribing Information · safety information", "{{PILink}} · {{ISILink}}"],
     ...(p.email.media.some((m) => m.kind === "doc") ? ([["Other linked documents", "{{$VaultDocID}}"]] as Array<[string, string]>) : []),

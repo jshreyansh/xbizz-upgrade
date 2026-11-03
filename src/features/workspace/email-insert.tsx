@@ -9,7 +9,7 @@ import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { cn } from "@/lib/cn";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import { MediaPickerModal, brandImageItems, workspaceMediaItems, type MediaItem } from "@/features/workspace/insert-pickers";
-import { SAMPLE_UPLOADS, approvedLinks, linkTag, platformMedia, type EmailAudience, type EmailBlock, type EmailMedia } from "@/features/workspace/email-options";
+import { SAMPLE_UPLOADS, linkTag, platformMedia, type EmailAudience, type EmailBlock, type EmailMedia } from "@/features/workspace/email-options";
 
 const uid = () => `m${Date.now()}${Math.round(Math.random() * 1000)}`;
 
@@ -55,7 +55,7 @@ export function useEmailLibrary(brandName: string, audience: EmailAudience) {
   };
 }
 
-export type EmailInsertRequest = "brand-images" | "workspace-images" | "upload-image" | "videos" | "upload-video" | "approved-link" | "url" | "documents" | "upload-doc";
+export type EmailInsertRequest = "brand-images" | "workspace-images" | "upload-image" | "videos" | "upload-video" | "url" | "documents" | "upload-doc";
 
 /** A toolbar Insert option, as the dialog it opens. Options email has no use for map to nothing. */
 export function insertRequestFor(option: string): EmailInsertRequest | null {
@@ -65,7 +65,6 @@ export function insertRequestFor(option: string): EmailInsertRequest | null {
     Upload: "upload-image",
     "Video library": "videos",
     "Upload video": "upload-video",
-    "Approved page": "approved-link",
     "Paste a URL": "url",
     Document: "documents",
     "Upload document": "upload-doc",
@@ -78,7 +77,6 @@ export function EmailInsertDialogs({
   request,
   brandName,
   audience,
-  condition,
   lead,
   onInsert,
   onClose,
@@ -86,7 +84,6 @@ export function EmailInsertDialogs({
   request: EmailInsertRequest | null;
   brandName: string;
   audience: EmailAudience;
-  condition: string;
   lead?: EmailBlock;
   onInsert: (media: EmailMedia) => void;
   onClose: () => void;
@@ -111,10 +108,8 @@ export function EmailInsertDialogs({
       return <EmailUploadModal kind="video" lead={lead} onInsert={onInsert} onClose={onClose} />;
     case "upload-doc":
       return <EmailUploadModal kind="doc" lead={lead} onInsert={onInsert} onClose={onClose} />;
-    case "approved-link":
-      return <EmailLinkModal brandName={brandName} audience={audience} condition={condition} onInsert={onInsert} onClose={onClose} />;
     case "url":
-      return <EmailLinkModal brandName={brandName} audience={audience} condition={condition} start="url" onInsert={onInsert} onClose={onClose} />;
+      return <EmailLinkModal onInsert={onInsert} onClose={onClose} />;
   }
 }
 
@@ -292,33 +287,16 @@ export function EmailUploadModal({
 }
 
 /**
- * Adding a link: one of the brand's approved pages, or a pasted URL that
- * SwishX checks and MLR then reviews.
+ * Adding a link: a URL that SwishX checks and MLR then reviews.
  */
-export function EmailLinkModal({
-  brandName,
-  audience,
-  condition,
-  start = "approved",
-  onInsert,
-  onClose,
-}: {
-  brandName: string;
-  audience: EmailAudience;
-  condition: string;
-  start?: "approved" | "url";
-  onInsert: (media: EmailMedia) => void;
-  onClose: () => void;
-}) {
-  const links = approvedLinks(brandName, audience, condition);
-  const [tab, setTab] = useState(start);
-  const [pick, setPick] = useState<string | null>(null);
+export function EmailLinkModal({ onInsert, onClose }: { onInsert: (media: EmailMedia) => void; onClose: () => void }) {
+  /* SwishX has no list of the brand's approved pages, so a link is the URL the marketer gives. */
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [checked, setChecked] = useState(false);
   const host = url.replace(/^https?:\/\//, "").split("/")[0];
   const secure = url.startsWith("https://");
-  const ready = tab === "approved" ? !!pick : checked && !!url.trim();
+  const ready = checked && !!url.trim();
 
   return (
     <Modal
@@ -335,12 +313,7 @@ export function EmailLinkModal({
           <Button
             disabled={!ready}
             onClick={() => {
-              if (tab === "approved" && pick) {
-                const l = links[pick];
-                onInsert({ uid: uid(), kind: "link", from: "platform", title: l.label, src: "Approved page", gradient: "", url: l.url, alt: "", claims: [], newClaims: [], code: l.code, approved: true });
-              } else {
-                onInsert({ uid: uid(), kind: "link", from: "upload", title: text.trim() || host || url, src: "Pasted URL", gradient: "", url: url.trim(), alt: "", claims: [], newClaims: [], code: "New", approved: false });
-              }
+              onInsert({ uid: uid(), kind: "link", from: "upload", title: text.trim() || host || url, src: "Pasted URL", gradient: "", url: url.trim(), alt: "", claims: [], newClaims: [], code: "New", approved: false });
             }}
             className="px-5 font-bold"
           >
@@ -350,39 +323,7 @@ export function EmailLinkModal({
       }
     >
       <div className="space-y-3">
-        <Segmented className="w-fit">
-          <SegmentedButton active={tab === "approved"} onClick={() => setTab("approved")}>
-            Approved pages
-          </SegmentedButton>
-          <SegmentedButton active={tab === "url"} onClick={() => setTab("url")}>
-            Paste a URL
-          </SegmentedButton>
-        </Segmented>
-        {tab === "approved" ? (
-          <div className="space-y-2">
-            {Object.keys(links).map((id) => (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={pick === id}
-                onClick={() => setPick(id)}
-                className={cn(
-                  "flex w-full cursor-pointer items-center gap-3 rounded-control border p-3 text-left transition",
-                  pick === id ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3"
-                )}
-              >
-                <span className={cn("size-4 shrink-0 rounded-full border", pick === id ? "border-[5px] border-brand" : "border-hair-3 bg-card")} />
-                <span className="min-w-0">
-                  <b className="block text-body text-ink">{links[id].label}</b>
-                  <span className="block truncate text-label text-ink-3">
-                    {links[id].url} · Approved {links[id].code}
-                  </span>
-                </span>
-              </button>
-            ))}
-            <p className="text-label text-ink-3">Approved pages for this audience in the US, kept in the Product library.</p>
-          </div>
-        ) : (
+        {(
           <div className="space-y-2">
             <div className="flex items-end gap-2">
               <Field
@@ -405,7 +346,7 @@ export function EmailLinkModal({
               <div className="space-y-2">
                 <Check ok>Opens: the page loads. Title: &ldquo;{host || "page"}&rdquo;</Check>
                 <Check ok={secure}>{secure ? "Secure (https)" : "Not secure. Use the https address."}</Check>
-                <Check ok={false}>Not one of {brandName}&apos;s approved pages. It goes to MLR as a linked destination for the reviewer to confirm.</Check>
+                <Check ok={false}>It goes to MLR as a linked destination for the reviewer to confirm.</Check>
                 <Check ok>
                   Clicks are tracked as <span className="font-mono text-label">LinkName={linkTag(text || host || "link")}</span>
                 </Check>

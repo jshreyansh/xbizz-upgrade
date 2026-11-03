@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import type { UploadedDoc } from "@/features/workspace/research-sources-section";
-import { CTA_DEFAULT, isPersonalSender, purposesFor, sendersFor, type CtaTarget, type EmailAudience, type EmailMedia, type EmailPurpose, type EmailSender } from "@/features/workspace/email-options";
+import { isPersonalSender, purposesFor, sendersFor, type EmailAudience, type EmailMedia, type EmailPurpose, type EmailSender } from "@/features/workspace/email-options";
 
 export interface EmailPackshot {
   id: string;
@@ -34,19 +34,23 @@ interface EmailState {
   references: EmailReference[];
   /** Files the user added as sources, each with what it is for. */
   files: UploadedDoc[];
+  /** Subject lines the marketer wrote, after SwishX's own. */
+  extraSubjects: string[];
+  /** Planned images the marketer left out. */
+  offImages: string[];
   /** Indexes into the purpose's subject lines. One unless senders pick from options. */
   subjects: number[];
   subjectMode: "one" | "choice";
   /** Blocks left out of the set. Everything else is in it. */
   offBlocks: string[];
-  /** How many blocks a sender may pick for one email. */
-  maxBlocks: number;
   repEdit: { note: boolean; blocks: boolean; piece: boolean };
   /** Approved pieces the sender can attach. */
   attached: string[];
   media: EmailMedia[];
-  cta: Record<EmailPurpose, CtaTarget>;
-  customLink: string;
+  /** What the button says; empty means the purpose's own wording. */
+  ctaText: string;
+  /** The page the button opens, as the marketer gives it. */
+  ctaUrl: string;
   setAbout: (patch: Partial<Pick<EmailState, "audience" | "sender" | "purpose">>) => void;
   set: (patch: Partial<Omit<EmailState, "set" | "setAbout" | "start">>) => void;
   /** A fresh email, from the start step's answers. */
@@ -78,15 +82,16 @@ export const useEmailStore = create<EmailState>((set) => ({
   packshots: [],
   references: [],
   files: [],
+  extraSubjects: [],
+  offImages: [],
   subjects: [0],
   subjectMode: "one",
   offBlocks: [],
-  maxBlocks: 3,
   repEdit: editsFor("rep"),
   attached: [],
   media: [],
-  cta: { ...CTA_DEFAULT },
-  customLink: "",
+  ctaText: "",
+  ctaUrl: "",
   setAbout: (patch) =>
     set((state) => {
       const next = { ...state, ...patch };
@@ -106,14 +111,15 @@ export const useEmailStore = create<EmailState>((set) => ({
       subjects: [0],
       subjectMode: "one",
       offBlocks: [],
-      maxBlocks: 3,
-      repEdit: editsFor(fitted.sender),
+          repEdit: editsFor(fitted.sender),
       template: null,
       packshots: [],
       references: [],
       files: [],
-      cta: { ...CTA_DEFAULT },
-      customLink: "",
+      extraSubjects: [],
+      offImages: [],
+      ctaText: "",
+      ctaUrl: "",
     });
   },
 }));

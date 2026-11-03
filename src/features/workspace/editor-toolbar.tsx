@@ -20,7 +20,6 @@ import {
   Film,
   Filter,
   FolderOpen,
-  Globe,
   Hash,
   Heading,
   Info,
@@ -240,7 +239,6 @@ export const INSERT_MENUS: Record<InsertMenuId, InsertMenu> = {
       {
         title: "Links",
         options: [
-          { label: "Approved page", icon: Globe, hint: "From the brand's approved list" },
           { label: "Paste a URL", icon: Link2, hint: "Checked, then reviewed by MLR" },
           { label: "Document", icon: FileText, hint: "A leave-behind, detail aid or reprint" },
           { label: "Upload document", icon: Upload, hint: "PDF, goes to MLR" },

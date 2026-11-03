@@ -58,12 +58,15 @@ export function useEmailProject() {
   /* The piece it is built from comes first: it is the one a lone attachment shows. */
   const attachedPieces = unbranded ? [] : pieces.filter((p) => email.attached.includes(p.id)).sort((a, b) => Number(b.id === startPiece?.id) - Number(a.id === startPiece?.id));
   const templates = emailTemplates(brandName, audience, condition);
-  const template = templates.find((t) => t.id === email.template);
+  /* Nothing chosen yet: SwishX's first layout. */
+  const template = templates.find((t) => t.id === email.template) ?? templates[0];
   const showNote = !isHQ && email.repEdit.note;
   const links = approvedLinks(brandName, audience, condition);
-  const cta = ctaLink(email.purpose, email.cta[email.purpose], email.customLink, links);
+  /* What the button says: the marketer's words, or the purpose's own. */
+  const ctaText = email.ctaText.trim() || purpose.cta;
+  const cta = ctaLink(ctaText, email.ctaUrl);
   const allLinks = emailLinks(cta, email.media, attachedPieces, audience, unbranded);
-  const subjects = purpose.subjects(brandName, condition);
+  const subjects = [...purpose.subjects(brandName, condition), ...email.extraSubjects];
 
   const zoneType = (id: string): ZoneType => {
     if (id === "greeting" || id === "footer") return "auto";
@@ -113,6 +116,7 @@ export function useEmailProject() {
     template,
     showNote,
     cta,
+    ctaText,
     /** The audience's approved pages, for the button and the link picker. */
     approved: links,
     links: allLinks,

@@ -160,7 +160,7 @@ export function EmailCanvas({
   /* Documents go as link cards at the end. When the rep chooses, the ones they ticked. */
   const pieces = live && p.zoneType("piece") === "choose" && pieceIds ? p.attachedPieces.filter((x) => pieceIds.includes(x.id)) : p.attachedPieces;
   const look = template === undefined ? p.template : template;
-  const packshot = email.packshots[0];
+  const packshot = email.offImages.includes("packshot") ? undefined : email.packshots[0];
   const recipient = recipientFor(p);
   const greeting = zones ? (
     p.professional ? <>Dear <Token>Title</Token> <Token>Last name</Token>,</> : <>Hi <Token>First name</Token>,</>
@@ -172,162 +172,251 @@ export function EmailCanvas({
   ) : view === "rep" ? (note ?? "") : sender.sampleNote;
   const heading = p.unbranded ? `Understanding ${p.condition}` : p.brandName;
   const strapline = p.professional ? "For US healthcare professionals only" : p.unbranded ? "Information about the condition" : `For people prescribed ${p.brandName}`;
+  const pad = view === "phone" ? "px-4" : "px-7";
+  const subjectLine = subject ?? p.subject;
+  /* The image SwishX generates for the header, unless left out on the plan or the layout is a plain letter.
+     Stand-in photos in public/email are from Unsplash, under the Unsplash License. */
+  const hero = look?.header !== "letter" && !email.offImages.includes("header") ? (p.unbranded ? "/email/awareness-together.jpg" : p.professional ? "/email/hcp-clinic.jpg" : "/email/patient-support.jpg") : null;
+  const heroAlt = p.unbranded ? "Friends together outdoors at sunset." : p.professional ? "A specialist talking with a patient in clinic." : "A nurse talking with a patient.";
+  /* The chart drawn from the lead number: "52% … vs 18% with placebo" becomes two bars. */
+  const showChart = !email.offImages.includes("chart");
+  const bars = (text: string) => {
+    const nums = [...text.matchAll(/(\d+(?:\.\d+)?)%/g)].map((m) => Number(m[1]));
+    return nums.length >= 2 ? nums.slice(0, 2) : null;
+  };
+  const topLinks = p.unbranded ? [] : p.professional ? ["Prescribing Information", "Important Safety Information"] : ["Medication Guide", "Important Safety Information"];
+  const personal = !isHQ;
 
   return (
     <div className={cn("w-full overflow-hidden rounded-control bg-card text-body-lg leading-relaxed text-ink-2 shadow-float", view === "phone" ? "max-w-[360px]" : "max-w-[600px]")}>
       {live && (
         <div className="grid gap-0.5 border-b border-hair bg-subtle px-4 py-2.5 text-label text-ink-3">
-          <b className="text-body-lg text-ink">{subject ?? p.subject}</b>
+          <b className="text-body-lg text-ink">{subjectLine}</b>
           <span>
             {isHQ ? `${heading} <${sender.address}>` : `${sender.signoff[0]} <${sender.address}>`} · to {recipient.name}
           </span>
+          {/* The preheader: what the inbox shows after the subject. */}
+          <span className="truncate text-ink-4">{purpose.opening(p.brandName, p.condition)}</span>
         </div>
       )}
+
+      {/* Above the header: who it is for, and the browser link every email carries. */}
+      <div className={cn("flex items-center justify-between gap-2 bg-canvas py-1.5 text-caption text-ink-4", pad)}>
+        <span>{strapline}</span>
+        <span className="underline">View in browser</span>
+      </div>
+
       {zone(
         "header",
-        look?.header === "letter" ? (
-          <div className="border-b-2 border-accent-violet px-6 pb-3 pt-5">
-            <div className="text-title font-black leading-tight text-accent-violet">{heading}</div>
-            <span className="block text-caption font-semibold text-ink-3">{strapline}</span>
+        <div>
+          {/* The logo bar: the mark, and the safety links pharma puts at the top. */}
+          <div className={cn("flex flex-wrap items-center justify-between gap-2 border-b border-hair py-3", pad)}>
+            <span className="inline-flex items-center gap-2">
+              {!p.unbranded && <span aria-hidden className="size-5 rounded-[5px]" style={{ background: HEADER_ART }} />}
+              <span className={cn("font-black tracking-tight text-ink", p.unbranded ? "text-body-lg" : "text-title")}>
+                {heading}
+                {!p.unbranded && <sup className="text-caption font-bold">®</sup>}
+              </span>
+            </span>
+            {topLinks.length > 0 && (
+              <span className="flex flex-wrap gap-x-3 text-caption font-bold text-accent-violet">
+                {topLinks.map((l) => (
+                  <span key={l} className="underline">
+                    {l}
+                  </span>
+                ))}
+              </span>
+            )}
           </div>
-        ) : look?.header === "banner" ? (
-          <div className="px-6 pb-5 pt-7 text-white" style={{ background: HEADER_ART }}>
-            <span className="block text-micro font-extrabold uppercase tracking-wide opacity-75">{strapline}</span>
-            <div className="mt-1 text-display font-black leading-tight">{heading}</div>
-            <span className="mt-1 block text-body opacity-85">{purpose.label}</span>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between gap-3 px-6 py-4 text-white" style={{ background: HEADER_ART }}>
-            <div className="text-title font-black leading-tight">
-              {heading}
-              <span className="block text-caption font-semibold opacity-80">{strapline}</span>
+
+          {look?.header === "banner" && (
+            <div className={cn("py-5 text-white", pad)} style={{ background: HEADER_ART }}>
+              <span className="block text-micro font-extrabold uppercase tracking-wide opacity-80">{purpose.label}</span>
+              <div className="mt-1 text-display font-black leading-tight">{subjectLine}</div>
             </div>
-          </div>
-        )
+          )}
+
+          {hero &&
+            (imagesOff ? (
+              <div className={cn("my-3 grid aspect-[2/1] place-items-center border border-dashed border-hair-3 bg-subtle p-4 text-center text-body text-ink-3", "mx-7")}>{heroAlt}</div>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element -- a hosted email image
+              <img src={hero} alt={heroAlt} className="block aspect-[2/1] w-full object-cover" />
+            ))}
+
+          {look?.header !== "banner" && (
+            <div className={cn("pt-5", pad)}>
+              <h1 className="text-display font-black leading-tight tracking-tight text-ink">{subjectLine}</h1>
+            </div>
+          )}
+        </div>
       )}
-      <div className={cn("pt-3", view === "phone" ? "px-4" : "px-6")}>
+
+      <div className={cn("pt-3", pad)}>
         {zone("greeting", <p className="py-1.5">{greeting}</p>)}
         {p.showNote && (!live || noteText) && zone("note", <p className="py-1.5">{noteText}</p>)}
         {zone(
           "opening",
           <>
             <p className="py-1.5">{purpose.opening(p.brandName, p.condition)}</p>
+            {/* The indication, near the top, as US promotional email states it. */}
             {p.professional && email.sender !== "msl" && p.wording && (
-              <div className="my-1.5 rounded-r-control border-l-2 border-accent-violet bg-subtle px-3 py-2 text-body text-ink-3">{p.wording}</div>
+              <p className="my-2 border-l-[3px] border-accent-violet bg-subtle px-3 py-2 text-body text-ink-2">
+                <b className="text-ink">INDICATION: </b>
+                {p.wording}
+              </p>
             )}
           </>
         )}
         {zone(
-            "blocks",
-            <>
-              {zones && chooses && shownBlocks.length > 0 && (
-                <p className="pt-1.5 text-label font-bold text-accent-blue">
-                  The rep picks 1 to {email.maxBlocks} of these {shownBlocks.length}:
-                </p>
-              )}
-              {zones && shownBlocks.length === 0 && <p className="py-1.5 italic text-ink-4">No blocks in the set. Add some in the plan.</p>}
-              {shownBlocks.map((b, i) => (
-                <div key={b.id} className={cn("my-2 flex gap-3 rounded-control border border-hair p-3", expired.includes(b.id) && "opacity-45 line-through")}>
-                  <div className="grid min-w-0 flex-1 gap-1">
-                  <h4 className="text-body-lg font-bold text-accent-violet">{b.title}</h4>
-                  {b.stat ? (
-                    <div className="flex items-center gap-3">
-                      <b className="shrink-0 text-display-lg font-black leading-none text-accent-violet">{b.stat}</b>
-                      <span className="text-body-lg text-ink-2">
-                        {b.text}
-                        <sup className="font-extrabold text-accent-violet">{i + 1}</sup>
-                      </span>
+          "blocks",
+          <>
+            {zones && chooses && shownBlocks.length > 0 && <p className="pt-1.5 text-label font-bold text-accent-blue">The rep picks which of these {shownBlocks.length} to send:</p>}
+            {zones && shownBlocks.length === 0 && <p className="py-1.5 italic text-ink-4">No blocks in the set. Add some in the plan.</p>}
+            {shownBlocks.map((b, i) => {
+              const pair = i === 0 && showChart && b.stat ? bars(b.text) : null;
+              return (
+                <section key={b.id} className={cn("border-t border-hair py-4", expired.includes(b.id) && "opacity-45 line-through")}>
+                  <h2 className="text-micro font-extrabold uppercase tracking-wider text-accent-violet">{b.title}</h2>
+                  <div className="mt-1.5 flex gap-4">
+                    <div className="min-w-0 flex-1">
+                      {b.stat ? (
+                        <>
+                          <b className="block text-display-lg font-black leading-none text-accent-violet">{b.stat}</b>
+                          <p className="mt-1.5 text-body-lg text-ink-2">
+                            {b.text}
+                            <sup className="font-extrabold text-accent-violet">{i + 1}</sup>
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-body-lg text-ink-2">
+                          {b.text}
+                          <sup className="font-extrabold text-accent-violet">{i + 1}</sup>
+                        </p>
+                      )}
+                      {/* The chart SwishX draws from the claim's own numbers. */}
+                      {pair && (
+                        <div className="mt-3 grid gap-1.5" role="img" aria-label={`${pair[0]}% with ${p.brandName} versus ${pair[1]}% with placebo`}>
+                          {[
+                            [p.brandName, pair[0]],
+                            ["Placebo", pair[1]],
+                          ].map(([label, value], k) => (
+                            <div key={String(label)} className="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-2 text-caption font-bold text-ink-3">
+                              <span className="truncate">{label}</span>
+                              <span className="flex items-center gap-1.5">
+                                <span className={cn("h-3 rounded-r-[3px]", k === 0 ? "bg-accent-violet" : "bg-hair-3")} style={{ width: `${Math.max(6, Number(value))}%` }} />
+                                <span className="tabular-nums text-ink-2">{value}%</span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {b.link && <span className="mt-1.5 inline-block text-body font-bold text-accent-violet underline">{b.link} ›</span>}
                     </div>
-                  ) : (
-                    <p className="text-body-lg text-ink-2">
-                      {b.text}
-                      <sup className="font-extrabold text-accent-violet">{i + 1}</sup>
-                    </p>
-                  )}
-                  {b.link && <span className="text-body font-bold text-accent-violet underline">{b.link}</span>}
+                    {/* The product shot, beside the lead claim. Images off: its alt text. */}
+                    {i === 0 &&
+                      packshot &&
+                      (imagesOff ? (
+                        <span className="grid w-24 shrink-0 place-items-center rounded-chip border border-dashed border-hair-3 p-1 text-center text-caption text-ink-4">{packshot.note || packshot.name}</span>
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element -- a hosted email image
+                        <img src={packshot.url} alt={packshot.note || `${p.brandName} pack`} className="h-28 w-28 shrink-0 rounded-chip object-cover" />
+                      ))}
                   </div>
-                  {/* The product shot, beside the lead claim. Images off: its alt text. */}
-                  {i === 0 && packshot &&
-                    (imagesOff ? (
-                      <span className="grid w-24 shrink-0 place-items-center rounded-chip border border-dashed border-hair-3 p-1 text-center text-caption text-ink-4">{packshot.note || packshot.name}</span>
-                    ) : (
-                      // eslint-disable-next-line @next/next/no-img-element -- a hosted email image, not a page asset
-                      <img src={packshot.url} alt={packshot.note || `${p.brandName} pack`} className="h-24 w-24 shrink-0 rounded-chip object-cover" />
-                    ))}
-                </div>
-              ))}
-            </>
-          )}
+                </section>
+              );
+            })}
+          </>
+        )}
         {email.media.map((m) => zone(`m:${m.uid}`, <MediaPart m={m} imagesOff={imagesOff} />))}
         {pieces.length > 0 &&
           zone(
             "piece",
-            <div className="my-2 grid gap-1.5">
+            <div className="my-2 grid gap-1.5 border-t border-hair pt-4">
               {zones && p.zoneType("piece") === "choose" && <p className="text-label font-bold text-accent-blue">The rep ticks which of these {pieces.length} go with the email:</p>}
               {pieces.map((piece) => (
                 <div key={piece.id} className="flex items-center gap-3 rounded-control border border-hair-2 bg-subtle p-2.5">
-                  <AssetPreview asset={{ gradient: piece.asset.gradient }} className={cn("shrink-0 rounded-chip", piece.kind === "Video" ? "h-8 w-12" : "h-10 w-8")} />
-                  <span className="min-w-0">
+                  <AssetPreview asset={{ gradient: piece.asset.gradient }} className={cn("shrink-0 rounded-chip", piece.kind === "Video" ? "h-10 w-14" : "h-12 w-9")} />
+                  <span className="min-w-0 flex-1">
                     <b className="block text-body-lg text-ink">{piece.title}</b>
                     <span className="text-label text-ink-3">
-                      {piece.kind === "Video" ? "Video" : "Document"} · {piece.spec} · opens in the browser
+                      {piece.kind === "Video" ? "Watch the video" : "Download the PDF"} · {piece.spec}
                     </span>
                   </span>
+                  <span className="text-body font-bold text-accent-violet">›</span>
                 </div>
               ))}
             </div>
           )}
         {zone(
           "cta",
-          <div className="py-2">
-            <span className="inline-block rounded-full bg-accent-violet px-5 py-2 text-body-lg font-extrabold text-white">{purpose.cta}</span>
+          <div className="py-4 text-center">
+            <span className="inline-block rounded-[4px] bg-accent-violet px-7 py-3 text-body-lg font-extrabold text-white">{p.ctaText}</span>
             {zones && (
-              <span className={cn("mt-1 block text-caption font-bold", p.cta.status === "missing" ? "text-danger" : "text-accent-blue")}>
-                {p.cta.status === "missing" ? "Goes nowhere yet: choose where in the plan" : `Goes to ${p.cta.dest}`}
+              <span className={cn("mt-1.5 block text-caption font-bold", p.cta.status === "missing" ? "text-danger" : "text-accent-blue")}>
+                {p.cta.status === "missing" ? "Goes nowhere yet: add its URL in the plan" : `Goes to ${p.cta.dest}`}
               </span>
             )}
           </div>
         )}
         {zone(
           "signoff",
-          <p className="py-2 text-body-lg">
-            Kind regards,
-            <br />
-            {zones && !isHQ ? (
-              <>
-                <Token>Sender&apos;s name</Token>
-                <br />
-                <Token>Title · email · phone</Token>
-              </>
-            ) : (
-              <>
-                <b className="text-ink">{isHQ ? `The ${heading} team` : sender.signoff[0]}</b>
-                <br />
-                {sender.signoff[1]}
-                {!isHQ && (
-                  <>
-                    <br />
-                    {sender.address}
-                  </>
-                )}
-              </>
+          <div className="flex items-center gap-3 border-t border-hair py-4 text-body-lg">
+            {personal && live && !imagesOff && (
+              // eslint-disable-next-line @next/next/no-img-element -- the sender's CRM photo
+              <img src="/email/rep-portrait.jpg" alt="" className="size-12 shrink-0 rounded-full object-cover" />
             )}
-          </p>
+            <p>
+              {zones && personal ? (
+                <>
+                  <Token>Sender&apos;s name</Token>
+                  <br />
+                  <Token>Title · email · phone</Token>
+                </>
+              ) : (
+                <>
+                  <b className="text-ink">{isHQ ? `The ${heading} team` : sender.signoff[0]}</b>
+                  <br />
+                  <span className="text-body text-ink-3">
+                    {sender.signoff[1]}
+                    {personal && ` · ${sender.address}`}
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
         )}
       </div>
+
       {/* Unbranded: no product named, so no safety information. */}
       {!p.unbranded &&
         zone(
           "isi",
-          <div className={cn("grid gap-1.5 border-t border-hair bg-subtle py-3.5 text-label text-ink-2", view === "phone" ? "px-4" : "px-6")}>
+          <div className={cn("grid gap-2 border-t-[3px] border-accent-violet bg-subtle py-5 text-label text-ink-2", pad)}>
+            {p.professional && p.wording && (
+              <>
+                <h5 className="text-label font-extrabold uppercase tracking-wide text-ink">Indication</h5>
+                <p>{p.wording}</p>
+              </>
+            )}
             <h5 className="text-label font-extrabold uppercase tracking-wide text-ink">Important Safety Information</h5>
             {p.professional ? (
               <>
-                {p.boxedWarning && <div className="border-[1.5px] border-ink px-2.5 py-2 text-caption font-bold">WARNING: SERIOUS INFECTIONS, MORTALITY, MALIGNANCY, MAJOR ADVERSE CARDIOVASCULAR EVENTS AND THROMBOSIS</div>}
-                <p>Serious infections that may lead to hospitalization or death have been reported. Evaluate patients before starting and monitor blood counts during treatment.</p>
+                {p.boxedWarning && (
+                  <div className="border-[1.5px] border-ink px-3 py-2 text-caption">
+                    <b className="block font-extrabold text-ink">WARNING: SERIOUS INFECTIONS, MORTALITY, MALIGNANCY, MAJOR ADVERSE CARDIOVASCULAR EVENTS AND THROMBOSIS</b>
+                    Serious infections leading to hospitalization or death have occurred. Evaluate and test for latent infection before treatment.
+                  </div>
+                )}
+                <p>
+                  <b className="text-ink">Infections:</b> Serious infections that may lead to hospitalization or death have been reported. Monitor patients closely during and after treatment.
+                </p>
+                <p>
+                  <b className="text-ink">Laboratory monitoring:</b> Check blood counts before starting and during treatment.
+                </p>
                 <p>
                   Please see <span className="font-bold text-accent-violet underline">full Prescribing Information</span>
-                  {p.boxedWarning ? ", including Boxed Warning." : "."}
+                  {p.boxedWarning ? ", including Boxed Warning" : ""}, and <span className="font-bold text-accent-violet underline">Medication Guide</span>.
                 </p>
               </>
             ) : (
@@ -335,21 +424,28 @@ export function EmailCanvas({
                 {p.boxedWarning && <p className="font-bold text-ink">{p.brandName} can cause serious side effects, including serious infections that can lead to death.</p>}
                 <p>Tell your doctor right away if you have a fever, cough, chills or feel unwell. Your doctor will check your blood counts during treatment.</p>
                 <p>
-                  Please read the <span className="font-bold text-accent-violet underline">Medication Guide</span> and talk to your doctor about your treatment.
+                  Please read the <span className="font-bold text-accent-violet underline">Medication Guide</span> and talk to your doctor about your treatment. You are encouraged to report side effects to the FDA at 1-800-FDA-1088.
                 </p>
               </>
             )}
           </div>
         )}
+
       {zone(
         "footer",
-        <div className={cn("grid gap-1 bg-subtle py-3 text-caption text-ink-3", view === "phone" ? "px-4" : "px-6")}>
-          {refs.length > 0 && <p>References: {refs.map((r, i) => `${i + 1}. ${r}`).join("; ")}.</p>}
-          {!p.professional && <p>You are receiving this because you signed up for updates. We never share your information.</p>}
+        <div className={cn("grid gap-1.5 bg-ink py-5 text-caption text-card/70", pad)}>
+          {refs.length > 0 && (
+            <p>
+              <b className="text-card/90">References:</b> {refs.map((r, i) => `${i + 1}. ${r}`).join(". ")}.
+            </p>
+          )}
+          {!p.professional && <p>You are receiving this email because you signed up for updates. We never sell your information.</p>}
+          {!p.unbranded && <p>{p.brandName} is a registered trademark of Corvane Pharma US.</p>}
+          <p>© 2026 Corvane Pharma US, 200 W Madison St, Chicago, IL 60606. All rights reserved.</p>
           <p>
-            Corvane Pharma US, 200 W Madison St, Chicago, IL 60606. <span className="underline">Unsubscribe</span> · <span className="underline">Privacy</span>
+            <span className="underline">Unsubscribe</span> · <span className="underline">Privacy Policy</span> · <span className="underline">Contact us</span>
           </p>
-          <p>US-{p.brandName.slice(0, 3).toUpperCase()}-2611-0042 · Prepared November 2026</p>
+          <p className="tabular-nums">US-{p.brandName.slice(0, 3).toUpperCase()}-2611-0042 · 11/26</p>
         </div>
       )}
     </div>

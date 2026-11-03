@@ -138,7 +138,7 @@ export function EmailStudioScreen() {
     const tokens: Record<string, string> = {
       greeting: "Filled from the CRM record",
       note: `The ${one} types it, up to 255 characters`,
-      blocks: t === "choose" ? `The ${one} picks 1 to ${email.maxBlocks} of the ${p.included.length} approved blocks` : "Every block is sent",
+      blocks: t === "choose" ? `The ${one} picks which of the ${p.included.length} approved blocks to send` : "Every block is sent",
       piece: t === "choose" ? `The ${one} ticks which documents to send` : "Every document goes as a link card",
       cta: p.cta.status === "missing" ? "Goes nowhere yet" : `Goes to ${p.cta.dest}`,
       signoff: p.isHQ ? "The brand team" : "Filled from the sender's profile",
@@ -193,7 +193,7 @@ export function EmailStudioScreen() {
       items.push({
         key: "replace",
         node: (
-          <Button size="sm" variant="ghost" onClick={() => setInsert({ request: selMedia.kind === "image" ? "brand-images" : selMedia.kind === "video" ? "videos" : selMedia.kind === "doc" ? "documents" : "approved-link", replace: selMedia.uid })}>
+          <Button size="sm" variant="ghost" onClick={() => setInsert({ request: selMedia.kind === "image" ? "brand-images" : selMedia.kind === "video" ? "videos" : selMedia.kind === "doc" ? "documents" : "url", replace: selMedia.uid })}>
             Replace
           </Button>
         ),
@@ -275,7 +275,7 @@ export function EmailStudioScreen() {
     ...(!p.professional ? [{ id: "plain", source: "Quality", title: "Plain language for patients and the public", detail: "No clinical jargon; reads at about a 6th to 8th grade level" }] : []),
     { id: "footer", source: "MLR", title: "Unsubscribe, company address and job code in the footer", detail: p.professional ? "Required in every commercial email" : "With why they're receiving it and the privacy policy" },
     p.cta.status === "missing"
-      ? { id: "cta", source: "MLR", severity: "blocker", title: `"${purpose.cta}" goes nowhere`, detail: "Choose a destination in the plan or the Links tab." }
+      ? { id: "cta", source: "MLR", severity: "blocker", title: `"${p.ctaText}" goes nowhere`, detail: "Add the page it opens in the Links tab." }
       : { id: "cta", source: "Quality", title: `Every link has a destination · ${p.links.length} links`, detail: "Each tracked with a label for click reports" },
     { id: "assets", source: "Quality", title: "Images hosted, none embedded", detail: `${email.media.filter((m) => m.kind === "image" || m.kind === "video").length + 1} files in the Assets folder · ${htmlSize.toLocaleString("en-US")} of 131,072 characters` },
     ...noAlt.map((m) => ({ id: `alt-${m.uid}`, source: "Quality", severity: "warning" as const, title: `${m.title} has no alt text`, detail: "Outlook often blocks images, so the doctor would see an empty box." })),
@@ -550,20 +550,7 @@ export function EmailStudioScreen() {
                 <p className="mt-1 break-all text-caption text-ink-3">{l.dest}</p>
                 <p className="mt-1 font-mono text-caption text-ink-4">LinkName={l.tag}</p>
                 {l.cta && l.status === "missing" && !submitted && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {!p.isHQ && (
-                      <Button size="sm" variant="secondary" onClick={() => setEmail({ cta: { ...email.cta, [email.purpose]: "scheduler" } })}>
-                        {p.sender.label}&apos;s booking link
-                      </Button>
-                    )}
-                    {Object.entries(p.approved)
-                      .slice(0, 2)
-                      .map(([id, l]) => (
-                        <Button key={id} size="sm" variant="secondary" onClick={() => setEmail({ cta: { ...email.cta, [email.purpose]: id } })}>
-                          {l.label}
-                        </Button>
-                      ))}
-                  </div>
+                  <Field size="sm" className="mt-2" placeholder="https://" value={email.ctaUrl} onChange={(e) => setEmail({ ctaUrl: e.target.value.trim() })} aria-label="Page the button opens" />
                 )}
               </div>
             );
@@ -636,7 +623,7 @@ export function EmailStudioScreen() {
                   size="sm"
                   onClick={() => setPublishOpen(true)}
                   disabled={p.cta.status === "missing"}
-                  title={p.cta.status === "missing" ? `Choose where "${purpose.cta}" goes first` : undefined}
+                  title={p.cta.status === "missing" ? `Add the page "${p.ctaText}" opens first` : undefined}
                   className="gap-1.5 px-4 font-bold disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <LogoMark size={14} />
@@ -659,7 +646,6 @@ export function EmailStudioScreen() {
               request={insert.request}
               brandName={brandName}
               audience={p.audience}
-              condition={p.condition}
               lead={p.included[0]}
               onClose={() => setInsert(null)}
               onInsert={(m) => {
