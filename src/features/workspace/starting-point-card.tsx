@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Eye, X } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { cn } from "@/lib/cn";
@@ -28,6 +28,8 @@ export interface StartingPointExample {
   metricLabel?: string;
   caption?: string;
   citation?: string;
+  /** A tile that draws its own example (an email), given whether it is pointed at. */
+  render?: (frame: { large: boolean; hovered: boolean }) => React.ReactNode;
 }
 
 const ROTATE_MS = 4000;
@@ -42,15 +44,20 @@ const ROTATE_MS = 4000;
 function ExampleFrame({
   example,
   large,
+  hovered = false,
   videoRef,
   controls,
 }: {
   example: StartingPointExample;
   /** Type steps up with the frame — a caption sized for a tile disappears. */
   large?: boolean;
+  hovered?: boolean;
   videoRef?: React.Ref<HTMLVideoElement>;
   controls?: boolean;
 }) {
+  /* Keyed, so each example starts from its own top. */
+  if (example.render) return <Fragment key={example.id}>{example.render({ large: Boolean(large), hovered })}</Fragment>;
+
   if (example.videoSrc) {
     return (
       <>
@@ -278,7 +285,7 @@ export function StartingPointCard({
         className="relative aspect-video overflow-hidden"
         style={{ background: current.bg }}
       >
-        <ExampleFrame example={current} videoRef={videoRef} />
+        <ExampleFrame example={current} videoRef={videoRef} hovered={hovered} />
 
         {/* Looking is not choosing. The tile starts a project, so the one
             thing you might want first — a proper look — gets a control of

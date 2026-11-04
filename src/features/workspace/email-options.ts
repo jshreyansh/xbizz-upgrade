@@ -64,7 +64,7 @@ export const DEFAULT_EMAIL_STYLES: EmailTypographyStyles = {
   isiSize: "micro",
 };
 
-export type EmailChannel = "veeva" | "oce" | "sfdc" | "sfmc" | "health" | "hubspot" | "braze" | "html";
+export type EmailChannel = "veeva" | "oce" | "sfdc" | "sfmc" | "hubspot" | "braze" | "html";
 
 export interface EmailChannelDef {
   id: EmailChannel;
@@ -109,16 +109,6 @@ export const EMAIL_CHANNELS: EmailChannelDef[] = [
     recommendedFor: (a, s) => (a === "Patient" || a === "Consumer") && s === "hq",
   },
   {
-    id: "health",
-    name: "Salesforce Health Cloud",
-    sub: "Care coordination & patient support outreach",
-    category: "crm",
-    tokens: "{!Contact.FirstName}, {!CarePlan.Id}, {!Case.Subject}",
-    complianceTag: "Patient Support & Nurse Programs",
-    hint: "Tailored for support nurses and patient onboarding workflows.",
-    recommendedFor: (_a, s) => s === "support",
-  },
-  {
     id: "oce",
     name: "IQVIA OCE",
     sub: "OCE Personal compliant approved email",
@@ -161,7 +151,6 @@ export const EMAIL_CHANNELS: EmailChannelDef[] = [
 ];
 
 export function defaultChannelFor(audience: EmailAudience, sender: EmailSender): EmailChannel {
-  if (sender === "support") return "health";
   if ((audience === "HCP" || audience === "PT_Committee") && sender !== "hq") return "veeva";
   if (audience === "Patient" || audience === "Consumer" || sender === "hq") return "sfmc";
   return "veeva";
