@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { EmailCanvas } from "@/features/workspace/email-canvas";
 import type { EmailProject } from "@/features/workspace/email-project";
-import { LINK_STATUS } from "@/features/workspace/email-options";
+import { getBlockRule, LINK_STATUS, type EmailChannel } from "@/features/workspace/email-options";
+import { ChannelLogo } from "@/components/ui/channel-logo";
 
 const TONE: Record<"ok" | "lock" | "warn" | "danger", string> = {
   ok: "bg-ok-bg text-ok",
@@ -42,6 +43,24 @@ export function emailPackage(p: EmailProject) {
     }),
     ...p.attachedPieces.map((pc) => ({ item: pc.title, type: "Linked document", detail: `${pc.approval} in the Content Library. Not reviewed again.`, claims: 0, code: "Library", already: true, expires: undefined })),
     ...(p.cta.status === "review" ? [{ item: `"${p.ctaText}" button`, type: "Linked destination", detail: p.cta.dest, claims: 0, code: "New", already: false, expires: undefined }] : []),
+    ...p.secondaryCtas.map((sc, idx) => ({
+      item: `"${sc.label}" secondary button`,
+      type: "Linked destination",
+      detail: sc.url,
+      claims: 0,
+      code: code(20 + idx),
+      already: false,
+      expires: undefined,
+    })),
+    ...p.backlinks.map((bl, idx) => ({
+      item: `"${bl.title}" backlink`,
+      type: "Citation reference",
+      detail: `${bl.context ? `${bl.context} · ` : ""}${bl.url}`,
+      claims: 0,
+      code: code(30 + idx),
+      already: false,
+      expires: undefined,
+    })),
   ];
 }
 
@@ -58,8 +77,8 @@ export function LinksTable({ p }: { p: EmailProject }) {
           </tr>
         </thead>
         <tbody>
-          {p.links.map((l) => (
-            <tr key={l.label}>
+          {p.links.map((l, idx) => (
+            <tr key={`${l.tag || l.label}-${idx}`}>
               <td className={cn(TD, "font-bold text-ink")}>{l.label}</td>
               <td className={cn(TD, "break-all text-ink-3")}>{l.dest}</td>
               <td className={TD}>
@@ -101,8 +120,8 @@ export function EmailPublishPreview({ p, approved }: { p: EmailProject; approved
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
-                  <tr key={r.item + r.type}>
+                {rows.map((r, idx) => (
+                  <tr key={`${r.code || r.item}-${r.type}-${idx}`}>
                     <td className={TD}>
                       <b className="block text-ink">{r.item}</b>
                       <span className="text-label text-ink-3">{r.detail}</span>
@@ -138,12 +157,14 @@ export function EmailPublishPreview({ p, approved }: { p: EmailProject; approved
 /* HCP email goes to the CRM reps already use; patient and consumer email to the brand's email platform. */
 const CRM_DESTINATIONS = [
   { id: "veeva", name: "Veeva Vault", sub: "PromoMats + Vault CRM Approved Email" },
+  { id: "hubspot", name: "HubSpot", sub: "Marketing Hub & Sales CRM Email" },
   { id: "oce", name: "IQVIA OCE", sub: "OCE Personal approved email" },
   { id: "sfdc", name: "Salesforce", sub: "Life Sciences Cloud" },
   { id: "html", name: "HTML package", sub: "Zip for your agency or email platform" },
 ];
 const CONSUMER_DESTINATIONS = [
   { id: "sfmc", name: "Salesforce Marketing Cloud", sub: "Consumer email, with the brand's opt-ins" },
+  { id: "hubspot", name: "HubSpot", sub: "Marketing Hub & Sales Sequences" },
   { id: "health", name: "Salesforce Health Cloud", sub: "Where patient support nurses send from" },
   { id: "braze", name: "Braze", sub: "Consumer lifecycle email" },
   { id: "html", name: "HTML package", sub: "Zip for your agency or email platform" },
@@ -156,9 +177,22 @@ const CONSUMER_DESTINATIONS = [
  */
 export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; onExported: (destination: string) => void; onClose: () => void }) {
   const destinations = p.professional ? CRM_DESTINATIONS : CONSUMER_DESTINATIONS.filter((d) => d.id !== "health" || p.audience === "Patient");
-  const [dest, setDest] = useState(destinations[0].id);
+  const [dest, setDest] = useState(p.email.channel && destinations.some((d) => d.id === p.email.channel) ? p.email.channel : destinations[0].id);
   const chosen = destinations.find((d) => d.id === dest) ?? destinations[0];
   const images = p.email.media.filter((m) => m.kind === "image" || m.kind === "video").length + 1;
+  const mandatoryCount = p.included.filter((b) => getBlockRule(p.email.blockRules, b.id).mandatory).length;
+  const optionalCount = p.included.length - mandatoryCount;
+  const hasEditableNote = p.included.some((b) => getBlockRule(p.email.blockRules, b.id).editable);
+
+  const hubspotTokens: Array<[string, string]> = [
+    [p.professional ? "Doctor's name" : "Recipient name", "{{contact.firstname}} {{contact.lastname}}"],
+    ...(p.showNote ? ([["Personal note, 255 characters", "{{contact.sales_rep_note}}"]] as Array<[string, string]>) : []),
+    ["Content blocks", `HubSpot Modular Sections (${p.included.length} approved modules)`],
+    ["Prescribing & Safety Info", "Hosted link tokens"],
+    ["Unsubscribe", "{{unsubscribe_link}}"],
+    ["Web links", "Auto-tagged with HubSpot tracking parameters"],
+  ];
+
   const consumerTokens: Array<[string, string]> = [
     ["First name", "%%FirstName%%"],
     ...(p.showNote ? ([["Personal note, 255 characters", "%%SenderNote%%"]] as Array<[string, string]>) : []),
@@ -167,10 +201,16 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
     ["Unsubscribe and preferences", "%%unsub_center_url%%"],
     ["Web links", "Tracked by the platform, labelled as below"],
   ];
-  const tokens: Array<[string, string]> = !p.professional ? consumerTokens : [
+  const tokens: Array<[string, string]> = dest === "hubspot" ? hubspotTokens : !p.professional ? consumerTokens : [
     ["Doctor's name", "{{accTitle}} {{accLname}}"],
     ...(p.showNote ? ([["Personal note, 255 characters", "{{customText(255)}}"]] as Array<[string, string]>) : []),
     [p.zoneType("blocks") === "choose" ? "Rep picks which blocks" : "Fixed blocks", p.zoneType("blocks") === "choose" ? `{{insertEmailFragments(1,${p.included.length})}}` : "inline in the template"],
+    [
+      "Block rules (Mandatory vs Optional)",
+      `${mandatoryCount} mandatory ({{!vva_mandatory}}), ${optionalCount} optional ({{!vva_optional}})`
+    ],
+    ...(p.email.repEdit?.reorder ? ([["Block reordering by rep", "allowFragmentReorder: true ({{allow_reorder}})"]] as Array<[string, string]>) : []),
+    ...(hasEditableNote ? ([["Block commentary note placeholder", "{{customBlockNote(255)}}"]] as Array<[string, string]>) : []),
     ...(p.attachedPieces.length ? ([[p.zoneType("piece") === "choose" ? "Documents, rep ticks which" : "Documents", "{{PieceLink}}, one per document"]] as Array<[string, string]>) : []),
     ["Prescribing Information · safety information", "{{PILink}} · {{ISILink}}"],
     ...(p.email.media.some((m) => m.kind === "doc") ? ([["Other linked documents", "{{$VaultDocID}}"]] as Array<[string, string]>) : []),
@@ -203,18 +243,34 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
     >
       <div className="space-y-4">
         <div className="grid gap-2 sm:grid-cols-2">
-          {destinations.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              aria-pressed={dest === d.id}
-              onClick={() => setDest(d.id)}
-              className={cn("rounded-control border p-3 text-left transition cursor-pointer", dest === d.id ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3")}
-            >
-              <b className="block text-body text-ink">{d.name}</b>
-              <span className="text-label text-ink-3">{d.sub}</span>
-            </button>
-          ))}
+          {destinations.map((d) => {
+            const isPlanChannel = (p.email.channels || [p.email.channel]).includes(d.id as EmailChannel);
+            return (
+              <button
+                key={d.id}
+                type="button"
+                aria-pressed={dest === d.id}
+                onClick={() => setDest(d.id)}
+                className={cn(
+                  "flex items-start gap-3 rounded-control border p-3 text-left transition cursor-pointer",
+                  dest === d.id ? "border-brand bg-tint ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3"
+                )}
+              >
+                <ChannelLogo id={d.id as EmailChannel} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <b className="block text-body text-ink truncate">{d.name}</b>
+                    {isPlanChannel && (
+                      <span className="rounded-chip bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep shrink-0">
+                        Planned
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-label text-ink-3 block truncate">{d.sub}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
         <div className="overflow-x-auto rounded-control border border-hair bg-card">
           <table className="w-full border-collapse">
@@ -225,8 +281,8 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
               </tr>
             </thead>
             <tbody>
-              {tokens.map(([what, token]) => (
-                <tr key={what}>
+              {tokens.map(([what, token], idx) => (
+                <tr key={`${what}-${idx}`}>
                   <td className={TD}>{what}</td>
                   <td className={cn(TD, "font-mono text-label text-ink-2")}>{token}</td>
                 </tr>

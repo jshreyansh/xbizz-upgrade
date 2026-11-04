@@ -31,11 +31,19 @@ export function TickRow({ on, onToggle, title, detail, tag, disabled }: { on: bo
   );
 }
 
-export const Tag = ({ tone, children }: { tone: "ok" | "lock" | "warn" | "danger"; children: React.ReactNode }) => (
+export const Tag = ({ tone, children }: { tone: "ok" | "lock" | "warn" | "danger" | "brand"; children: React.ReactNode }) => (
   <span
     className={cn(
       "rounded-chip px-1.5 py-0.5 text-micro font-extrabold",
-      tone === "ok" ? "bg-ok-bg text-ok" : tone === "warn" ? "bg-warn-bg text-warn" : tone === "danger" ? "bg-danger-bg text-danger" : "bg-subtle text-ink-3"
+      tone === "brand"
+        ? "bg-tint text-brand-deep border border-tint-line"
+        : tone === "ok"
+        ? "bg-ok-bg text-ok"
+        : tone === "warn"
+        ? "bg-warn-bg text-warn"
+        : tone === "danger"
+        ? "bg-danger-bg text-danger"
+        : "bg-subtle text-ink-3"
     )}
   >
     {children}

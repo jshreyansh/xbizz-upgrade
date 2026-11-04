@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowRight, Check, CheckCircle2, Image as ImageIcon, Link2, Mail, MousePointerClick, Palette, Stamp, PanelRight, PenLine, ShieldCheck, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, CheckCircle2, Eye, FileText, Film, Image as ImageIcon, Library, Link2, Mail, Megaphone, MousePointerClick, Palette, Stamp, PanelRight, PenLine, Plus, Send, ShieldCheck, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { SwishXMark } from "@/components/ui/swishx-mark";
@@ -33,14 +33,17 @@ import { FormattedMessageText } from "@/features/workspace/chat-message";
 import { labelVersion } from "@/features/workspace/ad-options";
 import { useEmailStore } from "@/features/workspace/email-store";
 import { useEmailProject } from "@/features/workspace/email-project";
-import { EmailPiecePicker } from "@/features/workspace/email-piece-picker";
-import { TickRow } from "@/features/workspace/email-plan-parts";
+import { ApprovedMaterialsModal } from "@/features/workspace/approved-materials-modal";
+import { ApprovedMaterialViewerModal } from "@/features/workspace/approved-material-viewer-modal";
+import { AssetPreview } from "@/features/content-library/asset-preview";
+import { Tag, TickRow } from "@/features/workspace/email-plan-parts";
 import { EmailPlanStep } from "@/features/workspace/email-plan-step";
 import { FileNoteDialog } from "@/features/workspace/file-note-dialog";
 import { AssetStrip, MediaAssetTile, MediaAttachmentGrid, brandVariations, workspaceAssets } from "@/features/workspace/workspace-assets";
-import { AUDIENCE_LABEL, EMAIL_AUDIENCES, EMAIL_PURPOSES, SENDER_PLURAL, audienceNoun, purposesFor, senderInfo, sendersFor, type EmailAudience } from "@/features/workspace/email-options";
+import { AUDIENCE_LABEL, EMAIL_AUDIENCES, EMAIL_CHANNELS, EMAIL_PURPOSES, SENDER_PLURAL, audienceNoun, isUrl, purposesFor, senderInfo, sendersFor, type EmailAudience, type EmailBacklinkItem, type EmailBlock, type EmailChannel, type EmailCtaItem, type EmailPiece } from "@/features/workspace/email-options";
+import { ChannelLogo } from "@/components/ui/channel-logo";
 
-type SectionId = "sources" | "audience" | "visuals" | "references" | "logo" | "button" | "edit";
+type SectionId = "sources" | "materials" | "audience" | "channel" | "visuals" | "references" | "logo" | "button" | "edit";
 
 const DRAFT_ONLY: AssetVersion[] = [{ label: "Draft v1", state: "current", at: "Saved just now" }];
 
@@ -83,20 +86,39 @@ export function EmailDirectionsScreen() {
 
   const [stage, setStage] = useState<"input" | "drafting" | "emailplan" | "building">("input");
   const [editing, setEditing] = useState<string | null>(null);
+  const [approvedModalOpen, setApprovedModalOpen] = useState(false);
+  const [previewPiece, setPreviewPiece] = useState<EmailPiece | null>(null);
   const { message: toastMessage, open: toastOpen, tone: toastTone, showToast } = useToast();
+
+  const allCtasValid = p.ctas.every((c) => isUrl(c.url));
+  const allBacklinksValid = p.backlinks.every((b) => isUrl(b.url));
+  const missingCta = p.ctas.find((c) => !isUrl(c.url));
+  const missingBacklink = p.backlinks.find((b) => !isUrl(b.url));
 
   const needsYou: Record<SectionId, boolean> = {
     sources: !hasSources,
+    materials: false,
     audience: false,
+    channel: false,
     visuals: false,
     references: false,
     logo: false,
-    button: p.cta.status === "missing",
+    button: !allCtasValid || !allBacklinksValid,
     edit: false,
   };
   /* What SwishX needs first; everything it could decide follows. */
   /* Sources first: the blocks, subject lines and look are drafted from them, on the email plan. */
-  const order: SectionId[] = ["sources", "audience", ...(p.unbranded ? [] : (["visuals"] as const)), "references", ...(p.unbranded ? [] : (["logo"] as const)), "button", ...(p.isHQ ? [] : (["edit"] as const))];
+  const order: SectionId[] = [
+    "sources",
+    ...(!p.unbranded ? (["materials"] as const) : []),
+    "audience",
+    "channel",
+    ...(p.unbranded ? [] : (["visuals"] as const)),
+    "references",
+    ...(p.unbranded ? [] : (["logo"] as const)),
+    "button",
+    ...(p.isHQ ? [] : (["edit"] as const)),
+  ];
   const [openSection, setOpenSection] = useState<SectionId | null>("sources");
   const toggleSection = (id: SectionId) => setOpenSection(openSection === id ? null : id);
   const advanceFrom = (section: SectionId) => {
@@ -107,7 +129,14 @@ export function EmailDirectionsScreen() {
   const blocker = !hasSources
     ? { title: "Add a source to start", detail: "Use the evidence dossier or add files in Research and Sources." }
     : needsYou.button
-      ? { title: `Add the page "${p.ctaText}" opens`, detail: "Enter its URL in The email's button." }
+      ? {
+          title: "Complete buttons & backlinks",
+          detail: missingCta
+            ? `Add a valid URL for "${missingCta.label || "CTA Button"}" in Email buttons & backlinks.`
+            : missingBacklink
+            ? `Add a valid URL for "${missingBacklink.title || "Backlink"}" in Email buttons & backlinks.`
+            : "Every button and resource backlink must have a valid web address starting with https://",
+        }
       : null;
   const planReady = planPhase === "plan" && !blocker;
 
@@ -137,7 +166,46 @@ export function EmailDirectionsScreen() {
     setTimeout(() => {
       const lower = text.toLowerCase();
       let reply = `Understood. I've updated the plan, still grounded in the **${brandName}** dossier.`;
-      if (/head office|from the brand/.test(lower)) {
+      if (/block/i.test(lower)) {
+        const rawTopic = text
+          .replace(/^(please\s+)?(add|create|draft|include)\s+(a\s+)?(content\s+)?block(\s+about|\s+on|\s+for)?/i, "")
+          .replace(/\[topic,?\s*e\.g\.\s*|\]/gi, "")
+          .trim() || "Additional clinical evidence";
+        const title = rawTopic.split(/[.,\n]/)[0].slice(0, 42).replace(/^[a-z]/, (c) => c.toUpperCase());
+        const newBlock: EmailBlock = {
+          id: `custom-block-${Date.now()}`,
+          title: title.length > 3 ? title : "Clinical evidence readout",
+          claimId: `CL-CS${Math.floor(Math.random() * 800 + 100)}`,
+          text: `Verified clinical evidence regarding ${rawTopic.toLowerCase()}, drafted directly from the ${brandName} dossier for promotional balance.`,
+          source: `${brandName} Evidence Dossier · §3.2`,
+          group: "custom" as const,
+          newClaim: true,
+        };
+        setEmail({ extraBlocks: [...(email.extraBlocks || []), newBlock] });
+        reply = `I've drafted and added a new content block: **${newBlock.title}** (Claim ID: **${newBlock.claimId}**), grounded in the **${brandName}** dossier. It has been added to your Content Blocks and ticked for inclusion.`;
+      } else if (/(secondary\s+)?(cta|button)/i.test(lower) && /(add|create|new)/i.test(lower)) {
+        const label = text.replace(/.*?(button|cta)(\s+(for|called|named))?\s+/i, "").replace(/\[.*?\]/g, "").trim() || "Explore More";
+        const newCta: EmailCtaItem = {
+          id: `cta-${Date.now()}`,
+          label: label.slice(0, 32),
+          url: `https://www.${brandName.toLowerCase()}-hcp.com/resources`,
+          priority: "secondary",
+          blockId: null,
+        };
+        setEmail({ ctas: [...p.ctas, newCta] });
+        reply = `Added a secondary CTA button: **${newCta.label}**. You can assign it to a specific block in the Email Plan.`;
+      } else if (/backlink|citation/i.test(lower) && /(add|attach|link)/i.test(lower)) {
+        const title = text.replace(/.*?(backlink|citation)(\s+(for|to|called))?\s+/i, "").trim() || "Clinical Reference";
+        const newBl: EmailBacklinkItem = {
+          id: `bl-${Date.now()}`,
+          title: title.slice(0, 40),
+          context: `Study citation for ${brandName}`,
+          url: "https://clinicaltrials.gov",
+          blockId: null,
+        };
+        setEmail({ backlinks: [...p.backlinks, newBl] });
+        reply = `Added resource backlink: **${newBl.title}**. You can tag it to any clinical block in the Email Plan.`;
+      } else if (/head office|from the brand/.test(lower)) {
         setAbout({ sender: "hq" });
         reply = "Switched to a **head-office** email: sent under the brand, nothing for reps to change.";
       } else if (/msl|medical/.test(lower)) {
@@ -149,6 +217,56 @@ export function EmailDirectionsScreen() {
       }
       addChatMessage({ role: "swishx", text: reply });
     }, 450);
+  };
+
+  const handleAskChatForBlock = (prefill?: string) => {
+    setCopilotPanelOpen(true);
+    if (prefill) {
+      setChatInput(prefill);
+    }
+  };
+
+  const handleAddSecondaryCta = () => {
+    const newCta: EmailCtaItem = {
+      id: `cta-${Date.now()}`,
+      label: "Explore Clinical Study",
+      url: `https://www.${brandName.toLowerCase()}-hcp.com/study`,
+      priority: "secondary",
+      blockId: null,
+    };
+    setEmail({ ctas: [...p.ctas, newCta] });
+  };
+
+  const handleUpdateCta = (id: string, patch: Partial<EmailCtaItem>) => {
+    const updated = p.ctas.map((c) => (c.id === id ? { ...c, ...patch } : c));
+    const prim = updated.find((c) => c.priority === "primary") || updated[0];
+    setEmail({ ctas: updated, ctaText: prim?.label, ctaUrl: prim?.url });
+  };
+
+  const handleRemoveCta = (id: string) => {
+    const updated = p.ctas.filter((c) => c.id !== id);
+    setEmail({ ctas: updated });
+  };
+
+  const handleAddBacklink = () => {
+    const newBl: EmailBacklinkItem = {
+      id: `bl-${Date.now()}`,
+      title: "Clinical Study Registry",
+      context: "Phase III registration & study protocol on ClinicalTrials.gov",
+      url: "https://clinicaltrials.gov",
+      blockId: null,
+    };
+    setEmail({ backlinks: [...p.backlinks, newBl] });
+  };
+
+  const handleUpdateBacklink = (id: string, patch: Partial<EmailBacklinkItem>) => {
+    setEmail({
+      backlinks: p.backlinks.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    });
+  };
+
+  const handleRemoveBacklink = (id: string) => {
+    setEmail({ backlinks: p.backlinks.filter((b) => b.id !== id) });
   };
 
   /* After Need your input: the content can only be drafted once the sources are settled. */
@@ -273,10 +391,119 @@ export function EmailDirectionsScreen() {
                     dossierInUse={dossierInUse}
                     onDossierInUseChange={setDossierInUse}
                     notice={`Safety information comes from ${brandName}'s ${labelVersion(brandId)}.${p.boxedWarning ? " It carries a boxed warning, so every email shows it in full." : ""}`}
-                  >
-                    <EmailPiecePicker project={p} />
-                  </ResearchSourcesContent>
+                  />
                 </PlanSectionShell>
+
+                {/* 2. Approved brand materials: Videos, Docs, and selective Ad cutdowns */}
+                {!p.unbranded && (
+                  <PlanSectionShell
+                    icon={Library}
+                    title="Approved brand materials"
+                    summary={
+                      p.attachedPieces.length > 0
+                        ? `${p.attachedPieces.length} approved ${p.attachedPieces.length === 1 ? "material" : "materials"} attached`
+                        : "Attach approved videos, docs, or ad cutdowns for this drug"
+                    }
+                    state={planState(false, p.attachedPieces.length === 0)}
+                    source={p.attachedPieces.length > 0 ? `${p.attachedPieces.length} attached` : "optional"}
+                    open={openSection === "materials"}
+                    onToggle={() => toggleSection("materials")}
+                  >
+                    <div className="space-y-3">
+                      <p className="text-body leading-snug text-ink-3">
+                        Videos, clinical infographics, or specific ad cutdowns already approved in the Content Library. SwishX includes them as interactive link cards and grounds the email&apos;s copy in their claims.
+                      </p>
+                      {p.attachedPieces.length > 0 ? (
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {p.attachedPieces.map((pc) => {
+                            const isVideo = pc.kind === "Video" || (pc.kind === "Ad" && /video|reel|shorts|youtube/i.test(pc.title));
+                            return (
+                              <div
+                                key={pc.id}
+                                className="group relative flex flex-col overflow-hidden rounded-panel border border-hair bg-card shadow-2xs hover:shadow-xs transition"
+                              >
+                                {/* Visual Preview Thumbnail Outside */}
+                                <div className="relative h-28 w-full overflow-hidden bg-subtle">
+                                  {pc.asset ? (
+                                    <AssetPreview asset={pc.asset} className="h-full w-full" />
+                                  ) : (
+                                    <div
+                                      className="h-full w-full"
+                                      style={{ background: "linear-gradient(150deg,#111827,#1f2937 55%,#334155)" }}
+                                    />
+                                  )}
+                                  <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-chip bg-black/60 px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-white backdrop-blur-sm pointer-events-none">
+                                    {isVideo ? <Film className="size-3" /> : pc.kind === "Ad" ? <Megaphone className="size-3" /> : <FileText className="size-3" />}
+                                    {pc.kind} · {pc.spec}
+                                  </span>
+
+                                  {/* Overlay Full Preview Button */}
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewPiece(pc)}
+                                    className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-chip bg-black/75 px-2.5 py-1 text-micro font-bold text-white shadow-sm backdrop-blur-sm hover:bg-black transition cursor-pointer"
+                                    title="Open full interactive preview"
+                                  >
+                                    <Eye className="size-3.5" />
+                                    <span>Full preview</span>
+                                  </button>
+                                </div>
+
+                                {/* Content and Meta */}
+                                <div className="flex flex-1 flex-col justify-between p-3.5">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      <h4 className="line-clamp-1 text-body font-extrabold text-ink">{pc.title}</h4>
+                                      <p className="mt-0.5 line-clamp-1 text-caption text-ink-3">
+                                        {pc.spec} · {pc.approval}
+                                      </p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEmail({ attached: email.attached.filter((x) => x !== pc.id) })}
+                                      className="grid size-7 cursor-pointer place-items-center rounded-full text-ink-4 hover:bg-black/5 hover:text-ink transition shrink-0"
+                                      title="Remove material"
+                                    >
+                                      <X className="size-3.5" />
+                                    </button>
+                                  </div>
+
+                                  <div className="mt-3 flex items-center justify-between border-t border-hair-2 pt-2 text-micro">
+                                    <span className="text-ink-4">Attached</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewPiece(pc)}
+                                      className="inline-flex items-center gap-1 text-brand font-bold hover:underline cursor-pointer"
+                                    >
+                                      <Eye className="size-3" />
+                                      <span>{isVideo ? "Play video" : pc.kind === "Docs" ? "Read all pages" : "Inspect cutdown"}</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="rounded-control border border-dashed border-hair-3 p-4 text-center text-label text-ink-3">
+                          No approved collateral attached yet.
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setApprovedModalOpen(true)}
+                          className="h-8 gap-1.5 text-label font-bold cursor-pointer"
+                        >
+                          <Library className="size-3.5" />
+                          <span>{p.attachedPieces.length > 0 ? "Change or add materials" : "Browse approved materials"}</span>
+                        </Button>
+                      </div>
+                    </div>
+                    <PlanSectionContinue onClick={() => advanceFrom("materials")} />
+                  </PlanSectionShell>
+                )}
 
                 {/* 2. Audience and sender, as set at the start: a tile like every other, changeable here. */}
                 <PlanSectionShell
@@ -325,6 +552,101 @@ export function EmailDirectionsScreen() {
                     </DecisionRow>
                   </div>
                   <PlanSectionContinue onClick={() => advanceFrom("audience")} />
+                </PlanSectionShell>
+
+                {/* Sending Channel & CRM Platform */}
+                <PlanSectionShell
+                  icon={Send}
+                  title="Sending channel & CRM platform"
+                  summary={(() => {
+                    const activeIds = email.channels && email.channels.length > 0 ? email.channels : [email.channel || "veeva"];
+                    const activeChannels = activeIds.map((id) => EMAIL_CHANNELS.find((c) => c.id === id)!).filter(Boolean);
+                    if (activeChannels.length === 1) {
+                      return `${activeChannels[0].name} · ${activeChannels[0].complianceTag}`;
+                    }
+                    return `${activeChannels.length} platforms selected (${activeChannels.map((c) => c.name).join(", ")})`;
+                  })()}
+                  state={planState(false)}
+                  source="architecture target"
+                  open={openSection === "channel"}
+                  onToggle={() => toggleSection("channel")}
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-body leading-snug text-ink-3">
+                        Select one or more destination platforms where this email will be deployed. SwishX aligns fragment syntax, MLR compliance locking, and CRM personalization tokens across all selected targets.
+                      </p>
+                      <span className="rounded-chip bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep">
+                        Multi-select enabled
+                      </span>
+                    </div>
+
+                    <div className="grid gap-2.5 sm:grid-cols-2">
+                      {EMAIL_CHANNELS.map((ch) => {
+                        const activeIds = email.channels && email.channels.length > 0 ? email.channels : [email.channel || "veeva"];
+                        const on = activeIds.includes(ch.id);
+                        const isRecommended = ch.recommendedFor(p.audience, email.sender);
+
+                        const toggleChannel = () => {
+                          let next: EmailChannel[];
+                          if (on) {
+                            if (activeIds.length <= 1) return; // Keep at least one selected
+                            next = activeIds.filter((x) => x !== ch.id);
+                          } else {
+                            next = [...activeIds, ch.id];
+                          }
+                          setEmail({ channels: next, channel: next[0] });
+                        };
+
+                        return (
+                          <button
+                            key={ch.id}
+                            type="button"
+                            aria-pressed={on}
+                            onClick={toggleChannel}
+                            className={cn(
+                              "flex flex-col justify-between rounded-control border p-3.5 text-left transition shadow-2xs cursor-pointer",
+                              on
+                                ? "border-brand bg-tint/60 ring-2 ring-brand/15"
+                                : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas/50"
+                            )}
+                          >
+                            <div>
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <ChannelLogo id={ch.id} />
+                                  <div className="min-w-0">
+                                    <span className="font-bold text-body text-ink block truncate">{ch.name}</span>
+                                    <span className="text-micro font-semibold text-accent-violet block truncate">{ch.sub}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {isRecommended && <Tag tone="brand">Recommended</Tag>}
+                                  <div
+                                    className={cn(
+                                      "grid size-5 place-items-center rounded-sm border transition",
+                                      on ? "border-brand bg-brand text-white shadow-2xs" : "border-hair-3 bg-card"
+                                    )}
+                                  >
+                                    {on && <Check className="size-3.5 stroke-[3]" />}
+                                  </div>
+                                </div>
+                              </div>
+                              <p className="mt-2.5 text-caption text-ink-3 leading-relaxed">
+                                {ch.hint}
+                              </p>
+                            </div>
+
+                            <div className="mt-3 border-t border-hair-2 pt-2 flex items-center justify-between text-micro font-mono text-ink-4">
+                              <span className="truncate max-w-[220px]">{ch.tokens}</span>
+                              <span className="font-sans font-bold text-ink-3">{ch.category.toUpperCase()}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <PlanSectionContinue onClick={() => advanceFrom("channel")} />
                 </PlanSectionShell>
 
                 {/* 3. Product & device visuals, as in every module. Not for unbranded emails, which can't show the product. */}
@@ -468,46 +790,190 @@ export function EmailDirectionsScreen() {
                   </PlanSectionShell>
                 )}
 
-                {/* 6. The email's button: what it says and the page it opens. SwishX has no list of the brand's pages, so the URL is asked. */}
+                {/* 6. Email buttons and backlinks: Primary, Secondary CTAs, and verified resource backlinks */}
                 <PlanSectionShell
                   icon={MousePointerClick}
-                  title="The email's button"
-                  summary={p.cta.status === "missing" ? `Add the page "${p.ctaText}" opens` : `"${p.ctaText}" opens ${p.cta.dest}`}
+                  title="Email buttons & backlinks"
+                  summary={
+                    needsYou.button
+                      ? "Add missing destination URLs for buttons or backlinks"
+                      : `Primary: "${p.ctaText}" · ${p.ctas.length} ${p.ctas.length === 1 ? "button" : "buttons"}${p.backlinks.length ? ` · ${p.backlinks.length} backlink${p.backlinks.length === 1 ? "" : "s"}` : ""}`
+                  }
                   state={planState(needsYou.button)}
                   source="from you"
                   open={openSection === "button"}
                   onToggle={() => toggleSection("button")}
                 >
-                  <div className="space-y-3">
-                    {/* The button as it will look, before what it says and where it goes. */}
-                    <div className="flex flex-wrap items-center gap-3 rounded-control border border-hair bg-canvas px-3 py-2.5">
-                      <span className="inline-block rounded-full bg-accent-violet px-4 py-1.5 text-body font-extrabold text-white">{p.ctaText}</span>
-                      <ArrowRight className="size-3.5 shrink-0 text-ink-4" />
-                      <span className={cn("min-w-0 flex-1 truncate text-label font-semibold", p.cta.status === "missing" ? "text-danger" : "text-ink-2")}>
-                        {p.cta.status === "missing" ? "Opens: no URL yet" : `Opens ${p.cta.dest}`}
-                      </span>
-                      <span className="w-full text-label text-ink-3">Every email ends with one button. It&apos;s what the reader clicks to act.</span>
+                  <div className="space-y-5">
+                    {/* Part 1: Buttons and CTAs */}
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-body font-bold text-ink">Action Buttons (CTAs)</span>
+                          <span className="text-caption font-medium text-ink-3">({p.ctas.length} active)</span>
+                        </div>
+                        <p className="mt-0.5 text-label text-ink-3">
+                          Primary CTA serves as the main campaign conversion goal. Secondary CTAs can be positioned alongside or assigned to specific content blocks in the Email Plan.
+                        </p>
+                      </div>
+
+                      <div className="space-y-3">
+                        {p.ctas.map((cta, idx) => {
+                          const isPrimary = cta.priority === "primary";
+                          const missing = !isUrl(cta.url);
+                          return (
+                            <div
+                              key={cta.id}
+                              className={cn(
+                                "flex flex-col gap-3 rounded-control border p-3.5 transition shadow-2xs",
+                                isPrimary ? "border-hair-2 bg-card" : "border-hair bg-canvas/70"
+                              )}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  {isPrimary ? (
+                                    <Tag tone="brand">Primary CTA</Tag>
+                                  ) : (
+                                    <Tag tone="lock">Secondary CTA</Tag>
+                                  )}
+                                  <span className="text-caption font-semibold text-ink-3">
+                                    {isPrimary ? "Main campaign button" : `Secondary button #${idx}`}
+                                  </span>
+                                </div>
+                                {!isPrimary && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveCta(cta.id)}
+                                    className="grid size-6 cursor-pointer place-items-center rounded-full text-ink-4 hover:bg-black/5 hover:text-ink transition"
+                                    title="Remove button"
+                                  >
+                                    <X className="size-3.5" />
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+                                <Field
+                                  size="sm"
+                                  label="Button text"
+                                  value={cta.label}
+                                  placeholder={isPrimary ? purpose.cta : "e.g. Explore Clinical Study"}
+                                  maxLength={35}
+                                  onChange={(e) => handleUpdateCta(cta.id, { label: e.target.value })}
+                                  hint="Short and actionable."
+                                />
+                                <Field
+                                  size="sm"
+                                  label="Page it opens"
+                                  type="url"
+                                  value={cta.url}
+                                  placeholder="https://"
+                                  onChange={(e) => handleUpdateCta(cta.id, { url: e.target.value.trim() })}
+                                  error={cta.url && missing ? "Enter a full web address starting with https://" : undefined}
+                                  hint="Goes to MLR with the email as a linked destination."
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={handleAddSecondaryCta}
+                          className="h-8 gap-1.5 text-label font-bold cursor-pointer"
+                        >
+                          <Plus className="size-3.5" />
+                          <span>Add secondary button</span>
+                        </Button>
+                      </div>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-                      <Field
-                        size="sm"
-                        label="Button text"
-                        value={email.ctaText}
-                        placeholder={purpose.cta}
-                        maxLength={30}
-                        onChange={(e) => setEmail({ ctaText: e.target.value })}
-                        hint="Short and specific. Leave empty for the suggested wording."
-                      />
-                      <Field
-                        size="sm"
-                        label="Page it opens"
-                        type="url"
-                        value={email.ctaUrl}
-                        placeholder="https://"
-                        onChange={(e) => setEmail({ ctaUrl: e.target.value.trim() })}
-                        error={email.ctaUrl && p.cta.status === "missing" ? "Enter a full web address, starting with https://" : undefined}
-                        hint="The page goes to MLR with the email as a linked destination."
-                      />
+
+                    {/* Part 2: Resource Backlinks and External Citations */}
+                    <div className="space-y-3 border-t border-hair-2 pt-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-body font-bold text-ink">Resource Backlinks &amp; Citations</span>
+                          <span className="text-caption font-medium text-ink-3">({p.backlinks.length} active)</span>
+                        </div>
+                        <p className="mt-0.5 text-label text-ink-3">
+                          Provide verified external links (e.g. journal publications, ClinicalTrials.gov, co-pay portals). In the Email Plan, you can assign each backlink to a specific content block.
+                        </p>
+                      </div>
+
+                      {p.backlinks.length > 0 ? (
+                        <div className="space-y-3">
+                          {p.backlinks.map((bl) => {
+                            const missing = !isUrl(bl.url);
+                            return (
+                              <div
+                                key={bl.id}
+                                className="flex flex-col gap-3 rounded-control border border-hair-2 bg-card p-3.5 shadow-2xs"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <Tag tone="ok">Backlink</Tag>
+                                    <span className="truncate text-caption font-bold text-ink">{bl.title}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveBacklink(bl.id)}
+                                    className="grid size-6 cursor-pointer place-items-center rounded-full text-ink-4 hover:bg-black/5 hover:text-ink transition"
+                                    title="Remove backlink"
+                                  >
+                                    <X className="size-3.5" />
+                                  </button>
+                                </div>
+
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                  <Field
+                                    size="sm"
+                                    label="Anchor title"
+                                    value={bl.title}
+                                    placeholder="e.g. AFFIRM-3 Study Publication"
+                                    onChange={(e) => handleUpdateBacklink(bl.id, { title: e.target.value })}
+                                  />
+                                  <Field
+                                    size="sm"
+                                    label="Clinical context / note"
+                                    value={bl.context}
+                                    placeholder="e.g. Full Phase III trial methodology in NEJM"
+                                    onChange={(e) => handleUpdateBacklink(bl.id, { context: e.target.value })}
+                                  />
+                                </div>
+                                <Field
+                                  size="sm"
+                                  label="Redirect URL"
+                                  type="url"
+                                  value={bl.url}
+                                  placeholder="https://"
+                                  onChange={(e) => handleUpdateBacklink(bl.id, { url: e.target.value.trim() })}
+                                  error={bl.url && missing ? "Enter a full web address starting with https://" : undefined}
+                                  hint="Tracked destination link for HCP reference."
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="rounded-control border border-dashed border-hair-3 p-3 text-center text-label text-ink-3">
+                          No resource backlinks added yet.
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={handleAddBacklink}
+                          className="h-8 gap-1.5 text-label font-bold cursor-pointer"
+                        >
+                          <Link2 className="size-3.5" />
+                          <span>Add resource backlink</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <PlanSectionContinue onClick={() => advanceFrom("button")} />
@@ -523,6 +989,7 @@ export function EmailDirectionsScreen() {
                         email.repEdit.note && "a note",
                         email.subjectMode === "choice" && "the subject line",
                         email.repEdit.blocks && "which blocks",
+                        email.repEdit.reorder && "reorder blocks",
                         email.repEdit.piece && "which documents",
                       ]
                         .filter(Boolean)
@@ -549,8 +1016,14 @@ export function EmailDirectionsScreen() {
                       <TickRow
                         on={email.repEdit.blocks}
                         title="Choose which blocks"
-                        detail="From the blocks you confirm on the email plan, they pick which to send."
+                        detail="From the blocks you confirm on the email plan, reps pick which to send (unless marked Mandatory)."
                         onToggle={() => setEmail({ repEdit: { ...email.repEdit, blocks: !email.repEdit.blocks } })}
+                      />
+                      <TickRow
+                        on={!!email.repEdit.reorder}
+                        title="Reorder content blocks"
+                        detail="Allow sales reps in Veeva CRM Approved Email to rearrange the order of blocks to match conversation flow."
+                        onToggle={() => setEmail({ repEdit: { ...email.repEdit, reorder: !email.repEdit.reorder } })}
                       />
                       <TickRow
                         on={email.repEdit.piece}
@@ -611,11 +1084,11 @@ export function EmailDirectionsScreen() {
 
           {planPhase === "plan" && stage === "emailplan" && (
             <>
-              <EmailPlanStep project={p} />
+              <EmailPlanStep project={p} onAskChatForBlock={handleAskChatForBlock} />
               <ActionBar
                 icon={p.included.length ? <CheckCircle2 className="size-4.5 shrink-0 text-ok-on-dark" /> : <AlertTriangle className="size-4.5 shrink-0 text-warn-on-dark" />}
                 title={p.included.length ? "Ready to build the email" : "No blocks in the email"}
-                description={p.included.length ? `${p.included.length} blocks · ${p.template.title}${p.attachedPieces.length ? ` · ${p.attachedPieces.length} documents` : ""}` : "Tick at least one block."}
+                description={p.included.length ? `${p.included.length} blocks · ${p.template.title}${p.attachedPieces.length ? ` · ${p.attachedPieces.length} approved ${p.attachedPieces.length === 1 ? "material" : "materials"}` : ""}` : "Tick at least one block."}
                 action={
                   <div className="flex shrink-0 items-center gap-2">
                     <Button variant="ghost" onClick={() => setStage("input")} className="h-9 text-body font-bold text-white hover:bg-white/10">
@@ -741,6 +1214,29 @@ export function EmailDirectionsScreen() {
             />
           )}
           {previewDossier && <DossierReaderModal dossier={previewDossier} onClose={() => setPreviewDossier(null)} />}
+          <ApprovedMaterialsModal
+            open={approvedModalOpen}
+            onClose={() => setApprovedModalOpen(false)}
+            brandName={brandName}
+            audience={p.audience}
+            allPieces={p.library}
+            selectedIds={email.attached}
+            onConfirm={(ids) => setEmail({ attached: ids })}
+          />
+          {previewPiece && (
+            <ApprovedMaterialViewerModal
+              piece={previewPiece}
+              onClose={() => setPreviewPiece(null)}
+              isAttached={email.attached.includes(previewPiece.id)}
+              onToggleAttach={(id) =>
+                setEmail({
+                  attached: email.attached.includes(id)
+                    ? email.attached.filter((x) => x !== id)
+                    : [...email.attached, id],
+                })
+              }
+            />
+          )}
           <SaveOrDiscardDialog
             open={!!exit.pending}
             destinationLabel={exit.pending?.label}

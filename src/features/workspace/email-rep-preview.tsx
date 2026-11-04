@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Send } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Lock, Send } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { cn } from "@/lib/cn";
 import { EmailCanvas, recipientFor } from "@/features/workspace/email-canvas";
-import { SENDER_AS, SENDER_PLURAL } from "@/features/workspace/email-options";
+import { getBlockRule, SENDER_AS, SENDER_PLURAL } from "@/features/workspace/email-options";
 import type { EmailProject } from "@/features/workspace/email-project";
 
 type Consent = "in" | "none" | "out";
@@ -31,7 +31,9 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
   const { email, purpose } = p;
   const chooses = p.zoneType("blocks") === "choose";
   const choosesPiece = p.zoneType("piece") === "choose";
-  const [picked, setPicked] = useState<string[]>(p.included.slice(0, 2).map((b) => b.id));
+  const canReorder = Boolean(email.repEdit.reorder);
+  const [orderedBlockIds, setOrderedBlockIds] = useState<string[]>(() => p.included.map((b) => b.id));
+  const [picked, setPicked] = useState<string[]>(() => p.included.map((b) => b.id));
   const [note, setNote] = useState(p.sender.sampleNote);
   const recipient = recipientFor(p);
   const lastName = recipient.name.split(",")[0];
@@ -43,8 +45,17 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
   const [future, setFuture] = useState(false);
   const [sent, setSent] = useState(false);
   const expired = future ? p.included.filter((b) => b.expires).map((b) => b.id) : [];
-  const sentBlocks = chooses ? p.included.filter((b) => picked.includes(b.id)) : p.included;
-  const gone = sentBlocks.find((b) => expired.includes(b.id));
+
+  const activePicked = orderedBlockIds.filter((id) => {
+    const b = p.included.find((x) => x.id === id);
+    if (!b) return false;
+    const rule = getBlockRule(email.blockRules, b.id);
+    return rule.mandatory || picked.includes(id);
+  });
+  const sentBlocks = chooses || canReorder
+    ? activePicked.map((id) => p.included.find((b) => b.id === id)).filter(Boolean)
+    : p.included;
+  const gone = sentBlocks.find((b) => b && expired.includes(b.id));
 
   const blocker =
     consent === "out"
@@ -53,7 +64,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
         ? p.professional
           ? `No email consent on record for ${lastName}. Capture it in the CRM before sending.`
           : `${lastName} hasn't authorised contact. Patients sign up, and consent to being contacted, before any email.`
-        : chooses && picked.length === 0
+        : chooses && activePicked.length === 0
           ? "Pick at least one block."
           : gone
             ? `The "${gone.title}" block's approval ended on ${gone.expires}. Remove it to send.`
@@ -114,33 +125,116 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
             </div>
           )}
 
-          {chooses && (
+          {(chooses || canReorder) && (
             <div className="space-y-1.5">
-              <span className="text-label font-bold text-ink-2">
-                Blocks <span className="font-semibold text-ink-4">· pick which to send</span>
-              </span>
-              {p.included.map((b) => {
-                const on = picked.includes(b.id);
+              <div className="flex items-center justify-between">
+                <span className="text-label font-bold text-ink-2">
+                  Blocks <span className="font-semibold text-ink-4">· {chooses ? "pick & reorder" : "reorder allowed"}</span>
+                </span>
+                {canReorder && (
+                  <span className="text-micro font-bold text-accent-violet">Reorder enabled</span>
+                )}
+              </div>
+              {orderedBlockIds.map((blockId, idx) => {
+                const b = p.included.find((item) => item.id === blockId);
+                if (!b) return null;
+                const rule = getBlockRule(email.blockRules, b.id);
+                const isMandatory = rule.mandatory;
+                const on = isMandatory || picked.includes(b.id);
                 const isGone = expired.includes(b.id);
+
                 return (
-                  <button
+                  <div
                     key={b.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => {
-                      setPicked(on ? picked.filter((x) => x !== b.id) : [...picked, b.id]);
-                      setSent(false);
-                    }}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-control border p-2 text-left text-body transition",
-                      "cursor-pointer",
+                      "flex w-full items-center justify-between gap-2 rounded-control border p-2 text-left text-body transition",
                       on ? "border-brand/40 bg-tint/60" : "border-hair-2 bg-card"
                     )}
                   >
-                    <span className={cn("grid size-4 shrink-0 place-items-center rounded-chip border", on ? "border-brand bg-brand text-white" : "border-hair-3")}>{on && <Check className="size-3 stroke-[3]" />}</span>
-                    <span className="min-w-0 flex-1 font-semibold text-ink">{b.title}</span>
-                    {isGone && <span className="rounded-chip bg-danger-bg px-1.5 py-0.5 text-micro font-extrabold text-danger">Expired</span>}
-                  </button>
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      disabled={isMandatory}
+                      onClick={() => {
+                        if (isMandatory) return;
+                        setPicked(on ? picked.filter((x) => x !== b.id) : [...picked, b.id]);
+                        setSent(false);
+                      }}
+                      className={cn(
+                        "flex flex-1 min-w-0 items-center gap-2.5 text-left transition",
+                        isMandatory ? "cursor-default opacity-90" : "cursor-pointer"
+                      )}
+                      title={isMandatory ? "Mandatory fragment (locked by MLR rules)" : on ? "Deselect block" : "Select block"}
+                    >
+                      <span
+                        className={cn(
+                          "grid size-4 shrink-0 place-items-center rounded-chip border",
+                          on ? "border-brand bg-brand text-white" : "border-hair-3 bg-card"
+                        )}
+                      >
+                        {isMandatory ? (
+                          <Lock className="size-2.5 stroke-[2.5]" />
+                        ) : on ? (
+                          <Check className="size-3 stroke-[3]" />
+                        ) : null}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate font-semibold text-ink">{b.title}</span>
+                          {isMandatory ? (
+                            <span className="shrink-0 rounded-chip bg-subtle px-1.5 py-0.2 text-micro font-bold text-ink-3 border border-hair-2">
+                              Locked
+                            </span>
+                          ) : (
+                            <span className="shrink-0 rounded-chip bg-ok-bg px-1.5 py-0.2 text-micro font-bold text-ok border border-ok-line">
+                              Optional
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {isGone && (
+                        <span className="shrink-0 rounded-chip bg-danger-bg px-1.5 py-0.5 text-micro font-extrabold text-danger">
+                          Expired
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Reorder Buttons if canReorder */}
+                    {canReorder && (
+                      <div className="flex items-center gap-0.5 shrink-0 pl-1 border-l border-hair-2">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => {
+                            if (idx === 0) return;
+                            const nextOrder = [...orderedBlockIds];
+                            const [item] = nextOrder.splice(idx, 1);
+                            nextOrder.splice(idx - 1, 0, item);
+                            setOrderedBlockIds(nextOrder);
+                          }}
+                          className="grid size-6 place-items-center rounded-chip text-ink-3 hover:bg-subtle hover:text-ink disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                          title="Move block up"
+                        >
+                          <ChevronUp className="size-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === orderedBlockIds.length - 1}
+                          onClick={() => {
+                            if (idx === orderedBlockIds.length - 1) return;
+                            const nextOrder = [...orderedBlockIds];
+                            const [item] = nextOrder.splice(idx, 1);
+                            nextOrder.splice(idx + 1, 0, item);
+                            setOrderedBlockIds(nextOrder);
+                          }}
+                          className="grid size-6 place-items-center rounded-chip text-ink-3 hover:bg-subtle hover:text-ink disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                          title="Move block down"
+                        >
+                          <ChevronDown className="size-3.5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -235,7 +329,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
         </div>
         <div className="grid justify-items-center gap-2 rounded-panel bg-canvas p-4">
           <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">What {lastName} gets</span>
-          <EmailCanvas project={p} view="rep" note={note} picked={picked} pieceIds={pieces} expired={expired} subject={subject} />
+          <EmailCanvas project={p} view="rep" note={note} picked={activePicked} pieceIds={pieces} expired={expired} subject={subject} />
         </div>
       </div>
     </Modal>

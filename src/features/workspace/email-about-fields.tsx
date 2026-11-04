@@ -56,14 +56,14 @@ const senderFreedoms = (sender: EmailSender) =>
   !isPersonalSender(sender) ? "Sent as approved" : sender === "msl" ? "Medical only · adds a note" : "Adds a note · picks blocks";
 
 /* The start modal's own row: an icon tile, the choice, and its state on the right. */
-const ROW = "group relative flex items-center gap-2.5 rounded-control border p-3 text-left shadow-2xs transition-all duration-150 cursor-pointer";
+const ROW = "group relative flex items-start gap-2.5 rounded-control border p-3 text-left shadow-2xs transition-all duration-150 cursor-pointer";
 const rowState = (on: boolean) => (on ? "border-brand bg-tint ring-2 ring-brand/15 shadow-sm" : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas");
 const IconTile = ({ icon: Icon, on }: { icon: LucideIcon; on: boolean }) => (
-  <span className={cn("grid size-7 shrink-0 place-items-center rounded-glyph transition-colors", on ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
+  <span className={cn("grid size-7 shrink-0 place-items-center rounded-glyph transition-colors mt-0.5", on ? "bg-brand text-white shadow-2xs" : "bg-tint text-brand-deep group-hover:bg-brand group-hover:text-white")}>
     <Icon className="size-3.5" />
   </span>
 );
-const Dot = ({ on }: { on: boolean }) => <span className={cn("size-4 shrink-0 rounded-full border transition-colors", on ? "border-[5px] border-brand" : "border-hair-3 bg-card")} />;
+const Dot = ({ on }: { on: boolean }) => <span className={cn("size-4 shrink-0 rounded-full border transition-colors mt-0.5", on ? "border-[5px] border-brand" : "border-hair-3 bg-card")} />;
 
 /**
  * The questions only an email asks: who sends it and what it is for — and,
@@ -117,8 +117,12 @@ export function EmailAboutFields({ withAudience = false }: { withAudience?: bool
                 <button key={id} type="button" aria-pressed={on} title={info.hint} onClick={() => setAbout({ sender: id })} className={cn(ROW, rowState(on))}>
                   <IconTile icon={SENDER_ICON[id]} on={on} />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-body font-bold text-ink">{info.long}</span>
-                    <span className="mt-0.5 flex items-center gap-1 text-caption font-semibold text-ink-3">
+                    <span className="block text-body font-bold text-ink">
+                      {info.long}
+                      {id === "msl" && <span className="ml-1 text-ink-3 font-semibold">(MSL)</span>}
+                    </span>
+                    <span className="mt-0.5 block text-caption text-ink-3 leading-snug">{info.subtitle}</span>
+                    <span className="mt-1 flex items-center gap-1 text-caption font-semibold text-ink-4">
                       {isPersonalSender(id) ? <PenLine className="size-3 shrink-0" /> : <Lock className="size-3 shrink-0" />}
                       <span className="truncate">{senderFreedoms(id)}</span>
                     </span>

@@ -9,11 +9,29 @@ import { useEmailStore } from "@/features/workspace/email-store";
 import { EMAIL_PURPOSES, approvedLinks, ctaLink, emailBlocks, emailLinks, emailTemplates, isProfessional, libraryPieces, senderInfo, sourceBlocks } from "@/features/workspace/email-options";
 
 /** The parts of an email, top to bottom. Inserted images and links are "m:" + their id. */
-export type EmailZone = "header" | "greeting" | "note" | "opening" | "blocks" | "piece" | "cta" | "signoff" | "isi" | "footer";
+export type EmailZone =
+  | "header"
+  | "header:logo"
+  | "header:links"
+  | "header:image"
+  | "header:heading"
+  | "greeting"
+  | "note"
+  | "opening"
+  | "blocks"
+  | "piece"
+  | "cta"
+  | "signoff"
+  | "isi"
+  | "footer";
 export type ZoneType = "lock" | "auto" | "choose" | "type";
 
 export const ZONE_NAME: Record<EmailZone, string> = {
   header: "Header",
+  "header:logo": "Logo & Brand Mark",
+  "header:links": "Header Safety Links",
+  "header:image": "Hero Image",
+  "header:heading": "Subject Heading",
   greeting: "Greeting",
   note: "Personal note",
   opening: "Opening and indication",
@@ -49,23 +67,34 @@ export function useEmailProject() {
   const library = libraryPieces(brandName, audience);
   const pieces = library.filter((p) => p.linkable);
   const startPiece = unbranded ? undefined : pieces.find((p) => p.id === email.startPiece);
-  /* The dossier's blocks, then one from the piece it's built from and one per file the user added. */
+  /* The pieces the user attached from approved materials or startPiece. */
+  const attachedPieces = unbranded
+    ? []
+    : pieces.filter((p) => email.attached.includes(p.id) || p.id === email.startPiece).sort((a, b) => Number(b.id === startPiece?.id) - Number(a.id === startPiece?.id));
+  /* The dossier's blocks, then approved blocks from attached materials, one per file the user added, and custom blocks from chat. */
   const blocks = [
     ...emailBlocks(brandId, brandName, email.sender, audience, condition, email.purpose).map((b) => ({ ...b, group: "dossier" as const })),
-    ...sourceBlocks(startPiece, email.files),
+    ...sourceBlocks(attachedPieces, email.files),
+    ...(email.extraBlocks || []),
   ];
   const included = blocks.filter((b) => !email.offBlocks.includes(b.id));
-  /* The piece it is built from comes first: it is the one a lone attachment shows. */
-  const attachedPieces = unbranded ? [] : pieces.filter((p) => email.attached.includes(p.id)).sort((a, b) => Number(b.id === startPiece?.id) - Number(a.id === startPiece?.id));
   const templates = emailTemplates(brandName, audience, condition);
   /* Nothing chosen yet: SwishX's first layout. */
   const template = templates.find((t) => t.id === email.template) ?? templates[0];
   const showNote = !isHQ && email.repEdit.note;
   const links = approvedLinks(brandName, audience, condition);
-  /* What the button says: the marketer's words, or the purpose's own. */
-  const ctaText = email.ctaText.trim() || purpose.cta;
-  const cta = ctaLink(ctaText, email.ctaUrl);
-  const allLinks = emailLinks(cta, email.media, attachedPieces, audience, unbranded);
+  const ctas = email.ctas?.length
+    ? email.ctas
+    : [{ id: "cta-primary", label: email.ctaText.trim() || purpose.cta, url: email.ctaUrl, priority: "primary" as const, blockId: null }];
+  const primaryCta = ctas.find((c) => c.priority === "primary") || ctas[0];
+  const secondaryCtas = ctas.filter((c) => c.id !== primaryCta.id);
+  const backlinks = email.backlinks || [];
+
+  /* What the primary button says: the marketer's words, or the purpose's own. */
+  const ctaText = primaryCta?.label.trim() || email.ctaText.trim() || purpose.cta;
+  const ctaUrl = primaryCta?.url.trim() || email.ctaUrl.trim();
+  const cta = ctaLink(ctaText, ctaUrl, "primary");
+  const allLinks = emailLinks(cta, email.media, attachedPieces, audience, unbranded, secondaryCtas, backlinks);
   const subjects = [...purpose.subjects(brandName, condition), ...email.extraSubjects];
 
   const zoneType = (id: string): ZoneType => {
@@ -117,6 +146,10 @@ export function useEmailProject() {
     showNote,
     cta,
     ctaText,
+    ctas,
+    primaryCta,
+    secondaryCtas,
+    backlinks,
     /** The audience's approved pages, for the button and the link picker. */
     approved: links,
     links: allLinks,

@@ -7,7 +7,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
 import { useEmailStore } from "@/features/workspace/email-store";
-import { AUDIENCE_LABEL, EMAIL_AUDIENCES, EMAIL_PURPOSES, audienceNoun, type EmailPurpose } from "@/features/workspace/email-options";
+import { EMAIL_PURPOSES, type EmailPurpose } from "@/features/workspace/email-options";
 
 /**
  * Where an email starts.
@@ -73,20 +73,6 @@ const STARTING_POINTS: Array<{ id: EmailPurpose; examples: StartingPointExample[
     ],
   },
   {
-    id: "formulary",
-    examples: [
-      ex("fm-1", SLATE, "Rep", "Ahead of your formulary review", "1 page", "formulary summary", "Formulary kit linked"),
-      ex("fm-2", DARK, "Head office", "Preparing for P&T", "AMCP", "value dossier on request", "For pharmacy directors"),
-    ],
-  },
-  {
-    id: "value",
-    examples: [
-      ex("va-1", FOREST, "Head office", "Budget impact and outcomes", "1M", "member budget impact model", "Adjustable to your population"),
-      ex("va-2", UMBER, "Head office", "The value dossier", "4.1", "AMCP format", "Clinical and economic evidence"),
-    ],
-  },
-  {
     id: "onboarding",
     examples: [
       ex("on-1", VIOLET, "Brand team", "Welcome to your treatment", "Week 1", "what to expect", "Plain-language safety information"),
@@ -123,38 +109,24 @@ export function EmailModeScreen() {
     <div className="page-enter max-w-[1140px] space-y-6">
       <PageHeading title="Create Email" description="Approved Email for HCPs, sent from your CRM. Patient and public email, sent from your email platform." />
 
-      {/* Grouped by who it's for, so a doctor's email is never picked for a patient. */}
-      {EMAIL_AUDIENCES.map((audience, group) => {
-        const points = STARTING_POINTS.filter((point) => EMAIL_PURPOSES[point.id].audience === audience);
-        return (
-          <section key={audience} className="space-y-3">
-            <div>
-              <h2 className="text-subhead font-[850] tracking-tight text-ink">For {audienceNoun(audience)}</h2>
-              <p className="text-label text-ink-3">{AUDIENCE_LABEL[audience].hint}</p>
-            </div>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {group === 0 && (
-                <CreateTile
-                  title="Create From Scratch"
-                  subtitle="Your own brief, grounded in the same approved claims. Senders pick from what you allow."
-                  delayMs={80}
-                  onSelect={() => handleSelect("followup")}
-                />
-              )}
-              {points.map((point, i) => (
-                <StartingPointCard
-                  key={point.id}
-                  title={EMAIL_PURPOSES[point.id].label}
-                  subtitle={EMAIL_PURPOSES[point.id].subtitle}
-                  examples={point.examples}
-                  delayMs={125 + i * 45}
-                  onSelect={() => handleSelect(point.id)}
-                />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
+        <CreateTile
+          title="Create From Scratch"
+          subtitle="Your own brief, grounded in the same approved claims. Senders pick from what you allow."
+          delayMs={80}
+          onSelect={() => handleSelect("followup")}
+        />
+        {STARTING_POINTS.map((point, i) => (
+          <StartingPointCard
+            key={point.id}
+            title={EMAIL_PURPOSES[point.id].label}
+            subtitle={EMAIL_PURPOSES[point.id].subtitle}
+            examples={point.examples}
+            delayMs={125 + i * 45}
+            onSelect={() => handleSelect(point.id)}
+          />
+        ))}
+      </div>
 
       <BrandDossierModal open={dossierModalOpen} onClose={() => setDossierModalOpen(false)} />
     </div>

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { adClaims } from "@/features/workspace/ad-options";
+import { AD_PLACEMENTS, adClaims } from "@/features/workspace/ad-options";
 import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/content-library-data";
 
 /**
@@ -20,6 +20,157 @@ export type EmailPurpose =
   | "onboarding" | "savings" | "adherence" | "supportfu"
   | "awareness" | "signup";
 
+export interface EmailRepEdit {
+  note: boolean;
+  blocks: boolean;
+  piece: boolean;
+  reorder: boolean;
+  noteCharLimit?: number;
+}
+
+export interface EmailBlockRule {
+  /** Mandatory means locked in template: sales rep cannot deselect or omit this block. Default true. */
+  mandatory: boolean;
+  /** Editable means sales rep can add a personalized note or commentary within this block. Default false (locked MLR text). */
+  editable: boolean;
+}
+
+export function getBlockRule(
+  rules: Record<string, EmailBlockRule> | undefined,
+  blockId: string
+): EmailBlockRule {
+  return rules?.[blockId] ?? { mandatory: true, editable: false };
+}
+
+export interface EmailTypographyStyles {
+  headerSize: number;
+  headerBold: boolean;
+  bodySize: number;
+  bodyBold: boolean;
+  buttonSize: "md" | "lg";
+  buttonStyle: "solid" | "outline" | "brand";
+  buttonAlign: "center" | "left" | "full";
+  isiSize: "micro" | "caption" | "body";
+}
+
+export const DEFAULT_EMAIL_STYLES: EmailTypographyStyles = {
+  headerSize: 28,
+  headerBold: true,
+  bodySize: 16,
+  bodyBold: false,
+  buttonSize: "md",
+  buttonStyle: "solid",
+  buttonAlign: "center",
+  isiSize: "micro",
+};
+
+export type EmailChannel = "veeva" | "oce" | "sfdc" | "sfmc" | "health" | "hubspot" | "braze" | "html";
+
+export interface EmailChannelDef {
+  id: EmailChannel;
+  name: string;
+  sub: string;
+  category: "crm" | "marketing" | "custom";
+  tokens: string;
+  complianceTag: string;
+  hint: string;
+  recommendedFor: (audience: EmailAudience, sender: EmailSender) => boolean;
+}
+
+export const EMAIL_CHANNELS: EmailChannelDef[] = [
+  {
+    id: "veeva",
+    name: "Veeva Vault CRM",
+    sub: "Vault CRM + PromoMats Approved Email",
+    category: "crm",
+    tokens: "{{insertEmailFragments}}, {{!vva_mandatory}}, {{$VaultDocID}}",
+    complianceTag: "Field Rep & MSL Approved Email",
+    hint: "Uses Veeva fragment architecture, MLR locking tokens, and Vault Doc IDs.",
+    recommendedFor: (a, s) => a === "HCP" && s !== "hq",
+  },
+  {
+    id: "hubspot",
+    name: "HubSpot",
+    sub: "Marketing Hub & Sales CRM Email Sequences",
+    category: "marketing",
+    tokens: "{{contact.firstname}}, {{personal_token}}, {{unsubscribe_link}}",
+    complianceTag: "Inbound Marketing & Sales Sequences",
+    hint: "Compatible with HubSpot personalization tokens and responsive email templates.",
+    recommendedFor: () => false,
+  },
+  {
+    id: "sfmc",
+    name: "Salesforce Marketing Cloud",
+    sub: "SFMC Journeys & Email Studio",
+    category: "marketing",
+    tokens: "%%FirstName%%, %%SenderNote%%, %%unsub_center_url%%",
+    complianceTag: "Enterprise Marketing Automation",
+    hint: "Uses AMPScript variables and enterprise subscriber management.",
+    recommendedFor: (a, s) => (a === "Patient" || a === "Consumer") && s === "hq",
+  },
+  {
+    id: "health",
+    name: "Salesforce Health Cloud",
+    sub: "Care coordination & patient support outreach",
+    category: "crm",
+    tokens: "{!Contact.FirstName}, {!CarePlan.Id}, {!Case.Subject}",
+    complianceTag: "Patient Support & Nurse Programs",
+    hint: "Tailored for support nurses and patient onboarding workflows.",
+    recommendedFor: (_a, s) => s === "support",
+  },
+  {
+    id: "oce",
+    name: "IQVIA OCE",
+    sub: "OCE Personal compliant approved email",
+    category: "crm",
+    tokens: "{{OCE_Personal}}, {{doc_id}}, {{opt_in}}",
+    complianceTag: "Life Sciences Field Engagement",
+    hint: "Dynamic fragment architecture for OCE commercial field teams.",
+    recommendedFor: () => false,
+  },
+  {
+    id: "sfdc",
+    name: "Salesforce Life Sciences Cloud",
+    sub: "HCP engagement & hybrid commercial teams",
+    category: "crm",
+    tokens: "{{recipient.Name}}, {{rep.Signature}}",
+    complianceTag: "Commercial Life Sciences",
+    hint: "Next-generation Salesforce Life Sciences Cloud Approved Email.",
+    recommendedFor: () => false,
+  },
+  {
+    id: "braze",
+    name: "Braze",
+    sub: "Customer engagement platform & lifecycle campaigns",
+    category: "marketing",
+    tokens: "{{${first_name}}}, {{campaign_id}}",
+    complianceTag: "Consumer Lifecycle Engagement",
+    hint: "Liquid syntax personalization and mobile cross-channel delivery.",
+    recommendedFor: () => false,
+  },
+  {
+    id: "html",
+    name: "HTML Package",
+    sub: "Universal ZIP with inline CSS, assets & tracking labels",
+    category: "custom",
+    tokens: "Standards-compliant responsive HTML package",
+    complianceTag: "Agency & Custom ESP Handoff",
+    hint: "Portable production package tested across Outlook, Gmail, and Apple Mail.",
+    recommendedFor: () => false,
+  },
+];
+
+export function defaultChannelFor(audience: EmailAudience, sender: EmailSender): EmailChannel {
+  if (sender === "support") return "health";
+  if (audience === "HCP" && sender !== "hq") return "veeva";
+  if (audience === "Patient" || audience === "Consumer" || sender === "hq") return "sfmc";
+  return "veeva";
+}
+
+export function defaultChannelsFor(audience: EmailAudience, sender: EmailSender): EmailChannel[] {
+  return [defaultChannelFor(audience, sender)];
+}
+
 /** Today, for approvals that are about to end. */
 export const EMAIL_TODAY = "2 Nov 2026";
 
@@ -37,6 +188,7 @@ export const isProfessional = (a: EmailAudience) => a === "HCP";
 interface SenderDef {
   label: string;
   long: string;
+  subtitle: string;
   hint: string;
   signoff: [string, string];
   address: string;
@@ -51,16 +203,55 @@ interface SenderDef {
  * personalised.
  */
 const SENDERS: Record<EmailSender, SenderDef> = {
-  rep: { label: "Rep", long: "Sales rep", hint: "Adds a personal note and picks from the approved blocks. Promotional.", signoff: ["Priya Menon", "Specialty Representative"], address: "priya.menon@corvane.com", sampleNote: "Good to see you at Tuesday's tumour board. Here is the data you asked about." },
-  msl: { label: "MSL", long: "Medical science liaison", hint: "Scientific exchange. No promotional claims or calls to action.", signoff: ["Dr. Arjun Rao", "Medical Science Liaison"], address: "arjun.rao@corvane.com", sampleNote: "Thank you for the question at Tuesday's meeting. The information is below." },
-  hq: { label: "Head office", long: "Head office", hint: "Sent from the brand to opted-in doctors. Nothing personalised.", signoff: ["The brand team", "Corvane Pharma US"], address: "updates@corvane-hcp.com", sampleNote: "" },
-  support: { label: "Support nurse", long: "Patient support nurse", hint: "Adds a short note and picks from approved patient blocks. Never promotional.", signoff: ["Alex Rivera, RN", "Patient Support Nurse"], address: "support@corvane-care.com", sampleNote: "It was good to speak with you this morning. Here is what we went over." },
+  rep: {
+    label: "Rep",
+    long: "Sales rep",
+    subtitle: "Field team · Commercial & promotional follow-up",
+    hint: "Adds a personal note and picks from approved promotional blocks.",
+    signoff: ["Priya Menon", "Specialty Representative"],
+    address: "priya.menon@corvane.com",
+    sampleNote: "Good to see you at Tuesday's tumour board. Here is the data you asked about.",
+  },
+  msl: {
+    label: "MSL",
+    long: "Medical science liaison",
+    subtitle: "Medical affairs · Scientific & clinical exchange",
+    hint: "Scientific exchange. Non-promotional, no commercial claims.",
+    signoff: ["Dr. Arjun Rao", "Medical Science Liaison"],
+    address: "arjun.rao@corvane.com",
+    sampleNote: "Thank you for the question at Tuesday's meeting. The information is below.",
+  },
+  hq: {
+    label: "Head office",
+    long: "Head office",
+    subtitle: "Brand team · Broad updates sent as approved",
+    hint: "Sent from the brand to opted-in prescribers. Nothing personalised.",
+    signoff: ["The brand team", "Corvane Pharma US"],
+    address: "updates@corvane-hcp.com",
+    sampleNote: "",
+  },
+  support: {
+    label: "Support nurse",
+    long: "Patient support nurse",
+    subtitle: "Care team · Treatment guidance & patient onboarding",
+    hint: "Adds a short note and picks from approved patient support blocks.",
+    signoff: ["Alex Rivera, RN", "Patient Support Nurse"],
+    address: "support@corvane-care.com",
+    sampleNote: "It was good to speak with you this morning. Here is what we went over.",
+  },
 };
 
 /** A sender as this audience knows it: head office is "the brand team" to a patient. */
 export function senderInfo(id: EmailSender, audience: EmailAudience): SenderDef {
   if (id === "hq" && !isProfessional(audience))
-    return { ...SENDERS.hq, label: "Brand team", long: "Brand team", hint: "Sent from the brand to people who signed up. Nothing personalised.", address: "hello@corvane-care.com" };
+    return {
+      ...SENDERS.hq,
+      label: "Brand team",
+      long: "Brand team",
+      subtitle: "Brand team · Direct patient communications sent as approved",
+      hint: "Sent from the brand to people who signed up. Nothing personalised.",
+      address: "hello@corvane-care.com",
+    };
   return SENDERS[id];
 }
 
@@ -225,30 +416,29 @@ export interface EmailBlock {
   /** When the claim's source approval ends, if soon. */
   expires?: string;
   link?: string;
-  /** Where it was drafted from: the dossier, the approved piece, or a file the user added. */
-  group?: "dossier" | "piece" | "file";
+  /** Where it was drafted from: the dossier, the approved piece, a file the user added, or custom chat. */
+  group?: "dossier" | "piece" | "file" | "custom";
   /** Drafted from the user's own file: a new claim, reviewed by MLR. */
   newClaim?: boolean;
 }
 
 /**
  * Blocks drafted from what the plan added beyond the dossier: the approved
- * piece leads with its own figure, and each file gives one block from what its
+ * pieces lead with their own figures, and each file gives one block from what its
  * note says it is for.
  */
-export function sourceBlocks(piece: EmailPiece | undefined, files: Array<{ name: string; note?: string }>): EmailBlock[] {
+export function sourceBlocks(piecesOrPiece: EmailPiece[] | EmailPiece | undefined, files: Array<{ name: string; note?: string }>): EmailBlock[] {
+  const pieces = Array.isArray(piecesOrPiece) ? piecesOrPiece : piecesOrPiece ? [piecesOrPiece] : [];
   return [
-    ...(piece
-      ? [{
-          id: `piece-${piece.id}`,
-          title: piece.asset.badge ?? piece.title,
-          claimId: `LB-${piece.id.slice(0, 3).toUpperCase()}`,
-          text: piece.asset.metric ? `${piece.asset.metric}: ${piece.asset.metricLabel ?? ""}`.trim() : `The key message from the ${piece.title}.`,
-          source: `${piece.title} · approved piece`,
-          stat: piece.asset.metric?.match(/^[\d.]+%?/)?.[0],
-          group: "piece" as const,
-        }]
-      : []),
+    ...pieces.map((piece) => ({
+      id: `piece-${piece.id}`,
+      title: piece.cutdownName ? piece.title : (piece.asset.badge ?? piece.title),
+      claimId: `AP-${piece.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase()}`,
+      text: piece.asset.metric ? `${piece.asset.metric}: ${piece.asset.metricLabel ?? ""}`.trim() : `Key message and clinical evidence from the approved ${piece.title}.`,
+      source: `${piece.title} · approved piece`,
+      stat: piece.asset.metric?.match(/^[\d.]+%?/)?.[0],
+      group: "piece" as const,
+    })),
     ...files.map((f) => ({
       id: `file-${f.name}`,
       title: "From your file",
@@ -327,7 +517,7 @@ export function emailBlocks(brandId: string, brandName: string, sender: EmailSen
 export interface EmailPiece {
   id: string;
   title: string;
-  kind: "Docs" | "Video";
+  kind: "Docs" | "Video" | "Ad";
   spec: string;
   /** The Content Library item itself, so a picker can show it as the shelf does. */
   asset: LibraryAsset;
@@ -335,6 +525,9 @@ export interface EmailPiece {
   linkable: boolean;
   /** "Published 15 Sep 2026", or why it can't be linked yet. */
   approval: string;
+  parentAdId?: string;
+  adPlacementId?: string;
+  cutdownName?: string;
 }
 
 const NOT_YET: Partial<Record<LibraryAsset["status"], string>> = {
@@ -344,29 +537,125 @@ const NOT_YET: Partial<Record<LibraryAsset["status"], string>> = {
 };
 
 /**
- * This brand's leave-behinds, leaflets and videos in the Content Library, for
- * this audience — the ones an email can link to first, then the ones still on
- * their way through MLR, so a piece someone expects to see is never just missing.
+ * This brand's leave-behinds, leaflets, videos, and ad cutdowns in the Content Library,
+ * for this audience. If the brand has no library items yet, provides realistic approved assets
+ * so the marketer can always build from approved collateral.
  */
 export function libraryPieces(brandName: string, audience: EmailAudience = "HCP"): EmailPiece[] {
   if (audience === "Consumer") return [];
   const forPatients = audience === "Patient";
-  return LIBRARY_ASSETS.filter(
-    (a) => a.brand === brandName && (a.kind === "infographic" || a.kind === "video") && a.stage !== "archived" && /patient/i.test(a.audience) === forPatients && !/field/i.test(a.audience)
-  )
-    .map((a) => {
-      const linkable = a.status === "Approved" || a.status === "Published";
-      return {
+  let matches = LIBRARY_ASSETS.filter(
+    (a) => a.brand.toLowerCase() === (brandName || "").toLowerCase() && a.stage !== "archived" && /patient/i.test(a.audience) === forPatients && !/field/i.test(a.audience)
+  );
+
+  // If brand has no direct matching assets in mock library, provide brand-adapted approved assets
+  if (matches.length === 0) {
+    const brandDisplay = brandName || "Onkavia";
+    matches = [
+      {
+        id: `${brandDisplay.toLowerCase()}-moa-film`,
+        title: `${brandDisplay} Mechanism of Action Film`,
+        kind: "video",
+        scenarioId: "hcp-launch",
+        brand: brandDisplay,
+        audience: forPatients ? "Patients" : "HCP",
+        spec: "16:9 · 45 sec",
+        status: "Published",
+        stage: "published",
+        updated: "Oct 12, 2026",
+        ownerId: "m1",
+        views: 140,
+        comments: 2,
+        gradient: "linear-gradient(150deg,#0f2d22,#14532d 55%,#1f7a4d)",
+        videoSrc: "/reel-moa.mp4",
+      },
+      {
+        id: `${brandDisplay.toLowerCase()}-leave-behind`,
+        title: `${brandDisplay} Clinical Efficacy Readout Panel`,
+        kind: "infographic",
+        scenarioId: "mechanism-infographic",
+        brand: brandDisplay,
+        audience: forPatients ? "Patients" : "HCP",
+        spec: "Landscape · 1 page",
+        status: "Published",
+        stage: "published",
+        updated: "Oct 15, 2026",
+        ownerId: "m2",
+        views: 95,
+        comments: 1,
+        gradient: "linear-gradient(150deg,#111827,#1f2937 55%,#334155)",
+        badge: "Pivotal Endpoints",
+        metric: "52% Response",
+        metricLabel: "vs 18% standard of care",
+      },
+      {
+        id: `${brandDisplay.toLowerCase()}-launch-campaign`,
+        title: `${brandDisplay} Launch Campaign Assets`,
+        kind: "ad",
+        scenarioId: "patient-education",
+        brand: brandDisplay,
+        audience: forPatients ? "Patients" : "HCP",
+        spec: "4 ads · 4 formats",
+        status: "Published",
+        stage: "published",
+        updated: "Oct 22, 2026",
+        ownerId: "m1",
+        views: 210,
+        comments: 4,
+        gradient: "linear-gradient(150deg,#7c2d12,#c2410c 55%,#f97316)",
+        badge: "Launch Ads",
+        metric: "4 cuts",
+        metricLabel: "YouTube · Meta · Display · LinkedIn",
+        ad: {
+          kind: "brand-launch",
+          type: "product-claim",
+          audience: forPatients ? "Patient" : "HCP",
+          placements: ["youtube", "meta-feed", "google-display", "linkedin-feed"],
+          formats: { "linkedin-feed": ["document"] },
+          subject: { kind: "drug", id: brandDisplay.toLowerCase(), name: brandDisplay },
+        },
+      },
+    ];
+  }
+
+  const result: EmailPiece[] = [];
+
+  matches.forEach((a) => {
+    const linkable = a.status === "Approved" || a.status === "Published";
+    const approval = linkable ? `${a.status} ${a.updated}` : (NOT_YET[a.status] ?? a.status);
+
+    if (a.kind === "ad" && a.ad?.placements) {
+      a.ad.placements.forEach((pId) => {
+        const placement = AD_PLACEMENTS.find((p) => p.id === pId);
+        const pLabel = placement?.label || pId;
+        const pSizes = placement?.sizes ? placement.sizes.split("·")[0].trim() : "Ad Cutdown";
+        result.push({
+          id: `${a.id}:${pId}`,
+          title: `${a.title} · ${pLabel}`,
+          kind: "Ad",
+          spec: pSizes,
+          asset: a,
+          linkable,
+          approval,
+          parentAdId: a.id,
+          adPlacementId: pId,
+          cutdownName: `${pLabel} (${pSizes})`,
+        });
+      });
+    } else {
+      result.push({
         id: a.id,
         title: a.title,
         kind: a.kind === "video" ? ("Video" as const) : ("Docs" as const),
         spec: a.spec,
         asset: a,
         linkable,
-        approval: linkable ? `${a.status} ${a.updated}` : (NOT_YET[a.status] ?? a.status),
-      };
-    })
-    .sort((a, b) => Number(b.linkable) - Number(a.linkable) || Number(a.kind === "Video") - Number(b.kind === "Video"));
+        approval,
+      });
+    }
+  });
+
+  return result.sort((a, b) => Number(b.linkable) - Number(a.linkable) || Number(a.kind === "Video") - Number(b.kind === "Video"));
 }
 
 /** The pieces an email can actually link to. */
@@ -536,18 +825,84 @@ export const LINK_STATUS: Record<LinkStatus, { tone: "ok" | "lock" | "warn" | "d
 
 export const linkTag = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 
+export type CtaPriority = "primary" | "secondary" | "tertiary";
+
+export interface EmailCtaItem {
+  id: string;
+  label: string;
+  url: string;
+  priority: CtaPriority;
+  /** If attached to a specific block ID; null or undefined means email-level / SwishX placement */
+  blockId?: string | null;
+  /** Attached to one or multiple specific block IDs */
+  blockIds?: string[];
+}
+
+export interface EmailBacklinkItem {
+  id: string;
+  title: string;
+  context: string;
+  url: string;
+  /** If attached to a specific block ID; null or undefined means general reference */
+  blockId?: string | null;
+  /** Attached to one or multiple specific block IDs */
+  blockIds?: string[];
+}
+
+/** Check if a CTA is attached to a given block ID */
+export function isCtaAttachedToBlock(cta: EmailCtaItem, blockId: string): boolean {
+  return cta.blockId === blockId;
+}
+
+/** Check if a Backlink is attached to a given block ID */
+export function isBacklinkAttachedToBlock(backlink: EmailBacklinkItem, blockId: string): boolean {
+  return backlink.blockId === blockId;
+}
+
+/** Check if a CTA has no specific block attachments (so it belongs in the email footer) */
+export function isCtaUnassigned(cta: EmailCtaItem): boolean {
+  return !cta.blockId;
+}
+
+/** Check if a Backlink has no specific block attachments (so it belongs in general references) */
+export function isBacklinkUnassigned(backlink: EmailBacklinkItem): boolean {
+  return !backlink.blockId;
+}
+
 /**
  * The button, as a link. SwishX has no list of the brand's approved pages, so
  * the URL is the one the marketer gives, and it goes to MLR with the email.
  */
-export function ctaLink(text: string, url: string): EmailLink {
-  const base = { label: `Button: ${text}`, tag: linkTag(text), cta: true };
+export function ctaLink(text: string, url: string, priority: CtaPriority = "primary"): EmailLink {
+  const base = { label: `${priority === "primary" ? "Primary Button" : "Secondary Button"}: ${text}`, tag: linkTag(text), cta: true };
   return isUrl(url) ? { ...base, dest: url.trim(), status: "review" } : { ...base, dest: url.trim() ? "Not a web address yet" : "No URL yet", status: "missing" };
 }
 
-/** Every link in the email: the button, what was inserted, the documents, and the ones SwishX always adds. */
-export function emailLinks(cta: EmailLink, media: EmailMedia[], pieces: EmailPiece[], audience: EmailAudience, unbranded: boolean): EmailLink[] {
+/** Every link in the email: buttons, backlinks, what was inserted, documents, and what SwishX always adds. */
+export function emailLinks(
+  cta: EmailLink,
+  media: EmailMedia[],
+  pieces: EmailPiece[],
+  audience: EmailAudience,
+  unbranded: boolean,
+  extraCtas: EmailCtaItem[] = [],
+  backlinks: EmailBacklinkItem[] = []
+): EmailLink[] {
   const list: EmailLink[] = [cta];
+  for (let i = 0; i < extraCtas.length; i++) {
+    const c = extraCtas[i];
+    const link = ctaLink(c.label, c.url, c.priority);
+    list.push({ ...link, tag: extraCtas.length > 1 ? `${link.tag}_${i + 1}` : link.tag });
+  }
+  for (let i = 0; i < backlinks.length; i++) {
+    const bl = backlinks[i];
+    list.push({
+      label: `Backlink: ${bl.title}`,
+      dest: isUrl(bl.url) ? bl.url.trim() : bl.url.trim() ? "Not a web address yet" : "No URL yet",
+      status: isUrl(bl.url) ? "review" : "missing",
+      tag: `${linkTag(bl.title)}${backlinks.length > 1 ? `_${i + 1}` : ""}`,
+    });
+  }
   const professional = isProfessional(audience);
   for (const m of media) {
     if (m.kind === "video") list.push({ label: `Video: ${m.title}`, dest: m.from === "platform" ? `Hosted player · ${m.code}` : "Hosted player · new upload", status: m.from === "platform" ? "approved" : "review", tag: linkTag(m.title) });

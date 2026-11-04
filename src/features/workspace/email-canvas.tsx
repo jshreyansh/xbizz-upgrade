@@ -1,9 +1,19 @@
 "use client";
 
-import { Play } from "lucide-react";
+import { Link2, Play } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { AssetPreview } from "@/features/content-library/asset-preview";
-import type { EmailMedia, EmailTemplate } from "@/features/workspace/email-options";
+import {
+  DEFAULT_EMAIL_STYLES,
+  isBacklinkAttachedToBlock,
+  isBacklinkUnassigned,
+  isCtaAttachedToBlock,
+  isCtaUnassigned,
+  type EmailBlock,
+  type EmailMedia,
+  type EmailTemplate,
+  type EmailTypographyStyles,
+} from "@/features/workspace/email-options";
 import { ZONE_TYPE_LABEL, type EmailProject, type ZoneType } from "@/features/workspace/email-project";
 
 /** Who the sample email is to, by audience. */
@@ -25,10 +35,10 @@ export type EmailView = "zones" | "inbox" | "phone" | "nopics" | "rep";
 export const HEADER_ART = "linear-gradient(120deg, #3b2370, #5b3a9e 60%, #7d5cc4)";
 
 const ZONE_STYLE: Record<ZoneType, { idle: string; selected: string; tag: string }> = {
-  lock: { idle: "outline-transparent hover:outline-hair-3", selected: "outline-2 outline-solid outline-ink-3", tag: "bg-ink-3" },
-  auto: { idle: "outline-ok/45", selected: "outline-2 outline-solid outline-ok", tag: "bg-ok" },
-  choose: { idle: "outline-accent-blue/50 bg-accent-blue/5", selected: "outline-2 outline-solid outline-accent-blue", tag: "bg-accent-blue" },
-  type: { idle: "outline-brand/60 bg-tint/60", selected: "outline-2 outline-solid outline-brand", tag: "bg-brand" },
+  lock: { idle: "outline-transparent hover:outline-hair-3", selected: "outline-2 outline-dashed outline-ink-3", tag: "bg-ink-3" },
+  auto: { idle: "outline-ok/45", selected: "outline-2 outline-dashed outline-ok", tag: "bg-ok" },
+  choose: { idle: "outline-accent-blue/50 bg-accent-blue/5", selected: "outline-2 outline-dashed outline-accent-blue", tag: "bg-accent-blue" },
+  type: { idle: "outline-brand/60 bg-tint/60", selected: "outline-2 outline-dashed outline-brand", tag: "bg-brand" },
 };
 
 const Token = ({ children, typed }: { children: React.ReactNode; typed?: boolean }) => (
@@ -114,6 +124,7 @@ export function EmailCanvas({
   expired = [],
   template,
   subject,
+  styles,
 }: {
   project: EmailProject;
   view: EmailView;
@@ -131,7 +142,9 @@ export function EmailCanvas({
   template?: EmailTemplate | null;
   /** The subject line the rep picked, in the rep preview. */
   subject?: string;
+  styles?: EmailTypographyStyles;
 }) {
+  const activeStyles = styles ?? p.email.styles ?? DEFAULT_EMAIL_STYLES;
   const zones = view === "zones";
   const live = !zones;
   const imagesOff = view === "nopics";
@@ -139,14 +152,22 @@ export function EmailCanvas({
   const zone = (id: string, children: React.ReactNode) => {
     const t = p.zoneType(id);
     const style = ZONE_STYLE[t];
+    const isSelected = selected === id || (selected === "header" && id === "header:heading");
     return (
       <div
         key={id}
         data-zone={id}
-        onClick={zones && onSelect ? (e) => { e.stopPropagation(); onSelect(id); } : undefined}
-        className={cn("relative", zones && "cursor-pointer outline-1 outline-dashed -outline-offset-1 transition-[outline-color]", zones && (selected === id ? style.selected : style.idle))}
+        onClick={onSelect ? (e) => { e.stopPropagation(); onSelect(id); } : undefined}
+        className={cn(
+          "relative",
+          onSelect && "cursor-pointer",
+          zones && "outline-1 outline-dashed -outline-offset-1 transition-[outline-color]",
+          zones
+            ? (isSelected ? style.selected : style.idle)
+            : (isSelected ? "outline-2 outline-dashed outline-brand outline-offset-1 rounded-sm" : onSelect ? "hover:outline-1 hover:outline-dashed hover:outline-brand/40" : "")
+        )}
       >
-        {zones && (t !== "lock" || selected === id) && (
+        {zones && (t !== "lock" || isSelected) && (
           <span className={cn("absolute right-1.5 top-1 z-10 rounded-chip px-1.5 text-micro font-extrabold uppercase tracking-wide text-white", style.tag)}>{ZONE_TYPE_LABEL[t]}</span>
         )}
         {children}
@@ -155,7 +176,11 @@ export function EmailCanvas({
   };
 
   const chooses = p.zoneType("blocks") === "choose";
-  const shownBlocks = live && chooses ? p.included.filter((b) => (picked ?? p.included.slice(0, 2).map((x) => x.id)).includes(b.id)) : p.included;
+  const canReorder = Boolean(email.repEdit.reorder);
+  const shownBlocks =
+    (chooses || canReorder) && picked
+      ? picked.map((id) => p.included.find((b) => b.id === id)).filter((b): b is EmailBlock => Boolean(b))
+      : p.included;
   const refs = shownBlocks.map((b) => b.source);
   /* Documents go as link cards at the end. When the rep chooses, the ones they ticked. */
   const pieces = live && p.zoneType("piece") === "choose" && pieceIds ? p.attachedPieces.filter((x) => pieceIds.includes(x.id)) : p.attachedPieces;
@@ -206,62 +231,76 @@ export function EmailCanvas({
         <span className="underline">View in browser</span>
       </div>
 
-      {zone(
-        "header",
-        <div>
-          {/* The logo bar: the mark, and the safety links pharma puts at the top. */}
-          <div className={cn("flex flex-wrap items-center justify-between gap-2 border-b border-hair py-3", pad)}>
-            <span className="inline-flex items-center gap-2">
+      <div>
+        {/* The logo bar: the mark, and the safety links pharma puts at the top. */}
+        <div className={cn("flex flex-wrap items-center justify-between gap-2 border-b border-hair py-3", pad)}>
+          {zone(
+            "header:logo",
+            <span className="inline-flex items-center gap-2 rounded-sm p-1 transition hover:bg-subtle/50">
               {!p.unbranded && <span aria-hidden className="size-5 rounded-[5px]" style={{ background: HEADER_ART }} />}
               <span className={cn("font-black tracking-tight text-ink", p.unbranded ? "text-body-lg" : "text-title")}>
                 {heading}
                 {!p.unbranded && <sup className="text-caption font-bold">®</sup>}
               </span>
             </span>
-            {topLinks.length > 0 && (
-              <span className="flex flex-wrap gap-x-3 text-caption font-bold text-accent-violet">
+          )}
+          {topLinks.length > 0 &&
+            zone(
+              "header:links",
+              <span className="flex flex-wrap gap-x-3 rounded-sm p-1 text-caption font-bold text-accent-violet transition hover:bg-subtle/50">
                 {topLinks.map((l) => (
-                  <span key={l} className="underline">
+                  <span key={l} className="underline hover:opacity-80">
                     {l}
                   </span>
                 ))}
               </span>
             )}
-          </div>
+        </div>
 
-          {look?.header === "banner" && (
+        {look?.header === "banner" &&
+          zone(
+            "header:heading",
             <div className={cn("py-5 text-white", pad)} style={{ background: HEADER_ART }}>
               <span className="block text-micro font-extrabold uppercase tracking-wide opacity-80">{purpose.label}</span>
               <div className="mt-1 text-display font-black leading-tight">{subjectLine}</div>
             </div>
           )}
 
-          {hero &&
-            (imagesOff ? (
+        {hero &&
+          zone(
+            "header:image",
+            imagesOff ? (
               <div className={cn("my-3 grid aspect-[2/1] place-items-center border border-dashed border-hair-3 bg-subtle p-4 text-center text-body text-ink-3", "mx-7")}>{heroAlt}</div>
             ) : (
               // eslint-disable-next-line @next/next/no-img-element -- a hosted email image
               <img src={hero} alt={heroAlt} className="block aspect-[2/1] w-full object-cover" />
-            ))}
+            )
+          )}
 
-          {look?.header !== "banner" && (
+        {look?.header !== "banner" &&
+          zone(
+            "header:heading",
             <div className={cn("pt-5", pad)}>
-              <h1 className="text-display font-black leading-tight tracking-tight text-ink">{subjectLine}</h1>
+              <h1
+                className={cn("leading-tight tracking-tight text-ink", activeStyles.headerBold ? "font-black" : "font-semibold")}
+                style={{ fontSize: `${activeStyles.headerSize}px` }}
+              >
+                {subjectLine}
+              </h1>
             </div>
           )}
-        </div>
-      )}
+      </div>
 
-      <div className={cn("pt-3", pad)}>
-        {zone("greeting", <p className="py-1.5">{greeting}</p>)}
-        {p.showNote && (!live || noteText) && zone("note", <p className="py-1.5">{noteText}</p>)}
+      <div className={cn("pt-3", pad)} style={{ fontSize: `${activeStyles.bodySize}px` }}>
+        {zone("greeting", <p className="py-1.5 leading-relaxed">{greeting}</p>)}
+        {p.showNote && (!live || noteText) && zone("note", <p className="py-1.5 leading-relaxed">{noteText}</p>)}
         {zone(
           "opening",
           <>
-            <p className="py-1.5">{purpose.opening(p.brandName, p.condition)}</p>
+            <p className="py-1.5 leading-relaxed">{purpose.opening(p.brandName, p.condition)}</p>
             {/* The indication, near the top, as US promotional email states it. */}
             {p.professional && email.sender !== "msl" && p.wording && (
-              <p className="my-2 border-l-[3px] border-accent-violet bg-subtle px-3 py-2 text-body text-ink-2">
+              <p className="my-2 border-l-[3px] border-accent-violet bg-subtle px-3 py-2 text-ink-2">
                 <b className="text-ink">INDICATION: </b>
                 {p.wording}
               </p>
@@ -275,6 +314,8 @@ export function EmailCanvas({
             {zones && shownBlocks.length === 0 && <p className="py-1.5 italic text-ink-4">No blocks in the set. Add some in the plan.</p>}
             {shownBlocks.map((b, i) => {
               const pair = i === 0 && showChart && b.stat ? bars(b.text) : null;
+              const blockBacklinks = p.backlinks.filter((bl) => isBacklinkAttachedToBlock(bl, b.id));
+              const blockCtas = p.ctas.filter((c) => isCtaAttachedToBlock(c, b.id));
               return (
                 <section key={b.id} className={cn("border-t border-hair py-4", expired.includes(b.id) && "opacity-45 line-through")}>
                   <h2 className="text-micro font-extrabold uppercase tracking-wider text-accent-violet">{b.title}</h2>
@@ -283,13 +324,13 @@ export function EmailCanvas({
                       {b.stat ? (
                         <>
                           <b className="block text-display-lg font-black leading-none text-accent-violet">{b.stat}</b>
-                          <p className="mt-1.5 text-body-lg text-ink-2">
+                          <p className="mt-1.5 leading-relaxed text-ink-2" style={{ fontSize: `${activeStyles.bodySize}px` }}>
                             {b.text}
                             <sup className="font-extrabold text-accent-violet">{i + 1}</sup>
                           </p>
                         </>
                       ) : (
-                        <p className="text-body-lg text-ink-2">
+                        <p className="leading-relaxed text-ink-2" style={{ fontSize: `${activeStyles.bodySize}px` }}>
                           {b.text}
                           <sup className="font-extrabold text-accent-violet">{i + 1}</sup>
                         </p>
@@ -312,6 +353,35 @@ export function EmailCanvas({
                         </div>
                       )}
                       {b.link && <span className="mt-1.5 inline-block text-body font-bold text-accent-violet underline">{b.link} ›</span>}
+                      {blockBacklinks.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {blockBacklinks.map((bl) => (
+                            <div key={bl.id} className="flex items-center gap-1.5 rounded-chip border border-hair-2 bg-subtle/80 px-2 py-1 text-label text-ink-2">
+                              <Link2 className="size-3 text-accent-violet shrink-0" />
+                              <span className="font-bold text-ink truncate">{bl.title}</span>
+                              {bl.context && <span className="truncate text-ink-3">· {bl.context}</span>}
+                              <span className="ml-auto shrink-0 text-micro font-bold text-accent-violet">↗</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {blockCtas.length > 0 && (
+                        <div className="mt-2.5 flex flex-wrap gap-2">
+                          {blockCtas.map((c) =>
+                            c.priority === "primary" ? (
+                              <span key={c.id} className="inline-flex items-center gap-1 rounded-control bg-accent-violet px-4 py-2 text-label font-extrabold text-white shadow-2xs">
+                                <span>{c.label}</span>
+                                <span className="text-micro font-extrabold">↗</span>
+                              </span>
+                            ) : (
+                              <span key={c.id} className="inline-flex items-center gap-1 rounded-control border border-accent-violet bg-card px-3.5 py-1.5 text-label font-bold text-accent-violet shadow-2xs">
+                                <span>{c.label}</span>
+                                <span className="text-micro font-extrabold">↗</span>
+                              </span>
+                            )
+                          )}
+                        </div>
+                      )}
                     </div>
                     {/* The product shot, beside the lead claim. Images off: its alt text. */}
                     {i === 0 &&
@@ -350,18 +420,58 @@ export function EmailCanvas({
           )}
         {zone(
           "cta",
-          <div className="py-4 text-center">
-            <span className="inline-block rounded-[4px] bg-accent-violet px-7 py-3 text-body-lg font-extrabold text-white">{p.ctaText}</span>
-            {zones && (
-              <span className={cn("mt-1.5 block text-caption font-bold", p.cta.status === "missing" ? "text-danger" : "text-accent-blue")}>
-                {p.cta.status === "missing" ? "Goes nowhere yet: add its URL in the plan" : `Goes to ${p.cta.dest}`}
+          <div className={cn("space-y-3 py-4", activeStyles.buttonAlign === "left" ? "text-left" : activeStyles.buttonAlign === "full" ? "text-center w-full" : "text-center")}>
+            <div>
+              <span
+                className={cn(
+                  "inline-block rounded-[4px] font-extrabold text-white shadow-2xs transition",
+                  activeStyles.buttonStyle === "brand" ? "bg-brand hover:bg-brand-deep" : "bg-accent-violet hover:brightness-110",
+                  activeStyles.buttonSize === "lg" ? "px-9 py-4 text-title" : "px-7 py-3 text-body-lg",
+                  activeStyles.buttonAlign === "full" && "w-full text-center"
+                )}
+              >
+                {p.primaryCta?.label || p.ctaText}
               </span>
+              {zones && (
+                <span className={cn("mt-1.5 block text-caption font-bold", (p.primaryCta ? !p.primaryCta.url : p.cta.status === "missing") ? "text-danger" : "text-accent-blue")}>
+                  {p.primaryCta?.url ? `Goes to ${p.primaryCta.url}` : p.cta.status === "missing" ? "Goes nowhere yet: add its URL in the plan" : `Goes to ${p.cta.dest}`}
+                </span>
+              )}
+            </div>
+            {/* Unassigned secondary CTAs appear here in footer */}
+            {p.secondaryCtas.filter((c) => isCtaUnassigned(c)).length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                {p.secondaryCtas.filter((c) => isCtaUnassigned(c)).map((c) => (
+                  <div key={c.id} className="inline-block">
+                    <span className="inline-flex items-center gap-1 rounded-[4px] border border-accent-violet/70 bg-card px-4 py-2 text-label font-bold text-accent-violet shadow-2xs">
+                      {c.label} ↗
+                    </span>
+                    {zones && (
+                      <span className={cn("mt-1 block text-micro font-bold", !c.url ? "text-danger" : "text-ink-4")}>
+                        {c.url ? `Goes to ${c.url}` : "Missing URL"}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Unassigned general backlinks */}
+            {p.backlinks.filter((bl) => isBacklinkUnassigned(bl)).length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-label text-ink-3">
+                {p.backlinks.filter((bl) => isBacklinkUnassigned(bl)).map((bl) => (
+                  <span key={bl.id} className="inline-flex items-center gap-1 font-semibold hover:underline">
+                    <Link2 className="size-3 text-accent-violet" />
+                    <span className="text-ink-2">{bl.title}</span>
+                    <span className="text-micro font-bold text-accent-violet">↗</span>
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         )}
         {zone(
           "signoff",
-          <div className="flex items-center gap-3 border-t border-hair py-4 text-body-lg">
+          <div className="flex items-center gap-3 border-t border-hair py-4" style={{ fontSize: `${activeStyles.bodySize}px` }}>
             {personal && live && !imagesOff && (
               // eslint-disable-next-line @next/next/no-img-element -- the sender's CRM photo
               <img src="/email/rep-portrait.jpg" alt="" className="size-12 shrink-0 rounded-full object-cover" />

@@ -11,6 +11,7 @@ import {
   Image as ImageIcon,
   Info,
   Layers,
+  Library,
   Megaphone,
   Paperclip,
   Search,
@@ -31,7 +32,8 @@ import { ScenarioDrawer } from "@/features/workspace/scenario-drawer";
 import { planningSources } from "@/features/workspace/mock-data";
 import { useBrandName } from "@/features/workspace/brand-catalogue";
 import { useEmailStore } from "@/features/workspace/email-store";
-import { AUDIENCE_LABEL, EMAIL_PURPOSES, emailSamplePrompts, senderInfo } from "@/features/workspace/email-options";
+import { AUDIENCE_LABEL, EMAIL_PURPOSES, emailSamplePrompts, libraryPieces, senderInfo } from "@/features/workspace/email-options";
+import { ApprovedMaterialsModal } from "@/features/workspace/approved-materials-modal";
 import { EmailAboutFields } from "@/features/workspace/email-about-fields";
 import { Modal } from "@/components/ui/modal";
 import { useAdSubject } from "@/features/workspace/ad-subject";
@@ -306,6 +308,13 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
      above the prompt opens that one; the modal keeps the other three
      reachable so a second change does not mean a second trip. */
   const [contextField, setContextField] = useState<ContextField | null>(null);
+
+  /* Approved materials attached for email */
+  const [approvedMaterialsOpen, setApprovedMaterialsOpen] = useState(false);
+  const emailAttached = useEmailStore((s) => s.attached);
+  const setEmailStore = useEmailStore((s) => s.set);
+  const allLibraryPieces = useMemo(() => libraryPieces(currentBrandName, emailAudience), [currentBrandName, emailAudience]);
+  const attachedPieces = useMemo(() => allLibraryPieces.filter((p) => emailAttached.includes(p.id)), [allLibraryPieces, emailAttached]);
 
   const preparePlan = () => {
     if (!requestIsSpecific) {
@@ -628,6 +637,24 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   onRemove={() => removeAttachment(file)}
                 />
               ))}
+              {isEmail &&
+                attachedPieces.map((piece) => (
+                  <span
+                    key={piece.id}
+                    className="inline-flex items-center gap-1.5 rounded-chip border border-tint-line bg-tint px-2.5 py-1 text-label font-bold text-brand-deep shadow-2xs"
+                  >
+                    <Library className="size-3 shrink-0" />
+                    <span className="max-w-44 truncate">{piece.title}</span>
+                    <button
+                      type="button"
+                      onClick={() => setEmailStore({ attached: emailAttached.filter((id) => id !== piece.id) })}
+                      className="grid size-4 cursor-pointer place-items-center rounded-full hover:bg-black/10 transition"
+                      title="Remove material"
+                    >
+                      <X className="size-2.5" />
+                    </button>
+                  </span>
+                ))}
             </div>
 
             <div className="p-6 pb-3">
@@ -669,6 +696,26 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                   <Paperclip className="size-3.5" />
                   <span>Attach</span>
                 </button>
+                {isEmail && (
+                  <button
+                    type="button"
+                    onClick={() => setApprovedMaterialsOpen(true)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-chip px-2.5 py-1.5 text-label font-bold transition-colors cursor-pointer",
+                      emailAttached.length > 0
+                        ? "border border-tint-line bg-tint text-brand-deep shadow-2xs"
+                        : "text-ink-3 hover:bg-tint hover:text-brand"
+                    )}
+                  >
+                    <Library className="size-3.5" />
+                    <span>Approved materials</span>
+                    {emailAttached.length > 0 && (
+                      <span className="grid size-4 place-items-center rounded-full bg-brand text-white text-micro font-bold">
+                        {emailAttached.length}
+                      </span>
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Far Right Bottom Action: Send Arrow CTA */}
@@ -726,7 +773,7 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
                       {sample.tag}
                     </span>
                     <span className="text-body text-ink font-medium leading-normal line-clamp-1 flex-1">
-                      "{sample.prompt}"
+                      &ldquo;{sample.prompt}&rdquo;
                     </span>
                   </div>
 
@@ -765,6 +812,17 @@ export function CreateScreen({ embedded = false }: { embedded?: boolean }) {
         >
           <EmailAboutFields withAudience />
         </Modal>
+      )}
+      {isEmail && approvedMaterialsOpen && (
+        <ApprovedMaterialsModal
+          open={approvedMaterialsOpen}
+          onClose={() => setApprovedMaterialsOpen(false)}
+          brandName={currentBrandName}
+          audience={emailAudience}
+          allPieces={allLibraryPieces}
+          selectedIds={emailAttached}
+          onConfirm={(ids) => setEmailStore({ attached: ids })}
+        />
       )}
       {contextField && (
         <ProjectContextModal
