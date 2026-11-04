@@ -19,6 +19,7 @@ import { ZONE_TYPE_LABEL, type EmailProject, type ZoneType } from "@/features/wo
 /** Who the sample email is to, by audience. */
 export const RECIPIENT = {
   HCP: { name: "Dr. Daniel Okafor", role: "Hematology-oncology · Lakeview Cancer Institute", greeting: "Dear Dr. Okafor,", initials: "DO" },
+  PT_Committee: { name: "Maria Alvarez, PharmD", role: "P&T Committee Chair · Lakeview Health System", greeting: "Dear Dr. Alvarez,", initials: "MA" },
   Pharmacy: { name: "Maria Alvarez, PharmD", role: "Director of Pharmacy · Lakeview Health", greeting: "Dear Dr. Alvarez,", initials: "MA" },
   Patient: { name: "Jordan Lee", role: "Patient · enrolled in the support programme", greeting: "Hi Jordan,", initials: "JL" },
   Consumer: { name: "Sam Patel", role: "Signed up on the website", greeting: "Hi Sam,", initials: "SP" },
@@ -26,7 +27,9 @@ export const RECIPIENT = {
 
 /** Formulary and value emails go to a pharmacy or P&T lead rather than a prescriber. */
 export const recipientFor = (p: Pick<EmailProject, "audience" | "email">) =>
-  p.email.purpose === "formulary" || p.email.purpose === "value" ? RECIPIENT.Pharmacy : RECIPIENT[p.audience];
+  p.audience === "PT_Committee" || p.email.purpose === "formulary" || p.email.purpose === "value"
+    ? RECIPIENT.PT_Committee
+    : RECIPIENT[p.audience as keyof typeof RECIPIENT] ?? RECIPIENT.HCP;
 
 /** How the email is being looked at. */
 export type EmailView = "zones" | "inbox" | "phone" | "nopics" | "rep";

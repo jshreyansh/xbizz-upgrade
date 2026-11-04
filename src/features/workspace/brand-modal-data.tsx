@@ -38,7 +38,6 @@ import {
   Target,
   TrendingUp,
   Truck,
-  UserCheck,
   Users,
   Sparkles,
   Zap,
@@ -167,8 +166,9 @@ export const INITIAL_HCP_SPECIALITIES = [
 ];
 
 // ── Audience Options ──
-export const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: string; icon: any }> = [
-  { id: "HCP", title: "HCP", subtitle: "Doctors & Specialists", icon: Stethoscope },
+export const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: string; icon: LucideIcon }> = [
+  { id: "HCP", title: "HCPs", subtitle: "Doctors & Specialists", icon: Stethoscope },
+  { id: "PT_Committee", title: "P&T Committee", subtitle: "Pharmacy & Therapeutics", icon: Scale },
   { id: "Patient", title: "Patients", subtitle: "Clarity & Adherence", icon: HeartHandshake },
   { id: "Field team", title: "Field Force", subtitle: "Detailing & Sales", icon: Briefcase },
   { id: "Hospital", title: "Hospital", subtitle: "Formulary & Value", icon: Building2 },
@@ -188,6 +188,7 @@ export const AUDIENCE_OPTIONS: Array<{ id: Audience; title: string; subtitle: st
  */
 export const GROUNDING_BY_AUDIENCE: Record<Audience, Array<"brand" | "disease">> = {
   HCP:            ["brand"],
+  PT_Committee:   ["brand"],
   "Field team":   ["brand"],
   Patient:        ["brand", "disease"],
   Consumer:       ["brand", "disease"],
@@ -211,6 +212,15 @@ export const GROUNDING_BY_AUDIENCE: Record<Audience, Array<"brand" | "disease">>
  */
 export const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; icon: LucideIcon }>> = {
   HCP: [
+    { id: "product-intro", label: "Product Introduction", icon: Pill },
+    { id: "moa", label: "Mechanism of Action", icon: Activity },
+    { id: "dosage-safety", label: "Dosage & Safety", icon: ShieldCheck },
+    { id: "interactions", label: "Drug Interactions", icon: Zap },
+    { id: "side-effects", label: "Side Effects", icon: AlertCircle },
+    { id: "efficacy", label: "Efficacy & Clinical Readout", icon: TrendingUp },
+    { id: "head-to-head", label: "Comparative Head-to-Head", icon: Scale },
+  ],
+  PT_Committee: [
     { id: "product-intro", label: "Product Introduction", icon: Pill },
     { id: "moa", label: "Mechanism of Action", icon: Activity },
     { id: "dosage-safety", label: "Dosage & Safety", icon: ShieldCheck },

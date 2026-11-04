@@ -12,7 +12,7 @@ import { LIBRARY_ASSETS, type LibraryAsset } from "@/features/content-library/co
  * MLR; nothing here sends, captures consent or tracks opens.
  */
 
-export type EmailAudience = "HCP" | "Patient" | "Consumer";
+export type EmailAudience = "HCP" | "PT_Committee" | "Patient" | "Consumer";
 export type EmailSender = "rep" | "msl" | "hq" | "support";
 export type EmailPurpose =
   | "followup" | "newdata" | "launch" | "congress" | "access" | "medq" | "pub" | "mslcongress"
@@ -162,7 +162,7 @@ export const EMAIL_CHANNELS: EmailChannelDef[] = [
 
 export function defaultChannelFor(audience: EmailAudience, sender: EmailSender): EmailChannel {
   if (sender === "support") return "health";
-  if (audience === "HCP" && sender !== "hq") return "veeva";
+  if ((audience === "HCP" || audience === "PT_Committee") && sender !== "hq") return "veeva";
   if (audience === "Patient" || audience === "Consumer" || sender === "hq") return "sfmc";
   return "veeva";
 }
@@ -174,16 +174,21 @@ export function defaultChannelsFor(audience: EmailAudience, sender: EmailSender)
 /** Today, for approvals that are about to end. */
 export const EMAIL_TODAY = "2 Nov 2026";
 
-export const EMAIL_AUDIENCES: EmailAudience[] = ["HCP", "Patient", "Consumer"];
+export const EMAIL_AUDIENCES: EmailAudience[] = ["HCP", "PT_Committee"];
 export const AUDIENCE_LABEL: Record<EmailAudience, { title: string; hint: string }> = {
-  HCP: { title: "HCPs", hint: "Doctors, nurses and pharmacists" },
+  HCP: { title: "HCPs", hint: "Doctors, nurses and clinical specialists" },
+  PT_Committee: { title: "P&T Committee", hint: "Pharmacy & Therapeutics and formulary decision-makers" },
   Patient: { title: "Patients", hint: "People prescribed the drug, and their carers" },
   Consumer: { title: "Consumers", hint: "The public, about the condition" },
 };
-/** The audience mid-sentence: "for HCPs", "for patients". */
-export const audienceNoun = (a: EmailAudience) => (a === "HCP" ? "HCPs" : AUDIENCE_LABEL[a].title.toLowerCase());
-/** HCP emails are Approved Email, sent from the CRM. */
-export const isProfessional = (a: EmailAudience) => a === "HCP";
+/** The audience mid-sentence: "for HCPs", "for P&T committees". */
+export const audienceNoun = (a: EmailAudience) => {
+  if (a === "HCP") return "HCPs";
+  if (a === "PT_Committee") return "P&T committees";
+  return AUDIENCE_LABEL[a].title.toLowerCase();
+};
+/** HCP and P&T Committee emails are Approved Email, sent from the CRM. */
+export const isProfessional = (a: EmailAudience) => a === "HCP" || a === "PT_Committee";
 
 interface SenderDef {
   label: string;
@@ -256,7 +261,7 @@ export function senderInfo(id: EmailSender, audience: EmailAudience): SenderDef 
 }
 
 export const sendersFor = (audience: EmailAudience): EmailSender[] =>
-  audience === "HCP" ? ["rep", "msl", "hq"] : audience === "Patient" ? ["hq", "support"] : ["hq"];
+  audience === "HCP" || audience === "PT_Committee" ? ["rep", "msl", "hq"] : audience === "Patient" ? ["hq", "support"] : ["hq"];
 
 /** The ones who write their own note and pick blocks; head office sends as it is. */
 export const isPersonalSender = (s: EmailSender) => s !== "hq";
@@ -357,16 +362,20 @@ export const EMAIL_PURPOSES: Record<EmailPurpose, PurposeDef> = {
   },
 };
 
-export const purposesFor = (sender: EmailSender, audience: EmailAudience): EmailPurpose[] =>
-  (Object.keys(EMAIL_PURPOSES) as EmailPurpose[]).filter((id) => EMAIL_PURPOSES[id].audience === audience && EMAIL_PURPOSES[id].senders.includes(sender));
+export const purposesFor = (sender: EmailSender, audience: EmailAudience): EmailPurpose[] => {
+  const targetAudience = audience === "PT_Committee" ? "HCP" : audience;
+  return (Object.keys(EMAIL_PURPOSES) as EmailPurpose[]).filter(
+    (id) => EMAIL_PURPOSES[id].audience === targetAudience && EMAIL_PURPOSES[id].senders.includes(sender)
+  );
+};
 
 /** The prompt screen's examples, by who it is for and who sends it. */
 export function emailSamplePrompts(audience: EmailAudience, sender: EmailSender, purpose: EmailPurpose, subject: string, prescribers: string, condition: string) {
-  if (purpose === "formulary" || purpose === "value")
+  if (audience === "PT_Committee" || purpose === "formulary" || purpose === "value")
     return [
-      { id: "formulary", tag: "Formulary review", prompt: `Write an email a rep or account manager can send a hospital pharmacy director before the P&T review of ${subject}, with the formulary kit linked.` },
-      { id: "value", tag: "Value & outcomes", prompt: `Draft an email for formulary decision makers on the budget impact and outcomes evidence for ${subject}.` },
-      { id: "dossier", tag: "Value dossier", prompt: `Create a short email offering the AMCP-format value dossier for ${subject} to a health system's value analysis team.` },
+      { id: "formulary", tag: "Formulary review", prompt: `Write an email an account manager can send to the P&T committee regarding the formulary review for ${subject}, linking the formulary kit.` },
+      { id: "value", tag: "Value & outcomes", prompt: `Draft an email for the P&T committee highlighting budget impact models and clinical outcomes for ${subject}.` },
+      { id: "dossier", tag: "Value dossier", prompt: `Create a concise email offering the AMCP value dossier for ${subject} to the health system formulary evaluation team.` },
     ];
   if (audience === "Patient")
     return [

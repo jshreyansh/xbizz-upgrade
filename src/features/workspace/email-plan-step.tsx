@@ -568,13 +568,13 @@ function BlockPlanTile({
                 ) : (
                   <span className="inline-flex items-center gap-1 rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-micro font-bold text-ok" title="Optional fragment: rep can choose whether to include">
                     <Check className="size-3 text-ok" />
-                    <span>Optional for rep</span>
+                    <span>Optional</span>
                   </span>
                 )}
                 {rule.editable && (
                   <span className="inline-flex items-center gap-1 rounded-chip border border-tint-line bg-tint px-2 py-0.5 text-micro font-bold text-brand-deep" title="Rep editable commentary allowed">
                     <PenLine className="size-3" />
-                    <span>Editable note</span>
+                    <span>Editable Note</span>
                   </span>
                 )}
 
@@ -653,7 +653,7 @@ function BlockPlanTile({
                   className="flex items-center gap-1.5 cursor-pointer hover:underline"
                 >
                   <PenLine className="size-3 text-brand" />
-                  <span>Editable note</span>
+                  <span>Editable Note</span>
                 </button>
                 <button
                   type="button"
@@ -671,7 +671,7 @@ function BlockPlanTile({
                 title="Locked MLR text (compliance preserved) · Click to edit"
               >
                 <ShieldCheck className="size-3 text-accent-violet" />
-                <span>Locked copy</span>
+                <span>Locked Text</span>
               </span>
             )}
 
@@ -735,7 +735,7 @@ function BlockPlanTile({
               className="h-7 gap-1 px-2.5 text-micro font-bold cursor-pointer"
             >
               <Plus className="size-3.5" />
-              <span>Attach CTA / Citation</span>
+              <span>Attach CTA / Backlink</span>
             </Button>
           </div>
         </div>
@@ -835,7 +835,7 @@ export function EmailPlanStep({
   return (
     <>
       <div className="shrink-0">
-        <h2 className="text-display font-[850] tracking-tight text-ink">Email plan</h2>
+        <h2 className="text-display font-[850] tracking-tight text-ink">Email Plan</h2>
         <p className="mt-0.5 text-body text-ink-3">Drafted from your sources and approved materials. Confirm the subject lines, blocks and template, then build.</p>
       </div>
 
@@ -843,7 +843,7 @@ export function EmailPlanStep({
         {/* 1. Subject lines */}
         <PlanSectionShell
           icon={Type}
-          title={choice ? "Subject lines" : "Subject line"}
+          title={choice ? "Subject Lines" : "Subject Line"}
           summary={choice ? `${email.subjects.length} for ${who} to choose from` : `"${p.subject}"`}
           state={planState(email.subjects.length === 0)}
           source="drafted from your sources"
@@ -887,7 +887,7 @@ export function EmailPlanStep({
         {/* 2. Content blocks, grouped by where each was drafted from */}
         <PlanSectionShell
           icon={ListChecks}
-          title="Content blocks"
+          title="Content Blocks"
           summary={`${p.included.length} of ${p.blocks.length} blocks${p.isHQ ? " in the email" : ` for ${who} to pick from`}`}
           state={planState(p.included.length === 0)}
           error={p.included.length === 0 ? { title: "No blocks in the email", detail: "Tick at least one block." } : null}
@@ -950,7 +950,7 @@ export function EmailPlanStep({
             <div className="flex flex-col gap-2 rounded-control border border-hair-2 bg-subtle/50 p-3.5 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-body font-bold text-ink">Need an additional content block?</span>
+                  <span className="text-body font-bold text-ink">Need an Additional Content Block?</span>
                   <span className="rounded-chip bg-tint px-1.5 py-0.5 text-micro font-bold text-brand-deep border border-tint-line">Context required</span>
                 </div>
                 <p className="mt-0.5 text-caption text-ink-3">
@@ -968,7 +968,7 @@ export function EmailPlanStep({
                 className="h-8 gap-1.5 shrink-0 text-label font-bold text-brand hover:text-brand-deep cursor-pointer"
               >
                 <Sparkles className="size-3.5" />
-                <span>Ask SwishX in chat</span>
+                <span>Ask SwishX in Chat</span>
               </Button>
             </div>
           </div>
@@ -978,7 +978,7 @@ export function EmailPlanStep({
         {/* 3. Template, as a grid of layouts */}
         <PlanSectionShell
           icon={LayoutTemplate}
-          title="Template"
+          title="Email Template & Layout"
           summary={`${p.template.title} · holds ${p.template.holds} blocks`}
           state={planState(false)}
           source={p.template.from === "brand" ? "from your brand" : "SwishX layout"}

@@ -322,7 +322,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={ShieldCheck}
-              label="Brand guidelines"
+              label="Brand Guidelines"
               onClick={() => setDossier(dossierFor(brandName))}
             />
           ),
@@ -343,7 +343,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={Link2}
-              label="View links table"
+              label="View Links Table"
               onClick={() => {
                 setCopilotPanelOpen(true);
                 setPanelTab("links");
@@ -358,7 +358,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={RefreshCw}
-              label="Regenerate hero"
+              label="Regenerate Hero"
               onClick={() => {
                 showToast("Regenerating hero image with SwishX...");
                 edited();
@@ -371,7 +371,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={Upload}
-              label="Replace hero"
+              label="Replace Hero"
               onClick={() => setInsert({ request: "brand-images" })}
             />
           ),
@@ -381,7 +381,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={ImageIcon}
-              label={email.offImages.includes("header") ? "Show hero image" : "Hide hero image"}
+              label={email.offImages.includes("header") ? "Show Hero Image" : "Hide Hero Image"}
               onClick={() => {
                 setEmail({
                   offImages: email.offImages.includes("header")
@@ -421,7 +421,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={Sparkles}
-              label="Rewrite headline"
+              label="Rewrite Headline"
               onClick={() =>
                 handToChat(
                   { id: "header:heading", label: "Subject Heading", detail: p.subject },
@@ -436,7 +436,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={RefreshCw}
-              label="Make shorter"
+              label="Shorten Headline"
               onClick={() =>
                 handToChat(
                   { id: "header:heading", label: "Subject Heading", detail: p.subject },
@@ -490,7 +490,7 @@ export function EmailStudioScreen() {
                       edited();
                     }}
                   >
-                    Not add a note
+                    Not Add a Note
                   </SegmentedButton>
                   <SegmentedButton
                     active={email.repEdit.note}
@@ -499,7 +499,7 @@ export function EmailStudioScreen() {
                       edited();
                     }}
                   >
-                    Type a note
+                    Type a Note
                   </SegmentedButton>
                 </Segmented>
               </span>
@@ -545,7 +545,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={RefreshCw}
-              label="Make shorter"
+              label="Shorten Opening"
               onClick={() =>
                 handToChat(
                   { id: "opening", label: "Opening & Indication", detail: purpose.opening(p.brandName, p.condition) },
@@ -580,7 +580,7 @@ export function EmailStudioScreen() {
                       edited();
                     }}
                   >
-                    Fixed blocks
+                    Fixed Blocks
                   </SegmentedButton>
                   <SegmentedButton
                     active={email.repEdit.blocks}
@@ -589,7 +589,7 @@ export function EmailStudioScreen() {
                       edited();
                     }}
                   >
-                    Rep chooses
+                    Rep Chooses
                   </SegmentedButton>
                 </Segmented>
               </span>
@@ -601,7 +601,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={BarChart3}
-              label={email.offImages.includes("chart") ? "Show chart" : "Hide chart"}
+              label={email.offImages.includes("chart") ? "Show Chart" : "Hide Chart"}
               onClick={() => {
                 setEmail({
                   offImages: email.offImages.includes("chart")
@@ -618,7 +618,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={Sparkles}
-              label="Rewrite claims"
+              label="Rewrite Claims"
               onClick={() =>
                 handToChat(
                   { id: "blocks", label: "Content Blocks", detail: `${p.included.length} approved blocks` },
@@ -727,7 +727,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={ImageIcon}
-              label={email.offImages.includes("rep") ? "Show sender photo" : "Hide sender photo"}
+              label={email.offImages.includes("rep") ? "Show Sender Photo" : "Hide Sender Photo"}
               onClick={() => {
                 setEmail({
                   offImages: email.offImages.includes("rep")
@@ -755,7 +755,7 @@ export function EmailStudioScreen() {
                       edited();
                     }}
                   >
-                    Fixed attachments
+                    Fixed Attachments
                   </SegmentedButton>
                   <SegmentedButton
                     active={email.repEdit.piece}
@@ -764,7 +764,7 @@ export function EmailStudioScreen() {
                       edited();
                     }}
                   >
-                    Rep chooses
+                    Rep Chooses
                   </SegmentedButton>
                 </Segmented>
               </span>
@@ -776,7 +776,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={Upload}
-              label="Attach doc"
+              label="Attach Document"
               onClick={() => setInsert({ request: "documents" })}
             />
           ),
@@ -796,7 +796,7 @@ export function EmailStudioScreen() {
           node: (
             <ToolButton
               icon={ShieldCheck}
-              label="View in dossier"
+              label="View in Dossier"
               onClick={() => setDossier(dossierFor(brandName))}
             />
           ),
@@ -909,7 +909,7 @@ export function EmailStudioScreen() {
   const rail = (
     <aside className="flex w-60 min-h-0 shrink-0 flex-col overflow-y-auto border-r border-hair bg-subtle">
       <div className="flex h-11 shrink-0 items-center border-b border-hair bg-card px-3">
-        <span className="text-micro font-bold uppercase tracking-[0.12em] text-ink-3">Email · {p.zones.length} parts</span>
+        <span className="text-micro font-bold uppercase tracking-[0.12em] text-ink-3">Email · {p.zones.length} Parts</span>
       </div>
       <div className="space-y-1 p-2.5">
         {p.zones.map((id) => {
@@ -935,9 +935,9 @@ export function EmailStudioScreen() {
                   <div className="space-y-0.5 pl-6">
                     {[
                       { id: "header:logo", label: "Logo & Brand Mark" },
-                      { id: "header:links", label: "Safety links (PI / ISI)" },
-                      { id: "header:image", label: "Hero image" },
-                      { id: "header:heading", label: "Subject heading" },
+                      { id: "header:links", label: "Safety Links (PI / ISI)" },
+                      { id: "header:image", label: "Hero Image" },
+                      { id: "header:heading", label: "Subject Heading" },
                     ].map((sub) => (
                       <button
                         key={sub.id}
@@ -1019,11 +1019,13 @@ export function EmailStudioScreen() {
     />
   );
 
-  const inboxLabel = p.professional
-    ? "Doctor's inbox"
-    : p.audience === "Patient"
-      ? "Patient's inbox"
-      : "Consumer inbox";
+  const inboxLabel = p.audience === "PT_Committee"
+    ? "P&T Committee Inbox"
+    : p.professional
+      ? "Doctor's Inbox"
+      : p.audience === "Patient"
+        ? "Patient's Inbox"
+        : "Consumer Inbox";
 
   const availableViews: EmailView[] = submitted
     ? ["inbox", "phone", "nopics"]
@@ -1041,8 +1043,8 @@ export function EmailStudioScreen() {
                 : v === "phone"
                   ? "Phone"
                   : v === "zones"
-                    ? `What ${who} can change`
-                    : "Images off"}
+                    ? (p.email.sender === "rep" ? "What Reps Can Change" : p.email.sender === "msl" ? "What MSLs Can Change" : "What Senders Can Change")
+                    : "Images Off"}
             </SegmentedButton>
           ))}
         </Segmented>

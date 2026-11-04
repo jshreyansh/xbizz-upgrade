@@ -105,8 +105,8 @@ export function EmailPublishPreview({ p, approved }: { p: EmailProject; approved
         </div>
         <div className="min-w-0 space-y-3">
           <div>
-            <h3 className="text-body-lg font-extrabold text-ink">MLR package</h3>
-            <p className="text-label text-ink-3">Each part reviewed and expiring on its own, the way Veeva does it. {rows.filter((r) => !r.already).length} items to review.</p>
+            <h3 className="text-body-lg font-extrabold text-ink">MLR Submission Package</h3>
+            <p className="text-label text-ink-3">Modular fragment package structured for Veeva Vault PromoMats and CRM Approved Email review. {rows.filter((r) => !r.already).length} items to review.</p>
           </div>
           <div className="overflow-x-auto rounded-control border border-hair bg-card">
             <table className="w-full border-collapse">
@@ -144,7 +144,7 @@ export function EmailPublishPreview({ p, approved }: { p: EmailProject; approved
             </table>
           </div>
           <div>
-            <h3 className="text-body-lg font-extrabold text-ink">Links</h3>
+            <h3 className="text-body-lg font-extrabold text-ink">Tracked Destination Links</h3>
             <p className="text-label text-ink-3">Each one tracked, with the label that shows in click reports.</p>
           </div>
           <LinksTable p={p} />
@@ -158,16 +158,16 @@ export function EmailPublishPreview({ p, approved }: { p: EmailProject; approved
 const CRM_DESTINATIONS = [
   { id: "veeva", name: "Veeva Vault", sub: "PromoMats + Vault CRM Approved Email" },
   { id: "hubspot", name: "HubSpot", sub: "Marketing Hub & Sales CRM Email" },
-  { id: "oce", name: "IQVIA OCE", sub: "OCE Personal approved email" },
+  { id: "oce", name: "IQVIA OCE", sub: "OCE Personal Approved Email" },
   { id: "sfdc", name: "Salesforce", sub: "Life Sciences Cloud" },
-  { id: "html", name: "HTML package", sub: "Zip for your agency or email platform" },
+  { id: "html", name: "HTML Package", sub: "ZIP package for external deployment" },
 ];
 const CONSUMER_DESTINATIONS = [
   { id: "sfmc", name: "Salesforce Marketing Cloud", sub: "Consumer email, with the brand's opt-ins" },
   { id: "hubspot", name: "HubSpot", sub: "Marketing Hub & Sales Sequences" },
   { id: "health", name: "Salesforce Health Cloud", sub: "Where patient support nurses send from" },
   { id: "braze", name: "Braze", sub: "Consumer lifecycle email" },
-  { id: "html", name: "HTML package", sub: "Zip for your agency or email platform" },
+  { id: "html", name: "HTML Package", sub: "ZIP package for external deployment" },
 ];
 
 /**
@@ -184,39 +184,45 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
   const optionalCount = p.included.length - mandatoryCount;
   const hasEditableNote = p.included.some((b) => getBlockRule(p.email.blockRules, b.id).editable);
 
+  const recipientLabel = p.audience === "PT_Committee"
+    ? "Recipient / Committee Chair Name"
+    : p.professional
+      ? "Doctor's Name"
+      : "Recipient Name";
+
   const hubspotTokens: Array<[string, string]> = [
-    [p.professional ? "Doctor's name" : "Recipient name", "{{contact.firstname}} {{contact.lastname}}"],
-    ...(p.showNote ? ([["Personal note, 255 characters", "{{contact.sales_rep_note}}"]] as Array<[string, string]>) : []),
-    ["Content blocks", `HubSpot Modular Sections (${p.included.length} approved modules)`],
-    ["Prescribing & Safety Info", "Hosted link tokens"],
+    [recipientLabel, "{{contact.firstname}} {{contact.lastname}}"],
+    ...(p.showNote ? ([["Personal Note (Optional)", "{{contact.sales_rep_note}}"]] as Array<[string, string]>) : []),
+    ["Content Blocks", `HubSpot Modular Sections (${p.included.length} approved modules)`],
+    ["Prescribing Information & Important Safety Information", "Hosted link tokens"],
     ["Unsubscribe", "{{unsubscribe_link}}"],
-    ["Web links", "Auto-tagged with HubSpot tracking parameters"],
+    ["Tracked Destination Links", "Auto-tagged with HubSpot tracking parameters"],
   ];
 
   const consumerTokens: Array<[string, string]> = [
-    ["First name", "%%FirstName%%"],
-    ...(p.showNote ? ([["Personal note, 255 characters", "%%SenderNote%%"]] as Array<[string, string]>) : []),
-    ...(p.zoneType("blocks") === "choose" ? ([["Sender picks which blocks", "Content blocks, one per block"]] as Array<[string, string]>) : []),
-    ...(p.unbranded ? [] : ([["Medication Guide · safety information", "Hosted pages, linked"]] as Array<[string, string]>)),
-    ["Unsubscribe and preferences", "%%unsub_center_url%%"],
-    ["Web links", "Tracked by the platform, labelled as below"],
+    ["First Name", "%%FirstName%%"],
+    ...(p.showNote ? ([["Personal Note (Optional)", "%%SenderNote%%"]] as Array<[string, string]>) : []),
+    ...(p.zoneType("blocks") === "choose" ? ([["Sender Picks Which Blocks", "Content blocks, one per block"]] as Array<[string, string]>) : []),
+    ...(p.unbranded ? [] : ([["Medication Guide & Safety Information", "Hosted pages, linked"]] as Array<[string, string]>)),
+    ["Unsubscribe & Preferences", "%%unsub_center_url%%"],
+    ["Tracked Destination Links", "Tracked by the platform, labelled as below"],
   ];
   const tokens: Array<[string, string]> = dest === "hubspot" ? hubspotTokens : !p.professional ? consumerTokens : [
-    ["Doctor's name", "{{accTitle}} {{accLname}}"],
-    ...(p.showNote ? ([["Personal note, 255 characters", "{{customText(255)}}"]] as Array<[string, string]>) : []),
-    [p.zoneType("blocks") === "choose" ? "Rep picks which blocks" : "Fixed blocks", p.zoneType("blocks") === "choose" ? `{{insertEmailFragments(1,${p.included.length})}}` : "inline in the template"],
+    [recipientLabel, "{{accTitle}} {{accLname}}"],
+    ...(p.showNote ? ([["Personal Note (Optional)", "{{customText(255)}}"]] as Array<[string, string]>) : []),
+    [p.zoneType("blocks") === "choose" ? "Rep Fragment Selection" : "Fixed Blocks", p.zoneType("blocks") === "choose" ? `{{insertEmailFragments(1,${p.included.length})}}` : "inline in the template"],
     [
-      "Block rules (Mandatory vs Optional)",
+      "Block Rules: Mandatory vs. Optional",
       `${mandatoryCount} mandatory ({{!vva_mandatory}}), ${optionalCount} optional ({{!vva_optional}})`
     ],
-    ...(p.email.repEdit?.reorder ? ([["Block reordering by rep", "allowFragmentReorder: true ({{allow_reorder}})"]] as Array<[string, string]>) : []),
-    ...(hasEditableNote ? ([["Block commentary note placeholder", "{{customBlockNote(255)}}"]] as Array<[string, string]>) : []),
-    ...(p.attachedPieces.length ? ([[p.zoneType("piece") === "choose" ? "Documents, rep ticks which" : "Documents", "{{PieceLink}}, one per document"]] as Array<[string, string]>) : []),
-    ["Prescribing Information · safety information", "{{PILink}} · {{ISILink}}"],
-    ...(p.email.media.some((m) => m.kind === "doc") ? ([["Other linked documents", "{{$VaultDocID}}"]] as Array<[string, string]>) : []),
-    ["Sender's name and contact", "{{userName}} {{userEmailAddress}}"],
+    ...(p.email.repEdit?.reorder ? ([["Block Reordering Permission", "allowFragmentReorder: true ({{allow_reorder}})"]] as Array<[string, string]>) : []),
+    ...(hasEditableNote ? ([["Rep Commentary Field (Optional)", "{{customBlockNote(255)}}"]] as Array<[string, string]>) : []),
+    ...(p.attachedPieces.length ? ([[p.zoneType("piece") === "choose" ? "Attached Documents (Rep Selects)" : "Attached Documents", "{{PieceLink}}, one per document"]] as Array<[string, string]>) : []),
+    ["Prescribing Information & Important Safety Information", "{{PILink}} · {{ISILink}}"],
+    ...(p.email.media.some((m) => m.kind === "doc") ? ([["Other Linked Documents", "{{$VaultDocID}}"]] as Array<[string, string]>) : []),
+    ["Sender's Name & Contact", "{{userName}} {{userEmailAddress}}"],
     ["Unsubscribe", "{{unsubscribe_product_link}}"],
-    ["Web links", "{{AppDocId}} on each link, for click tracking"],
+    ["Tracked Destination Links", "{{AppDocId}} on each link, for click tracking"],
   ];
   return (
     <Modal
@@ -276,7 +282,7 @@ export function EmailExportModal({ p, onExported, onClose }: { p: EmailProject; 
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                <th className={TH}>In the email</th>
+                <th className={TH}>In the Email</th>
                 <th className={TH}>Becomes in {dest === "veeva" ? "Veeva" : chosen.name}</th>
               </tr>
             </thead>

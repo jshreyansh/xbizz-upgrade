@@ -76,8 +76,8 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
     <Modal
       open
       onClose={onClose}
-      title={`Try it as ${SENDER_AS[email.sender]}`}
-      description={`A simulation, to test what ${SENDER_PLURAL[email.sender]} can and can't change. Real sending happens in ${p.professional ? "your CRM" : "your patient support platform"}.`}
+      title={`Try as ${SENDER_AS[email.sender]}`}
+      description={`Simulate how ${SENDER_PLURAL[email.sender]} personalize and select fragments before sending in ${p.professional ? "your CRM" : "your patient support platform"}.`}
       size="xl"
     >
       <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
@@ -102,7 +102,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
           {subjectOptions.length > 1 && (
             <div className="space-y-1.5">
               <span className="text-label font-bold text-ink-2">
-                Subject line <span className="font-semibold text-ink-4">· pick one</span>
+                Subject Line <span className="font-semibold text-ink-4">· Select One</span>
               </span>
               {subjectOptions.map((line) => {
                 const on = subject === line;
@@ -129,7 +129,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-label font-bold text-ink-2">
-                  Blocks <span className="font-semibold text-ink-4">· {chooses ? "pick & reorder" : "reorder allowed"}</span>
+                  Content Blocks <span className="font-semibold text-ink-4">· {chooses ? "Select & Reorder" : "Reorder Allowed"}</span>
                 </span>
                 {canReorder && (
                   <span className="text-micro font-bold text-accent-violet">Reorder enabled</span>
@@ -183,7 +183,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
                           <span className="truncate font-semibold text-ink">{b.title}</span>
                           {isMandatory ? (
                             <span className="shrink-0 rounded-chip bg-subtle px-1.5 py-0.2 text-micro font-bold text-ink-3 border border-hair-2">
-                              Locked
+                              Mandatory
                             </span>
                           ) : (
                             <span className="shrink-0 rounded-chip bg-ok-bg px-1.5 py-0.2 text-micro font-bold text-ok border border-ok-line">
@@ -243,7 +243,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
           {choosesPiece && (
             <div className="space-y-1.5">
               <span className="text-label font-bold text-ink-2">
-                Documents <span className="font-semibold text-ink-4">· tick which to send</span>
+                Attached Documents <span className="font-semibold text-ink-4">· Select Which to Send</span>
               </span>
               {p.attachedPieces.map((pc) => {
                 const on = pieces.includes(pc.id);
@@ -271,7 +271,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
               <Field
                 multiline
                 rows={3}
-                label="Personal note"
+                label="Personal Note"
                 value={note}
                 onChange={(e) => {
                   setNote(e.target.value);
@@ -296,7 +296,7 @@ export function EmailRepPreview({ project: p, onClose }: { project: EmailProject
           <p className="text-label text-ink-3">{SENDER_PLURAL[email.sender][0].toUpperCase() + SENDER_PLURAL[email.sender].slice(1)} can&apos;t upload files or add links. They only pick from what you approved.</p>
 
           <div className="space-y-2 rounded-control border border-dashed border-hair-3 p-2.5">
-            <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">Try what&apos;s checked at send</span>
+            <span className="text-micro font-extrabold uppercase tracking-wide text-ink-4">Try What&apos;s Checked at Send</span>
             <Segmented className="w-fit">
               {(["in", "none", "out"] as Consent[]).map((c) => (
                 <SegmentedButton

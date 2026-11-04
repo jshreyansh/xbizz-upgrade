@@ -398,7 +398,7 @@ export function EmailDirectionsScreen() {
                 {!p.unbranded && (
                   <PlanSectionShell
                     icon={Library}
-                    title="Approved brand materials"
+                    title="Approved Brand Materials"
                     summary={
                       p.attachedPieces.length > 0
                         ? `${p.attachedPieces.length} approved ${p.attachedPieces.length === 1 ? "material" : "materials"} attached`
@@ -508,7 +508,7 @@ export function EmailDirectionsScreen() {
                 {/* 2. Audience and sender, as set at the start: a tile like every other, changeable here. */}
                 <PlanSectionShell
                   icon={Users}
-                  title="Audience and sender"
+                  title="Audience & Sender"
                   summary={[brandName, AUDIENCE_LABEL[p.audience].title, p.sender.long, purpose.label, p.condition[0].toUpperCase() + p.condition.slice(1)].join(" · ")}
                   state={planState(false)}
                   source="from project start"
@@ -528,7 +528,7 @@ export function EmailDirectionsScreen() {
                           useWorkspaceStore.getState().setAudience(a);
                         }}
                         onDone={() => setEditing(null)}
-                        footnote="HCP emails are Approved Email, sent from your CRM. Patient and consumer emails go out from your email platform."
+                        footnote="HCP and P&T Committee emails are Approved Email, deployed through your CRM."
                       />
                     </DecisionRow>
                     <DecisionRow label="Sent by" value={p.sender.long} icon={<Mail className="size-4" />} editing={editing === "sender"} onEdit={() => setEditing(editing === "sender" ? null : "sender")}>
@@ -538,7 +538,7 @@ export function EmailDirectionsScreen() {
                         values={[p.sender.long]}
                         onToggle={(long) => setAbout({ sender: sendersFor(p.audience).find((id) => senderInfo(id, p.audience).long === long)! })}
                         onDone={() => setEditing(null)}
-                        footnote="Changes what can be personalised: a note and a choice of blocks for a rep or support nurse; medical material only for an MSL; nothing from head office."
+                        footnote="Controls personalization: personal note and fragment selection for sales reps; scientific non-promotional material for MSLs; locked broadcast for HQ."
                       />
                     </DecisionRow>
                     <DecisionRow label="For" value={purpose.label} icon={<Link2 className="size-4" />} editing={editing === "purpose"} onEdit={() => setEditing(editing === "purpose" ? null : "purpose")}>
@@ -557,7 +557,7 @@ export function EmailDirectionsScreen() {
                 {/* Sending Channel & CRM Platform */}
                 <PlanSectionShell
                   icon={Send}
-                  title="Sending channel & CRM platform"
+                  title="Sending Channels & CRM Platforms"
                   summary={(() => {
                     const activeIds = email.channels && email.channels.length > 0 ? email.channels : [email.channel || "veeva"];
                     const activeChannels = activeIds.map((id) => EMAIL_CHANNELS.find((c) => c.id === id)!).filter(Boolean);
@@ -653,7 +653,7 @@ export function EmailDirectionsScreen() {
                 {!p.unbranded && (
                   <PlanSectionShell
                     icon={ImageIcon}
-                    title="Product & Device Visual Assets"
+                    title="Product & Device Visuals"
                     summary={email.packshots.length > 0 ? `${email.packshots.length} packshot${email.packshots.length === 1 ? "" : "s"} attached` : "Packshots SwishX can place in the email"}
                     state={planState(false, email.packshots.length === 0)}
                     open={openSection === "visuals"}
@@ -714,7 +714,7 @@ export function EmailDirectionsScreen() {
                 {/* 4. Visual & creative references: the look, and the user's own assets, each with what to take from it. */}
                 <PlanSectionShell
                   icon={Palette}
-                  title="Visual & creative references"
+                  title="Visual & Creative References"
                   summary={email.references.length > 0 ? `${email.references.length} reference${email.references.length === 1 ? "" : "s"}` : "The look you are after, or your own assets to use"}
                   state={planState(false, email.references.length === 0)}
                   source={email.references.length > 0 ? `${email.references.length} attached` : undefined}
@@ -778,7 +778,7 @@ export function EmailDirectionsScreen() {
                 {!p.unbranded && (
                   <PlanSectionShell
                     icon={Stamp}
-                    title="Brand mark"
+                    title="Brand Logo & Mark"
                     summary={logoMark.position === "none" ? "No logo" : `In the header · ${logoMark.name}`}
                     state={planState(false, true)}
                     source="from brand kit"
@@ -793,7 +793,7 @@ export function EmailDirectionsScreen() {
                 {/* 6. Email buttons and backlinks: Primary, Secondary CTAs, and verified resource backlinks */}
                 <PlanSectionShell
                   icon={MousePointerClick}
-                  title="Email buttons & backlinks"
+                  title="Email Buttons & Backlinks"
                   summary={
                     needsYou.button
                       ? "Add missing destination URLs for buttons or backlinks"
@@ -886,7 +886,7 @@ export function EmailDirectionsScreen() {
                           className="h-8 gap-1.5 text-label font-bold cursor-pointer"
                         >
                           <Plus className="size-3.5" />
-                          <span>Add secondary button</span>
+                          <span>Add Secondary Button</span>
                         </Button>
                       </div>
                     </div>
@@ -971,7 +971,7 @@ export function EmailDirectionsScreen() {
                           className="h-8 gap-1.5 text-label font-bold cursor-pointer"
                         >
                           <Link2 className="size-3.5" />
-                          <span>Add resource backlink</span>
+                          <span>Add Resource Backlink</span>
                         </Button>
                       </div>
                     </div>
@@ -983,7 +983,7 @@ export function EmailDirectionsScreen() {
                 {!p.isHQ && (
                   <PlanSectionShell
                     icon={PenLine}
-                    title={`What ${who} can change`}
+                    title={p.email.sender === "rep" ? "What Sales Reps Can Change" : `What ${who[0].toUpperCase() + who.slice(1)} Can Change`}
                     summary={
                       [
                         email.repEdit.note && "a note",
@@ -1043,13 +1043,13 @@ export function EmailDirectionsScreen() {
                   <ul className="mt-2 space-y-1.5 text-body text-ink-2">
                     {[
                       p.unbranded
-                        ? ["No safety information", "no product is named or implied, so none is needed"]
+                        ? ["No Safety Information", "no product is named or implied, so none is needed"]
                         : ["Important Safety Information", `the current ${brandName} ISI${p.professional ? "" : " in plain language"}${p.boxedWarning ? ", with the boxed warning," : ""} at the foot of every email`],
-                      ["Unsubscribe and company address", p.professional ? "required in every commercial email" : "required, with why they're receiving it and the privacy policy"],
-                      ["Job code", `US-${brandName.slice(0, 3).toUpperCase()}-2611-0042, the number MLR approves this email under`],
-                      ["Layout", "single column, 600 px wide, reads on a phone and with images off"],
-                      ["References", "numbered automatically from each block's claim"],
-                      ["Links added for you", `${p.unbranded ? "" : p.professional ? "Prescribing Information, safety information, " : "Medication Guide, safety information, "}unsubscribe and privacy, each tracked for click reports`],
+                      ["Unsubscribe & Company Address", p.professional ? "required in every commercial email" : "required, with why they're receiving it and the privacy policy"],
+                      ["MLR Job Code", `US-${brandName.slice(0, 3).toUpperCase()}-2611-0042, the number MLR approves this email under`],
+                      ["Layout & Responsiveness", "single column, 600 px wide, responsive across mobile, desktop, and Outlook"],
+                      ["Clinical References", "numbered automatically from each block's verified claim"],
+                      ["Tracked Compliance Links", `${p.unbranded ? "" : p.professional ? "Prescribing Information, Important Safety Information, " : "Medication Guide, Important Safety Information, "}unsubscribe and privacy, each tracked for click reports`],
                     ].map(([title, detail]) => (
                       <li key={title} className="flex items-start gap-2">
                         <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-ok" />

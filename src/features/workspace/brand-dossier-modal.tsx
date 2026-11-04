@@ -343,6 +343,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [selectedDiseaseId, setSelectedDiseaseId] = useState("");
   const [subjectQuery, setSubjectQuery] = useState("");
+  const [customizeScope, setCustomizeScope] = useState(false);
 
   // Project name. Lives in the header rather than as a step: naming is not a
   // focus decision, and asking for one up front is asking before the user has
@@ -363,6 +364,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setEditingName(false);
       setSelectedBrandId("");
       setSelectedVariations([]);
+      setCustomizeScope(false);
       setSelectedDiseaseIds([]);
       setCustomDiseases([]);
       setCustomDiseaseInput("");
@@ -462,7 +464,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     ? AUDIENCE_OPTIONS.filter((a) => AD_AUDIENCES.includes(a.id))
     : isEmail
       ? AUDIENCE_OPTIONS.filter((a) => (EMAIL_AUDIENCES as Audience[]).includes(a.id))
-      : AUDIENCE_OPTIONS;
+      : AUDIENCE_OPTIONS.filter((a) => a.id !== "PT_Committee");
   const audienceTitle = AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title ?? "";
   const studioNoun = isAd ? "Ads" : isEmail ? "Email" : assetType === "infographic" ? "Creative" : "Video";
   const groundingModes = (audience && GROUNDING_BY_AUDIENCE[audience]) || ["brand"];
@@ -639,9 +641,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const handleSelectAudience = (itemAudience: Audience) => {
     setAudience(itemAudience);
     if (isEmail) useEmailStore.getState().setAbout({ audience: itemAudience as EmailAudience });
-    // HCP holds the step open for the optional speciality chips; every other
+    // HCP and P&T Committee hold the step open for the optional speciality chips; every other
     // audience has nothing left to answer here, so it moves on.
-    if (itemAudience !== "HCP") {
+    if (itemAudience !== "HCP" && itemAudience !== "PT_Committee") {
       setStage("grounding");
     }
   };
@@ -822,6 +824,117 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     </>
   );
 
+  const isCustomizedScope =
+    (pickedLabels.length > 0 && pickedLabels.length < subjectIndications.length) ||
+    (pickedAreas.length > 0 && pickedAreas.length < areaOptions.length);
+  const canCustomizeScope = subjectIndications.length > 1 || areaOptions.length > 1;
+  const isScopeExpanded = customizeScope || needsIndication;
+
+  const scopeSummaryRow = (
+    <SubjectRow
+      label={isAd && adSubjectKind === "device" ? "Intended Use & Areas" : "Indications & Therapy Areas"}
+      note={isCustomizedScope ? "Customized" : "Approved label"}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-control border border-hair-2 bg-subtle/50 p-2.5 sm:px-3.5 sm:py-2.5">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex size-4.5 shrink-0 items-center justify-center rounded-full bg-ok-bg text-ok">
+              <Check className="size-3 stroke-[2.5]" />
+            </span>
+            <b className="text-body font-bold text-ink">
+              {isCustomizedScope
+                ? `${pickedIndications.length} of ${subjectIndications.length} indications · ${therapyAreas.length} of ${areaOptions.length} therapy areas`
+                : subjectIndications.length > 0
+                  ? `All ${subjectIndications.length} indications · All ${areaOptions.length} therapy areas`
+                  : `All ${areaOptions.length} therapy areas`}
+            </b>
+            {!isCustomizedScope ? (
+              <span className="rounded-chip border border-ok-line bg-ok-bg px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-ok">
+                Default
+              </span>
+            ) : (
+              <span className="rounded-chip border border-accent-blue/30 bg-accent-blue/10 px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-accent-blue">
+                Customized
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 pl-6.5 text-caption text-ink-3 truncate">
+            {isCustomizedScope
+              ? `${pickedIndications.map((i) => i.condition || i.label).join(", ")} · ${therapyAreas.join(", ")}`
+              : `Full label coverage across ${areaOptions.slice(0, 4).join(", ")}${areaOptions.length > 4 ? ` +${areaOptions.length - 4} more` : ""}.`}
+          </p>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2 pl-6.5 sm:pl-0">
+          {isCustomizedScope && (
+            <button
+              type="button"
+              onClick={() => {
+                setIndications([]);
+                setAreaPick({ key: "", areas: [] });
+              }}
+              className="cursor-pointer text-caption font-semibold text-ink-3 hover:text-ink hover:underline"
+            >
+              Reset to all
+            </button>
+          )}
+          {canCustomizeScope && (
+            <button
+              type="button"
+              onClick={() => setCustomizeScope(true)}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-chip border border-hair-2 bg-card px-3 py-1 text-label font-bold text-brand shadow-2xs hover:border-brand/40 hover:bg-tint hover:text-brand-deep transition"
+            >
+              <Edit3 className="size-3" />
+              <span>Customize</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </SubjectRow>
+  );
+
+  const scopeDetailsBlock = (
+    <div className="divide-y divide-hair animate-in fade-in duration-200">
+      <div className="flex items-center justify-between bg-tint/40 px-3.5 py-2.5 border-b border-hair">
+        <div className="flex items-center gap-2">
+          <span className="text-caption font-bold text-brand-deep">
+            Customizing {indicationLabel === "Intended use" ? "intended use" : "indications"} &amp; therapy areas
+          </span>
+          {isCustomizedScope && (
+            <span className="text-micro font-medium text-ink-3">
+              ({pickedIndications.length} of {subjectIndications.length} indications selected)
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {isCustomizedScope && (
+            <button
+              type="button"
+              onClick={() => {
+                setIndications([]);
+                setAreaPick({ key: "", areas: [] });
+              }}
+              className="cursor-pointer text-caption font-semibold text-ink-3 hover:text-ink hover:underline"
+            >
+              Reset to all
+            </button>
+          )}
+          {!needsIndication && (
+            <button
+              type="button"
+              onClick={() => setCustomizeScope(false)}
+              className="inline-flex cursor-pointer items-center gap-1 rounded-chip border border-brand/30 bg-card px-2.5 py-1 text-caption font-bold text-brand hover:bg-tint transition"
+            >
+              <Check className="size-3" />
+              <span>Done</span>
+            </button>
+          )}
+        </div>
+      </div>
+      {subjectRows}
+    </div>
+  );
+
   if (!open || !mounted) return null;
 
   return createPortal(
@@ -980,7 +1093,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             {/* Expanded Body for Step 1 */}
             {stage === "audience" && (
               <div className="pt-4 space-y-4 animate-in fade-in duration-150">
-                <div className={cn("grid gap-3.5", isAd ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6")}>
+                <div className={cn("grid gap-3.5", isEmail ? "grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto" : isAd ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6")}>
                   {audienceOptions.map((item) => {
                     const isSel = audience === item.id;
                     const IconComp = item.icon;
@@ -1022,12 +1135,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   })}
                 </div>
 
-                {/* ── Direct 1-Click Doctor Speciality Chips ── */}
-                {audience === "HCP" && (
+                {/* ── Direct 1-Click Doctor / Committee Speciality Chips ── */}
+                {(audience === "HCP" || audience === "PT_Committee") && (
                   <div className="pt-3 border-t border-hair-2/80 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <span className="text-label font-bold text-ink-2">
-                        Doctor Speciality (Optional):
+                        {audience === "PT_Committee" ? "Therapeutic Focus (Optional):" : "Clinical Specialty (Optional):"}
                       </span>
                       {selectedSpecialities.length > 0 && (
                         <button
@@ -1189,8 +1302,8 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   {isAd && adSubjectKind !== "drug" ? (
                     <div className="space-y-3">
                       {adSubjectKind === "device" && selectedDevice ? (
-                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => { setSelectedDeviceId(""); setIndications([]); }}>
-                          {subjectRows}
+                        <SelectedBrandTile brand={deviceAsBrand(selectedDevice)} onChange={() => { setSelectedDeviceId(""); setIndications([]); setCustomizeScope(false); }}>
+                          {isScopeExpanded ? scopeDetailsBlock : scopeSummaryRow}
                         </SelectedBrandTile>
                       ) : adSubjectKind === "disease" && selectedDisease ? (
                         <SubjectCard details={subjectRows}>
@@ -1305,7 +1418,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       {selectedBrand ? (
                         <SelectedBrandTile
                           brand={selectedBrand}
-                          onChange={() => { setSelectedBrandId(""); setBrandSearch(""); setSelectedVariations([]); setIndications([]); }}
+                          onChange={() => { setSelectedBrandId(""); setBrandSearch(""); setSelectedVariations([]); setIndications([]); setCustomizeScope(false); }}
                         >
                           <SubjectRow
                             label="Variants"
@@ -1344,7 +1457,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                               }
                             />
                           </SubjectRow>
-                          {subjectRows}
+                          {isScopeExpanded ? scopeDetailsBlock : scopeSummaryRow}
                         </SelectedBrandTile>
                       ) : !brandSearch.trim() ? (
                         /* Nothing until there is a query — see filteredBrands. */

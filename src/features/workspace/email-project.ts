@@ -29,18 +29,18 @@ export type ZoneType = "lock" | "auto" | "choose" | "type";
 export const ZONE_NAME: Record<EmailZone, string> = {
   header: "Header",
   "header:logo": "Logo & Brand Mark",
-  "header:links": "Header Safety Links",
+  "header:links": "Safety Links (PI / ISI)",
   "header:image": "Hero Image",
   "header:heading": "Subject Heading",
   greeting: "Greeting",
-  note: "Personal note",
-  opening: "Opening and indication",
-  blocks: "Content blocks",
-  piece: "Documents",
-  cta: "Call to action",
-  signoff: "Sign-off",
+  note: "Personal Note",
+  opening: "Opening & Indication",
+  blocks: "Content Blocks",
+  piece: "Attached Documents",
+  cta: "Call to Action",
+  signoff: "Sign-Off & Signature",
   isi: "Important Safety Information",
-  footer: "Footer",
+  footer: "Footer & Compliance",
 };
 
 export const ZONE_TYPE_LABEL: Record<ZoneType, string> = { lock: "Locked", auto: "Filled in", choose: "Sender chooses", type: "Sender types" };
