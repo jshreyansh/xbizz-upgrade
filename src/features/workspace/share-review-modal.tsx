@@ -19,6 +19,8 @@ import { cn } from "@/lib/cn";
 import { Portal } from "@/components/ui/portal";
 import { Segmented, SegmentedButton } from "@/components/patterns/segmented";
 import { captionLabel, type CaptionStyle } from "@/features/workspace/subtitle-sync";
+import { EmailVeevaCard } from "@/features/workspace/email-veeva-card";
+import type { veevaPackage } from "@/features/workspace/email-veeva-package";
 
 interface ShareReviewModalProps {
   open: boolean;
@@ -33,6 +35,8 @@ interface ShareReviewModalProps {
   onShowToast?: (message: string) => void;
   /** Video: the captions burned into the published video, which decides what Download offers. */
   captions?: CaptionStyle;
+  /** Email: what PromoMats asks for, which replaces the send and export options. */
+  veeva?: ReturnType<typeof veevaPackage>;
 }
 
 type VideoDownload = "with" | "without";
@@ -48,6 +52,7 @@ export function ShareReviewModal({
   onExportDirect,
   onShowToast,
   captions = "off",
+  veeva,
 }: ShareReviewModalProps) {
   const [copied, setCopied] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
@@ -70,7 +75,7 @@ export function ShareReviewModal({
 
   if (!open) return null;
 
-  const slug = `${brandName.toLowerCase()}-${assetType === "video" ? "hcp-launch" : assetType === "ad" ? "campaign" : "hcp-infographic"}-v1`;
+  const slug = `${brandName.toLowerCase()}-${assetType === "video" ? "hcp-launch" : assetType === "ad" ? "campaign" : assetType === "email" ? "approved-email" : "hcp-infographic"}-v1`;
   const reviewUrl = `https://swishx.biz/review/${assetType}/${slug}`;
 
   const handleCopyLink = () => {
@@ -143,7 +148,7 @@ export function ShareReviewModal({
                   Share &amp; Distribute Asset
                 </h2>
                 <p className="text-body text-ink-3">
-                  {assetTitle} · {assetType === "video" ? `Video (${durationSeconds || 50}s)` : assetType === "ad" ? `Ad campaign${assetSummary ? ` (${assetSummary})` : ""}` : "Infographic (Print-Ready)"}
+                  {assetTitle} · {assetType === "video" ? `Video (${durationSeconds || 50}s)` : assetType === "ad" ? `Ad campaign${assetSummary ? ` (${assetSummary})` : ""}` : assetType === "email" ? "Approved Email" : "Infographic (Print-Ready)"}
                 </p>
               </div>
             </div>
@@ -243,6 +248,10 @@ export function ShareReviewModal({
                   </div>
                 </button>
 
+                {veeva ? (
+                  <EmailVeevaCard pkg={veeva} onDownloaded={(m) => onShowToast?.(m)} />
+                ) : (
+                <>
                 {/* Option B: Send to Veeva PromoMats */}
                 <button
                   type="button"
@@ -389,6 +398,8 @@ export function ShareReviewModal({
                       </Button>
                     </div>
                   </div>
+                )}
+                </>
                 )}
               </div>
             </div>

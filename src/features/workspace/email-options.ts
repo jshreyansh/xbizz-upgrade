@@ -83,7 +83,7 @@ export const EMAIL_CHANNELS: EmailChannelDef[] = [
     name: "Veeva Vault CRM",
     sub: "Vault CRM + PromoMats Approved Email",
     category: "crm",
-    tokens: "{{insertEmailFragments}}, {{!vva_mandatory}}, {{$VaultDocID}}",
+    tokens: "{{insertEmailFragments}}, {{customText}}, {{$VaultDocID}}",
     complianceTag: "Field Rep & MSL Approved Email",
     hint: "Uses Veeva fragment architecture, MLR locking tokens, and Vault Doc IDs.",
     recommendedFor: (a, s) => a === "HCP" && s !== "hq",

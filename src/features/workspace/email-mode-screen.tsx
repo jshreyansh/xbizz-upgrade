@@ -13,10 +13,9 @@ import { EMAIL_PURPOSES, type EmailPurpose } from "@/features/workspace/email-op
  * Where an email starts.
  *
  * The same page as Video, Docs and Ads: Create From Scratch, then the emails
- * pharma actually sends — reps, MSLs and head office to HCPs (formulary teams
- * included),
- * the brand and support nurses to patients, the brand to the public. Each one
- * knows who it is for and who usually sends it.
+ * pharma actually sends to HCPs (reps, MSLs and head office) and to P&T
+ * committees (formulary and value). Each one knows who it is for and who
+ * usually sends it.
  */
 const PLUM = "linear-gradient(135deg, #180924 0%, #2e1245 60%, #4a1d6e 100%)";
 const DARK = "linear-gradient(135deg, #09101d 0%, #152238 60%, #1f3557 100%)";
@@ -73,24 +72,17 @@ const STARTING_POINTS: Array<{ id: EmailPurpose; examples: StartingPointExample[
     ],
   },
   {
-    id: "onboarding",
+    id: "formulary",
     examples: [
-      ex("on-1", VIOLET, "Brand team", "Welcome to your treatment", "Week 1", "what to expect", "Plain-language safety information"),
-      ex("on-2", FOREST, "Support nurse", "Your first weeks", "1 call", "with a support nurse", "Medication Guide linked"),
+      ex("fm-1", SLATE, "Rep or head office", "Ahead of your formulary review", "1 page", "formulary summary", "Formulary kit linked"),
+      ex("fm-2", DARK, "Head office", "For your P&T committee", "3", "decision points covered", "Dosing, storage and coverage"),
     ],
   },
   {
-    id: "savings",
+    id: "value",
     examples: [
-      ex("sv-1", UMBER, "Brand team", "You could pay less", "$0", "a month for eligible patients", "Savings card sign-up"),
-      ex("sv-2", PLUM, "Support nurse", "Help paying for treatment", "2 min", "to sign up", "Eligibility rules included"),
-    ],
-  },
-  {
-    id: "awareness",
-    examples: [
-      ex("aw-1", SLATE, "Brand team", "Questions to ask your doctor", "3", "signs worth discussing", "No product named"),
-      ex("aw-2", FOREST, "Brand team", "Living with the condition", "1 click", "to find a specialist", "Unbranded, no safety information needed"),
+      ex("va-1", FOREST, "Head office", "Budget impact and outcomes", "1M", "member budget impact model", "Adjustable to your population"),
+      ex("va-2", UMBER, "Rep", "The value dossier you asked for", "AMCP", "format dossier", "Clinical and economic evidence"),
     ],
   },
 ];
@@ -101,13 +93,15 @@ export function EmailModeScreen() {
   const handleSelect = (purpose: EmailPurpose) => {
     useWorkspaceStore.getState().setAssetType("email");
     const def = EMAIL_PURPOSES[purpose];
-    useEmailStore.getState().setAbout({ audience: def.audience, sender: def.senders[0], purpose });
+    /* Formulary and value emails are for the P&T committee; the rest go to HCPs. */
+    const audience = purpose === "formulary" || purpose === "value" ? "PT_Committee" : def.audience;
+    useEmailStore.getState().setAbout({ audience, sender: def.senders[0], purpose });
     setDossierModalOpen(true);
   };
 
   return (
     <div className="page-enter max-w-[1140px] space-y-6">
-      <PageHeading title="Create Email" description="Approved Email for HCPs, sent from your CRM. Patient and public email, sent from your email platform." />
+      <PageHeading title="Create Email" description="Approved Email for HCPs and P&T committees, sent from your CRM." />
 
       <div className="grid grid-cols-1 gap-5 pt-1 sm:grid-cols-2 lg:grid-cols-3">
         <CreateTile

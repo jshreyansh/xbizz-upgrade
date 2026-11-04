@@ -5,7 +5,7 @@ import {
   BarChart3,
   Bold,
   BookOpen,
-  Download,
+  Share2,
   Image as ImageIcon,
   Link2,
   Lock,
@@ -56,7 +56,9 @@ import { ZONE_NAME, ZONE_TYPE_LABEL, useEmailProject, type EmailZone, type ZoneT
 import { EmailCanvas, type EmailView } from "@/features/workspace/email-canvas";
 import { EmailInsertDialogs, insertRequestFor, type EmailInsertRequest } from "@/features/workspace/email-insert";
 import { EmailRepPreview } from "@/features/workspace/email-rep-preview";
-import { EmailExportModal, EmailPublishPreview, emailPackage } from "@/features/workspace/email-export";
+import { EmailPublishPreview, emailPackage } from "@/features/workspace/email-export";
+import { veevaPackage } from "@/features/workspace/email-veeva-package";
+import { ShareReviewModal } from "@/features/workspace/share-review-modal";
 import { DEFAULT_EMAIL_STYLES, isUrl, LINK_STATUS, SENDER_AS, SENDER_PLURAL, type EmailTypographyStyles } from "@/features/workspace/email-options";
 
 type PanelTab = "assistant" | "evidence" | "links";
@@ -102,7 +104,7 @@ export function EmailStudioScreen() {
   const [repOpen, setRepOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
-  const [exportedTo, setExportedTo] = useState<string | null>(null);
+  const [downloaded, setDownloaded] = useState(false);
   const [dossier, setDossier] = useState<BrandDossier | null>(null);
   const [studioMode, setStudioMode] = useState<"editor" | "review">(studioEntry === "review" ? "review" : "editor");
   const [publishedCount, setPublishedCount] = useState(0);
@@ -113,7 +115,6 @@ export function EmailStudioScreen() {
   const assetReview = useAssetReview(reviewKey);
   const mlrReview = useMlrReview(reviewKey, editCount);
   const submitted = studioMode === "review";
-  const approved = assetReview.item?.status === "approved" || (!!assetReview.item && assetReview.stages.length === 0);
 
   /* A part that was removed can't stay selected. */
   const sel = selected && (p.zones.includes(selected) || selected.startsWith("header:")) ? selected : null;
@@ -1002,7 +1003,7 @@ export function EmailStudioScreen() {
   const toolbar = submitted ? (
     <div className="flex h-12 shrink-0 items-center gap-2 border-b border-hair bg-card px-4">
       <span className="shrink-0 text-label font-bold text-ink">Shared review</span>
-      <span className="truncate text-label text-ink-3">{exportedTo ? `Exported to ${exportedTo}.${p.professional ? " Senders see it after their next sync." : ""}` : approved ? `Approved. Export it to your ${p.professional ? "CRM" : "email platform"}.` : "In MLR review. Locked until it's approved."}</span>
+      <span className="truncate text-label text-ink-3">{downloaded ? "Package downloaded. Upload it in Veeva PromoMats, where MLR review happens." : "Share it to download the package for Veeva PromoMats."}</span>
     </div>
   ) : (
     <EditorToolbar
@@ -1257,10 +1258,11 @@ export function EmailStudioScreen() {
                     Edit
                   </Button>
                 )}
+                {/* Not held for approval: MLR happens in PromoMats, and this is what goes there. */}
                 {assetReview.canEdit && (
-                  <Button size="sm" onClick={() => setExportOpen(true)} disabled={!approved} title={approved ? undefined : "Opens once the review chain approves it"} className="gap-1.5 px-4 font-bold">
-                    <Download className="size-3.5" />
-                    {p.professional ? "Export to CRM" : "Export to email platform"}
+                  <Button size="sm" onClick={() => setExportOpen(true)} className="gap-1.5 px-4 font-bold">
+                    <Share2 className="size-3.5" />
+                    Share
                   </Button>
                 )}
               </>
@@ -1330,17 +1332,18 @@ export function EmailStudioScreen() {
               preview={<EmailPublishPreview p={p} />}
             />
           )}
-          {exportOpen && (
-            <EmailExportModal
-              p={p}
-              onClose={() => setExportOpen(false)}
-              onExported={(name) => {
-                setExportOpen(false);
-                setExportedTo(name);
-                showToast(`Exported to ${name}.${p.professional ? " Senders see it after their next sync." : ""}`);
-              }}
-            />
-          )}
+          <ShareReviewModal
+            open={exportOpen}
+            onClose={() => setExportOpen(false)}
+            assetType="email"
+            assetTitle={p.title}
+            brandName={p.brandName}
+            veeva={exportOpen ? veevaPackage(p) : undefined}
+            onShowToast={(m) => {
+              showToast(m);
+              if (m.startsWith("Downloaded")) setDownloaded(true);
+            }}
+          />
           <DossierReaderModal dossier={dossier} onClose={() => setDossier(null)} />
           <SaveOrDiscardDialog
             open={!!exit.pending}

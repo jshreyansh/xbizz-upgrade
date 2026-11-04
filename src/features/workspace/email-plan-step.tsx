@@ -353,7 +353,7 @@ function BlockRulesModal({
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-body font-bold text-ink">Field Rep Inclusivity</span>
-            <span className="text-caption font-semibold text-ink-3">Veeva CRM Token: {mandatory ? "{{!vva_mandatory}}" : "{{!vva_optional}}"}</span>
+            <span className="text-caption font-semibold text-ink-3">In Veeva: {mandatory ? "part of the Email Template" : "an Email Fragment, via {{insertEmailFragments}}"}</span>
           </div>
 
           <div className="grid gap-2.5 sm:grid-cols-2">
