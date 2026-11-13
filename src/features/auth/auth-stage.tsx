@@ -62,6 +62,9 @@ function StepList() {
   );
 }
 
+/** The same assurance under every step. */
+export const AUTH_FOOTNOTE = "SOC 2 Type II · ISO 27001 · GDPR · HIPAA and 21 CFR Part 11 aligned";
+
 export function AuthStage({
   eyebrow, title, accent, body, aside, footnote, compact, children,
 }: {
@@ -117,7 +120,7 @@ export function AuthStage({
 
         <div className="grid gap-5">
           <StepList />
-          <p className="m-0 text-caption text-white/35">{footnote ?? "SOC 2 Type II · ISO 27001 · GDPR · 21 CFR Part 11 aligned"}</p>
+          <p className="m-0 text-caption text-white/35">{footnote ?? AUTH_FOOTNOTE}</p>
         </div>
       </div>
 
@@ -160,7 +163,7 @@ export function AuthButton({
   );
 }
 
-/** Small caps label over a group of choices. */
+/** The label over a group of choices: the same style as a field's label, so every question on a card reads alike. */
 export function AuthLabel({ children }: { children: ReactNode }) {
-  return <span className="mb-2 block text-caption font-extrabold uppercase tracking-[.11em] text-ink-4">{children}</span>;
+  return <span className="mb-2 block text-label font-semibold text-ink-2">{children}</span>;
 }

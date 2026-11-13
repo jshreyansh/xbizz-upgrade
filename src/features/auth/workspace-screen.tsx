@@ -39,7 +39,7 @@ export function WorkspaceScreen() {
           ? "A workspace is one client or brand, with its own team, libraries and credits, so each client's work, approvals and spend stay separate. Each asset is written against the label of the market it ships to."
           : "A workspace is one brand or market, with its own team, libraries and credits. Each asset is written against the label and promotional guidance of the market it ships to, so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim."
       }
-      footnote={`More workspaces can be added later from Settings → Organisation.`}
+      footnote={`More workspaces can be added later from Settings → ${agency ? "Agency" : "Organisation"}.`}
     >
       <AuthCardHead title="Create your first workspace">
         Inside {orgName}. This becomes the default for every dossier, reel and campaign made here.

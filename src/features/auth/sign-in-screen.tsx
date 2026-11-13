@@ -127,7 +127,6 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
       body="Specialists who make videos, images, docs, ads and emails from your approved dossier, with every claim cited."
       /* The studio demo (StudioDemo) is hidden for now; this is the simpler picture. */
       aside={<WhatYouMake />}
-      footnote="Claims come only from your approved sources · SOC 2 Type II · GDPR · HIPAA-aligned"
     >
       {/* The mode is the heading; the line under it switches to the other one. */}
       <AuthCardHead title={signingUp ? "Create your account" : "Sign in to SwishX Studio"}>

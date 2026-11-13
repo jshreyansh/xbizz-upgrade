@@ -53,7 +53,7 @@ export function OtpScreen() {
         Didn&apos;t get it? <a href="#" className="font-semibold text-brand">Resend in 0:24</a> · <a href="#" className="font-semibold text-brand">Use a magic link instead</a>
       </p>
 
-      <AuthButton onClick={next}>Verify &amp; continue</AuthButton>
+      <AuthButton onClick={next}>Verify and continue</AuthButton>
       <AuthButton variant="secondary" onClick={() => setAuthView("signin")}>Use a different email</AuthButton>
     </AuthStage>
   );
