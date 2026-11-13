@@ -207,7 +207,6 @@ export function Sidebar() {
   const { me } = useCan();
   const workspaces = listWorkspaces(settings);
   const accounts = listAccounts(settings);
-  const agency = settings.accountType === "agency";
   const switchAccount = settings.switchAccount;
   const { orgName, workspaceName, creditBalance, switchWorkspace, joinWorkspaceAsAdmin } = settings;
   const isOrgAdmin = settings.orgAdminIds.includes(currentUserId);
@@ -230,7 +229,7 @@ export function Sidebar() {
   function handleSignOut() {
     setMenuOpen(false);
     setAuthView("signedout");
-    router.push("/auth");
+    router.push("/signin");
   }
 
   function handleCreateNav(targetAsset: string) {
@@ -437,7 +436,7 @@ export function Sidebar() {
             <div key={group.label} className="space-y-1.5">
               {!collapsed ? (
                 <div className="px-2 pt-2 text-caption font-extrabold uppercase tracking-[0.14em] text-ink-3">
-                  {agency && group.label === "Workspace" ? "Agency" : group.label}
+                  {group.label}
                 </div>
               ) : (
                 <div className="my-1.5 flex justify-center">
@@ -637,10 +636,9 @@ export function Sidebar() {
                   ))}
                 </div>
 
-                {/* Workspaces: the ones you're in, and for organisation admins
-                    the rest of the organisation's, which they can open as workspace admin.
-                    An agency is one tier, so it has none to list. */}
-                {!agency && (
+                {/* Workspaces: the ones you're in, and for organisation (or agency) admins
+                    the rest, which they can open as workspace admin. */}
+                {(
                 <div className="border-b border-hair py-1.5">
                   <div className="px-2.5 pb-1 pt-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4 truncate">
                     {orgName}

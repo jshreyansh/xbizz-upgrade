@@ -14,7 +14,9 @@ const MARKETS = ["United States", "European Union", "UK", "Japan", "India", "Aus
 export function WorkspaceScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
   const orgName = useSettingsStore((s) => s.orgName);
-  const [name, setName] = useState(`${orgName.split(" ")[0]} Commercial`);
+  /* An agency's workspaces are usually its clients. */
+  const agency = useSettingsStore((s) => s.accountType === "agency");
+  const [name, setName] = useState(agency ? "" : `${orgName.split(" ")[0]} Commercial`);
   const [markets, setMarkets] = useState<string[]>(["United States"]);
   const toggle = (id: string) => setMarkets((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]));
 
@@ -30,9 +32,13 @@ export function WorkspaceScreen() {
   return (
     <AuthStage
       eyebrow="First workspace"
-      title="Your markets"
-      accent="set the rules."
-      body="A workspace is one brand or market, with its own team, libraries and credits. Each asset is written against the label and promotional guidance of the market it ships to, so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim."
+      title={agency ? "One workspace" : "Your markets"}
+      accent={agency ? "per client." : "set the rules."}
+      body={
+        agency
+          ? "A workspace is one client or brand, with its own team, libraries and credits, so each client's work, approvals and spend stay separate. Each asset is written against the label of the market it ships to."
+          : "A workspace is one brand or market, with its own team, libraries and credits. Each asset is written against the label and promotional guidance of the market it ships to, so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim."
+      }
       footnote={`More workspaces can be added later from Settings → Organisation.`}
     >
       <AuthCardHead title="Create your first workspace">
@@ -40,7 +46,7 @@ export function WorkspaceScreen() {
       </AuthCardHead>
 
       <div className="grid gap-5">
-        <Field label="Workspace name" value={name} onChange={(e) => setName(e.target.value)} hint="Usually a brand or market, like Velmora US" />
+        <Field label="Workspace name" value={name} onChange={(e) => setName(e.target.value)} placeholder={agency ? "Velmora US" : undefined} hint={agency ? "Usually a client, like Velmora US" : "Usually a brand or market, like Velmora US"} />
 
         <div>
           <AuthLabel>Operating in</AuthLabel>

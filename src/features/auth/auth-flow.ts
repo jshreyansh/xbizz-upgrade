@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { findInvite, findInviteByEmail, orgPeople, useSettingsStore } from "@/features/settings/settings-store";
+import { findInvite, findInviteByEmail, orgPeople, useSettingsStore, type AccountType, type Sector } from "@/features/settings/settings-store";
 import { emailDomain, isPersonalEmail } from "@/features/settings/settings-types";
 
 /**
@@ -65,6 +65,9 @@ export function emailProblem(email: string): string | undefined {
 
 interface AuthFlowState {
   email: string;
+  /** A new company's confirmed account type, applied once its email is verified. */
+  choice?: { type: AccountType; sector?: Sector };
+  setChoice: (choice?: { type: AccountType; sector?: Sector }) => void;
   route: AuthRoute;
   /** From an invite link, kept while they verify. */
   inviteId?: string;
@@ -74,10 +77,11 @@ interface AuthFlowState {
 }
 
 export const useAuthFlow = create<AuthFlowState>((set) => ({
-  /* A new company, so the default walk-through is first sign-up. */
-  email: "lee.chen@meridian-tx.com",
+  /* Empty, as a real sign-in page starts; "Try a path" fills in each prototype path. */
+  email: "",
   route: { path: "new" },
   setEmail: (email) => set({ email }),
+  setChoice: (choice) => set({ choice }),
   setRoute: (route) => set({ route }),
   setInviteId: (inviteId) => set({ inviteId }),
 }));

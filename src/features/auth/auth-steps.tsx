@@ -30,7 +30,13 @@ export function useAuthNext() {
       case "invite": setAuthView("details"); return;
       case "join": setAuthView("join"); return;
       case "pending": setAuthView("waiting"); return;
-      case "new": setAuthView("accounttype"); return;
+      case "new": {
+        /* The type chosen on the sign-in card takes effect now the email is verified. */
+        const choice = useAuthFlow.getState().choice ?? { type: "lifesciences" as const, sector: "Pharma" as const };
+        useSettingsStore.getState().confirmAccountType(choice.type, choice.sector);
+        setAuthView(choice.type === "agency" ? "reward" : "organisation");
+        return;
+      }
       default: setAuthView("blocked");
     }
   };
@@ -40,7 +46,7 @@ export function useAuthNext() {
 
 export function OrganisationScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
-  /* An agency is one tier: this step makes the agency, and there's no workspace step after it. */
+  /* An agency is set up like a company: the agency first, then a workspace for its first client. */
   const agency = useSettingsStore((s) => s.accountType === "agency");
   const email = useAuthFlow((s) => s.email);
   const domain = emailDomain(email);
@@ -58,27 +64,25 @@ export function OrganisationScreen() {
       allowedDomains: [domain],
       /* Whoever sets the company up is its first admin. */
       orgAdminIds: s.orgAdminIds.includes(s.currentUserId) ? s.orgAdminIds : [...s.orgAdminIds, s.currentUserId],
-      /* The agency is its own workspace, under the same name. */
-      ...(agency ? { workspaceName: name.trim() } : {}),
     });
-    setAuthView(agency ? "team" : "workspace");
+    setAuthView("workspace");
   };
 
   return (
     <AuthStage
       eyebrow={agency ? "Your agency" : "Organisation"}
-      title={agency ? "One agency." : "First, the company."}
-      accent={agency ? "Your whole team in it." : "Then its brands."}
+      title={agency ? "First, the agency." : "First, the company."}
+      accent={agency ? "Then its clients." : "Then its brands."}
       body={
         agency ? (
-          <>Your agency is one account: its team, its credits, brand kits and approvals, all in one place. You&apos;ll invite your team from Settings.</>
+          <>Your agency is the organisation: its legal entity, who can sign up, and its admins. Each client gets a <b className="text-white">workspace</b> inside it, with its own team, libraries and credits.</>
         ) : (
           <>Your organisation is the company: its legal entity, who can sign up, and its admins. Brands and markets go in <b className="text-white">workspaces</b> inside it, each with its own team, libraries and credits.</>
         )
       }
     >
       <AuthCardHead title={agency ? "Set up your agency" : "Set up your organisation"}>
-        {agency ? "You\u2019ll be its admin, so you can add people later." : <>You&apos;ll be its admin, so you can add workspaces and people later.</>}
+        You&apos;ll be its admin, so you can add workspaces and people later.
       </AuthCardHead>
       <div className="grid gap-4">
         <Field label={agency ? "Agency name" : "Organisation name"} value={name} onChange={(e) => setName(e.target.value)} placeholder={agency ? "Brightwave Health" : "Meridian Therapeutics"} autoFocus />
@@ -121,32 +125,21 @@ export function InviteScreen() {
   if (!found) return <BlockedScreen />;
   const { invite } = found;
   const access = accessHeadline(invite.permissions);
-  /* An agency is its own workspace, so its invite names one place, not two. */
-  const where = agency ? orgName : workspaceName;
+  const where = workspaceName;
 
   return (
     <AuthStage
       eyebrow="You're invited"
       title={`Join ${where}`}
       accent="on SwishX Studio."
-      body={
-        agency
-          ? `${inviterName} added you to ${orgName}, the agency. Verify your email and you're in, with your role already set.`
-          : `${inviterName} added you to ${orgName}'s ${workspaceName} workspace. Verify your email and you're in, with your role already set.`
-      }
+      body={`${inviterName} added you to ${orgName}'s ${workspaceName} workspace. Verify your email and you're in, with your role already set.`}
     >
       <AuthCardHead title={`Join ${where}`}>
         {inviterName} invited <b className="text-ink [overflow-wrap:anywhere]">{invite.email}</b>.
       </AuthCardHead>
       <dl className="mb-6 grid gap-2.5 rounded-control border border-hair bg-subtle p-3.5 text-body">
-        {agency ? (
-          <div className="flex justify-between gap-3"><dt className="text-ink-3">Agency</dt><dd className="text-right font-semibold text-ink">{orgName}</dd></div>
-        ) : (
-          <>
-            <div className="flex justify-between gap-3"><dt className="text-ink-3">Organisation</dt><dd className="text-right font-semibold text-ink">{orgName}</dd></div>
-            <div className="flex justify-between gap-3"><dt className="text-ink-3">Workspace</dt><dd className="text-right font-semibold text-ink">{workspaceName}</dd></div>
-          </>
-        )}
+        <div className="flex justify-between gap-3"><dt className="text-ink-3">{agency ? "Agency" : "Organisation"}</dt><dd className="text-right font-semibold text-ink">{orgName}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-ink-3">Workspace</dt><dd className="text-right font-semibold text-ink">{workspaceName}</dd></div>
         <div className="flex justify-between gap-3"><dt className="text-ink-3">Role</dt><dd className="text-right font-semibold text-ink">{invite.role} · {invite.seniority}</dd></div>
         <div className="grid gap-1">
           <dt className="text-ink-3">You&apos;ll be able to</dt>
@@ -167,7 +160,7 @@ export function InviteScreen() {
 export function DetailsScreen() {
   const router = useRouter();
   const email = useAuthFlow((s) => s.email);
-  const { found, workspaceName, orgName, agency } = useInvite();
+  const { found, workspaceName } = useInvite();
   const local = email.split("@")[0].split(/[._-]/).map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
   const [name, setName] = useState(local);
   const [title, setTitle] = useState("");
@@ -189,7 +182,7 @@ export function DetailsScreen() {
       accent="who you are."
       body="Your name shows on what you make, comment on and approve. Your role and permissions were set by whoever invited you."
     >
-      <AuthCardHead title="Your details">Joining {agency ? orgName : workspaceName} as {found.invite.role}.</AuthCardHead>
+      <AuthCardHead title="Your details">Joining {workspaceName} as {found.invite.role}.</AuthCardHead>
       <div className="grid gap-4">
         <Field label="Full name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
         <Field label="Job title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Brand Manager" />
@@ -198,7 +191,7 @@ export function DetailsScreen() {
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-4 accent-brand" />
           <span>I agree to the <a href="#" className="font-semibold text-brand">Terms</a> and <a href="#" className="font-semibold text-brand">Privacy Notice</a>.</span>
         </label>
-        <AuthButton onClick={join} disabled={name.trim().length < 2 || !agreed}>Join {agency ? orgName : workspaceName}</AuthButton>
+        <AuthButton onClick={join} disabled={name.trim().length < 2 || !agreed}>Join {workspaceName}</AuthButton>
       </div>
     </AuthStage>
   );
@@ -211,8 +204,7 @@ export function JoinScreen() {
   const email = useAuthFlow((s) => s.email);
   const s = useSettingsStore();
   const workspaces = listWorkspaces(s).filter((w) => !w.archived);
-  /* An agency has one place to join, so there's nothing to pick. */
-  const agency = s.accountType === "agency";
+
   const local = email.split("@")[0].split(/[._-]/).map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
   const [workspaceId, setWorkspaceId] = useState(workspaces[0]?.id ?? "");
   const [name, setName] = useState(local);
@@ -228,17 +220,11 @@ export function JoinScreen() {
       eyebrow={`${s.orgName} is on SwishX Studio`}
       title="Your team"
       accent="is already here."
-      body={
-        agency
-          ? `People with an @${emailDomain(email)} email work at ${s.orgName}. Nobody has invited you yet, so ask the agency's admins. They choose your role when they approve.`
-          : `People with an @${emailDomain(email)} email work in ${s.orgName}'s workspaces. Nobody has invited you yet, so ask the admins of the one you need. They choose your role when they approve.`
-      }
+      body={`People with an @${emailDomain(email)} email work in ${s.orgName}'s workspaces. Nobody has invited you yet, so ask the admins of the one you need. They choose your role when they approve.`}
     >
-      <AuthCardHead title={agency ? `Ask to join ${s.orgName}` : "Ask to join"}>
-        {agency ? <>Your request goes to the agency&apos;s admins.</> : <>Your request goes to that workspace&apos;s admins.</>}
-      </AuthCardHead>
+      <AuthCardHead title="Ask to join">Your request goes to that workspace&apos;s admins.</AuthCardHead>
       <div className="grid gap-4">
-        {!agency && <div>
+        <div>
           <AuthLabel>Workspace</AuthLabel>
           <div className="grid gap-2" role="radiogroup" aria-label="Workspace">
             {workspaces.map((w) => (
@@ -258,7 +244,7 @@ export function JoinScreen() {
               </button>
             ))}
           </div>
-        </div>}
+        </div>
         <Field label="Full name" value={name} onChange={(e) => setName(e.target.value)} />
         <Field multiline rows={2} label="Note to the admins (optional)" value={note} onChange={(e) => setNote(e.target.value)} placeholder="I'm joining the EU brand team as a medical writer." />
         <AuthButton onClick={send} disabled={!workspaceId || name.trim().length < 2}>Send request</AuthButton>

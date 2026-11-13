@@ -13,7 +13,7 @@ import { InviteModal, RoleConfigModal } from "@/features/settings/team-modals";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/patterns/sheet";
 import { DataTable, type DataColumn } from "@/components/patterns/data-table";
-import { roleLabel, useSettingsStore } from "@/features/settings/settings-store";
+import { useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard, AccessGrid } from "@/features/settings/settings-parts";
 import { useCan } from "@/features/settings/view-as";
 import {
@@ -58,13 +58,15 @@ export function SectionTeam() {
         <div className="min-w-0">
           <span className="flex min-w-0 items-center gap-1.5">
             <Text size="body" weight="semibold" className="truncate text-ink">{m.name}</Text>
-            {s.orgAdminIds.includes(m.id) && s.accountType !== "agency" && <Chip tone="default" size="xs" title="Organisation admin: company-wide, across workspaces">Org admin</Chip>}
+            {s.orgAdminIds.includes(m.id) && (s.accountType === "agency"
+              ? <Chip tone="default" size="xs" title="Agency admin: agency-wide, across workspaces">Agency admin</Chip>
+              : <Chip tone="default" size="xs" title="Organisation admin: company-wide, across workspaces">Org admin</Chip>)}
           </span>
           <Text size="caption" tone="subtle" className="block truncate">{m.email}</Text>
         </div>
       ),
     },
-    { key: "role", header: "Role", cell: (m) => <Chip tone="brand" size="xs">{roleLabel(m.role, s.accountType)}</Chip> },
+    { key: "role", header: "Role", cell: (m) => <Chip tone="brand" size="xs">{m.role}</Chip> },
     { key: "seniority", header: "Seniority", secondary: true, cell: (m) => <Chip tone="default" size="xs">{m.seniority}</Chip> },
     ...(canManage ? [
     {
@@ -94,7 +96,7 @@ export function SectionTeam() {
           that need a fresh link because they expired or the invitee asked.
           An invite here also stays in Pending invites, where it lives. */}
       {canManage && (s.joinRequests.length > 0 || inviteRequests.length > 0) && (
-        <SettingsCard title="Requests" description={s.accountType === "agency" ? "People asking to join your agency, and invites that need a new link." : "People asking to join this workspace, and invites that need a new link."}>
+        <SettingsCard title="Requests" description="People asking to join this workspace, and invites that need a new link.">
           <Stack gap={2}>
             {s.joinRequests.map((r) => <JoinRequestRow key={r.id} request={r} />)}
             {inviteRequests.map((i) => <InviteRequestRow key={i.id} invite={i} />)}
@@ -128,7 +130,7 @@ export function SectionTeam() {
               <button key={r} type="button" onClick={() => setRoleFilter(r)}
                 className={cn("rounded-chip border px-2.5 py-1 transition-colors cursor-pointer",
                   roleFilter === r ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-hair-3")}>
-                <span className="text-label font-bold">{roleLabel(r, s.accountType)}</span>
+                <span className="text-label font-bold">{r}</span>
               </button>
             ))}
           </div>
@@ -154,13 +156,13 @@ export function SectionTeam() {
                     {i.expired && <Chip tone="warn" size="xs">Expired</Chip>}
                   </div>
                   <Text size="caption" tone="muted" className="block">
-                    {roleLabel(i.role, s.accountType)} · {i.seniority} · {i.invitedAt.startsWith("resent") ? i.invitedAt : `invited ${i.invitedAt}`}
+                    {i.role} · {i.seniority} · {i.invitedAt.startsWith("resent") ? i.invitedAt : `invited ${i.invitedAt}`}
                     {i.expired && " · the link no longer works, resend to issue a new one"}
                   </Text>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {/* Prototype: what the invitee sees when they open the email's link. */}
-                  <Button size="sm" variant="ghost" onClick={() => { useWorkspaceStore.getState().setAuthView("invite"); router.push(`/auth?invite=${i.id}`); }}>
+                  <Button size="sm" variant="ghost" onClick={() => { useWorkspaceStore.getState().setAuthView("invite"); router.push(`/signin?invite=${i.id}`); }}>
                     Open invite link
                   </Button>
                   <ResendButton onResend={() => s.resendInvite(i.id)} />
@@ -219,7 +221,7 @@ export function SectionTeam() {
 
             <div>
               <Text size="label" tone="muted" weight="semibold" className="mb-1.5 block">Role</Text>
-              <SelectMenu size="md" ariaLabel="Role" value={openMember.role} onChange={(v) => s.setMemberRole(openMember.id, v as Role)} options={s.roles.map((r) => ({ value: r.name, label: roleLabel(r.name, s.accountType), hint: accessHeadline(r.permissions) }))} />
+              <SelectMenu size="md" ariaLabel="Role" value={openMember.role} onChange={(v) => s.setMemberRole(openMember.id, v as Role)} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: accessHeadline(r.permissions) }))} />
               <Text size="caption" tone="subtle" className="mt-1 block">
                 Changing the role re-seeds the permissions below.
               </Text>
@@ -257,9 +259,7 @@ export function SectionTeam() {
               <div className="rounded-panel border border-hair-2 bg-subtle p-3">
                 <Text size="body" weight="bold" className="mb-1.5 block">Remove {openMember.name} from {s.workspaceName}?</Text>
                 <Text size="label" tone="muted" className="mb-2 block">
-                  {s.accountType === "agency"
-                    ? "They lose access to the agency, and their approval chain is cleared. What they made stays."
-                    : "They lose access to this workspace only, and their approval chain here is cleared. Other workspaces they\u2019re in are untouched, and what they made stays."}
+                  They lose access to this workspace only, and their approval chain here is cleared. Other workspaces they&apos;re in are untouched, and what they made stays.
                 </Text>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="danger" onClick={() => { s.removeMember(openMember.id); setRemoving(false); setOpenMemberId(null); }}>
@@ -332,7 +332,7 @@ function JoinRequestRow({ request }: { request: JoinRequest }) {
         <div className="mt-2.5 flex flex-wrap items-end gap-2 border-t border-warn-line pt-2.5">
           <div className="flex w-52 flex-col gap-1">
             <Text size="caption" tone="muted" weight="semibold">Role</Text>
-            <SelectMenu size="sm" ariaLabel="Role" value={activeRole} onChange={setRole} options={s.roles.map((r) => ({ value: r.name, label: roleLabel(r.name, s.accountType), hint: accessHeadline(r.permissions) }))} menuMinWidth={240} />
+            <SelectMenu size="sm" ariaLabel="Role" value={activeRole} onChange={setRole} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: accessHeadline(r.permissions) }))} menuMinWidth={240} />
           </div>
           <div className="flex w-36 flex-col gap-1">
             <Text size="caption" tone="muted" weight="semibold">Seniority</Text>
@@ -365,7 +365,7 @@ function InviteRequestRow({ invite }: { invite: PendingInvite }) {
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-warn-line bg-warn-bg px-3 py-2.5">
       <div className="min-w-0">
         <Text size="body" weight="semibold" className="block truncate">{invite.email}</Text>
-        <Text size="caption" tone="muted" className="block">{roleLabel(invite.role, useSettingsStore.getState().accountType)} · {invite.seniority} · {why}</Text>
+        <Text size="caption" tone="muted" className="block">{invite.role} · {invite.seniority} · {why}</Text>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Button size="sm" variant="secondary" onClick={() => s.revokeInvite(invite.id)}>Revoke</Button>

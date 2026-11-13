@@ -1,63 +1,78 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Activity, Building2, Check, Dna, FlaskConical, Handshake, Pill, type LucideIcon } from "lucide-react";
+import { Activity, Building2, Check, Dna, FlaskConical, Handshake, Lock, Pill, type LucideIcon } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { STARTING_CREDITS, creditsInUsd, useSettingsStore, type AccountType, type Sector } from "@/features/settings/settings-store";
+import { STARTING_CREDITS, creditsInUsd, type AccountType, type Sector } from "@/features/settings/settings-store";
 import { ConfettiBurst } from "@/features/dossiers/confetti-burst";
-import { AuthButton, AuthCardHead, AuthLabel, AuthStage } from "@/features/auth/auth-stage";
+import { AuthButton, AuthLabel } from "@/features/auth/auth-stage";
 
 /**
- * A new account says what it is, once: a life sciences company making
- * content for its own brands, or an agency making it for its clients. The
- * choice sets the workflows that follow and can't be changed, so it's
- * confirmed before it's saved. Agencies are then welcomed with their
- * starting credits.
+ * A new account says what it is, once, on the sign-in card: a life sciences
+ * company making content for its own brands, or an agency making it for its
+ * clients. The choice sets the workflows that follow and can't be changed,
+ * so it's confirmed first, and applied once the email is verified. Agencies
+ * are then welcomed with their starting credits.
  */
 
-const TYPES: Array<{ id: AccountType; title: string; body: string; icon: LucideIcon }> = [
-  { id: "lifesciences", title: "Life Sciences Company", body: "Create content for your organization’s brands and products.", icon: FlaskConical },
-  { id: "agency", title: "Agency Partner", body: "Create content for your life sciences clients.", icon: Handshake },
+const TYPES: Array<{ id: AccountType; title: string; body: string; icon: LucideIcon; tint: string; ink: string }> = [
+  {
+    id: "lifesciences", title: "Life Sciences Company", body: "Create content for your organization’s brands and products.", icon: FlaskConical,
+    tint: "linear-gradient(135deg,#eef2ff 0%,#e0f2fe 100%)", ink: "#4f46e5",
+  },
+  {
+    id: "agency", title: "Agency Partner", body: "Create content for your life sciences clients.", icon: Handshake,
+    tint: "linear-gradient(135deg,#fff1e8 0%,#fde7f1 100%)", ink: "#e8590c",
+  },
 ];
 
-const SECTORS: Array<{ id: Sector; icon: LucideIcon }> = [
-  { id: "Pharma", icon: Pill },
-  { id: "Biotech", icon: Dna },
-  { id: "Medtech", icon: Activity },
+const SECTORS: Array<{ id: Sector; icon: LucideIcon; hint: string }> = [
+  { id: "Pharma", icon: Pill, hint: "Medicines" },
+  { id: "Biotech", icon: Dna, hint: "Biologics & cell therapies" },
+  { id: "Medtech", icon: Activity, hint: "Devices & diagnostics" },
 ];
 
-export function AccountTypeScreen() {
-  const setAuthView = useWorkspaceStore((s) => s.setAuthView);
-  const confirmAccountType = useSettingsStore((s) => s.confirmAccountType);
-  const [type, setType] = useState<AccountType>();
-  const [sector, setSector] = useState<Sector>();
-  const [confirming, setConfirming] = useState(false);
-  const complete = type === "agency" || (type === "lifesciences" && !!sector);
+/** A small drawing for each type: a molecule for life sciences, two overlapping circles for an agency and its client. */
+function TileArt({ id, ink }: { id: AccountType; ink: string }) {
+  return id === "lifesciences" ? (
+    <svg viewBox="0 0 120 48" className="absolute inset-0 h-full w-full" aria-hidden>
+      <g stroke={ink} strokeOpacity=".28" strokeWidth="1.4" fill="none">
+        <path d="M70 12 L84 20 L84 34 L70 42 L56 34 L56 20 Z" />
+        <path d="M84 20 L98 12 M98 12 L112 20 M56 34 L42 42" />
+      </g>
+      {[[70, 12], [84, 20], [84, 34], [70, 42], [56, 34], [56, 20], [98, 12], [112, 20], [42, 42]].map(([x, y], k) => (
+        <circle key={k} cx={x} cy={y} r={k % 3 === 0 ? 3.2 : 2.2} fill={ink} fillOpacity={k % 3 === 0 ? 0.45 : 0.25} />
+      ))}
+    </svg>
+  ) : (
+    <svg viewBox="0 0 120 48" className="absolute inset-0 h-full w-full" aria-hidden>
+      <circle cx="78" cy="26" r="17" fill={ink} fillOpacity=".12" stroke={ink} strokeOpacity=".3" strokeWidth="1.4" />
+      <circle cx="98" cy="26" r="17" fill={ink} fillOpacity=".08" stroke={ink} strokeOpacity=".3" strokeWidth="1.4" />
+      <circle cx="88" cy="26" r="3" fill={ink} fillOpacity=".5" />
+    </svg>
+  );
+}
 
-  const confirm = () => {
-    if (!type) return;
-    confirmAccountType(type, sector);
-    setConfirming(false);
-    setAuthView(type === "agency" ? "reward" : "organisation");
-  };
-
+/**
+ * The choice, on the sign-up card. Shown only for a company new to SwishX
+ * Studio: anyone joining an existing account inherits its type.
+ */
+export function AccountTypePicker({
+  type, sector, onType, onSector,
+}: {
+  type?: AccountType;
+  sector?: Sector;
+  onType: (t: AccountType) => void;
+  onSector: (s: Sector) => void;
+}) {
   return (
-    <AuthStage
-      eyebrow="Account type"
-      title="Built around"
-      accent="who you make for."
-      body="Life sciences companies make content for their own brands. Agencies make it for their clients. SwishX Studio sets up the workflows that fit."
-    >
-      <AuthCardHead title="Welcome to SwishX Studio">
-        Tell us about your organization so we can tailor your content creation workflows.
-      </AuthCardHead>
-
+    <div className="rise-in">
       <AuthLabel>Which best describes your organization?</AuthLabel>
-      <div className="grid gap-2.5" role="radiogroup" aria-label="Which best describes your organization?">
+      <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="Which best describes your organization?">
         {TYPES.map((t) => {
           const on = type === t.id;
           return (
@@ -66,31 +81,47 @@ export function AccountTypeScreen() {
               type="button"
               role="radio"
               aria-checked={on}
-              onClick={() => setType(t.id)}
+              onClick={() => onType(t.id)}
               className={cn(
-                "focus-ring flex cursor-pointer items-center gap-3 rounded-panel border p-3.5 text-left transition",
-                on ? "border-brand bg-tint/60 ring-2 ring-brand/15" : "border-hair-2 bg-card hover:border-hair-3 hover:bg-canvas"
+                "focus-ring group relative flex cursor-pointer flex-col overflow-hidden rounded-panel border bg-card text-left transition-all duration-300",
+                on
+                  ? "-translate-y-0.5 border-brand shadow-soft ring-2 ring-brand/15"
+                  : "border-hair-2 hover:-translate-y-0.5 hover:border-hair-3 hover:shadow-soft"
               )}
             >
-              <span className={cn("grid size-10 shrink-0 place-items-center rounded-control", on ? "bg-brand text-white" : "bg-subtle text-ink-3")}>
-                <t.icon className="size-5" />
+              {/* The type's picture, with its icon badge sitting on its edge. */}
+              <span className="relative block h-14" style={{ background: t.tint }}>
+                <TileArt id={t.id} ink={t.ink} />
+                <span
+                  className="absolute -bottom-4 left-3 grid size-9 place-items-center rounded-control bg-card shadow-soft ring-1 ring-black/5 transition-transform duration-300 group-hover:scale-105"
+                  style={{ color: t.ink }}
+                >
+                  <t.icon className="size-4.5" />
+                </span>
+                <span
+                  className={cn(
+                    "absolute right-2 top-2 grid size-5 place-items-center rounded-full transition-all duration-200",
+                    on ? "scale-100 bg-brand text-white shadow-soft" : "scale-90 border border-hair-3 bg-card/80"
+                  )}
+                >
+                  {on && <Check className="size-3 stroke-[3]" />}
+                </span>
               </span>
-              <span className="min-w-0 flex-1">
-                <b className="block text-body-lg font-bold text-ink">{t.title}</b>
-                <span className="block text-label leading-snug text-ink-3">{t.body}</span>
-              </span>
-              <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border", on ? "border-brand bg-brand text-white" : "border-hair-3")}>
-                {on && <Check className="size-3 stroke-[3]" />}
+              <span className="block px-3 pb-3 pt-6">
+                <b className="block text-body font-bold leading-tight text-ink">{t.title}</b>
+                <span className="mt-1 block text-label leading-snug text-ink-3">{t.body}</span>
               </span>
             </button>
           );
         })}
       </div>
 
+      {/* The sector, in a panel that points back at the life sciences card. */}
       {type === "lifesciences" && (
-        <div className="rise-in mt-5">
+        <div className="rise-in relative mt-3 rounded-panel border border-hair bg-canvas p-3">
+          <span aria-hidden className="absolute -top-[7px] left-[22%] size-3 rotate-45 border-l border-t border-hair bg-canvas" />
           <AuthLabel>Which sector best describes your company?</AuthLabel>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Which sector best describes your company?">
+          <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Which sector best describes your company?">
             {SECTORS.map((x) => {
               const on = sector === x.id;
               return (
@@ -99,14 +130,17 @@ export function AccountTypeScreen() {
                   type="button"
                   role="radio"
                   aria-checked={on}
-                  onClick={() => setSector(x.id)}
+                  onClick={() => onSector(x.id)}
                   className={cn(
-                    "focus-ring flex cursor-pointer flex-col items-center gap-1.5 rounded-panel border py-3 text-body font-bold transition",
-                    on ? "border-brand bg-tint/60 text-brand-deep ring-2 ring-brand/15" : "border-hair-2 bg-card text-ink hover:border-hair-3 hover:bg-canvas"
+                    "focus-ring flex cursor-pointer flex-col items-center gap-1 rounded-control border px-1.5 py-2.5 text-center transition-all duration-200",
+                    on ? "border-brand bg-card shadow-soft ring-2 ring-brand/15" : "border-transparent hover:border-hair-2 hover:bg-card"
                   )}
                 >
-                  <x.icon className="size-5" />
-                  {x.id}
+                  <span className={cn("grid size-7 place-items-center rounded-full transition-colors", on ? "bg-brand text-white" : "bg-subtle text-ink-3")}>
+                    <x.icon className="size-3.5" />
+                  </span>
+                  <b className={cn("text-body leading-none", on ? "text-brand-deep" : "text-ink")}>{x.id}</b>
+                  <span className="text-micro leading-tight text-ink-4">{x.hint}</span>
                 </button>
               );
             })}
@@ -114,44 +148,54 @@ export function AccountTypeScreen() {
         </div>
       )}
 
-      <p className="mb-5 mt-4 text-label leading-snug text-ink-3">
-        Your selection determines the workflows available in SwishX Studio and cannot be changed once confirmed.
+      <p className="mt-3 flex items-center gap-1.5 text-label leading-snug text-ink-3">
+        <Lock className="size-3 shrink-0" />
+        This sets your workflows and can&rsquo;t be changed later.
       </p>
+    </div>
+  );
+}
 
-      <AuthButton onClick={() => setConfirming(true)} disabled={!complete}>Continue</AuthButton>
-
-      <Modal
-        open={confirming}
-        onClose={() => setConfirming(false)}
-        title="Confirm your account type"
-        size="sm"
-        footer={
-          <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setConfirming(false)}>Go back</Button>
-            <Button onClick={confirm}>Confirm and continue</Button>
-          </div>
-        }
-      >
-        <div className="grid gap-4">
-          <div className="flex items-center gap-3 rounded-panel border border-hair bg-canvas p-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-control bg-brand text-white">
-              {type === "agency" ? <Handshake className="size-5" /> : <Building2 className="size-5" />}
-            </span>
-            <span className="min-w-0">
-              <span className="block text-caption font-bold uppercase tracking-wider text-ink-4">Selected account</span>
-              <b className="block text-body-lg text-ink">
-                {type === "agency" ? "Agency Partner" : `Life Sciences Company · ${sector}`}
-              </b>
-            </span>
-          </div>
-          <p className="text-body leading-relaxed text-ink-2">
-            {type === "agency"
-              ? "Your SwishX Studio workflows will be tailored to creating content for your life sciences clients. Once confirmed, your account type cannot be changed."
-              : "Your SwishX Studio workflows will be tailored to this selection. Once confirmed, your account type and sector cannot be changed."}
-          </p>
+/** "Are you sure?": the type can't be changed, so it's confirmed before anything is created. */
+export function AccountTypeConfirm({
+  open, type, sector, onBack, onConfirm,
+}: {
+  open: boolean;
+  type?: AccountType;
+  sector?: Sector;
+  onBack: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Modal
+      open={open}
+      onClose={onBack}
+      title="Confirm your account type"
+      size="sm"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={onBack}>Go back</Button>
+          <Button onClick={onConfirm}>Confirm and continue</Button>
         </div>
-      </Modal>
-    </AuthStage>
+      }
+    >
+      <div className="grid gap-4">
+        <div className="flex items-center gap-3 rounded-panel border border-hair bg-canvas p-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-control bg-brand text-white">
+            {type === "agency" ? <Handshake className="size-5" /> : <Building2 className="size-5" />}
+          </span>
+          <span className="min-w-0">
+            <span className="block text-caption font-bold uppercase tracking-wider text-ink-4">Selected account</span>
+            <b className="block text-body-lg text-ink">{type === "agency" ? "Agency Partner" : `Life Sciences Company · ${sector}`}</b>
+          </span>
+        </div>
+        <p className="text-body leading-relaxed text-ink-2">
+          {type === "agency"
+            ? "Your SwishX Studio workflows will be tailored to creating content for your life sciences clients. Once confirmed, your account type cannot be changed."
+            : "Your SwishX Studio workflows will be tailored to this selection. Once confirmed, your account type and sector cannot be changed."}
+        </p>
+      </div>
+    </Modal>
   );
 }
 

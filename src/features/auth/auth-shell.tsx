@@ -11,7 +11,7 @@ import { OtpScreen } from "@/features/auth/otp-screen";
 import { WorkspaceScreen } from "@/features/auth/workspace-screen";
 import { TeamScreen } from "@/features/auth/team-screen";
 import { SignedOutScreen } from "@/features/auth/signed-out-screen";
-import { AccountTypeScreen, AgencyRewardScreen } from "@/features/auth/account-type-screen";
+import { AgencyRewardScreen } from "@/features/auth/account-type-screen";
 
 /**
  * The ground behind every step: near-black, one warm glow from the brand
@@ -66,11 +66,18 @@ function Backdrop() {
   );
 }
 
-export function AuthShell() {
+/** Sign in lives at /signin and sign up at /signup; the steps after them carry on at the same address. */
+export function AuthShell({ mode }: { mode: "signin" | "signup" }) {
   const authView = useWorkspaceStore((s) => s.authView);
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
 
-  /* An invite link (/auth?invite=…) lands on the invite itself. */
+  /* Arriving at either address starts at its card, unless you've just signed out. */
+  useEffect(() => {
+    const view = useWorkspaceStore.getState().authView;
+    if (view !== "signedout" && view !== "invite") setAuthView("signin");
+  }, [mode, setAuthView]);
+
+  /* An invite link (/signin?invite=…) lands on the invite itself. */
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("invite");
     if (!id) return;
@@ -93,9 +100,8 @@ export function AuthShell() {
 
       {/* Stage content */}
       <div className="relative z-10 flex h-full w-full">
-        {authView === "signin" && <SignInScreen />}
+        {authView === "signin" && <SignInScreen mode={mode} />}
         {authView === "otp" && <OtpScreen />}
-        {authView === "accounttype" && <AccountTypeScreen />}
         {authView === "reward" && <AgencyRewardScreen />}
         {authView === "organisation" && <OrganisationScreen />}
         {authView === "workspace" && <WorkspaceScreen />}

@@ -1,13 +1,58 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Check, ChevronDown, FileText, Image as ImageIcon, Mail, Megaphone, Video, type LucideIcon } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
-import { StudioDemo } from "@/features/auth/studio-demo";
+import { AccountTypeConfirm, AccountTypePicker } from "@/features/auth/account-type-screen";
 import { emailProblem, routeEmail, TRY_EMAILS, useAuthFlow } from "@/features/auth/auth-flow";
 import { AuthButton, AuthCardHead, AuthStage } from "@/features/auth/auth-stage";
-import { useSettingsStore } from "@/features/settings/settings-store";
+import { existingAccountFor, useSettingsStore, type AccountType, type Sector } from "@/features/settings/settings-store";
+
+const MAKES: Array<{ label: string; icon: LucideIcon }> = [
+  { label: "Video", icon: Video },
+  { label: "Image", icon: ImageIcon },
+  { label: "Docs", icon: FileText },
+  { label: "Ads", icon: Megaphone },
+  { label: "Emails", icon: Mail },
+];
+const PROOF = [
+  "Every claim cited to an approved source",
+  "Ready for your MLR review",
+  "Written to the label of each market",
+];
+
+/** What SwishX Studio makes, and the three things true of all of it. */
+function WhatYouMake() {
+  return (
+    <div className="grid max-w-[520px] gap-7">
+      <div className="grid grid-cols-5 gap-2">
+        {MAKES.map((m, i) => (
+          <div
+            key={m.label}
+            className="auth-rise flex flex-col items-center gap-2 rounded-panel border border-white/10 bg-white/[.04] py-4 text-white/85 transition-colors hover:border-white/25 hover:bg-white/[.08]"
+            style={{ animationDelay: `${700 + i * 80}ms` }}
+          >
+            <m.icon className="size-5" style={{ color: "var(--brand-2)" }} />
+            <span className="text-label font-semibold">{m.label}</span>
+          </div>
+        ))}
+      </div>
+      <ul className="grid gap-2.5">
+        {PROOF.map((p) => (
+          <li key={p} className="flex items-center gap-2.5 text-body text-white/70">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-ok-on-dark/15 text-ok-on-dark">
+              <Check className="size-3 stroke-[3]" />
+            </span>
+            {p}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function GoogleMark() {
   return (
@@ -31,18 +76,45 @@ function MicrosoftMark() {
   );
 }
 
-export function SignInScreen() {
+export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
+  const router = useRouter();
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
   const { email: storedEmail, setEmail, setRoute, inviteId } = useAuthFlow();
   const [email, setDraft] = useState(storedEmail);
   const [error, setError] = useState<string>();
+  const [type, setType] = useState<AccountType>();
+  const [sector, setSector] = useState<Sector>();
+  const [confirming, setConfirming] = useState(false);
+  const [tryOpen, setTryOpen] = useState(false);
+  /* Sign in is just the email; sign up adds what the organization is. Each has its own address. An invite link is always a sign-in. */
+  const setMode = (next: "signin" | "signup") => router.push(next === "signup" ? "/signup" : "/signin");
+
+  /* Whether this email's company is already on SwishX Studio, and so has a type of its own. */
+  const settings = useSettingsStore();
+  const existing = existingAccountFor(settings, email);
+  const isNew = !inviteId && !emailProblem(email) && !existing;
+  const chosen = type === "agency" || (type === "lifesciences" && !!sector);
+  const signingUp = mode === "signup" && !inviteId;
+  /* Each mode points to the other when the email belongs there. */
+  const wrongMode = !emailProblem(email) && (signingUp ? !!existing : isNew);
 
   /* Work email only: a personal address is stopped here, before any code is sent. */
   function proceed(address = email) {
     const problem = emailProblem(address);
     if (problem) { setError(problem); return; }
+    if (wrongMode) return;
+    if (signingUp) {
+      if (!chosen) { setError("Choose what describes your organization."); return; }
+      setConfirming(true);
+      return;
+    }
+    go(address);
+  }
+
+  function go(address = email) {
     /* Prototype: the seeded agency and company each own their domain, so the right one opens. */
     useSettingsStore.getState().switchAccountForEmail(address);
+    useAuthFlow.getState().setChoice(signingUp && type ? { type, sector } : undefined);
     setEmail(address.trim());
     setRoute(routeEmail(address, inviteId));
     setAuthView("otp");
@@ -53,15 +125,32 @@ export function SignInScreen() {
       title="Your brand's whole team,"
       accent="on day one."
       body="Specialists who make videos, images, docs, ads and emails from your approved dossier, with every claim cited."
-      aside={<StudioDemo />}
-      compact
+      /* The studio demo (StudioDemo) is hidden for now; this is the simpler picture. */
+      aside={<WhatYouMake />}
       footnote="Claims come only from your approved sources · SOC 2 Type II · GDPR · HIPAA-aligned"
     >
-      <AuthCardHead title="Sign in to SwishX Studio">
-        Sign in with your work email. New here? We&apos;ll set up your company in about ninety seconds.
+      {/* The mode is the heading; the line under it switches to the other one. */}
+      <AuthCardHead title={signingUp ? "Create your account" : "Sign in to SwishX Studio"}>
+        {inviteId ? (
+          "Sign in with your work email."
+        ) : (
+          <>
+            {signingUp ? "Already have an account? " : "New to SwishX Studio? "}
+            <button
+              type="button"
+              onClick={() => { setMode(signingUp ? "signin" : "signup"); setError(undefined); }}
+              className="cursor-pointer font-bold text-brand underline-offset-4 hover:text-brand-deep hover:underline"
+            >
+              {signingUp ? "Sign in" : "Create an account"}
+            </button>
+          </>
+        )}
       </AuthCardHead>
 
-      <form onSubmit={(e) => { e.preventDefault(); proceed(); }} className="grid gap-3">
+      <form onSubmit={(e) => { e.preventDefault(); proceed(); }} className="grid gap-4">
+        {signingUp && (
+          <AccountTypePicker type={type} sector={sector} onType={(t) => { setType(t); setError(undefined); }} onSector={(x) => { setSector(x); setError(undefined); }} />
+        )}
         <Field
           type="email"
           label="Work email"
@@ -71,8 +160,32 @@ export function SignInScreen() {
           error={error}
           autoComplete="email"
         />
-        <AuthButton type="submit">Continue</AuthButton>
+        {wrongMode && (
+          <div className="rise-in flex items-center gap-2.5 rounded-panel border border-hair bg-canvas px-3 py-2.5">
+            <span className="min-w-0 flex-1 text-label leading-snug text-ink-2">
+              {signingUp
+                ? <><b className="text-ink">{existing?.name}</b> is already on SwishX Studio.</>
+                : <>No SwishX Studio account for <b className="text-ink">@{email.split("@")[1]}</b> yet.</>}
+            </span>
+            <button
+              type="button"
+              onClick={() => setMode(signingUp ? "signin" : "signup")}
+              className="shrink-0 cursor-pointer text-label font-bold text-brand hover:text-brand-deep"
+            >
+              {signingUp ? "Sign in instead" : "Sign up instead"}
+            </button>
+          </div>
+        )}
+        <AuthButton type="submit" disabled={wrongMode || (signingUp && !chosen)}>{signingUp ? "Sign up" : "Sign in"}</AuthButton>
       </form>
+
+      <AccountTypeConfirm
+        open={confirming}
+        type={type}
+        sector={sector}
+        onBack={() => setConfirming(false)}
+        onConfirm={() => { setConfirming(false); go(); }}
+      />
 
       <div className="my-5 flex items-center gap-3 text-caption font-semibold text-ink-4">
         <span className="h-px flex-1 bg-hair" />
@@ -102,13 +215,20 @@ export function SignInScreen() {
         <a href="#" className="font-semibold text-ink-3 underline hover:text-ink">Privacy Notice</a>.
       </p>
 
-      {/* Prototype only: one address per path, so each sign-up flow can be walked. */}
+      {/* Prototype only: one address per path, so each sign-up flow can be walked. Folded, so it doesn't crowd the card. */}
       <div className="mt-5 rounded-panel border border-dashed border-hair-3 p-3">
-        <span className="mb-2 flex items-center gap-1.5 text-micro font-extrabold uppercase tracking-wider text-ink-4">
+        <button
+          type="button"
+          onClick={() => setTryOpen((o) => !o)}
+          aria-expanded={tryOpen}
+          className="flex w-full cursor-pointer items-center gap-1.5 text-micro font-extrabold uppercase tracking-wider text-ink-4"
+        >
           Try a path
           <span className="rounded-glyph bg-warn-bg px-1.5 py-px normal-case tracking-normal text-warn">Prototype</span>
-        </span>
-        <div className="grid gap-1.5">
+          <ChevronDown className={cn("ml-auto size-3.5 transition-transform", tryOpen && "rotate-180")} />
+        </button>
+        {tryOpen && (
+        <div className="mt-2 grid gap-1.5">
           {(["Either", "Life sciences", "Agency"] as const).map((group) => (
           <div key={group} className="flex flex-wrap items-center gap-1.5">
           {group !== "Either" && <span className="w-full text-micro font-bold text-ink-4">{group === "Agency" ? "Agency · Brightwave Health" : "Life sciences · Velmora"}</span>}
@@ -117,7 +237,7 @@ export function SignInScreen() {
               key={t.email}
               type="button"
               title={t.email}
-              onClick={() => { setDraft(t.email); setError(undefined); }}
+              onClick={() => { setDraft(t.email); setError(undefined); setMode(t.label === "New company" ? "signup" : "signin"); }}
               className={cn(
                 "cursor-pointer rounded-chip border px-2 py-0.5 text-caption font-semibold transition-colors",
                 email === t.email ? "border-brand bg-tint text-brand-deep" : "border-hair-2 bg-card text-ink-3 hover:border-ink-4 hover:text-ink"
@@ -129,6 +249,7 @@ export function SignInScreen() {
           </div>
           ))}
         </div>
+        )}
       </div>
     </AuthStage>
   );

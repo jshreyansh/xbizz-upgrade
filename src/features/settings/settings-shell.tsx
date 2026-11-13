@@ -41,15 +41,9 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   { id: "pronunciations", label: "Pronunciations",      blurb: "How names are spoken in generated narration.", anyOf: ["pron"] },
 ];
 
-/**
- * An agency is one tier, so the company and workspace sections become one:
- * "Agency", with no separate workspace profile, and the wording follows.
- */
+/** An agency is two tiers like a company; its top tier is called the agency. */
 const AGENCY_SECTIONS: Partial<Record<string, Pick<SettingsSection, "label" | "blurb"> | null>> = {
-  organisation: { label: "Agency", blurb: "Your agency: its name, account type, sign-up domains and admins." },
-  workspace: null,
-  "brand-kit": { label: "Brand kit", blurb: "The logos, typefaces and colours your agency's assets are built from." },
-  team: { label: "Team", blurb: "Who is in your agency, what they are, and what they can do." },
+  organisation: { label: "Agency", blurb: "The agency above its workspaces: domains, admins, and every workspace." },
 };
 
 export function SettingsShell({ children }: { children: React.ReactNode }) {

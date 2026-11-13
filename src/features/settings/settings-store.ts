@@ -228,11 +228,44 @@ const ACCOUNT_KEYS = [
 export type AccountSnapshot = Pick<SettingsState, (typeof ACCOUNT_KEYS)[number]>;
 
 /**
- * Brightwave Health: an agency making content for life sciences clients,
- * Velmora among them. One tier, so its one workspace is the agency. Siva
- * runs it, as he runs Velmora, so switching needs no new sign-in.
+ * Brightwave Health: an agency making content for life sciences clients.
+ * Like a company, it's two tiers: the agency, and a workspace per client —
+ * Velmora US, which Siva runs, and Corvane Oncology, which Priya runs and
+ * Siva can open as an agency admin.
  */
 export const AGENCY_ACCOUNT_ID = "acct_brightwave";
+/* Brightwave's second client workspace. */
+const CORVANE_WORKSPACE: WorkspaceSlice = {
+  workspaceName: "Corvane Oncology",
+  region: "United States",
+  markets: ["United States · FDA"],
+  therapyAreas: ["Oncology"],
+  workspaceId: "ws_brightwave_corvane",
+  brandKit: {
+    logos: { "lockup-light": { fileName: "corvane-lockup.svg", size: "16 KB" } },
+    typefaces: [{ id: "tf-cv1", name: "Inter", source: "google" }],
+    colors: { primary: "#1d4ed8", accent: "#0ea5e9", callout: "#eff6ff", text: "#0a0d14" },
+  },
+  members: [
+    { id: "a1", name: "Priya Shah", email: "priya.shah@brightwavehealth.com", role: "Workspace admin", seniority: "VP", permissions: ROLE_PERMISSIONS["Workspace admin"], status: "active", lastActive: "10 minutes ago" },
+    { id: "a4", name: "Dr. Kofi Mensah", email: "kofi.mensah@brightwavehealth.com", role: "Medical reviewer", seniority: "Director", permissions: ROLE_PERMISSIONS["Medical reviewer"], status: "active", lastActive: "Yesterday" },
+    { id: "a5", name: "Sam Okoye", email: "sam.okoye@brightwavehealth.com", role: "Design", seniority: "Associate", permissions: ROLE_PERMISSIONS["Design"], status: "active", lastActive: "3 days ago" },
+  ],
+  invites: [],
+  joinRequests: [],
+  roles: DEFAULT_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] })),
+  chains: [],
+  expiryWarnDays: 30,
+  autoArchive: true,
+  planName: "Agency",
+  renewsOn: "1 Dec 2026",
+  creditBalance: 800,
+  usage: [],
+  topUps: [],
+  invoices: [],
+  pronunciations: [],
+  topUpRequests: [],
+};
 const AGENCY_ACCOUNT: AccountSnapshot = {
   accountType: "agency",
   sector: undefined,
@@ -240,9 +273,9 @@ const AGENCY_ACCOUNT: AccountSnapshot = {
   allowedDomains: ["brightwavehealth.com", "swishx.com"],
   orgAdminIds: ["m0", "a1"],
   archivedWorkspaceIds: [],
-  stash: {},
+  stash: { ws_brightwave_corvane: CORVANE_WORKSPACE },
   legalEntity: "Brightwave Health LLC",
-  workspaceName: "Brightwave Health",
+  workspaceName: "Velmora US",
   region: "United States",
   markets: ["United States · FDA", "European Union · EMA"],
   therapyAreas: ["Dermatology", "Oncology", "Cardiology"],
@@ -470,14 +503,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (owner) get().switchAccount(owner[0]);
   },
   confirmAccountType: (accountType, sector) =>
-    set((s) => ({
+    set({
       accountType,
       sector: accountType === "agency" ? undefined : sector,
       creditBalance: STARTING_CREDITS[accountType],
-      /* One tier: the agency is its only workspace. */
-      stash: accountType === "agency" ? {} : s.stash,
-      archivedWorkspaceIds: accountType === "agency" ? [] : s.archivedWorkspaceIds,
-    })),
+    }),
   orgName: "Velmora Therapeutics",
   allowedDomains: ["velmora.com", "swishx.com"],
   orgAdminIds: ["m0"],
@@ -891,12 +921,19 @@ export const creditsInUsd = (credits: number) =>
  */
 export function accountWords(type: AccountType) {
   return type === "agency"
-    ? { org: "Agency", orgLower: "agency", workspace: "Agency", workspaceLower: "agency", admin: "Agency admin" }
+    ? { org: "Agency", orgLower: "agency", workspace: "Workspace", workspaceLower: "workspace", admin: "Agency admin" }
     : { org: "Organisation", orgLower: "organisation", workspace: "Workspace", workspaceLower: "workspace", admin: "Organisation admin" };
 }
 
-/** A role as shown: in an agency, its own admin role reads as the agency's. */
-export const roleLabel = (role: string, type: AccountType) => (type === "agency" && role === "Workspace admin" ? "Agency admin" : role);
+/** The account an email belongs to, by its domain, if any (swishx.com is shared by every seeded account). */
+export function existingAccountFor(s: SettingsState, email: string) {
+  const domain = emailDomain(email);
+  if (!domain || !email.includes("@")) return undefined;
+  if (domain === "swishx.com") return { name: s.orgName, type: s.accountType, sector: s.sector };
+  return listAccounts(s).find((a) =>
+    (a.current ? s.allowedDomains : s.otherAccounts[a.id].allowedDomains).includes(domain)
+  );
+}
 
 /** Every account, the one on screen first: for the prototype's account switch. */
 export function listAccounts(s: SettingsState) {

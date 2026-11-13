@@ -16,21 +16,17 @@ import type { AuthView } from "@/types/content";
  * explains, it doesn't advertise.
  */
 
-/**
- * Setting up a new account is the one path with a fixed number of steps.
- * An agency has one fewer: it is its own workspace.
- */
+/** Setting up a new account is the one path with a fixed number of steps; an agency's are named for an agency. */
 export function newAccountSteps(type: AccountType): Array<{ view: AuthView; label: string }> {
   return type === "agency"
     ? [
         { view: "otp", label: "Verify email" },
-        { view: "accounttype", label: "Account type" },
         { view: "organisation", label: "Your agency" },
+        { view: "workspace", label: "First workspace" },
         { view: "team", label: "Your team" },
       ]
     : [
         { view: "otp", label: "Verify email" },
-        { view: "accounttype", label: "Account type" },
         { view: "organisation", label: "Organisation" },
         { view: "workspace", label: "First workspace" },
         { view: "team", label: "Your team" },

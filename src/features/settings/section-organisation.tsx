@@ -25,7 +25,7 @@ export function SectionOrganisation() {
   const s = useSettingsStore();
   const workspaces = listWorkspaces(s);
   const people = orgPeople(s).filter((p) => p.status === "active");
-  /* An agency is its own workspace: one name, no workspaces to list. */
+  /* An agency is the organisation above its client workspaces. */
   const agency = s.accountType === "agency";
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
@@ -45,17 +45,14 @@ export function SectionOrganisation() {
     <Stack gap={4}>
       <SettingsCard
         title={agency ? "Agency" : "Organisation"}
-        description={agency ? "Your agency. Shown on invoices." : "The company every workspace belongs to. Shown on invoices for all of them."}
+        description={agency ? "The agency every workspace belongs to. Shown on invoices for all of them." : "The company every workspace belongs to. Shown on invoices for all of them."}
       >
         <div>
           <SettingRow label={agency ? "Agency name" : "Organisation name"} htmlFor="org-name">
             <Field
               id="org-name"
               value={s.orgName}
-              onChange={(e) => {
-                s.setOrgName(e.target.value);
-                if (agency) s.setWorkspaceField("workspaceName", e.target.value);
-              }}
+              onChange={(e) => s.setOrgName(e.target.value)}
               className="text-body"
             />
           </SettingRow>
@@ -101,10 +98,10 @@ export function SectionOrganisation() {
         </div>
       </SettingsCard>
 
-      {!agency && (
+      {(
       <SettingsCard
         title="Workspaces"
-        description="Each has its own team, roles, libraries and credits. People are added to each one separately."
+        description={agency ? "Usually one per client. Each has its own team, roles, libraries and credits." : "Each has its own team, roles, libraries and credits. People are added to each one separately."}
         actions={<Button size="sm" onClick={() => setCreating(true)}><Plus className="size-3.5" /> New workspace</Button>}
       >
         <div className="divide-y divide-hair">
@@ -171,7 +168,7 @@ export function SectionOrganisation() {
         title={agency ? "Agency admins" : "Organisation admins"}
         description={
           agency
-            ? "Manage the agency's details, allowed domains and admins. What each person can do day to day is set in Team."
+            ? "Agency-wide: create, rename and archive workspaces, manage allowed domains, and open any workspace as its workspace admin. Being Workspace admin of one workspace is set in that workspace's Team instead."
             : "Company-wide: create, rename and archive workspaces, manage allowed domains, and open any workspace as its workspace admin. Being Workspace admin of one workspace is set in that workspace's Team instead."
         }
         actions={<Button size="sm" variant="secondary" onClick={() => setAddingAdmin(true)} disabled={candidates.length === 0}><Plus className="size-3.5" /> Add admin</Button>}
@@ -183,7 +180,7 @@ export function SectionOrganisation() {
               <div key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 py-2.5 first:pt-0 last:pb-0">
                 <div className="min-w-0 flex-1">
                   <Text size="body" weight="semibold" className="block">{p.name}</Text>
-                  <Text size="caption" tone="subtle" className="mt-0.5 block truncate">{agency ? p.email : `${p.email} · ${workspacesOf(p.id).join(" · ")}`}</Text>
+                  <Text size="caption" tone="subtle" className="mt-0.5 block truncate">{`${p.email} · ${workspacesOf(p.id).join(" · ")}`}</Text>
                 </div>
                 <Button
                   size="sm"
