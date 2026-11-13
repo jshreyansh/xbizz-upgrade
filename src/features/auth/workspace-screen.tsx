@@ -29,7 +29,7 @@ export function WorkspaceScreen() {
 
   return (
     <AuthStage
-      eyebrow="Step 3 of 4 · First workspace"
+      eyebrow="First workspace"
       title="Your markets"
       accent="set the rules."
       body="A workspace is one brand or market, with its own team, libraries and credits. Each asset is written against the label and promotional guidance of the market it ships to, so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim."

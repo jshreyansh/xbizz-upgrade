@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
-import { listWorkspaces } from "@/features/settings/settings-store";
+import { listAccounts, listWorkspaces } from "@/features/settings/settings-store";
 import { CreateWorkspaceModal } from "@/features/settings/workspace-modals";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { usePageSettled } from "@/lib/use-load-gates";
@@ -206,6 +206,9 @@ export function Sidebar() {
   const settings = useSettingsStore();
   const { me } = useCan();
   const workspaces = listWorkspaces(settings);
+  const accounts = listAccounts(settings);
+  const agency = settings.accountType === "agency";
+  const switchAccount = settings.switchAccount;
   const { orgName, workspaceName, creditBalance, switchWorkspace, joinWorkspaceAsAdmin } = settings;
   const isOrgAdmin = settings.orgAdminIds.includes(currentUserId);
   const initials = (me?.name ?? PERSONA.name).replace(/^Dr\.\s*/, "").split(" ").map((p) => p[0]).slice(0, 2).join("");
@@ -307,7 +310,7 @@ export function Sidebar() {
             <LogoMark size={24} className="text-brand" />
             {!collapsed && (
               <span>
-                swish<span className="text-brand">X</span>
+                swish<span className="text-brand">X</span><span className="ml-1.5 font-semibold text-current opacity-60">Studio</span>
               </span>
             )}
           </div>
@@ -434,7 +437,7 @@ export function Sidebar() {
             <div key={group.label} className="space-y-1.5">
               {!collapsed ? (
                 <div className="px-2 pt-2 text-caption font-extrabold uppercase tracking-[0.14em] text-ink-3">
-                  {group.label}
+                  {agency && group.label === "Workspace" ? "Agency" : group.label}
                 </div>
               ) : (
                 <div className="my-1.5 flex justify-center">
@@ -607,8 +610,37 @@ export function Sidebar() {
                   </div>
                 </div>
 
+                {/* Prototype: the seeded accounts, a life sciences company and an agency, side by side. */}
+                <div className="border-b border-hair py-1.5">
+                  <div className="px-2.5 pb-1 pt-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4">Accounts</div>
+                  {accounts.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (a.current) return;
+                        switchAccount(a.id);
+                        router.push("/");
+                      }}
+                      className="flex w-full items-center gap-2 rounded-chip px-2.5 py-1.5 text-left hover:bg-black/[0.04]"
+                    >
+                      <span className={`grid size-6 shrink-0 place-items-center rounded-glyph text-caption font-extrabold ${a.current ? "bg-ink text-white" : "bg-subtle text-ink-3"}`}>
+                        {a.name.slice(0, 1)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className={`block truncate text-body ${a.current ? "font-bold text-ink" : "font-medium text-ink-2"}`}>{a.name}</span>
+                        <span className="block truncate text-caption text-ink-4">{a.type === "agency" ? "Agency Partner" : `Life Sciences · ${a.sector ?? "Pharma"}`}</span>
+                      </span>
+                      {a.current && <span className="text-caption font-bold text-brand">Current</span>}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Workspaces: the ones you're in, and for organisation admins
-                    the rest of the organisation's, which they can open as workspace admin. */}
+                    the rest of the organisation's, which they can open as workspace admin.
+                    An agency is one tier, so it has none to list. */}
+                {!agency && (
                 <div className="border-b border-hair py-1.5">
                   <div className="px-2.5 pb-1 pt-0.5 text-micro font-extrabold uppercase tracking-wider text-ink-4 truncate">
                     {orgName}
@@ -648,6 +680,7 @@ export function Sidebar() {
                     </button>
                   )}
                 </div>
+                )}
 
                 <div className="py-1 space-y-0.5">
                   <button

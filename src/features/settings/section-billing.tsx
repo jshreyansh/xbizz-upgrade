@@ -12,7 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { Sheet } from "@/components/patterns/sheet";
 import { DataTable, type DataColumn } from "@/components/patterns/data-table";
 import { TabNav } from "@/components/patterns/tab-nav";
-import { useSettingsStore } from "@/features/settings/settings-store";
+import { CREDIT_PRICE_USD, creditsInUsd, useSettingsStore } from "@/features/settings/settings-store";
 import { SettingsCard, SettingRow } from "@/features/settings/settings-parts";
 import type { Invoice, TopUpEntry, UsageEntry } from "@/features/settings/settings-types";
 
@@ -20,7 +20,8 @@ const INVOICE_TONE = { paid: "ok", due: "warn", overdue: "danger", refunded: "de
 const TOPUP_TONE = { paid: "ok", pending: "warn", failed: "danger" } as const;
 
 /** Below this the balance is called out, for everyone who can see it. */
-const LOW_CREDITS = 10000;
+/* Below this, renders are close to pausing. New agencies start at 2,000. */
+const LOW_CREDITS = 1000;
 
 export function SectionBilling() {
   const s = useSettingsStore();
@@ -105,12 +106,15 @@ export function SectionBilling() {
               <Text size="title" weight="bold" className="mt-0.5 block tabular-nums text-white">
                 {s.creditBalance.toLocaleString()}
               </Text>
+              <Text size="caption" className="block tabular-nums text-white/50">
+                Worth {creditsInUsd(s.creditBalance)} · US${CREDIT_PRICE_USD.toFixed(2)} a credit
+              </Text>
             </div>
           </div>
           {canManage ? (
             <div className="flex items-center gap-2">
               <Button size="sm" variant="secondary">Change plan</Button>
-              <Button size="sm" onClick={() => s.topUp(50000, "$4,000.00")}>Top up 50,000</Button>
+              <Button size="sm" onClick={() => s.topUp(10000, "$12,500.00")}>Top up 10,000 · US$12,500</Button>
             </div>
           ) : asked ? (
             <Text size="label" className="text-white/70">Top-up requested. Whoever manages billing has been told.</Text>
@@ -141,7 +145,7 @@ export function SectionBilling() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Button size="sm" variant="secondary" onClick={() => s.dismissTopUpRequest(r.id)}>Dismiss</Button>
-                  <Button size="sm" onClick={() => s.topUp(50000, "$4,000.00")}>Top up 50,000</Button>
+                  <Button size="sm" onClick={() => s.topUp(10000, "$12,500.00")}>Top up 10,000 · US$12,500</Button>
                 </div>
               </div>
             ))}

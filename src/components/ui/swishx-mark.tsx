@@ -7,7 +7,7 @@ export function SwishXMark({ compact = false, className }: { compact?: boolean; 
       <LogoMark size={26} className="text-brand" />
       {!compact && (
         <span className="text-title font-extrabold tracking-[-0.035em] text-ink">
-          swish<span className="text-brand">X</span>
+          swish<span className="text-brand">X</span><span className="ml-1.5 font-semibold text-current opacity-60">Studio</span>
         </span>
       )}
     </div>

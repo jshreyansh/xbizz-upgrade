@@ -30,7 +30,7 @@ export function useAuthNext() {
       case "invite": setAuthView("details"); return;
       case "join": setAuthView("join"); return;
       case "pending": setAuthView("waiting"); return;
-      case "new": setAuthView("organisation"); return;
+      case "new": setAuthView("accounttype"); return;
       default: setAuthView("blocked");
     }
   };
@@ -40,6 +40,8 @@ export function useAuthNext() {
 
 export function OrganisationScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
+  /* An agency is one tier: this step makes the agency, and there's no workspace step after it. */
+  const agency = useSettingsStore((s) => s.accountType === "agency");
   const email = useAuthFlow((s) => s.email);
   const domain = emailDomain(email);
   const guess = domain.split(".")[0].replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -54,24 +56,32 @@ export function OrganisationScreen() {
       legalEntity: entity.trim() || name.trim(),
       region,
       allowedDomains: [domain],
-      /* Whoever sets the company up is its first organisation admin. */
+      /* Whoever sets the company up is its first admin. */
       orgAdminIds: s.orgAdminIds.includes(s.currentUserId) ? s.orgAdminIds : [...s.orgAdminIds, s.currentUserId],
+      /* The agency is its own workspace, under the same name. */
+      ...(agency ? { workspaceName: name.trim() } : {}),
     });
-    setAuthView("workspace");
+    setAuthView(agency ? "team" : "workspace");
   };
 
   return (
     <AuthStage
-      eyebrow="Step 2 of 4 · Organisation"
-      title="First, the company."
-      accent="Then its brands."
-      body={<>Your organisation is the company: its legal entity, who can sign up, and its admins. Brands and markets go in <b className="text-white">workspaces</b> inside it, each with its own team, libraries and credits.</>}
+      eyebrow={agency ? "Your agency" : "Organisation"}
+      title={agency ? "One agency." : "First, the company."}
+      accent={agency ? "Your whole team in it." : "Then its brands."}
+      body={
+        agency ? (
+          <>Your agency is one account: its team, its credits, brand kits and approvals, all in one place. You&apos;ll invite your team from Settings.</>
+        ) : (
+          <>Your organisation is the company: its legal entity, who can sign up, and its admins. Brands and markets go in <b className="text-white">workspaces</b> inside it, each with its own team, libraries and credits.</>
+        )
+      }
     >
-      <AuthCardHead title="Set up your organisation">
-        You&apos;ll be its admin, so you can add workspaces and people later.
+      <AuthCardHead title={agency ? "Set up your agency" : "Set up your organisation"}>
+        {agency ? "You\u2019ll be its admin, so you can add people later." : <>You&apos;ll be its admin, so you can add workspaces and people later.</>}
       </AuthCardHead>
       <div className="grid gap-4">
-        <Field label="Organisation name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Meridian Therapeutics" autoFocus />
+        <Field label={agency ? "Agency name" : "Organisation name"} value={name} onChange={(e) => setName(e.target.value)} placeholder={agency ? "Brightwave Health" : "Meridian Therapeutics"} autoFocus />
         <Field label="Legal entity" value={entity} onChange={(e) => setEntity(e.target.value)} hint="Shown on invoices" />
         <div className="grid gap-1.5">
           <span className="text-label font-semibold text-ink-2">Headquarters region</span>
@@ -80,7 +90,7 @@ export function OrganisationScreen() {
         <div className="rounded-control border border-hair bg-subtle px-3 py-2.5 text-label leading-snug text-ink-3">
           Anyone with an <b className="text-ink">@{domain}</b> email can ask to join. You approve each request, and you can add more domains in Settings.
         </div>
-        <AuthButton onClick={next} disabled={name.trim().length < 2}>Create organisation</AuthButton>
+        <AuthButton onClick={next} disabled={name.trim().length < 2}>{agency ? "Create agency" : "Create organisation"}</AuthButton>
       </div>
     </AuthStage>
   );
@@ -98,6 +108,7 @@ function useInvite() {
     inviterName: inviter?.name ?? "An admin",
     workspaceName: found ? workspaceNameOf(s, found.workspaceId) : "",
     orgName: s.orgName,
+    agency: s.accountType === "agency",
   };
 }
 
@@ -105,25 +116,37 @@ function useInvite() {
 export function InviteScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
   const { setEmail } = useAuthFlow();
-  const { found, inviterName, workspaceName, orgName } = useInvite();
+  const { found, inviterName, workspaceName, orgName, agency } = useInvite();
 
   if (!found) return <BlockedScreen />;
   const { invite } = found;
   const access = accessHeadline(invite.permissions);
+  /* An agency is its own workspace, so its invite names one place, not two. */
+  const where = agency ? orgName : workspaceName;
 
   return (
     <AuthStage
       eyebrow="You're invited"
-      title={`Join ${workspaceName}`}
-      accent="on SwishX."
-      body={`${inviterName} added you to ${orgName}'s ${workspaceName} workspace. Verify your email and you're in, with your role already set.`}
+      title={`Join ${where}`}
+      accent="on SwishX Studio."
+      body={
+        agency
+          ? `${inviterName} added you to ${orgName}, the agency. Verify your email and you're in, with your role already set.`
+          : `${inviterName} added you to ${orgName}'s ${workspaceName} workspace. Verify your email and you're in, with your role already set.`
+      }
     >
-      <AuthCardHead title={`Join ${workspaceName}`}>
+      <AuthCardHead title={`Join ${where}`}>
         {inviterName} invited <b className="text-ink [overflow-wrap:anywhere]">{invite.email}</b>.
       </AuthCardHead>
       <dl className="mb-6 grid gap-2.5 rounded-control border border-hair bg-subtle p-3.5 text-body">
-        <div className="flex justify-between gap-3"><dt className="text-ink-3">Organisation</dt><dd className="text-right font-semibold text-ink">{orgName}</dd></div>
-        <div className="flex justify-between gap-3"><dt className="text-ink-3">Workspace</dt><dd className="text-right font-semibold text-ink">{workspaceName}</dd></div>
+        {agency ? (
+          <div className="flex justify-between gap-3"><dt className="text-ink-3">Agency</dt><dd className="text-right font-semibold text-ink">{orgName}</dd></div>
+        ) : (
+          <>
+            <div className="flex justify-between gap-3"><dt className="text-ink-3">Organisation</dt><dd className="text-right font-semibold text-ink">{orgName}</dd></div>
+            <div className="flex justify-between gap-3"><dt className="text-ink-3">Workspace</dt><dd className="text-right font-semibold text-ink">{workspaceName}</dd></div>
+          </>
+        )}
         <div className="flex justify-between gap-3"><dt className="text-ink-3">Role</dt><dd className="text-right font-semibold text-ink">{invite.role} · {invite.seniority}</dd></div>
         <div className="grid gap-1">
           <dt className="text-ink-3">You&apos;ll be able to</dt>
@@ -144,7 +167,7 @@ export function InviteScreen() {
 export function DetailsScreen() {
   const router = useRouter();
   const email = useAuthFlow((s) => s.email);
-  const { found, workspaceName } = useInvite();
+  const { found, workspaceName, orgName, agency } = useInvite();
   const local = email.split("@")[0].split(/[._-]/).map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
   const [name, setName] = useState(local);
   const [title, setTitle] = useState("");
@@ -166,7 +189,7 @@ export function DetailsScreen() {
       accent="who you are."
       body="Your name shows on what you make, comment on and approve. Your role and permissions were set by whoever invited you."
     >
-      <AuthCardHead title="Your details">Joining {workspaceName} as {found.invite.role}.</AuthCardHead>
+      <AuthCardHead title="Your details">Joining {agency ? orgName : workspaceName} as {found.invite.role}.</AuthCardHead>
       <div className="grid gap-4">
         <Field label="Full name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
         <Field label="Job title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Brand Manager" />
@@ -175,7 +198,7 @@ export function DetailsScreen() {
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-4 accent-brand" />
           <span>I agree to the <a href="#" className="font-semibold text-brand">Terms</a> and <a href="#" className="font-semibold text-brand">Privacy Notice</a>.</span>
         </label>
-        <AuthButton onClick={join} disabled={name.trim().length < 2 || !agreed}>Join {workspaceName}</AuthButton>
+        <AuthButton onClick={join} disabled={name.trim().length < 2 || !agreed}>Join {agency ? orgName : workspaceName}</AuthButton>
       </div>
     </AuthStage>
   );
@@ -188,6 +211,8 @@ export function JoinScreen() {
   const email = useAuthFlow((s) => s.email);
   const s = useSettingsStore();
   const workspaces = listWorkspaces(s).filter((w) => !w.archived);
+  /* An agency has one place to join, so there's nothing to pick. */
+  const agency = s.accountType === "agency";
   const local = email.split("@")[0].split(/[._-]/).map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(" ");
   const [workspaceId, setWorkspaceId] = useState(workspaces[0]?.id ?? "");
   const [name, setName] = useState(local);
@@ -200,14 +225,20 @@ export function JoinScreen() {
 
   return (
     <AuthStage
-      eyebrow={`${s.orgName} is on SwishX`}
+      eyebrow={`${s.orgName} is on SwishX Studio`}
       title="Your team"
       accent="is already here."
-      body={`People with an @${emailDomain(email)} email work in ${s.orgName}'s workspaces. Nobody has invited you yet, so ask the admins of the one you need. They choose your role when they approve.`}
+      body={
+        agency
+          ? `People with an @${emailDomain(email)} email work at ${s.orgName}. Nobody has invited you yet, so ask the agency's admins. They choose your role when they approve.`
+          : `People with an @${emailDomain(email)} email work in ${s.orgName}'s workspaces. Nobody has invited you yet, so ask the admins of the one you need. They choose your role when they approve.`
+      }
     >
-      <AuthCardHead title="Ask to join">Your request goes to that workspace&apos;s admins.</AuthCardHead>
+      <AuthCardHead title={agency ? `Ask to join ${s.orgName}` : "Ask to join"}>
+        {agency ? <>Your request goes to the agency&apos;s admins.</> : <>Your request goes to that workspace&apos;s admins.</>}
+      </AuthCardHead>
       <div className="grid gap-4">
-        <div>
+        {!agency && <div>
           <AuthLabel>Workspace</AuthLabel>
           <div className="grid gap-2" role="radiogroup" aria-label="Workspace">
             {workspaces.map((w) => (
@@ -227,7 +258,7 @@ export function JoinScreen() {
               </button>
             ))}
           </div>
-        </div>
+        </div>}
         <Field label="Full name" value={name} onChange={(e) => setName(e.target.value)} />
         <Field multiline rows={2} label="Note to the admins (optional)" value={note} onChange={(e) => setNote(e.target.value)} placeholder="I'm joining the EU brand team as a medical writer." />
         <AuthButton onClick={send} disabled={!workspaceId || name.trim().length < 2}>Send request</AuthButton>
@@ -307,7 +338,7 @@ export function BlockedScreen() {
 
   const { Icon } = content;
   return (
-    <AuthStage eyebrow="Access" title="Not quite" accent="yet." body="Access to SwishX comes from your company's admins: by invite, or by approving a request to join.">
+    <AuthStage eyebrow="Access" title="Not quite" accent="yet." body="Access to SwishX Studio comes from your company's admins: by invite, or by approving a request to join.">
       <div className="mb-5 grid size-12 place-items-center rounded-full bg-warn-bg text-warn"><Icon className="size-6" /></div>
       <AuthCardHead title={content.title}>{content.body}</AuthCardHead>
       {content.actions}

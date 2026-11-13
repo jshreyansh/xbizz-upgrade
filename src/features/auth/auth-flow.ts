@@ -59,7 +59,7 @@ export function routeEmail(email: string, inviteId?: string): AuthRoute {
 export function emailProblem(email: string): string | undefined {
   const e = email.trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)) return "Enter your work email, like you@company.com.";
-  if (isPersonalEmail(e)) return `SwishX is for company accounts, so ${emailDomain(e)} addresses can't sign in. Use your work email.`;
+  if (isPersonalEmail(e)) return `SwishX Studio is for company accounts, so ${emailDomain(e)} addresses can't sign in. Use your work email.`;
   return undefined;
 }
 
@@ -83,12 +83,18 @@ export const useAuthFlow = create<AuthFlowState>((set) => ({
 }));
 
 /** Addresses that walk each path, for trying the flows in the prototype. */
-export const TRY_EMAILS = [
-  { label: "New company", email: "lee.chen@meridian-tx.com" },
-  { label: "Invited", email: "nadia.hassan@velmora.com" },
-  { label: "Expired invite", email: "grace.liu@velmora.com" },
-  { label: "Colleague, not invited", email: "omar.farouk@velmora.com" },
-  { label: "Returning", email: "maya.kapoor@velmora.com" },
-  { label: "Access removed", email: "marco.d@velmora.com" },
-  { label: "Personal email", email: "lee.chen@gmail.com" },
+export const TRY_EMAILS: Array<{ label: string; email: string; group: "Life sciences" | "Agency" | "Either" }> = [
+  { label: "New company", email: "lee.chen@meridian-tx.com", group: "Either" },
+  { label: "Personal email", email: "lee.chen@gmail.com", group: "Either" },
+  { label: "Invited", email: "nadia.hassan@velmora.com", group: "Life sciences" },
+  { label: "Expired invite", email: "grace.liu@velmora.com", group: "Life sciences" },
+  { label: "Colleague, not invited", email: "omar.farouk@velmora.com", group: "Life sciences" },
+  { label: "Returning", email: "maya.kapoor@velmora.com", group: "Life sciences" },
+  { label: "Access removed", email: "marco.d@velmora.com", group: "Life sciences" },
+  /* Brightwave Health, the seeded agency. */
+  { label: "Invited", email: "jordan.lee@brightwavehealth.com", group: "Agency" },
+  { label: "Expired invite", email: "mei.chen@brightwavehealth.com", group: "Agency" },
+  { label: "Colleague, not invited", email: "leah.wong@brightwavehealth.com", group: "Agency" },
+  { label: "Returning", email: "priya.shah@brightwavehealth.com", group: "Agency" },
+  { label: "Access removed", email: "ella.burke@brightwavehealth.com", group: "Agency" },
 ];

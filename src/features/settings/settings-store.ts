@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
 import {
-  ROLE_PERMISSIONS, DEFAULT_ROLES, rolePermissions, setLevel, fromSpec, type RoleDef, type AreaId, type LevelId,
+  ROLE_PERMISSIONS, DEFAULT_ROLES, emailDomain, rolePermissions, setLevel, fromSpec, type RoleDef, type AreaId, type LevelId,
   type ApprovalChain, type BrandKit, type IntegrationLog, type IntegrationStatus,
   type Invoice, type JoinRequest, type Language, type Member, type NotificationPref,
   type PendingInvite, type PermissionId, type Pronunciation, type Role, type Seniority,
@@ -119,18 +119,18 @@ const USAGE: UsageEntry[] = [
 ];
 
 const TOPUPS: TopUpEntry[] = [
-  { id: "k1", at: "1 Sep 2026",  amount: "$4,000.00", credits: 50000, purchasedBy: "Ben Sorensen", reference: "TXN-88214", status: "paid" },
-  { id: "k2", at: "1 Aug 2026",  amount: "$4,000.00", credits: 50000, purchasedBy: "Ben Sorensen", reference: "TXN-84190", status: "paid" },
-  { id: "k3", at: "14 Jul 2026", amount: "$800.00",   credits: 10000, purchasedBy: "Maya Kapoor",  reference: "TXN-81002", status: "paid" },
+  { id: "k1", at: "1 Sep 2026",  amount: "$62,500.00", credits: 50000, purchasedBy: "Ben Sorensen", reference: "TXN-88214", status: "paid" },
+  { id: "k2", at: "1 Aug 2026",  amount: "$62,500.00", credits: 50000, purchasedBy: "Ben Sorensen", reference: "TXN-84190", status: "paid" },
+  { id: "k3", at: "14 Jul 2026", amount: "$12,500.00", credits: 10000, purchasedBy: "Maya Kapoor",  reference: "TXN-81002", status: "paid" },
 ];
 
 const INVOICES: Invoice[] = [
-  { id: "i1", number: "INV-2026-0912", at: "1 Sep 2026", period: "Sep 2026", amount: "$4,000.00", status: "paid",
-    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 50,000", amount: "$2,000.00" }] },
-  { id: "i2", number: "INV-2026-0844", at: "1 Aug 2026", period: "Aug 2026", amount: "$4,000.00", status: "paid",
-    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 50,000", amount: "$2,000.00" }] },
-  { id: "i3", number: "INV-2026-0771", at: "1 Jul 2026", period: "Jul 2026", amount: "$2,800.00", status: "paid",
-    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 10,000", amount: "$800.00" }] },
+  { id: "i1", number: "INV-2026-0912", at: "1 Sep 2026", period: "Sep 2026", amount: "$64,500.00", status: "paid",
+    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 50,000", amount: "$62,500.00" }] },
+  { id: "i2", number: "INV-2026-0844", at: "1 Aug 2026", period: "Aug 2026", amount: "$64,500.00", status: "paid",
+    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 50,000", amount: "$62,500.00" }] },
+  { id: "i3", number: "INV-2026-0771", at: "1 Jul 2026", period: "Jul 2026", amount: "$14,500.00", status: "paid",
+    lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }, { description: "Credit top-up, 10,000", amount: "$12,500.00" }] },
   { id: "i4", number: "INV-2026-1001", at: "1 Oct 2026", period: "Oct 2026", amount: "$2,000.00", status: "due",
     lines: [{ description: "Enterprise plan, monthly", amount: "$2,000.00" }] },
 ];
@@ -213,11 +213,79 @@ const EU_WORKSPACE: WorkspaceSlice = {
   renewsOn: "1 Oct 2026",
   creditBalance: 12000,
   usage: [],
-  topUps: [{ id: "k-eu1", at: "3 Oct 2026", amount: "$960.00", credits: 12000, purchasedBy: "Maya Kapoor", reference: "TXN-90118", status: "paid" }],
+  topUps: [{ id: "k-eu1", at: "3 Oct 2026", amount: "$15,000.00", credits: 12000, purchasedBy: "Maya Kapoor", reference: "TXN-90118", status: "paid" }],
   invoices: [],
   pronunciations: [],
   topUpRequests: [],
 };
+
+/* ── A second account: an agency, so the agency side can be seen and tried ── */
+
+/** What makes up a whole account: its organisation fields and its current workspace. */
+const ACCOUNT_KEYS = [
+  "accountType", "sector", "orgName", "allowedDomains", "orgAdminIds", "archivedWorkspaceIds", "stash", "legalEntity", ...SLICE_KEYS,
+] as const;
+export type AccountSnapshot = Pick<SettingsState, (typeof ACCOUNT_KEYS)[number]>;
+
+/**
+ * Brightwave Health: an agency making content for life sciences clients,
+ * Velmora among them. One tier, so its one workspace is the agency. Siva
+ * runs it, as he runs Velmora, so switching needs no new sign-in.
+ */
+export const AGENCY_ACCOUNT_ID = "acct_brightwave";
+const AGENCY_ACCOUNT: AccountSnapshot = {
+  accountType: "agency",
+  sector: undefined,
+  orgName: "Brightwave Health",
+  allowedDomains: ["brightwavehealth.com", "swishx.com"],
+  orgAdminIds: ["m0", "a1"],
+  archivedWorkspaceIds: [],
+  stash: {},
+  legalEntity: "Brightwave Health LLC",
+  workspaceName: "Brightwave Health",
+  region: "United States",
+  markets: ["United States · FDA", "European Union · EMA"],
+  therapyAreas: ["Dermatology", "Oncology", "Cardiology"],
+  workspaceId: "ws_brightwave_4d27",
+  brandKit: {
+    logos: { "lockup-light": { fileName: "brightwave-lockup.svg", size: "14 KB" } },
+    typefaces: [{ id: "tf-bw1", name: "Inter", source: "google" }],
+    colors: { primary: "#0f766e", accent: "#14b8a6", callout: "#ecfeff", text: "#0a0d14" },
+  },
+  members: [
+    { ...MEMBERS[0], role: "Workspace admin", seniority: "Director", permissions: ROLE_PERMISSIONS["Workspace admin"], lastActive: "Online now" },
+    { id: "a1", name: "Priya Shah", email: "priya.shah@brightwavehealth.com", role: "Workspace admin", seniority: "VP", permissions: ROLE_PERMISSIONS["Workspace admin"], status: "active", lastActive: "10 minutes ago" },
+    { id: "a2", name: "Leo Grant", email: "leo.grant@brightwavehealth.com", role: "Design", seniority: "Manager", permissions: ROLE_PERMISSIONS["Design"], status: "active", lastActive: "1 hour ago" },
+    { id: "a3", name: "Hana Ito", email: "hana.ito@brightwavehealth.com", role: "Marketing", seniority: "Associate", permissions: ROLE_PERMISSIONS["Marketing"], status: "active", lastActive: "Today" },
+    { id: "a4", name: "Dr. Kofi Mensah", email: "kofi.mensah@brightwavehealth.com", role: "Medical reviewer", seniority: "Director", permissions: ROLE_PERMISSIONS["Medical reviewer"], status: "active", lastActive: "Yesterday" },
+    { id: "a5", name: "Sam Okoye", email: "sam.okoye@brightwavehealth.com", role: "Design", seniority: "Associate", permissions: ROLE_PERMISSIONS["Design"], status: "active", lastActive: "3 days ago" },
+    { id: "a6", name: "Ella Burke", email: "ella.burke@brightwavehealth.com", role: "Marketing", seniority: "Manager", permissions: ROLE_PERMISSIONS["Marketing"], status: "deactivated", lastActive: "5 weeks ago", deactivationReason: "Moved to another agency" },
+  ],
+  invites: [
+    { id: "ab1", email: "jordan.lee@brightwavehealth.com", role: "Marketing", seniority: "Manager", permissions: [...ROLE_PERMISSIONS["Marketing"]], invitedAt: "Yesterday", invitedBy: "a1" },
+    { id: "ab2", email: "mei.chen@brightwavehealth.com", role: "Design", seniority: "Associate", permissions: [...ROLE_PERMISSIONS["Design"]], invitedAt: "15 days ago", expired: true, invitedBy: "a1" },
+  ],
+  joinRequests: [
+    { id: "ajr1", name: "Ravi Desai", email: "ravi.desai@brightwavehealth.com", requestedAt: "Today", note: "Joining the oncology client team as a copywriter." },
+  ],
+  roles: DEFAULT_ROLES.map((r) => ({ ...r, permissions: [...r.permissions] })),
+  chains: [{ memberId: "a3", stages: [{ id: "bw1", name: "Medical review", role: "Medical reviewer", narrowTo: { kind: "anyone" } }] }],
+  expiryWarnDays: 30,
+  autoArchive: true,
+  planName: "Agency",
+  renewsOn: "1 Dec 2026",
+  creditBalance: 1640,
+  usage: [
+    { id: "bu1", at: "Today, 10:12", description: "Creative render · 1080 × 1350", person: "Hana Ito", assetTitle: "Velmora launch ads", credits: -360, balanceAfter: 1640 },
+  ],
+  topUps: [{ id: "bk1", at: "13 Nov 2026", amount: "Complimentary", credits: 2000, purchasedBy: "SwishX Studio", reference: "WELCOME-2000", status: "paid" }],
+  invoices: [],
+  pronunciations: [],
+  topUpRequests: [],
+};
+
+const pickAccount = (s: SettingsState): AccountSnapshot =>
+  Object.fromEntries(ACCOUNT_KEYS.map((k) => [k, s[k]])) as AccountSnapshot;
 
 interface SettingsState {
   /** Derived from the current persona's permissions — never set on its own. */
@@ -229,6 +297,22 @@ interface SettingsState {
   setCurrentUser: (memberId: string) => void;
 
   // 0 — organisation
+  /**
+   * What the account is, chosen once at sign-up and locked. A life sciences
+   * company is two tiers: the organisation, and a workspace per brand or
+   * market. An agency is one: the agency itself, with no workspaces to
+   * switch between.
+   */
+  accountType: AccountType;
+  sector?: Sector;
+  /** Locks the type in, and adds the starting credits that come with it. */
+  confirmAccountType: (type: AccountType, sector?: Sector) => void;
+  /** Prototype: the account on screen, and the others to switch to. */
+  accountId: string;
+  otherAccounts: Record<string, AccountSnapshot>;
+  switchAccount: (id: string) => void;
+  /** Opens whichever account owns this email's domain, if it isn't the one on screen. */
+  switchAccountForEmail: (email: string) => void;
   orgName: string;
   allowedDomains: string[];
   /** Person ids. Organisation admins create, rename and archive workspaces and can open any of them. */
@@ -364,6 +448,36 @@ interface SettingsState {
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
+  accountType: "lifesciences",
+  sector: "Pharma",
+  accountId: "acct_velmora",
+  otherAccounts: { [AGENCY_ACCOUNT_ID]: AGENCY_ACCOUNT },
+  switchAccount: (id) => {
+    const s = get();
+    const target = s.otherAccounts[id];
+    if (!target || id === s.accountId) return;
+    const otherAccounts = { ...s.otherAccounts, [s.accountId]: pickAccount(s) };
+    delete otherAccounts[id];
+    useProductLibraryStore.getState().switchWorkspace(s.workspaceId, target.workspaceId);
+    const me = target.members.find((m) => m.id === s.currentUserId && m.status === "active") ?? target.members[0];
+    set({ ...target, accountId: id, otherAccounts, currentUserId: me.id, signedInId: me.id, isAdmin: me.permissions.includes("admin") });
+  },
+  switchAccountForEmail: (email) => {
+    const s = get();
+    const domain = emailDomain(email);
+    if (s.allowedDomains.includes(domain) && domain !== "swishx.com") return;
+    const owner = Object.entries(s.otherAccounts).find(([, a]) => a.allowedDomains.includes(domain) && domain !== "swishx.com");
+    if (owner) get().switchAccount(owner[0]);
+  },
+  confirmAccountType: (accountType, sector) =>
+    set((s) => ({
+      accountType,
+      sector: accountType === "agency" ? undefined : sector,
+      creditBalance: STARTING_CREDITS[accountType],
+      /* One tier: the agency is its only workspace. */
+      stash: accountType === "agency" ? {} : s.stash,
+      archivedWorkspaceIds: accountType === "agency" ? [] : s.archivedWorkspaceIds,
+    })),
   orgName: "Velmora Therapeutics",
   allowedDomains: ["velmora.com", "swishx.com"],
   orgAdminIds: ["m0"],
@@ -759,6 +873,37 @@ export function orgPeople(s: Pick<SettingsState, "members" | "stash">): Member[]
   for (const m of s.members) out.set(m.id, m);
   for (const slice of Object.values(s.stash)) for (const m of slice.members) if (!out.has(m.id)) out.set(m.id, m);
   return [...out.values()];
+}
+
+export type AccountType = "lifesciences" | "agency";
+export type Sector = "Pharma" | "Biotech" | "Medtech";
+
+/* What a new account starts with. */
+export const STARTING_CREDITS: Record<AccountType, number> = { lifesciences: 20000, agency: 2000 };
+/** One credit, in US dollars. 2,000 credits are worth US$2,500. */
+export const CREDIT_PRICE_USD = 1.25;
+export const creditsInUsd = (credits: number) =>
+  `US$${(credits * CREDIT_PRICE_USD).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+
+/**
+ * The words for the account, which differ by type: an agency is the agency;
+ * a company has an organisation above its workspaces.
+ */
+export function accountWords(type: AccountType) {
+  return type === "agency"
+    ? { org: "Agency", orgLower: "agency", workspace: "Agency", workspaceLower: "agency", admin: "Agency admin" }
+    : { org: "Organisation", orgLower: "organisation", workspace: "Workspace", workspaceLower: "workspace", admin: "Organisation admin" };
+}
+
+/** A role as shown: in an agency, its own admin role reads as the agency's. */
+export const roleLabel = (role: string, type: AccountType) => (type === "agency" && role === "Workspace admin" ? "Agency admin" : role);
+
+/** Every account, the one on screen first: for the prototype's account switch. */
+export function listAccounts(s: SettingsState) {
+  return [
+    { id: s.accountId, name: s.orgName, type: s.accountType, sector: s.sector, current: true },
+    ...Object.entries(s.otherAccounts).map(([id, a]) => ({ id, name: a.orgName, type: a.accountType, sector: a.sector, current: false })),
+  ];
 }
 
 /** The organisation's workspaces, the current one first, with this person's place in each. */

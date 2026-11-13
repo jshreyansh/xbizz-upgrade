@@ -131,7 +131,7 @@ const SHOWCASE_LANES: ShowcaseLane[] = [
   {
     label: "Video Samples",
     title: "Reels and avatars your team already shipped",
-    subtitle: "Real videos made on SwishX. Two Reel cuts, two Avatar presenters. Play one before you build.",
+    subtitle: "Real videos made on SwishX Studio. Two Reel cuts, two Avatar presenters. Play one before you build.",
     items: [
       {
         title: "Mechanism of action, cardiology",

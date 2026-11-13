@@ -41,14 +41,30 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   { id: "pronunciations", label: "Pronunciations",      blurb: "How names are spoken in generated narration.", anyOf: ["pron"] },
 ];
 
+/**
+ * An agency is one tier, so the company and workspace sections become one:
+ * "Agency", with no separate workspace profile, and the wording follows.
+ */
+const AGENCY_SECTIONS: Partial<Record<string, Pick<SettingsSection, "label" | "blurb"> | null>> = {
+  organisation: { label: "Agency", blurb: "Your agency: its name, account type, sign-up domains and admins." },
+  workspace: null,
+  "brand-kit": { label: "Brand kit", blurb: "The logos, typefaces and colours your agency's assets are built from." },
+  team: { label: "Team", blurb: "Who is in your agency, what they are, and what they can do." },
+};
+
 export function SettingsShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = useSettingsStore((s) => s.isAdmin);
   const isOrgAdmin = useSettingsStore((s) => s.orgAdminIds.includes(s.currentUserId));
 
+  const agency = useSettingsStore((s) => s.accountType === "agency");
+
   const { canAny } = useCan();
-  const visible = SETTINGS_SECTIONS.filter((s) =>
+  const sections = agency
+    ? SETTINGS_SECTIONS.flatMap((s) => (AGENCY_SECTIONS[s.id] === null ? [] : [{ ...s, ...AGENCY_SECTIONS[s.id] }]))
+    : SETTINGS_SECTIONS;
+  const visible = sections.filter((s) =>
     s.orgAdminOnly ? isOrgAdmin : (!s.adminOnly || isAdmin) && (!s.anyOf || canAny(s.anyOf))
   );
   const onVisibleRoute = visible.some((s) => pathname === `/settings/${s.id}`);

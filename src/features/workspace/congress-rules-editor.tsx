@@ -94,7 +94,7 @@ function deliverablesSummary(d: Deliverables) {
       g.maxPages ? (g.maxPages === 1 ? "1 page" : `up to ${g.maxPages} pages or slides`) : null,
       g.maxMB ? `up to ${g.maxMB} MB` : null,
       g.minDpi ? `${g.minDpi} dpi or more` : null,
-      g.recording ? `plus a ${g.recording.minutes}-min recording (${g.recording.required ? "required" : "optional"}, not made in SwishX)` : null,
+      g.recording ? `plus a ${g.recording.minutes}-min recording (${g.recording.required ? "required" : "optional"}, not made in SwishX Studio)` : null,
     ]
       .filter(Boolean)
       .join(" · ");

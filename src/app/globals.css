@@ -811,3 +811,96 @@ button.rounded-full {
 @media (prefers-reduced-motion: reduce) {
   .mascot-body, .mascot-glance, .mascot-blink { animation: none; }
 }
+
+/* ── Sign-in and onboarding ──────────────────────────────────────────────
+   The landing choreography: a step fades in, its headline arrives word by
+   word, the specialists drop in one at a time, and the coloured phrase
+   carries a slow sheen. slide-up is the team cards' entrance. */
+@keyframes stage-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.stage-in { animation: stage-in 420ms var(--ease-entrance) both; }
+
+@keyframes auth-word {
+  from { opacity: 0; transform: translateY(.45em); filter: blur(10px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.auth-word { display: inline-block; animation: auth-word 820ms var(--ease-entrance) both; }
+
+@keyframes auth-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.auth-rise { animation: auth-rise 760ms var(--ease-entrance) both; }
+
+@keyframes auth-drop {
+  0% { opacity: 0; transform: translateY(-46px) scale(.7) rotate(-8deg); }
+  60% { opacity: 1; transform: translateY(6px) scale(1.06) rotate(2deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+.auth-drop { animation: auth-drop 900ms var(--ease-entrance) both; }
+
+@keyframes auth-sheen {
+  from { background-position: 0% 50%; }
+  to { background-position: 200% 50%; }
+}
+.auth-sheen {
+  background-image: linear-gradient(90deg, var(--brand-2), #ffd9c2 25%, var(--brand) 50%, #ffd9c2 75%, var(--brand-2));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: auth-sheen 7s linear infinite;
+}
+
+@keyframes auth-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(4%, 6%, 0) scale(1.08); }
+}
+.auth-drift { animation: auth-drift 18s ease-in-out infinite alternate; }
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* The landing's studio scene: whoever is working hops, assets pop in. */
+@keyframes auth-hop {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-9px) rotate(-3deg); }
+  50% { transform: translateY(0); }
+  70% { transform: translateY(-4px) rotate(2deg); }
+}
+.auth-hop { animation: auth-hop 1.1s var(--ease-entrance) infinite; }
+
+@keyframes auth-pop {
+  0% { opacity: 0; transform: scale(.6) translateY(10px); }
+  70% { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.auth-pop { animation: auth-pop 600ms var(--ease-entrance) both; }
+
+@keyframes auth-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* The ghost cursor's click: a dip, and a ring where it lands. */
+@keyframes auth-click {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(.78); }
+}
+@keyframes auth-ripple {
+  from { opacity: .9; transform: scale(.4); }
+  to { opacity: 0; transform: scale(2.4); }
+}
+
+@keyframes auth-progress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-in, .auth-word, .auth-rise, .auth-drop, .auth-sheen, .auth-drift, .auth-hop, .auth-pop { animation: none; }
+}

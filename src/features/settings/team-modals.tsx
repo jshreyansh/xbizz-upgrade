@@ -9,7 +9,7 @@ import { Chip } from "@/components/ui/chip";
 import { Stack } from "@/components/ui/stack";
 import { Field } from "@/components/ui/field";
 import { Button } from "@/components/ui/button";
-import { useSettingsStore } from "@/features/settings/settings-store";
+import { roleLabel, useSettingsStore } from "@/features/settings/settings-store";
 import { AccessGrid, AccessSummary } from "@/features/settings/settings-parts";
 import {
   SENIORITY, accessHeadline, roleSees, rolePermissions, setLevel, type AreaId, type LevelId,
@@ -94,7 +94,7 @@ export function InviteModal({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <Text size="label" tone="muted" weight="semibold">Role</Text>
-            <SelectMenu size="md" ariaLabel="Role" value={activeRole} onChange={(v) => setRole(v as Role)} options={s.roles.map((r) => ({ value: r.name, label: r.name, hint: accessHeadline(r.permissions) }))} />
+            <SelectMenu size="md" ariaLabel="Role" value={activeRole} onChange={(v) => setRole(v as Role)} options={s.roles.map((r) => ({ value: r.name, label: roleLabel(r.name, s.accountType), hint: accessHeadline(r.permissions) }))} />
           </div>
           <div className="flex flex-col gap-1">
             <Text size="label" tone="muted" weight="semibold">Seniority</Text>
@@ -354,7 +354,7 @@ export function RoleConfigModal({
             >
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-1.5">
-                  <Text size="body" weight="semibold" className="truncate text-ink">{r.name}</Text>
+                  <Text size="body" weight="semibold" className="truncate text-ink">{roleLabel(r.name, useSettingsStore.getState().accountType)}</Text>
                   {r.locked && <Lock className="size-3 shrink-0 text-ink-4" aria-label="Can't be removed" />}
                 </span>
                 <Text size="caption" tone="muted" className="block">

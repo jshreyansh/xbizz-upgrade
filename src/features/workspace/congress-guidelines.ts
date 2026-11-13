@@ -1149,7 +1149,7 @@ export function keyRules(congress: Congress): string[] {
 export function recordingNote(congress: Congress) {
   const r = congress.rules.deliverables.value?.digital?.recording;
   if (!r) return null;
-  return `${congress.acronym} also ${r.required ? "requires a" : "accepts an optional"} ${r.minutes}-minute recorded commentary. You record it yourself; it isn't made in SwishX.`;
+  return `${congress.acronym} also ${r.required ? "requires a" : "accepts an optional"} ${r.minutes}-minute recorded commentary. You record it yourself; it isn't made in SwishX Studio.`;
 }
 
 export function pageShapeFor(congress: Congress, typeId: PresentationType["id"] | null, sizeIndex: number | null): "A4" | "16:9" {

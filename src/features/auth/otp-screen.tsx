@@ -11,7 +11,6 @@ const DEMO_CODE = "704192";
 export function OtpScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
   const email = useAuthFlow((s) => s.email);
-  const path = useAuthFlow((s) => s.route.path);
   const next = useAuthNext();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -29,7 +28,7 @@ export function OtpScreen() {
 
   return (
     <AuthStage
-      eyebrow={path === "new" ? "Step 1 of 4 · Verify" : "Verify your email"}
+      eyebrow="Verify your email"
       title="One code."
       accent="Then we build."
       body="We never store passwords. A six-digit code, valid for ten minutes, is all it takes to open your workspace."

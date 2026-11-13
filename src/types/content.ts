@@ -8,6 +8,8 @@ export type EvidenceState = "approved" | "supported" | "changed" | "unsupported"
 /** Auth sub-stages within /auth route */
 export type AuthView =
   | "signin" | "otp" | "organisation" | "workspace" | "team" | "signedout"
+  /** New company: life sciences or agency, confirmed once; agencies then get their welcome credits. */
+  | "accounttype" | "reward"
   /** Invite link → accept → your details. */
   | "invite" | "details"
   /** Company already on SwishX, not invited → ask to join → wait. */

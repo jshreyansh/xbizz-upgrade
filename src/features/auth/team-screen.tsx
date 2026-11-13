@@ -6,6 +6,9 @@ import { ChevronRight, ClipboardCheck, Clapperboard, Compass, PenLine, ShieldChe
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { TEAM, type TeamMember } from "@/features/workspace/mock-personas";
 import { Mascot, mascotColour } from "@/features/workspace/mascot";
+import { LogoMark } from "@/components/ui/logo-mark";
+import { AuthButton, newAccountSteps } from "@/features/auth/auth-stage";
+import { useSettingsStore } from "@/features/settings/settings-store";
 
 /**
  * The last sign-up step: the specialists who work inside the studio.
@@ -28,6 +31,7 @@ export function TeamScreen() {
   const router = useRouter();
   const setIsFirstRun = useWorkspaceStore((s) => s.setIsFirstRun);
   const [hovered, setHovered] = useState<number | null>(null);
+  const steps = newAccountSteps(useSettingsStore((s) => s.accountType));
 
   /* Straight into the studio: sign-up has already said what it needed to. */
   function enterApp() {
@@ -36,102 +40,66 @@ export function TeamScreen() {
   }
 
   return (
-    <div className="stage-in flex h-full w-full items-center justify-center overflow-y-auto p-11">
-      <div style={{ width: "100%", maxWidth: 1080, textAlign: "center", color: "#fff" }}>
-        <div style={{ fontSize: 11, letterSpacing: ".22em", textTransform: "uppercase", color: "rgba(255,255,255,.62)", fontWeight: 700, marginBottom: 22, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 9 }}>
-          <span style={{ width: 22, height: 1, background: "linear-gradient(90deg,var(--brand),transparent)", display: "inline-block" }} />
-          Step 4 of 4 · Your co-workers
-        </div>
-        <h2 style={{ fontSize: "clamp(32px,3.6vw,46px)", letterSpacing: "-1.9px", margin: "0 0 12px", fontWeight: 800 }}>Five specialists. One record of truth.</h2>
-        <p style={{ color: "rgba(255,255,255,.68)", fontSize: 16, margin: "0 auto 44px", maxWidth: "58ch", lineHeight: 1.62 }}>
-          They work as a chain. Each one hands their work to the next, every line is cited to an approved source, and nothing reaches your asset until it has been checked.
+    <div className="stage-in relative flex h-full w-full flex-col overflow-y-auto px-6 py-10 text-white md:px-14 md:py-12">
+      <div className="inline-flex items-center gap-2 text-title font-extrabold tracking-tight">
+        <LogoMark size={24} />
+        <span>
+          swish<span className="text-brand">X</span><span className="ml-1.5 font-semibold text-current opacity-60">Studio</span>
+        </span>
+      </div>
+
+      <div className="mx-auto my-auto w-full max-w-[1080px] py-10 text-center">
+        <div className="mb-4 text-caption font-bold uppercase tracking-[.18em] text-white/50">Step {steps.length} of {steps.length} · Your team</div>
+        <h2 className="m-0 font-extrabold text-balance" style={{ fontSize: "clamp(30px, 3.2vw, 44px)", lineHeight: 1.08, letterSpacing: "-0.035em" }}>
+          Five specialists. <span style={{ color: "var(--brand-2)" }}>One record of truth.</span>
+        </h2>
+        <p className="mx-auto mt-4 max-w-[58ch] text-body-lg leading-relaxed text-white/65">
+          They work as a chain. Each hands their work to the next, every line is cited to an approved source, and nothing reaches your asset until it has been checked.
         </p>
 
-        <div style={{ display: "flex", alignItems: "stretch", justifyContent: "center" }}>
+        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:flex lg:items-stretch lg:gap-0">
           {TEAM.map((member, i) => {
             const Icon = ICON[member.key];
+            const colour = mascotColour(member.key);
             return (
               <div
                 key={member.name}
                 onPointerEnter={() => setHovered(i)}
                 onPointerLeave={() => setHovered((h) => (h === i ? null : h))}
-                style={{ display: "flex", alignItems: "stretch", flex: "1 1 0", minWidth: 0 }}
+                className="flex min-w-0 items-stretch lg:flex-1"
               >
                 <div
-                  style={{
-                    flex: 1,
-                    minWidth: 0,
-                    background: "rgba(255,255,255,.055)",
-                    border: "1px solid rgba(255,255,255,.13)",
-                    backdropFilter: "blur(18px)",
-                    borderRadius: "var(--r-l)",
-                    padding: "22px 14px 16px",
-                    position: "relative",
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    animation: `slide-up .8s var(--spring) ${0.08 + i * 0.12}s both`,
-                  }}
+                  className="relative flex min-w-0 flex-1 flex-col items-center overflow-hidden rounded-card border border-white/10 bg-white/[.04] px-4 pb-4 pt-6 transition-colors hover:border-white/20 hover:bg-white/[.06]"
+                  style={{ animation: `slide-up .7s var(--spring) ${0.08 + i * 0.1}s both` }}
                 >
-                  <span style={{ position: "absolute", inset: "0 0 auto", height: 1, background: "linear-gradient(90deg,transparent,rgba(255,255,255,.5),transparent)" }} />
                   {/* Their colour, faintly, behind the portrait. */}
-                  <span aria-hidden style={{ position: "absolute", top: -60, left: "50%", width: 180, height: 180, transform: "translateX(-50%)", borderRadius: "50%", background: mascotColour(member.key), opacity: 0.14, filter: "blur(34px)" }} />
+                  <span aria-hidden className="absolute -top-16 left-1/2 size-44 -translate-x-1/2 rounded-full opacity-15 blur-3xl" style={{ background: colour }} />
 
-                  <div style={{ position: "relative", width: 84, height: 84, marginBottom: 14 }}>
-                    <Mascot who={member.key} size={84} follow mood={hovered === i ? "happy" : "idle"} />
+                  <div className="relative mb-4 size-20">
+                    <Mascot who={member.key} size={80} follow mood={hovered === i ? "happy" : "idle"} />
                     <span
                       title={member.name}
-                      style={{
-                        position: "absolute",
-                        right: -6,
-                        bottom: -2,
-                        width: 26,
-                        height: 26,
-                        borderRadius: "50%",
-                        display: "grid",
-                        placeItems: "center",
-                        background: "#1b1714",
-                        border: `1.5px solid ${mascotColour(member.key)}`,
-                      }}
+                      className="absolute -bottom-0.5 -right-1.5 grid size-6 place-items-center rounded-full bg-ink"
+                      style={{ border: `1.5px solid ${colour}` }}
                     >
-                      <Icon size={13} strokeWidth={2.4} color={mascotColour(member.key)} />
+                      <Icon size={12} strokeWidth={2.4} color={colour} />
                     </span>
                   </div>
 
-                  <b style={{ display: "block", fontSize: 14, marginBottom: 6, position: "relative" }}>{member.name}</b>
-                  <span style={{ fontSize: 11.5, color: "rgba(255,255,255,.58)", lineHeight: 1.55, display: "block", position: "relative" }}>{member.role}</span>
+                  <b className="relative block text-body-lg font-bold">{member.name}</b>
+                  <span className="relative mt-1.5 block text-label leading-snug text-white/55">{member.role}</span>
 
-                  <span style={{ flex: 1, minHeight: 14 }} />
-                  <span
-                    style={{
-                      position: "relative",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      maxWidth: "100%",
-                      fontSize: 10.5,
-                      fontWeight: 700,
-                      color: "rgba(255,255,255,.82)",
-                      background: "rgba(255,255,255,.07)",
-                      border: "1px solid rgba(255,255,255,.12)",
-                      borderRadius: 999,
-                      padding: "4px 10px",
-                      lineHeight: 1.35,
-                      textAlign: "left",
-                    }}
-                  >
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: mascotColour(member.key), flexShrink: 0 }} />
-                    <span>{i === TEAM.length - 1 ? `Delivers ${member.handsOn.toLowerCase()}` : `Hands on ${member.handsOn.toLowerCase()}`}</span>
+                  <span className="min-h-4 flex-1" />
+                  <span className="relative inline-flex max-w-full items-center gap-1.5 rounded-chip border border-white/10 bg-white/[.06] px-2.5 py-1 text-caption font-semibold text-white/80">
+                    <span className="size-1.5 shrink-0 rounded-full" style={{ background: colour }} />
+                    <span className="truncate">{i === TEAM.length - 1 ? `Delivers ${member.handsOn.toLowerCase()}` : `Hands on ${member.handsOn.toLowerCase()}`}</span>
                   </span>
                 </div>
 
                 {/* The hand-off to the next specialist. */}
                 {i < TEAM.length - 1 && (
-                  <div aria-hidden style={{ width: 22, flexShrink: 0, display: "grid", placeItems: "center", animation: `fadeIn .6s ease ${0.3 + i * 0.12}s both` }}>
-                    <span style={{ width: 20, height: 20, borderRadius: "50%", display: "grid", placeItems: "center", background: "rgba(255,255,255,.08)", border: "1px solid rgba(255,255,255,.16)" }}>
-                      <ChevronRight size={12} color="rgba(255,255,255,.7)" />
-                    </span>
+                  <div aria-hidden className="hidden w-6 shrink-0 place-items-center lg:grid" style={{ animation: `fadeIn .6s ease ${0.3 + i * 0.1}s both` }}>
+                    <ChevronRight className="size-4 text-white/35" />
                   </div>
                 )}
               </div>
@@ -139,25 +107,9 @@ export function TeamScreen() {
           })}
         </div>
 
-        <button
-          onClick={enterApp}
-          style={{
-            marginTop: 44,
-            padding: "15px 32px",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 9,
-            borderRadius: "var(--r)",
-            fontWeight: 680,
-            fontSize: 15,
-            background: "linear-gradient(180deg,#ff5b2d,var(--brand))",
-            color: "#fff",
-            boxShadow: "0 12px 26px -14px rgba(253,72,22,.95),inset 0 1px 0 rgba(255,255,255,.28)",
-          }}
-        >
-          Enter SwishX
-          <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-        </button>
+        <div className="mt-12 flex justify-center">
+          <AuthButton onClick={enterApp} className="w-auto px-8">Enter SwishX Studio</AuthButton>
+        </div>
       </div>
     </div>
   );
