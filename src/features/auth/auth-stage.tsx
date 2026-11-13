@@ -20,16 +20,16 @@ import type { AuthView } from "@/types/content";
 export function newAccountSteps(type: AccountType): Array<{ view: AuthView; label: string }> {
   return type === "agency"
     ? [
-        { view: "otp", label: "Verify email" },
-        { view: "organisation", label: "Your agency" },
-        { view: "workspace", label: "First workspace" },
-        { view: "team", label: "Your team" },
+        { view: "otp", label: "Verify Email" },
+        { view: "organisation", label: "Your Agency" },
+        { view: "workspace", label: "First Workspace" },
+        { view: "team", label: "Your Team" },
       ]
     : [
-        { view: "otp", label: "Verify email" },
+        { view: "otp", label: "Verify Email" },
         { view: "organisation", label: "Organisation" },
-        { view: "workspace", label: "First workspace" },
-        { view: "team", label: "Your team" },
+        { view: "workspace", label: "First Workspace" },
+        { view: "team", label: "Your Team" },
       ];
 }
 

@@ -86,7 +86,7 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
   const [sector, setSector] = useState<Sector>();
   const [confirming, setConfirming] = useState(false);
   const [tryOpen, setTryOpen] = useState(false);
-  /* Sign in is just the email; sign up adds what the organization is. Each has its own address. An invite link is always a sign-in. */
+  /* Sign in is just the email; sign up adds what the organisation is. Each has its own address. An invite link is always a sign-in. */
   const setMode = (next: "signin" | "signup") => router.push(next === "signup" ? "/signup" : "/signin");
 
   /* Whether this email's company is already on SwishX Studio, and so has a type of its own. */
@@ -104,7 +104,7 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
     if (problem) { setError(problem); return; }
     if (wrongMode) return;
     if (signingUp) {
-      if (!chosen) { setError("Choose what describes your organization."); return; }
+      if (!chosen) { setError("Choose what describes your organisation."); return; }
       setConfirming(true);
       return;
     }
@@ -129,7 +129,7 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
       aside={<WhatYouMake />}
     >
       {/* The mode is the heading; the line under it switches to the other one. */}
-      <AuthCardHead title={signingUp ? "Create your account" : "Sign in to SwishX Studio"}>
+      <AuthCardHead title={signingUp ? "Create Your Account" : "Sign In to SwishX Studio"}>
         {inviteId ? (
           "Sign in with your work email."
         ) : (
@@ -140,7 +140,7 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
               onClick={() => { setMode(signingUp ? "signin" : "signup"); setError(undefined); }}
               className="cursor-pointer font-bold text-brand underline-offset-4 hover:text-brand-deep hover:underline"
             >
-              {signingUp ? "Sign in" : "Create an account"}
+              {signingUp ? "Sign In" : "Create an Account"}
             </button>
           </>
         )}
@@ -152,7 +152,7 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
         )}
         <Field
           type="email"
-          label="Work email"
+          label="Work Email"
           value={email}
           onChange={(e) => { setDraft(e.target.value); setError(undefined); }}
           placeholder="you@company.com"
@@ -171,11 +171,11 @@ export function SignInScreen({ mode }: { mode: "signin" | "signup" }) {
               onClick={() => setMode(signingUp ? "signin" : "signup")}
               className="shrink-0 cursor-pointer text-label font-bold text-brand hover:text-brand-deep"
             >
-              {signingUp ? "Sign in instead" : "Sign up instead"}
+              {signingUp ? "Sign In Instead" : "Sign Up Instead"}
             </button>
           </div>
         )}
-        <AuthButton type="submit" disabled={wrongMode || (signingUp && !chosen)}>{signingUp ? "Sign up" : "Sign in"}</AuthButton>
+        <AuthButton type="submit" disabled={wrongMode || (signingUp && !chosen)}>{signingUp ? "Sign Up" : "Sign In"}</AuthButton>
       </form>
 
       <AccountTypeConfirm

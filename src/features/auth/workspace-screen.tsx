@@ -41,19 +41,19 @@ export function WorkspaceScreen() {
       }
       footnote={`More workspaces can be added later from Settings → ${agency ? "Agency" : "Organisation"}.`}
     >
-      <AuthCardHead title="Create your first workspace">
+      <AuthCardHead title="Create Your First Workspace">
         Inside {orgName}. This becomes the default for every dossier, reel and campaign made here.
       </AuthCardHead>
 
       <div className="grid gap-5">
-        <Field label="Workspace name" value={name} onChange={(e) => setName(e.target.value)} placeholder={agency ? "Velmora US" : undefined} hint={agency ? "Usually a client, like Velmora US" : "Usually a brand or market, like Velmora US"} />
+        <Field label="Workspace Name" value={name} onChange={(e) => setName(e.target.value)} placeholder={agency ? "Velmora US" : undefined} hint={agency ? "Usually a client, like Velmora US" : "Usually a brand or market, like Velmora US"} />
 
         <div>
-          <AuthLabel>Operating in</AuthLabel>
+          <AuthLabel>Operating In</AuthLabel>
           <ChipMultiSelect options={MARKETS.map((m) => ({ id: m, label: m }))} selected={markets} onToggle={toggle} />
         </div>
 
-        <AuthButton onClick={next} disabled={name.trim().length < 2 || markets.length === 0}>Meet your team</AuthButton>
+        <AuthButton onClick={next} disabled={name.trim().length < 2 || markets.length === 0}>Meet Your Team</AuthButton>
       </div>
     </AuthStage>
   );

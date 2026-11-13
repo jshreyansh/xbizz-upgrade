@@ -21,7 +21,7 @@ import { AuthButton, AuthLabel } from "@/features/auth/auth-stage";
 
 const TYPES: Array<{ id: AccountType; title: string; body: string; icon: LucideIcon; tint: string; ink: string }> = [
   {
-    id: "lifesciences", title: "Life Sciences Company", body: "Create content for your organization’s brands and products.", icon: FlaskConical,
+    id: "lifesciences", title: "Life Sciences Company", body: "Create content for your organisation’s brands and products.", icon: FlaskConical,
     tint: "linear-gradient(135deg,#eef2ff 0%,#e0f2fe 100%)", ink: "#4f46e5",
   },
   {
@@ -32,8 +32,8 @@ const TYPES: Array<{ id: AccountType; title: string; body: string; icon: LucideI
 
 const SECTORS: Array<{ id: Sector; icon: LucideIcon; hint: string }> = [
   { id: "Pharma", icon: Pill, hint: "Medicines" },
-  { id: "Biotech", icon: Dna, hint: "Biologics & cell therapies" },
-  { id: "Medtech", icon: Activity, hint: "Devices & diagnostics" },
+  { id: "Biotech", icon: Dna, hint: "Biologics and Cell Therapies" },
+  { id: "Medtech", icon: Activity, hint: "Devices and Diagnostics" },
 ];
 
 /** A small drawing for each type: a molecule for life sciences, two overlapping circles for an agency and its client. */
@@ -71,8 +71,8 @@ export function AccountTypePicker({
 }) {
   return (
     <div className="rise-in">
-      <AuthLabel>Which best describes your organization?</AuthLabel>
-      <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="Which best describes your organization?">
+      <AuthLabel>Which best describes your organisation?</AuthLabel>
+      <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="Which best describes your organisation?">
         {TYPES.map((t) => {
           const on = type === t.id;
           return (
@@ -170,12 +170,12 @@ export function AccountTypeConfirm({
     <Modal
       open={open}
       onClose={onBack}
-      title="Confirm your account type"
+      title="Confirm Your Account Type"
       size="sm"
       footer={
         <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={onBack}>Go back</Button>
-          <Button onClick={onConfirm}>Confirm and continue</Button>
+          <Button variant="secondary" onClick={onBack}>Go Back</Button>
+          <Button onClick={onConfirm}>Confirm and Continue</Button>
         </div>
       }
     >
@@ -185,7 +185,7 @@ export function AccountTypeConfirm({
             {type === "agency" ? <Handshake className="size-5" /> : <Building2 className="size-5" />}
           </span>
           <span className="min-w-0">
-            <span className="block text-caption font-bold uppercase tracking-wider text-ink-4">Selected account</span>
+            <span className="block text-caption font-bold uppercase tracking-wider text-ink-4">Selected Account</span>
             <b className="block text-body-lg text-ink">{type === "agency" ? "Agency Partner" : `Life Sciences Company · ${sector}`}</b>
           </span>
         </div>
@@ -241,7 +241,7 @@ export function AgencyRewardScreen() {
         </div>
         <div className="auth-rise relative overflow-hidden rounded-card bg-card px-8 pb-8 pt-9 text-center shadow-modal">
           <span aria-hidden className="absolute inset-x-0 -top-24 mx-auto size-56 rounded-full bg-brand/20 blur-3xl" />
-          <h1 className="relative m-0 text-display-lg font-extrabold tracking-tight text-ink">A head start for your agency</h1>
+          <h1 className="relative m-0 text-display-lg font-extrabold tracking-tight text-ink">A Head Start for Your Agency</h1>
 
           <div className="relative mt-6">
             <b className="block font-black tabular-nums leading-none tracking-tight text-brand" style={{ fontSize: "clamp(56px, 7vw, 76px)" }}>
@@ -259,7 +259,7 @@ export function AgencyRewardScreen() {
           </p>
 
           <div className="relative mt-7">
-            <AuthButton onClick={() => setAuthView("organisation")}>Set up your agency</AuthButton>
+            <AuthButton onClick={() => setAuthView("organisation")}>Set Up Your Agency</AuthButton>
           </div>
         </div>
       </div>

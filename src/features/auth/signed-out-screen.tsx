@@ -25,7 +25,7 @@ export function SignedOutScreen() {
         <div className="mx-auto mb-6 grid size-16 place-items-center rounded-full border border-white/15 bg-white/[.06]">
           <LogOut className="size-7" strokeWidth={1.8} />
         </div>
-        <h2 className="m-0 text-hero-lg font-extrabold tracking-tight">You&apos;re signed out</h2>
+        <h2 className="m-0 text-hero-lg font-extrabold tracking-tight">You&apos;re Signed Out</h2>
         <p className="mx-auto mt-3 max-w-[40ch] text-body-lg leading-relaxed text-white/65">
           Your session on this device has ended. Everything you made is safe in the {workspaceName} workspace.
         </p>
@@ -34,7 +34,7 @@ export function SignedOutScreen() {
             className="w-auto px-8"
             onClick={() => { if (me) useAuthFlow.getState().setEmail(me.email); setAuthView("signin"); }}
           >
-            Sign back in
+            Sign Back In
           </AuthButton>
         </div>
         {me && <p className="mt-5 text-caption text-white/40">Last signed in as {me.email}</p>}

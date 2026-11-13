@@ -81,20 +81,20 @@ export function OrganisationScreen() {
         )
       }
     >
-      <AuthCardHead title={agency ? "Set up your agency" : "Set up your organisation"}>
+      <AuthCardHead title={agency ? "Set Up Your Agency" : "Set Up Your Organisation"}>
         You&apos;ll be its admin, so you can add workspaces and people later.
       </AuthCardHead>
       <div className="grid gap-4">
-        <Field label={agency ? "Agency name" : "Organisation name"} value={name} onChange={(e) => setName(e.target.value)} placeholder={agency ? "Brightwave Health" : "Meridian Therapeutics"} autoFocus />
-        <Field label="Legal entity" value={entity} onChange={(e) => setEntity(e.target.value)} hint="Shown on invoices" />
+        <Field label={agency ? "Agency Name" : "Organisation Name"} value={name} onChange={(e) => setName(e.target.value)} placeholder={agency ? "Brightwave Health" : "Meridian Therapeutics"} autoFocus />
+        <Field label="Legal Entity" value={entity} onChange={(e) => setEntity(e.target.value)} hint="Shown on Invoices" />
         <div className="grid gap-1.5">
-          <span className="text-label font-semibold text-ink-2">Headquarters region</span>
-          <SelectMenu size="md" ariaLabel="Headquarters region" value={region} onChange={setRegion} options={REGIONS} />
+          <span className="text-label font-semibold text-ink-2">Headquarters Region</span>
+          <SelectMenu size="md" ariaLabel="Headquarters Region" value={region} onChange={setRegion} options={REGIONS} />
         </div>
         <div className="rounded-control border border-hair bg-subtle px-3 py-2.5 text-label leading-snug text-ink-3">
           Anyone with an <b className="text-ink">@{domain}</b> email can ask to join. You approve each request, and you can add more domains in Settings.
         </div>
-        <AuthButton onClick={next} disabled={name.trim().length < 2}>{agency ? "Create agency" : "Create organisation"}</AuthButton>
+        <AuthButton onClick={next} disabled={name.trim().length < 2}>{agency ? "Create Agency" : "Create Organisation"}</AuthButton>
       </div>
     </AuthStage>
   );
@@ -149,9 +149,9 @@ export function InviteScreen() {
       {invite.expired ? (
         <AuthButton onClick={() => { useAuthFlow.getState().setRoute({ path: "expired", inviteId: invite.id }); setAuthView("blocked"); }}>Continue</AuthButton>
       ) : (
-        <AuthButton onClick={() => { setEmail(invite.email); setAuthView("otp"); }}>Accept and verify email</AuthButton>
+        <AuthButton onClick={() => { setEmail(invite.email); setAuthView("otp"); }}>Accept and Verify Email</AuthButton>
       )}
-      <AuthButton variant="secondary" onClick={() => setAuthView("signin")}>Not you? Sign in with another email</AuthButton>
+      <AuthButton variant="secondary" onClick={() => setAuthView("signin")}>Not You? Sign In with Another Email</AuthButton>
     </AuthStage>
   );
 }
@@ -182,11 +182,11 @@ export function DetailsScreen() {
       accent="who you are."
       body="Your name shows on what you make, comment on and approve. Your role and permissions were set by whoever invited you."
     >
-      <AuthCardHead title="Your details">Joining {workspaceName} as {found.invite.role}.</AuthCardHead>
+      <AuthCardHead title="Your Details">Joining {workspaceName} as {found.invite.role}.</AuthCardHead>
       <div className="grid gap-4">
-        <Field label="Full name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-        <Field label="Job title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Brand Manager" />
-        <Field label="Work email" value={email} readOnly hint="Verified" />
+        <Field label="Full Name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        <Field label="Job Title (Optional)" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Brand Manager" />
+        <Field label="Work Email" value={email} readOnly hint="Verified" />
         <label className="flex cursor-pointer items-start gap-2.5 text-label leading-snug text-ink-3">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-4 accent-brand" />
           <span>I agree to the <a href="#" className="font-semibold text-brand">Terms</a> and <a href="#" className="font-semibold text-brand">Privacy Notice</a>.</span>
@@ -222,7 +222,7 @@ export function JoinScreen() {
       accent="is already here."
       body={`People with an @${emailDomain(email)} email work in ${s.orgName}'s workspaces. Nobody has invited you yet, so ask the admins of the one you need. They choose your role when they approve.`}
     >
-      <AuthCardHead title="Ask to join">Your request goes to that workspace&apos;s admins.</AuthCardHead>
+      <AuthCardHead title="Ask to Join">Your request goes to that workspace&apos;s admins.</AuthCardHead>
       <div className="grid gap-4">
         <div>
           <AuthLabel>Workspace</AuthLabel>
@@ -245,10 +245,10 @@ export function JoinScreen() {
             ))}
           </div>
         </div>
-        <Field label="Full name" value={name} onChange={(e) => setName(e.target.value)} />
-        <Field multiline rows={2} label="Note to the admins (optional)" value={note} onChange={(e) => setNote(e.target.value)} placeholder="I'm joining the EU brand team as a medical writer." />
-        <AuthButton onClick={send} disabled={!workspaceId || name.trim().length < 2}>Send request</AuthButton>
-        <AuthButton variant="secondary" className="mt-0" onClick={() => setAuthView("signin")}>Use a different email</AuthButton>
+        <Field label="Full Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <Field multiline rows={2} label="Note to the Admins (Optional)" value={note} onChange={(e) => setNote(e.target.value)} placeholder="I'm joining the EU brand team as a medical writer." />
+        <AuthButton onClick={send} disabled={!workspaceId || name.trim().length < 2}>Send Request</AuthButton>
+        <AuthButton variant="secondary" className="mt-0" onClick={() => setAuthView("signin")}>Use a Different Email</AuthButton>
       </div>
     </AuthStage>
   );
@@ -265,14 +265,14 @@ export function WaitingScreen() {
   return (
     <AuthStage eyebrow="Request sent" title="Sit tight." accent="An admin decides." body="Admins approve requests from Settings → Team, and choose your role as they do. You'll get an email the moment they do, and the same sign-in takes you straight in.">
       <div className="mb-5 grid size-12 place-items-center rounded-full bg-tint text-brand"><Clock className="size-6" /></div>
-      <AuthCardHead title="Waiting for approval">
+      <AuthCardHead title="Waiting for Approval">
         We sent your request to the admins of <b className="text-ink">{workspace}</b>. We&apos;ll email <b className="text-ink [overflow-wrap:anywhere]">{email}</b> when it&apos;s approved.
       </AuthCardHead>
       <div className="mb-6 flex items-start gap-2 rounded-control border border-hair bg-subtle px-3 py-2.5 text-label leading-snug text-ink-3">
         <Check className="mt-0.5 size-3.5 shrink-0 text-ok" />
         Nothing else to do. Close this tab if you like.
       </div>
-      <AuthButton variant="secondary" className="mt-0" onClick={() => setAuthView("signin")}>Back to sign in</AuthButton>
+      <AuthButton variant="secondary" className="mt-0" onClick={() => setAuthView("signin")}>Back to Sign In</AuthButton>
     </AuthStage>
   );
 }
@@ -290,12 +290,12 @@ export function BlockedScreen() {
     if (route.path === "wrong-email" && found) {
       return {
         Icon: MailX,
-        title: "This invite is for someone else",
+        title: "This Invite Is for Someone Else",
         body: <>It was sent to <b className="text-ink">{found.invite.email}</b>, and you signed in as <b className="text-ink">{email}</b>. Sign in with the invited address, or ask for an invite to yours.</>,
         actions: (
           <>
             <AuthButton onClick={() => { setEmail(found.invite.email); setRoute({ path: "invite", inviteId: found.invite.id }); setAuthView("otp"); }}>Sign in as {found.invite.email.split("@")[0]}</AuthButton>
-            <AuthButton variant="secondary" onClick={() => { useAuthFlow.getState().setInviteId(undefined); setAuthView("signin"); }}>Use a different email</AuthButton>
+            <AuthButton variant="secondary" onClick={() => { useAuthFlow.getState().setInviteId(undefined); setAuthView("signin"); }}>Use a Different Email</AuthButton>
           </>
         ),
       };
@@ -303,12 +303,12 @@ export function BlockedScreen() {
     if (route.path === "expired" && found) {
       return {
         Icon: Clock,
-        title: "This invite has expired",
+        title: "This Invite Has Expired",
         body: <>Invite links last 14 days. The admins of <b className="text-ink">{workspaceNameOf(s, found.workspaceId)}</b> can send you a fresh one.</>,
         actions: asked ? (
           <div className="flex items-start gap-2 rounded-control border border-ok-line bg-ok-bg px-3 py-2.5 text-label text-ok"><Check className="mt-0.5 size-3.5 shrink-0" /> Asked. You&apos;ll get a new link by email.</div>
         ) : (
-          <AuthButton onClick={() => { s.requestInviteResend(found.invite.id); setAsked(true); }}>Ask for a new invite</AuthButton>
+          <AuthButton onClick={() => { s.requestInviteResend(found.invite.id); setAsked(true); }}>Ask for a New Invite</AuthButton>
         ),
       };
     }
@@ -316,9 +316,9 @@ export function BlockedScreen() {
     const inviteGone = route.path === "invite" || !!route.reason?.startsWith("This invite");
     return {
       Icon: inviteGone ? ShieldAlert : Lock,
-      title: inviteGone ? "This invite isn't valid" : "You can't sign in right now",
+      title: inviteGone ? "This Invite Isn't Valid" : "You Can't Sign In Right Now",
       body: <>{inviteGone ? "This invite is no longer valid. It may have been revoked or already used." : route.reason ?? "Your access was removed."} Ask an admin in your company to add you again.</>,
-      actions: <AuthButton variant="secondary" className="mt-0" onClick={() => { useAuthFlow.getState().setInviteId(undefined); setAuthView("signin"); }}>Back to sign in</AuthButton>,
+      actions: <AuthButton variant="secondary" className="mt-0" onClick={() => { useAuthFlow.getState().setInviteId(undefined); setAuthView("signin"); }}>Back to Sign In</AuthButton>,
     };
   })();
 

@@ -33,7 +33,7 @@ export function OtpScreen() {
       accent="Then we build."
       body="We never store passwords. A six-digit code, valid for ten minutes, is all it takes to open your workspace."
     >
-      <AuthCardHead title="Check your inbox">
+      <AuthCardHead title="Check Your Inbox">
         We sent a six-digit code to <b className="text-ink [overflow-wrap:anywhere]">{email}</b>.
       </AuthCardHead>
 
@@ -50,11 +50,11 @@ export function OtpScreen() {
         ))}
       </div>
       <p className="mb-6 text-caption leading-relaxed text-ink-4">
-        Didn&apos;t get it? <a href="#" className="font-semibold text-brand">Resend in 0:24</a> · <a href="#" className="font-semibold text-brand">Use a magic link instead</a>
+        Didn&apos;t get it? <a href="#" className="font-semibold text-brand">Resend in 0:24</a> · <a href="#" className="font-semibold text-brand">Use a Magic Link Instead</a>
       </p>
 
-      <AuthButton onClick={next}>Verify and continue</AuthButton>
-      <AuthButton variant="secondary" onClick={() => setAuthView("signin")}>Use a different email</AuthButton>
+      <AuthButton onClick={next}>Verify and Continue</AuthButton>
+      <AuthButton variant="secondary" onClick={() => setAuthView("signin")}>Use a Different Email</AuthButton>
     </AuthStage>
   );
 }
