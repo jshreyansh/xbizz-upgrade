@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
-import { STARTING_CREDITS, creditsInUsd, type AccountType, type Sector } from "@/features/settings/settings-store";
+import { STARTING_CREDITS, creditsInUsd, useSettingsStore, type AccountType, type Sector } from "@/features/settings/settings-store";
 import { ConfettiBurst } from "@/features/dossiers/confetti-burst";
 import { AuthButton, AuthLabel } from "@/features/auth/auth-stage";
 
@@ -223,6 +223,8 @@ function useCountUp(target: number, ms = 1400) {
 /** An agency's welcome: shown once its credits have been added. */
 export function AgencyRewardScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
+  const agencyName = useSettingsStore((s) => s.orgName);
+  const workspaceName = useSettingsStore((s) => s.workspaceName);
   const credits = STARTING_CREDITS.agency;
   const shown = useCountUp(credits);
 
@@ -241,7 +243,11 @@ export function AgencyRewardScreen() {
         </div>
         <div className="auth-rise relative overflow-hidden rounded-card bg-card px-8 pb-8 pt-9 text-center shadow-modal">
           <span aria-hidden className="absolute inset-x-0 -top-24 mx-auto size-56 rounded-full bg-brand/20 blur-3xl" />
-          <h1 className="relative m-0 text-display-lg font-extrabold tracking-tight text-ink">A Head Start for Your Agency</h1>
+          <span className="relative mb-2 inline-flex items-center gap-1.5 rounded-chip bg-ok-bg px-2.5 py-1 text-label font-bold text-ok">
+            <Check className="size-3.5 stroke-[3]" />
+            Workspace {workspaceName} is ready
+          </span>
+          <h1 className="relative m-0 text-display-lg font-extrabold tracking-tight text-ink text-balance">A Head Start for {agencyName}</h1>
 
           <div className="relative mt-6">
             <b className="block font-black tabular-nums leading-none tracking-tight text-brand" style={{ fontSize: "clamp(56px, 7vw, 76px)" }}>
@@ -255,11 +261,12 @@ export function AgencyRewardScreen() {
           </div>
 
           <p className="relative mx-auto mt-6 max-w-[36ch] text-body-lg leading-relaxed text-ink-3">
-            Welcome to SwishX Studio! Your credits have been added to your account. Bring your first client brief to life.
+            Welcome to SwishX Studio! Your credits have been added to {agencyName}.{" "}
+            {workspaceName === agencyName ? "Bring your first client brief to life." : `Bring your first client brief to life in ${workspaceName}.`}
           </p>
 
           <div className="relative mt-7">
-            <AuthButton onClick={() => setAuthView("organisation")}>Set Up Your Agency</AuthButton>
+            <AuthButton onClick={() => setAuthView("team")}>Meet Your Team</AuthButton>
           </div>
         </div>
       </div>

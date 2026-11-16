@@ -896,11 +896,26 @@ button.rounded-full {
   to { opacity: 0; transform: scale(2.4); }
 }
 
+/* A highlight worth noticing: a light sweeping across it, and its sparkle twinkling. */
+@keyframes auth-shine {
+  0% { transform: translateX(0); }
+  60%, 100% { transform: translateX(450%); }
+}
+.auth-shine {
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.75), transparent);
+  animation: auth-shine 3.2s ease-in-out infinite;
+}
+@keyframes auth-twinkle {
+  0%, 100% { transform: scale(1) rotate(0); opacity: 1; }
+  50% { transform: scale(1.18) rotate(12deg); opacity: .85; }
+}
+.auth-twinkle { animation: auth-twinkle 1.8s ease-in-out infinite; }
+
 @keyframes auth-progress {
   from { width: 0; }
   to { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .stage-in, .auth-word, .auth-rise, .auth-drop, .auth-sheen, .auth-drift, .auth-hop, .auth-pop { animation: none; }
+  .stage-in, .auth-word, .auth-rise, .auth-drop, .auth-sheen, .auth-drift, .auth-hop, .auth-pop, .auth-shine, .auth-twinkle { animation: none; }
 }

@@ -34,7 +34,20 @@ export function useAuthNext() {
         /* The type chosen on the sign-in card takes effect now the email is verified. */
         const choice = useAuthFlow.getState().choice ?? { type: "lifesciences" as const, sector: "Pharma" as const };
         useSettingsStore.getState().confirmAccountType(choice.type, choice.sector);
-        setAuthView(choice.type === "agency" ? "reward" : "organisation");
+        /* An agency skips the organisation step: it's named from its email's domain, based in the US. Both can be changed in Settings. */
+        if (choice.type === "agency") {
+          const s = useSettingsStore.getState();
+          const domain = emailDomain(email);
+          const name = domain.split(".")[0].replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+          useSettingsStore.setState({
+            orgName: name,
+            legalEntity: name,
+            region: "United States",
+            allowedDomains: [domain],
+            orgAdminIds: s.orgAdminIds.includes(s.currentUserId) ? s.orgAdminIds : [...s.orgAdminIds, s.currentUserId],
+          });
+        }
+        setAuthView(choice.type === "agency" ? "workspace" : "organisation");
         return;
       }
       default: setAuthView("blocked");

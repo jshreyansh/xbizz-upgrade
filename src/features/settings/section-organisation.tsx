@@ -64,9 +64,12 @@ export function SectionOrganisation() {
               </Text>
             </div>
           </SettingRow>
-          <SettingRow label="Legal entity" hint="Used on invoices" htmlFor="org-entity">
-            <Field id="org-entity" value={s.legalEntity} onChange={(e) => s.setWorkspaceField("legalEntity", e.target.value)} className="text-body" />
-          </SettingRow>
+          {/* Agencies aren't asked for a legal entity. */}
+          {!agency && (
+            <SettingRow label="Legal entity" hint="Used on invoices" htmlFor="org-entity">
+              <Field id="org-entity" value={s.legalEntity} onChange={(e) => s.setWorkspaceField("legalEntity", e.target.value)} className="text-body" />
+            </SettingRow>
+          )}
           <SettingRow label="Allowed email domains" hint="Who can sign up or ask to join">
             <div className="grid gap-2">
               <div className="flex flex-wrap gap-1.5">
