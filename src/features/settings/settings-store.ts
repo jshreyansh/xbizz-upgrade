@@ -150,7 +150,7 @@ export const SEED_WORKSPACE_ID = "ws_velmora_7f3a91";
 const SLICE_KEYS = [
   "workspaceName", "region", "therapyAreas", "markets", "workspaceId", "brandKit",
   "members", "invites", "joinRequests", "roles", "chains", "expiryWarnDays", "autoArchive",
-  "planName", "renewsOn", "creditBalance", "usage", "topUps", "invoices", "pronunciations", "topUpRequests",
+  "planName", "renewsOn", "creditBalance", "usage", "topUps", "invoices", "pronunciations", "topUpRequests", "client",
 ] as const;
 export type WorkspaceSlice = Pick<SettingsState, (typeof SLICE_KEYS)[number]>;
 
@@ -237,6 +237,7 @@ export const AGENCY_ACCOUNT_ID = "acct_brightwave";
 /* Brightwave's second client workspace. */
 const CORVANE_WORKSPACE: WorkspaceSlice = {
   workspaceName: "Corvane Oncology",
+  client: { name: "Corvane Pharma", products: "9" },
   region: "United States",
   markets: ["United States · FDA"],
   therapyAreas: ["Oncology"],
@@ -276,6 +277,7 @@ const AGENCY_ACCOUNT: AccountSnapshot = {
   stash: { ws_brightwave_corvane: CORVANE_WORKSPACE },
   legalEntity: "Brightwave Health LLC",
   workspaceName: "Velmora US",
+  client: { name: "Velmora Therapeutics", products: "12" },
   region: "United States",
   markets: ["United States · FDA", "European Union · EMA"],
   therapyAreas: ["Dermatology", "Oncology", "Cardiology"],
@@ -373,6 +375,10 @@ interface SettingsState {
   region: string;
   therapyAreas: string[];
   workspaceId: string;
+  /** An agency's workspace: the client company it makes content for, and how many of its products are linked. */
+  client?: { name: string; products?: string };
+  /** Assigns the workspace's client; until then an agency workspace can't make assets. */
+  setClient: (client: { name: string; products?: string }) => void;
   setWorkspaceField: (k: "workspaceName" | "legalEntity" | "region", v: string) => void;
   toggleTherapyArea: (a: string) => void;
   toggleMarket: (m: string) => void;
@@ -483,6 +489,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   accountType: "lifesciences",
   sector: "Pharma",
+  setClient: (client) => set({ client }),
   accountId: "acct_velmora",
   otherAccounts: { [AGENCY_ACCOUNT_ID]: AGENCY_ACCOUNT },
   switchAccount: (id) => {

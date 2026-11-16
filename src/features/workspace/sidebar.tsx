@@ -23,6 +23,7 @@ import {
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { PERSONA } from "@/features/workspace/mock-personas";
 import { listAccounts, listWorkspaces } from "@/features/settings/settings-store";
+import { requireClient } from "@/features/workspace/client-picker";
 import { CreateWorkspaceModal } from "@/features/settings/workspace-modals";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { usePageSettled } from "@/lib/use-load-gates";
@@ -466,7 +467,10 @@ export function Sidebar() {
                   <div className="flex w-full justify-center">
                     <button
                       onClick={() => {
-                        if (item.href !== "#") router.push(item.href);
+                        if (item.href === "#") return;
+                        /* The libraries hold a client's products and claims: an agency picks its client first, staying where it is. */
+                        if (item.href === "/product-library" || item.href === "/claims-library") requireClient(() => router.push(item.href));
+                        else router.push(item.href);
                       }}
                       title={collapsed ? item.label : undefined}
                       className={`group flex items-center rounded-control transition-all duration-150 ${

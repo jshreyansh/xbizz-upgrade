@@ -68,12 +68,30 @@ export function SectionWorkspace() {
             />
           </SettingRow>
 
-          <SettingRow label="Organisation" hint="Legal entity on invoices">
-            <ReadOnlyValue
-              value={`${s.orgName} · ${s.legalEntity}`}
-              note={s.orgAdminIds.includes(s.currentUserId) ? "Change it in Organisation." : "Set by an organisation admin."}
-            />
-          </SettingRow>
+          {s.accountType === "agency" ? (
+            <>
+              <SettingRow label="Agency">
+                <ReadOnlyValue
+                  value={s.orgName}
+                  note={s.orgAdminIds.includes(s.currentUserId) ? "Change it in Agency." : "Set by an agency admin."}
+                />
+              </SettingRow>
+              {/* What this workspace makes content for. */}
+              <SettingRow label="Client" hint="The company whose products this workspace uses">
+                <ReadOnlyValue
+                  value={s.client ? `${s.client.name}${s.client.products ? ` · ${s.client.products} products linked` : ""}` : "Not set"}
+                  note={s.client ? "Set when the client was chosen." : "Choose it from the Product Library or any create screen."}
+                />
+              </SettingRow>
+            </>
+          ) : (
+            <SettingRow label="Organisation" hint="Legal entity on invoices">
+              <ReadOnlyValue
+                value={`${s.orgName} · ${s.legalEntity}`}
+                note={s.orgAdminIds.includes(s.currentUserId) ? "Change it in Organisation." : "Set by an organisation admin."}
+              />
+            </SettingRow>
+          )}
 
           <SettingRow label="Region" hint="Sets the currency used in Billing">
             <SelectMenu

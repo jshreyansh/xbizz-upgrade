@@ -225,6 +225,7 @@ export function AgencyRewardScreen() {
   const setAuthView = useWorkspaceStore((s) => s.setAuthView);
   const agencyName = useSettingsStore((s) => s.orgName);
   const workspaceName = useSettingsStore((s) => s.workspaceName);
+  const client = useSettingsStore((s) => s.client);
   const credits = STARTING_CREDITS.agency;
   const shown = useCountUp(credits);
 
@@ -246,6 +247,7 @@ export function AgencyRewardScreen() {
           <span className="relative mb-2 inline-flex items-center gap-1.5 rounded-chip bg-ok-bg px-2.5 py-1 text-label font-bold text-ok">
             <Check className="size-3.5 stroke-[3]" />
             Workspace {workspaceName} is ready
+            {client?.products && <span className="font-semibold text-ok/80">· {client.products} {client.name} products linked</span>}
           </span>
           <h1 className="relative m-0 text-display-lg font-extrabold tracking-tight text-ink text-balance">A Head Start for {agencyName}</h1>
 
@@ -262,7 +264,7 @@ export function AgencyRewardScreen() {
 
           <p className="relative mx-auto mt-6 max-w-[36ch] text-body-lg leading-relaxed text-ink-3">
             Welcome to SwishX Studio! Your credits have been added to {agencyName}.{" "}
-            {workspaceName === agencyName ? "Bring your first client brief to life." : `Bring your first client brief to life in ${workspaceName}.`}
+            {client ? `Bring your first ${client.name} brief to life.` : "Bring your first client brief to life."}
           </p>
 
           <div className="relative mt-7">

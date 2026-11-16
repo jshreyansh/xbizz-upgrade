@@ -6,6 +6,7 @@ import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
 import { CreateTile } from "@/components/patterns/create-tile";
+import { requireClient } from "@/features/workspace/client-picker";
 import { AD_KIND_PRESETS, type AdKind } from "@/features/workspace/ad-options";
 
 /**
@@ -104,7 +105,7 @@ export function AdsModeScreen() {
           title="Create From Scratch"
           subtitle="A blank brief and your own direction, grounded in the same approved claims."
           delayMs={80}
-          onSelect={() => handleSelect("scratch")}
+          onSelect={() => requireClient(() => handleSelect("scratch"))}
         />
         {STARTING_POINTS.map((point, i) => (
           <StartingPointCard

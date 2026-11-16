@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PageHeading } from "@/components/patterns/page-heading";
 import { CreateTile } from "@/components/patterns/create-tile";
+import { requireClient } from "@/features/workspace/client-picker";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { BrandDossierModal } from "@/features/workspace/brand-dossier-modal";
 import { StartingPointCard, type StartingPointExample } from "@/features/workspace/starting-point-card";
@@ -191,7 +192,7 @@ export function EmailModeScreen() {
           title="Create From Scratch"
           subtitle="Your own brief, grounded in the same approved claims. Senders pick from what you allow."
           delayMs={80}
-          onSelect={() => handleSelect("followup")}
+          onSelect={() => requireClient(() => handleSelect("followup"))}
         />
         {STARTING_POINTS.map((point, i) => (
           <StartingPointCard

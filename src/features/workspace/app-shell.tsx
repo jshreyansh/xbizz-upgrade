@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { ClientPromptHost } from "@/features/workspace/client-picker";
 import { Sidebar } from "@/features/workspace/sidebar";
 import { Topbar } from "@/features/workspace/topbar";
 import { ViewingAsBanner, useCan } from "@/features/settings/view-as";
@@ -91,6 +92,8 @@ export function AppShell({ children, pageTitle }: AppShellProps) {
       {/* The AI co-workers work on projects, so they're for people who create. */}
       {canCreate && <TeamDock />}
       <Toast message={toastMessage} open={toastOpen} tone={toastTone} />
+      {/* An agency workspace without a client is asked for one here, over whatever page it's on. */}
+      <ClientPromptHost />
     </div>
   );
 }

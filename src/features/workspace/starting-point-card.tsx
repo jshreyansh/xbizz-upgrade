@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Eye, X } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { cn } from "@/lib/cn";
+import { requireClient } from "@/features/workspace/client-picker";
 
 /**
  * One starting point on a Create screen — video or creative, same shape.
@@ -275,7 +276,7 @@ export function StartingPointCard({
     <>
     <button
       type="button"
-      onClick={onSelect}
+      onClick={() => requireClient(onSelect)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className="rise-in-stagger group overflow-hidden rounded-card border border-hair bg-card text-left shadow-soft transition-all duration-200 hover:-translate-y-1"

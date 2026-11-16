@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { useSettingsStore } from "@/features/settings/settings-store";
 import { Field } from "@/components/ui/field";
-import { Check, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
+import { LogoMark } from "@/components/ui/logo-mark";
 import { AuthButton, AuthCardHead, AuthLabel, AuthStage } from "@/features/auth/auth-stage";
 
 /* Each market sets the rules its assets are checked against. Only the US is open today; the rest are coming. */
@@ -17,7 +18,7 @@ export function WorkspaceScreen() {
   const orgName = useSettingsStore((s) => s.orgName);
   /* An agency's workspaces are usually its clients. */
   const agency = useSettingsStore((s) => s.accountType === "agency");
-  /* An agency names itself here, and its first workspace takes the same name until edited. */
+  /* An agency names itself here, and its first workspace takes the same name until edited. Its client is chosen later, inside the platform. */
   const [agencyName, setAgencyName] = useState(orgName);
   const [name, setName] = useState(agency ? orgName : `${orgName.split(" ")[0]} Commercial`);
   const [nameEdited, setNameEdited] = useState(false);
@@ -25,7 +26,7 @@ export function WorkspaceScreen() {
 
   const next = () => {
     useSettingsStore.setState({
-      ...(agency ? { orgName: agencyName.trim(), legalEntity: agencyName.trim() } : {}),
+      ...(agency ? { orgName: agencyName.trim(), legalEntity: agencyName.trim(), client: undefined } : {}),
       workspaceName: name.trim(),
       markets,
       region: "United States",
@@ -47,7 +48,7 @@ export function WorkspaceScreen() {
       footnote={`More workspaces can be added later from Settings → ${agency ? "Agency" : "Organisation"}.`}
     >
       <AuthCardHead title={agency ? "Name Your Agency and Workspace" : "Create Your First Workspace"}>
-        {agency ? "Your first workspace is where your content is made. You can add one per client later." : <>Inside {orgName}. This becomes the default for every dossier, reel and campaign made here.</>}
+        {agency ? "Your first workspace is where your content is made. You'll pick its client once you're in." : <>Inside {orgName}. This becomes the default for every dossier, reel and campaign made here.</>}
       </AuthCardHead>
 
       <div className="grid gap-5">
@@ -56,7 +57,7 @@ export function WorkspaceScreen() {
           <span aria-hidden className="auth-shine pointer-events-none absolute inset-y-0 -left-1/3 w-1/3" />
           <div className="relative flex items-start gap-2.5">
             <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-white shadow-soft">
-              <Sparkles className="auth-twinkle size-4" />
+              <LogoMark size={17} className="auth-twinkle" />
             </span>
             <p className="text-label leading-snug text-ink-2">
               <b className="text-body font-extrabold text-brand-deep">125+ US medical sources</b> already linked, including FDA, PubMed, ClinicalTrials.gov, CDC and more.
@@ -80,7 +81,7 @@ export function WorkspaceScreen() {
           value={name}
           onChange={(e) => { setName(e.target.value); setNameEdited(true); }}
           placeholder={agency ? "Brightwave Health" : undefined}
-          hint={agency ? "Same as your agency to start. Rename it for a client, like Velmora US." : "Usually a brand or market, like Velmora US"}
+          hint={agency ? "Same as your agency to start. You can rename it for a client later." : "Usually a brand or market, like Velmora US"}
         />
 
         <div>
