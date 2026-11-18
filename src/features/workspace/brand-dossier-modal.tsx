@@ -1712,7 +1712,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   {isAd ? 4 : 3}
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  {isEmail ? "About This Email" : "Clinical Focus Topics"}
+                  {isEmail ? "About This Email" : sourceMode === "disease" ? "Focus Topics" : "Clinical Focus Topics"}
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -1747,7 +1747,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     </div>
                     <div>
                       <h3 className="text-body-lg font-extrabold text-ink">
-                        Clinical Focus Topics
+                        {sourceMode === "disease" ? "Focus Topics" : "Clinical Focus Topics"}
                       </h3>
                       <p className="text-label text-ink-3">
                         Select 1 to 3 story pillars (tailored for {AUDIENCE_OPTIONS.find((a) => a.id === audience)?.title}).
