@@ -221,7 +221,8 @@ export function AdsDirectionsScreen() {
 
   /* What the campaign makes. Unticked ads aren't written, made, charged or sent to MLR. */
   const adFormats = useWorkspaceStore((st) => st.adFormats);
-  const outputs = buildAdOutputs(adPlacements, adType, adFormats);
+  const adBanners = useWorkspaceStore((st) => st.adBanners);
+  const outputs = buildAdOutputs(adPlacements, adType, adFormats, adBanners);
   /* Every output is made: an ad comes out by turning its format off. */
   const kept = outputs;
   const credits = kept.reduce((sum, o) => sum + o.credits, 0);

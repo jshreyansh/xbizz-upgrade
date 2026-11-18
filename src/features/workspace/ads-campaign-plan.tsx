@@ -26,7 +26,7 @@ import {
   type StoryboardLayout,
 } from "@/features/workspace/storyboard";
 import { useShotPreviews } from "@/features/workspace/use-shot-previews";
-import { AD_PLACEMENTS, NEXT_STEPS, closingLine, type AdClaim, type AdFormat, type AdFormatChoice, type AdPlacement, type AdType } from "@/features/workspace/ad-options";
+import { AD_PLACEMENTS, NEXT_STEPS, closingLine, formatsOf, type AdClaim, type AdFormat, type AdFormatChoice, type AdPlacement, type AdType } from "@/features/workspace/ad-options";
 import {
   buildAdStory,
   buildCarousel,
@@ -44,6 +44,7 @@ import {
 } from "@/features/workspace/ad-campaign";
 import { SearchAdCard, SearchChecks, SearchLines } from "@/features/workspace/search-ad-preview";
 import { ACCOUNT_MARK, FormatChips } from "@/features/workspace/placement-picker";
+import { BannerSizes } from "@/features/workspace/banner-sizes";
 
 /**
  * The Ads campaign, in three parts.
@@ -201,6 +202,12 @@ export function AdsToMakeList({
             >
               <X className="size-3.5" />
             </IconButton>
+            {/* A display placement chooses its banner sizes here, beside what they cost. */}
+            {formatsOf(id, formats).includes("banner") && (
+              <div className="w-full pr-1.5">
+                <BannerSizes placement={id} />
+              </div>
+            )}
           </div>
         );
       })}

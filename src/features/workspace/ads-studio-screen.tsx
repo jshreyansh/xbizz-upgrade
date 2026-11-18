@@ -200,6 +200,7 @@ export function AdsStudioScreen() {
     adType,
     adPlacements,
     adFormats,
+    adBanners,
     adCampaign,
     projectName,
     chatMessages,
@@ -223,12 +224,12 @@ export function AdsStudioScreen() {
     leadMessage: leadMessages(adType, brandName, allClaims, condition)[0] ?? brandName,
     claimIds: allClaims.slice(0, 2).map((c) => c.id),
     closing: closingLine(defaultNextStep(adKind, who), adType, brandName),
-    keptIds: buildAdOutputs(adPlacements, adType, adFormats).map((o) => o.id),
+    keptIds: buildAdOutputs(adPlacements, adType, adFormats, adBanners).map((o) => o.id),
     look: { mode: "template" },
   };
   const claims = allClaims.filter((c) => campaign.claimIds.includes(c.id));
   const words = { brandId, brand: brandName, adType, claims, leadMessage: campaign.leadMessage, closing: campaign.closing, condition };
-  const outputs = buildAdOutputs(adPlacements, adType, adFormats).filter((o) => campaign.keptIds.includes(o.id));
+  const outputs = buildAdOutputs(adPlacements, adType, adFormats, adBanners).filter((o) => campaign.keptIds.includes(o.id));
   const story = buildAdStory(words);
   const imagePlan = buildImageAd(words);
   const cards = buildCarousel(words);

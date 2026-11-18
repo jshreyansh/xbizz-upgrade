@@ -15,7 +15,7 @@
 
 import type { Scene, SceneGraph, Shot } from "@/types/content";
 import type { AdClaim, AdFormat, AdPlacement, AdType } from "@/features/workspace/ad-options";
-import { AD_PLACEMENTS, formatsOf, type AdFormatChoice } from "@/features/workspace/ad-options";
+import { AD_PLACEMENTS, BANNER_SIZES, bannerOf, formatsOf, type AdFormatChoice, type BannerChoice } from "@/features/workspace/ad-options";
 
 /* ── Brand facts the story needs ── */
 
@@ -341,7 +341,7 @@ const PLACEMENT_LABEL = (id: AdPlacement) => {
  * placements that output serves. Credits: video by length, a still, a
  * banner set, a carousel.
  */
-export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice: AdFormatChoice = {}): AdOutput[] {
+export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice: AdFormatChoice = {}, banners: BannerChoice = {}): AdOutput[] {
   const reminder = adType === "reminder";
   const safety = (format: AdFormat) =>
     adType === "reminder"
@@ -369,7 +369,21 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice
     const still45: Spec = { key: "s-4x5", name: "Image ad", format: "image", shape: "4:5", from: "Image ad", credits: 300 };
     const still916: Spec = { key: "s-9x16", name: "Image ad, vertical", format: "image", shape: "9:16", from: "Image ad", credits: 300 };
     const still11: Spec = { key: "s-1x1", name: "Image ad, square", format: "image", shape: "1:1", from: "Image ad", credits: 300 };
-    const banners: Spec = { key: "b-set", name: "Banner set", format: "banner", shape: "300×250 · 728×90 · 300×600 · 160×600 · 320×50", from: "Image ad", credits: 900 };
+    /* One banner per chosen size; the same sizes and motion on two placements is one set. */
+    const bannerSet = (): Spec => {
+      const { sizes, motion } = bannerOf(id, banners);
+      const ordered = BANNER_SIZES.filter((b) => sizes.includes(b.id));
+      return {
+        key: `b-${motion}-${ordered.map((b) => b.id).join("-")}`,
+        name: motion === "animated" ? "Banner set, animated" : "Banner set, static",
+        format: "banner",
+        shape: ordered.map((b) => `${b.w}×${b.h}`).join(" · "),
+        from: "Image ad",
+        credits: 180 * ordered.length,
+      };
+    };
+    const native: Spec = { key: "n-native", name: "Native ad", format: "image", shape: "1.91:1 · 1200×627 · headline and text", from: "Image ad", credits: 300 };
+    const responsive: Spec = { key: "r-responsive", name: "Responsive display assets", format: "image", shape: "1.91:1 · 1:1 · logo · 5 headlines", from: "Image ad", credits: 450 };
     const carousel: Spec = { key: "c-1x1", name: "Carousel", format: "carousel", shape: "1:1 · 5 cards", from: "Carousel", credits: 750 };
     const doc: Spec = { key: "d-doc", name: "Document ad", format: "document", shape: "PDF · 4:5 · 6 pages", from: "Document", credits: 600 };
     const search: Spec = { key: "t-search", name: "Search ad", format: "text", shape: "15 headlines · 4 descriptions", from: "Search ad", credits: 150 };
@@ -382,8 +396,10 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice
       case "meta-reels-stories": return [tall, still916];
       case "tiktok": return reminder ? [tall] : [tall, carousel];
       case "google-display":
-      case "programmatic-display": return [banners];
-      case "hcp-networks": return [square, still11];
+      case "programmatic-display": return [bannerSet()];
+      case "google-responsive": return [responsive];
+      case "programmatic-native": return [native];
+      case "hcp-networks": return [square, still11, bannerSet()];
       /* A reminder names the brand and nothing else: no carousel, no document to read. */
       case "linkedin-feed": return reminder ? [still11, square] : [still11, square, carousel, doc];
     }

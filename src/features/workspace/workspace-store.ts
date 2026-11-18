@@ -4,7 +4,7 @@ import { creativeDirections } from "@/features/workspace/mock-data";
 import type { CaptionStyle } from "@/features/workspace/subtitle-sync";
 import type { AppView, AssetType, Audience, AuthView, InspectorTab, LogoMark, OnboardingBeat, PresentationMode } from "@/types/content";
 import type { BriefAttachment } from "@/features/workspace/plan-intake";
-import type { AdFormatChoice, AdKind, AdPlacement, AdType } from "@/features/workspace/ad-options";
+import type { AdFormatChoice, AdKind, BannerChoice, AdPlacement, AdType } from "@/features/workspace/ad-options";
 
 export type CreationMode = "magic-reel" | "magic-avatar" | "magic-chart" | "scratch";
 export type SourceSelectionType = "dossier" | "url" | "text";
@@ -176,6 +176,8 @@ interface WorkspaceState {
   adPlacements: AdPlacement[];
   /** Which formats each placement makes; a placement not listed makes all it can. */
   adFormats: AdFormatChoice;
+  /** Banner sizes and motion per display placement; one not listed uses the standard five. */
+  adBanners: BannerChoice;
   adSubject: AdSubject | null;
   adCampaign: AdCampaignSnapshot | null;
   // Setters
@@ -251,6 +253,7 @@ interface WorkspaceState {
   setAdType: (adType: AdType) => void;
   setAdPlacements: (adPlacements: AdPlacement[]) => void;
   setAdFormats: (adFormats: AdFormatChoice) => void;
+  setAdBanners: (adBanners: BannerChoice) => void;
   setAdSubject: (adSubject: AdSubject | null) => void;
   setAdCampaign: (adCampaign: AdCampaignSnapshot | null) => void;
   reset: () => void;
@@ -328,6 +331,7 @@ const initialState = {
   adType: "product-claim" as AdType,
   adPlacements: ["youtube", "meta-feed", "meta-reels-stories", "google-display"] as AdPlacement[],
   adFormats: {} as AdFormatChoice,
+  adBanners: {} as BannerChoice,
   adSubject: null as AdSubject | null,
   adCampaign: null as AdCampaignSnapshot | null,
 };
@@ -423,6 +427,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   setAdType: (adType) => set({ adType }),
   setAdPlacements: (adPlacements) => set({ adPlacements }),
   setAdFormats: (adFormats) => set({ adFormats }),
+  setAdBanners: (adBanners) => set({ adBanners }),
   setAdSubject: (adSubject) => set({ adSubject }),
   setAdCampaign: (adCampaign) => set({ adCampaign }),
   reset: () => set(initialState),

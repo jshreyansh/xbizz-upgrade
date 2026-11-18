@@ -49,7 +49,9 @@ export type AdPlacement =
   | "google-display"
   | "meta-feed"
   | "meta-reels-stories"
+  | "google-responsive"
   | "programmatic-display"
+  | "programmatic-native"
   | "programmatic-video"
   | "ctv"
   | "hcp-networks"
@@ -116,17 +118,19 @@ export const AD_PLACEMENTS: Array<{
   /** Who the placement can reach. */
   audiences: Audience[];
 }> = [
-  { id: "youtube", account: "Google Ads", label: "YouTube", makes: ["video"], sizes: "16:9 skippable in-stream, 9:16 Shorts · 6 sec bumpers for reminders", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "youtube", account: "Google Ads", label: "YouTube", makes: ["video"], sizes: "In-stream 16:9 · 1920 × 1080 · Shorts 9:16 · 6 sec bumpers for reminders", audiences: ["Patient", "Consumer", "HCP"] },
   { id: "google-search", account: "Google Ads", label: "Search", makes: ["text"], sizes: "Up to 15 headlines and 4 descriptions · Google mixes them", audiences: ["Patient", "Consumer", "HCP"] },
-  { id: "google-display", account: "Google Ads", label: "Display", makes: ["banner"], sizes: "Image banners in fixed sizes, with a static safety band", audiences: ["Patient", "Consumer", "HCP"] },
-  { id: "meta-feed", account: "Meta Ads", label: "Feed", makes: ["video", "image", "carousel"], sizes: "1:1 and 4:5", audiences: ["Patient", "Consumer", "HCP"] },
-  { id: "meta-reels-stories", account: "Meta Ads", label: "Reels & Stories", makes: ["video", "image"], sizes: "9:16 full screen", audiences: ["Patient", "Consumer", "HCP"] },
-  { id: "linkedin-feed", account: "LinkedIn Ads", label: "Feed", makes: ["image", "video", "carousel", "document"], sizes: "1:1 image and video, square carousel, PDF document", audiences: ["HCP", "Patient", "Consumer"] },
-  { id: "programmatic-display", account: "Programmatic", label: "Display", makes: ["banner"], sizes: "HTML5 banners with scrolling safety information", audiences: ["Patient", "Consumer", "HCP"] },
-  { id: "programmatic-video", account: "Programmatic", label: "Online video", makes: ["video"], sizes: "16:9 · 15 or 30 sec", audiences: ["Patient", "Consumer", "HCP"] },
-  { id: "ctv", account: "Programmatic", label: "Connected TV", makes: ["video"], sizes: "16:9 TV spot · 15, 30 or 60 sec", audiences: ["Patient", "Consumer"] },
-  { id: "hcp-networks", account: "HCP networks", label: "In-feed and banners", makes: ["video", "image"], sizes: "Each network's own specs", audiences: ["HCP"] },
-  { id: "tiktok", account: "TikTok Ads", label: "In-feed", makes: ["video", "carousel"], sizes: "9:16 video and image carousels", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "google-display", account: "Google Ads", label: "Display", makes: ["banner"], sizes: "Banners in standard IAB sizes, picked below", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "google-responsive", account: "Google Ads", label: "Responsive display", makes: ["image"], sizes: "Images 1.91:1 and 1:1, logo and headlines · Google builds the ads", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "meta-feed", account: "Meta Ads", label: "Feed", makes: ["video", "image", "carousel"], sizes: "Square 1:1 · 1080 × 1080 · Vertical 4:5 · 1080 × 1350", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "meta-reels-stories", account: "Meta Ads", label: "Reels & Stories", makes: ["video", "image"], sizes: "Full screen 9:16 · 1080 × 1920", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "linkedin-feed", account: "LinkedIn Ads", label: "Feed", makes: ["image", "video", "carousel", "document"], sizes: "Landscape 1.91:1 · 1200 × 627 · Square 1:1 · 1200 × 1200 · PDF document", audiences: ["HCP", "Patient", "Consumer"] },
+  { id: "programmatic-display", account: "Programmatic", label: "Display", makes: ["banner"], sizes: "Banners in standard IAB sizes, picked below", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "programmatic-native", account: "Programmatic", label: "Native", makes: ["image"], sizes: "Image 1.91:1 · 1200 × 627 with headline and text, styled like the site", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "programmatic-video", account: "Programmatic", label: "Online video", makes: ["video"], sizes: "Widescreen 16:9 · 1920 × 1080 · 15 or 30 sec", audiences: ["Patient", "Consumer", "HCP"] },
+  { id: "ctv", account: "Programmatic", label: "Connected TV", makes: ["video"], sizes: "Widescreen 16:9 · 1920 × 1080 · 15, 30 or 60 sec", audiences: ["Patient", "Consumer"] },
+  { id: "hcp-networks", account: "HCP networks", label: "In-feed and banners", makes: ["video", "image", "banner"], sizes: "Standard IAB sizes · confirm with each network", audiences: ["HCP"] },
+  { id: "tiktok", account: "TikTok Ads", label: "In-feed", makes: ["video", "carousel"], sizes: "Full screen 9:16 · 1080 × 1920 · image carousels", audiences: ["Patient", "Consumer", "HCP"] },
 ];
 
 export const AD_FORMATS: Array<{ id: AdFormat; label: string; icon: LucideIcon }> = [
@@ -137,6 +141,56 @@ export const AD_FORMATS: Array<{ id: AdFormat; label: string; icon: LucideIcon }
   { id: "text", label: "Text", icon: TextCursorInput },
   { id: "document", label: "Document", icon: FileText },
 ];
+
+/* ── Banner sizes ──
+   The IAB's fixed sizes (2017 guidelines) and the extra ones Google Display
+   takes. Named as the IAB names them, shown with pixels and ratio, so a
+   media plan's "300×250" and the tile read the same. */
+
+export type BannerMotion = "animated" | "static";
+
+export interface BannerSize {
+  id: string;
+  name: string;
+  w: number;
+  h: number;
+  /** As media plans write it; long banners are rounded ("≈4:1"). */
+  ratio: string;
+  device: "Desktop" | "Mobile" | "Desktop and mobile";
+  /** Whether it can be animated. A 320×50 is too small for motion and a scrolling safety panel. */
+  animates: boolean;
+  /** One of the five every media plan asks for; ticked to start. */
+  standard?: boolean;
+  /** Placements that do not take this size. */
+  notOn?: AdPlacement[];
+}
+
+export const BANNER_SIZES: BannerSize[] = [
+  { id: "300x250", name: "Medium Rectangle", w: 300, h: 250, ratio: "6:5", device: "Desktop and mobile", animates: true, standard: true },
+  { id: "728x90", name: "Leaderboard", w: 728, h: 90, ratio: "8:1", device: "Desktop", animates: true, standard: true },
+  { id: "300x600", name: "Half Page", w: 300, h: 600, ratio: "1:2", device: "Desktop", animates: true, standard: true },
+  { id: "160x600", name: "Wide Skyscraper", w: 160, h: 600, ratio: "4:15", device: "Desktop", animates: true, standard: true },
+  { id: "320x50", name: "Mobile Banner", w: 320, h: 50, ratio: "32:5", device: "Mobile", animates: false, standard: true },
+  { id: "970x250", name: "Billboard", w: 970, h: 250, ratio: "≈4:1", device: "Desktop", animates: true },
+  { id: "970x90", name: "Super Leaderboard", w: 970, h: 90, ratio: "≈11:1", device: "Desktop", animates: true },
+  { id: "300x1050", name: "Portrait", w: 300, h: 1050, ratio: "2:7", device: "Desktop", animates: true },
+  { id: "336x280", name: "Large Rectangle", w: 336, h: 280, ratio: "6:5", device: "Desktop and mobile", animates: true },
+  { id: "320x100", name: "Large Mobile Banner", w: 320, h: 100, ratio: "16:5", device: "Mobile", animates: true },
+  { id: "1080x1920", name: "Mobile Interstitial", w: 1080, h: 1920, ratio: "9:16", device: "Mobile", animates: true, notOn: ["google-display"] },
+];
+
+/** Sizes and motion chosen per banner placement; one not listed uses the standard five. */
+export type BannerChoice = Partial<Record<AdPlacement, { sizes: string[]; motion: BannerMotion }>>;
+
+/** The sizes a placement can take. */
+export function bannerSizesFor(id: AdPlacement): BannerSize[] {
+  return BANNER_SIZES.filter((s) => !s.notOn?.includes(id));
+}
+
+/* Google's uploaded banners are images by default; programmatic and HCP sites take HTML5 with scrolling safety information. */
+export function bannerOf(id: AdPlacement, choice: BannerChoice = {}): { sizes: string[]; motion: BannerMotion } {
+  return choice[id] ?? { sizes: BANNER_SIZES.filter((s) => s.standard).map((s) => s.id), motion: id === "google-display" ? "static" : "animated" };
+}
 
 export function placementName(id: AdPlacement): string {
   const p = AD_PLACEMENTS.find((x) => x.id === id);

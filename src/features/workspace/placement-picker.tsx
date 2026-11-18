@@ -4,7 +4,18 @@ import type { ReactNode } from "react";
 import { Check, Network, Stethoscope, Tv } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Audience } from "@/types/content";
-import { AD_ACCOUNTS, AD_FORMATS, AD_PLACEMENTS, formatsOf, type AdAccount, type AdFormat, type AdFormatChoice, type AdPlacement } from "@/features/workspace/ad-options";
+import {
+  AD_ACCOUNTS,
+  AD_FORMATS,
+  AD_PLACEMENTS,
+  bannerOf,
+  formatsOf,
+  type AdAccount,
+  type AdFormat,
+  type AdFormatChoice,
+  type AdPlacement,
+} from "@/features/workspace/ad-options";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 import { GoogleAdsLogo, LinkedInLogo, MetaLogo, TikTokLogo } from "@/features/workspace/platform-logos";
 
 /**
@@ -36,6 +47,8 @@ const FRAMES: Record<AdPlacement, Frame[]> = {
   youtube: [{ w: 16, h: 9, video: true }, { w: 9, h: 16, video: true }],
   "google-search": [{ w: 16, h: 8, text: true }],
   "google-display": [{ w: 6, h: 5 }, { w: 16, h: 2 }, { w: 3, h: 7 }],
+  "google-responsive": [{ w: 19, h: 10 }, { w: 1, h: 1 }],
+  "programmatic-native": [{ w: 19, h: 10, doc: true }],
   "meta-feed": [{ w: 1, h: 1, video: true }, { w: 4, h: 5 }],
   "meta-reels-stories": [{ w: 9, h: 16, video: true }],
   "programmatic-display": [{ w: 6, h: 5 }, { w: 16, h: 2 }],
@@ -50,6 +63,7 @@ const FRAMES: Record<AdPlacement, Frame[]> = {
 const HCP_VIA: Partial<Record<AdPlacement, string>> = {
   youtube: "HCPs via an NPI-matched audience",
   "google-display": "HCPs via an NPI-matched audience",
+  "google-responsive": "HCPs via an NPI-matched audience",
   "meta-feed": "HCPs via an NPI-matched audience",
   "meta-reels-stories": "HCPs via an NPI-matched audience",
   tiktok: "HCPs via an NPI-matched audience",
@@ -169,6 +183,7 @@ export function PlacementPicker({
   formats?: AdFormatChoice;
   onToggleFormat?: (id: AdPlacement, format: AdFormat) => void;
 }) {
+  const banners = useWorkspaceStore((s) => s.adBanners);
   return (
     <div className="space-y-4">
       {AD_ACCOUNTS.map((account) => {
@@ -186,6 +201,11 @@ export function PlacementPicker({
               {rows.map((placement) => {
                 const on = selected.includes(placement.id);
                 const via = audience === "HCP" ? HCP_VIA[placement.id] : undefined;
+                /* Banner sizes are chosen in the production plan; here they are only summed up. */
+                const banner = on && formatsOf(placement.id, formats).includes("banner") ? bannerOf(placement.id, banners) : undefined;
+                const caption = banner
+                  ? `${banner.sizes.length} ${banner.sizes.length === 1 ? "size" : "sizes"} · ${banner.motion === "animated" ? "Animated" : "Static"} · change in the plan`
+                  : via ?? placement.sizes;
                 return (
                   <div
                     key={placement.id}
@@ -211,8 +231,8 @@ export function PlacementPicker({
                         {placement.id === "ctv" && <Tv className="size-3.5 shrink-0 text-ink-4" />}
                       </span>
                       <FormatChips placement={placement.id} on={on} formats={formats} onToggleFormat={onToggleFormat} className="mt-1" />
-                      <span className="mt-1 block truncate text-caption text-ink-4" title={placement.sizes}>
-                        {via ?? placement.sizes}
+                      <span className="mt-1 block truncate text-caption text-ink-4" title={caption}>
+                        {caption}
                       </span>
                     </span>
                     <span
