@@ -11,8 +11,8 @@ import type { BrandKit, LogoSlot } from "@/features/settings/settings-types";
  * A product's logos: the one every asset needs, and two it can do without.
  * Anything empty falls back to the workspace kit.
  */
-const PRODUCT_SLOTS: LogoSlot[] = ["lockup-light", "favicon", "animated"];
-const PRODUCT_SLOT_COPY: Partial<
+export const PRODUCT_SLOTS: LogoSlot[] = ["lockup-light", "favicon", "animated"];
+export const PRODUCT_SLOT_COPY: Partial<
   Record<LogoSlot, { label?: string; hint?: string; priority?: "primary" | "optional" }>
 > = {
   "lockup-light": { label: "Logo", hint: "Every asset: documents, leave-behinds, video", priority: "primary" },
@@ -21,8 +21,8 @@ const PRODUCT_SLOT_COPY: Partial<
 };
 
 /** Two typefaces and two colours: what one brand needs, without a system's worth of roles. */
-const PRODUCT_TYPEFACES = 2;
-const PRODUCT_COLOR_ROLES = [
+export const PRODUCT_TYPEFACES = 2;
+export const PRODUCT_COLOR_ROLES = [
   { id: "primary" as const, label: "Primary", trailing: "Headlines, buttons, the brand mark" },
   { id: "accent" as const, label: "Secondary", trailing: "Highlights and supporting emphasis" },
 ];

@@ -1,6 +1,7 @@
 "use client";
 
 import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components/patterns/pick-list";
+import { useTherapyLibraryStore } from "@/features/therapy-library/therapy-library-store";
 import { useState, useMemo, useEffect } from "react";
 import { conditionPhrase } from "@/features/workspace/ad-subject";
 import { createPortal } from "react-dom";
@@ -325,6 +326,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const [adSubjectKind, setAdSubjectKind] = useState<"drug" | "device" | "disease">("drug");
   const [selectedDeviceId, setSelectedDeviceId] = useState("");
   const [selectedDiseaseId, setSelectedDiseaseId] = useState("");
+  /* Disease dossiers in the Therapy Library, offered first for a disease campaign. Only CDC conditions can ground an ad. */
+  const therapyDossiers = useTherapyLibraryStore((s) => s.dossiers);
+  const libraryDiseases = therapyDossiers.filter((d) => d.status === "ready" && !!cdcDisease(d.diseaseId));
   const [subjectQuery, setSubjectQuery] = useState("");
   const [customizeScope, setCustomizeScope] = useState(false);
 
@@ -423,7 +427,12 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     [brandCatalogue, brandSearch]
   );
 
-  const allDiseases = useMemo(() => [...INITIAL_DISEASE_OPTIONS, ...customDiseases], [customDiseases]);
+  /* Disease dossiers from the Therapy Library: picked like an area, but grounded in the dossier itself. */
+  const libraryOptions = useMemo(
+    () => therapyDossiers.filter((d) => d.status === "ready").map((d) => ({ id: d.id, label: d.disease, desc: `Therapy Library dossier, v${d.version} · ${d.sources} sources` })),
+    [therapyDossiers]
+  );
+  const allDiseases = useMemo(() => [...libraryOptions, ...INITIAL_DISEASE_OPTIONS, ...customDiseases], [libraryOptions, customDiseases]);
 
   const filteredDiseases = useMemo(() => {
     const q = diseaseSearch.toLowerCase().trim();
@@ -446,14 +455,11 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   const studioNoun = isAd ? "Ads" : isEmail ? "Email" : assetType === "infographic" ? "Creative" : "Video";
   const groundingModes = (audience && GROUNDING_BY_AUDIENCE[audience]) || ["brand"];
   /**
-   * Therapy-area grounding is hidden for now — every audience grounds in a
-   * brand. The toggle, the disease picker and the mode they switch between
-   * are all still here and still work; this one flag is what turns them back
-   * on. Flipping it to groundingModes.includes("disease") restores the
-   * original behaviour for the audiences that allow it.
+   * Therapy-area grounding comes back once the Therapy Library has a ready
+   * dossier to ground in, for the audiences that allow it. Without one,
+   * every audience grounds in a brand.
    */
-  const canUseTherapyArea = false;
-  void groundingModes;
+  const canUseTherapyArea = groundingModes.includes("disease") && therapyDossiers.some((d) => d.status === "ready");
 
   /** What the project is grounded in, in one phrase, for the name and chips. */
   const selectedDevice = medtechDevice(selectedDeviceId);
@@ -1145,7 +1151,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   2
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  {isAd ? "What's It About?" : "Select Brand"}
+                  {isAd ? "What's It About?" : sourceMode === "disease" ? "Select Therapy Area" : "Select Brand"}
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -1168,7 +1174,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                     {(stage === "details" || stage === "adtype") && groundingLabel ? "✓" : "2"}
                   </div>
                   <span className="text-body-lg font-extrabold text-ink">
-                    {isAd ? "What's It About?" : "Select Brand"}
+                    {isAd ? "What's It About?" : sourceMode === "disease" ? "Select Therapy Area" : "Select Brand"}
                   </span>
                   {stage !== "grounding" && groundingLabel && (
                     <span className="text-body font-semibold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line ml-2">
@@ -1257,7 +1263,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                       ? "Grounded in the device's Instructions for Use and its FDA clearance, so every claim traces back to them."
                       : isAd && adSubjectKind === "disease"
                         ? "About the condition itself, for help-seeking ads. No product is named."
-                        : "Every asset is grounded in a specific product, so its claims can be traced back to an approved source."}
+                        : sourceMode === "disease"
+                          ? "Grounded in a disease dossier from your Therapy Library, or a whole therapy area. No product is named."
+                          : "Every asset is grounded in a specific product, so its claims can be traced back to an approved source."}
                   </p>
 
                   {isAd && adSubjectKind !== "drug" ? (
@@ -1275,7 +1283,9 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                           <div className="min-w-0 flex-1">
                             <div className="text-body font-bold text-ink">{adSubjectName}</div>
                             <div className="truncate text-label text-ink-3">
-                              {selectedDisease.group} · From the CDC&apos;s Health Topics A–Z
+                              {therapyDossiers.find((d) => d.diseaseId === selectedDisease.id && d.status === "ready")
+                                ? <>{selectedDisease.group} · Therapy Library dossier, v{therapyDossiers.find((d) => d.diseaseId === selectedDisease.id)?.version}</>
+                                : <>{selectedDisease.group} · From the CDC&apos;s Health Topics A–Z</>}
                             </div>
                           </div>
                           <button
@@ -1296,7 +1306,21 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                             placeholder={adSubjectKind === "device" ? "Search medical devices (e.g. Glucora, Cardiyn)..." : "Search diseases and conditions (e.g. Asthma, Heart Failure)..."}
                             autoFocus
                           />
-                          {!subjectQuery.trim() ? (
+                          {!subjectQuery.trim() && adSubjectKind === "disease" && libraryDiseases.length > 0 ? (
+                            /* What the Therapy Library already holds comes first; typing searches every condition. */
+                            <PickList>
+                              {libraryDiseases.map((d) => (
+                                <PickRow
+                                  key={d.id}
+                                  onSelect={() => setSelectedDiseaseId(d.diseaseId)}
+                                  thumb={<span className="grid size-10 shrink-0 place-items-center rounded-chip bg-tint text-brand"><Stethoscope className="size-4.5" /></span>}
+                                  title={d.disease}
+                                  detail={`Therapy Library · v${d.version} · ${d.sources} sources`}
+                                  chip={<PickChip tone="ok">Dossier Ready</PickChip>}
+                                />
+                              ))}
+                            </PickList>
+                          ) : !subjectQuery.trim() ? (
                             <div className="rounded-panel border border-dashed border-hair-2 bg-card px-4 py-6 text-center">
                               <p className="text-body font-bold text-ink-2">{adSubjectKind === "device" ? "Start typing to find a device" : "Start typing to find a condition"}</p>
                               <p className="mt-0.5 text-label text-ink-4">
@@ -1327,6 +1351,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                                         thumb={<span className="grid size-10 shrink-0 place-items-center rounded-chip bg-subtle text-ink-3"><Stethoscope className="size-4.5" /></span>}
                                         title={d.label}
                                         detail={d.group}
+                                        chip={libraryDiseases.some((x) => x.diseaseId === d.id) ? <PickChip tone="ok">In Therapy Library</PickChip> : undefined}
                                       />
                                     ))}
                               {(adSubjectKind === "device"
@@ -1489,10 +1514,24 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                         />
                       </div>
 
+                      {libraryOptions.length > 0 && (
+                        <div className="space-y-1.5">
+                          <span className="block text-label font-bold text-ink-3">From Your Therapy Library</span>
+                          <ChipMultiSelect
+                            size="md"
+                            rowClassName="p-1"
+                            options={filteredDiseases.filter((d) => libraryOptions.some((o) => o.id === d.id))}
+                            selected={selectedDiseaseIds}
+                            onToggle={toggleDisease}
+                          />
+                          <span className="block pt-1 text-label font-bold text-ink-3">Or a Whole Therapy Area</span>
+                        </div>
+                      )}
+
                       <ChipMultiSelect
                         size="md"
                         rowClassName="max-h-[170px] overflow-y-auto p-1"
-                        options={filteredDiseases}
+                        options={filteredDiseases.filter((d) => !libraryOptions.some((o) => o.id === d.id))}
                         selected={selectedDiseaseIds}
                         onToggle={toggleDisease}
                         otherLabel="Other (Specify)"

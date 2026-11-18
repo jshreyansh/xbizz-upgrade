@@ -14,6 +14,7 @@ import {
   FileText,
   Library,
   Package,
+  Stethoscope,
   ClipboardCheck,
   ShieldCheck,
   BarChart3,
@@ -120,6 +121,7 @@ const ASSET_GROUPS: NavGroup[] = [
         ],
       },
       { label: "Product Library", shortLabel: "Products", icon: "package", href: "/product-library", requires: [...LIBRARY_ACCESS] },
+      { label: "Therapy Library", shortLabel: "Therapy", icon: "therapy", href: "/therapy-library", requires: [...LIBRARY_ACCESS] },
       { label: "Claims Library", shortLabel: "Claims", icon: "claims", href: "/claims-library", requires: [...LIBRARY_ACCESS] },
     ],
   },
@@ -154,6 +156,7 @@ function NavIcon({ name }: { name: string }): ReactNode {
     library: <Library size={16} strokeWidth={1.75} />,
     package: <Package size={16} strokeWidth={1.75} />,
     claims: <ClipboardCheck size={16} strokeWidth={1.75} />,
+    therapy: <Stethoscope size={16} strokeWidth={1.75} />,
     shield: <ShieldCheck size={16} strokeWidth={1.75} />,
     chart: <BarChart3 size={16} strokeWidth={1.75} />,
     settings: <Settings size={16} strokeWidth={1.75} />,
@@ -469,7 +472,7 @@ export function Sidebar() {
                       onClick={() => {
                         if (item.href === "#") return;
                         /* The libraries hold a client's products and claims: an agency picks its client first, staying where it is. */
-                        if (item.href === "/product-library" || item.href === "/claims-library") requireClient(() => router.push(item.href));
+                        if (item.href === "/product-library" || item.href === "/therapy-library" || item.href === "/claims-library") requireClient(() => router.push(item.href));
                         else router.push(item.href);
                       }}
                       title={collapsed ? item.label : undefined}

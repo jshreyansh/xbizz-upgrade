@@ -649,6 +649,23 @@ const THERAPY_AREA_BY_GROUP: Record<string, string> = {
 };
 export const diseaseTherapyArea = (group: string) => THERAPY_AREA_BY_GROUP[group] ?? "General Medicine";
 
+/** The therapy areas the CDC's diseases fall into, with their groups: the folders of the Therapy Library. */
+export const DISEASE_THERAPY_AREAS: Array<{ id: string; name: string; groups: string[] }> = Object.entries(THERAPY_AREA_BY_GROUP)
+  .reduce<Array<{ id: string; name: string; groups: string[] }>>((areas, [group, name]) => {
+    const area = areas.find((a) => a.name === name.replace(/ & /g, " and "));
+    if (area) area.groups.push(group);
+    else areas.push({ id: name.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""), name: name.replace(/ & /g, " and "), groups: [group] });
+    return areas;
+  }, [])
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+export const diseaseArea = (id: string) => DISEASE_THERAPY_AREAS.find((a) => a.id === id);
+/** The area a CDC disease sits in. */
+export const areaOfDisease = (diseaseId: string) => {
+  const d = cdcDisease(diseaseId);
+  return d ? DISEASE_THERAPY_AREAS.find((a) => a.groups.includes(d.group)) : undefined;
+};
+
 /**
  * The indications a product's label lists, from its dossier. Unlike
  * brandAdFacts there is no stand-in: a product with no label data has none,

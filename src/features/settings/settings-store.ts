@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { useProductLibraryStore } from "@/features/product-library/product-library-store";
+import { useTherapyLibraryStore } from "@/features/therapy-library/therapy-library-store";
 import {
   ROLE_PERMISSIONS, DEFAULT_ROLES, emailDomain, rolePermissions, setLevel, fromSpec, type RoleDef, type AreaId, type LevelId,
   type ApprovalChain, type BrandKit, type IntegrationLog, type IntegrationStatus,
@@ -499,6 +500,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const otherAccounts = { ...s.otherAccounts, [s.accountId]: pickAccount(s) };
     delete otherAccounts[id];
     useProductLibraryStore.getState().switchWorkspace(s.workspaceId, target.workspaceId);
+    useTherapyLibraryStore.getState().switchWorkspace(s.workspaceId, target.workspaceId);
     const me = target.members.find((m) => m.id === s.currentUserId && m.status === "active") ?? target.members[0];
     set({ ...target, accountId: id, otherAccounts, currentUserId: me.id, signedInId: me.id, isAdmin: me.permissions.includes("admin") });
   },
@@ -542,6 +544,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const stash = { ...s.stash, [s.workspaceId]: pickSlice(s) };
     delete stash[id];
     useProductLibraryStore.getState().switchWorkspace(s.workspaceId, id);
+    useTherapyLibraryStore.getState().switchWorkspace(s.workspaceId, id);
     set({ ...target, stash, isAdmin: me.permissions.includes("admin") });
   },
   joinWorkspaceAsAdmin: (id) => {
@@ -598,6 +601,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     };
     set({ stash: { ...s.stash, [id]: slice } });
     useProductLibraryStore.getState().ensureWorkspace(id);
+    useTherapyLibraryStore.getState().ensureWorkspace(id);
     get().switchWorkspace(id);
     return id;
   },
