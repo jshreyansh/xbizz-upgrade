@@ -210,6 +210,21 @@ export const GROUNDING_BY_AUDIENCE: Record<Audience, Array<"brand" | "disease">>
  * someone who already picked the audience, and six of them turned a choice
  * into a page of reading.
  */
+/**
+ * Topics for unbranded content grounded in a therapy dossier: no product is
+ * named, so the story is about the condition. Patients and consumers only,
+ * the audiences that can ground in a therapy area.
+ */
+export const DISEASE_TOPICS: Array<{ id: string; label: string; icon: LucideIcon }> = [
+  { id: "understanding", label: "Understanding the Condition", icon: BookOpen },
+  { id: "symptoms", label: "Recognising Symptoms", icon: AlertCircle },
+  { id: "diagnosis", label: "Getting Diagnosed", icon: Stethoscope },
+  { id: "treatment-options", label: "Treatment Options", icon: Pill },
+  { id: "living-with", label: "Living With It", icon: Heart },
+  { id: "talk-to-doctor-disease", label: "Questions for Your Doctor", icon: MessageSquareQuote },
+  { id: "support", label: "Support and Resources", icon: Users },
+];
+
 export const TOPICS_BY_AUDIENCE: Record<Audience, Array<{ id: string; label: string; icon: LucideIcon }>> = {
   HCP: [
     { id: "product-intro", label: "Product Introduction", icon: Pill },

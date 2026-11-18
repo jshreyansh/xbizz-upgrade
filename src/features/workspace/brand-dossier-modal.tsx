@@ -73,6 +73,7 @@ import {
   INITIAL_HCP_SPECIALITIES,
   AUDIENCE_OPTIONS,
   TOPICS_BY_AUDIENCE,
+  DISEASE_TOPICS,
   GROUNDING_BY_AUDIENCE,
 } from "@/features/workspace/brand-modal-data";
 import type {
@@ -442,7 +443,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
 
   const allSpecialities = INITIAL_HCP_SPECIALITIES;
 
-  const currentTopics = (audience && TOPICS_BY_AUDIENCE[audience]) || TOPICS_BY_AUDIENCE.HCP;
+  const currentTopics = sourceMode === "disease" ? DISEASE_TOPICS : (audience && TOPICS_BY_AUDIENCE[audience]) || TOPICS_BY_AUDIENCE.HCP;
 
   /* Ads reach patients and HCPs. Trade and market-access audiences are
      reached through dossiers and portals, not ad accounts. */
@@ -1206,14 +1207,14 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
                   <div className="inline-flex rounded-chip border border-hair bg-card p-1 gap-0.5 shadow-2xs">
                     <button
                       type="button"
-                      onClick={() => { setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
+                      onClick={() => { if (sourceMode !== "brand") setSelectedTopics([]); setSourceMode("brand"); setSelectedDiseaseIds([]); setDiseaseSearch(""); }}
                       className={cn("px-2.5 py-0.5 rounded-glyph text-label font-bold transition-all cursor-pointer", sourceMode === "brand" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
                     >
                       Brand
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setSourceMode("disease"); setSelectedBrandId(""); setBrandSearch(""); }}
+                      onClick={() => { if (sourceMode !== "disease") setSelectedTopics([]); setSourceMode("disease"); setSelectedBrandId(""); setBrandSearch(""); }}
                       className={cn("px-2.5 py-0.5 rounded-glyph text-label font-bold transition-all cursor-pointer", sourceMode === "disease" ? "bg-brand text-white" : "text-ink-3 hover:text-ink")}
                     >
                       Therapy Area

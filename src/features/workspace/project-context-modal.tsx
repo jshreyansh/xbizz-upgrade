@@ -13,6 +13,7 @@ import {
   INITIAL_BRANDS,
   SHAPE_OPTIONS,
   TOPICS_BY_AUDIENCE,
+  DISEASE_TOPICS,
   type OutputShape,
 } from "@/features/workspace/brand-modal-data";
 import { Portal } from "@/components/ui/portal";
@@ -86,7 +87,9 @@ export function ProjectContextModal({
   const [draft, setDraft] = useState<ProjectContext>(context);
   const [brandQuery, setBrandQuery] = useState("");
 
-  const topicOptions = TOPICS_BY_AUDIENCE[draft.audience] ?? TOPICS_BY_AUDIENCE.HCP;
+  /* A therapy-grounded project keeps the condition topics it started with. */
+  const diseaseGrounded = context.topics.some((t) => DISEASE_TOPICS.some((d) => d.label === t));
+  const topicOptions = diseaseGrounded ? DISEASE_TOPICS : TOPICS_BY_AUDIENCE[draft.audience] ?? TOPICS_BY_AUDIENCE.HCP;
   // The same merged catalogue the start modal searches, so a brand added
   // there is here too.
   const brandCatalogue = useBrandCatalogue();
