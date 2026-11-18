@@ -15,7 +15,7 @@
 
 import type { Scene, SceneGraph, Shot } from "@/types/content";
 import type { AdClaim, AdFormat, AdPlacement, AdType } from "@/features/workspace/ad-options";
-import { AD_PLACEMENTS, BANNER_SIZES, bannerOf, formatsOf, type AdFormatChoice, type BannerChoice } from "@/features/workspace/ad-options";
+import { AD_PLACEMENTS, BANNER_CREDITS, BANNER_SIZES, bannerOf, bannerSizesOn, formatsOf, type AdFormatChoice, type BannerChoice } from "@/features/workspace/ad-options";
 
 /* ── Brand facts the story needs ── */
 
@@ -369,17 +369,17 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice
     const still45: Spec = { key: "s-4x5", name: "Image ad", format: "image", shape: "4:5", from: "Image ad", credits: 300 };
     const still916: Spec = { key: "s-9x16", name: "Image ad, vertical", format: "image", shape: "9:16", from: "Image ad", credits: 300 };
     const still11: Spec = { key: "s-1x1", name: "Image ad, square", format: "image", shape: "1:1", from: "Image ad", credits: 300 };
-    /* One banner per chosen size; the same sizes and motion on two placements is one set. */
+    /* One set per motion: a size two placements both need is made once and serves both. */
     const bannerSet = (): Spec => {
-      const { sizes, motion } = bannerOf(id, banners);
-      const ordered = BANNER_SIZES.filter((b) => sizes.includes(b.id));
+      const { motion } = bannerOf(id, banners);
+      const own = bannerSizesOn(id, banners);
       return {
-        key: `b-${motion}-${ordered.map((b) => b.id).join("-")}`,
+        key: `b-${motion}`,
         name: motion === "animated" ? "Banner set, animated" : "Banner set, static",
         format: "banner",
-        shape: ordered.map((b) => `${b.w}×${b.h}`).join(" · "),
+        shape: own.map((b) => `${b.w}×${b.h}`).join(" · "),
         from: "Image ad",
-        credits: 180 * ordered.length,
+        credits: BANNER_CREDITS * own.length,
       };
     };
     const native: Spec = { key: "n-native", name: "Native ad", format: "image", shape: "1.91:1 · 1200×627 · headline and text", from: "Image ad", credits: 300 };
@@ -413,6 +413,13 @@ export function buildAdOutputs(placements: AdPlacement[], adType: AdType, choice
       const existing = byKey.get(spec.key);
       if (existing) {
         if (!existing.placements.includes(PLACEMENT_LABEL(id))) existing.placements.push(PLACEMENT_LABEL(id));
+        if (spec.format === "banner") {
+          /* The set grows by the sizes it didn't already have, in the standard order. */
+          const have = new Set([...existing.shape.split(" · "), ...spec.shape.split(" · ")]);
+          const sizes = BANNER_SIZES.map((b) => `${b.w}×${b.h}`).filter((k) => have.has(k));
+          existing.shape = sizes.join(" · ");
+          existing.credits = BANNER_CREDITS * sizes.length;
+        }
       } else {
         byKey.set(spec.key, {
           id: spec.key,

@@ -204,7 +204,7 @@ export function PlacementPicker({
                 /* Banner sizes are chosen in the production plan; here they are only summed up. */
                 const banner = on && formatsOf(placement.id, formats).includes("banner") ? bannerOf(placement.id, banners) : undefined;
                 const caption = banner
-                  ? `${banner.sizes.length} ${banner.sizes.length === 1 ? "size" : "sizes"} · ${banner.motion === "animated" ? "Animated" : "Static"} · change in the plan`
+                  ? `${banner.sizes.length} banner ${banner.sizes.length === 1 ? "size" : "sizes"} · ${banner.motion === "animated" ? "Animated" : "Static"}`
                   : via ?? placement.sizes;
                 return (
                   <div

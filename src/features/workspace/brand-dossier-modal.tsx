@@ -1,8 +1,7 @@
 "use client";
 
 import { PickChip, PickEmpty, PickList, PickRow, PickSearch } from "@/components/patterns/pick-list";
-import { useState, useMemo, useEffect, useRef } from "react";
-import { PlacementPicker } from "@/features/workspace/placement-picker";
+import { useState, useMemo, useEffect } from "react";
 import { conditionPhrase } from "@/features/workspace/ad-subject";
 import { createPortal } from "react-dom";
 import {
@@ -22,7 +21,6 @@ import {
   Info,
   ShieldAlert,
   Stethoscope,
-  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEmailStore } from "@/features/workspace/email-store";
@@ -39,17 +37,12 @@ import type { Audience } from "@/types/content";
 import {
   AD_AUDIENCES,
   AD_KIND_PRESETS,
-  AD_PLACEMENTS,
   AD_TYPES,
   adSamplePrompts,
   brandAdFacts,
-  placementsFromMediaPlan,
+  placementsFor,
   promptKindFor,
-  type AdPlacement,
   type AdType,
-  formatsOf,
-  type AdFormat,
-  type AdFormatChoice,
   CDC_DISEASES,
   MEDTECH_DEVICES,
   cdcDisease,
@@ -321,16 +314,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
   // 4. Focus Topics
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
-  /* Ads only. Step 3 asks where the ads run instead of which topics they
-     cover: an ad carries one message, and the placements decide every size,
-     length, format and how the safety information fits. */
-  const [adPlacements, setAdPlacements] = useState<AdPlacement[]>([]);
-  /* Formats turned off per placement; a ticked placement starts with all of them on. */
-  const [adFormats, setAdFormats] = useState<AdFormatChoice>({});
-  /* The media agency's plan, when there is one: it already names the
-     placements, so reading it beats ticking them again. */
-  const [mediaPlanName, setMediaPlanName] = useState("");
-  const mediaPlanInputRef = useRef<HTMLInputElement>(null);
   const [adType, setAdType] = useState<AdType | null>(null);
   /* Which of the label's indications the project is about, among those the
      picked variants carry. Empty is All. */
@@ -371,16 +354,13 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
       setShowCustomDiseaseBox(false);
       setBrandSearch("");
       setDiseaseSearch("");
-      /* Every project starts blank: no audience, topics or placements are
+      /* Every project starts blank: no audience or topics are
          picked for the user. The tile only sets the kind of ad. */
       setAudience(null);
       setSelectedSpecialities([]);
       setSelectedTopics([]);
       setIndications([]);
       if (isAd) {
-        setAdPlacements([]);
-        setAdFormats({});
-        setMediaPlanName("");
         setAdType(null);
         setAdSubjectKind("drug");
         setSelectedDeviceId("");
@@ -395,9 +375,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     /* Topics belong to an audience, so a new audience clears them rather than picking new ones. */
     setSelectedTopics([]);
     setSelectedSpecialities([]);
-    /* TikTok and CTV cannot reach doctors, HCP networks cannot reach patients. */
-    /* Keeps only what this audience can reach; never picks placements for them. */
-    setAdPlacements((prev) => prev.filter((id) => AD_PLACEMENTS.find((p) => p.id === id)?.audiences.includes(audience)));
     // Therapy-area grounding vanishes for brand-only audiences. Drop a
     // selection made under a previous audience rather than carrying an
     // impossible one forward — picking Patient, choosing two therapy areas,
@@ -557,25 +534,7 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     !!audience &&
     (isAd ? !!adSubjectId && !needsOneCondition : sourceMode === "brand" ? !!selectedBrandId : selectedDiseaseIds.length > 0) &&
     hasReachedFocusTopics &&
-    (isAd ? !!adType && !reminderBlocked && adPlacements.length > 0 && !brandStepBlocked : isEmail || selectedTopics.length > 0);
-
-  const toggleAdPlacement = (id: AdPlacement) => {
-    /* Ticked again, a placement starts over with every format on. */
-    setAdFormats((prev) => {
-      const next = { ...prev };
-      delete next[id];
-      return next;
-    });
-    setAdPlacements((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    );
-  };
-  const toggleAdFormat = (id: AdPlacement, format: AdFormat) =>
-    setAdFormats((prev) => {
-      const current = formatsOf(id, prev);
-      const next = current.includes(format) ? current.filter((f) => f !== format) : [...current, format];
-      return next.length ? { ...prev, [id]: next } : prev;
-    });
+    (isAd ? !!adType && !reminderBlocked && !brandStepBlocked : isEmail || selectedTopics.length > 0);
 
   const toggleTopic = (label: string) => {
     if (selectedTopics.includes(label)) {
@@ -687,8 +646,10 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
     if (isAd) {
       const store = useWorkspaceStore.getState();
       store.setAdType(adType ?? "product-claim");
-      store.setAdPlacements(adPlacements);
-      store.setAdFormats(Object.fromEntries(adPlacements.map((id) => [id, formatsOf(id, adFormats)])));
+      /* The starting point's usual placements, kept to what this audience can be reached on. Changed in the plan. */
+      store.setAdPlacements(placementsFor(audience, adPreset.placements));
+      store.setAdFormats({});
+      store.setAdBanners({});
       setTopicsStore(adKind === "new-indication" && pickedIndication ? [pickedIndication.label] : []);
       const condition = isDiseaseSubject ? conditionPhrase(adSubjectName) : pickedIndication?.condition;
       store.setBrief(adSamplePrompts(promptKindFor(adKind, adType ?? "product-claim", audience), adSubjectName || groundingLabel, condition)[0].prompt);
@@ -1703,14 +1664,15 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
           )}
 
           {/* ══════════════ 3. CLINICAL FOCUS TOPICS ══════════════ */}
-          {stage !== "details" ? (
+          {/* Ads ask where they run in the plan, beside what each placement makes and costs, so the pop-up stops at the ad type. */}
+          {isAd ? null : stage !== "details" ? (
             <div className="rounded-panel border border-dashed border-hair-2 bg-canvas p-3.5 flex items-center justify-between opacity-60">
               <div className="flex items-center gap-2.5">
                 <div className="grid size-6 place-items-center rounded-full bg-black/5 text-label font-bold text-ink-3">
                   {isAd ? 4 : 3}
                 </div>
                 <span className="text-body font-bold text-ink-3">
-                  {isAd ? "Where It Runs" : isEmail ? "About This Email" : "Clinical Focus Topics"}
+                  {isEmail ? "About This Email" : "Clinical Focus Topics"}
                 </span>
               </div>
               <span className="text-label text-ink-3 flex items-center gap-1">
@@ -1720,79 +1682,6 @@ export function BrandDossierModal({ open, onClose, onSelectDossier }: BrandDossi
             </div>
           ) : (
             <div className="space-y-4 animate-in fade-in duration-200">
-
-              {/* 3. Where it runs — the ads version of step 3, in the same
-                  row style as the topics, so the modal reads as one form.
-                  Placements are grouped by the account they are bought
-                  through, and each says what it will produce. */}
-              {isAd && (
-                <div className="rounded-panel border border-hair bg-card p-5 space-y-3 shadow-2xs">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <div className="grid size-5.5 place-items-center rounded-full bg-tint text-brand-deep text-caption font-extrabold">
-                        4
-                      </div>
-                      <div>
-                        <h3 className="text-body-lg font-extrabold text-ink">Where It Runs</h3>
-                        <p className="text-label text-ink-3">
-                          Each placement sets the format and size. SwishX makes what it needs.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => mediaPlanInputRef.current?.click()}
-                        className="h-7.5 gap-1.5 text-label font-bold"
-                      >
-                        <Upload className="size-3.5" />
-                        <span>{mediaPlanName ? "Replace media plan" : "Upload media plan"}</span>
-                      </Button>
-                      <span className="text-label font-bold text-brand-deep bg-tint px-2.5 py-0.5 rounded-chip border border-tint-line">
-                        {adPlacements.length} Selected
-                      </span>
-                    </div>
-                    <input
-                      ref={mediaPlanInputRef}
-                      type="file"
-                      accept=".xlsx,.xls,.csv,.pdf"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        setMediaPlanName(file.name);
-                        if (audience) {
-                          setAdPlacements(placementsFromMediaPlan(audience));
-                          setAdFormats({});
-                        }
-                        e.target.value = "";
-                      }}
-                    />
-                  </div>
-
-                  {mediaPlanName && (
-                    <div className="flex items-center gap-2 rounded-control border border-ok-line bg-ok-bg px-3 py-2 text-label text-ink-2">
-                      <Check className="size-3.5 shrink-0 text-ok" />
-                      <span className="min-w-0 truncate">
-                        Placements read from <b className="font-bold text-ink">{mediaPlanName}</b>. Change any below.
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="pt-1">
-                    {audience && (
-                      <PlacementPicker
-                        audience={audience}
-                        selected={adPlacements}
-                        onToggle={toggleAdPlacement}
-                        formats={adFormats}
-                        onToggleFormat={toggleAdFormat}
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
 
               {/* 3. About this email: who sends it, what it is for, what it starts from. */}
               {isEmail && (

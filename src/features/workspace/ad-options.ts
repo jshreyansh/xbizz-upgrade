@@ -179,6 +179,9 @@ export const BANNER_SIZES: BannerSize[] = [
   { id: "1080x1920", name: "Mobile Interstitial", w: 1080, h: 1920, ratio: "9:16", device: "Mobile", animates: true, notOn: ["google-display"] },
 ];
 
+/** Credits for one banner size, animated or static. */
+export const BANNER_CREDITS = 180;
+
 /** Sizes and motion chosen per banner placement; one not listed uses the standard five. */
 export type BannerChoice = Partial<Record<AdPlacement, { sizes: string[]; motion: BannerMotion }>>;
 
@@ -187,9 +190,15 @@ export function bannerSizesFor(id: AdPlacement): BannerSize[] {
   return BANNER_SIZES.filter((s) => !s.notOn?.includes(id));
 }
 
-/* Google's uploaded banners are images by default; programmatic and HCP sites take HTML5 with scrolling safety information. */
+/* Animated to start: HTML5 with the safety information scrolling inside the banner is the standard pharma display ad. */
 export function bannerOf(id: AdPlacement, choice: BannerChoice = {}): { sizes: string[]; motion: BannerMotion } {
-  return choice[id] ?? { sizes: BANNER_SIZES.filter((s) => s.standard).map((s) => s.id), motion: id === "google-display" ? "static" : "animated" };
+  return choice[id] ?? { sizes: BANNER_SIZES.filter((s) => s.standard).map((s) => s.id), motion: "animated" };
+}
+
+/** What one banner placement actually gets: its chosen sizes, less any it cannot take. */
+export function bannerSizesOn(id: AdPlacement, choice: BannerChoice = {}): BannerSize[] {
+  const { sizes } = bannerOf(id, choice);
+  return bannerSizesFor(id).filter((s) => sizes.includes(s.id));
 }
 
 export function placementName(id: AdPlacement): string {

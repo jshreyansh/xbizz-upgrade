@@ -5,6 +5,8 @@ import {
   AlertTriangle,
   ArrowRight,
   Check,
+  Plus,
+  Upload,
   CheckCircle2,
   Image as ImageIcon,
   ListChecks,
@@ -95,8 +97,10 @@ import {
   craftKeyMessage,
   defaultNextStep,
   formatsOf,
+  placementsFromMediaPlan,
   labelVersion,
   leadMessages,
+  type AdKind,
   type AdType,
 } from "@/features/workspace/ad-options";
 
@@ -119,6 +123,17 @@ type Stage = "input" | "building" | "campaign" | "templates";
 
 const DRAFT_ONLY: AssetVersion[] = [{ label: "Draft v1", state: "current", at: "Saved just now" }];
 
+
+/* What the suggestion is for, in words: the starting point picked. */
+const SUGGESTED_FOR: Record<AdKind, string> = {
+  scratch: "these ads",
+  "brand-launch": "a brand launch",
+  "disease-awareness": "a disease awareness campaign",
+  reminder: "reminder ads",
+  "hcp-campaign": "an HCP campaign",
+  savings: "a savings and copay campaign",
+  "new-indication": "a new indication campaign",
+};
 
 export function AdsDirectionsScreen() {
   const {
@@ -229,6 +244,9 @@ export function AdsDirectionsScreen() {
   const creditBalance = useSettingsStore((st) => st.creditBalance);
   const [editingDecision, setEditingDecision] = useState<string | null>(null);
   const [changingPlacements, setChangingPlacements] = useState(false);
+  /* The media agency's plan, when there is one: it names the placements, so reading it beats picking them. */
+  const [mediaPlanName, setMediaPlanName] = useState("");
+  const mediaPlanInputRef = useRef<HTMLInputElement>(null);
   const showsProduct = adType !== "unbranded";
   /* Who appears, who narrates and what plays under it: only asked when the
      campaign makes video. Narrated by default, so a character is optional. */
@@ -833,17 +851,26 @@ export function AdsDirectionsScreen() {
                     anything is written. */}
                 <PlanSectionShell
                   icon={ListChecks}
-                  title="Ads to make"
-                  summary={`${kept.length} ads · ${credits.toLocaleString()} credits · from ${adPlacements.length} placements`}
+                  title="Where it runs and what it makes"
+                  summary={`${adPlacements.length} placements · ${kept.length} ads · ${credits.toLocaleString()} credits`}
                   state={planState(needsYou.ads)}
-                  source="from placements"
+                  source={mediaPlanName ? "from your media plan" : "suggested"}
                   open={openSection === "ads"}
                   onToggle={() => toggleSection("ads")}
                 >
                   <div className="space-y-3">
-                    <p className="text-body leading-snug text-ink-2">
-                      What each placement makes. Turn off a format you don&apos;t need, or remove the placement: it won&apos;t be made, charged, sent to MLR or exported.
-                    </p>
+                    {mediaPlanName ? (
+                      <div className="flex items-center gap-2 rounded-control border border-ok-line bg-ok-bg px-3 py-2 text-label text-ink-2">
+                        <Check className="size-3.5 shrink-0 text-ok" />
+                        <span className="min-w-0 truncate">
+                          Placements read from <b className="font-bold text-ink">{mediaPlanName}</b>. Change any below.
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-body leading-snug text-ink-2">
+                        Suggested for {SUGGESTED_FOR[adKind]}, reaching {who === "HCP" ? "HCPs" : "patients"}. Add or remove placements, turn off a format you don&apos;t need, or upload your media plan. What&apos;s removed isn&apos;t made, charged, sent to MLR or exported.
+                      </p>
+                    )}
                     <AdsToMakeList
                       outputs={outputs}
                       placements={adPlacements}
@@ -857,9 +884,31 @@ export function AdsDirectionsScreen() {
                         if (adPlacements.length > 1) setAdPlacements(adPlacements.filter((p) => p !== id));
                       }}
                     />
-                    <Button size="sm" variant="secondary" onClick={() => setChangingPlacements(true)}>
-                      Change placements
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button size="sm" variant="secondary" onClick={() => setChangingPlacements(true)} className="gap-1.5">
+                        <Plus className="size-3.5" />
+                        Add Placement
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => mediaPlanInputRef.current?.click()} className="gap-1.5">
+                        <Upload className="size-3.5" />
+                        {mediaPlanName ? "Replace Media Plan" : "Upload Media Plan"}
+                      </Button>
+                      <input
+                        ref={mediaPlanInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv,.pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          /* Prototype: any file reads as the plan this kind of launch usually carries. */
+                          setMediaPlanName(file.name);
+                          setAdPlacements(placementsFromMediaPlan(who));
+                          useWorkspaceStore.getState().setAdFormats({});
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
                     {/* The same budget card as the Video and Docs plans: what this
                         campaign costs against what the workspace has. */}
                     {(() => {

@@ -26,7 +26,7 @@ import {
   type StoryboardLayout,
 } from "@/features/workspace/storyboard";
 import { useShotPreviews } from "@/features/workspace/use-shot-previews";
-import { AD_PLACEMENTS, NEXT_STEPS, closingLine, formatsOf, type AdClaim, type AdFormat, type AdFormatChoice, type AdPlacement, type AdType } from "@/features/workspace/ad-options";
+import { AD_PLACEMENTS, NEXT_STEPS, bannerSizesOn, closingLine, formatsOf, type AdClaim, type AdFormat, type AdFormatChoice, type AdPlacement, type AdType } from "@/features/workspace/ad-options";
 import {
   buildAdStory,
   buildCarousel,
@@ -44,7 +44,8 @@ import {
 } from "@/features/workspace/ad-campaign";
 import { SearchAdCard, SearchChecks, SearchLines } from "@/features/workspace/search-ad-preview";
 import { ACCOUNT_MARK, FormatChips } from "@/features/workspace/placement-picker";
-import { BannerSizes } from "@/features/workspace/banner-sizes";
+import { BannerSet } from "@/features/workspace/banner-sizes";
+import { useWorkspaceStore } from "@/features/workspace/workspace-store";
 
 /**
  * The Ads campaign, in three parts.
@@ -170,7 +171,11 @@ export function AdsToMakeList({
   onToggleFormat: (id: AdPlacement, format: AdFormat) => void;
   onRemovePlacement: (id: AdPlacement) => void;
 }) {
+  const banners = useWorkspaceStore((s) => s.adBanners);
+  /* Display placements share one banner set, shown once under the list. */
+  const bannerPlacements = placements.filter((id) => formatsOf(id, formats).includes("banner"));
   return (
+    <div className="space-y-3">
     <div className="divide-y divide-hair rounded-control border border-hair-2 bg-canvas">
       {placements.map((id) => {
         const placement = AD_PLACEMENTS.find((p) => p.id === id);
@@ -180,7 +185,7 @@ export function AdsToMakeList({
         const makes = outputs
           .filter((o) => o.placements.includes(label))
           .map((o) =>
-            o.format === "banner" ? `${o.shape.split(" · ").length} banner sizes` : o.format === "text" ? "15 headlines · 4 descriptions" : o.format === "document" ? "6-page PDF" : `${o.shape.split(" · ")[0]} ${o.format}`
+            o.format === "banner" ? `${bannerSizesOn(id, banners).length} banner sizes` : o.format === "text" ? "15 headlines · 4 descriptions" : o.format === "document" ? "6-page PDF" : `${o.shape.split(" · ")[0]} ${o.format}`
           )
           .join(" · ");
         return (
@@ -202,15 +207,11 @@ export function AdsToMakeList({
             >
               <X className="size-3.5" />
             </IconButton>
-            {/* A display placement chooses its banner sizes here, beside what they cost. */}
-            {formatsOf(id, formats).includes("banner") && (
-              <div className="w-full pr-1.5">
-                <BannerSizes placement={id} />
-              </div>
-            )}
           </div>
         );
       })}
+    </div>
+    <BannerSet placements={bannerPlacements} />
     </div>
   );
 }
