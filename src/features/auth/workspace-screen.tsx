@@ -8,9 +8,8 @@ import { Check } from "lucide-react";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { AuthButton, AuthCardHead, AuthLabel, AuthStage } from "@/features/auth/auth-stage";
 
-/* Each market sets the rules its assets are checked against. Only the US is open today; the rest are coming. */
+/* Each market sets the rules its assets are checked against. Only the US is open today; others are coming. */
 const AVAILABLE = ["United States"];
-const COMING_SOON = ["European Union", "UK", "Japan", "India", "Australia", "Brazil"];
 
 /** The organisation's first workspace: a brand or market, and the markets it operates in. */
 export function WorkspaceScreen() {
@@ -38,11 +37,11 @@ export function WorkspaceScreen() {
   return (
     <AuthStage
       eyebrow="First workspace"
-      title={agency ? "One workspace" : "Your markets"}
-      accent={agency ? "per client." : "set the rules."}
+      title={agency ? "One client," : "Your markets"}
+      accent={agency ? "one workspace." : "set the rules."}
       body={
         agency
-          ? "A workspace is one client or brand, with its own team, libraries and credits, so each client's work, approvals and spend stay separate. Each asset is written against the label of the market it ships to."
+          ? "Each workspace keeps one client's work in its own sandbox, so it never mixes with another client's."
           : "A workspace is one brand or market, with its own team, libraries and credits. Each asset is written against the label and promotional guidance of the market it ships to, so one dossier can produce an FDA-compliant US reel and an EMA-compliant EU reel without rewriting a claim."
       }
       footnote={`More workspaces can be added later from Settings → ${agency ? "Agency" : "Organisation"}.`}
@@ -52,18 +51,6 @@ export function WorkspaceScreen() {
       </AuthCardHead>
 
       <div className="grid gap-5">
-        {/* The thing worth knowing first: the sources are already connected. */}
-        <div className="auth-rise relative overflow-hidden rounded-panel border border-tint-line bg-tint px-3.5 py-3" style={{ animationDelay: "320ms" }}>
-          <span aria-hidden className="auth-shine pointer-events-none absolute inset-y-0 -left-1/3 w-1/3" />
-          <div className="relative flex items-start gap-2.5">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-white shadow-soft">
-              <LogoMark size={17} className="auth-twinkle" />
-            </span>
-            <p className="text-label leading-snug text-ink-2">
-              <b className="text-body font-extrabold text-brand-deep">125+ US medical sources</b> already linked, including FDA, PubMed, ClinicalTrials.gov, CDC and more.
-            </p>
-          </div>
-        </div>
         {agency && (
           <Field
             label="Agency Name"
@@ -93,14 +80,24 @@ export function WorkspaceScreen() {
                 {m}
               </span>
             ))}
-            {COMING_SOON.map((m) => (
-              <span key={m} aria-disabled className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-chip border border-hair-2 px-3 py-1.5 text-label font-semibold text-ink-4">
-                {m}
-                <span className="rounded-glyph bg-subtle px-1.5 py-px text-micro font-bold text-ink-3">Soon</span>
-              </span>
-            ))}
+            <span aria-disabled className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-chip border border-hair-2 px-3 py-1.5 text-label font-semibold text-ink-4">
+              Others
+              <span className="rounded-glyph bg-subtle px-1.5 py-px text-micro font-bold text-ink-3">Coming Soon</span>
+            </span>
           </div>
+        </div>
 
+        {/* Once the market is set: its sources are already connected. */}
+        <div className="auth-rise relative overflow-hidden rounded-panel border border-tint-line bg-tint px-3.5 py-3" style={{ animationDelay: "320ms" }}>
+          <span aria-hidden className="auth-shine pointer-events-none absolute inset-y-0 -left-1/3 w-1/3" />
+          <div className="relative flex items-start gap-2.5">
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand text-white shadow-soft">
+              <LogoMark size={17} className="auth-twinkle" />
+            </span>
+            <p className="text-label leading-snug text-ink-2">
+              <b className="text-body font-extrabold text-brand-deep">125+ US medical sources</b> already linked, including FDA, PubMed, ClinicalTrials.gov, CDC and more.
+            </p>
+          </div>
         </div>
 
         <AuthButton onClick={next} disabled={name.trim().length < 2 || (agency && agencyName.trim().length < 2)}>{agency ? "Create Workspace" : "Meet Your Team"}</AuthButton>

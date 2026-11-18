@@ -71,8 +71,8 @@ export function AccountTypePicker({
 }) {
   return (
     <div className="rise-in">
-      <AuthLabel>Which best describes your organisation?</AuthLabel>
-      <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="Which best describes your organisation?">
+      <AuthLabel>What best describes your organisation?</AuthLabel>
+      <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="What best describes your organisation?">
         {TYPES.map((t) => {
           const on = type === t.id;
           return (
@@ -191,7 +191,7 @@ export function AccountTypeConfirm({
         </div>
         <p className="text-body leading-relaxed text-ink-2">
           {type === "agency"
-            ? "Your SwishX Studio workflows will be tailored to creating content for your life sciences clients. Once confirmed, your account type cannot be changed."
+            ? "SwishX Studio workflows will be tailored to your life sciences clients. Account type is permanent once confirmed."
             : "Your SwishX Studio workflows will be tailored to this selection. Once confirmed, your account type and sector cannot be changed."}
         </p>
       </div>

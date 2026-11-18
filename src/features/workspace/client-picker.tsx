@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { Check, Plus, Search } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
@@ -116,9 +116,11 @@ export function useClientNeeded() {
 }
 
 /* One pop-up for the whole app, opened by whatever needs a client, with what to do once there is one. */
-const useClientPrompt = create<{ open: boolean; then?: () => void; ask: (then?: () => void) => void; close: () => void }>((set) => ({
+const useClientPrompt = create<{ open: boolean; then?: () => void; greeted: boolean; ask: (then?: () => void) => void; close: () => void }>((set) => ({
   open: false,
-  ask: (then) => set({ open: true, then }),
+  /* Asked once on landing; after that only when something needs the client. */
+  greeted: false,
+  ask: (then) => set({ open: true, then, greeted: true }),
   close: () => set({ open: false, then: undefined }),
 }));
 
@@ -150,6 +152,11 @@ function PickClient({ onDone }: { onDone?: () => void }) {
 /** The pop-up itself, mounted once in the app shell. */
 export function ClientPromptHost() {
   const { open, then, close } = useClientPrompt();
+  const needed = useClientNeeded();
+  /* A new agency workspace is asked for its client as it lands. Closing it is fine: making anything asks again. */
+  useEffect(() => {
+    if (needed && !useClientPrompt.getState().greeted) useClientPrompt.getState().ask();
+  }, [needed]);
   return (
     <Modal open={open} onClose={close} title="Select a Client" description="Assets in this workspace are made from one client's products. Pick the client to start." size="sm">
       <PickClient onDone={() => { close(); then?.(); }} />

@@ -51,7 +51,7 @@ export function TeamScreen() {
       <div className="mx-auto my-auto w-full max-w-[1080px] py-10 text-center">
         <div className="mb-4 text-caption font-bold uppercase tracking-[.18em] text-white/50">Step {steps.length} of {steps.length} · Your team</div>
         <h2 className="m-0 font-extrabold text-balance" style={{ fontSize: "clamp(30px, 3.2vw, 44px)", lineHeight: 1.08, letterSpacing: "-0.035em" }}>
-          Five specialists. <span style={{ color: "var(--brand-2)" }}>One record of truth.</span>
+          Five Specialists, <span style={{ color: "var(--brand-2)" }}>One Verified Dossier</span>
         </h2>
         <p className="mx-auto mt-4 max-w-[58ch] text-body-lg leading-relaxed text-white/65">
           They work as a chain. Each hands their work to the next, every line is cited to an approved source, and nothing reaches your asset until it has been checked.
